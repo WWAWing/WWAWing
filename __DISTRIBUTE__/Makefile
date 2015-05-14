@@ -39,7 +39,9 @@ wwawing_dist.zip: ../debugger/installer.bat ../debugger/uninstaller.bat ../debug
 	mkdir backup; \
 	mkdir audio; \
 	cp -R ../../../audio .
+	convmv -f utf-8 -t cp932 -r --notest wwawing_dist/
 	zip -r $@ wwawing_dist
+	convmv -f cp932 -t utf-8 -r --notest wwawing_dist/
 
 wwawing_update.zip:
 	mkdir wwawing_update
@@ -48,7 +50,9 @@ wwawing_update.zip:
 	cp ../wwa.js wwawing_update
 	cp ../wwaload.js wwawing_update
 	cp ../manual.html wwawing_update
+	convmv -f utf-8 -t cp932 -r --notest wwawing_update/
 	zip -r $@ wwawing_update
+	convmv -f cp932 -t utf-8 -r --notest wwawing_update/
 
 .PHONY: clean
 clean:
