@@ -1,8 +1,6 @@
 .idea/
 __DISTRIBUTE__/wwawing_dist/
 __DISTRIBUTE__/wwawing_update/
-__DISTRIBUTE__/wwawing_dist.zip
-__DISTRIBUTE__/wwawing_update.zip
 closure/compiler.jar
 closure/README.md
 closure/COPYING
