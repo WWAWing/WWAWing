@@ -1,5 +1,7 @@
-.idea
-.idea/typescript-compiler.xml
-.idea/watcherTasks.xml
+.idea/
+__DISTRIBUTE__/wwawing_dist/
+__DISTRIBUTE__/wwawing_update/
+__DISTRIBUTE__/wwawing_dist.bat
+__DISTRIBUTE__/wwawing_update.bat
 closure
 compile.bat
