@@ -1,0 +1,28 @@
+バージョンW3.13では、WWAのシステムで使うCSSファイルを
+style.cssからwwa.cssに分離しました。
+style.cssは、WWAに関係ない部分の装飾のみとなりました。
+アップデートの際には、style.cssに加え、wwa.cssを配置し、WWAのあるページの
+<head> ... </head>の間に
+<link rel="stylesheet" href="wwa.css" type="text/css" />
+を追加してください。
+
+最終的に、head要素内は
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Cache-Control" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>タイトル</title>
+    <link rel="stylesheet" href="style.css" type="text/css" /><!-- ←WWA以外の装飾をするCSS -->
+
+    <!--  WWA requirements-->
+    <link rel="stylesheet" href="wwa.css" type="text/css" /><!-- ←WWAの装飾をするCSS -->
+    <script src="audio/audio.min.js"></script>
+    <script src="wwa.js"></script>
+    <!-- /WWA requirements -->
+
+</head>
+こんな感じになると思います。
+(コメント「WWA requirements」～「/WWA requirements」）の間に
+絶対必要なファイルの一覧が書かれる感じです。
+※コメント自体には意味はありませんが、書いておくと後々便利です。
