@@ -43,6 +43,14 @@ module wwa_main {
     import util = wwa_util;
     var wwa: WWA;
 
+    /**
+     *
+     *
+     * @param current
+     * @param total
+     * @param stage
+     * @returns {wwa_data.LoaderProgress}
+     */
     export function getProgress(current: number, total: number, stage: wwa_data.LoadStage): wwa_data.LoaderProgress {
         var progress = new wwa_data.LoaderProgress();
         progress.current = current;
@@ -51,7 +59,6 @@ module wwa_main {
         return progress;
     }
 
-    
     export class WWA {
         private _cvs: HTMLCanvasElement;
         private _cvsSub: HTMLCanvasElement;
@@ -120,7 +127,6 @@ module wwa_main {
         ////////////////////////
 
         private _loadHandler: (e) => void;
-
 
         constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false) {
             try {
@@ -2359,6 +2365,17 @@ module wwa_main {
         public gameover() {
             var jx = this._wwaData.gameoverX;
             var jy = this._wwaData.gameoverY;
+            if( this._messageWindow.isVisible()) {
+                this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
+                this._messageQueue = []; // force clear!!
+                this._messageWindow.hide();
+                this._yesNoChoicePartsCoord = void 0;
+                this._yesNoChoicePartsID = void 0;
+                this._yesNoUseItemPos = void 0;
+                this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.NONE;
+                this._messageWindow.setYesNoChoice(false);
+            }
+
             this._waitTimeInCurrentFrame = Consts.GAMEOVER_FRAME_INTERVAL;
             this._temporaryInputDisable = true;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));

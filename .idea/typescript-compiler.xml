@@ -3,5 +3,6 @@
   <component name="TypeScriptCompiler">
     <option name="isCompilerEnabled" value="true" />
     <option name="typeScriptCompilerParams" value="-t ES5 --out wwa.long.js" />
+    <option name="nodeInterpreterTextField" value="C:\Program Files\nodejs\node.exe" />
   </component>
 </project>
