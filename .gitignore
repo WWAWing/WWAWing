@@ -1,3 +1,5 @@
 .idea
+.idea/typescript-compiler.xml
+.idea/watcherTasks.xml
 closure
 compile.bat
