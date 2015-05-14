@@ -5,3 +5,6 @@ __DISTRIBUTE__/wwawing_dist.bat
 __DISTRIBUTE__/wwawing_update.bat
 closure
 compile.bat
+wwaload.long.js
+wwaload.long.noworker.js
+
