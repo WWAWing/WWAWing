@@ -62,48 +62,50 @@ var wwa_input;
         }
         KeyStore.prototype.checkHitKey = function (keyCode) {
             var s = this.getKeyState(keyCode);
-            return (s === 1 /* KEYDOWN */ || s === 2 /* KEYPRESS */);
+            return (s === KeyState.KEYDOWN || s === KeyState.KEYPRESS);
         };
         KeyStore.prototype.getKeyState = function (keyCode) {
             if (this._prevKeyState[keyCode]) {
                 if (this._keyState[keyCode]) {
-                    return 2 /* KEYPRESS */;
+                    return KeyState.KEYPRESS;
                 }
-                return 3 /* KEYUP */;
+                return KeyState.KEYUP;
             }
             else {
                 if (this._keyState[keyCode]) {
-                    return 1 /* KEYDOWN */;
+                    return KeyState.KEYDOWN;
                 }
-                return 0 /* NONE */;
+                return KeyState.NONE;
             }
         };
         KeyStore.prototype.getKeyStateForControllPlayer = function (keyCode) {
             if (this._prevKeyStateOnControllable[keyCode]) {
                 if (this._keyState[keyCode]) {
-                    return 2 /* KEYPRESS */;
+                    return KeyState.KEYPRESS;
                 }
-                return 3 /* KEYUP */;
+                return KeyState.KEYUP;
             }
             else {
                 if (this._keyState[keyCode]) {
-                    return 1 /* KEYDOWN */;
+                    return KeyState.KEYDOWN;
                 }
-                return 0 /* NONE */;
+                return KeyState.NONE;
             }
         };
         KeyStore.prototype.getKeyStateForMessageCheck = function (keyCode) {
             if (this._prevKeyState[keyCode]) {
                 if (this._keyState[keyCode]) {
-                    return (this._keyInputContinueFrameNum[keyCode] >= wwa_data.WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM ? 4 /* KEYPRESS_MESSAGECHANGE */ : 2 /* KEYPRESS */);
+                    return (this._keyInputContinueFrameNum[keyCode] >=
+                        wwa_data.WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM ?
+                        KeyState.KEYPRESS_MESSAGECHANGE : KeyState.KEYPRESS);
                 }
-                return 3 /* KEYUP */;
+                return KeyState.KEYUP;
             }
             else {
                 if (this._keyState[keyCode]) {
-                    return 1 /* KEYDOWN */;
+                    return KeyState.KEYDOWN;
                 }
-                return 0 /* NONE */;
+                return KeyState.NONE;
             }
         };
         KeyStore.prototype.setPressInfo = function (keyCode) {
@@ -159,44 +161,44 @@ var wwa_input;
             else {
                 s = this.getMouseState();
             }
-            return (s === 1 /* MOUSEDOWN */ || s === 2 /* MOUSEPRESS */);
+            return (s === MouseState.MOUSEDOWN || s === MouseState.MOUSEPRESS);
         };
         MouseStore.prototype.getMouseState = function (dir) {
             if (dir !== void 0) {
                 if (this._inputDir !== dir) {
-                    return 0 /* NONE */;
+                    return MouseState.NONE;
                 }
             }
             if (this._prevMouseState) {
                 if (this._mouseState) {
-                    return 2 /* MOUSEPRESS */;
+                    return MouseState.MOUSEPRESS;
                 }
-                return 3 /* MOUSEUP */;
+                return MouseState.MOUSEUP;
             }
             else {
                 if (this._mouseState) {
-                    return 1 /* MOUSEDOWN */;
+                    return MouseState.MOUSEDOWN;
                 }
-                return 0 /* NONE */;
+                return MouseState.NONE;
             }
         };
         MouseStore.prototype.getMouseStateForControllPlayer = function (dir) {
             if (dir !== void 0) {
                 if (this._inputDir !== dir) {
-                    return 0 /* NONE */;
+                    return MouseState.NONE;
                 }
             }
             if (this._prevMouseStateOnControllable) {
                 if (this._mouseState) {
-                    return 2 /* MOUSEPRESS */;
+                    return MouseState.MOUSEPRESS;
                 }
-                return 3 /* MOUSEUP */;
+                return MouseState.MOUSEUP;
             }
             else {
                 if (this._mouseState) {
-                    return 1 /* MOUSEDOWN */;
+                    return MouseState.MOUSEDOWN;
                 }
-                return 0 /* NONE */;
+                return MouseState.NONE;
             }
         };
         MouseStore.prototype.setPressInfo = function (dir, touchID) {
@@ -316,29 +318,29 @@ var wwa_data;
         Coord.prototype.getDirectionTo = function (dest) {
             if (this.x < dest.x) {
                 if (this.y > dest.y) {
-                    return 7 /* RIGHT_UP */;
+                    return Direction.RIGHT_UP;
                 }
                 if (this.y === dest.y) {
-                    return 1 /* RIGHT */;
+                    return Direction.RIGHT;
                 }
-                return 6 /* RIGHT_DOWN */;
+                return Direction.RIGHT_DOWN;
             }
             if (this.x === dest.x) {
                 if (this.y > dest.y) {
-                    return 3 /* UP */;
+                    return Direction.UP;
                 }
                 if (this.y === dest.y) {
-                    return 8 /* NO_DIRECTION */;
+                    return Direction.NO_DIRECTION;
                 }
-                return 2 /* DOWN */;
+                return Direction.DOWN;
             }
             if (this.y > dest.y) {
-                return 5 /* LEFT_UP */;
+                return Direction.LEFT_UP;
             }
             if (this.y === dest.y) {
-                return 0 /* LEFT */;
+                return Direction.LEFT;
             }
-            return 4 /* LEFT_DOWN */;
+            return Direction.LEFT_DOWN;
         };
         return Coord;
     })();
@@ -424,16 +426,19 @@ var wwa_data;
             return this.equals(stp);
         };
         Position.prototype.equals = function (pos) {
-            return (this._partsCoord.equals(pos.getPartsCoord()) && this._offsetCoord.equals(pos.getOffsetCoord()));
+            return (this._partsCoord.equals(pos.getPartsCoord()) &&
+                this._offsetCoord.equals(pos.getOffsetCoord()));
         };
         Position.prototype.isInCameraRange = function (camera) {
             var camPos = camera.getPosition()._partsCoord;
             var x = this._partsCoord.x;
             var y = this._partsCoord.y;
-            return (camPos.x <= x && x < camPos.x + WWAConsts.H_PARTS_NUM_IN_WINDOW && camPos.y <= y && y < camPos.y + WWAConsts.V_PARTS_NUM_IN_WINDOW);
+            return (camPos.x <= x && x < camPos.x + WWAConsts.H_PARTS_NUM_IN_WINDOW &&
+                camPos.y <= y && y < camPos.y + WWAConsts.V_PARTS_NUM_IN_WINDOW);
         };
         Position.prototype.hasLocalGate = function () {
-            return (this._wwa.getMapTypeByPosition(this) === WWAConsts.MAP_LOCALGATE || this._wwa.getObjectTypeByPosition(this) === WWAConsts.OBJECT_LOCALGATE);
+            return (this._wwa.getMapTypeByPosition(this) === WWAConsts.MAP_LOCALGATE ||
+                this._wwa.getObjectTypeByPosition(this) === WWAConsts.OBJECT_LOCALGATE);
         };
         Position.prototype.clone = function () {
             return new Position(this._wwa, this._partsCoord.x, this._partsCoord.y, this._offsetCoord.x, this._offsetCoord.y);
@@ -468,7 +473,7 @@ var wwa_data;
     wwa_data.vx = [-1, 1, 0, 0, -1, -1, 1, 1, 0];
     wwa_data.vy = [0, 0, 1, -1, 1, -1, 1, -1, 0];
     wwa_data.dirToPos = [4, 6, 2, 0]; // 仮
-    wwa_data.dirToKey = [37 /* KEY_LEFT */, 39 /* KEY_RIGHT */, 40 /* KEY_DOWN */, 38 /* KEY_UP */];
+    wwa_data.dirToKey = [wwa_input.KeyCode.KEY_LEFT, wwa_input.KeyCode.KEY_RIGHT, wwa_input.KeyCode.KEY_DOWN, wwa_input.KeyCode.KEY_UP];
     (function (YesNoState) {
         YesNoState[YesNoState["YES"] = 0] = "YES";
         YesNoState[YesNoState["NO"] = 1] = "NO";
@@ -739,7 +744,11 @@ var wwa_data;
         WWAConsts.RANDOM_MOVE_ITERATION_NUM = 50;
         WWAConsts.BATTLE_ESTIMATE_MONSTER_TYPE_MAX = 8;
         WWAConsts.SOUND_MAX = 100;
-        WWAConsts.ITEM_BORDER_IMG_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAArklEQVRYR" + "+2Y0QqAIAxFt///aENJHwxxuJUSxzeh3S7HXaNpEkly4FIRzba0GEyHeVTN7jqDWvb7V4Y1NLibZIY0" + "NbiL5G3MZLCe / 1fn3XJgJYjB7mgg6O1VCEKwXo79JeklY62nB62kRs9BEIKkeNIDhISQEBJC4k0BB" + "CF4D7D4cV9shf99ixdB + MrM0y3fa3zV05D45GOqhwPMGPkYlccIOEY2VKUN0UNVXxC7ADj7mDi9aF" + "ZZAAAAAElFTkSuQmCC";
+        WWAConsts.ITEM_BORDER_IMG_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAArklEQVRYR" +
+            "+2Y0QqAIAxFt///aENJHwxxuJUSxzeh3S7HXaNpEkly4FIRzba0GEyHeVTN7jqDWvb7V4Y1NLibZIY0" +
+            "NbiL5G3MZLCe / 1fn3XJgJYjB7mgg6O1VCEKwXo79JeklY62nB62kRs9BEIKkeNIDhISQEBJC4k0BB" +
+            "CF4D7D4cV9shf99ixdB + MrM0y3fa3zV05D45GOqhwPMGPkYlccIOEY2VKUN0UNVXxC7ADj7mDi9aF" +
+            "ZZAAAAAElFTkSuQmCC";
         WWAConsts.LOAD_STAGE_MAX_EXCEPT_AUDIO = 7;
         WWAConsts.WWA_STYLE_TAG_ID = "wwa-additional-style";
         WWAConsts.DEFAULT_FRAME_COLOR_R = 0xff;
@@ -933,9 +942,9 @@ var wwa_parts_player;
             }
             this.updateItemBox();
             this._energyMax = em;
-            this._dir = 2 /* DOWN */;
+            this._dir = Direction.DOWN;
             this._wwa = wwa;
-            this._state = 0 /* CONTROLLABLE */;
+            this._state = PlayerState.CONTROLLABLE;
             this._camera = camera;
             this._isPartsEventExecuted = false;
             this._energyValueElement = wwa_util.$qsh("#disp-energy>.status-value-box");
@@ -960,24 +969,24 @@ var wwa_parts_player;
                 this.controll(this._dir);
                 return;
             }
-            if (this._state === 2 /* CAMERA_MOVING */) {
+            if (this._state === PlayerState.CAMERA_MOVING) {
                 try {
                     this._camera.move(this._dir);
                 }
                 catch (e) {
                 }
                 if (this._isOnCameraStopPosition()) {
-                    this._state = 0 /* CONTROLLABLE */;
+                    this._state = PlayerState.CONTROLLABLE;
                 }
             }
-            else if (this._state === 1 /* MOVING */) {
+            else if (this._state === PlayerState.MOVING) {
                 try {
                     var next = this._position.getNextFramePosition(this._dir, wwa_data.speedList[this._speedIndex], wwa_data.speedList[this._speedIndex]);
                 }
                 catch (e) {
                 }
                 if (next.isJustPosition()) {
-                    this._state = 0 /* CONTROLLABLE */;
+                    this._state = PlayerState.CONTROLLABLE;
                     this._moves++;
                     this._isPartsEventExecuted = false;
                     this._samePosLastExecutedMapID = void 0;
@@ -1003,13 +1012,15 @@ var wwa_parts_player;
                 if (this._isOnCameraMovingPosition()) {
                     ////////////////////// 本番ではデバッグ消すこと！！！//////////////////////
                     if (this._wwa.getMapIdByPosition(nextJustPos) !== 0 || this._wwa.isOldMap() || this._wwa.debug) {
+                        //                    if (this._wwa.getMapIdByPosition(nextJustPos) !== 0 ) {
+                        // カメラが動く場合、カメラが動かせることを確認して、カメラ移動モードに入る
                         try {
                             this._camera.move(this._dir);
-                            this._state = 2 /* CAMERA_MOVING */;
+                            this._state = PlayerState.CAMERA_MOVING;
                         }
                         catch (e) {
                             // 範囲外座標
-                            this._state = 0 /* CONTROLLABLE */;
+                            this._state = PlayerState.CONTROLLABLE;
                         }
                     }
                     return;
@@ -1023,7 +1034,7 @@ var wwa_parts_player;
                 }
                 // カメラが動く場所(画面端)でなくて、移動可能なら移動モードに入って終わり
                 this._position = nextFramePos;
-                this._state = 1 /* MOVING */;
+                this._state = PlayerState.MOVING;
                 if (this._wwa.getMapAttributeByPosition(this._position.getNextJustPosition(moveDir), Consts.ATR_TYPE) !== Consts.MAP_LOCALGATE) {
                     this._wwa.moveObjects(true);
                 }
@@ -1055,11 +1066,13 @@ var wwa_parts_player;
                 return true;
             }
             // 物体衝突判定2: 通り抜け可能通常物体
-            if (this._wwa.getObjectTypeByPosition(pos) === Consts.OBJECT_NORMAL && this._wwa.getObjectAttributeByPosition(pos, Consts.ATR_MODE) === Consts.PASSABLE_OBJECT) {
+            if (this._wwa.getObjectTypeByPosition(pos) === Consts.OBJECT_NORMAL &&
+                this._wwa.getObjectAttributeByPosition(pos, Consts.ATR_MODE) === Consts.PASSABLE_OBJECT) {
                 return true;
             }
             // 物体衝突判定3: 通り抜け可能扉 (鍵アイテム所持時はアイテム処理を行うため通り抜け不可）
-            if (this._wwa.getObjectTypeByPosition(pos) === Consts.OBJECT_DOOR && this._wwa.getObjectAttributeByPosition(pos, Consts.ATR_NUMBER) === Consts.PASSABLE_OBJECT) {
+            if (this._wwa.getObjectTypeByPosition(pos) === Consts.OBJECT_DOOR &&
+                this._wwa.getObjectAttributeByPosition(pos, Consts.ATR_NUMBER) === Consts.PASSABLE_OBJECT) {
                 if (this.hasItem(this._wwa.getObjectAttributeByPosition(pos, Consts.ATR_ITEM))) {
                     return false;
                 }
@@ -1070,22 +1083,34 @@ var wwa_parts_player;
         };
         // プレイヤーが動いているかどうか。カメラが動いている場合も動いているとする。
         Player.prototype.isMoving = function () {
-            return this._state == 1 /* MOVING */ || this._state == 2 /* CAMERA_MOVING */;
+            return this._state == PlayerState.MOVING || this._state == PlayerState.CAMERA_MOVING;
         };
         Player.prototype._isOnCameraMovingPosition = function () {
             var camPos = this._camera.getPosition().getPartsCoord();
             var pPos = this.getPosition().getPartsCoord();
-            return ((pPos.x - camPos.x === Consts.H_PARTS_NUM_IN_WINDOW - 1 && this._dir === 1 /* RIGHT */) || (pPos.x === camPos.x && this._dir === 0 /* LEFT */) || (pPos.y - camPos.y === Consts.V_PARTS_NUM_IN_WINDOW - 1 && this._dir === 2 /* DOWN */) || (pPos.y === camPos.y && this._dir === 3 /* UP */));
+            return ((pPos.x - camPos.x === Consts.H_PARTS_NUM_IN_WINDOW - 1 && this._dir === Direction.RIGHT) ||
+                (pPos.x === camPos.x && this._dir === Direction.LEFT) ||
+                (pPos.y - camPos.y === Consts.V_PARTS_NUM_IN_WINDOW - 1 && this._dir === Direction.DOWN) ||
+                (pPos.y === camPos.y && this._dir === Direction.UP));
         };
         Player.prototype._isOnCameraStopPosition = function () {
             var camPos = this._camera.getPosition().getPartsCoord();
             var pPos = this.getPosition().getPartsCoord();
-            return ((pPos.x - camPos.x === Consts.H_PARTS_NUM_IN_WINDOW - 1 && this._dir === 0 /* LEFT */) || (pPos.x === camPos.x && this._dir === 1 /* RIGHT */) || (pPos.y - camPos.y === Consts.V_PARTS_NUM_IN_WINDOW - 1 && this._dir === 3 /* UP */) || (pPos.y === camPos.y && this._dir === 2 /* DOWN */));
+            return ((pPos.x - camPos.x === Consts.H_PARTS_NUM_IN_WINDOW - 1 && this._dir === Direction.LEFT) ||
+                (pPos.x === camPos.x && this._dir === Direction.RIGHT) ||
+                (pPos.y - camPos.y === Consts.V_PARTS_NUM_IN_WINDOW - 1 && this._dir === Direction.UP) ||
+                (pPos.y === camPos.y && this._dir === Direction.DOWN));
         };
         Player.prototype.isControllable = function () {
             var isAfterMoveMacro = this._afterMoveMacroFlag;
             this._afterMoveMacroFlag = false;
-            return (this._state === 0 /* CONTROLLABLE */ && !this._partsAppeared && ((this._wwa.getMapTypeByPosition(this._position) !== Consts.MAP_LOCALGATE && this._wwa.getMapTypeByPosition(this._position) !== Consts.MAP_URLGATE) || !this._wwa.isPrevFrameEventExecuted()) && this._moveMacroWaitingRemainMoves === 0 && this._moveObjectAutoExecTimer === 0 && !isAfterMoveMacro && this._wwa.canInput());
+            return (this._state === PlayerState.CONTROLLABLE &&
+                !this._partsAppeared &&
+                ((this._wwa.getMapTypeByPosition(this._position) !== Consts.MAP_LOCALGATE &&
+                    this._wwa.getMapTypeByPosition(this._position) !== Consts.MAP_URLGATE) ||
+                    !this._wwa.isPrevFrameEventExecuted()) &&
+                this._moveMacroWaitingRemainMoves === 0 && this._moveObjectAutoExecTimer === 0 &&
+                !isAfterMoveMacro && this._wwa.canInput());
         };
         Player.prototype.getCopyOfItemBox = function () {
             return this._itemBox.slice();
@@ -1097,17 +1122,17 @@ var wwa_parts_player;
             return this._energyMax;
         };
         Player.prototype.isJumped = function () {
-            return this._state === 4 /* LOCALGATE_JUMPED */;
+            return this._state === PlayerState.LOCALGATE_JUMPED;
         };
         Player.prototype.setMessageWaiting = function () {
-            this._state = 3 /* MESSAGE_WAITING */;
+            this._state = PlayerState.MESSAGE_WAITING;
         };
         Player.prototype.isWaitingMessage = function () {
-            return this._state === 3 /* MESSAGE_WAITING */;
+            return this._state === PlayerState.MESSAGE_WAITING;
         };
         Player.prototype.clearMessageWaiting = function () {
-            if (this._state === 3 /* MESSAGE_WAITING */) {
-                this._state = 0 /* CONTROLLABLE */;
+            if (this._state === PlayerState.MESSAGE_WAITING) {
+                this._state = PlayerState.CONTROLLABLE;
                 this._isPartsEventExecuted = true;
                 if (this._isPreparedForLookingAround) {
                     this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
@@ -1115,14 +1140,14 @@ var wwa_parts_player;
             }
         };
         Player.prototype.setEstimateWindowWating = function () {
-            this._state = 6 /* ESTIMATE_WINDOW_WAITING */;
+            this._state = PlayerState.ESTIMATE_WINDOW_WAITING;
         };
         Player.prototype.isWatingEstimateWindow = function () {
-            return this._state === 6 /* ESTIMATE_WINDOW_WAITING */;
+            return this._state === PlayerState.ESTIMATE_WINDOW_WAITING;
         };
         Player.prototype.clearEstimateWindowWaiting = function () {
-            if (this._state === 6 /* ESTIMATE_WINDOW_WAITING */) {
-                this._state = 0 /* CONTROLLABLE */;
+            if (this._state === PlayerState.ESTIMATE_WINDOW_WAITING) {
+                this._state = PlayerState.CONTROLLABLE;
             }
         };
         Player.prototype.isPartsEventExecuted = function () {
@@ -1132,10 +1157,10 @@ var wwa_parts_player;
             this._isPartsEventExecuted = false;
         };
         Player.prototype.getLastExecPartsIDOnSamePosition = function (type) {
-            return type === 1 /* MAP */ ? this._samePosLastExecutedMapID : this._samePosLastExecutedObjID;
+            return type === wwa_data.PartsType.MAP ? this._samePosLastExecutedMapID : this._samePosLastExecutedObjID;
         };
         Player.prototype.setLastExecInfoOnSamePosition = function (type, id) {
-            if (type === 1 /* MAP */) {
+            if (type === wwa_data.PartsType.MAP) {
                 this._samePosLastExecutedMapID = id;
             }
             else {
@@ -1143,11 +1168,11 @@ var wwa_parts_player;
             }
         };
         Player.prototype.processAfterJump = function () {
-            if (this._state !== 4 /* LOCALGATE_JUMPED */) {
+            if (this._state !== PlayerState.LOCALGATE_JUMPED) {
                 return;
             }
             if (--this._jumpWaitFramesRemain === 0) {
-                this._state = 0 /* CONTROLLABLE */;
+                this._state = PlayerState.CONTROLLABLE;
             }
         };
         Player.prototype.jumpTo = function (pos) {
@@ -1160,28 +1185,28 @@ var wwa_parts_player;
             if (!pos.isInCameraRange(this._camera)) {
                 this._camera.reset(pos);
             }
-            this._state = 4 /* LOCALGATE_JUMPED */;
+            this._state = PlayerState.LOCALGATE_JUMPED;
             this._jumpWaitFramesRemain = Consts.LOCALGATE_PLAYER_WAIT_FRAME;
             this._samePosLastExecutedMapID = void 0;
             this._samePosLastExecutedObjID = void 0;
             // ジャンプ先がジャンプゲートの場合、下向きに設定
             if (pos.hasLocalGate()) {
-                this._dir = 2 /* DOWN */;
+                this._dir = Direction.DOWN;
             }
-            else if (pos.getPartsCoord().y <= this._wwa.getMapWidth() - 2 && pos.getNextJustPosition(2 /* DOWN */).hasLocalGate()) {
-                this._dir = 3 /* UP */;
+            else if (pos.getPartsCoord().y <= this._wwa.getMapWidth() - 2 && pos.getNextJustPosition(Direction.DOWN).hasLocalGate()) {
+                this._dir = Direction.UP;
             }
-            else if (pos.getPartsCoord().y >= 1 && pos.getNextJustPosition(3 /* UP */).hasLocalGate()) {
-                this._dir = 2 /* DOWN */;
+            else if (pos.getPartsCoord().y >= 1 && pos.getNextJustPosition(Direction.UP).hasLocalGate()) {
+                this._dir = Direction.DOWN;
             }
-            else if (pos.getPartsCoord().x <= this._wwa.getMapWidth() - 2 && pos.getNextJustPosition(1 /* RIGHT */).hasLocalGate()) {
-                this._dir = 0 /* LEFT */;
+            else if (pos.getPartsCoord().x <= this._wwa.getMapWidth() - 2 && pos.getNextJustPosition(Direction.RIGHT).hasLocalGate()) {
+                this._dir = Direction.LEFT;
             }
-            else if (pos.getPartsCoord().x >= 1 && pos.getNextJustPosition(0 /* LEFT */).hasLocalGate()) {
-                this._dir = 1 /* RIGHT */;
+            else if (pos.getPartsCoord().x >= 1 && pos.getNextJustPosition(Direction.LEFT).hasLocalGate()) {
+                this._dir = Direction.RIGHT;
             }
             else {
-                this._dir = 2 /* DOWN */;
+                this._dir = Direction.DOWN;
             }
             if (!this._camera.getPosition().equals(prevCameraPos)) {
                 this._isPreparedForLookingAround = true;
@@ -1194,11 +1219,11 @@ var wwa_parts_player;
             this._position = pos;
             this._camera.reset(pos);
             this._camera.resetPreviousPosition();
-            this._state = 4 /* LOCALGATE_JUMPED */;
+            this._state = PlayerState.LOCALGATE_JUMPED;
             this._jumpWaitFramesRemain = Consts.LOCALGATE_PLAYER_WAIT_FRAME;
             this._samePosLastExecutedMapID = void 0;
             this._samePosLastExecutedObjID = void 0;
-            this._dir = 2 /* DOWN */; // 向きは仮
+            this._dir = Direction.DOWN; // 向きは仮
             this._isPreparedForLookingAround = true;
             this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         };
@@ -1317,7 +1342,8 @@ var wwa_parts_player;
             else if (isOverwrite === false) {
                 insertPos = itemPos;
                 oldObjID = this._itemBox[insertPos - 1];
-                if (this._wwa.getObjectAttributeById(oldObjID, Consts.ATR_NUMBER) !== this._wwa.getObjectAttributeById(objID, Consts.ATR_NUMBER)) {
+                if (this._wwa.getObjectAttributeById(oldObjID, Consts.ATR_NUMBER) !==
+                    this._wwa.getObjectAttributeById(objID, Consts.ATR_NUMBER)) {
                     oldInsertPos = this._getBlankItemPos();
                     if (oldInsertPos !== Consts.ITEMBOX_IS_FULL) {
                         //                        this._itemBox[oldInsertPos - 1] = oldObjID;
@@ -1369,11 +1395,13 @@ var wwa_parts_player;
             var itemType = this._wwa.getObjectAttributeById(id, Consts.ATR_MODE);
             this.removeItemByItemPosition(pos);
             this._itemBox[pos - 1] = id;
-            if (id !== 0 && itemType !== 0 /* NORMAL */) {
-                var mes = this._wwa.getSystemMessageById(0 /* CLICKABLE_ITEM */);
+            if (id !== 0 && itemType !== wwa_data.ItemMode.NORMAL) {
+                var mes = this._wwa.getSystemMessageById(wwa_data.SystemMessage2.CLICKABLE_ITEM);
                 if (!this._isClickableItemGot) {
                     if (mes !== "BLANK") {
-                        this._wwa.setMessageQueue(mes === "" ? "このアイテムは右のボックスをクリックすることで使用できます。\n" + "使用できるアイテムは色枠で囲まれます。" : mes, false, true);
+                        this._wwa.setMessageQueue(mes === "" ?
+                            "このアイテムは右のボックスをクリックすることで使用できます。\n" +
+                                "使用できるアイテムは色枠で囲まれます。" : mes, false, true);
                     }
                     this._isClickableItemGot = true;
                 }
@@ -1424,7 +1452,7 @@ var wwa_parts_player;
             if (partsID === 0) {
                 return false;
             }
-            if (this._wwa.getObjectAttributeById(partsID, Consts.ATR_MODE) === 0 /* NORMAL */) {
+            if (this._wwa.getObjectAttributeById(partsID, Consts.ATR_MODE) === wwa_data.ItemMode.NORMAL) {
                 return false;
             }
             return true;
@@ -1433,7 +1461,7 @@ var wwa_parts_player;
             var itemID;
             var messageID;
             itemID = this._itemBox[this._readyToUseItemPos - 1];
-            if (this._wwa.getObjectAttributeById(itemID, Consts.ATR_MODE) !== 2 /* NOT_DISAPPEAR */) {
+            if (this._wwa.getObjectAttributeById(itemID, Consts.ATR_MODE) !== wwa_data.ItemMode.NOT_DISAPPEAR) {
                 this.removeItemByItemPosition(this._readyToUseItemPos);
             }
             var bg = (wwa_util.$id("item" + (this._readyToUseItemPos - 1)));
@@ -1454,7 +1482,7 @@ var wwa_parts_player;
             if (this._itemBox[itemPos - 1] === 0) {
                 return;
             }
-            if (this._wwa.getObjectAttributeById(this._itemBox[itemPos - 1], Consts.ATR_MODE) !== 0 /* NORMAL */) {
+            if (this._wwa.getObjectAttributeById(this._itemBox[itemPos - 1], Consts.ATR_MODE) !== wwa_data.ItemMode.NORMAL) {
                 border = wwa_util.$qsh("#item" + (itemPos - 1) + ">.item-click-border");
                 border.removeEventListener("click", this._itemUsingEvent[itemPos - 1]);
                 border.style.display = "none";
@@ -1470,7 +1498,7 @@ var wwa_parts_player;
             }
             for (var i = 0; i < Consts.ITEMBOX_SIZE; i++) {
                 if (this._itemBox[i] === partsID) {
-                    if (this._wwa.getObjectAttributeById(this._itemBox[i], Consts.ATR_MODE) !== 0 /* NORMAL */) {
+                    if (this._wwa.getObjectAttributeById(this._itemBox[i], Consts.ATR_MODE) !== wwa_data.ItemMode.NORMAL) {
                         border = wwa_util.$qsh("#item" + i + ">.item-click-border");
                         border.removeEventListener("click", this._itemUsingEvent[i]);
                         border.style.display = "none";
@@ -1515,10 +1543,10 @@ var wwa_parts_player;
             this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
             this._battleTurnNum = 0;
             this._enemy = enemy;
-            this._state = 5 /* BATTLE */;
+            this._state = PlayerState.BATTLE;
         };
         Player.prototype.isFighting = function () {
-            return this._state === 5 /* BATTLE */;
+            return this._state === PlayerState.BATTLE;
         };
         Player.prototype.isTurn = function () {
             return this._isPlayerTurn;
@@ -1542,19 +1570,20 @@ var wwa_parts_player;
             this._battleTurnNum++;
             if (this._speedIndex === Consts.MAX_SPEED_INDEX || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
                 if (this._battleTurnNum === 1) {
-                    this._wwa.playSound(3 /* ATTACK */);
+                    this._wwa.playSound(wwa_data.SystemSound.ATTACK);
                 }
                 this._battleFrameCounter = 1;
             }
             else {
                 this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
-                this._wwa.playSound(3 /* ATTACK */);
+                this._wwa.playSound(wwa_data.SystemSound.ATTACK);
             }
             var playerStatus = this.getStatus();
             var enemyStatus = this._enemy.status;
             if (this._isPlayerTurn) {
                 // プレイヤーターン
-                if (playerStatus.strength > enemyStatus.defence || playerStatus.defence < enemyStatus.strength) {
+                if (playerStatus.strength > enemyStatus.defence ||
+                    playerStatus.defence < enemyStatus.strength) {
                     // モンスターがこのターンで死なない場合
                     if (enemyStatus.energy > playerStatus.strength - enemyStatus.defence) {
                         if (playerStatus.strength > enemyStatus.defence) {
@@ -1567,15 +1596,15 @@ var wwa_parts_player;
                         this.earnGold(enemyStatus.gold);
                         this._wwa.setStatusChangedEffect(new wwa_data.Status(0, 0, 0, enemyStatus.gold));
                         if (this._enemy.item !== 0) {
-                            this._wwa.setPartsOnPosition(0 /* OBJECT */, this._enemy.item, this._enemy.position);
+                            this._wwa.setPartsOnPosition(wwa_data.PartsType.OBJECT, this._enemy.item, this._enemy.position);
                         }
                         else {
                             // 本当はif文でわける必要ないけど、可読性のため設置。
-                            this._wwa.setPartsOnPosition(0 /* OBJECT */, 0, this._enemy.position);
+                            this._wwa.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, this._enemy.position);
                         }
                         // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
-                        this._wwa.appearParts(this._enemy.position, 1 /* OBJECT */, this._enemy.partsID);
-                        this._state = 0 /* CONTROLLABLE */; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
+                        this._wwa.appearParts(this._enemy.position, wwa_data.AppearanceTriggerType.OBJECT, this._enemy.partsID);
+                        this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
                         this._wwa.setMessageQueue(this._enemy.message, false, false);
                         this._enemy.battleEndProcess();
                         this._battleTurnNum = 0;
@@ -1599,7 +1628,7 @@ var wwa_parts_player;
                     else {
                         this.setEnergy(0);
                         this._enemy.battleEndProcess();
-                        this._state = 0 /* CONTROLLABLE */;
+                        this._state = PlayerState.CONTROLLABLE;
                         this._battleTurnNum = 0;
                         this._enemy = null;
                         this._wwa.gameover();
@@ -1617,7 +1646,7 @@ var wwa_parts_player;
             itemID = this._itemBox[itemPos - 1];
             messageID = this._wwa.getObjectAttributeById(itemID, Consts.ATR_STRING);
             //            this._wwa.setMessageQueue(this._wwa.getMessageById(messageID), false, itemID, wwa_data.PartsType.OBJECT, this._position.getPartsCoord());
-            this._wwa.appearParts(this._position.getPartsCoord(), 1 /* OBJECT */, itemID);
+            this._wwa.appearParts(this._position.getPartsCoord(), wwa_data.AppearanceTriggerType.OBJECT, itemID);
             this._readyToUseItemPos = itemPos;
             this._isReadyToUseItem = true;
         };
@@ -1858,8 +1887,12 @@ var wwa_util;
     };
     wwa_util.$localPos = function (mouseX, mouseY) {
         var cx, cy;
-        var sx = window.pageXOffset || document.body.scrollLeft || document.documentElement.scrollLeft;
-        var sy = window.pageYOffset || document.body.scrollTop || document.documentElement.scrollTop;
+        var sx = window.pageXOffset ||
+            document.body.scrollLeft ||
+            document.documentElement.scrollLeft;
+        var sy = window.pageYOffset ||
+            document.body.scrollTop ||
+            document.documentElement.scrollTop;
         cx = mouseX - wwa_util.$id("wwa-wrapper").offsetLeft + sx;
         cy = mouseY - wwa_util.$id("wwa-wrapper").offsetTop + sy;
         return new wwa_data.Coord(cx, cy);
@@ -1909,70 +1942,70 @@ var wwa_message;
         }
         Macro.prototype.execute = function () {
             try {
-                if (this.macroType === 1 /* IMGPLAYER */) {
+                if (this.macroType === wwa_data.MacroType.IMGPLAYER) {
                     this._executeImgPlayerMacro();
                 }
-                else if (this.macroType === 2 /* IMGYESNO */) {
+                else if (this.macroType === wwa_data.MacroType.IMGYESNO) {
                     this._executeImgYesNoMacro();
                 }
-                else if (this.macroType === 3 /* HPMAX */) {
+                else if (this.macroType === wwa_data.MacroType.HPMAX) {
                     this._executeHPMaxMacro();
                 }
-                else if (this.macroType === 4 /* SAVE */) {
+                else if (this.macroType === wwa_data.MacroType.SAVE) {
                     this._executeSaveMacro();
                 }
-                else if (this.macroType === 5 /* ITEM */) {
+                else if (this.macroType === wwa_data.MacroType.ITEM) {
                     this._executeItemMacro();
                 }
-                else if (this.macroType === 6 /* DEFAULT */) {
+                else if (this.macroType === wwa_data.MacroType.DEFAULT) {
                     this._executeDefaultMacro();
                 }
-                else if (this.macroType === 7 /* OLDMAP */) {
+                else if (this.macroType === wwa_data.MacroType.OLDMAP) {
                     this._executeOldMapMacro();
                 }
-                else if (this.macroType === 8 /* PARTS */) {
+                else if (this.macroType === wwa_data.MacroType.PARTS) {
                     this._executePartsMacro();
                 }
-                else if (this.macroType === 9 /* MOVE */) {
+                else if (this.macroType === wwa_data.MacroType.MOVE) {
                     this._executeMoveMacro();
                 }
-                else if (this.macroType === 10 /* MAP */) {
+                else if (this.macroType === wwa_data.MacroType.MAP) {
                     this._executeMapMacro();
                 }
-                else if (this.macroType === 11 /* DIRMAP */) {
+                else if (this.macroType === wwa_data.MacroType.DIRMAP) {
                     this._executeDirMapMacro();
                 }
-                else if (this.macroType === 12 /* IMGFRAME */) {
+                else if (this.macroType === wwa_data.MacroType.IMGFRAME) {
                     this._executeImgFrameMacro();
                 }
-                else if (this.macroType === 13 /* IMGBOM */) {
+                else if (this.macroType === wwa_data.MacroType.IMGBOM) {
                     this._executeImgBomMacro();
                 }
-                else if (this.macroType === 14 /* DELPLAYER */) {
+                else if (this.macroType === wwa_data.MacroType.DELPLAYER) {
                     this._executeDelPlayerMacro();
                 }
-                else if (this.macroType === 15 /* FACE */) {
+                else if (this.macroType === wwa_data.MacroType.FACE) {
                     this._executeFaceMacro();
                 }
-                else if (this.macroType === 16 /* EFFECT */) {
+                else if (this.macroType === wwa_data.MacroType.EFFECT) {
                     this._executeEffectMacro();
                 }
-                else if (this.macroType === 17 /* GAMEOVER */) {
+                else if (this.macroType === wwa_data.MacroType.GAMEOVER) {
                     this._executeGameOverMacro();
                 }
-                else if (this.macroType === 18 /* IMGCLICK */) {
+                else if (this.macroType === wwa_data.MacroType.IMGCLICK) {
                     this._executeImgClickMacro();
                 }
-                else if (this.macroType === 19 /* STATUS */) {
+                else if (this.macroType === wwa_data.MacroType.STATUS) {
                     this._executeStatusMacro();
                 }
-                else if (this.macroType === 21 /* COLOR */) {
+                else if (this.macroType === wwa_data.MacroType.COLOR) {
                     this._executeColorMacro();
                 }
-                else if (this.macroType === 22 /* WAIT */) {
+                else if (this.macroType === wwa_data.MacroType.WAIT) {
                     this._executeWaitMacro();
                 }
-                else if (this.macroType === 23 /* SOUND */) {
+                else if (this.macroType === wwa_data.MacroType.SOUND) {
                     this._executeSoundMacro();
                 }
             }
@@ -2038,9 +2071,9 @@ var wwa_message;
             this._concatEmptyArgs(4);
             var srcID = this._parseInt(0);
             var destID = this._parseInt(1);
-            var partsType = this._parseInt(2, 0 /* OBJECT */);
+            var partsType = this._parseInt(2, wwa_data.PartsType.OBJECT);
             var onlyThisSight = this._parseInt(3);
-            if (partsType !== 0 /* OBJECT */ && partsType !== 1 /* MAP */) {
+            if (partsType !== wwa_data.PartsType.OBJECT && partsType !== wwa_data.PartsType.MAP) {
                 throw new Error("パーツ種別が不明です");
             }
             if (onlyThisSight !== 0 && onlyThisSight !== 1) {
@@ -2050,7 +2083,7 @@ var wwa_message;
             if (srcID < 0 || destID < 0) {
                 throw new Error("パーツ番号が不正です");
             }
-            if (partsType === 0 /* OBJECT */) {
+            if (partsType === wwa_data.PartsType.OBJECT) {
                 if (srcID >= this._wwa.getObjectPartsNum() || destID >= this._wwa.getObjectPartsNum()) {
                     throw new Error("パーツ番号が不正です");
                 }
@@ -2072,11 +2105,11 @@ var wwa_message;
             var partsID = this._parseInt(0);
             var xstr = this.macroArgs[1];
             var ystr = this.macroArgs[2];
-            var partsType = this._parseInt(3, 0 /* OBJECT */);
+            var partsType = this._parseInt(3, wwa_data.PartsType.OBJECT);
             if (partsID < 0) {
                 throw new Error("パーツ番号が不正です");
             }
-            if (partsType === 0 /* OBJECT */) {
+            if (partsType === wwa_data.PartsType.OBJECT) {
                 if (partsID >= this._wwa.getObjectPartsNum()) {
                     throw new Error("パーツ番号が不正です");
                 }
@@ -2092,14 +2125,14 @@ var wwa_message;
             this._concatEmptyArgs(3);
             var partsID = this._parseInt(0);
             var dist = this._parseInt(1);
-            var partsType = this._parseInt(2, 0 /* OBJECT */);
+            var partsType = this._parseInt(2, wwa_data.PartsType.OBJECT);
             if (isNaN(partsID) || isNaN(dist) || isNaN(partsType)) {
                 throw new Error("引数が整数ではありません");
             }
             if (partsID < 0) {
                 throw new Error("パーツ番号が不正です");
             }
-            if (partsType === 0 /* OBJECT */) {
+            if (partsType === wwa_data.PartsType.OBJECT) {
                 if (partsID >= this._wwa.getObjectPartsNum()) {
                     throw new Error("パーツ番号が不正です");
                 }
@@ -2121,33 +2154,33 @@ var wwa_message;
             if (posX < 0 || posY < 0) {
                 throw new Error("座標は正でなければなりません。");
             }
-            if (type === 0 /* ENERGY */) {
+            if (type === wwa_data.MacroImgFrameIndex.ENERGY) {
                 var iconNode_energy = wwa_util.$qsh("#disp-energy>.status-icon");
                 iconNode_energy.style.backgroundPosition = "-" + x + "px -" + y + "px";
             }
-            else if (type === 1 /* STRENGTH */) {
+            else if (type === wwa_data.MacroImgFrameIndex.STRENGTH) {
                 var iconNode_strength = wwa_util.$qsh("#disp-strength>.status-icon");
                 iconNode_strength.style.backgroundPosition = "-" + x + "px -" + y + "px";
             }
-            else if (type === 2 /* DEFENCE */) {
+            else if (type === wwa_data.MacroImgFrameIndex.DEFENCE) {
                 var iconNode_defence = wwa_util.$qsh("#disp-defence>.status-icon");
                 iconNode_defence.style.backgroundPosition = "-" + x + "px -" + y + "px";
             }
-            else if (type === 3 /* GOLD */) {
+            else if (type === wwa_data.MacroImgFrameIndex.GOLD) {
                 var iconNode_gold = wwa_util.$qsh("#disp-gold>.status-icon");
                 iconNode_gold.style.backgroundPosition = "-" + x + "px -" + y + "px";
             }
-            else if (type === 4 /* WIDE_CELL_ROW */) {
+            else if (type === wwa_data.MacroImgFrameIndex.WIDE_CELL_ROW) {
                 Array.prototype.forEach.call(wwa_util.$qsAll("div.wide-cell-row"), function (node) {
                     node.style.backgroundPosition = "-" + x + "px -" + y + "px";
                 });
             }
-            else if (type === 5 /* ITEM_BG */) {
+            else if (type === wwa_data.MacroImgFrameIndex.ITEM_BG) {
                 Array.prototype.forEach.call(wwa_util.$qsAll("div.item-cell"), function (node) {
                     node.style.backgroundPosition = "-" + x + "px -" + y + "px";
                 });
             }
-            else if (type === 6 /* MAIN_FRAME */) {
+            else if (type === wwa_data.MacroImgFrameIndex.MAIN_FRAME) {
                 this._wwa.setFrameCoord(new wwa_data.Coord(posX, posY));
             }
             else {
@@ -2177,7 +2210,9 @@ var wwa_message;
             var srcWidth = this._parseInt(4);
             var srcHeight = this._parseInt(5);
             var face;
-            if (destPosX < 0 || destPosY < 0 || srcPosX < 0 || srcPosY < 0 || srcWidth < 0 || srcHeight < 0) {
+            if (destPosX < 0 || destPosY < 0 ||
+                srcPosX < 0 || srcPosY < 0 ||
+                srcWidth < 0 || srcHeight < 0) {
                 throw new Error("各引数は0以上の整数でなければなりません。");
             }
             face = new wwa_data.Face(new wwa_data.Coord(destPosX, destPosY), new wwa_data.Coord(srcPosX, srcPosY), new wwa_data.Coord(srcWidth, srcHeight));
@@ -2249,12 +2284,15 @@ var wwa_message;
             if (type < 0 || type > 5) {
                 throw new Error("種別は0から5までです");
             }
-            if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+            if (r < 0 || r > 255 ||
+                g < 0 || g > 255 ||
+                b < 0 || b > 255) {
                 throw new Error("色が範囲外です");
             }
             this._wwa.changeStyleRule(type, r, g, b);
         };
         Macro.prototype._executeWaitMacro = function () {
+            // 動作が不安定なので、実装しないことになりました。
             throw new Error("Not implemented!");
             /*
             if (this.macroArgs.length < 1) {
@@ -2287,11 +2325,9 @@ var wwa_message;
         var macroIndex = wwa_data.macrotable["$" + macroType.toLowerCase()];
         if (macroIndex === void 0) {
             // undefined macro
-            return new Macro(wwa, partsID, partsType, position, 0 /* UNDEFINED */, matchInfo[2].split(","));
+            return new Macro(wwa, partsID, partsType, position, wwa_data.MacroType.UNDEFINED, matchInfo[2].split(","));
         }
-        return new Macro(wwa, partsID, partsType, position, macroIndex, matchInfo[2].split(",").map(function (e) {
-            return e.trim();
-        }));
+        return new Macro(wwa, partsID, partsType, position, macroIndex, matchInfo[2].split(",").map(function (e) { return e.trim(); }));
     }
     wwa_message.parseMacro = parseMacro;
     var TextWindow = (function () {
@@ -2375,7 +2411,8 @@ var wwa_message;
         }
         MosterWindow.prototype.update = function (monster) {
             if (monster !== void 0) {
-                this._monsterBox.style.backgroundPosition = "-" + monster.imgCoord.x + "px -" + monster.imgCoord.y + "px";
+                this._monsterBox.style.backgroundPosition =
+                    "-" + monster.imgCoord.x + "px -" + monster.imgCoord.y + "px";
                 this._energyBox.textContent = "生命力 " + monster.status.energy;
                 this._strengthBox.textContent = "攻撃力 " + monster.status.strength;
                 this._defenceBox.textContent = "防御力 " + monster.status.defence;
@@ -2412,8 +2449,8 @@ var wwa_message;
         Positioning[Positioning["SCORE"] = 3] = "SCORE";
     })(wwa_message.Positioning || (wwa_message.Positioning = {}));
     var Positioning = wwa_message.Positioning;
-    var MessageWindow = (function () {
-        function MessageWindow(wwa, x, y, width, height, message, cgFileName, isVisible, isYesno, parentElement) {
+    var MessageWindow /* implements TextWindow(予定)*/ = (function () {
+        function MessageWindow /* implements TextWindow(予定)*/(wwa, x, y, width, height, message, cgFileName, isVisible, isYesno, parentElement) {
             var thisA = this;
             var escapedFilename = cgFileName.replace("(", "\\(").replace(")", "\\)");
             this._wwa = wwa;
@@ -2463,10 +2500,11 @@ var wwa_message;
             this._divYesElement.style.cssFloat = "left";
             this._divYesElement.style.width = "40px";
             this._divYesElement.style.height = "40px";
-            this._divYesElement.style.background = "url(" + escapedFilename + ")";
+            this._divYesElement.style.background =
+                "url(" + escapedFilename + ")";
             this._divYesElement.onclick = function () {
                 if (!thisA._isInputDisable) {
-                    wwa.setYesNoInput(0 /* YES */);
+                    wwa.setYesNoInput(wwa_data.YesNoState.YES);
                     thisA.update();
                 }
             };
@@ -2477,10 +2515,11 @@ var wwa_message;
             this._divNoElement.style.cssFloat = "left";
             this._divNoElement.style.width = "40px";
             this._divNoElement.style.height = "40px";
-            this._divNoElement.style.background = "url(" + escapedFilename + ")";
+            this._divNoElement.style.background =
+                "url(" + escapedFilename + ")";
             this._divNoElement.onclick = function () {
                 if (!thisA._isInputDisable) {
-                    wwa.setYesNoInput(1 /* NO */);
+                    wwa.setYesNoInput(wwa_data.YesNoState.NO);
                     thisA.update();
                 }
             };
@@ -2490,100 +2529,112 @@ var wwa_message;
             thisA._isInputDisable = false;
             this.update();
         }
-        MessageWindow.prototype.setPosition = function (x, y, width, height) {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.setPosition = function (x, y, width, height) {
             this._x = x;
             this._y = y;
             this._width = width;
             this._height = height;
             this.update();
         };
-        MessageWindow.prototype.setPositionByPlayerPosition = function (existsFaces, existsScoreWindow, displayCenter, playerPos, cameraPos) {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.setPositionByPlayerPosition = function (existsFaces, existsScoreWindow, displayCenter, playerPos, cameraPos) {
             var playerInScreenY = playerPos.getPartsCoord().substract(cameraPos.getPartsCoord()).y;
             var pos;
             if (existsFaces) {
-                pos = 2 /* BOTTOM */;
+                pos = wwa_message.Positioning.BOTTOM;
             }
             else if (existsScoreWindow) {
-                pos = 3 /* SCORE */;
+                pos = wwa_message.Positioning.SCORE;
             }
             else if (displayCenter) {
-                pos = 1 /* CENTER */;
+                pos = wwa_message.Positioning.CENTER;
             }
             else if (playerInScreenY >= Math.ceil(wwa_data.WWAConsts.V_PARTS_NUM_IN_WINDOW / 2)) {
-                pos = 0 /* TOP */;
+                pos = wwa_message.Positioning.TOP;
             }
             else {
-                pos = 2 /* BOTTOM */;
+                pos = wwa_message.Positioning.BOTTOM;
             }
             this.setPositionEasy(pos);
         };
-        MessageWindow.prototype.setPositionEasy = function (pos) {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.setPositionEasy = function (pos) {
             var centerPos = Math.floor(this._element.clientHeight / 2);
-            if (pos === 1 /* CENTER */) {
+            if (pos === Positioning.CENTER) {
                 this._y = wwa_data.WWAConsts.MAP_WINDOW_HEIGHT / 2 - centerPos;
                 this.update();
                 return;
             }
-            if (pos === 0 /* TOP */) {
+            if (pos === Positioning.TOP) {
                 this._y = Math.max(20, wwa_data.WWAConsts.MAP_WINDOW_HEIGHT / 4 - centerPos) + 10;
                 this.update();
                 return;
             }
-            if (pos === 2 /* BOTTOM */) {
+            if (pos === Positioning.BOTTOM) {
                 this._y = Math.min(wwa_data.WWAConsts.MAP_WINDOW_HEIGHT - 20 - this._element.clientHeight, wwa_data.WWAConsts.MAP_WINDOW_HEIGHT * 3 / 4 - centerPos);
                 this.update();
                 return;
             }
-            if (pos === 3 /* SCORE */) {
+            if (pos === Positioning.SCORE) {
                 this._y = 80;
                 this.update();
                 return;
             }
         };
-        MessageWindow.prototype.setMessage = function (message) {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.setMessage = function (message) {
             this._message = message;
             this.update();
         };
-        MessageWindow.prototype.setYesNoChoice = function (isYesNo) {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.setYesNoChoice = function (isYesNo) {
             this._isInputDisable = false;
             this._isYesno = isYesNo;
             this.update();
             return this._isYesno;
         };
-        MessageWindow.prototype.isYesNoChoice = function () {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.isYesNoChoice = function () {
             return this._isYesno;
         };
-        MessageWindow.prototype.setInputDisable = function () {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.setInputDisable = function () {
             this._isInputDisable = true;
         };
-        MessageWindow.prototype.isInputDisable = function () {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.isInputDisable = function () {
             return this._isInputDisable;
         };
-        MessageWindow.prototype.show = function () {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.show = function () {
             this._isVisible = true;
             this.update();
         };
-        MessageWindow.prototype.hide = function () {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.hide = function () {
             this._isVisible = false;
             this.update();
         };
-        MessageWindow.prototype.isVisible = function () {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.isVisible = function () {
             return this._isVisible;
         };
-        MessageWindow.prototype.update = function () {
+        MessageWindow /* implements TextWindow(予定)*/.prototype.update = function () {
             var base = this._wwa.getYesNoImgCoord();
             if (this._isYesno) {
-                if (this._wwa.getYesNoState() === 0 /* YES */) {
-                    this._divYesElement.style.backgroundPosition = "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_YESP_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " + "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
-                    this._divNoElement.style.backgroundPosition = "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_NO_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " + "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
+                if (this._wwa.getYesNoState() === wwa_data.YesNoState.YES) {
+                    this._divYesElement.style.backgroundPosition =
+                        "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_YESP_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " +
+                            "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
+                    this._divNoElement.style.backgroundPosition =
+                        "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_NO_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " +
+                            "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
                 }
-                else if (this._wwa.getYesNoState() === 1 /* NO */) {
-                    this._divYesElement.style.backgroundPosition = "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_YES_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " + "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
-                    this._divNoElement.style.backgroundPosition = "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_NOP_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " + "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
+                else if (this._wwa.getYesNoState() === wwa_data.YesNoState.NO) {
+                    this._divYesElement.style.backgroundPosition =
+                        "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_YES_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " +
+                            "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
+                    this._divNoElement.style.backgroundPosition =
+                        "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_NOP_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " +
+                            "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
                 }
                 else {
-                    this._divYesElement.style.backgroundPosition = "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_YES_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " + "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
-                    this._divNoElement.style.backgroundPosition = "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_NO_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " + "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
+                    this._divYesElement.style.backgroundPosition =
+                        "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_YES_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " +
+                            "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
+                    this._divNoElement.style.backgroundPosition =
+                        "-" + (base.x + wwa_data.WWAConsts.IMGRELPOS_YESNO_NO_X) * wwa_data.WWAConsts.CHIP_SIZE + "px " +
+                            "-" + (base.y * wwa_data.WWAConsts.CHIP_SIZE) + "px";
                 }
                 this._ynWrapperElement.style.display = "block";
             }
@@ -2613,9 +2664,9 @@ var wwa_message;
             this._dummyElement.style.display = this._isYesno ? "block" : "none";
             //            this._element.style.display = this._isVisible ? "block" : "none";
         };
-        return MessageWindow;
+        return MessageWindow /* implements TextWindow(予定)*/;
     })();
-    wwa_message.MessageWindow = MessageWindow;
+    wwa_message.MessageWindow /* implements TextWindow(予定)*/ = MessageWindow /* implements TextWindow(予定)*/;
 })(wwa_message || (wwa_message = {}));
 /// <reference path="./wwa_main.ts" />
 var wwa_monster;
@@ -2631,44 +2682,32 @@ var wwa_monster;
             this._battleEndCallback = _battleEndCallback;
         }
         Object.defineProperty(Monster.prototype, "partsID", {
-            get: function () {
-                return this._partsID;
-            },
+            get: function () { return this._partsID; },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(Monster.prototype, "position", {
-            get: function () {
-                return this._position;
-            },
+            get: function () { return this._position; },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(Monster.prototype, "imgCoord", {
-            get: function () {
-                return this._imgCoord;
-            },
+            get: function () { return this._imgCoord; },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(Monster.prototype, "status", {
-            get: function () {
-                return this._status;
-            },
+            get: function () { return this._status; },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(Monster.prototype, "message", {
-            get: function () {
-                return this._message;
-            },
+            get: function () { return this._message; },
             enumerable: true,
             configurable: true
         });
         Object.defineProperty(Monster.prototype, "item", {
-            get: function () {
-                return this._item;
-            },
+            get: function () { return this._item; },
             enumerable: true,
             configurable: true
         });
@@ -2755,8 +2794,8 @@ var wwa_motion;
                 this._queue[i].update();
                 if (this._queue[i].isAchievedDestination) {
                     endObjects.push(this._queue[i]);
-                    this._wwa.setPartsOnPosition(0 /* OBJECT */, 0, this._queue[i].beforePosition.getPartsCoord());
-                    this._wwa.setPartsOnPosition(0 /* OBJECT */, this._queue[i].objID, this._queue[i].destination.getPartsCoord());
+                    this._wwa.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, this._queue[i].beforePosition.getPartsCoord());
+                    this._wwa.setPartsOnPosition(wwa_data.PartsType.OBJECT, this._queue[i].objID, this._queue[i].destination.getPartsCoord());
                 }
                 else {
                     continueObjects.push(this._queue[i]);
@@ -2878,6 +2917,7 @@ var wwa_estimate_battle;
             this._parent.appendChild(this._element);
         }
         BattleEstimateWindow.prototype.update = function (playerStatus, monsters) {
+            // モンスターの種類が8種類を超える場合は、先頭の8種類のみ処理
             for (var i = 0; i < wwa_data.WWAConsts.BATTLE_ESTIMATE_MONSTER_TYPE_MAX; i++) {
                 if (i >= monsters.length) {
                     // 非表示処理
@@ -3007,8 +3047,7 @@ var wwa_inject_html;
 /// <reference path="./wwa_motion.ts" />
 /// <reference path="./wwa_estimate_battle.ts" />
 /// <reference path="./wwa_inject_html.ts" />
-var postMessage_noWorker = function (e) {
-};
+var postMessage_noWorker = function (e) { };
 var wwa_main;
 (function (wwa_main) {
     var KeyCode = wwa_input.KeyCode;
@@ -3046,8 +3085,7 @@ var wwa_main;
             try {
                 util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
             }
-            catch (e) {
-            }
+            catch (e) { }
             this._isURLGateEnable = urlgateEnabled;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
@@ -3055,7 +3093,9 @@ var wwa_main;
             var t_start = new Date().getTime();
             var isLocal = !!location.href.match(/^file/);
             if (isLocal) {
-                alert("【警告】直接HTMLファイルを開いているようです。\n" + "このプログラムは正常に動作しない可能性があります。\n" + "マップデータの確認を行う場合には同梱の「WWA Debugger」をご利用ください。");
+                alert("【警告】直接HTMLファイルを開いているようです。\n" +
+                    "このプログラムは正常に動作しない可能性があります。\n" +
+                    "マップデータの確認を行う場合には同梱の「WWA Debugger」をご利用ください。");
             }
             if (window["audiojs"] === void 0) {
                 alert("Audio.jsのロードに失敗しました。audioフォルダの中にaudio.min.jsは配置されていますか？");
@@ -3072,11 +3112,12 @@ var wwa_main;
                 }
                 _this._wwaData = e.data.wwaData;
                 _this.initCSSRule();
-                _this._setProgressBar(getProgress(0, 4, 7 /* GAME_INIT */));
+                _this._setProgressBar(getProgress(0, 4, wwa_data.LoadStage.GAME_INIT));
                 var cgFile = new Image();
                 cgFile.src = _this._wwaData.mapCGName;
                 cgFile.addEventListener("error", function () {
-                    alert("画像ファイル「" + _this._wwaData.mapCGName + "」が見つかりませんでした。\n" + "管理者の方へ: データがアップロードされているか、パーミッションを確かめてください。");
+                    alert("画像ファイル「" + _this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
+                        "管理者の方へ: データがアップロードされているか、パーミッションを確かめてください。");
                 });
                 _this._restartData = JSON.parse(JSON.stringify(_this._wwaData));
                 var escapedFilename = _this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
@@ -3109,7 +3150,7 @@ var wwa_main;
                 var iconNode_gold = util.$qsh("#disp-gold>.status-icon");
                 iconNode_gold.style.backgroundPosition = "-240px -80px";
                 iconNode_gold.style.backgroundImage = "url(" + escapedFilename + ")";
-                _this._setProgressBar(getProgress(1, 4, 7 /* GAME_INIT */));
+                _this._setProgressBar(getProgress(1, 4, wwa_data.LoadStage.GAME_INIT));
                 _this._replaceAllRandomObjects();
                 var t_end = new Date().getTime();
                 console.log("Loading Complete!" + (t_end - t_start) + "ms");
@@ -3128,22 +3169,82 @@ var wwa_main;
                 _this._keyStore = new KeyStore();
                 _this._mouseStore = new MouseStore();
                 _this._messageQueue = [];
-                _this._yesNoJudge = 2 /* UNSELECTED */;
-                _this._yesNoJudgeInNextFrame = 2 /* UNSELECTED */;
-                _this._yesNoChoiceCallInfo = 0 /* NONE */;
+                _this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
+                _this._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
+                _this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.NONE;
                 _this._prevFrameEventExected = false;
                 _this._lastMessage = new wwa_message.MessageInfo("", false, false, []);
                 _this._execMacroListInNextFrame = [];
-                _this._setProgressBar(getProgress(2, 4, 7 /* GAME_INIT */));
+                _this._setProgressBar(getProgress(2, 4, wwa_data.LoadStage.GAME_INIT));
                 window.addEventListener("keydown", function (e) {
                     _this._keyStore.setPressInfo(e.keyCode);
-                    if (e.keyCode === 40 /* KEY_DOWN */ || e.keyCode === 37 /* KEY_LEFT */ || e.keyCode === 39 /* KEY_RIGHT */ || e.keyCode === 38 /* KEY_UP */ || e.keyCode === 16 /* KEY_SHIFT */ || e.keyCode === 13 /* KEY_ENTER */ || e.keyCode === 49 /* KEY_1 */ || e.keyCode === 50 /* KEY_2 */ || e.keyCode === 51 /* KEY_3 */ || e.keyCode === 65 /* KEY_A */ || e.keyCode === 67 /* KEY_C */ || e.keyCode === 68 /* KEY_D */ || e.keyCode === 69 /* KEY_E */ || e.keyCode === 77 /* KEY_M */ || e.keyCode === 78 /* KEY_N */ || e.keyCode === 81 /* KEY_Q */ || e.keyCode === 83 /* KEY_S */ || e.keyCode === 87 /* KEY_W */ || e.keyCode === 88 /* KEY_X */ || e.keyCode === 89 /* KEY_Y */ || e.keyCode === 90 /* KEY_Z */ || e.keyCode === 27 /* KEY_ESC */ || e.keyCode === 112 /* KEY_F1 */ || e.keyCode === 114 /* KEY_F3 */ || e.keyCode === 115 /* KEY_F4 */ || e.keyCode === 116 /* KEY_F5 */ || e.keyCode === 117 /* KEY_F6 */ || e.keyCode === 118 /* KEY_F7 */ || e.keyCode === 119 /* KEY_F8 */ || e.keyCode === 123 /* KEY_F12 */ || e.keyCode === 32 /* KEY_SPACE */) {
+                    if (e.keyCode === KeyCode.KEY_DOWN ||
+                        e.keyCode === KeyCode.KEY_LEFT ||
+                        e.keyCode === KeyCode.KEY_RIGHT ||
+                        e.keyCode === KeyCode.KEY_UP ||
+                        e.keyCode === KeyCode.KEY_SHIFT ||
+                        e.keyCode === KeyCode.KEY_ENTER ||
+                        e.keyCode === KeyCode.KEY_1 ||
+                        e.keyCode === KeyCode.KEY_2 ||
+                        e.keyCode === KeyCode.KEY_3 ||
+                        e.keyCode === KeyCode.KEY_A ||
+                        e.keyCode === KeyCode.KEY_C ||
+                        e.keyCode === KeyCode.KEY_D ||
+                        e.keyCode === KeyCode.KEY_E ||
+                        e.keyCode === KeyCode.KEY_M ||
+                        e.keyCode === KeyCode.KEY_N ||
+                        e.keyCode === KeyCode.KEY_Q ||
+                        e.keyCode === KeyCode.KEY_S ||
+                        e.keyCode === KeyCode.KEY_W ||
+                        e.keyCode === KeyCode.KEY_X ||
+                        e.keyCode === KeyCode.KEY_Y ||
+                        e.keyCode === KeyCode.KEY_Z ||
+                        e.keyCode === KeyCode.KEY_ESC ||
+                        e.keyCode === KeyCode.KEY_F1 ||
+                        e.keyCode === KeyCode.KEY_F3 ||
+                        e.keyCode === KeyCode.KEY_F4 ||
+                        e.keyCode === KeyCode.KEY_F5 ||
+                        e.keyCode === KeyCode.KEY_F6 ||
+                        e.keyCode === KeyCode.KEY_F7 ||
+                        e.keyCode === KeyCode.KEY_F8 ||
+                        e.keyCode === KeyCode.KEY_F12 ||
+                        e.keyCode === KeyCode.KEY_SPACE) {
                         e.preventDefault();
                     }
                 });
                 window.addEventListener("keyup", function (e) {
                     _this._keyStore.setReleaseInfo(e.keyCode);
-                    if (e.keyCode === 40 /* KEY_DOWN */ || e.keyCode === 37 /* KEY_LEFT */ || e.keyCode === 39 /* KEY_RIGHT */ || e.keyCode === 38 /* KEY_UP */ || e.keyCode === 16 /* KEY_SHIFT */ || e.keyCode === 13 /* KEY_ENTER */ || e.keyCode === 49 /* KEY_1 */ || e.keyCode === 50 /* KEY_2 */ || e.keyCode === 51 /* KEY_3 */ || e.keyCode === 65 /* KEY_A */ || e.keyCode === 67 /* KEY_C */ || e.keyCode === 68 /* KEY_D */ || e.keyCode === 69 /* KEY_E */ || e.keyCode === 77 /* KEY_M */ || e.keyCode === 78 /* KEY_N */ || e.keyCode === 81 /* KEY_Q */ || e.keyCode === 83 /* KEY_S */ || e.keyCode === 87 /* KEY_W */ || e.keyCode === 88 /* KEY_X */ || e.keyCode === 89 /* KEY_Y */ || e.keyCode === 90 /* KEY_Z */ || e.keyCode === 27 /* KEY_ESC */ || e.keyCode === 112 /* KEY_F1 */ || e.keyCode === 114 /* KEY_F3 */ || e.keyCode === 115 /* KEY_F4 */ || e.keyCode === 116 /* KEY_F5 */ || e.keyCode === 117 /* KEY_F6 */ || e.keyCode === 118 /* KEY_F7 */ || e.keyCode === 119 /* KEY_F8 */ || e.keyCode === 123 /* KEY_F12 */ || e.keyCode === 32 /* KEY_SPACE */) {
+                    if (e.keyCode === KeyCode.KEY_DOWN ||
+                        e.keyCode === KeyCode.KEY_LEFT ||
+                        e.keyCode === KeyCode.KEY_RIGHT ||
+                        e.keyCode === KeyCode.KEY_UP ||
+                        e.keyCode === KeyCode.KEY_SHIFT ||
+                        e.keyCode === KeyCode.KEY_ENTER ||
+                        e.keyCode === KeyCode.KEY_1 ||
+                        e.keyCode === KeyCode.KEY_2 ||
+                        e.keyCode === KeyCode.KEY_3 ||
+                        e.keyCode === KeyCode.KEY_A ||
+                        e.keyCode === KeyCode.KEY_C ||
+                        e.keyCode === KeyCode.KEY_D ||
+                        e.keyCode === KeyCode.KEY_E ||
+                        e.keyCode === KeyCode.KEY_M ||
+                        e.keyCode === KeyCode.KEY_N ||
+                        e.keyCode === KeyCode.KEY_Q ||
+                        e.keyCode === KeyCode.KEY_S ||
+                        e.keyCode === KeyCode.KEY_W ||
+                        e.keyCode === KeyCode.KEY_X ||
+                        e.keyCode === KeyCode.KEY_Y ||
+                        e.keyCode === KeyCode.KEY_Z ||
+                        e.keyCode === KeyCode.KEY_ESC ||
+                        e.keyCode === KeyCode.KEY_F1 ||
+                        e.keyCode === KeyCode.KEY_F3 ||
+                        e.keyCode === KeyCode.KEY_F4 ||
+                        e.keyCode === KeyCode.KEY_F5 ||
+                        e.keyCode === KeyCode.KEY_F6 ||
+                        e.keyCode === KeyCode.KEY_F7 ||
+                        e.keyCode === KeyCode.KEY_F8 ||
+                        e.keyCode === KeyCode.KEY_F12 ||
+                        e.keyCode === KeyCode.KEY_SPACE) {
                         e.preventDefault();
                     }
                 });
@@ -3164,7 +3265,7 @@ var wwa_main;
                 _this._mouseControllerElement = (wwa_util.$id("wwa-controller"));
                 _this._mouseControllerElement.addEventListener("mousedown", function (e) {
                     if (e.which === 1) {
-                        if (_this._mouseStore.getMouseState() !== 0 /* NONE */) {
+                        if (_this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
                             return;
                         }
@@ -3175,16 +3276,16 @@ var wwa_main;
                         var dy = Math.abs(dist.y);
                         var dir;
                         if (dist.y > 0 && dy > dx) {
-                            dir = 2 /* DOWN */;
+                            dir = wwa_data.Direction.DOWN;
                         }
                         else if (dist.y < 0 && dy > dx) {
-                            dir = 3 /* UP */;
+                            dir = wwa_data.Direction.UP;
                         }
                         else if (dist.x > 0 && dy < dx) {
-                            dir = 1 /* RIGHT */;
+                            dir = wwa_data.Direction.RIGHT;
                         }
                         else if (dist.x < 0 && dy < dx) {
-                            dir = 0 /* LEFT */;
+                            dir = wwa_data.Direction.LEFT;
                         }
                         _this._mouseStore.setPressInfo(dir);
                         e.preventDefault();
@@ -3200,9 +3301,9 @@ var wwa_main;
                     }
                 });
                 //////////////// タッチ関連 超β ////////////////////////////
-                if (window["TouchEvent"]) {
+                if (window["TouchEvent"] /* ←コンパイルエラー回避 */) {
                     _this._mouseControllerElement.addEventListener("touchstart", function (e /*←コンパイルエラー回避*/) {
-                        if (_this._mouseStore.getMouseState() !== 0 /* NONE */) {
+                        if (_this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
                             return;
                         }
@@ -3213,16 +3314,16 @@ var wwa_main;
                         var dy = Math.abs(dist.y);
                         var dir;
                         if (dist.y > 0 && dy > dx) {
-                            dir = 2 /* DOWN */;
+                            dir = wwa_data.Direction.DOWN;
                         }
                         else if (dist.y < 0 && dy > dx) {
-                            dir = 3 /* UP */;
+                            dir = wwa_data.Direction.UP;
                         }
                         else if (dist.x > 0 && dy < dx) {
-                            dir = 1 /* RIGHT */;
+                            dir = wwa_data.Direction.RIGHT;
                         }
                         else if (dist.x < 0 && dy < dx) {
-                            dir = 0 /* LEFT */;
+                            dir = wwa_data.Direction.LEFT;
                         }
                         _this._mouseStore.setPressInfo(dir, e.changedTouches[0].identifier);
                         if (e.cancelable) {
@@ -3251,22 +3352,22 @@ var wwa_main;
                 //////////////// タッチ関連 超β ////////////////////////////
                 util.$id("button-load").addEventListener("click", function () {
                     if (_this._player.isControllable()) {
-                        _this.onselectbutton(0 /* QUICK_LOAD */);
+                        _this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
                     }
                 });
                 util.$id("button-save").addEventListener("click", function () {
                     if (_this._player.isControllable()) {
-                        _this.onselectbutton(1 /* QUICK_SAVE */);
+                        _this.onselectbutton(wwa_data.SidebarButton.QUICK_SAVE);
                     }
                 });
                 util.$id("button-restart").addEventListener("click", function () {
                     if (_this._player.isControllable()) {
-                        _this.onselectbutton(2 /* RESTART_GAME */);
+                        _this.onselectbutton(wwa_data.SidebarButton.RESTART_GAME);
                     }
                 });
                 util.$id("button-gotowwa").addEventListener("click", function () {
                     if (_this._player.isControllable()) {
-                        _this.onselectbutton(3 /* GOTO_WWA */);
+                        _this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA);
                     }
                 });
                 Array.prototype.forEach.call(util.$qsAll(".wide-cell-row"), function (node) {
@@ -3280,7 +3381,7 @@ var wwa_main;
                 _this._messageWindow = new wwa_message.MessageWindow(_this, 50, 180, 340, 0, "", _this._wwaData.mapCGName, false, true, util.$id("wwa-wrapper"));
                 _this._monsterWindow = new wwa_message.MosterWindow(_this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), _this._wwaData.mapCGName);
                 _this._scoreWindow = new wwa_message.ScoreWindow(_this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
-                _this._setProgressBar(getProgress(3, 4, 7 /* GAME_INIT */));
+                _this._setProgressBar(getProgress(3, 4, wwa_data.LoadStage.GAME_INIT));
                 _this._isLoadedSound = false;
                 _this._temporaryInputDisable = false;
                 _this._paintSkipByDoorOpen = false;
@@ -3303,33 +3404,38 @@ var wwa_main;
                 }
                 */
                 _this._cgManager = new CGManager(ctx, ctxSub, _this._wwaData.mapCGName, function () {
-                    if (_this._wwaData.systemMessage[2 /* LOAD_SE */] === "ON") {
+                    if (_this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "ON") {
                         _this._isLoadedSound = true;
-                        _this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" + "(iOS, Android端末では音楽は再生されません。)", false, true);
+                        _this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
+                            "(iOS, Android端末では音楽は再生されません。)", false, true);
                         _this.loadSound();
                         setTimeout(_this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, _this);
                         return;
                     }
-                    if (_this._wwaData.systemMessage[2 /* LOAD_SE */] === "OFF") {
+                    if (_this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "OFF") {
                         _this._isLoadedSound = false;
                         _this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
                         _this.openGameWindow();
                         return;
                     }
-                    _this._messageWindow.setMessage((_this._wwaData.systemMessage[2 /* LOAD_SE */] === "" ? "効果音・ＢＧＭデータをロードしますか？" : _this._wwaData.systemMessage[2 /* LOAD_SE */]) + "\n(iOS, Android端末では音楽は再生されません。)");
+                    _this._messageWindow.setMessage((_this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "" ?
+                        "効果音・ＢＧＭデータをロードしますか？" :
+                        _this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE]) + "\n(iOS, Android端末では音楽は再生されません。)");
                     _this._messageWindow.show();
-                    _this._setProgressBar(getProgress(4, 4, 7 /* GAME_INIT */));
+                    _this._setProgressBar(getProgress(4, 4, wwa_data.LoadStage.GAME_INIT));
                     var timer = setInterval(function () {
                         self._keyStore.update();
-                        if (self._yesNoJudgeInNextFrame === 2 /* UNSELECTED */) {
-                            if (self._keyStore.getKeyState(13 /* KEY_ENTER */) === 1 /* KEYDOWN */ || self._keyStore.getKeyState(89 /* KEY_Y */) === 1 /* KEYDOWN */) {
-                                self._yesNoJudgeInNextFrame = 0 /* YES */;
+                        if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.UNSELECTED) {
+                            if (self._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
+                                self._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN) {
+                                self._yesNoJudgeInNextFrame = wwa_data.YesNoState.YES;
                             }
-                            else if (self._keyStore.getKeyState(78 /* KEY_N */) === 1 /* KEYDOWN */ || self._keyStore.getKeyState(27 /* KEY_ESC */) === 1 /* KEYDOWN */) {
-                                self._yesNoJudgeInNextFrame = 1 /* NO */;
+                            else if (self._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
+                                self._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN) {
+                                self._yesNoJudgeInNextFrame = wwa_data.YesNoState.NO;
                             }
                         }
-                        if (self._yesNoJudgeInNextFrame === 0 /* YES */) {
+                        if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.YES) {
                             clearInterval(timer);
                             self._messageWindow.update();
                             self._yesNoJudge = self._yesNoJudgeInNextFrame;
@@ -3338,15 +3444,15 @@ var wwa_main;
                                 self._messageWindow.update();
                                 setTimeout(function () {
                                     self._messageWindow.hide();
-                                    self._yesNoJudge = 2 /* UNSELECTED */;
-                                    self._yesNoJudgeInNextFrame = 2 /* UNSELECTED */;
+                                    self._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
+                                    self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
                                     self._isLoadedSound = true;
                                     self.loadSound();
                                     setTimeout(_this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, _this);
                                 }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                             }, Consts.DEFAULT_FRAME_INTERVAL);
                         }
-                        else if (self._yesNoJudgeInNextFrame === 1 /* NO */) {
+                        else if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.NO) {
                             clearInterval(timer);
                             self._messageWindow.update();
                             self._yesNoJudge = self._yesNoJudgeInNextFrame;
@@ -3355,8 +3461,8 @@ var wwa_main;
                                 self._messageWindow.update();
                                 setTimeout(function () {
                                     self._messageWindow.hide();
-                                    self._yesNoJudge = 2 /* UNSELECTED */;
-                                    self._yesNoJudgeInNextFrame = 2 /* UNSELECTED */;
+                                    self._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
+                                    self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
                                     self._isLoadedSound = false;
                                     self.openGameWindow();
                                 }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
@@ -3387,6 +3493,7 @@ var wwa_main;
                 postMessage_noWorker = function (e) {
                     self1._loadHandler(e);
                 };
+                // 黒魔術
                 try {
                     loader_start({
                         data: {
@@ -3419,30 +3526,35 @@ var wwa_main;
         }
         WWA.prototype._setProgressBar = function (progress) {
             if (progress.stage <= Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO) {
-                (wwa_util.$id("progress-message-container")).textContent = (progress.stage === Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO ? "World Name: " + this._wwaData.worldName : wwa_data.loadMessages[progress.stage]);
-                (wwa_util.$id("progress-bar")).style.width = (1 * progress.stage + (progress.current / progress.total) * 1) / (Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO + 1) * Consts.MAP_WINDOW_WIDTH + "px";
-                (wwa_util.$id("progress-disp")).textContent = ((1 * progress.stage + (progress.current / progress.total) * 1) / (Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO + 1) * 100).toFixed(2) + "%";
+                (wwa_util.$id("progress-message-container")).textContent =
+                    (progress.stage === Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO ? "World Name: " + this._wwaData.worldName : wwa_data.loadMessages[progress.stage]);
+                (wwa_util.$id("progress-bar")).style.width =
+                    (1 * progress.stage + (progress.current / progress.total) * 1) / (Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO + 1) * Consts.MAP_WINDOW_WIDTH + "px";
+                (wwa_util.$id("progress-disp")).textContent =
+                    ((1 * progress.stage + (progress.current / progress.total) * 1) / (Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO + 1) * 100).toFixed(2) + "%";
             }
             else {
                 (wwa_util.$id("progress-message-container")).textContent = "効果音/BGMを読み込んでいます。(スペースキーでスキップ）";
-                (wwa_util.$id("progress-bar-audio")).style.width = (progress.current * Consts.MAP_WINDOW_WIDTH / progress.total) + "px";
-                (wwa_util.$id("progress-disp")).textContent = ((progress.current / progress.total * 100).toFixed(2)) + "%";
+                (wwa_util.$id("progress-bar-audio")).style.width =
+                    (progress.current * Consts.MAP_WINDOW_WIDTH / progress.total) + "px";
+                (wwa_util.$id("progress-disp")).textContent =
+                    ((progress.current / progress.total * 100).toFixed(2)) + "%";
             }
         };
         WWA.prototype.createAudioJSInstance = function (idx, isSub) {
             if (isSub === void 0) { isSub = false; }
-            if (idx === 0 || this._audioJSInstances[idx] !== void 0 || idx === 99 /* NO_SOUND */) {
+            if (idx === 0 || this._audioJSInstances[idx] !== void 0 || idx === wwa_data.SystemSound.NO_SOUND) {
                 return;
             }
             var file = (wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + ".mp3" : "./audio/" + idx + ".mp3");
             var audioElement = new Audio(file);
             audioElement.preload = "auto";
-            if (idx >= 70 /* BGM_LB */) {
+            if (idx >= wwa_data.SystemSound.BGM_LB) {
                 audioElement.loop = true;
             }
             util.$id("wwa-audio-wrapper").appendChild(audioElement);
             this._audioJSInstances[idx] = audiojs.create(audioElement);
-            if (idx < 70 /* BGM_LB */) {
+            if (idx < wwa_data.SystemSound.BGM_LB) {
                 var audioElementSub = new Audio(file);
                 audioElementSub.preload = "auto";
                 util.$id("wwa-audio-wrapper").appendChild(audioElementSub);
@@ -3452,8 +3564,8 @@ var wwa_main;
         WWA.prototype.loadSound = function () {
             this._audioJSInstances = new Array(Consts.SOUND_MAX + 1);
             this._audioJSInstancesSub = new Array(Consts.SOUND_MAX + 1);
-            this.createAudioJSInstance(1 /* DECISION */);
-            this.createAudioJSInstance(3 /* ATTACK */);
+            this.createAudioJSInstance(wwa_data.SystemSound.DECISION);
+            this.createAudioJSInstance(wwa_data.SystemSound.ATTACK);
             for (var pid = 1; pid < this._wwaData.mapPartsMax; pid++) {
                 var idx = this._wwaData.mapAttribute[pid][Consts.ATR_SOUND];
                 this.createAudioJSInstance(idx);
@@ -3472,7 +3584,7 @@ var wwa_main;
             var loadedNum = 0;
             var total = 0;
             this._keyStore.update();
-            if (this._keyStore.getKeyState(32 /* KEY_SPACE */) === 1 /* KEYDOWN */) {
+            if (this._keyStore.getKeyState(wwa_input.KeyCode.KEY_SPACE) === wwa_input.KeyState.KEYDOWN) {
                 this._soundLoadSkipFlag = true;
             }
             for (var i = 1; i <= Consts.SOUND_MAX; i++) {
@@ -3489,11 +3601,11 @@ var wwa_main;
                 loadedNum++;
             }
             if (loadedNum < total && !this._soundLoadSkipFlag) {
-                this._setProgressBar(getProgress(loadedNum, total, 8 /* AUDIO */));
+                this._setProgressBar(getProgress(loadedNum, total, wwa_data.LoadStage.AUDIO));
                 setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
                 return;
             }
-            this._setProgressBar(getProgress(Consts.SOUND_MAX, Consts.SOUND_MAX, 8 /* AUDIO */));
+            this._setProgressBar(getProgress(Consts.SOUND_MAX, Consts.SOUND_MAX, wwa_data.LoadStage.AUDIO));
             this.openGameWindow();
         };
         WWA.prototype.playSound = function (id) {
@@ -3504,20 +3616,20 @@ var wwa_main;
             if (id < 0 || id > Consts.SOUND_MAX) {
                 throw new Error("サウンド番号が範囲外です。");
             }
-            if (id >= 70 /* BGM_LB */ && this._wwaData.bgm === id) {
+            if (id >= wwa_data.SystemSound.BGM_LB && this._wwaData.bgm === id) {
                 return;
             }
-            if ((id === 99 /* NO_SOUND */ || id >= 70 /* BGM_LB */) && this._wwaData.bgm !== 0) {
+            if ((id === wwa_data.SystemSound.NO_SOUND || id >= wwa_data.SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
                 if (!this._audioJSInstances[this._wwaData.bgm].wrapper.classList.contains("loading")) {
                     this._audioJSInstances[this._wwaData.bgm].pause();
                 }
                 this._wwaData.bgm = 0;
             }
-            if (id === 0 || id === 99 /* NO_SOUND */) {
+            if (id === 0 || id === wwa_data.SystemSound.NO_SOUND) {
                 return;
             }
             if (this._audioJSInstances[id].wrapper.classList.contains("loading")) {
-                if (id >= 70 /* BGM_LB */) {
+                if (id >= wwa_data.SystemSound.BGM_LB) {
                     var loadi = (function (id, self) {
                         var timer = setInterval(function () {
                             if (self._wwaData.bgm === id) {
@@ -3530,7 +3642,7 @@ var wwa_main;
                             }
                             else {
                                 clearInterval(timer);
-                                if (self._wwaData.bgm !== 99 /* NO_SOUND */) {
+                                if (self._wwaData.bgm !== wwa_data.SystemSound.NO_SOUND) {
                                     loadi(self._wwaData.bgm, self);
                                 }
                             }
@@ -3542,7 +3654,7 @@ var wwa_main;
                 return;
             }
             if (id !== 0 && !this._audioJSInstances[id].wrapper.classList.contains("error")) {
-                if (id >= 70 /* BGM_LB */) {
+                if (id >= wwa_data.SystemSound.BGM_LB) {
                     this._audioJSInstances[id].skipTo(0);
                     this._audioJSInstances[id].play();
                     this._wwaData.bgm = id;
@@ -3587,60 +3699,64 @@ var wwa_main;
             if (this._player.canUseItem(itemPos)) {
                 var bg = (wwa_util.$id("item" + (itemPos - 1)));
                 bg.classList.add("onpress");
-                this.playSound(1 /* DECISION */);
-                if (this._wwaData.message[8 /* USE_ITEM */] === "BLANK") {
+                this.playSound(wwa_data.SystemSound.DECISION);
+                if (this._wwaData.message[wwa_data.SystemMessage1.USE_ITEM] === "BLANK") {
                     this._player.readyToUseItem(itemPos);
                     var itemID = this._player.useItem();
                     var mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
-                    this.setMessageQueue(this.getMessageById(mesID), false, false, itemID, 0 /* OBJECT */, this._player.getPosition().getPartsCoord());
+                    this.setMessageQueue(this.getMessageById(mesID), false, false, itemID, wwa_data.PartsType.OBJECT, this._player.getPosition().getPartsCoord());
                 }
                 else {
-                    this.setMessageQueue(this._wwaData.message[8 /* USE_ITEM */] === "" ? "このアイテムを使用します。\nよろしいですか?" : this._wwaData.message[8 /* USE_ITEM */], true, true);
-                    this._yesNoChoiceCallInfo = 3 /* CALL_BY_ITEM_USE */;
+                    this.setMessageQueue(this._wwaData.message[wwa_data.SystemMessage1.USE_ITEM] === "" ?
+                        "このアイテムを使用します。\nよろしいですか?" :
+                        this._wwaData.message[wwa_data.SystemMessage1.USE_ITEM], true, true);
+                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_ITEM_USE;
                     this._yesNoUseItemPos = itemPos;
                 }
             }
         };
         WWA.prototype.onselectbutton = function (button) {
             var bg = (wwa_util.$id(wwa_data.sidebarButtonCellElementID[button]));
-            this.playSound(1 /* DECISION */);
+            this.playSound(wwa_data.SystemSound.DECISION);
             bg.classList.add("onpress");
-            if (button === 0 /* QUICK_LOAD */) {
+            if (button === wwa_data.SidebarButton.QUICK_LOAD) {
                 if (this._quickSaveData !== void 0) {
                     this.setMessageQueue("データを読み込みますか？\n※パスワードロードは、現在ご利用になれません。", true, true);
-                    this._yesNoChoiceCallInfo = 5 /* CALL_BY_QUICK_LOAD */;
+                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_QUICK_LOAD;
                 }
                 else {
                     this.setMessageQueue("セーブデータがありません。\n※パスワードロードは、現在ご利用になれません。", false, true);
                 }
             }
-            else if (button === 1 /* QUICK_SAVE */) {
+            else if (button === wwa_data.SidebarButton.QUICK_SAVE) {
                 if (!this._wwaData.disableSaveFlag) {
                     this.setMessageQueue("データの一時保存をします。\nよろしいですか？\n※パスワードセーブは、現在ご利用になれません。", true, true);
-                    this._yesNoChoiceCallInfo = 4 /* CALL_BY_QUICK_SAVE */;
+                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 }
                 else {
                     this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
                 }
             }
-            else if (button === 2 /* RESTART_GAME */) {
+            else if (button === wwa_data.SidebarButton.RESTART_GAME) {
                 this.setMessageQueue("初めからスタートしなおしますか？", true, true);
-                this._yesNoChoiceCallInfo = 6 /* CALL_BY_RESTART_GAME */;
+                this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME;
             }
-            else if (button === 3 /* GOTO_WWA */) {
+            else if (button === wwa_data.SidebarButton.GOTO_WWA) {
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
-                this._yesNoChoiceCallInfo = 7 /* CALL_BY_GOTO_WWA */;
+                this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA;
             }
         };
         WWA.prototype.onchangespeed = function (type) {
             var speedIndex;
-            if (type === 0 /* UP */) {
+            if (type === wwa_data.SpeedChange.UP) {
                 speedIndex = this._player.speedUp();
             }
             else {
                 speedIndex = this._player.speedDown();
             }
-            this.setMessageQueue("移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" + (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") + "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
+            this.setMessageQueue("移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
+                (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
+                "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
         };
         WWA.prototype._main = function () {
             var _this = this;
@@ -3675,122 +3791,135 @@ var wwa_main;
             var prevPosition = this._player.getPosition();
             var pdir = this._player.getDir();
             if (this._player.isControllable()) {
-                if (this._keyStore.getKeyStateForControllPlayer(37 /* KEY_LEFT */) === 1 /* KEYDOWN */ || this._mouseStore.getMouseStateForControllPlayer(0 /* LEFT */) === 1 /* MOUSEDOWN */) {
-                    this._player.controll(0 /* LEFT */);
+                if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === wwa_input.KeyState.KEYDOWN ||
+                    this._mouseStore.getMouseStateForControllPlayer(wwa_data.Direction.LEFT) === wwa_input.MouseState.MOUSEDOWN) {
+                    this._player.controll(wwa_data.Direction.LEFT);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.getKeyStateForControllPlayer(38 /* KEY_UP */) === 1 /* KEYDOWN */ || this._mouseStore.getMouseStateForControllPlayer(3 /* UP */) === 1 /* MOUSEDOWN */) {
-                    this._player.controll(3 /* UP */);
+                else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_UP) === wwa_input.KeyState.KEYDOWN ||
+                    this._mouseStore.getMouseStateForControllPlayer(wwa_data.Direction.UP) === wwa_input.MouseState.MOUSEDOWN) {
+                    this._player.controll(wwa_data.Direction.UP);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.getKeyStateForControllPlayer(39 /* KEY_RIGHT */) === 1 /* KEYDOWN */ || this._mouseStore.getMouseStateForControllPlayer(1 /* RIGHT */) === 1 /* MOUSEDOWN */) {
-                    this._player.controll(1 /* RIGHT */);
+                else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_RIGHT) === wwa_input.KeyState.KEYDOWN ||
+                    this._mouseStore.getMouseStateForControllPlayer(wwa_data.Direction.RIGHT) === wwa_input.MouseState.MOUSEDOWN) {
+                    this._player.controll(wwa_data.Direction.RIGHT);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.getKeyStateForControllPlayer(40 /* KEY_DOWN */) === 1 /* KEYDOWN */ || this._mouseStore.getMouseStateForControllPlayer(2 /* DOWN */) === 1 /* MOUSEDOWN */) {
-                    this._player.controll(2 /* DOWN */);
+                else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_DOWN) === wwa_input.KeyState.KEYDOWN ||
+                    this._mouseStore.getMouseStateForControllPlayer(wwa_data.Direction.DOWN) === wwa_input.MouseState.MOUSEDOWN) {
+                    this._player.controll(wwa_data.Direction.DOWN);
                     this._objectMovingDataManager.update();
                 }
                 else if (this._keyStore.checkHitKey(wwa_data.dirToKey[pdir])) {
                     this._player.controll(pdir);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.checkHitKey(37 /* KEY_LEFT */) || this._mouseStore.checkClickMouse(0 /* LEFT */)) {
-                    this._player.controll(0 /* LEFT */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.LEFT)) {
+                    this._player.controll(wwa_data.Direction.LEFT);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.checkHitKey(38 /* KEY_UP */) || this._mouseStore.checkClickMouse(3 /* UP */)) {
-                    this._player.controll(3 /* UP */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.UP)) {
+                    this._player.controll(wwa_data.Direction.UP);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.checkHitKey(39 /* KEY_RIGHT */) || this._mouseStore.checkClickMouse(1 /* RIGHT */)) {
-                    this._player.controll(1 /* RIGHT */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.RIGHT)) {
+                    this._player.controll(wwa_data.Direction.RIGHT);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.checkHitKey(40 /* KEY_DOWN */) || this._mouseStore.checkClickMouse(2 /* DOWN */)) {
-                    this._player.controll(2 /* DOWN */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.DOWN)) {
+                    this._player.controll(wwa_data.Direction.DOWN);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.checkHitKey(37 /* KEY_LEFT */) || this._mouseStore.checkClickMouse(0 /* LEFT */)) {
-                    this._player.controll(0 /* LEFT */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.LEFT)) {
+                    this._player.controll(wwa_data.Direction.LEFT);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.checkHitKey(38 /* KEY_UP */) || this._mouseStore.checkClickMouse(3 /* UP */)) {
-                    this._player.controll(3 /* UP */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.UP)) {
+                    this._player.controll(wwa_data.Direction.UP);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.checkHitKey(39 /* KEY_RIGHT */) || this._mouseStore.checkClickMouse(1 /* RIGHT */)) {
-                    this._player.controll(1 /* RIGHT */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.RIGHT)) {
+                    this._player.controll(wwa_data.Direction.RIGHT);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.checkHitKey(40 /* KEY_DOWN */) || this._mouseStore.checkClickMouse(2 /* DOWN */)) {
-                    this._player.controll(2 /* DOWN */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.DOWN)) {
+                    this._player.controll(wwa_data.Direction.DOWN);
                     this._objectMovingDataManager.update();
                 }
-                else if (this._keyStore.getKeyState(49 /* KEY_1 */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_1) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(1);
                 }
-                else if (this._keyStore.getKeyState(50 /* KEY_2 */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_2) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(2);
                 }
-                else if (this._keyStore.getKeyState(51 /* KEY_3 */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_3) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(3);
                 }
-                else if (this._keyStore.getKeyState(81 /* KEY_Q */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_Q) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(4);
                 }
-                else if (this._keyStore.getKeyState(87 /* KEY_W */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_W) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(5);
                 }
-                else if (this._keyStore.getKeyState(69 /* KEY_E */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_E) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(6);
                 }
-                else if (this._keyStore.getKeyState(65 /* KEY_A */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_A) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(7);
                 }
-                else if (this._keyStore.getKeyState(83 /* KEY_S */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_S) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(8);
                 }
-                else if (this._keyStore.getKeyState(68 /* KEY_D */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_D) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(9);
                 }
-                else if (this._keyStore.getKeyState(90 /* KEY_Z */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_Z) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(10);
                 }
-                else if (this._keyStore.getKeyState(88 /* KEY_X */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_X) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(11);
                 }
-                else if (this._keyStore.getKeyState(67 /* KEY_C */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_C) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(12);
                 }
-                else if (this._keyStore.getKeyState(73 /* KEY_I */)) {
-                    this.onchangespeed(1 /* DOWN */);
+                else if (this._keyStore.getKeyState(KeyCode.KEY_I)) {
+                    this.onchangespeed(wwa_data.SpeedChange.DOWN);
                 }
-                else if (this._keyStore.checkHitKey(80 /* KEY_P */)) {
-                    this.onchangespeed(0 /* UP */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_P)) {
+                    this.onchangespeed(wwa_data.SpeedChange.UP);
                 }
-                else if (this._keyStore.getKeyState(112 /* KEY_F1 */) === 1 /* KEYDOWN */ || this._keyStore.getKeyState(77 /* KEY_M */) === 1 /* KEYDOWN */) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_F1) === wwa_input.KeyState.KEYDOWN ||
+                    this._keyStore.getKeyState(KeyCode.KEY_M) === wwa_input.KeyState.KEYDOWN) {
                     // 戦闘結果予測 
                     if (this.launchBattleEstimateWindow()) {
                     }
                 }
-                else if (this._keyStore.checkHitKey(114 /* KEY_F3 */)) {
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {
                 }
-                else if (this._keyStore.checkHitKey(115 /* KEY_F4 */)) {
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
                 }
-                else if (this._keyStore.checkHitKey(116 /* KEY_F5 */)) {
-                    this.onselectbutton(0 /* QUICK_LOAD */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_F5)) {
+                    this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
                 }
-                else if (this._keyStore.checkHitKey(117 /* KEY_F6 */)) {
-                    this.onselectbutton(1 /* QUICK_SAVE */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_F6)) {
+                    this.onselectbutton(wwa_data.SidebarButton.QUICK_SAVE);
                 }
-                else if (this._keyStore.checkHitKey(118 /* KEY_F7 */)) {
-                    this.onselectbutton(2 /* RESTART_GAME */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_F7)) {
+                    this.onselectbutton(wwa_data.SidebarButton.RESTART_GAME);
                 }
-                else if (this._keyStore.checkHitKey(119 /* KEY_F8 */)) {
-                    this.onselectbutton(3 /* GOTO_WWA */);
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
+                    this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA);
                 }
-                else if (this._keyStore.checkHitKey(123 /* KEY_F12 */)) {
+                else if (this._keyStore.checkHitKey(KeyCode.KEY_F12)) {
                     // コマンドのヘルプ 
                     this._displayHelp();
                 }
@@ -3811,10 +3940,13 @@ var wwa_main;
                     this._messageWindow.show();
                 }
                 if (!this._messageWindow.isYesNoChoice()) {
-                    var enter = this._keyStore.getKeyStateForMessageCheck(13 /* KEY_ENTER */);
-                    var space = this._keyStore.getKeyStateForMessageCheck(32 /* KEY_SPACE */);
-                    var esc = this._keyStore.getKeyStateForMessageCheck(27 /* KEY_ESC */);
-                    if (enter === 1 /* KEYDOWN */ || enter === 4 /* KEYPRESS_MESSAGECHANGE */ || space === 1 /* KEYDOWN */ || space === 4 /* KEYPRESS_MESSAGECHANGE */ || esc === 1 /* KEYDOWN */ || esc === 4 /* KEYPRESS_MESSAGECHANGE */ || this._mouseStore.getMouseState() === 1 /* MOUSEDOWN */) {
+                    var enter = this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_ENTER);
+                    var space = this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_SPACE);
+                    var esc = this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_ESC);
+                    if (enter === KeyState.KEYDOWN || enter === KeyState.KEYPRESS_MESSAGECHANGE ||
+                        space === KeyState.KEYDOWN || space === KeyState.KEYPRESS_MESSAGECHANGE ||
+                        esc === KeyState.KEYDOWN || esc === KeyState.KEYPRESS_MESSAGECHANGE ||
+                        this._mouseStore.getMouseState() === MouseState.MOUSEDOWN) {
                         for (var i = 0; i < wwa_data.sidebarButtonCellElementID.length; i++) {
                             var elm = (wwa_util.$id(wwa_data.sidebarButtonCellElementID[i]));
                             if (elm.classList.contains("onpress")) {
@@ -3826,22 +3958,24 @@ var wwa_main;
                 }
                 else {
                     if (!this._messageWindow.isInputDisable()) {
-                        if (this._yesNoJudge === 2 /* UNSELECTED */) {
-                            if (this._keyStore.getKeyState(13 /* KEY_ENTER */) === 1 /* KEYDOWN */ || this._keyStore.getKeyState(89 /* KEY_Y */) === 1 /* KEYDOWN */) {
-                                this._yesNoJudge = 0 /* YES */;
+                        if (this._yesNoJudge === wwa_data.YesNoState.UNSELECTED) {
+                            if (this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
+                                this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN) {
+                                this._yesNoJudge = wwa_data.YesNoState.YES;
                             }
-                            else if (this._keyStore.getKeyState(78 /* KEY_N */) === 1 /* KEYDOWN */ || this._keyStore.getKeyState(27 /* KEY_ESC */) === 1 /* KEYDOWN */) {
-                                this._yesNoJudge = 1 /* NO */;
+                            else if (this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
+                                this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN) {
+                                this._yesNoJudge = wwa_data.YesNoState.NO;
                             }
                         }
-                        if (this._yesNoJudge === 0 /* YES */) {
-                            this.playSound(1 /* DECISION */);
+                        if (this._yesNoJudge === wwa_data.YesNoState.YES) {
+                            this.playSound(wwa_data.SystemSound.DECISION);
                             this._yesNoDispCounter = Consts.YESNO_PRESS_DISP_FRAME_NUM;
                             this._messageWindow.setInputDisable();
                             this._messageWindow.update();
                         }
-                        else if (this._yesNoJudge === 1 /* NO */) {
-                            this.playSound(1 /* DECISION */);
+                        else if (this._yesNoJudge === wwa_data.YesNoState.NO) {
+                            this.playSound(wwa_data.SystemSound.DECISION);
                             this._yesNoDispCounter = Consts.YESNO_PRESS_DISP_FRAME_NUM;
                             this._messageWindow.setInputDisable();
                             this._messageWindow.update();
@@ -3850,7 +3984,8 @@ var wwa_main;
                 }
             }
             else if (this._player.isWatingEstimateWindow()) {
-                if (this._keyStore.getKeyState(13 /* KEY_ENTER */) === 1 /* KEYDOWN */ || this._keyStore.getKeyState(32 /* KEY_SPACE */) === 1 /* KEYDOWN */) {
+                if (this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
+                    this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
                     this.hideBattleEstimateWindow();
                 }
             }
@@ -3867,7 +4002,10 @@ var wwa_main;
             }
             this._prevFrameEventExected = false;
             if (this._player.getPosition().isJustPosition() && this._camera.getPosition().isScreenTopPosition()) {
-                if (!this._player.isJumped() && !this._player.isWaitingMessage() && !this._player.isWaitingMoveMacro() && !this._player.isFighting()) {
+                if (!this._player.isJumped() &&
+                    !this._player.isWaitingMessage() &&
+                    !this._player.isWaitingMoveMacro() &&
+                    !this._player.isFighting()) {
                     if (this._player.isPartsAppearedTime()) {
                         this._player.clearPartsAppearedFlag();
                     }
@@ -3882,7 +4020,11 @@ var wwa_main;
                     this._prevFrameEventExected = eventExecuted;
                 }
                 // 選択系イベント( 物の売買, 二者択一 )の処理
-                if (this._player.isWaitingMessage() && this._messageWindow.isYesNoChoice() && this._yesNoJudge !== 2 /* UNSELECTED */ && !this._player.isWaitingMoveMacro() && !this._player.isFighting()) {
+                if (this._player.isWaitingMessage() &&
+                    this._messageWindow.isYesNoChoice() &&
+                    this._yesNoJudge !== wwa_data.YesNoState.UNSELECTED &&
+                    !this._player.isWaitingMoveMacro() &&
+                    !this._player.isFighting()) {
                     this._execChoiceWindowRunningEvent();
                 }
             }
@@ -3917,10 +4059,10 @@ var wwa_main;
             }
             else {
                 this._fadeout(function () {
-                    if (_this._loadType === 0 /* QUICK_LOAD */) {
+                    if (_this._loadType === wwa_data.LoadType.QUICK_LOAD) {
                         _this._quickLoad();
                     }
-                    else if (_this._loadType === 1 /* RESTART_GAME */) {
+                    else if (_this._loadType === wwa_data.LoadType.RESTART_GAME) {
                         _this._restartGame();
                     }
                     setTimeout(_this.mainCaller, _this._waitTimeInCurrentFrame, _this);
@@ -4023,7 +4165,10 @@ var wwa_main;
             if (this._player.isLookingAround() && !this._player.isWaitingMessage()) {
                 crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
             }
-            else if ((dir === 0 /* LEFT */ || dir === 1 /* RIGHT */) && Math.abs(poso.x) > Math.floor(Consts.CHIP_SIZE / 2) || (dir === 3 /* UP */ || dir === 2 /* DOWN */) && Math.abs(poso.y) > Math.floor(Consts.CHIP_SIZE / 2)) {
+            else if ((dir === wwa_data.Direction.LEFT || dir === wwa_data.Direction.RIGHT) &&
+                Math.abs(poso.x) > Math.floor(Consts.CHIP_SIZE / 2) ||
+                (dir === wwa_data.Direction.UP || dir === wwa_data.Direction.DOWN) &&
+                    Math.abs(poso.y) > Math.floor(Consts.CHIP_SIZE / 2)) {
                 crop = this._wwaData.playerImgPosX + relpcrop + 1;
             }
             else {
@@ -4047,20 +4192,26 @@ var wwa_main;
             var yTop = Math.max(0, cpParts.y - 1);
             var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW);
             var offset;
+            // 画面内物体描画
             for (var x = xLeft; x <= xRight; x++) {
                 for (var y = yTop; y <= yBottom; y++) {
-                    if (this._player.isFighting() && this._player.isTurn() && this._player.getPosition().getPartsCoord().equals(this._monster.position) && new wwa_data.Coord(x, y).equals(this._monster.position)) {
+                    if (this._player.isFighting() &&
+                        this._player.isTurn() &&
+                        this._player.getPosition().getPartsCoord().equals(this._monster.position) &&
+                        new wwa_data.Coord(x, y).equals(this._monster.position)) {
                         continue;
                     }
                     var partsIDObj = this._wwaData.mapObject[y][x];
                     offset = new Coord(0, 0);
-                    if (this._wwaData.objectAttribute[partsIDObj][Consts.ATR_MOVE] !== 0 /* STATIC */) {
+                    if (this._wwaData.objectAttribute[partsIDObj][Consts.ATR_MOVE] !== wwa_data.MoveType.STATIC) {
                         var result = this._objectMovingDataManager.getOffsetByBeforePartsCoord(new Coord(x, y));
                         if (result !== null) {
                             offset = result;
                         }
                     }
-                    var imgType = (this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME || this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 && this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0);
+                    var imgType = (this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME ||
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
+                            this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0);
                     var ppxo = this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
                     var ppyo = this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
                     var canvasX = Consts.CHIP_SIZE * (x - cpParts.x) + offset.x - cpOffset.x;
@@ -4125,7 +4276,10 @@ var wwa_main;
             if (objType === Consts.OBJECT_DOOR && atrNumber === 0) {
                 return true;
             }
-            return (objType === Consts.OBJECT_STATUS || objType === Consts.OBJECT_MESSAGE || objType === Consts.OBJECT_ITEM || objType === Consts.OBJECT_SELL || objType === Consts.OBJECT_BUY || objType === Consts.OBJECT_SELL || objType === Consts.OBJECT_LOCALGATE);
+            return (objType === Consts.OBJECT_STATUS || objType === Consts.OBJECT_MESSAGE ||
+                objType === Consts.OBJECT_ITEM || objType === Consts.OBJECT_SELL ||
+                objType === Consts.OBJECT_BUY || objType === Consts.OBJECT_SELL ||
+                objType === Consts.OBJECT_LOCALGATE);
         };
         WWA.prototype.getMapWidth = function () {
             if (this._wwaData === void 0) {
@@ -4192,7 +4346,7 @@ var wwa_main;
             var isPlayerPositionExec = (pos.x === playerPos.x && pos.y === playerPos.y);
             var eventExecuted = false;
             if (isPlayerPositionExec) {
-                if (this._player.getLastExecPartsIDOnSamePosition(1 /* MAP */) === partsID) {
+                if (this._player.getLastExecPartsIDOnSamePosition(wwa_data.PartsType.MAP) === partsID) {
                     return false;
                 }
             }
@@ -4210,7 +4364,7 @@ var wwa_main;
                 eventExecuted = this._execMapUrlGateEvent(pos, partsID, mapAttr);
             }
             if (isPlayerPositionExec && !this._player.isJumped()) {
-                this._player.setLastExecInfoOnSamePosition(1 /* MAP */, partsID);
+                this._player.setLastExecInfoOnSamePosition(wwa_data.PartsType.MAP, partsID);
             }
             return eventExecuted;
         };
@@ -4222,7 +4376,7 @@ var wwa_main;
             var objAttr = this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE];
             var isPlayerPositionExec = (pos.x === playerPos.x && pos.y === playerPos.y);
             if (isPlayerPositionExec) {
-                if (this._player.getLastExecPartsIDOnSamePosition(0 /* OBJECT */) === partsID) {
+                if (this._player.getLastExecPartsIDOnSamePosition(wwa_data.PartsType.OBJECT) === partsID) {
                     return;
                 }
             }
@@ -4264,7 +4418,7 @@ var wwa_main;
                 this._execObjectLocalGateEvent(pos, partsID, objAttr);
             }
             if (isPlayerPositionExec && !this._player.isJumped()) {
-                this._player.setLastExecInfoOnSamePosition(0 /* OBJECT */, partsID);
+                this._player.setLastExecInfoOnSamePosition(wwa_data.PartsType.OBJECT, partsID);
             }
         };
         WWA.prototype._execMapStreetEvent = function (pos, partsID, mapAttr) {
@@ -4272,24 +4426,27 @@ var wwa_main;
             if (itemID !== 0 && !this._player.hasItem(itemID)) {
                 return false;
             }
-            this.appearParts(pos, 0 /* MAP */);
+            this.appearParts(pos, wwa_data.AppearanceTriggerType.MAP);
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             var message = this._wwaData.message[messageID];
             // 待ち時間
             this._waitTimeInCurrentFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * 100;
             this._temporaryInputDisable = true;
-            var messageDisplayed = this.setMessageQueue(message, false, false, partsID, 1 /* MAP */, pos.clone());
+            var messageDisplayed = this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.MAP, pos.clone());
             this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
             return messageID !== 0 && messageDisplayed;
         };
         WWA.prototype._execMapWallEvent = function (pos, partsID, mapAttr) {
             var objID = this.getObjectIdByPosition(pos.convertIntoPosition(this));
             var objType = this.getObjectAttributeById(objID, Consts.ATR_TYPE);
-            if (objID === 0 || objType === Consts.OBJECT_NORMAL || objType === Consts.OBJECT_DOOR && (!this._player.hasItem(this.getObjectAttributeById(objID, Consts.ATR_ITEM)) || this.getObjectAttributeById(objType, Consts.ATR_MODE) === Consts.PASSABLE_OBJECT)) {
-                this.appearParts(pos, 0 /* MAP */);
+            if (objID === 0 ||
+                objType === Consts.OBJECT_NORMAL ||
+                objType === Consts.OBJECT_DOOR && (!this._player.hasItem(this.getObjectAttributeById(objID, Consts.ATR_ITEM)) ||
+                    this.getObjectAttributeById(objType, Consts.ATR_MODE) === Consts.PASSABLE_OBJECT)) {
+                this.appearParts(pos, wwa_data.AppearanceTriggerType.MAP);
                 var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
                 var message = this._wwaData.message[messageID];
-                this.setMessageQueue(message, false, false, partsID, 1 /* MAP */, pos.clone());
+                this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.MAP, pos.clone());
                 this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
                 return false;
             }
@@ -4306,8 +4463,9 @@ var wwa_main;
             if (jy > Consts.RELATIVE_COORD_LOWER) {
                 jy = pos.y + jy - Consts.RELATIVE_COORD_BIAS;
             }
-            this.appearParts(pos, 0 /* MAP */);
-            if (0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth && (jx !== playerPos.x || jy !== playerPos.y)) {
+            this.appearParts(pos, wwa_data.AppearanceTriggerType.MAP);
+            if (0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth &&
+                (jx !== playerPos.x || jy !== playerPos.y)) {
                 this._player.jumpTo(new Position(this, jx, jy, 0, 0));
                 this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
                 return true;
@@ -4319,14 +4477,16 @@ var wwa_main;
             if (!this._isURLGateEnable) {
                 return true;
             }
-            if (this._wwaData.message[5 /* ASK_LINK */] === "BLANK") {
+            if (this._wwaData.message[wwa_data.SystemMessage1.ASK_LINK] === "BLANK") {
                 location.href = wwa_util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0]);
                 return;
             }
-            this.setMessageQueue(this._wwaData.message[5 /* ASK_LINK */] === "" ? "他のページにリンクします。\nよろしいですか？" : this._wwaData.message[5 /* ASK_LINK */], true, true);
+            this.setMessageQueue(this._wwaData.message[wwa_data.SystemMessage1.ASK_LINK] === "" ?
+                "他のページにリンクします。\nよろしいですか？" :
+                this._wwaData.message[wwa_data.SystemMessage1.ASK_LINK], true, true);
             this._yesNoChoicePartsCoord = pos;
             this._yesNoChoicePartsID = partsID;
-            this._yesNoChoiceCallInfo = 1 /* CALL_BY_MAP_PARTS */;
+            this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_MAP_PARTS;
             this._yesNoURL = this._wwaData.message[messageID].split(/\s/g)[0];
             return true;
         };
@@ -4343,11 +4503,11 @@ var wwa_main;
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
             }
             // 試験的に踏み潰し判定と処理の順序を入れ替えています。不具合があるようなら戻します。 150415
-            this.setMessageQueue(message, false, false, partsID, 0 /* OBJECT */, pos);
+            this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos);
             // 待ち時間
             this._waitTimeInCurrentFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * 100;
             this._temporaryInputDisable = true;
-            this.appearParts(pos, 1 /* OBJECT */, partsID);
+            this.appearParts(pos, wwa_data.AppearanceTriggerType.OBJECT, partsID);
             this.playSound(soundID);
         };
         WWA.prototype._execObjectStatusEvent = function (pos, partsID, objAttr) {
@@ -4356,14 +4516,23 @@ var wwa_main;
             var message = this._wwaData.message[messageID];
             var pstatus = this._player.getStatusWithoutEquipments();
             // マイナス判定 ステータスがマイナスになる場合は、引かないこと！！
-            if (status.strength > Consts.STATUS_MINUS_BORDER && pstatus.strength < status.strength - Consts.STATUS_MINUS_BORDER || status.defence > Consts.STATUS_MINUS_BORDER && pstatus.defence < status.defence - Consts.STATUS_MINUS_BORDER || status.gold > Consts.STATUS_MINUS_BORDER && pstatus.gold < status.gold - Consts.STATUS_MINUS_BORDER) {
+            if (status.strength > Consts.STATUS_MINUS_BORDER &&
+                pstatus.strength < status.strength - Consts.STATUS_MINUS_BORDER ||
+                status.defence > Consts.STATUS_MINUS_BORDER &&
+                    pstatus.defence < status.defence - Consts.STATUS_MINUS_BORDER ||
+                status.gold > Consts.STATUS_MINUS_BORDER &&
+                    pstatus.gold < status.gold - Consts.STATUS_MINUS_BORDER) {
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
                 return;
             }
-            status.energy = status.energy > Consts.STATUS_MINUS_BORDER ? Consts.STATUS_MINUS_BORDER - status.energy : status.energy;
-            status.strength = status.strength > Consts.STATUS_MINUS_BORDER ? Consts.STATUS_MINUS_BORDER - status.strength : status.strength;
-            status.defence = status.defence > Consts.STATUS_MINUS_BORDER ? Consts.STATUS_MINUS_BORDER - status.defence : status.defence;
-            status.gold = status.gold > Consts.STATUS_MINUS_BORDER ? Consts.STATUS_MINUS_BORDER - status.gold : status.gold;
+            status.energy = status.energy > Consts.STATUS_MINUS_BORDER ?
+                Consts.STATUS_MINUS_BORDER - status.energy : status.energy;
+            status.strength = status.strength > Consts.STATUS_MINUS_BORDER ?
+                Consts.STATUS_MINUS_BORDER - status.strength : status.strength;
+            status.defence = status.defence > Consts.STATUS_MINUS_BORDER ?
+                Consts.STATUS_MINUS_BORDER - status.defence : status.defence;
+            status.gold = status.gold > Consts.STATUS_MINUS_BORDER ?
+                Consts.STATUS_MINUS_BORDER - status.gold : status.gold;
             this._player.addStatusAll(status);
             this.setStatusChangedEffect(status);
             //  ゲームオーバー
@@ -4371,9 +4540,9 @@ var wwa_main;
                 this.gameover();
                 return;
             }
-            this.setMessageQueue(message, false, false, partsID, 0 /* OBJECT */, pos.clone());
+            this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
             this._wwaData.mapObject[pos.y][pos.x] = 0;
-            this.appearParts(pos, 1 /* OBJECT */, partsID);
+            this.appearParts(pos, wwa_data.AppearanceTriggerType.OBJECT, partsID);
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
         };
         WWA.prototype._execObjectMonsterEvent = function (pos, partsID, objAttr) {
@@ -4398,10 +4567,10 @@ var wwa_main;
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
             }
             // 試験的に(ry
-            this.setMessageQueue(message, true, false, partsID, 0 /* OBJECT */, pos.clone());
+            this.setMessageQueue(message, true, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
             this._yesNoChoicePartsCoord = pos;
             this._yesNoChoicePartsID = partsID;
-            this._yesNoChoiceCallInfo = 2 /* CALL_BY_OBJECT_PARTS */;
+            this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
         };
         WWA.prototype._execObjectSellEvent = function (pos, partsID, objAttr) {
@@ -4413,10 +4582,10 @@ var wwa_main;
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
             }
             // 試験的に(ry
-            this.setMessageQueue(message, true, false, partsID, 0 /* OBJECT */, pos.clone());
+            this.setMessageQueue(message, true, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
             this._yesNoChoicePartsCoord = pos;
             this._yesNoChoicePartsID = partsID;
-            this._yesNoChoiceCallInfo = 2 /* CALL_BY_OBJECT_PARTS */;
+            this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
         };
         WWA.prototype._execObjectItemEvent = function (pos, partsID, objAttr) {
@@ -4428,14 +4597,16 @@ var wwa_main;
                 if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 }
                 else {
-                    this.setMessageQueue(message, false, false, partsID, 0 /* OBJECT */, pos.clone());
-                    this.appearParts(pos, 1 /* OBJECT */, partsID);
+                    this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
+                    this.appearParts(pos, wwa_data.AppearanceTriggerType.OBJECT, partsID);
                 }
             }
             catch (e) {
                 // これ以上、アイテムを持てません
-                if (this._wwaData.systemMessage[1 /* FULL_ITEM */] !== "BLANK") {
-                    this.setMessageQueue(this._wwaData.systemMessage[1 /* FULL_ITEM */] === "" ? "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[1 /* FULL_ITEM */], false, true);
+                if (this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM] !== "BLANK") {
+                    this.setMessageQueue(this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM] === "" ?
+                        "これ以上、アイテムを持てません。" :
+                        this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM], false, true);
                 }
             }
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
@@ -4449,9 +4620,9 @@ var wwa_main;
                     this._player.removeItemByPartsID(itemID);
                 }
                 this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
-                this.setMessageQueue(message, false, false, partsID, 0 /* OBJECT */, pos.clone());
+                this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
-                this.appearParts(pos, 1 /* OBJECT */, partsID);
+                this.appearParts(pos, wwa_data.AppearanceTriggerType.OBJECT, partsID);
                 this._paintSkipByDoorOpen = true;
             }
         };
@@ -4464,10 +4635,10 @@ var wwa_main;
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
             }
             // 試験(ry
-            this.setMessageQueue(message, true, false, partsID, 0 /* OBJECT */, pos.clone());
+            this.setMessageQueue(message, true, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
             this._yesNoChoicePartsCoord = pos;
             this._yesNoChoicePartsID = partsID;
-            this._yesNoChoiceCallInfo = 2 /* CALL_BY_OBJECT_PARTS */;
+            this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
         };
         WWA.prototype._execObjectLocalGateEvent = function (pos, partsID, mapAttr) {
@@ -4485,8 +4656,9 @@ var wwa_main;
             if (jy > Consts.RELATIVE_COORD_LOWER) {
                 jy = playerPos.y + jy - Consts.RELATIVE_COORD_BIAS;
             }
-            this.appearParts(pos, 1 /* OBJECT */, partsID);
-            if (0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth && (jx !== playerPos.x || jy !== playerPos.y)) {
+            this.appearParts(pos, wwa_data.AppearanceTriggerType.OBJECT, partsID);
+            if (0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth &&
+                (jx !== playerPos.x || jy !== playerPos.y)) {
                 this._player.jumpTo(new Position(this, jx, jy, 0, 0));
                 this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
             }
@@ -4496,14 +4668,16 @@ var wwa_main;
             if (!this._isURLGateEnable) {
                 return;
             }
-            if (this._wwaData.message[5 /* ASK_LINK */] === "BLANK") {
+            if (this._wwaData.message[wwa_data.SystemMessage1.ASK_LINK] === "BLANK") {
                 location.href = wwa_util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0]);
                 return;
             }
-            this.setMessageQueue(this._wwaData.message[5 /* ASK_LINK */] === "" ? "他のページにリンクします。\nよろしいですか？" : this._wwaData.message[5 /* ASK_LINK */], true, true);
+            this.setMessageQueue(this._wwaData.message[wwa_data.SystemMessage1.ASK_LINK] === "" ?
+                "他のページにリンクします。\nよろしいですか？" :
+                this._wwaData.message[wwa_data.SystemMessage1.ASK_LINK], true, true);
             this._yesNoChoicePartsCoord = pos;
             this._yesNoChoicePartsID = partsID;
-            this._yesNoChoiceCallInfo = 2 /* CALL_BY_OBJECT_PARTS */;
+            this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
             this._yesNoURL = this._wwaData.message[messageID].split(/\s/g)[0];
         };
         WWA.prototype._execObjectScoreEvent = function (pos, partsID, mapAttr) {
@@ -4524,14 +4698,14 @@ var wwa_main;
             var partsType;
             var gold;
             if (--this._yesNoDispCounter === 0) {
-                if (this._yesNoJudge === 0 /* YES */) {
-                    if (this._yesNoChoiceCallInfo === 1 /* CALL_BY_MAP_PARTS */) {
+                if (this._yesNoJudge === wwa_data.YesNoState.YES) {
+                    if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_MAP_PARTS) {
                         partsType = this._wwaData.mapAttribute[this._yesNoChoicePartsID][Consts.ATR_TYPE];
                         if (partsType === Consts.MAP_URLGATE) {
                             location.href = wwa_util.$escapedURI(this._yesNoURL);
                         }
                     }
-                    else if (this._yesNoChoiceCallInfo === 2 /* CALL_BY_OBJECT_PARTS */) {
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_OBJECT_PARTS) {
                         partsType = this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_TYPE];
                         if (partsType === Consts.OBJECT_BUY) {
                             if (this._player.hasItem(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM])) {
@@ -4539,12 +4713,13 @@ var wwa_main;
                                 gold = this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD];
                                 this._player.earnGold(gold);
                                 this.setStatusChangedEffect(new wwa_data.Status(0, 0, 0, gold));
-                                this.appearParts(this._yesNoChoicePartsCoord, 1 /* OBJECT */, this._yesNoChoicePartsID);
+                                this.appearParts(this._yesNoChoicePartsCoord, wwa_data.AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                             }
                             else {
                                 // アイテムを持っていない
-                                if (this._wwaData.message[7 /* NO_ITEM */] !== "BLANK") {
-                                    this._messageQueue.push(new wwa_message.MessageInfo(this._wwaData.message[7 /* NO_ITEM */] === "" ? "アイテムをもっていない。" : this._wwaData.message[7 /* NO_ITEM */], true));
+                                if (this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] !== "BLANK") {
+                                    this._messageQueue.push(new wwa_message.MessageInfo(this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] === "" ?
+                                        "アイテムをもっていない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM], true));
                                 }
                                 ;
                             }
@@ -4553,9 +4728,11 @@ var wwa_main;
                             if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
                                 if (this._player.canHaveMoreItems()) {
                                     this._player.addItem(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
-                                    var status = new wwa_data.Status(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY], this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_STRENGTH], this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_DEFENCE], -this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD]);
+                                    var status = new wwa_data.Status(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY], this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_STRENGTH], this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_DEFENCE], -this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD] // 払うので、マイナスになります。
+                                    );
                                     var pstatus = this._player.getStatusWithoutEquipments();
-                                    status.energy = status.energy > Consts.STATUS_MINUS_BORDER ? Consts.STATUS_MINUS_BORDER - status.energy : status.energy;
+                                    status.energy = status.energy > Consts.STATUS_MINUS_BORDER ?
+                                        Consts.STATUS_MINUS_BORDER - status.energy : status.energy;
                                     this.setStatusChangedEffect(status);
                                     this._player.addStatusAll(status);
                                     //  ゲームオーバー
@@ -4563,7 +4740,7 @@ var wwa_main;
                                         this.gameover();
                                         return;
                                     }
-                                    this.appearParts(this._yesNoChoicePartsCoord, 1 /* OBJECT */, this._yesNoChoicePartsID);
+                                    this.appearParts(this._yesNoChoicePartsCoord, wwa_data.AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                                 }
                                 else {
                                     // アイテムをボックスがいっぱい
@@ -4572,94 +4749,95 @@ var wwa_main;
                             }
                             else {
                                 // 所持金が足りない
-                                if (this._wwaData.message[6 /* NO_MONEY */] !== "BLANK") {
-                                    this._messageQueue.push(new wwa_message.MessageInfo(this._wwaData.message[6 /* NO_MONEY */] === "" ? "所持金が足りない。" : this._wwaData.message[6 /* NO_MONEY */], true));
+                                if (this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY] !== "BLANK") {
+                                    this._messageQueue.push(new wwa_message.MessageInfo(this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY] === "" ?
+                                        "所持金が足りない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY], true));
                                 }
                             }
                         }
                         else if (partsType === Consts.OBJECT_SELECT) {
-                            this.appearParts(this._yesNoChoicePartsCoord, 2 /* CHOICE_YES */, this._yesNoChoicePartsID);
+                            this.appearParts(this._yesNoChoicePartsCoord, wwa_data.AppearanceTriggerType.CHOICE_YES, this._yesNoChoicePartsID);
                         }
                         else if (partsType === Consts.OBJECT_URLGATE) {
                             location.href = wwa_util.$escapedURI(this._yesNoURL);
                         }
                     }
-                    else if (this._yesNoChoiceCallInfo === 3 /* CALL_BY_ITEM_USE */) {
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_ITEM_USE) {
                         this._player.readyToUseItem(this._yesNoUseItemPos);
                     }
-                    else if (this._yesNoChoiceCallInfo === 5 /* CALL_BY_QUICK_LOAD */) {
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[0 /* QUICK_LOAD */])).classList.remove("onpress");
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_QUICK_LOAD) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD])).classList.remove("onpress");
                         this._stopUpdateByLoadFlag = true;
-                        this._loadType = 0 /* QUICK_LOAD */;
+                        this._loadType = wwa_data.LoadType.QUICK_LOAD;
                     }
-                    else if (this._yesNoChoiceCallInfo === 4 /* CALL_BY_QUICK_SAVE */) {
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[1 /* QUICK_SAVE */])).classList.remove("onpress");
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE])).classList.remove("onpress");
                         this._quickSave();
                     }
-                    else if (this._yesNoChoiceCallInfo === 6 /* CALL_BY_RESTART_GAME */) {
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[2 /* RESTART_GAME */])).classList.remove("onpress");
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.RESTART_GAME])).classList.remove("onpress");
                         this._stopUpdateByLoadFlag = true;
-                        this._loadType = 1 /* RESTART_GAME */;
+                        this._loadType = wwa_data.LoadType.RESTART_GAME;
                     }
-                    else if (this._yesNoChoiceCallInfo === 7 /* CALL_BY_GOTO_WWA */) {
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
                         location.href = wwa_util.$escapedURI(Consts.WWA_HOME);
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[3 /* GOTO_WWA */])).classList.remove("onpress");
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA])).classList.remove("onpress");
                     }
-                    this._yesNoJudge = 2 /* UNSELECTED */;
+                    this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
                     this._setNextMessage();
                     this._yesNoChoicePartsCoord = void 0;
                     this._yesNoChoicePartsID = void 0;
                     this._yesNoUseItemPos = void 0;
-                    this._yesNoChoiceCallInfo = 0 /* NONE */;
+                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.NONE;
                     this._messageWindow.setYesNoChoice(false);
                 }
-                else if (this._yesNoJudge === 1 /* NO */) {
-                    if (this._yesNoChoiceCallInfo === 1 /* CALL_BY_MAP_PARTS */) {
+                else if (this._yesNoJudge === wwa_data.YesNoState.NO) {
+                    if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_MAP_PARTS) {
                         partsType = this._wwaData.mapAttribute[this._yesNoChoicePartsID][Consts.ATR_TYPE];
                         if (partsType === Consts.MAP_URLGATE) {
                         }
                     }
-                    else if (this._yesNoChoiceCallInfo === 2 /* CALL_BY_OBJECT_PARTS */) {
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_OBJECT_PARTS) {
                         partsType = this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_TYPE];
                         if (partsType === Consts.OBJECT_BUY) {
                         }
                         else if (partsType === Consts.OBJECT_SELL) {
                         }
                         else if (partsType === Consts.OBJECT_SELECT) {
-                            this.appearParts(this._yesNoChoicePartsCoord, 3 /* CHOICE_NO */, this._yesNoChoicePartsID);
+                            this.appearParts(this._yesNoChoicePartsCoord, wwa_data.AppearanceTriggerType.CHOICE_NO, this._yesNoChoicePartsID);
                         }
                         else if (partsType === Consts.OBJECT_URLGATE) {
                         }
                     }
-                    else if (this._yesNoChoiceCallInfo === 3 /* CALL_BY_ITEM_USE */) {
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_ITEM_USE) {
                         var bg = (wwa_util.$id("item" + (this._yesNoUseItemPos - 1)));
                         bg.classList.remove("onpress");
                     }
-                    else if (this._yesNoChoiceCallInfo === 5 /* CALL_BY_QUICK_LOAD */) {
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[0 /* QUICK_LOAD */])).classList.remove("onpress");
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_QUICK_LOAD) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD])).classList.remove("onpress");
                     }
-                    else if (this._yesNoChoiceCallInfo === 4 /* CALL_BY_QUICK_SAVE */) {
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[1 /* QUICK_SAVE */])).classList.remove("onpress");
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE])).classList.remove("onpress");
                     }
-                    else if (this._yesNoChoiceCallInfo === 6 /* CALL_BY_RESTART_GAME */) {
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[2 /* RESTART_GAME */])).classList.remove("onpress");
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.RESTART_GAME])).classList.remove("onpress");
                     }
-                    else if (this._yesNoChoiceCallInfo === 7 /* CALL_BY_GOTO_WWA */) {
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[3 /* GOTO_WWA */])).classList.remove("onpress");
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA])).classList.remove("onpress");
                     }
-                    this._yesNoJudge = 2 /* UNSELECTED */;
+                    this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
                     this._setNextMessage();
                     this._yesNoChoicePartsCoord = void 0;
                     this._yesNoChoicePartsID = void 0;
                     this._yesNoUseItemPos = void 0;
-                    this._yesNoChoiceCallInfo = 0 /* NONE */;
+                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.NONE;
                     this._messageWindow.setYesNoChoice(false);
                 }
             }
         };
         WWA.prototype.setMessageQueue = function (message, showChoice, isSystemMessage, partsID, partsType, partsPosition, messageDisplayed) {
             if (partsID === void 0) { partsID = 0; }
-            if (partsType === void 0) { partsType = 0 /* OBJECT */; }
+            if (partsType === void 0) { partsType = wwa_data.PartsType.OBJECT; }
             if (partsPosition === void 0) { partsPosition = new Coord(0, 0); }
             if (messageDisplayed === void 0) { messageDisplayed = false; }
             this._messageQueue = this._messageQueue.concat(this.getMessageQueueByRawMessage(message, partsID, partsType, partsPosition));
@@ -4744,21 +4922,23 @@ var wwa_main;
         WWA.prototype.appearParts = function (pos, triggerType, triggerPartsID) {
             if (triggerPartsID === void 0) { triggerPartsID = 0; }
             var triggerPartsType;
-            var rangeMin = (triggerType === 3 /* CHOICE_NO */) ? Consts.APPERANCE_PARTS_MIN_INDEX_NO : Consts.APPERANCE_PARTS_MIN_INDEX;
-            var rangeMax = (triggerType === 2 /* CHOICE_YES */) ? Consts.APPERANCE_PARTS_MAX_INDEX_YES : Consts.APPERANCE_PARTS_MAX_INDEX;
+            var rangeMin = (triggerType === wwa_data.AppearanceTriggerType.CHOICE_NO) ?
+                Consts.APPERANCE_PARTS_MIN_INDEX_NO : Consts.APPERANCE_PARTS_MIN_INDEX;
+            var rangeMax = (triggerType === wwa_data.AppearanceTriggerType.CHOICE_YES) ?
+                Consts.APPERANCE_PARTS_MAX_INDEX_YES : Consts.APPERANCE_PARTS_MAX_INDEX;
             var targetPartsID;
             var targetPartsType;
             var targetX;
             var targetY;
             var targetPos;
             var i;
-            if (triggerType === 0 /* MAP */) {
+            if (triggerType === wwa_data.AppearanceTriggerType.MAP) {
                 triggerPartsID = (triggerPartsID === 0) ? this._wwaData.map[pos.y][pos.x] : triggerPartsID;
-                triggerPartsType = 1 /* MAP */;
+                triggerPartsType = wwa_data.PartsType.MAP;
             }
             else {
                 triggerPartsID = (triggerPartsID === 0) ? this._wwaData.mapObject[pos.y][pos.x] : triggerPartsID;
-                triggerPartsType = 0 /* OBJECT */;
+                triggerPartsType = wwa_data.PartsType.OBJECT;
             }
             for (i = rangeMin; i <= rangeMax; i++) {
                 var base = Consts.ATR_APPERANCE_BASE + i * Consts.REL_ATR_APPERANCE_UNIT_LENGTH;
@@ -4766,10 +4946,18 @@ var wwa_main;
                 var idxX = base + Consts.REL_ATR_APPERANCE_X;
                 var idxY = base + Consts.REL_ATR_APPERANCE_Y;
                 var idxType = base + Consts.REL_ATR_APPERANCE_TYPE;
-                targetPartsID = (triggerPartsType === 1 /* MAP */) ? this._wwaData.mapAttribute[triggerPartsID][idxID] : this._wwaData.objectAttribute[triggerPartsID][idxID];
-                targetPartsType = (triggerPartsType === 1 /* MAP */) ? this._wwaData.mapAttribute[triggerPartsID][idxType] : this._wwaData.objectAttribute[triggerPartsID][idxType];
-                targetX = (triggerPartsType === 1 /* MAP */) ? this._wwaData.mapAttribute[triggerPartsID][idxX] : this._wwaData.objectAttribute[triggerPartsID][idxX];
-                targetY = (triggerPartsType === 1 /* MAP */) ? this._wwaData.mapAttribute[triggerPartsID][idxY] : this._wwaData.objectAttribute[triggerPartsID][idxY];
+                targetPartsID = (triggerPartsType === wwa_data.PartsType.MAP) ?
+                    this._wwaData.mapAttribute[triggerPartsID][idxID] :
+                    this._wwaData.objectAttribute[triggerPartsID][idxID];
+                targetPartsType = (triggerPartsType === wwa_data.PartsType.MAP) ?
+                    this._wwaData.mapAttribute[triggerPartsID][idxType] :
+                    this._wwaData.objectAttribute[triggerPartsID][idxType];
+                targetX = (triggerPartsType === wwa_data.PartsType.MAP) ?
+                    this._wwaData.mapAttribute[triggerPartsID][idxX] :
+                    this._wwaData.objectAttribute[triggerPartsID][idxX];
+                targetY = (triggerPartsType === wwa_data.PartsType.MAP) ?
+                    this._wwaData.mapAttribute[triggerPartsID][idxY] :
+                    this._wwaData.objectAttribute[triggerPartsID][idxY];
                 if (targetX === Consts.PLAYER_COORD) {
                     targetX = this._player.getPosition().getPartsCoord().x;
                     this._player.resetEventExecutionInfo();
@@ -4789,7 +4977,7 @@ var wwa_main;
                 }
                 try {
                     targetPos = new wwa_data.Position(this, targetX, targetY, 0, 0);
-                    if (targetPartsType === 1 /* MAP */) {
+                    if (targetPartsType === wwa_data.PartsType.MAP) {
                         if (targetPartsID >= this._wwaData.mapPartsMax) {
                             throw new Error("背景パーツの範囲外IDが指定されました");
                         }
@@ -4801,7 +4989,8 @@ var wwa_main;
                         }
                         this._wwaData.mapObject[targetY][targetX] = targetPartsID;
                         this._replaceRandomObject(new Coord(targetX, targetY));
-                        if (targetX === this._player.getPosition().getPartsCoord().x && targetY === this._player.getPosition().getPartsCoord().y) {
+                        if (targetX === this._player.getPosition().getPartsCoord().x &&
+                            targetY === this._player.getPosition().getPartsCoord().y) {
                             this._player.setPartsAppearedFlag();
                         }
                     }
@@ -4851,9 +5040,10 @@ var wwa_main;
                     throw new Error("座標として解釈できない文字が含まれています。");
                 }
             }
+            //    ↑ここまでの例外はマクロ無効化が目的
             try {
                 var targetPos = new wwa_data.Position(this, targetX, targetY, 0, 0); // 範囲外は止める用
-                if (targetPartsType === 1 /* MAP */) {
+                if (targetPartsType === wwa_data.PartsType.MAP) {
                     if (targetPartsID >= this._wwaData.mapPartsMax) {
                         throw new Error("背景パーツの範囲外IDが指定されました");
                     }
@@ -4865,7 +5055,8 @@ var wwa_main;
                     }
                     this._wwaData.mapObject[targetY][targetX] = targetPartsID;
                     this._replaceRandomObject(new Coord(targetX, targetY));
-                    if (targetX === this._player.getPosition().getPartsCoord().x && targetY === this._player.getPosition().getPartsCoord().y) {
+                    if (targetX === this._player.getPosition().getPartsCoord().x &&
+                        targetY === this._player.getPosition().getPartsCoord().y) {
                         this._player.setPartsAppearedFlag();
                     }
                 }
@@ -4918,13 +5109,13 @@ var wwa_main;
             var jx = this._wwaData.gameoverX;
             var jy = this._wwaData.gameoverY;
             if (this._messageWindow.isVisible()) {
-                this._yesNoJudge = 2 /* UNSELECTED */;
+                this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
                 this._messageQueue = []; // force clear!!
                 this._messageWindow.hide();
                 this._yesNoChoicePartsCoord = void 0;
                 this._yesNoChoicePartsID = void 0;
                 this._yesNoUseItemPos = void 0;
-                this._yesNoChoiceCallInfo = 0 /* NONE */;
+                this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.NONE;
                 this._messageWindow.setYesNoChoice(false);
             }
             this._waitTimeInCurrentFrame = Consts.GAMEOVER_FRAME_INTERVAL;
@@ -4961,7 +5152,7 @@ var wwa_main;
             }
         };
         WWA.prototype.setPartsOnPosition = function (partsType, id, pos) {
-            if (partsType === 1 /* MAP */) {
+            if (partsType === wwa_data.PartsType.MAP) {
                 if (id >= this._wwaData.mapPartsMax) {
                     this._wwaData.map[pos.y][pos.x] = 0;
                 }
@@ -5007,7 +5198,7 @@ var wwa_main;
             }
             this._player.systemJumpTo(new wwa_data.Position(this, newData.playerX, newData.playerY, 0, 0));
             if (newData.bgm === 0) {
-                this.playSound(99 /* NO_SOUND */);
+                this.playSound(wwa_data.SystemSound.NO_SOUND);
             }
             else {
                 this.playSound(newData.bgm);
@@ -5056,7 +5247,8 @@ var wwa_main;
             var topY = camPos.getPartsCoord().y;
             var objectsInNextFrame; // y - x
             var localX, localY;
-            if (this.getMapAttributeByPosition(this._player.getPosition(), Consts.ATR_TYPE) === Consts.MAP_LOCALGATE || this.getObjectAttributeByPosition(this._player.getPosition(), Consts.ATR_TYPE) === Consts.OBJECT_LOCALGATE) {
+            if (this.getMapAttributeByPosition(this._player.getPosition(), Consts.ATR_TYPE) === Consts.MAP_LOCALGATE ||
+                this.getObjectAttributeByPosition(this._player.getPosition(), Consts.ATR_TYPE) === Consts.OBJECT_LOCALGATE) {
                 return;
             }
             objectsInNextFrame = new Array(Consts.V_PARTS_NUM_IN_WINDOW + 2);
@@ -5065,7 +5257,8 @@ var wwa_main;
                 objectsInNextFrame[localY + 1] = new Array(Consts.H_PARTS_NUM_IN_WINDOW + 2);
                 this.hoge[localY + 1] = new Array(Consts.H_PARTS_NUM_IN_WINDOW + 2);
                 for (localX = -1; localX <= Consts.H_PARTS_NUM_IN_WINDOW; localX++) {
-                    if (topY + localY < 0 || topY + localY >= this._wwaData.mapWidth || leftX + localX < 0 || leftX + localX >= this._wwaData.mapWidth) {
+                    if (topY + localY < 0 || topY + localY >= this._wwaData.mapWidth ||
+                        leftX + localX < 0 || leftX + localX >= this._wwaData.mapWidth) {
                         objectsInNextFrame[localY + 1][localX + 1] = 0;
                         this.hoge[localY + 1][localX + 1] = 0;
                         continue;
@@ -5085,11 +5278,13 @@ var wwa_main;
                     this.hoge[localY + 1][localX + 1] = -this._wwaData.mapObject[posc.y][posc.x];
                 }
             }
+            //            for (localY = -1; localY <= Consts.V_PARTS_NUM_IN_WINDOW; localY++) {
             for (localX = -1; localX <= Consts.H_PARTS_NUM_IN_WINDOW; localX++) {
                 //                if (topY + localY < 0 || topY + localY >= this._wwaData.mapWidth) {
                 if (leftX + localX < 0 || leftX + localX >= this._wwaData.mapWidth) {
                     continue;
                 }
+                //                for (localX = -1; localX <= Consts.H_PARTS_NUM_IN_WINDOW; localX++) {
                 for (localY = -1; localY <= Consts.V_PARTS_NUM_IN_WINDOW; localY++) {
                     //                    if (leftX + localX < 0 || leftX + localX >= this._wwaData.mapWidth) {
                     if (topY + localY < 0 || topY + localY >= this._wwaData.mapWidth) {
@@ -5103,11 +5298,13 @@ var wwa_main;
                         continue;
                     }
                     var partsID = this._wwaData.mapObject[posc.y][posc.x];
-                    if (partsID === 0 || this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] === 0 /* STATIC */ || this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE) {
+                    if (partsID === 0 ||
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] === wwa_data.MoveType.STATIC ||
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE) {
                         continue;
                     }
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
-                    if (moveMode !== 3 /* HANG_AROUND */) {
+                    if (moveMode !== wwa_data.MoveType.HANG_AROUND) {
                         var candCoord = this._getCandidateCoord(playerIsMoving, pos, moveMode);
                         var xCand = new Coord(candCoord.x, posc.y);
                         var yCand = new Coord(posc.x, candCoord.y);
@@ -5118,10 +5315,10 @@ var wwa_main;
                         }
                         else {
                             var mode = this._getSecondCandidateMoveMode(playerIsMoving, posc, candCoord, xCand, yCand, this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_MONSTER, objectsInNextFrame);
-                            if (mode === 0 /* MODE_X */) {
+                            if (mode === wwa_data.SecondCandidateMoveType.MODE_X) {
                                 this._setObjectsInNextFrame(posc, xCand, leftX, topY, objectsInNextFrame, partsID);
                             }
-                            else if (mode === 1 /* MODE_Y */) {
+                            else if (mode === wwa_data.SecondCandidateMoveType.MODE_Y) {
                                 this._setObjectsInNextFrame(posc, yCand, leftX, topY, objectsInNextFrame, partsID);
                             }
                             else {
@@ -5158,13 +5355,21 @@ var wwa_main;
             var candidateCoord = currentCoord.clone();
             var dx = 0;
             var dy = 0;
-            if (moveType === 1 /* CHASE_PLAYER */) {
-                dx = currentCoord.x > playerNextCoord.x ? 1 : currentCoord.x < playerNextCoord.x ? -1 : 0;
-                dy = currentCoord.y > playerNextCoord.y ? 1 : currentCoord.y < playerNextCoord.y ? -1 : 0;
+            if (moveType === wwa_data.MoveType.CHASE_PLAYER) {
+                dx =
+                    currentCoord.x > playerNextCoord.x ? 1 :
+                        currentCoord.x < playerNextCoord.x ? -1 : 0;
+                dy =
+                    currentCoord.y > playerNextCoord.y ? 1 :
+                        currentCoord.y < playerNextCoord.y ? -1 : 0;
             }
-            else if (moveType === 2 /* RUN_OUT */) {
-                dx = currentCoord.x > playerNextCoord.x ? -1 : currentCoord.x < playerNextCoord.x ? 1 : 0;
-                dy = currentCoord.y > playerNextCoord.y ? -1 : currentCoord.y < playerNextCoord.y ? 1 : 0;
+            else if (moveType === wwa_data.MoveType.RUN_OUT) {
+                dx =
+                    currentCoord.x > playerNextCoord.x ? -1 :
+                        currentCoord.x < playerNextCoord.x ? 1 : 0;
+                dy =
+                    currentCoord.y > playerNextCoord.y ? -1 :
+                        currentCoord.y < playerNextCoord.y ? 1 : 0;
             }
             candidateCoord.x -= dx;
             candidateCoord.y -= dy;
@@ -5173,27 +5378,29 @@ var wwa_main;
             return candidateCoord;
         };
         WWA.prototype._getSecondCandidateMoveMode = function (playerIsMoving, current, firstCandidate, xCand, yCand, isMonster, objectsInNextFrame) {
-            if (playerIsMoving && ((this._player.getDir() === 3 /* UP */ || this._player.getDir() === 2 /* DOWN */) && isMonster || (this._player.getDir() === 0 /* LEFT */ || this._player.getDir() === 1 /* RIGHT */) && !isMonster)) {
+            if (playerIsMoving && ((this._player.getDir() === wwa_data.Direction.UP || this._player.getDir() === wwa_data.Direction.DOWN) && isMonster ||
+                (this._player.getDir() === wwa_data.Direction.LEFT || this._player.getDir() === wwa_data.Direction.RIGHT) && !isMonster)) {
                 // 移動Yモード
                 if (this._objectCanMoveTo(playerIsMoving, yCand, objectsInNextFrame)) {
-                    return 1 /* MODE_Y */;
+                    return wwa_data.SecondCandidateMoveType.MODE_Y;
                 }
                 if (this._objectCanMoveTo(playerIsMoving, xCand, objectsInNextFrame)) {
-                    return 0 /* MODE_X */;
+                    return wwa_data.SecondCandidateMoveType.MODE_X;
                 }
-                return 2 /* UNDECIDED */;
+                return wwa_data.SecondCandidateMoveType.UNDECIDED;
             }
             // 移動Xモード
             if (this._objectCanMoveTo(playerIsMoving, xCand, objectsInNextFrame)) {
-                return 0 /* MODE_X */;
+                return wwa_data.SecondCandidateMoveType.MODE_X;
             }
             if (this._objectCanMoveTo(playerIsMoving, yCand, objectsInNextFrame)) {
-                return 1 /* MODE_Y */;
+                return wwa_data.SecondCandidateMoveType.MODE_Y;
             }
-            return 2 /* UNDECIDED */;
+            return wwa_data.SecondCandidateMoveType.UNDECIDED;
         };
         WWA.prototype._getThirdCandidate = function (playerIsMoving, currentPos, firstCandidate, mode, objectsInNextFrame) {
-            var dir = mode === 1 /* CHASE_PLAYER */ ? 1 : mode === 2 /* RUN_OUT */ ? -1 : 0;
+            var dir = mode === wwa_data.MoveType.CHASE_PLAYER ? 1 :
+                mode === wwa_data.MoveType.RUN_OUT ? -1 : 0;
             var npCoord = playerIsMoving ? this._player.getPosition().getNextJustPosition().getPartsCoord() : this._player.getPosition().getPartsCoord();
             var currentCoord = currentPos.getPartsCoord();
             var testCoord;
@@ -5266,7 +5473,8 @@ var wwa_main;
             }
             var targetX = candCoord.x - leftX + 1;
             var targetY = candCoord.y - topY + 1;
-            if (0 <= targetX && 0 <= targetY && targetX < objectsInNextFrame.length && targetY < objectsInNextFrame.length) {
+            if (0 <= targetX && 0 <= targetY &&
+                targetX < objectsInNextFrame.length && targetY < objectsInNextFrame.length) {
                 if (objectsInNextFrame[targetY][targetX] !== 0) {
                     return false;
                 }
@@ -5307,7 +5515,7 @@ var wwa_main;
             var yTop = Math.max(0, cpParts.y);
             var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1;
             var monsterList = [];
-            this.playSound(1 /* DECISION */);
+            this.playSound(wwa_data.SystemSound.DECISION);
             for (var x = xLeft; x <= xRight; x++) {
                 for (var y = yTop; y <= yBottom; y++) {
                     var pid = this._wwaData.mapObject[y][x];
@@ -5332,7 +5540,23 @@ var wwa_main;
         };
         WWA.prototype._displayHelp = function () {
             if (this._player.isControllable()) {
-                this.setMessageQueue("【ショートカットキーの一覧】\n" + "Ｆ１、Ｍ：戦闘結果予測の表示\n" + "Ｆ５：一時保存データの読み込み\n" + "Ｆ６：データの一時保存\n" + "Ｆ７：初めからスタート\n" + "Ｆ８：ＷＷＡ公式ページにリンク\n" + "Ｆ１２：このリストの表示\n" + "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" + "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" + " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" + "現在の移動回数：" + this._player.getMoveCount() + "\n" + "WWA Wing バージョン:" + Consts.VERSION_WWAJS, false, true);
+                this.setMessageQueue("【ショートカットキーの一覧】\n" +
+                    "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
+                    //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
+                    //                                "Ｆ３：復帰用パスワード入力\n" +
+                    //                                "Ｆ４：復帰用パスワード表示\n" +
+                    "Ｆ５：一時保存データの読み込み\n" +
+                    "Ｆ６：データの一時保存\n" +
+                    "Ｆ７：初めからスタート\n" +
+                    "Ｆ８：ＷＷＡ公式ページにリンク\n" +
+                    //                               "Ｆ９、Ｇ：描画モードの切り換え\n" +
+                    "Ｆ１２：このリストの表示\n" +
+                    //                                "Ｌ：リンクを別のウィンドウで開く\n" +
+                    "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
+                    "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
+                    " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" +
+                    "現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS, false, true);
             }
         };
         WWA.prototype._setNextMessage = function (displayCenter) {
@@ -5390,11 +5614,11 @@ var wwa_main;
                 this._player.clearMessageWaiting();
             }
             else {
-                this.setMessageQueue(this.getMessageById(mesID), false, false, itemID, 0 /* OBJECT */, this._player.getPosition().getPartsCoord(), true);
+                this.setMessageQueue(this.getMessageById(mesID), false, false, itemID, wwa_data.PartsType.OBJECT, this._player.getPosition().getPartsCoord(), true);
             }
         };
         WWA.prototype.replaceParts = function (srcID, destID, partsType, onlyThisSight) {
-            if (partsType === void 0) { partsType = 0 /* OBJECT */; }
+            if (partsType === void 0) { partsType = wwa_data.PartsType.OBJECT; }
             if (onlyThisSight === void 0) { onlyThisSight = false; }
             var cpParts = this._camera.getPosition().getPartsCoord();
             var xLeft = onlyThisSight ? Math.max(0, cpParts.x) : 0;
@@ -5403,7 +5627,7 @@ var wwa_main;
             var yBottom = onlyThisSight ? Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1 : this._wwaData.mapWidth - 1;
             for (var x = xLeft; x <= xRight; x++) {
                 for (var y = yTop; y <= yBottom; y++) {
-                    if (partsType === 0 /* OBJECT */) {
+                    if (partsType === wwa_data.PartsType.OBJECT) {
                         var pid = this._wwaData.mapObject[y][x];
                         if (pid === srcID) {
                             this._wwaData.mapObject[y][x] = destID;
@@ -5467,19 +5691,19 @@ var wwa_main;
             return pos;
         };
         WWA.prototype.setPlayerStatus = function (type, value) {
-            if (type === 0 /* ENERGY */) {
+            if (type === wwa_data.MacroStatusIndex.ENERGY) {
                 this._player.setEnergy(value);
             }
-            else if (type === 1 /* STRENGTH */) {
+            else if (type === wwa_data.MacroStatusIndex.STRENGTH) {
                 this._player.setStrength(value);
             }
-            else if (type === 2 /* DEFENCE */) {
+            else if (type === wwa_data.MacroStatusIndex.DEFENCE) {
                 this._player.setDefence(value);
             }
-            else if (type === 3 /* GOLD */) {
+            else if (type === wwa_data.MacroStatusIndex.GOLD) {
                 this._player.setGold(value);
             }
-            else if (type === 4 /* MOVES */) {
+            else if (type === wwa_data.MacroStatusIndex.MOVES) {
                 this._player.setMoveCount(value);
             }
             else {
@@ -5564,31 +5788,41 @@ var wwa_main;
                 }
             }
             if (this._sheet.addRule !== void 0) {
-                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.addRule("div.wwa-message-window", "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1) ;" + "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" + "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);");
-                this._stylePos[1 /* SIDEBAR */] = this._sheet.addRule("div#wwa-sidebar", "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);" + "font-weight: bold;");
+                this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.addRule("div.wwa-message-window", "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1) ;" +
+                    "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" +
+                    "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);");
+                this._stylePos[wwa_data.SelectorType.SIDEBAR] = this._sheet.addRule("div#wwa-sidebar", "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);" +
+                    "font-weight: bold;");
             }
             else {
-                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.insertRule("div.wwa-message-window {\n" + "background-color: rgb(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ");\n" + "border-color: rgb(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ");\n" + "color: rgb(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ");\n" + "}", 0);
-                this._stylePos[1 /* SIDEBAR */] = this._sheet.insertRule("div#wwa-sidebar {\n" + "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);\n" + "font-weight: bold;\n" + "}", 1);
+                this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule("div.wwa-message-window {\n" +
+                    "background-color: rgb(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ");\n" +
+                    "border-color: rgb(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ");\n" +
+                    "color: rgb(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ");\n" +
+                    "}", 0);
+                this._stylePos[wwa_data.SelectorType.SIDEBAR] = this._sheet.insertRule("div#wwa-sidebar {\n" +
+                    "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);\n" +
+                    "font-weight: bold;\n" +
+                    "}", 1);
             }
         };
         WWA.prototype.changeStyleRule = function (type, r, g, b) {
-            if (type === 0 /* COLOR_FRAME */) {
+            if (type === wwa_data.ChangeStyleType.COLOR_FRAME) {
                 this._wwaData.frameColorR = r;
                 this._wwaData.frameColorG = g;
                 this._wwaData.frameColorB = b;
             }
-            else if (type === 1 /* COLOR_FRAMEOUT */) {
+            else if (type === wwa_data.ChangeStyleType.COLOR_FRAMEOUT) {
                 this._wwaData.frameOutColorR = r;
                 this._wwaData.frameOutColorG = g;
                 this._wwaData.frameOutColorB = b;
             }
-            else if (type === 2 /* COLOR_STR */) {
+            else if (type === wwa_data.ChangeStyleType.COLOR_STR) {
                 this._wwaData.fontColorR = r;
                 this._wwaData.fontColorG = g;
                 this._wwaData.fontColorB = b;
             }
-            else if (type === 4 /* COLOR_STATUS_STR */) {
+            else if (type === wwa_data.ChangeStyleType.COLOR_STATUS_STR) {
                 this._wwaData.statusColorR = r;
                 this._wwaData.statusColorG = g;
                 this._wwaData.statusColorB = b;
@@ -5623,7 +5857,9 @@ var wwa_main;
                 return mes; // Gecko and WebKit
             }
         });
-        var titleImgName = wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG : util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
+        var titleImgName = wwap_mode ?
+            Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG :
+            util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
         wwa_inject_html.inject(util.$id("wwa-wrapper"), titleImgName === null ? "cover.gif" : titleImgName);
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
         var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
