@@ -5,7 +5,7 @@ WWA( http://wwajp.com )のJavaScript実装です。
 - ビルドはこのREADMEがあるディレクトリで、端末等から<code>make</code>でできます。 
 - TypeScriptのコンパイラとGoogle Closure Compilerが必要です。ディレクトリ「closure」にコンパイラのjarファイルを置いてください。
 - 成果物は、TypeScriptでコンパイルした結果が「wwa.long.js」で、Closure Compilerで minify した結果が「wwa.js」です。
-- 配布用ZIPを作りたい場合はディレクトリ「__DISTRIBUTE__」へ。
+- 配布用ZIPを作りたい場合はディレクトリ「\_\_DISTRIBUTE\_\_」へ。
 
 ## ライセンス
 MIT License。詳しくは「LICENCE」ファイルを参照。
