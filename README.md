@@ -1,4 +1,17 @@
 # WWA Wing
+WWA( http://wwajp.com )のJavaScript実装です。
+## とりあえず触りたい人へ
+- src ディレクトリにすべての元になっているTypeScriptソースがあります。
+- ビルドはこのREADMEがあるディレクトリで、端末等から<code>make</code>でできます。 
+- TypeScriptのコンパイラとGoogle Closure Compilerが必要です。ディレクトリ「closure」にコンパイラのjarファイルを置いてください。
+- 成果物は、TypeScriptでコンパイルした結果が「wwa.long.js」で、Closure Compilerで minify した結果が「wwa.js」です。
+- 配布用ZIPを作りたい場合はディレクトリ「__DISTRIBUTE__」へ。
+
+## ライセンス
+MIT License。詳しくは「LICENCE」ファイルを参照。
+ただし、マニュアル「manual.html」のみ CC BY 4.0。
+### 同梱物のライセンスについて
+同梱されているマップデータファイル「caves01.dat」「caves02.dat」 「island02.dat」「wwamap.dat」、 ゲーム中で使用される画像の内「caves01.gif」「caves02.gif」「island02.gif」「making.gif」「mapcg.gif」および WWA作成ツールに関しての著作権は原作者NAO氏が保持し、取り扱いについてはキャラバンサークル で定める通りとし、WWA Debuggerの実行ファイルおよびインストーラのバッチファイルに関しての著作権は、原作者Aruneko氏および アイコン制作者プチ氏が保持し、取り扱いについては同梱しているWWA Debuggerの説明文書によるものとします。
 
 ## 構成(W3.13b++)
 ### ディレクトリ
