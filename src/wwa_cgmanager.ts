@@ -6,7 +6,6 @@
 module wwa_cgmanager {
     import Consts = wwa_data.WWAConsts;
     import Position = wwa_data.Position;
-
     export class CGManager {
         private _ctx: CanvasRenderingContext2D;
         private _ctxSub: CanvasRenderingContext2D;

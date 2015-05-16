@@ -1,9 +1,10 @@
 .PHONY: all
-all: wwawing_dist.zip wwawing_update.zip
-
-wwawing_dist.zip: ../debugger/installer.bat ../debugger/uninstaller.bat ../debugger/readme.txt ../debugger/WWA\ Debugger.exe ../wwamk310/WinWwamk.exe ../wwamk310/作成ツールについて.txt ../manual.html ../caves01.dat ../caves01.gif ../dist_html/caves01.html ../caves02.dat ../caves02.gif ../dist_html/caves02.html ../cover.gif ../island02.dat ../island02.gif ../dist_html/island02.html ../making.gif ../mapcg.gif ../style.css ../wwa.css ../wwa.js ../wwaload.js ../dist_html/wwamap.html ../wwawing-disp.png ../wwamap.dat ../audio
-	mkdir wwawing_dist
-	cd wwawing_dist; \
+all: wwawing_dist wwawing_update
+.PHONY: zip
+zip: wwawing_dist.zip wwawing_update.zip
+wwawing_dist: ../debugger/installer.bat ../debugger/uninstaller.bat ../debugger/readme.txt ../debugger/WWA\ Debugger.exe ../wwamk310/WinWwamk.exe ../wwamk310/作成ツールについて.txt ../manual.html ../caves01.dat ../caves01.gif ../dist_html/caves01.html ../caves02.dat ../caves02.gif ../dist_html/caves02.html ../cover.gif ../island02.dat ../island02.gif ../dist_html/island02.html ../making.gif ../mapcg.gif ../style.css ../wwa.css ../wwa.js ../wwaload.js ../dist_html/wwamap.html ../wwawing-disp.png ../wwamap.dat ../audio
+	mkdir wwawing_dist.tmp
+	cd wwawing_dist.tmp; \
 	mkdir wwa_debugger_installer; \
 	cd wwa_debugger_installer; \
 	cp ../../../debugger/installer.bat .; \
@@ -39,25 +40,33 @@ wwawing_dist.zip: ../debugger/installer.bat ../debugger/uninstaller.bat ../debug
 	mkdir backup; \
 	mkdir audio; \
 	cp -R ../../../audio .
-	convmv -f utf-8 -t cp932 -r --notest wwawing_dist/
-	zip -r $@ wwawing_dist
-	convmv -f cp932 -t utf-8 -r --notest wwawing_dist/
+	mv wwawing_dist.tmp $@
 
-wwawing_update.zip:
-	mkdir wwawing_update
-	cp ../wwa.css wwawing_update
-	cp ../style.css wwawing_update
-	cp ../wwa.js wwawing_update
-	cp ../wwaload.js wwawing_update
-	cp ../manual.html wwawing_update
-	convmv -f utf-8 -t cp932 -r --notest wwawing_update/
+wwawing_dist.zip: wwawing_dist
+#	convmv -f utf-8 -t cp932 -r --notest wwawing_dist/
+	zip -r $@ wwawing_dist
+#	convmv -f cp932 -t utf-8 -r --notest wwawing_dist/
+
+wwawing_update:
+	mkdir wwawing_update.tmp
+	cp ../wwa.css wwawing_update.tmp
+	cp ../style.css wwawing_update.tmp
+	cp ../wwa.js wwawing_update.tmp
+	cp ../wwaload.js wwawing_update.tmp
+	cp ../manual.html wwawing_update.tmp
+	mv wwawing_update.tmp $@
+
+wwawing_update.zip: wwawing_update
+#	convmv -f utf-8 -t cp932 -r --notest wwawing_update/
 	zip -r $@ wwawing_update
-	convmv -f cp932 -t utf-8 -r --notest wwawing_update/
+#	convmv -f cp932 -t utf-8 -r --notest wwawing_update/
 
 .PHONY: clean
 clean:
 	$(RM) -r wwawing_dist
+	$(RM) -r wwawing_dist.tmp
 	$(RM) -r wwawing_update
+	$(RM) -r wwawing_update.tmp
 	$(RM) wwawing_dist.zip
 	$(RM) wwawing_update.zip
 
