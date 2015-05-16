@@ -6,6 +6,7 @@ WWA( http://wwajp.com )のJavaScript実装です。
 - TypeScriptのコンパイラとGoogle Closure Compilerが必要です。ディレクトリ「closure」にコンパイラのjarファイルを置いてください。
 - 成果物は、TypeScriptでコンパイルした結果が「wwa.long.js」で、Closure Compilerで minify した結果が「wwa.js」です。
 - 配布用ZIPを作りたい場合はディレクトリ「\_\_DISTRIBUTE\_\_」へ。
+- wwaload.js と wwaload.noworker は WWALoader( https://github.com/WWAWing/WWALoader )により生成されたものです。
 
 ## ライセンス
 - MIT License。詳しくは「LICENSE」ファイルを参照。
@@ -46,3 +47,8 @@ WWA( http://wwajp.com )のJavaScript実装です。
 ├── wwaload.noworker.js(Workerなし版)
 └── wwawing-disp.png - バナー
 </pre>
+
+## その他
+不具合を発見された場合は、issuesかPull Requestまで。Githubのアカウントを持っていない場合はバグ報告板( http://jbbs.shitaraba.net/netgame/14732/ )まで。
+
+WWA Wing - http://wwawing.com
