@@ -13,7 +13,7 @@ WWA( http://wwajp.com )のJavaScript実装です。
 - ただし、マニュアル「manual.html」のみ CC BY 4.0。→<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a>
 
 ### 同梱物のライセンスについて
-同梱されているマップデータファイル「caves01.dat」「caves02.dat」 「island02.dat」「wwamap.dat」、 ゲーム中で使用される画像の内「caves01.gif」「caves02.gif」「island02.gif」「making.gif」「mapcg.gif」および WWA作成ツールに関しての著作権は原作者NAO氏が保持し、取り扱いについてはキャラバンサークル で定める通りとし、WWA Debuggerの実行ファイルおよびインストーラのバッチファイルに関しての著作権は、原作者Aruneko氏および アイコン制作者プチ氏が保持し、取り扱いについては同梱しているWWA Debuggerの説明文書によるものとします。
+同梱されているマップデータファイル「caves01.dat」「caves02.dat」 「island02.dat」「wwamap.dat」、 ゲーム中で使用される画像の内「caves01.gif」「caves02.gif」「island02.gif」「making.gif」「mapcg.gif」および WWA作成ツールに関しての著作権は原作者NAO氏が保持し、取り扱いについてはキャラバンサークル( http://wwajp.com )で定める通りとし、WWA Debuggerの実行ファイルおよびインストーラのバッチファイルに関しての著作権は、原作者Aruneko氏および アイコン制作者プチ氏が保持し、取り扱いについては同梱しているWWA Debuggerの説明文書によるものとします。
 
 ## 構成(W3.13b++)
 ### ディレクトリ
