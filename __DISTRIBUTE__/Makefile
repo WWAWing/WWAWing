@@ -2,9 +2,10 @@
 all: wwawing_dist wwawing_update
 .PHONY: zip
 zip: wwawing_dist.zip wwawing_update.zip
-wwawing_dist: ../debugger/installer.bat ../debugger/uninstaller.bat ../debugger/readme.txt ../debugger/WWA\ Debugger.exe ../wwamk310/WinWwamk.exe ../wwamk310/作成ツールについて.txt ../manual.html ../caves01.dat ../caves01.gif ../dist_html/caves01.html ../caves02.dat ../caves02.gif ../dist_html/caves02.html ../cover.gif ../island02.dat ../island02.gif ../dist_html/island02.html ../making.gif ../mapcg.gif ../style.css ../wwa.css ../wwa.js ../wwaload.js ../dist_html/wwamap.html ../wwawing-disp.png ../wwamap.dat ../audio
+wwawing_dist: ../LICENSE ../debugger/installer.bat ../debugger/uninstaller.bat ../debugger/readme.txt ../debugger/WWA\ Debugger.exe ../wwamk310/WinWwamk.exe ../wwamk310/作成ツールについて.txt ../manual.html ../caves01.dat ../caves01.gif ../dist_html/caves01.html ../caves02.dat ../caves02.gif ../dist_html/caves02.html ../classictitle.gif ../cover.gif ../island02.dat ../island02.gif ../dist_html/island02.html ../making.gif ../mapcg.gif ../style.css ../wwa.css ../wwa.js ../wwaload.js ../dist_html/wwamap.html ../wwawing-disp.png ../wwamap.dat ../audio
 	mkdir wwawing_dist.tmp
 	cd wwawing_dist.tmp; \
+	cp ../../LICENSE .; \
 	mkdir wwa_debugger_installer; \
 	cd wwa_debugger_installer; \
 	cp ../../../debugger/installer.bat .; \
@@ -24,6 +25,7 @@ wwawing_dist: ../debugger/installer.bat ../debugger/uninstaller.bat ../debugger/
 	cp ../../../caves02.dat .; \
 	cp ../../../caves02.gif .; \
 	cp ../../../dist_html/caves02.html .; \
+	cp ../../../classictitle.gif .; \
 	cp ../../../cover.gif .; \
 	cp ../../../island02.dat .; \
 	cp ../../../island02.gif .; \
@@ -47,8 +49,9 @@ wwawing_dist.zip: wwawing_dist
 	zip -r $@ wwawing_dist
 #	convmv -f cp932 -t utf-8 -r --notest wwawing_dist/
 
-wwawing_update:
+wwawing_update: ../LICENSE ../wwa.css ../style.css ../wwa.js ../wwaload.js ../manual.html
 	mkdir wwawing_update.tmp
+	cp ../LICENSE wwawing_update.tmp
 	cp ../wwa.css wwawing_update.tmp
 	cp ../style.css wwawing_update.tmp
 	cp ../wwa.js wwawing_update.tmp
