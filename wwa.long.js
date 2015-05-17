@@ -2304,12 +2304,12 @@ var wwa_message;
             this._parentElement = _parentElement;
             this._element = document.createElement("div");
             this._element.style.position = "absolute";
-            this._element.style.borderWidth = "1px";
+            this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "5px";
+            this._element.style.borderRadius = "10px";
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = zIndex + "";
-            this._element.style.opacity = "0.9";
+            //            this._element.style.opacity = "0.9";
             this._element.style.left = this._coord.x + "px";
             this._element.style.top = this._coord.y + "px";
             this._element.style.width = this._width + "px";
@@ -2427,14 +2427,14 @@ var wwa_message;
             this._isYesno = isYesno;
             this._element = document.createElement("div");
             this._element.style.position = "absolute";
-            this._element.style.borderWidth = "1px";
+            this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "5px";
+            this._element.style.borderRadius = "10px";
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = "400";
-            this._element.style.opacity = "0.9";
+            //            this._element.style.opacity = "0.9";
             this._msgWrapperElement = document.createElement("div");
-            this._msgWrapperElement.style.padding = "5px";
+            this._msgWrapperElement.style.padding = "7px";
             this._msgWrapperElement.style.margin = "0";
             this._msgWrapperElement.style.textAlign = "left";
             this._msgWrapperElement.style.wordWrap = "break-word";
@@ -3305,7 +3305,7 @@ var wwa_main;
                 _this._cgManager = new CGManager(ctx, ctxSub, _this._wwaData.mapCGName, function () {
                     if (_this._wwaData.systemMessage[2 /* LOAD_SE */] === "ON") {
                         _this._isLoadedSound = true;
-                        _this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" + "(iOS, Android端末では音楽は再生されません。)", false, true);
+                        _this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" + "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
                         _this.loadSound();
                         setTimeout(_this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, _this);
                         return;
@@ -3316,7 +3316,7 @@ var wwa_main;
                         _this.openGameWindow();
                         return;
                     }
-                    _this._messageWindow.setMessage((_this._wwaData.systemMessage[2 /* LOAD_SE */] === "" ? "効果音・ＢＧＭデータをロードしますか？" : _this._wwaData.systemMessage[2 /* LOAD_SE */]) + "\n(iOS, Android端末では音楽は再生されません。)");
+                    _this._messageWindow.setMessage((_this._wwaData.systemMessage[2 /* LOAD_SE */] === "" ? "効果音・ＢＧＭデータをロードしますか？" : _this._wwaData.systemMessage[2 /* LOAD_SE */]) + "\n※iOS, Android端末では、選択に関わらず音楽が再生されないことがあります。");
                     _this._messageWindow.show();
                     _this._setProgressBar(getProgress(4, 4, 7 /* GAME_INIT */));
                     var timer = setInterval(function () {
@@ -5564,11 +5564,11 @@ var wwa_main;
                 }
             }
             if (this._sheet.addRule !== void 0) {
-                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.addRule("div.wwa-message-window", "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1) ;" + "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" + "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);");
+                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.addRule("div.wwa-message-window, div#wwa-battle-estimate", "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);" + "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" + "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);");
                 this._stylePos[1 /* SIDEBAR */] = this._sheet.addRule("div#wwa-sidebar", "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);" + "font-weight: bold;");
             }
             else {
-                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.insertRule("div.wwa-message-window {\n" + "background-color: rgb(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ");\n" + "border-color: rgb(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ");\n" + "color: rgb(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ");\n" + "}", 0);
+                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.insertRule("div.wwa-message-window, div#wwa-battle-estimate {\n" + "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);\n" + "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);\n" + "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);\n" + "}", 0);
                 this._stylePos[1 /* SIDEBAR */] = this._sheet.insertRule("div#wwa-sidebar {\n" + "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);\n" + "font-weight: bold;\n" + "}", 1);
             }
         };

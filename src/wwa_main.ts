@@ -480,7 +480,7 @@ module wwa_main {
                     if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "ON") {
                         this._isLoadedSound = true;
                         this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
-                            "(iOS, Android端末では音楽は再生されません。)", false, true);
+                            "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
                         this.loadSound();
                         setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
                         
@@ -497,7 +497,7 @@ module wwa_main {
                         this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "" ?
                         "効果音・ＢＧＭデータをロードしますか？" :
                         this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE]
-                        ) + "\n(iOS, Android端末では音楽は再生されません。)");
+                        ) + "\n※iOS, Android端末では、選択に関わらず音楽が再生されないことがあります。");
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, wwa_data.LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
@@ -3158,8 +3158,8 @@ module wwa_main {
             }
             if (this._sheet.addRule !== void 0) {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(
-                    "div.wwa-message-window",
-                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1) ;" +
+                    "div.wwa-message-window, div#wwa-battle-estimate",
+                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);" +
                     "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" +
                     "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);"
                     );
@@ -3170,10 +3170,10 @@ module wwa_main {
                     );
             } else {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(
-                    "div.wwa-message-window {\n"+
-                        "background-color: rgb(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ");\n" + 
-                        "border-color: rgb(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ");\n" +
-                       "color: rgb(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ");\n" +
+                    "div.wwa-message-window, div#wwa-battle-estimate {\n"+
+                        "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);\n" +
+                        "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);\n" +
+                       "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);\n" +
                     "}",0);
                 this._stylePos[wwa_data.SelectorType.SIDEBAR] = this._sheet.insertRule(
                     "div#wwa-sidebar {\n" +

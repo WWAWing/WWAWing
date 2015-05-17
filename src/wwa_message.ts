@@ -451,12 +451,12 @@ module wwa_message {
             ) {
             this._element = document.createElement("div");
             this._element.style.position = "absolute";
-            this._element.style.borderWidth = "1px";
+            this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "5px"
+            this._element.style.borderRadius = "10px"
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = zIndex + "";
-            this._element.style.opacity = "0.9";
+//            this._element.style.opacity = "0.9";
             this._element.style.left = this._coord.x + "px";
             this._element.style.top = this._coord.y + "px";
             this._element.style.width = this._width + "px";
@@ -633,14 +633,14 @@ module wwa_message {
             this._isYesno = isYesno;
             this._element = document.createElement("div");
             this._element.style.position = "absolute";
-            this._element.style.borderWidth = "1px";
+            this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "5px";
+            this._element.style.borderRadius = "10px";
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = "400";
-            this._element.style.opacity = "0.9";
+//            this._element.style.opacity = "0.9";
             this._msgWrapperElement = document.createElement("div");
-            this._msgWrapperElement.style.padding = "5px";
+            this._msgWrapperElement.style.padding = "7px";
             this._msgWrapperElement.style.margin = "0";
             this._msgWrapperElement.style.textAlign = "left";
             this._msgWrapperElement.style.wordWrap = "break-word";
