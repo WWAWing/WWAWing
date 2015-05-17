@@ -2122,12 +2122,19 @@ module wwa_main {
             isSystemMessage: boolean = false): wwa_message.MessageInfo[]{
 
             // コメント削除
-            var messageMain = message.split(/\<c\>/i)[0].replace(/\<p\>\n/ig, "<P>");
+            var messageMain = message
+                .split(/\n\<c\>/i)[0]
+                .split(/\<c\>/i)[0]
+                .replace(/\n\<p\>\n/ig, "<P>")
+                .replace(/\n\<p\>/ig, "<P>")
+                .replace(/\<p\>\n/ig, "<P>")
+                .replace(/\<p\>/ig, "<P>");
+
             var messageQueue: wwa_message.MessageInfo[] = [];
             if (messageMain !== "") {
                 var rawQueue = messageMain.split(/\<p\>/ig);
                 for (var j = 0; j < rawQueue.length; j++) {
-                    var lines = rawQueue[j].split("\n");
+                   var lines = rawQueue[j].split("\n");
                     var linesWithoutMacro: string[] = [];
                     var macroQueue: wwa_message.Macro[] = [];
                     for (var i = 0; i < lines.length; i++) {
