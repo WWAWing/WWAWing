@@ -2384,6 +2384,34 @@ var wwa_inject_html;
     }
     wwa_inject_html.inject = inject;
 })(wwa_inject_html || (wwa_inject_html = {}));
+/// <reference path="./wwa_data.ts" />
+var wwa_psave;
+(function (wwa_psave) {
+    var pressData;
+    var VALUE_MAX = 65000;
+    var MASK_BIG = 0xFF00;
+    var MASK_LITTLE = 0x00FF;
+    function getPressData() {
+        return pressData;
+    }
+    wwa_psave.getPressData = getPressData;
+    function pressToBuffer(pos, value, useMax) {
+        if (useMax === void 0) { useMax = false; }
+        if (useMax) {
+            value = Math.max(VALUE_MAX, value);
+        }
+        pressData[pos] = value;
+    }
+    function createSavePassword(wwaData) {
+        var map;
+        if (pressData === void 0 || pressData === null) {
+            pressData = new Uint8Array(wwaData.mapWidth * wwaData.mapWidth * 4);
+        }
+        //        pressToBuffer();
+        return "";
+    }
+    wwa_psave.createSavePassword = createSavePassword;
+})(wwa_psave || (wwa_psave = {}));
 /// <reference path="./wwa_input.ts" />
 /// <reference path="./wwa_cgmanager.ts" />
 /// <reference path="./wwa_data.ts" />
@@ -2394,6 +2422,7 @@ var wwa_inject_html;
 /// <reference path="./wwa_motion.ts" />
 /// <reference path="./wwa_estimate_battle.ts" />
 /// <reference path="./wwa_inject_html.ts" />
+/// <reference path="./wwa_psave.ts" />
 var postMessage_noWorker = function (e) { };
 var wwa_main;
 (function (wwa_main) {
@@ -5636,7 +5665,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.13d-dev00";
+        WWAConsts.VERSION_WWAJS = "W3.13d-dev01";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;

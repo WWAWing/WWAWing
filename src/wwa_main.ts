@@ -8,6 +8,7 @@
 /// <reference path="./wwa_motion.ts" />
 /// <reference path="./wwa_estimate_battle.ts" />
 /// <reference path="./wwa_inject_html.ts" />
+/// <reference path="./wwa_psave.ts" />
 
 interface AudioJSInstance{
     play(): void;
