@@ -872,6 +872,7 @@ var wwa_data;
             this.statusColorR = void 0;
             this.statusColorG = void 0;
             this.statusColorB = void 0;
+            this.checkString = void 0;
         }
         return WWAData;
     })();
@@ -5016,7 +5017,31 @@ var wwa_main;
             qd.statusDefence = st.defence;
             qd.statusGold = st.gold;
             qd.moves = this._player.getMoveCount();
+            /*
+                        var originalData = this._restartData;
+                        var mapHash;
+                        var text = "A";
+                        for( var y = 0; y < originalData.map.length; y++ ) {
+                            for( var x = 0; x < originalData.map[y].length; x += 2 ) {
+                                text += ( originalData.map[y][x] * 10001 + originalData.mapObject[x][y] +"/" )
+                            }
+                        }
+            
+                        text += "Z";
+            
+            //            qd.checkString = CryptoJS.MD5( text );
+                        mapHash = CryptoJS.MD5( text );
+            
+            //            console.log( text );
+            */
             this._quickSaveData = qd;
+            /*
+            var s = JSON.stringify( this._quickSaveData );
+            CryptoJS.AES.encrypt(
+                CryptoJS.enc.Utf8.parse( s ),
+                this._wwaData.worldPassNumber * 231 + 8310 + mapHash
+            ).toString()
+            */
         };
         WWA.prototype._quickLoad = function (restart) {
             if (restart === void 0) { restart = false; }

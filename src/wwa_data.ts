@@ -748,6 +748,8 @@ module wwa_data {
        statusColorG: number = void 0;
        statusColorB: number = void 0;
 
+       checkString: string = void 0;
+
         constructor() { }
     }
 }
