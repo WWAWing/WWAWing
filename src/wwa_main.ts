@@ -27,7 +27,7 @@ interface AudiojsTScomp {
 declare var audiojs: AudiojsTScomp;
 declare var wwap_mode: boolean;
 declare var external_script_inject_mode: boolean;
-declare var CryptoJS: any;
+declare var CryptoJS: any; // ゆるして
 declare function loader_start(e: any): void;
 var postMessage_noWorker = function (e: any): void { };
 
