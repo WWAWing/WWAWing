@@ -1,6 +1,8 @@
 .idea/
 __DISTRIBUTE__/wwawing_dist/
 __DISTRIBUTE__/wwawing_update/
+*.tmp
+wwa.link.js
 closure/compiler.jar
 closure/README.md
 closure/COPYING
