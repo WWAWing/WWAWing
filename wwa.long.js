@@ -506,7 +506,8 @@ var wwa_data;
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_QUICK_LOAD"] = 5] = "CALL_BY_QUICK_LOAD";
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_RESTART_GAME"] = 6] = "CALL_BY_RESTART_GAME";
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_GOTO_WWA"] = 7] = "CALL_BY_GOTO_WWA";
-        ChoiceCallInfo[ChoiceCallInfo["CALL_BY_PASSWORD"] = 8] = "CALL_BY_PASSWORD";
+        ChoiceCallInfo[ChoiceCallInfo["CALL_BY_PASSWORD_SAVE"] = 8] = "CALL_BY_PASSWORD_SAVE";
+        ChoiceCallInfo[ChoiceCallInfo["CALL_BY_PASSWORD_LOAD"] = 9] = "CALL_BY_PASSWORD_LOAD";
     })(wwa_data.ChoiceCallInfo || (wwa_data.ChoiceCallInfo = {}));
     var ChoiceCallInfo = wwa_data.ChoiceCallInfo;
     (function (SidebarButton) {
@@ -924,6 +925,7 @@ var wwa_parts_player;
         PlayerState[PlayerState["LOCALGATE_JUMPED"] = 4] = "LOCALGATE_JUMPED";
         PlayerState[PlayerState["BATTLE"] = 5] = "BATTLE";
         PlayerState[PlayerState["ESTIMATE_WINDOW_WAITING"] = 6] = "ESTIMATE_WINDOW_WAITING";
+        PlayerState[PlayerState["PASSWORD_WINDOW_WAITING"] = 7] = "PASSWORD_WINDOW_WAITING";
     })(PlayerState || (PlayerState = {}));
     var Player = (function (_super) {
         __extends(Player, _super);
@@ -1128,6 +1130,17 @@ var wwa_parts_player;
         };
         Player.prototype.clearEstimateWindowWaiting = function () {
             if (this._state === 6 /* ESTIMATE_WINDOW_WAITING */) {
+                this._state = 0 /* CONTROLLABLE */;
+            }
+        };
+        Player.prototype.setPasswordWindowWating = function () {
+            this._state = 7 /* PASSWORD_WINDOW_WAITING */;
+        };
+        Player.prototype.isWaitingPasswordWindow = function () {
+            return this._state === 7 /* PASSWORD_WINDOW_WAITING */;
+        };
+        Player.prototype.clearPasswordWindowWaiting = function () {
+            if (this._state === 7 /* PASSWORD_WINDOW_WAITING */) {
                 this._state = 0 /* CONTROLLABLE */;
             }
         };
@@ -2961,7 +2974,7 @@ var wwa_estimate_battle;
 // 入力値を扱う時はセキュリティに気をつける!!
 var wwa_inject_html;
 (function (wwa_inject_html) {
-    var inject_html = "            <canvas id=\"wwa-map\" class=\"wwa-canvas\" width=\"440\" height=\"440\">                このブラウザは、Canvas要素をサポートしていません。            </canvas>            <canvas id=\"wwa-map-sub\" class=\"wwa-canvas\" width=\"440\" height=\"440\"></canvas>            <div id=\"wwa-sidebar\">                <div class=\"wide-cell-row\" id=\"disp-energy\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-strength\"><div class=\"status-icon\"></div><div class=\"status-value-box\"> 0 </div></div>                <div class=\"wide-cell-row\" id=\"disp-defence\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-gold\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"item-cell\" id=\"item0\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item1\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item2\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item3\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item4\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item5\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item6\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item7\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item8\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item9\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item10\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item11\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"wide-cell-row\" id=\"cell-load\">Quick Load</div><div class=\"wide-button\" id=\"button-load\"></div>                <div class=\"wide-cell-row\" id=\"cell-save\">Quick Save</div><div class=\"wide-button\" id=\"button-save\"></div>                <div class=\"wide-cell-row\" id=\"cell-restart\">Restart Game</div><div class=\"wide-button\" id=\"button-restart\"></div>                <div class=\"wide-cell-row\" id=\"cell-gotowwa\">Go to WWA</div><div class=\"wide-button\" id=\"button-gotowwa\"></div>            </div>            <div id=\"wwa-controller\"></div>            <div id=\"wwa-fader\"></div>            <div id=\"wwa-cover\">                 <div id=\"version\"></div>                 <div id=\"progress-message-container\">開始しています...</div>                 <div id=\"progress-bar-bg\"></div>                 <div id=\"progress-bar\" class=\"progress-bar\"></div>                 <div id=\"progress-bar-audio\" class=\"progress-bar\"></div>                 <div id=\"progress-disp\">---</div>            </div>            <div id=\"wwa-audio-wrapper\"></div>    ";
+    var inject_html = "            <canvas id=\"wwa-map\" class=\"wwa-canvas\" width=\"440\" height=\"440\">                このブラウザは、Canvas要素をサポートしていません。            </canvas>            <canvas id=\"wwa-map-sub\" class=\"wwa-canvas\" width=\"440\" height=\"440\"></canvas>            <div id=\"wwa-sidebar\">                <div class=\"wide-cell-row\" id=\"disp-energy\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-strength\"><div class=\"status-icon\"></div><div class=\"status-value-box\"> 0 </div></div>                <div class=\"wide-cell-row\" id=\"disp-defence\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-gold\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"item-cell\" id=\"item0\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item1\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item2\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item3\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item4\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item5\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item6\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item7\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item8\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item9\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item10\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item11\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"wide-cell-row\" id=\"cell-load\">Password</div><div class=\"wide-button\" id=\"button-load\"></div>                <div class=\"wide-cell-row\" id=\"cell-save\">Quick Save</div><div class=\"wide-button\" id=\"button-save\"></div>                <div class=\"wide-cell-row\" id=\"cell-restart\">Restart Game</div><div class=\"wide-button\" id=\"button-restart\"></div>                <div class=\"wide-cell-row\" id=\"cell-gotowwa\">Go to WWA</div><div class=\"wide-button\" id=\"button-gotowwa\"></div>            </div>            <div id=\"wwa-controller\"></div>            <div id=\"wwa-fader\"></div>            <div id=\"wwa-cover\">                 <div id=\"version\"></div>                 <div id=\"progress-message-container\">開始しています...</div>                 <div id=\"progress-bar-bg\"></div>                 <div id=\"progress-bar\" class=\"progress-bar\"></div>                 <div id=\"progress-bar-audio\" class=\"progress-bar\"></div>                 <div id=\"progress-disp\">---</div>            </div>            <div id=\"wwa-audio-wrapper\"></div>    ";
     /*
     var inject_html = "\
             <canvas id=\"wwa-map\" class=\"wwa-canvas\" width=\"440\" height=\"440\">\
@@ -2985,7 +2998,7 @@ var wwa_inject_html;
                 <div class=\"item-cell\" id=\"item9\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>\
                 <div class=\"item-cell\" id=\"item10\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>\
                 <div class=\"item-cell\" id=\"item11\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>\
-                <div class=\"wide-cell-row\" id=\"cell-load\">Quick Load</div><div class=\"wide-button\" id=\"button-load\"></div>\
+                <div class=\"wide-cell-row\" id=\"cell-load\">Password</div><div class=\"wide-button\" id=\"button-load\"></div>\
                 <div class=\"wide-cell-row\" id=\"cell-save\">Quick Save</div><div class=\"wide-button\" id=\"button-save\"></div>\
                 <div class=\"wide-cell-row\" id=\"cell-restart\">Restart Game</div><div class=\"wide-button\" id=\"button-restart\"></div>\
                 <div class=\"wide-cell-row\" id=\"cell-gotowwa\">Go to WWA</div><div class=\"wide-button\" id=\"button-gotowwa\"></div>\
@@ -3043,6 +3056,121 @@ var wwa_psave;
     }
     wwa_psave.createSavePassword = createSavePassword;
 })(wwa_psave || (wwa_psave = {}));
+/// <reference path="./wwa_main.ts" />
+var wwa_password_window;
+(function (wwa_password_window) {
+    (function (Mode) {
+        Mode[Mode["SAVE"] = 0] = "SAVE";
+        Mode[Mode["LOAD"] = 1] = "LOAD";
+    })(wwa_password_window.Mode || (wwa_password_window.Mode = {}));
+    var Mode = wwa_password_window.Mode;
+    var DESCRIPTION_LOAD = ("下のボックスに前回のプレイで取得した\n" + "復帰用パスワードを入力してください。\n" + "テキストは、Ctrl+Cでコピー、Ctrl+Vで貼り付けできます。\n" + "現在、Java版WWAで取得したパスワードはご利用になれません。\n" + "作成者がマップの内容を変更した場合は\n" + "それ以前に取得したパスワードは使えなくなります。");
+    var DESCRIPTION_SAVE = ("下記テキストがデータ復帰用のパスワードになっています。\n" + "コピーしてメモ帳などのテキストエディタに貼り付けて\n" + "保存してください。ボックスをクリックで全体を選択、\n" + "「Ctrl+C」でコピー、「Ctrl+V」で貼り付けできます。\n" + "通常数万文字程度ありますので、ご注意ください。");
+    var PasswordWindow = (function () {
+        function PasswordWindow(_wwa, _parent) {
+            var _this = this;
+            this._wwa = _wwa;
+            this._parent = _parent;
+            this._element = document.createElement("div");
+            this._element.setAttribute("id", "wwa-password-window");
+            this._element.style.display = "none";
+            this._descriptionElement = document.createElement("div");
+            this._descriptionElement.classList.add("wwa-password-description");
+            this._passwordBoxElement = document.createElement("textarea");
+            this._passwordBoxElement.setAttribute("cols", "50");
+            this._passwordBoxElement.setAttribute("rows", "16");
+            this._passwordBoxElement.addEventListener("focus", function (e) {
+                _this._passwordBoxElement.select();
+            });
+            this._buttonWrapperElement = document.createElement("div");
+            this._okButtonElement = document.createElement("button");
+            this._okButtonElement.textContent = "OK";
+            this._okButtonElement.addEventListener("click", function () {
+                _this._wwa.hidePasswordWindow();
+            });
+            this._cancelButtonElement = document.createElement("button");
+            this._cancelButtonElement.textContent = "キャンセル";
+            this._cancelButtonElement.addEventListener("click", function () {
+                _this._wwa.hidePasswordWindow(true);
+            });
+            this._buttonWrapperElement.appendChild(this._okButtonElement);
+            this._buttonWrapperElement.appendChild(this._cancelButtonElement);
+            this._mode = 1 /* LOAD */;
+            this._element.appendChild(this._descriptionElement);
+            this._element.appendChild(this._passwordBoxElement);
+            this._element.appendChild(this._buttonWrapperElement);
+            this._parent.appendChild(this._element);
+            this.update();
+        }
+        Object.defineProperty(PasswordWindow.prototype, "mode", {
+            get: function () {
+                return this._mode;
+            },
+            set: function (mode) {
+                this._mode = mode;
+                if (mode === 1 /* LOAD */) {
+                    this.password = "";
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(PasswordWindow.prototype, "password", {
+            get: function () {
+                return this._passwordBoxElement.value;
+            },
+            set: function (password) {
+                this._passwordBoxElement.value = password;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        PasswordWindow.prototype.show = function (mode) {
+            if (mode !== void 0) {
+                this.mode = mode;
+            }
+            this._isVisible = true;
+            this.update();
+        };
+        PasswordWindow.prototype.hide = function () {
+            this._isVisible = false;
+            this.update();
+        };
+        PasswordWindow.prototype.update = function () {
+            var msg = "";
+            if (this._mode === 1 /* LOAD */) {
+                msg = DESCRIPTION_LOAD;
+                try {
+                    this._passwordBoxElement.removeAttribute("readonly");
+                }
+                catch (e) {
+                }
+                this._cancelButtonElement.style.display = "inline";
+            }
+            else {
+                msg = DESCRIPTION_SAVE;
+                this._passwordBoxElement.setAttribute("readonly", "readonly");
+                this._cancelButtonElement.style.display = "none";
+            }
+            var mesArray = msg.split("\n");
+            this._descriptionElement.textContent = "";
+            for (var i = 0; i < mesArray.length; i++) {
+                var sp = document.createElement("span");
+                sp.textContent = mesArray[i];
+                this._descriptionElement.appendChild(sp);
+                this._descriptionElement.appendChild(document.createElement("br"));
+            }
+            if (this._isVisible) {
+                this._element.style.display = "block";
+            }
+            else {
+                this._element.style.display = "none";
+            }
+        };
+        return PasswordWindow;
+    })();
+    wwa_password_window.PasswordWindow = PasswordWindow;
+})(wwa_password_window || (wwa_password_window = {}));
 /// <reference path="./wwa_input.ts" />
 /// <reference path="./wwa_cgmanager.ts" />
 /// <reference path="./wwa_data.ts" />
@@ -3054,6 +3182,7 @@ var wwa_psave;
 /// <reference path="./wwa_estimate_battle.ts" />
 /// <reference path="./wwa_inject_html.ts" />
 /// <reference path="./wwa_psave.ts" />
+/// <reference path="./wwa_password_window.ts" />
 var postMessage_noWorker = function (e) {
 };
 var wwa_main;
@@ -3181,20 +3310,30 @@ var wwa_main;
                 _this._prevFrameEventExected = false;
                 _this._lastMessage = new wwa_message.MessageInfo("", false, false, []);
                 _this._execMacroListInNextFrame = [];
+                _this._passwordLoadExecInNextFrame = false;
                 _this._setProgressBar(getProgress(2, 4, 7 /* GAME_INIT */));
                 window.addEventListener("keydown", function (e) {
                     _this._keyStore.setPressInfo(e.keyCode);
-                    if (e.keyCode === 40 /* KEY_DOWN */ || e.keyCode === 37 /* KEY_LEFT */ || e.keyCode === 39 /* KEY_RIGHT */ || e.keyCode === 38 /* KEY_UP */ || e.keyCode === 16 /* KEY_SHIFT */ || e.keyCode === 13 /* KEY_ENTER */ || e.keyCode === 49 /* KEY_1 */ || e.keyCode === 50 /* KEY_2 */ || e.keyCode === 51 /* KEY_3 */ || e.keyCode === 65 /* KEY_A */ || e.keyCode === 67 /* KEY_C */ || e.keyCode === 68 /* KEY_D */ || e.keyCode === 69 /* KEY_E */ || e.keyCode === 77 /* KEY_M */ || e.keyCode === 78 /* KEY_N */ || e.keyCode === 81 /* KEY_Q */ || e.keyCode === 83 /* KEY_S */ || e.keyCode === 87 /* KEY_W */ || e.keyCode === 88 /* KEY_X */ || e.keyCode === 89 /* KEY_Y */ || e.keyCode === 90 /* KEY_Z */ || e.keyCode === 27 /* KEY_ESC */ || e.keyCode === 112 /* KEY_F1 */ || e.keyCode === 114 /* KEY_F3 */ || e.keyCode === 115 /* KEY_F4 */ || e.keyCode === 116 /* KEY_F5 */ || e.keyCode === 117 /* KEY_F6 */ || e.keyCode === 118 /* KEY_F7 */ || e.keyCode === 119 /* KEY_F8 */ || e.keyCode === 123 /* KEY_F12 */ || e.keyCode === 32 /* KEY_SPACE */) {
+                    if (e.keyCode === 116 /* KEY_F5 */) {
                         e.preventDefault();
+                    }
+                    else if (e.keyCode === 40 /* KEY_DOWN */ || e.keyCode === 37 /* KEY_LEFT */ || e.keyCode === 39 /* KEY_RIGHT */ || e.keyCode === 38 /* KEY_UP */ || e.keyCode === 16 /* KEY_SHIFT */ || e.keyCode === 13 /* KEY_ENTER */ || e.keyCode === 49 /* KEY_1 */ || e.keyCode === 50 /* KEY_2 */ || e.keyCode === 51 /* KEY_3 */ || e.keyCode === 65 /* KEY_A */ || e.keyCode === 67 /* KEY_C */ || e.keyCode === 68 /* KEY_D */ || e.keyCode === 69 /* KEY_E */ || e.keyCode === 77 /* KEY_M */ || e.keyCode === 78 /* KEY_N */ || e.keyCode === 81 /* KEY_Q */ || e.keyCode === 83 /* KEY_S */ || e.keyCode === 87 /* KEY_W */ || e.keyCode === 88 /* KEY_X */ || e.keyCode === 89 /* KEY_Y */ || e.keyCode === 90 /* KEY_Z */ || e.keyCode === 27 /* KEY_ESC */ || e.keyCode === 112 /* KEY_F1 */ || e.keyCode === 114 /* KEY_F3 */ || e.keyCode === 115 /* KEY_F4 */ || e.keyCode === 117 /* KEY_F6 */ || e.keyCode === 118 /* KEY_F7 */ || e.keyCode === 119 /* KEY_F8 */ || e.keyCode === 123 /* KEY_F12 */ || e.keyCode === 32 /* KEY_SPACE */) {
+                        if (!_this._player.isWaitingMessage() && !_this._player.isWaitingPasswordWindow()) {
+                            e.preventDefault();
+                        }
                     }
                 });
                 window.addEventListener("keyup", function (e) {
                     _this._keyStore.setReleaseInfo(e.keyCode);
-                    if (e.keyCode === 40 /* KEY_DOWN */ || e.keyCode === 37 /* KEY_LEFT */ || e.keyCode === 39 /* KEY_RIGHT */ || e.keyCode === 38 /* KEY_UP */ || e.keyCode === 16 /* KEY_SHIFT */ || e.keyCode === 13 /* KEY_ENTER */ || e.keyCode === 49 /* KEY_1 */ || e.keyCode === 50 /* KEY_2 */ || e.keyCode === 51 /* KEY_3 */ || e.keyCode === 65 /* KEY_A */ || e.keyCode === 67 /* KEY_C */ || e.keyCode === 68 /* KEY_D */ || e.keyCode === 69 /* KEY_E */ || e.keyCode === 77 /* KEY_M */ || e.keyCode === 78 /* KEY_N */ || e.keyCode === 81 /* KEY_Q */ || e.keyCode === 83 /* KEY_S */ || e.keyCode === 87 /* KEY_W */ || e.keyCode === 88 /* KEY_X */ || e.keyCode === 89 /* KEY_Y */ || e.keyCode === 90 /* KEY_Z */ || e.keyCode === 27 /* KEY_ESC */ || e.keyCode === 112 /* KEY_F1 */ || e.keyCode === 114 /* KEY_F3 */ || e.keyCode === 115 /* KEY_F4 */ || e.keyCode === 116 /* KEY_F5 */ || e.keyCode === 117 /* KEY_F6 */ || e.keyCode === 118 /* KEY_F7 */ || e.keyCode === 119 /* KEY_F8 */ || e.keyCode === 123 /* KEY_F12 */ || e.keyCode === 32 /* KEY_SPACE */) {
+                    if (e.keyCode === 116 /* KEY_F5 */) {
                         e.preventDefault();
                     }
+                    else if (e.keyCode === 40 /* KEY_DOWN */ || e.keyCode === 37 /* KEY_LEFT */ || e.keyCode === 39 /* KEY_RIGHT */ || e.keyCode === 38 /* KEY_UP */ || e.keyCode === 16 /* KEY_SHIFT */ || e.keyCode === 13 /* KEY_ENTER */ || e.keyCode === 49 /* KEY_1 */ || e.keyCode === 50 /* KEY_2 */ || e.keyCode === 51 /* KEY_3 */ || e.keyCode === 65 /* KEY_A */ || e.keyCode === 67 /* KEY_C */ || e.keyCode === 68 /* KEY_D */ || e.keyCode === 69 /* KEY_E */ || e.keyCode === 77 /* KEY_M */ || e.keyCode === 78 /* KEY_N */ || e.keyCode === 81 /* KEY_Q */ || e.keyCode === 83 /* KEY_S */ || e.keyCode === 87 /* KEY_W */ || e.keyCode === 88 /* KEY_X */ || e.keyCode === 89 /* KEY_Y */ || e.keyCode === 90 /* KEY_Z */ || e.keyCode === 27 /* KEY_ESC */ || e.keyCode === 112 /* KEY_F1 */ || e.keyCode === 114 /* KEY_F3 */ || e.keyCode === 115 /* KEY_F4 */ || e.keyCode === 117 /* KEY_F6 */ || e.keyCode === 118 /* KEY_F7 */ || e.keyCode === 119 /* KEY_F8 */ || e.keyCode === 123 /* KEY_F12 */ || e.keyCode === 32 /* KEY_SPACE */) {
+                        if (!_this._player.isWaitingMessage() && !_this._player.isWaitingPasswordWindow()) {
+                            e.preventDefault();
+                        }
+                    }
                 });
-                ;
                 window.addEventListener("blur", function (e) {
                     _this._keyStore.allClear();
                     _this._mouseStore.clear();
@@ -3324,6 +3463,7 @@ var wwa_main;
                 _this._frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
                 _this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);
                 _this._battleEstimateWindow = new wwa_estimate_battle.BattleEstimateWindow(_this, _this._wwaData.mapCGName, wwa_util.$id("wwa-wrapper"));
+                _this._passwordWindow = new wwa_password_window.PasswordWindow(_this, wwa_util.$id("wwa-wrapper"));
                 _this._messageWindow = new wwa_message.MessageWindow(_this, 50, 180, 340, 0, "", _this._wwaData.mapCGName, false, true, util.$id("wwa-wrapper"));
                 _this._monsterWindow = new wwa_message.MosterWindow(_this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), _this._wwaData.mapCGName);
                 _this._scoreWindow = new wwa_message.ScoreWindow(_this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
@@ -3648,23 +3788,23 @@ var wwa_main;
                 }
             }
         };
-        WWA.prototype.onselectbutton = function (button) {
+        WWA.prototype.onselectbutton = function (button, forcePassword) {
+            if (forcePassword === void 0) { forcePassword = false; }
             var bg = (wwa_util.$id(wwa_data.sidebarButtonCellElementID[button]));
             this.playSound(1 /* DECISION */);
             bg.classList.add("onpress");
             if (button === 0 /* QUICK_LOAD */) {
-                if (this._quickSaveData !== void 0) {
-                    this.setMessageQueue("データを読み込みますか？\n※パスワードロードは、現在ご利用になれません。", true, true);
+                if (this._quickSaveData !== void 0 && !forcePassword) {
+                    this.setMessageQueue("データを読み込みますか？\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
                     this._yesNoChoiceCallInfo = 5 /* CALL_BY_QUICK_LOAD */;
                 }
                 else {
-                    this.setMessageQueue("データ復帰用のパスワードを入力しますか？", true, true);
-                    this._yesNoChoiceCallInfo = 8 /* CALL_BY_PASSWORD */;
+                    this.onpasswordloadcalled();
                 }
             }
             else if (button === 1 /* QUICK_SAVE */) {
                 if (!this._wwaData.disableSaveFlag) {
-                    this.setMessageQueue("データの一時保存をします。\nよろしいですか？\n※パスワードセーブは、現在ご利用になれません。", true, true);
+                    this.setMessageQueue("データの一時保存をします。\nよろしいですか？\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
                     this._yesNoChoiceCallInfo = 4 /* CALL_BY_QUICK_SAVE */;
                 }
                 else {
@@ -3678,6 +3818,23 @@ var wwa_main;
             else if (button === 3 /* GOTO_WWA */) {
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                 this._yesNoChoiceCallInfo = 7 /* CALL_BY_GOTO_WWA */;
+            }
+        };
+        WWA.prototype.onpasswordloadcalled = function () {
+            var bg = (wwa_util.$id(wwa_data.sidebarButtonCellElementID[0 /* QUICK_LOAD */]));
+            bg.classList.add("onpress");
+            this.setMessageQueue("データ復帰用のパスワードを入力しますか？", true, true);
+            this._yesNoChoiceCallInfo = 9 /* CALL_BY_PASSWORD_LOAD */;
+        };
+        WWA.prototype.onpasswordsavecalled = function () {
+            var bg = (wwa_util.$id(wwa_data.sidebarButtonCellElementID[1 /* QUICK_SAVE */]));
+            bg.classList.add("onpress");
+            if (!this._wwaData.disableSaveFlag) {
+                this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
+                this._yesNoChoiceCallInfo = 8 /* CALL_BY_PASSWORD_SAVE */;
+            }
+            else {
+                this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
             }
         };
         WWA.prototype.onchangespeed = function (type) {
@@ -3823,8 +3980,12 @@ var wwa_main;
                     }
                 }
                 else if (this._keyStore.checkHitKey(114 /* KEY_F3 */)) {
+                    this.playSound(1 /* DECISION */);
+                    this.onselectbutton(0 /* QUICK_LOAD */, true);
                 }
                 else if (this._keyStore.checkHitKey(115 /* KEY_F4 */)) {
+                    this.playSound(1 /* DECISION */);
+                    this.onpasswordsavecalled();
                 }
                 else if (this._keyStore.checkHitKey(116 /* KEY_F5 */)) {
                     this.onselectbutton(0 /* QUICK_LOAD */);
@@ -3934,6 +4095,12 @@ var wwa_main;
                     this._execChoiceWindowRunningEvent();
                 }
             }
+            if (this._passwordLoadExecInNextFrame) {
+                this._stopUpdateByLoadFlag = true;
+                this._loadType = 2 /* PASSWORD */;
+                this._player.clearPasswordWindowWaiting();
+                this._passwordLoadExecInNextFrame = false;
+            }
             // draw
             this._drawAll();
             this._mainCallCounter++;
@@ -3972,6 +4139,8 @@ var wwa_main;
                         _this._restartGame();
                     }
                     else if (_this._loadType === 2 /* PASSWORD */) {
+                        _this._applyQuickLoad(_this._passwordSaveExtractData);
+                        _this._passwordSaveExtractData = void 0;
                     }
                     setTimeout(_this.mainCaller, _this._waitTimeInCurrentFrame, _this);
                 });
@@ -4655,10 +4824,16 @@ var wwa_main;
                         location.href = wwa_util.$escapedURI(Consts.WWA_HOME);
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[3 /* GOTO_WWA */])).classList.remove("onpress");
                     }
-                    else if (this._yesNoChoiceCallInfo === 8 /* CALL_BY_PASSWORD */) {
+                    else if (this._yesNoChoiceCallInfo === 9 /* CALL_BY_PASSWORD_LOAD */) {
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[0 /* QUICK_LOAD */])).classList.remove("onpress");
-                        this._stopUpdateByLoadFlag = true;
-                        this._loadType = 2 /* PASSWORD */;
+                        this._player.setPasswordWindowWating();
+                        this._passwordWindow.show(1 /* LOAD */);
+                    }
+                    else if (this._yesNoChoiceCallInfo === 8 /* CALL_BY_PASSWORD_SAVE */) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[1 /* QUICK_SAVE */])).classList.remove("onpress");
+                        this._player.setPasswordWindowWating();
+                        this._passwordWindow.password = this._quickSave(true);
+                        this._passwordWindow.show(0 /* SAVE */);
                     }
                     this._yesNoJudge = 2 /* UNSELECTED */;
                     this._setNextMessage();
@@ -4691,10 +4866,16 @@ var wwa_main;
                         bg.classList.remove("onpress");
                     }
                     else if (this._yesNoChoiceCallInfo === 5 /* CALL_BY_QUICK_LOAD */) {
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[0 /* QUICK_LOAD */])).classList.remove("onpress");
+                        //                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+                        this._yesNoJudge = 2 /* UNSELECTED */;
+                        this.onpasswordloadcalled();
+                        return;
                     }
                     else if (this._yesNoChoiceCallInfo === 4 /* CALL_BY_QUICK_SAVE */) {
-                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[1 /* QUICK_SAVE */])).classList.remove("onpress");
+                        //                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                        this._yesNoJudge = 2 /* UNSELECTED */;
+                        this.onpasswordsavecalled();
+                        return;
                     }
                     else if (this._yesNoChoiceCallInfo === 6 /* CALL_BY_RESTART_GAME */) {
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[2 /* RESTART_GAME */])).classList.remove("onpress");
@@ -4702,8 +4883,11 @@ var wwa_main;
                     else if (this._yesNoChoiceCallInfo === 7 /* CALL_BY_GOTO_WWA */) {
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[3 /* GOTO_WWA */])).classList.remove("onpress");
                     }
-                    else if (this._yesNoChoiceCallInfo === 8 /* CALL_BY_PASSWORD */) {
+                    else if (this._yesNoChoiceCallInfo === 9 /* CALL_BY_PASSWORD_LOAD */) {
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[0 /* QUICK_LOAD */])).classList.remove("onpress");
+                    }
+                    else if (this._yesNoChoiceCallInfo === 8 /* CALL_BY_PASSWORD_SAVE */) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[1 /* QUICK_SAVE */])).classList.remove("onpress");
                     }
                     this._yesNoJudge = 2 /* UNSELECTED */;
                     this._setNextMessage();
@@ -5111,7 +5295,8 @@ var wwa_main;
             }
             return CryptoJS.MD5(text).toString();
         };
-        WWA.prototype._quickSave = function () {
+        WWA.prototype._quickSave = function (isPassword) {
+            if (isPassword === void 0) { isPassword = false; }
             var qd = JSON.parse(JSON.stringify(this._wwaData));
             var pc = this._player.getPosition().getPartsCoord();
             var st = this._player.getStatusWithoutEquipments();
@@ -5124,38 +5309,49 @@ var wwa_main;
             qd.statusDefence = st.defence;
             qd.statusGold = st.gold;
             qd.moves = this._player.getMoveCount();
-            qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            qd.mapCompressed = this._compressMap(qd.map);
-            qd.mapObjectCompressed = this._compressMap(qd.mapObject);
-            qd.checkString = this._generateSaveDataHash(qd);
-            // map, mapObjectについてはcompressから復元
-            qd.map = void 0;
-            qd.mapObject = void 0;
+            if (isPassword) {
+                qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
+                qd.mapCompressed = this._compressMap(qd.map);
+                qd.mapObjectCompressed = this._compressMap(qd.mapObject);
+                qd.checkString = this._generateSaveDataHash(qd);
+                // map, mapObjectについてはcompressから復元
+                qd.map = void 0;
+                qd.mapObject = void 0;
+            }
             // message, mapAttribute, objectAttributeについてはrestartdataから復元
             // TODO: WWAEvalの機能などでrestart時から変更された場合は、差分をセーブするようにする予定
             qd.message = void 0;
             qd.mapAttribute = void 0;
             qd.objectAttribute = void 0;
-            var s = JSON.stringify(qd);
-            var savepass = CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(s), "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]").toString();
+            if (isPassword) {
+                var s = JSON.stringify(qd);
+                return CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(s), "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]").toString();
+            }
             this._quickSaveData = qd;
+            util.$id("cell-load").textContent = "Quick Load";
+            return "";
         };
         WWA.prototype._decodePassword = function (pass) {
             var ori = this._generateMapDataHash(this._restartData);
-            var json = CryptoJS.AES.decrypt(pass, "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + ori) + "P+>A[]").toString(CryptoJS.enc.Utf8);
-            console.log(json);
+            try {
+                var json = CryptoJS.AES.decrypt(pass, "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + ori) + "P+>A[]").toString(CryptoJS.enc.Utf8);
+            }
+            catch (e) {
+                throw new Error("データが破損しています。\n" + e.message);
+            }
             var obj;
             try {
                 obj = JSON.parse(json);
             }
             catch (e) {
-                throw new Error("JSON PARSE FAILED");
+                throw new Error("マップデータ以外のものが暗号化されたか、マップデータに何かが不足しているようです。\nJSON PARSE FAILED");
             }
             return obj;
         };
-        WWA.prototype._quickLoad = function (restart, password) {
+        WWA.prototype._quickLoad = function (restart, password, apply) {
             if (restart === void 0) { restart = false; }
             if (password === void 0) { password = null; }
+            if (apply === void 0) { apply = true; }
             if (!restart && this._quickSaveData === void 0 && password === null) {
                 throw new Error("セーブデータがありません。");
             }
@@ -5170,23 +5366,31 @@ var wwa_main;
             newData.message = JSON.parse(JSON.stringify(this._restartData.message));
             newData.mapAttribute = JSON.parse(JSON.stringify(this._restartData.mapAttribute));
             newData.objectAttribute = JSON.parse(JSON.stringify(this._restartData.objectAttribute));
-            newData.map = this._decompressMap(newData.mapCompressed);
-            newData.mapObject = this._decompressMap(newData.mapObjectCompressed);
-            newData.mapCompressed = void 0;
-            newData.mapObjectCompressed = void 0;
-            var checkString = this._generateSaveDataHash(newData);
-            if (newData.checkString !== checkString) {
-                console.log("Invalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
-                throw new Error();
+            if (newData.map === void 0) {
+                newData.map = this._decompressMap(newData.mapCompressed);
+                newData.mapCompressed = void 0;
             }
-            var checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            if (newData.checkOriginalMapString !== checkOriginalMapString) {
-                console.log("Invalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
-                throw new Error();
+            if (newData.mapObject === void 0) {
+                newData.mapObject = this._decompressMap(newData.mapObjectCompressed);
+                newData.mapObjectCompressed = void 0;
             }
             if (password !== null) {
+                var checkString = this._generateSaveDataHash(newData);
+                if (newData.checkString !== checkString) {
+                    throw new Error("データが壊れているようです。\nInvalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
+                }
+                var checkOriginalMapString = this._generateMapDataHash(this._restartData);
+                if (newData.checkOriginalMapString !== checkOriginalMapString) {
+                    throw new Error("管理者によってマップが変更されたようです。\nInvalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
+                }
                 console.log("Valid Password!");
             }
+            if (apply) {
+                this._applyQuickLoad(newData);
+            }
+            return newData;
+        };
+        WWA.prototype._applyQuickLoad = function (newData) {
             this._player.setEnergyMax(newData.statusEnergyMax);
             this._player.setEnergy(newData.statusEnergy);
             this._player.setStrength(newData.statusStrength);
@@ -5522,9 +5726,28 @@ var wwa_main;
             this._battleEstimateWindow.hide();
             this._player.clearEstimateWindowWaiting();
         };
+        WWA.prototype.hidePasswordWindow = function (isCancel) {
+            if (isCancel === void 0) { isCancel = false; }
+            this._passwordWindow.hide();
+            if (isCancel || this._passwordWindow.mode === 0 /* SAVE */) {
+                this._player.clearPasswordWindowWaiting();
+                return;
+            }
+            try {
+                var data = this._quickLoad(false, this._passwordWindow.password, false);
+            }
+            catch (e) {
+                this._player.clearPasswordWindowWaiting();
+                // 読み込み失敗
+                alert("パスワードが正常ではありません。\nエラー詳細:\n" + e.message);
+                return;
+            }
+            this._passwordLoadExecInNextFrame = true;
+            this._passwordSaveExtractData = data;
+        };
         WWA.prototype._displayHelp = function () {
             if (this._player.isControllable()) {
-                this.setMessageQueue("【ショートカットキーの一覧】\n" + "Ｆ１、Ｍ：戦闘結果予測の表示\n" + "Ｆ５：一時保存データの読み込み\n" + "Ｆ６：データの一時保存\n" + "Ｆ７：初めからスタート\n" + "Ｆ８：ＷＷＡ公式ページにリンク\n" + "Ｆ１２：このリストの表示\n" + "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" + "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" + " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" + "現在の移動回数：" + this._player.getMoveCount() + "\n" + "WWA Wing バージョン:" + Consts.VERSION_WWAJS, false, true);
+                this.setMessageQueue("【ショートカットキーの一覧】\n" + "Ｆ１、Ｍ：戦闘結果予測の表示\n" + "Ｆ３：復帰用パスワード入力\n" + "Ｆ４：復帰用パスワード表示\n" + "Ｆ５：一時保存データの読み込み\n" + "Ｆ６：データの一時保存\n" + "Ｆ７：初めからスタート\n" + "Ｆ８：ＷＷＡ公式ページにリンク\n" + "Ｆ１２：このリストの表示\n" + "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" + "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" + " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" + "現在の移動回数：" + this._player.getMoveCount() + "\n" + "WWA Wing バージョン:" + Consts.VERSION_WWAJS, false, true);
             }
         };
         WWA.prototype._setNextMessage = function (displayCenter) {
@@ -5734,7 +5957,6 @@ var wwa_main;
             this._faces = [];
         };
         WWA.prototype.initCSSRule = function () {
-            console.log(this);
             this._styleElm = wwa_util.$id(Consts.WWA_STYLE_TAG_ID);
             this._sheet = this._styleElm.sheet;
             this.updateCSSRule();
@@ -5756,11 +5978,11 @@ var wwa_main;
                 }
             }
             if (this._sheet.addRule !== void 0) {
-                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.addRule("div.wwa-message-window, div#wwa-battle-estimate", "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);" + "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" + "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);");
+                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.addRule("div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window", "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);" + "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" + "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);");
                 this._stylePos[1 /* SIDEBAR */] = this._sheet.addRule("div#wwa-sidebar", "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);" + "font-weight: bold;");
             }
             else {
-                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.insertRule("div.wwa-message-window, div#wwa-battle-estimate {\n" + "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);\n" + "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);\n" + "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);\n" + "}", 0);
+                this._stylePos[0 /* MESSAGE_WINDOW */] = this._sheet.insertRule("div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window {\n" + "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);\n" + "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);\n" + "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);\n" + "}", 0);
                 this._stylePos[1 /* SIDEBAR */] = this._sheet.insertRule("div#wwa-sidebar {\n" + "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);\n" + "font-weight: bold;\n" + "}", 1);
             }
         };

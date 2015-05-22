@@ -393,7 +393,7 @@ div.item-disp {
 }
 
 
-#wwa-battle-estimate {
+#wwa-battle-estimate, #wwa-password-window {
     position: absolute;
     top: 0;
     left: 0;
@@ -406,9 +406,24 @@ div.item-disp {
     border-color: #000000;
     border-radius: 10px;
 /*    background-color: rgba( 255, 255, 255, 0.9 ); */ /*システムで指定することになりました。$colorで。*/
-    z-index: 230;
     cursor: pointer;
     overflow: auto;
+}
+
+#wwa-battle-estimate {
+    z-index: 230;
+}
+#wwa-password-window {
+    z-index: 231;
+}
+#wwa-password-window>div.wwa-password-description {
+    text-align: left;
+    font-size: 12px;
+    padding: 5px;
+}
+
+#wwa-password-window>textarea {
+    font-size: 12px;
 }
 
 #wwa-battle-estimate>.est {

@@ -9,6 +9,7 @@
 /// <reference path="./wwa_estimate_battle.ts" />
 /// <reference path="./wwa_inject_html.ts" />
 /// <reference path="./wwa_psave.ts" />
+/// <reference path="./wwa_password_window.ts" />
 
 interface AudioJSInstance{
     play(): void;
@@ -92,6 +93,7 @@ module wwa_main {
         private _mouseControllerElement: HTMLDivElement;
         private _statusPressCounter: wwa_data.Status; // ステータス型があるので、アニメーション残りカウンタもこれで代用しまぁす。
         private _battleEstimateWindow: wwa_estimate_battle.BattleEstimateWindow;
+        private _passwordWindow: wwa_password_window.PasswordWindow;
 
         private _stopUpdateByLoadFlag: boolean;
         private _isURLGateEnable: boolean;
@@ -111,15 +113,18 @@ module wwa_main {
 
         private _playSound: (s: number) => void;
 
-        private _temporaryInputDisable: boolean
+        private _temporaryInputDisable: boolean;
 
         private _isLoadedSound: boolean;
 
         private _soundLoadSkipFlag: boolean;
 
+        private _passwordLoadExecInNextFrame: boolean;
+        private _passwordSaveExtractData: wwa_data.WWAData;
+
         private _faces: wwa_data.Face[];
         private _execMacroListInNextFrame: wwa_message.Macro[];
-        private _clearFacesInNextFrame: boolean
+        private _clearFacesInNextFrame: boolean;
         private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
 
         private _useConsole: boolean;
@@ -234,10 +239,13 @@ module wwa_main {
                 this._prevFrameEventExected = false;
                 this._lastMessage = new wwa_message.MessageInfo("", false, false, []);
                 this._execMacroListInNextFrame = [];
+                this._passwordLoadExecInNextFrame = false;
                 this._setProgressBar(getProgress(2, 4, wwa_data.LoadStage.GAME_INIT) );
                 window.addEventListener("keydown", (e): void => {
                     this._keyStore.setPressInfo(e.keyCode);
-                    if (e.keyCode === KeyCode.KEY_DOWN ||
+                    if( e.keyCode === KeyCode.KEY_F5 ) {
+                        e.preventDefault()
+                    } else if (e.keyCode === KeyCode.KEY_DOWN ||
                         e.keyCode === KeyCode.KEY_LEFT ||
                         e.keyCode === KeyCode.KEY_RIGHT ||
                         e.keyCode === KeyCode.KEY_UP ||
@@ -262,18 +270,21 @@ module wwa_main {
                         e.keyCode === KeyCode.KEY_F1 ||
                         e.keyCode === KeyCode.KEY_F3 ||
                         e.keyCode === KeyCode.KEY_F4 ||
-                        e.keyCode === KeyCode.KEY_F5 ||
                         e.keyCode === KeyCode.KEY_F6 ||
                         e.keyCode === KeyCode.KEY_F7 ||
                         e.keyCode === KeyCode.KEY_F8 ||
                         e.keyCode === KeyCode.KEY_F12 ||
                         e.keyCode === KeyCode.KEY_SPACE) {
-                        e.preventDefault();
+                        if (!this._player.isWaitingMessage() && !this._player.isWaitingPasswordWindow()) {
+                            e.preventDefault();
+                        }
                     }
                 });
                 window.addEventListener("keyup", (e): void => {
                     this._keyStore.setReleaseInfo(e.keyCode);
-                    if (e.keyCode === KeyCode.KEY_DOWN ||
+                    if( e.keyCode === KeyCode.KEY_F5 ) {
+                        e.preventDefault()
+                    } else if (e.keyCode === KeyCode.KEY_DOWN ||
                         e.keyCode === KeyCode.KEY_LEFT ||
                         e.keyCode === KeyCode.KEY_RIGHT ||
                         e.keyCode === KeyCode.KEY_UP ||
@@ -298,15 +309,16 @@ module wwa_main {
                         e.keyCode === KeyCode.KEY_F1 ||
                         e.keyCode === KeyCode.KEY_F3 ||
                         e.keyCode === KeyCode.KEY_F4 ||
-                        e.keyCode === KeyCode.KEY_F5 ||
                         e.keyCode === KeyCode.KEY_F6 ||
                         e.keyCode === KeyCode.KEY_F7 ||
                         e.keyCode === KeyCode.KEY_F8 ||
                         e.keyCode === KeyCode.KEY_F12 ||
                         e.keyCode === KeyCode.KEY_SPACE) {
-                        e.preventDefault();
+                        if (!this._player.isWaitingMessage() && !this._player.isWaitingPasswordWindow()) {
+                            e.preventDefault();
+                        }
                     }
-                });;
+                });
                 window.addEventListener("blur", (e): void => {
                     this._keyStore.allClear();
                     this._mouseStore.clear();
@@ -446,6 +458,9 @@ module wwa_main {
                 this._battleEstimateWindow = new wwa_estimate_battle.BattleEstimateWindow(
                     this, this._wwaData.mapCGName, wwa_util.$id("wwa-wrapper"));
 
+                this._passwordWindow = new wwa_password_window.PasswordWindow(
+                    this, <HTMLDivElement>wwa_util.$id("wwa-wrapper"));
+
                 this._messageWindow = new wwa_message.MessageWindow(
                     this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, util.$id("wwa-wrapper"));
                 this._monsterWindow = new wwa_message.MosterWindow(
@@ -484,6 +499,7 @@ module wwa_main {
                         this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
                             "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
                         this.loadSound();
+
                         setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
                         
                         return;
@@ -820,21 +836,20 @@ module wwa_main {
             }
         }
 
-        public onselectbutton(button: wwa_data.SidebarButton): void {
+        public onselectbutton(button: wwa_data.SidebarButton, forcePassword: boolean = false): void {
             var bg = <HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[button]));
             this.playSound(wwa_data.SystemSound.DECISION);
             bg.classList.add("onpress");
             if (button === wwa_data.SidebarButton.QUICK_LOAD) {
-                if (this._quickSaveData !== void 0) {
-                    this.setMessageQueue("データを読み込みますか？\n※パスワードロードは、現在ご利用になれません。", true, true);
+                if (this._quickSaveData !== void 0 && !forcePassword) {
+                    this.setMessageQueue("データを読み込みますか？\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
                     this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_QUICK_LOAD;
                 } else {
-                    this.setMessageQueue("データ復帰用のパスワードを入力しますか？", true, true);
-                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD;
+                    this.onpasswordloadcalled();
                 }
             } else if (button === wwa_data.SidebarButton.QUICK_SAVE) {
                 if (!this._wwaData.disableSaveFlag) {
-                    this.setMessageQueue("データの一時保存をします。\nよろしいですか？\n※パスワードセーブは、現在ご利用になれません。", true, true);
+                    this.setMessageQueue("データの一時保存をします。\nよろしいですか？\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
                     this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 } else {
                     this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
@@ -846,7 +861,23 @@ module wwa_main {
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                 this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA;
             }
+        }
+        public onpasswordloadcalled( ) {
+            var bg = <HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]));
+            bg.classList.add("onpress");
+            this.setMessageQueue("データ復帰用のパスワードを入力しますか？", true, true);
+            this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_LOAD;
+        }
 
+        public onpasswordsavecalled( ) {
+            var bg = <HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE]));
+            bg.classList.add("onpress");
+            if (!this._wwaData.disableSaveFlag) {
+                this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
+                this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
+            } else {
+                this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
+            }
         }
 
         public onchangespeed(type: wwa_data.SpeedChange) {
@@ -988,9 +1019,11 @@ module wwa_main {
                     if (this.launchBattleEstimateWindow()) {
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {
-                    // パスワードロード跡地 何つくろっかなー
+                    this.playSound(wwa_data.SystemSound.DECISION);
+                    this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD, true);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
-                    // パスワードセーブ跡地 何つくろっかなー
+                    this.playSound(wwa_data.SystemSound.DECISION);
+                    this.onpasswordsavecalled()
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F5)) {
                     this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F6)) {
@@ -1118,6 +1151,13 @@ module wwa_main {
                 }
             }
 
+            if( this._passwordLoadExecInNextFrame ) {
+                this._stopUpdateByLoadFlag = true;
+                this._loadType = wwa_data.LoadType.PASSWORD;
+                this._player.clearPasswordWindowWaiting();
+                this._passwordLoadExecInNextFrame = false;
+            }
+
             // draw
 
             this._drawAll();
@@ -1156,7 +1196,8 @@ module wwa_main {
                     } else if (this._loadType === wwa_data.LoadType.RESTART_GAME) {
                         this._restartGame();
                     } else if( this._loadType === wwa_data.LoadType.PASSWORD ) {
-                        // かく
+                        this._applyQuickLoad( this._passwordSaveExtractData );
+                        this._passwordSaveExtractData = void 0;
                     }
                     setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this)
                 });
@@ -1997,12 +2038,16 @@ module wwa_main {
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
                         location.href = wwa_util.$escapedURI(Consts.WWA_HOME);
                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
-                    } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD ) {
+                    } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_LOAD ) {
                          (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
-                        this._stopUpdateByLoadFlag = true;
-                        this._loadType = wwa_data.LoadType.PASSWORD;
+                        this._player.setPasswordWindowWating();
+                        this._passwordWindow.show(wwa_password_window.Mode.LOAD);
+                    } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_SAVE ) {
+                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                        this._player.setPasswordWindowWating();
+                        this._passwordWindow.password = this._quickSave( true );
+                        this._passwordWindow.show(wwa_password_window.Mode.SAVE);
                     }
-
                     this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
                     this._setNextMessage();
 
@@ -2034,15 +2079,23 @@ module wwa_main {
                         var bg = <HTMLDivElement> (wwa_util.$id("item" + (this._yesNoUseItemPos - 1)));
                         bg.classList.remove("onpress");
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_QUICK_LOAD) {
-                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+//                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+                        this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
+                        this.onpasswordloadcalled();
+                        return;
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
-                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+//                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                        this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
+                        this.onpasswordsavecalled();
+                        return;
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME) {
                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.RESTART_GAME]))).classList.remove("onpress");
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
-                    } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD) {
+                    } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_LOAD) {
                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+                    } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
+                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                     }
 
                     this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
@@ -2537,7 +2590,7 @@ module wwa_main {
             return CryptoJS.MD5( text ).toString();
         }
 
-        private _quickSave(): void {
+        private _quickSave( isPassword: boolean = false): string {
             var qd = <wwa_data.WWAData>JSON.parse(JSON.stringify(this._wwaData));
             var pc = this._player.getPosition().getPartsCoord();
             var st = this._player.getStatusWithoutEquipments();
@@ -2550,14 +2603,16 @@ module wwa_main {
             qd.statusDefence = st.defence;
             qd.statusGold = st.gold;
             qd.moves = this._player.getMoveCount();
-            qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            qd.mapCompressed = this._compressMap(qd.map);
-            qd.mapObjectCompressed = this._compressMap(qd.mapObject);
-            qd.checkString = this._generateSaveDataHash(qd);
+            if (isPassword) {
+                qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
+                qd.mapCompressed = this._compressMap(qd.map);
+                qd.mapObjectCompressed = this._compressMap(qd.mapObject);
+                qd.checkString = this._generateSaveDataHash(qd);
 
-            // map, mapObjectについてはcompressから復元
-            qd.map = void 0;
-            qd.mapObject = void 0;
+                // map, mapObjectについてはcompressから復元
+                qd.map = void 0;
+                qd.mapObject = void 0;
+            }
 
             // message, mapAttribute, objectAttributeについてはrestartdataから復元
             // TODO: WWAEvalの機能などでrestart時から変更された場合は、差分をセーブするようにする予定
@@ -2565,31 +2620,38 @@ module wwa_main {
             qd.mapAttribute = void 0;
             qd.objectAttribute = void 0;
 
-            var s = JSON.stringify( qd );
-            var savepass = CryptoJS.AES.encrypt(
-                CryptoJS.enc.Utf8.parse( s ),
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString ) + "P+>A[]"
-            ).toString();
+            if( isPassword ) {
+                var s = JSON.stringify( qd );
+                return CryptoJS.AES.encrypt(
+                    CryptoJS.enc.Utf8.parse(s),
+                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString ) + "P+>A[]"
+                ).toString();
+            }
             this._quickSaveData = qd;
+            util.$id("cell-load").textContent = "Quick Load";
+            return "";
         }
 
         private _decodePassword( pass: string): wwa_data.WWAData {
             var ori = this._generateMapDataHash( this._restartData );
-            var json = CryptoJS.AES.decrypt(
-                pass,
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + ori ) + "P+>A[]"
-            ).toString(CryptoJS.enc.Utf8);
-            console.log( json );
+            try {
+                var json = CryptoJS.AES.decrypt(
+                    pass,
+                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + ori ) + "P+>A[]"
+                ).toString(CryptoJS.enc.Utf8);
+            } catch( e ) {
+                throw new Error( "データが破損しています。\n" + e.message )
+            }
             var obj: wwa_data.WWAData;
             try {
                 obj = JSON.parse( json );
             } catch( e ) {
-                throw new Error( "JSON PARSE FAILED" );
+                throw new Error( "マップデータ以外のものが暗号化されたか、マップデータに何かが不足しているようです。\nJSON PARSE FAILED" );
             }
             return obj;
         }
 
-        private _quickLoad( restart:boolean = false, password: string = null): void {
+        private _quickLoad( restart:boolean = false, password: string = null, apply: boolean = true): wwa_data.WWAData {
             if (!restart && this._quickSaveData === void 0 && password === null ) {
                 throw new Error("セーブデータがありません。");
             }
@@ -2603,49 +2665,57 @@ module wwa_main {
             newData.message = <string[]>JSON.parse(JSON.stringify(this._restartData.message ) );
             newData.mapAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.mapAttribute ) );
             newData.objectAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.objectAttribute ) );
-            newData.map = this._decompressMap( newData.mapCompressed );
-            newData.mapObject = this._decompressMap( newData.mapObjectCompressed );
-            newData.mapCompressed = void 0;
-            newData.mapObjectCompressed = void 0;
+            if( newData.map === void 0) {
+                newData.map = this._decompressMap(newData.mapCompressed);
+                newData.mapCompressed = void 0;
+            }
+            if( newData.mapObject === void 0 ) {
+                newData.mapObject = this._decompressMap(newData.mapObjectCompressed);
+                newData.mapObjectCompressed = void 0;
+            }
 
-            var checkString = this._generateSaveDataHash( newData );
-            if( newData.checkString !== checkString ) {
-                console.log( "Invalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash( newData ) );
-                throw new Error();
-            }
-            var checkOriginalMapString = this._generateMapDataHash( this._restartData );
-            if( newData.checkOriginalMapString !==  checkOriginalMapString)  {
-                console.log( "Invalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash( newData ) );
-                throw new Error();
-            }
             if( password !== null ) {
+                var checkString = this._generateSaveDataHash( newData );
+                if( newData.checkString !== checkString ) {
+                    throw new Error( "データが壊れているようです。\nInvalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash( newData ) );
+                }
+                var checkOriginalMapString = this._generateMapDataHash( this._restartData );
+                if( newData.checkOriginalMapString !==  checkOriginalMapString)  {
+                    throw new Error( "管理者によってマップが変更されたようです。\nInvalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash( newData ) );
+                }
                 console.log("Valid Password!");
             }
 
-            this._player.setEnergyMax(newData.statusEnergyMax);
-            this._player.setEnergy(newData.statusEnergy);
-            this._player.setStrength(newData.statusStrength);
-            this._player.setDefence(newData.statusDefence);
-            this._player.setGold(newData.statusGold);
-            this._player.setMoveCount(newData.moves);
-            this._player.clearItemBox();
-            for (var i = 0; i < newData.itemBox.length; i++) {
-                this._player.addItem(newData.itemBox[ i ], i + 1, true);
+            if( apply ) {
+                this._applyQuickLoad( newData );
             }
+            return newData;
+        }
 
-            this._player.systemJumpTo(new wwa_data.Position(this, newData.playerX, newData.playerY, 0, 0));
-            if (newData.bgm === 0) {
-                this.playSound(wwa_data.SystemSound.NO_SOUND);
-            } else {
-                this.playSound(newData.bgm);
-            }
-            this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
-            if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
-                this._player.setPartsAppearedFlag();
-            }
+        private _applyQuickLoad( newData: wwa_data.WWAData): void {
+                this._player.setEnergyMax(newData.statusEnergyMax);
+                this._player.setEnergy(newData.statusEnergy);
+                this._player.setStrength(newData.statusStrength);
+                this._player.setDefence(newData.statusDefence);
+                this._player.setGold(newData.statusGold);
+                this._player.setMoveCount(newData.moves);
+                this._player.clearItemBox();
+                for (var i = 0; i < newData.itemBox.length; i++) {
+                    this._player.addItem(newData.itemBox[ i ], i + 1, true);
+                }
 
-            this._wwaData = newData;
-            this.updateCSSRule();
+                this._player.systemJumpTo(new wwa_data.Position(this, newData.playerX, newData.playerY, 0, 0));
+                if (newData.bgm === 0) {
+                    this.playSound(wwa_data.SystemSound.NO_SOUND);
+                } else {
+                    this.playSound(newData.bgm);
+                }
+                this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
+                if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
+                    this._player.setPartsAppearedFlag();
+                }
+                this._wwaData = newData;
+                this.updateCSSRule();
         }
 
         private _restartGame(): void {
@@ -3042,14 +3112,32 @@ module wwa_main {
             this._player.clearEstimateWindowWaiting();
         }
 
+        public hidePasswordWindow( isCancel: boolean = false): void {
+            this._passwordWindow.hide();
+            if( isCancel || this._passwordWindow.mode === wwa_password_window.Mode.SAVE ) {
+                this._player.clearPasswordWindowWaiting();
+                return;
+            }
+            try {
+                var data = this._quickLoad(false, this._passwordWindow.password, false);
+            } catch ( e ) {
+                this._player.clearPasswordWindowWaiting();
+                // 読み込み失敗
+                alert( "パスワードが正常ではありません。\nエラー詳細:\n" + e.message );
+                return;
+            }
+            this._passwordLoadExecInNextFrame = true;
+            this._passwordSaveExtractData = data;
+        }
+
         private _displayHelp(): void {
             if (this._player.isControllable()) {
                 this.setMessageQueue(
                     "【ショートカットキーの一覧】\n" +
                     "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
                     //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
-                    //                                "Ｆ３：復帰用パスワード入力\n" +
-                    //                                "Ｆ４：復帰用パスワード表示\n" +
+                    "Ｆ３：復帰用パスワード入力\n" +
+                    "Ｆ４：復帰用パスワード表示\n" +
                     "Ｆ５：一時保存データの読み込み\n" +
                     "Ｆ６：データの一時保存\n" +
                     "Ｆ７：初めからスタート\n" +
@@ -3309,7 +3397,6 @@ module wwa_main {
         private _styleElm: HTMLStyleElement;
         private _sheet: CSSStyleSheet;
         public initCSSRule() {
-            console.log(this);
             this._styleElm = <HTMLStyleElement>wwa_util.$id(Consts.WWA_STYLE_TAG_ID);
             this._sheet = <CSSStyleSheet>this._styleElm.sheet;
             this.updateCSSRule();
@@ -3330,7 +3417,7 @@ module wwa_main {
             }
             if (this._sheet.addRule !== void 0) {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(
-                    "div.wwa-message-window, div#wwa-battle-estimate",
+                    "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window",
                     "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);" +
                     "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" +
                     "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);"
@@ -3342,7 +3429,7 @@ module wwa_main {
                     );
             } else {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(
-                    "div.wwa-message-window, div#wwa-battle-estimate {\n"+
+                    "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window {\n"+
                         "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);\n" +
                         "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);\n" +
                        "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);\n" +

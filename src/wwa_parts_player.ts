@@ -39,6 +39,7 @@ module wwa_parts_player {
         LOCALGATE_JUMPED,
         BATTLE,
         ESTIMATE_WINDOW_WAITING,
+        PASSWORD_WINDOW_WAITING
     }
 
     export class Player extends PartsObject {
@@ -318,6 +319,21 @@ module wwa_parts_player {
                 this._state = PlayerState.CONTROLLABLE;
             }
         }
+
+        public setPasswordWindowWating(): void {
+            this._state = PlayerState.PASSWORD_WINDOW_WAITING;
+        }
+
+        public isWaitingPasswordWindow(): boolean {
+            return this._state === PlayerState.PASSWORD_WINDOW_WAITING;
+        }
+
+        public clearPasswordWindowWaiting(): void {
+            if (this._state === PlayerState.PASSWORD_WINDOW_WAITING) {
+                this._state = PlayerState.CONTROLLABLE;
+            }
+        }
+
 
         public isPartsEventExecuted(): boolean {
             return this._isPartsEventExecuted;
