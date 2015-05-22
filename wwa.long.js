@@ -340,6 +340,9 @@ var wwa_data;
             }
             return 4 /* LEFT_DOWN */;
         };
+        Coord.prototype.toString = function () {
+            return "(" + this.x + ", " + this.y + ")";
+        };
         return Coord;
     })();
     wwa_data.Coord = Coord;
@@ -475,7 +478,6 @@ var wwa_data;
         YesNoState[YesNoState["UNSELECTED"] = 2] = "UNSELECTED";
     })(wwa_data.YesNoState || (wwa_data.YesNoState = {}));
     var YesNoState = wwa_data.YesNoState;
-    ;
     (function (AppearanceTriggerType) {
         AppearanceTriggerType[AppearanceTriggerType["MAP"] = 0] = "MAP";
         AppearanceTriggerType[AppearanceTriggerType["OBJECT"] = 1] = "OBJECT";
@@ -484,14 +486,12 @@ var wwa_data;
         AppearanceTriggerType[AppearanceTriggerType["CHOICE_NO"] = 3] = "CHOICE_NO";
     })(wwa_data.AppearanceTriggerType || (wwa_data.AppearanceTriggerType = {}));
     var AppearanceTriggerType = wwa_data.AppearanceTriggerType;
-    ;
     (function (ItemMode) {
         ItemMode[ItemMode["NORMAL"] = 0] = "NORMAL";
         ItemMode[ItemMode["CAN_USE"] = 1] = "CAN_USE";
         ItemMode[ItemMode["NOT_DISAPPEAR"] = 2] = "NOT_DISAPPEAR";
     })(wwa_data.ItemMode || (wwa_data.ItemMode = {}));
     var ItemMode = wwa_data.ItemMode;
-    ;
     (function (PartsType) {
         PartsType[PartsType["MAP"] = 1] = "MAP";
         PartsType[PartsType["OBJECT"] = 0] = "OBJECT";
@@ -506,6 +506,7 @@ var wwa_data;
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_QUICK_LOAD"] = 5] = "CALL_BY_QUICK_LOAD";
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_RESTART_GAME"] = 6] = "CALL_BY_RESTART_GAME";
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_GOTO_WWA"] = 7] = "CALL_BY_GOTO_WWA";
+        ChoiceCallInfo[ChoiceCallInfo["CALL_BY_PASSWORD"] = 8] = "CALL_BY_PASSWORD";
     })(wwa_data.ChoiceCallInfo || (wwa_data.ChoiceCallInfo = {}));
     var ChoiceCallInfo = wwa_data.ChoiceCallInfo;
     (function (SidebarButton) {
@@ -523,6 +524,7 @@ var wwa_data;
     (function (LoadType) {
         LoadType[LoadType["QUICK_LOAD"] = 0] = "QUICK_LOAD";
         LoadType[LoadType["RESTART_GAME"] = 1] = "RESTART_GAME";
+        LoadType[LoadType["PASSWORD"] = 2] = "PASSWORD";
     })(wwa_data.LoadType || (wwa_data.LoadType = {}));
     var LoadType = wwa_data.LoadType;
     (function (MoveType) {
@@ -837,6 +839,8 @@ var wwa_data;
             this.messageNum = void 0;
             this.map = void 0;
             this.mapObject = void 0;
+            this.mapCompressed = void 0;
+            this.mapObjectCompressed = void 0;
             this.mapAttribute = void 0;
             this.objectAttribute = void 0;
             this.worldPassword = void 0;
@@ -872,6 +876,7 @@ var wwa_data;
             this.statusColorR = void 0;
             this.statusColorG = void 0;
             this.statusColorB = void 0;
+            this.checkOriginalMapString = void 0;
             this.checkString = void 0;
         }
         return WWAData;
@@ -1872,6 +1877,18 @@ var wwa_util;
         }
         else {
             return location.href = "./" + uri;
+        }
+    };
+    wwa_util.arr2str4save = function (x) {
+        var txt = "";
+        if (x instanceof Array) {
+            for (var i = 0; i < x.length; i++) {
+                txt += (wwa_util.arr2str4save(x[i]) + "/");
+            }
+            return txt;
+        }
+        else {
+            return x + "";
         }
     };
 })(wwa_util || (wwa_util = {}));
@@ -3641,7 +3658,8 @@ var wwa_main;
                     this._yesNoChoiceCallInfo = 5 /* CALL_BY_QUICK_LOAD */;
                 }
                 else {
-                    this.setMessageQueue("セーブデータがありません。\n※パスワードロードは、現在ご利用になれません。", false, true);
+                    this.setMessageQueue("データ復帰用のパスワードを入力しますか？", true, true);
+                    this._yesNoChoiceCallInfo = 8 /* CALL_BY_PASSWORD */;
                 }
             }
             else if (button === 1 /* QUICK_SAVE */) {
@@ -3952,6 +3970,8 @@ var wwa_main;
                     }
                     else if (_this._loadType === 1 /* RESTART_GAME */) {
                         _this._restartGame();
+                    }
+                    else if (_this._loadType === 2 /* PASSWORD */) {
                     }
                     setTimeout(_this.mainCaller, _this._waitTimeInCurrentFrame, _this);
                 });
@@ -4635,6 +4655,11 @@ var wwa_main;
                         location.href = wwa_util.$escapedURI(Consts.WWA_HOME);
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[3 /* GOTO_WWA */])).classList.remove("onpress");
                     }
+                    else if (this._yesNoChoiceCallInfo === 8 /* CALL_BY_PASSWORD */) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[0 /* QUICK_LOAD */])).classList.remove("onpress");
+                        this._stopUpdateByLoadFlag = true;
+                        this._loadType = 2 /* PASSWORD */;
+                    }
                     this._yesNoJudge = 2 /* UNSELECTED */;
                     this._setNextMessage();
                     this._yesNoChoicePartsCoord = void 0;
@@ -4676,6 +4701,9 @@ var wwa_main;
                     }
                     else if (this._yesNoChoiceCallInfo === 7 /* CALL_BY_GOTO_WWA */) {
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[3 /* GOTO_WWA */])).classList.remove("onpress");
+                    }
+                    else if (this._yesNoChoiceCallInfo === 8 /* CALL_BY_PASSWORD */) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[0 /* QUICK_LOAD */])).classList.remove("onpress");
                     }
                     this._yesNoJudge = 2 /* UNSELECTED */;
                     this._setNextMessage();
@@ -5004,6 +5032,85 @@ var wwa_main;
                 this._wwaData.mapObject[pos.y][pos.x] = id;
             }
         };
+        WWA.prototype._countSamePartsLength = function (data, startPos) {
+            var i;
+            for (i = startPos + 1; i < data.length; i++) {
+                if (data[i] !== data[i - 1]) {
+                    break;
+                }
+            }
+            return i - startPos;
+        };
+        WWA.prototype._compressMap = function (map) {
+            var dest = [];
+            for (var y = 0; y < map.length; y++) {
+                dest[y] = [];
+                for (var x = 0; x < map[y].length;) {
+                    var len = this._countSamePartsLength(map[y], x);
+                    dest[y].push([map[y][x], len]);
+                    x += (len);
+                }
+            }
+            return dest;
+        };
+        WWA.prototype._decompressMap = function (compressedMap) {
+            var dest = [];
+            var x;
+            for (var y = 0; y < compressedMap.length; y++) {
+                dest[y] = [];
+                x = 0;
+                for (var i = 0; i < compressedMap[y].length; i++) {
+                    var len = compressedMap[y][i][1]; // length
+                    for (var j = 0; j < len; j++) {
+                        dest[y].push(compressedMap[y][i][0]); // parts id
+                    }
+                }
+            }
+            return dest;
+        };
+        WWA.prototype._generateMapDataHash = function (data) {
+            var text = "A";
+            for (var y = 0; y < data.map.length; y++) {
+                for (var x = 0; x < data.map[y].length;) {
+                    var len = this._countSamePartsLength(data.map[y], x);
+                    text += (data.map[y][x] + "|" + len + "/");
+                    x += (len);
+                }
+                for (x = 0; x < data.mapObject[y].length;) {
+                    var len = this._countSamePartsLength(data.mapObject[y], x);
+                    text += (data.mapObject[y][x] + "|" + len + "/");
+                    x += (len);
+                }
+            }
+            for (var mapi = 0; mapi < data.mapAttribute.length; mapi++) {
+                for (var mapatri = 0; mapatri < data.mapAttribute[mapi].length; mapatri++) {
+                    text += data.mapAttribute[mapi][mapatri] + "/";
+                }
+            }
+            for (var obji = 0; obji < data.objectAttribute.length; obji++) {
+                for (var objatri = 0; objatri < data.objectAttribute[obji].length; objatri++) {
+                    text += data.objectAttribute[obji][objatri] + "/";
+                }
+            }
+            text += "Z";
+            return CryptoJS.MD5(text).toString();
+        };
+        WWA.prototype._generateSaveDataHash = function (data) {
+            var maphash = this._generateMapDataHash(data);
+            var text = maphash;
+            var keyArray = [];
+            for (var key in data) {
+                if (key === "map" || key === "mapObject" || key === "mapCompressed" || key === "mapObjectCompressed" || key === "mapAttribute" || key === "objectAttribute" || key === "checkString") {
+                    continue;
+                }
+                keyArray.push(key);
+            }
+            keyArray.sort();
+            for (var i = 0; i < keyArray.length; i++) {
+                text += wwa_util.arr2str4save(data[keyArray[i]]);
+            }
+            return CryptoJS.MD5(text).toString();
+        };
         WWA.prototype._quickSave = function () {
             var qd = JSON.parse(JSON.stringify(this._wwaData));
             var pc = this._player.getPosition().getPartsCoord();
@@ -5017,38 +5124,69 @@ var wwa_main;
             qd.statusDefence = st.defence;
             qd.statusGold = st.gold;
             qd.moves = this._player.getMoveCount();
-            /*
-                        var originalData = this._restartData;
-                        var mapHash;
-                        var text = "A";
-                        for( var y = 0; y < originalData.map.length; y++ ) {
-                            for( var x = 0; x < originalData.map[y].length; x += 2 ) {
-                                text += ( originalData.map[y][x] * 10001 + originalData.mapObject[x][y] +"/" )
-                            }
-                        }
-            
-                        text += "Z";
-            
-            //            qd.checkString = CryptoJS.MD5( text );
-                        mapHash = CryptoJS.MD5( text );
-            
-            //            console.log( text );
-            */
+            qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            qd.mapCompressed = this._compressMap(qd.map);
+            qd.mapObjectCompressed = this._compressMap(qd.mapObject);
+            qd.checkString = this._generateSaveDataHash(qd);
+            // map, mapObjectについてはcompressから復元
+            qd.map = void 0;
+            qd.mapObject = void 0;
+            // message, mapAttribute, objectAttributeについてはrestartdataから復元
+            // TODO: WWAEvalの機能などでrestart時から変更された場合は、差分をセーブするようにする予定
+            qd.message = void 0;
+            qd.mapAttribute = void 0;
+            qd.objectAttribute = void 0;
+            var s = JSON.stringify(qd);
+            var savepass = CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(s), "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]").toString();
             this._quickSaveData = qd;
-            /*
-            var s = JSON.stringify( this._quickSaveData );
-            CryptoJS.AES.encrypt(
-                CryptoJS.enc.Utf8.parse( s ),
-                this._wwaData.worldPassNumber * 231 + 8310 + mapHash
-            ).toString()
-            */
         };
-        WWA.prototype._quickLoad = function (restart) {
+        WWA.prototype._decodePassword = function (pass) {
+            var ori = this._generateMapDataHash(this._restartData);
+            var json = CryptoJS.AES.decrypt(pass, "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + ori) + "P+>A[]").toString(CryptoJS.enc.Utf8);
+            console.log(json);
+            var obj;
+            try {
+                obj = JSON.parse(json);
+            }
+            catch (e) {
+                throw new Error("JSON PARSE FAILED");
+            }
+            return obj;
+        };
+        WWA.prototype._quickLoad = function (restart, password) {
             if (restart === void 0) { restart = false; }
-            if (!restart && this._quickSaveData === void 0) {
+            if (password === void 0) { password = null; }
+            if (!restart && this._quickSaveData === void 0 && password === null) {
                 throw new Error("セーブデータがありません。");
             }
-            var newData = JSON.parse(JSON.stringify(restart ? this._restartData : this._quickSaveData));
+            var newData;
+            if (password !== null) {
+                newData = this._decodePassword(password);
+            }
+            else {
+                newData = JSON.parse(JSON.stringify(restart ? this._restartData : this._quickSaveData));
+            }
+            // TODO: WWAEvalの属性変更対策, もう少しスマートなディープコピー方法考える
+            newData.message = JSON.parse(JSON.stringify(this._restartData.message));
+            newData.mapAttribute = JSON.parse(JSON.stringify(this._restartData.mapAttribute));
+            newData.objectAttribute = JSON.parse(JSON.stringify(this._restartData.objectAttribute));
+            newData.map = this._decompressMap(newData.mapCompressed);
+            newData.mapObject = this._decompressMap(newData.mapObjectCompressed);
+            newData.mapCompressed = void 0;
+            newData.mapObjectCompressed = void 0;
+            var checkString = this._generateSaveDataHash(newData);
+            if (newData.checkString !== checkString) {
+                console.log("Invalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
+                throw new Error();
+            }
+            var checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            if (newData.checkOriginalMapString !== checkOriginalMapString) {
+                console.log("Invalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
+                throw new Error();
+            }
+            if (password !== null) {
+                console.log("Valid Password!");
+            }
             this._player.setEnergyMax(newData.statusEnergyMax);
             this._player.setEnergy(newData.statusEnergy);
             this._player.setStrength(newData.statusStrength);

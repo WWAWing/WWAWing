@@ -522,7 +522,7 @@ module wwa_main {
                         if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.YES) {
                             clearInterval(timer);
                             self._messageWindow.update();
-                            self._yesNoJudge = self._yesNoJudgeInNextFrame
+                            self._yesNoJudge = self._yesNoJudgeInNextFrame;
                             self._messageWindow.setInputDisable();
                             setTimeout((): void => {
                                 self._messageWindow.update();
@@ -538,7 +538,7 @@ module wwa_main {
                         } else if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.NO) {
                             clearInterval(timer);
                             self._messageWindow.update();
-                            self._yesNoJudge = self._yesNoJudgeInNextFrame
+                            self._yesNoJudge = self._yesNoJudgeInNextFrame;
                             self._messageWindow.setInputDisable();
                             setTimeout((): void =>  {
                                 self._messageWindow.update();
@@ -559,7 +559,7 @@ module wwa_main {
             if (wwap_mode|| Worker === void 0) {
                 var script: HTMLScriptElement;
                 if (!external_script_inject_mode) {
-                    script = document.createElement("script")
+                    script = document.createElement("script");
                     if (wwap_mode) {
                         script.src = Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_LOADER_NO_WORKER;
                     } else {
@@ -829,7 +829,8 @@ module wwa_main {
                     this.setMessageQueue("データを読み込みますか？\n※パスワードロードは、現在ご利用になれません。", true, true);
                     this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_QUICK_LOAD;
                 } else {
-                    this.setMessageQueue("セーブデータがありません。\n※パスワードロードは、現在ご利用になれません。", false, true);
+                    this.setMessageQueue("データ復帰用のパスワードを入力しますか？", true, true);
+                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD;
                 }
             } else if (button === wwa_data.SidebarButton.QUICK_SAVE) {
                 if (!this._wwaData.disableSaveFlag) {
@@ -1154,6 +1155,8 @@ module wwa_main {
                         this._quickLoad();
                     } else if (this._loadType === wwa_data.LoadType.RESTART_GAME) {
                         this._restartGame();
+                    } else if( this._loadType === wwa_data.LoadType.PASSWORD ) {
+                        // かく
                     }
                     setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this)
                 });
@@ -1994,6 +1997,10 @@ module wwa_main {
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
                         location.href = wwa_util.$escapedURI(Consts.WWA_HOME);
                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+                    } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD ) {
+                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+                        this._stopUpdateByLoadFlag = true;
+                        this._loadType = wwa_data.LoadType.PASSWORD;
                     }
 
                     this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
@@ -2034,6 +2041,8 @@ module wwa_main {
                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.RESTART_GAME]))).classList.remove("onpress");
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+                    } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD) {
+                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
                     }
 
                     this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
@@ -2439,6 +2448,95 @@ module wwa_main {
             }
         }
 
+        private _countSamePartsLength( data: number[], startPos: number): number {
+            var i;
+            for( i = startPos + 1; i < data.length; i++ ) {
+                if( data[ i ] !== data[ i - 1 ] ) {
+                    break;
+                }
+            }
+            return i - startPos;
+        }
+
+        private _compressMap( map: number[][] ): number[][][] {
+            var dest: number[][][] = [];
+            for( var y = 0; y < map.length; y++ ) {
+                dest[ y ] = [];
+                for( var x = 0; x < map[y].length;  ) {
+                    var len = this._countSamePartsLength( map[y], x );
+                    dest[ y ].push( [map[ y ][ x ], len]);
+                    x += ( len );
+                }
+            }
+            return dest;
+        }
+
+        private _decompressMap( compressedMap: number[][][] ): number[][] {
+            var dest: number[][] = [];
+            var x: number;
+             for( var y = 0; y < compressedMap.length; y++ ) {
+                 dest[ y ] = [];
+                 x = 0;
+                 for( var i = 0; i < compressedMap[ y ].length; i++ ) {
+                     var len = compressedMap[ y ][ i ][ 1 ]; // length
+                     for( var j = 0; j < len; j++ ) {
+                         dest[y].push( compressedMap[ y ][ i ][ 0 ]) // parts id
+                     }
+                 }
+            }
+            return dest;
+        }
+
+        private _generateMapDataHash( data: wwa_data.WWAData): string {
+            var text = "A";
+            for( var y = 0; y < data.map.length; y++ ) {
+                for( var x = 0; x < data.map[y].length;  ) {
+                    var len = this._countSamePartsLength( data.map[y], x );
+                    text += ( data.map[ y ][ x ] + "|" + len + "/" );
+                    x += ( len );
+                }
+                for( x = 0; x < data.mapObject[y].length;  ) {
+                    var len = this._countSamePartsLength( data.mapObject[y], x );
+                    text += ( data.mapObject[ y ][ x ] + "|" + len + "/" );
+                    x += ( len );
+                }
+            }
+            for(var mapi = 0; mapi < data.mapAttribute.length; mapi++ ) {
+                for( var mapatri = 0; mapatri < data.mapAttribute[ mapi ].length; mapatri++ ) {
+                    text += data.mapAttribute[ mapi ][ mapatri ] + "/";
+                }
+            }
+            for(var obji = 0; obji < data.objectAttribute.length; obji++ ) {
+                for( var objatri = 0; objatri < data.objectAttribute[ obji ].length; objatri++ ) {
+                    text += data.objectAttribute[ obji ][ objatri ] + "/";
+                }
+            }
+            text += "Z";
+            return CryptoJS.MD5( text ).toString();
+        }
+
+        private _generateSaveDataHash( data: wwa_data.WWAData): string {
+            var maphash = this._generateMapDataHash( data );
+            var text = maphash;
+            var keyArray: string[] = [];
+            for( var key in data ) {
+                if( key === "map" || key === "mapObject" ||
+                    key === "mapCompressed" || key === "mapObjectCompressed" ||
+                    key === "mapAttribute" || key === "objectAttribute" ||
+                    key === "checkString"
+                ) {
+                    continue;
+                }
+                keyArray.push( key );
+            }
+            keyArray.sort();
+            for( var i = 0; i < keyArray.length; i++ ) {
+                text += wwa_util.arr2str4save( data[ keyArray[ i ] ] );
+            }
+
+            return CryptoJS.MD5( text ).toString();
+        }
+
         private _quickSave(): void {
             var qd = <wwa_data.WWAData>JSON.parse(JSON.stringify(this._wwaData));
             var pc = this._player.getPosition().getPartsCoord();
@@ -2452,38 +2550,78 @@ module wwa_main {
             qd.statusDefence = st.defence;
             qd.statusGold = st.gold;
             qd.moves = this._player.getMoveCount();
-/*
-            var originalData = this._restartData;
-            var mapHash;
-            var text = "A";
-            for( var y = 0; y < originalData.map.length; y++ ) {
-                for( var x = 0; x < originalData.map[y].length; x += 2 ) {
-                    text += ( originalData.map[y][x] * 10001 + originalData.mapObject[x][y] +"/" )
-                }
-            }
+            qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            qd.mapCompressed = this._compressMap(qd.map);
+            qd.mapObjectCompressed = this._compressMap(qd.mapObject);
+            qd.checkString = this._generateSaveDataHash(qd);
 
-            text += "Z";
+            // map, mapObjectについてはcompressから復元
+            qd.map = void 0;
+            qd.mapObject = void 0;
 
-//            qd.checkString = CryptoJS.MD5( text );
-            mapHash = CryptoJS.MD5( text );
+            // message, mapAttribute, objectAttributeについてはrestartdataから復元
+            // TODO: WWAEvalの機能などでrestart時から変更された場合は、差分をセーブするようにする予定
+            qd.message = void 0;
+            qd.mapAttribute = void 0;
+            qd.objectAttribute = void 0;
 
-//            console.log( text );
-*/
-            this._quickSaveData = qd;
-            /*
-            var s = JSON.stringify( this._quickSaveData );
-            CryptoJS.AES.encrypt(
+            var s = JSON.stringify( qd );
+            var savepass = CryptoJS.AES.encrypt(
                 CryptoJS.enc.Utf8.parse( s ),
-                this._wwaData.worldPassNumber * 231 + 8310 + mapHash
-            ).toString()
-            */
+                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString ) + "P+>A[]"
+            ).toString();
+            this._quickSaveData = qd;
         }
 
-        private _quickLoad( restart:boolean = false): void {
-            if (!restart && this._quickSaveData === void 0) {
+        private _decodePassword( pass: string): wwa_data.WWAData {
+            var ori = this._generateMapDataHash( this._restartData );
+            var json = CryptoJS.AES.decrypt(
+                pass,
+                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + ori ) + "P+>A[]"
+            ).toString(CryptoJS.enc.Utf8);
+            console.log( json );
+            var obj: wwa_data.WWAData;
+            try {
+                obj = JSON.parse( json );
+            } catch( e ) {
+                throw new Error( "JSON PARSE FAILED" );
+            }
+            return obj;
+        }
+
+        private _quickLoad( restart:boolean = false, password: string = null): void {
+            if (!restart && this._quickSaveData === void 0 && password === null ) {
                 throw new Error("セーブデータがありません。");
             }
-            var newData = <wwa_data.WWAData>JSON.parse(JSON.stringify( restart ? this._restartData : this._quickSaveData));
+            var newData: wwa_data.WWAData;
+            if( password !== null ) {
+                newData = this._decodePassword( password );
+            } else {
+                newData = <wwa_data.WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._quickSaveData));
+            }
+            // TODO: WWAEvalの属性変更対策, もう少しスマートなディープコピー方法考える
+            newData.message = <string[]>JSON.parse(JSON.stringify(this._restartData.message ) );
+            newData.mapAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.mapAttribute ) );
+            newData.objectAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.objectAttribute ) );
+            newData.map = this._decompressMap( newData.mapCompressed );
+            newData.mapObject = this._decompressMap( newData.mapObjectCompressed );
+            newData.mapCompressed = void 0;
+            newData.mapObjectCompressed = void 0;
+
+            var checkString = this._generateSaveDataHash( newData );
+            if( newData.checkString !== checkString ) {
+                console.log( "Invalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash( newData ) );
+                throw new Error();
+            }
+            var checkOriginalMapString = this._generateMapDataHash( this._restartData );
+            if( newData.checkOriginalMapString !==  checkOriginalMapString)  {
+                console.log( "Invalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash( newData ) );
+                throw new Error();
+            }
+            if( password !== null ) {
+                console.log("Valid Password!");
+            }
+
             this._player.setEnergyMax(newData.statusEnergyMax);
             this._player.setEnergy(newData.statusEnergy);
             this._player.setStrength(newData.statusStrength);
@@ -2505,6 +2643,7 @@ module wwa_main {
             if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
                 this._player.setPartsAppearedFlag();
             }
+
             this._wwaData = newData;
             this.updateCSSRule();
         }

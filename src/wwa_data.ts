@@ -133,6 +133,9 @@ module wwa_data {
             return Direction.LEFT_DOWN;
         }
 
+        public toString(): string {
+            return "(" + this.x + ", " + this.y + ")";
+        }
 
         public constructor(x: number=0, y: number=0) {
             this.x = x;
@@ -291,7 +294,7 @@ module wwa_data {
         YES,
         NO,
         UNSELECTED
-    };
+    }
 
     export enum AppearanceTriggerType {
         MAP,
@@ -299,13 +302,13 @@ module wwa_data {
 //        USE_ITEM,
         CHOICE_YES,
         CHOICE_NO
-    };
+    }
 
     export enum ItemMode {
         NORMAL = 0,
         CAN_USE = 1,
         NOT_DISAPPEAR = 2
-    };
+    }
 
     export enum PartsType {
         MAP = 1,
@@ -320,7 +323,8 @@ module wwa_data {
         CALL_BY_QUICK_SAVE,
         CALL_BY_QUICK_LOAD,
         CALL_BY_RESTART_GAME,
-        CALL_BY_GOTO_WWA
+        CALL_BY_GOTO_WWA,
+        CALL_BY_PASSWORD
     }
 
     export enum SidebarButton {
@@ -337,7 +341,8 @@ module wwa_data {
 
     export enum LoadType {
         QUICK_LOAD,
-        RESTART_GAME
+        RESTART_GAME,
+        PASSWORD
     }
     export enum MoveType {
         STATIC = 0,
@@ -672,7 +677,7 @@ module wwa_data {
     };
 
 
-   export class WWAData {
+    export class WWAData {
         version: number = void 0;
 
         gameoverX: number = void 0;
@@ -700,6 +705,9 @@ module wwa_data {
         map: number[][] = void 0;
         mapObject: number[][] = void 0;
 
+        mapCompressed: number[][][] = void 0;
+        mapObjectCompressed: number[][][] = void 0;
+
         mapAttribute: number[][] = void 0;
         objectAttribute: number[][] = void 0;
 
@@ -710,45 +718,46 @@ module wwa_data {
         charCGName: string = void 0;
         mapCGName: string = void 0;
         systemMessage: string[] = void 0;
-       moves: number = void 0;
+        moves: number = void 0;
 
-       yesnoImgPosX: number = void 0;
-       yesnoImgPosY: number = void 0;
-       playerImgPosX: number = void 0;
-       playerImgPosY: number = void 0;
-       clickableItemSignImgPosX: number = void 0; // 0の時, 標準枠  注) 面倒なことがわかったので未実装
-       clickableItemSignImgPosY: number = void 0; // undefined時, 標準枠 注) 面倒なことがわかったので未実装
+        yesnoImgPosX: number = void 0;
+        yesnoImgPosY: number = void 0;
+        playerImgPosX: number = void 0;
+        playerImgPosY: number = void 0;
+        clickableItemSignImgPosX: number = void 0; // 0の時, 標準枠  注) 面倒なことがわかったので未実装
+        clickableItemSignImgPosY: number = void 0; // undefined時, 標準枠 注) 面倒なことがわかったので未実装
 
-       disableSaveFlag: boolean = void 0;
-       compatibleForOldMapFlag: boolean = void 0;
-       objectNoCollapseDefaultFlag: boolean = void 0;
+        disableSaveFlag: boolean = void 0;
+        compatibleForOldMapFlag: boolean = void 0;
+        objectNoCollapseDefaultFlag: boolean = void 0;
 
-       delPlayerFlag: boolean = void 0;
+        delPlayerFlag: boolean = void 0;
 
-       bgm: number = void 0;
-       effectCoords: Coord[];
-       effectWaits: number;
+        bgm: number = void 0;
+        effectCoords: Coord[];
+        effectWaits: number;
 
-       imgClickX: number = void 0;
-       imgClickY: number = void 0;
+        imgClickX: number = void 0;
+        imgClickY: number = void 0;
 
-       frameColorR: number = void 0;
-       frameColorG: number = void 0;
-       frameColorB: number = void 0;
+        frameColorR: number = void 0;
+        frameColorG: number = void 0;
+        frameColorB: number = void 0;
 
-       frameOutColorR: number = void 0;
-       frameOutColorG: number = void 0;
-       frameOutColorB: number = void 0;
+        frameOutColorR: number = void 0;
+        frameOutColorG: number = void 0;
+        frameOutColorB: number = void 0;
 
-       fontColorR: number = void 0;
-       fontColorG: number = void 0;
-       fontColorB: number = void 0;
+        fontColorR: number = void 0;
+        fontColorG: number = void 0;
+        fontColorB: number = void 0;
 
-       statusColorR: number = void 0;
-       statusColorG: number = void 0;
-       statusColorB: number = void 0;
+        statusColorR: number = void 0;
+        statusColorG: number = void 0;
+        statusColorB: number = void 0;
 
-       checkString: string = void 0;
+        checkOriginalMapString: string = void 0;
+        checkString: string = void 0;
 
         constructor() { }
     }

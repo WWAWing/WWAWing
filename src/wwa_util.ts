@@ -45,4 +45,16 @@ module wwa_util {
             return location.href = "./" + uri;
         }
     }
+
+    export var arr2str4save = ( x: any): string => {
+        var txt = "";
+        if( x instanceof Array ) {
+            for (var i = 0; i < x.length; i++ ) {
+                txt += (arr2str4save( x[ i  ] ) + "/");
+            }
+            return txt;
+        } else {
+            return x + "";
+        }
+    }
 }
