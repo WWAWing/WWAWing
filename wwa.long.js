@@ -372,6 +372,19 @@ var wwa_data;
             var newY = Math.floor(this._partsCoord.y / (WWAConsts.V_PARTS_NUM_IN_WINDOW - 1)) * (WWAConsts.V_PARTS_NUM_IN_WINDOW - 1);
             return new Position(this._wwa, newX, newY, 0, 0);
         };
+        Position.prototype.getDefaultCameraPosition = function () {
+            var pos = this.getScreenTopPosition();
+            var coord = pos.getPartsCoord();
+            var width = this._wwa.getMapWidth();
+            var newCoord = pos.getPartsCoord().clone();
+            if (coord.x === width - 1) {
+                newCoord.x--;
+            }
+            if (coord.y === width - 1) {
+                newCoord.y--;
+            }
+            return newCoord.convertIntoPosition(this._wwa).getScreenTopPosition();
+        };
         Position.prototype.getNextJustPosition = function (dir) {
             // 方向指定時は、その方向の次のPartsCoordを返す
             if (dir !== void 0) {
@@ -429,11 +442,13 @@ var wwa_data;
         Position.prototype.equals = function (pos) {
             return (this._partsCoord.equals(pos.getPartsCoord()) && this._offsetCoord.equals(pos.getOffsetCoord()));
         };
-        Position.prototype.isInCameraRange = function (camera) {
+        Position.prototype.isInCameraRange = function (camera, exceptRightBottomEdge) {
+            if (exceptRightBottomEdge === void 0) { exceptRightBottomEdge = false; }
             var camPos = camera.getPosition()._partsCoord;
             var x = this._partsCoord.x;
             var y = this._partsCoord.y;
-            return (camPos.x <= x && x < camPos.x + WWAConsts.H_PARTS_NUM_IN_WINDOW && camPos.y <= y && y < camPos.y + WWAConsts.V_PARTS_NUM_IN_WINDOW);
+            var m = exceptRightBottomEdge ? 1 : 0;
+            return (camPos.x <= x && x < camPos.x + WWAConsts.H_PARTS_NUM_IN_WINDOW - m && camPos.y <= y && y < camPos.y + WWAConsts.V_PARTS_NUM_IN_WINDOW - m);
         };
         Position.prototype.hasLocalGate = function () {
             return (this._wwa.getMapTypeByPosition(this) === WWAConsts.MAP_LOCALGATE || this._wwa.getObjectTypeByPosition(this) === WWAConsts.OBJECT_LOCALGATE);
@@ -638,7 +653,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.14-β2";
+        WWAConsts.VERSION_WWAJS = "W3.14-β3";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -1176,9 +1191,9 @@ var wwa_parts_player;
                 return false;
             }
             this._position = pos;
-            //            if (!pos.isInCameraRange(this._camera)) {
-            this._camera.reset(pos);
-            //            }
+            if (!pos.isInCameraRange(this._camera, true)) {
+                this._camera.reset(pos);
+            }
             this._state = 4 /* LOCALGATE_JUMPED */;
             this._jumpWaitFramesRemain = Consts.LOCALGATE_PLAYER_WAIT_FRAME;
             this._samePosLastExecutedMapID = void 0;
@@ -1760,7 +1775,8 @@ var wwa_camera;
         };
         Camera.prototype.reset = function (position) {
             this._positionPrev = this._position;
-            this._position = position.getScreenTopPosition();
+            //            this._position = position.getScreenTopPosition();
+            this._position = position.getDefaultCameraPosition();
             this._transitionStep = 0;
             this._isResetting = true;
         };

@@ -159,6 +159,22 @@ module wwa_data {
             return new Position(this._wwa, newX, newY, 0, 0);
         }
 
+        public getDefaultCameraPosition(): Position {
+            var pos = this.getScreenTopPosition();
+            var coord = pos.getPartsCoord();
+            var width = this._wwa.getMapWidth();
+            var newCoord = pos.getPartsCoord().clone();
+
+            if( coord.x === width - 1) {
+                newCoord.x--;
+            }
+            if( coord.y === width - 1 ) {
+                newCoord.y--;
+            }
+
+            return newCoord.convertIntoPosition( this._wwa ).getScreenTopPosition();
+        }
+
         public getNextJustPosition(dir?: Direction): Position {
             // 方向指定時は、その方向の次のPartsCoordを返す
             if (dir !== void 0) {
@@ -225,12 +241,13 @@ module wwa_data {
                 );
         }
 
-        public isInCameraRange(camera: wwa_camera.Camera): boolean {
+        public isInCameraRange(camera: wwa_camera.Camera, exceptRightBottomEdge: boolean = false): boolean {
             var camPos = camera.getPosition()._partsCoord;
             var x = this._partsCoord.x;
             var y = this._partsCoord.y;
-            return (camPos.x <= x && x < camPos.x + WWAConsts.H_PARTS_NUM_IN_WINDOW &&
-                camPos.y <= y && y < camPos.y + WWAConsts.V_PARTS_NUM_IN_WINDOW);
+            var m = exceptRightBottomEdge ? 1 : 0;
+            return (camPos.x <= x && x < camPos.x + WWAConsts.H_PARTS_NUM_IN_WINDOW - m &&
+                camPos.y <= y && y < camPos.y + WWAConsts.V_PARTS_NUM_IN_WINDOW - m);
         }
 
         public hasLocalGate(): boolean {
@@ -455,7 +472,7 @@ module wwa_data {
     export var speedList = [2, 5, 8, 10];
     export var speedNameList = ["低速", "準低速", "中速", "高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "W3.14-β2";
+        static VERSION_WWAJS: string = "W3.14-β3";
         static WWA_HOME: string = "http://wwajp.com";
 
         static ITEMBOX_SIZE: number = 12;

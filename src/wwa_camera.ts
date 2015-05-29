@@ -69,7 +69,8 @@ module wwa_camera {
 
         public reset(position: wwa_data.Position): void {
             this._positionPrev = this._position;
-            this._position = position.getScreenTopPosition();
+//            this._position = position.getScreenTopPosition();
+            this._position = position.getDefaultCameraPosition();
             this._transitionStep = 0;
             this._isResetting = true;
         }
