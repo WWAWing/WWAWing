@@ -643,7 +643,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.14-β1";
+        WWAConsts.VERSION_WWAJS = "W3.14-β2";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -1201,9 +1201,9 @@ var wwa_parts_player;
                 return false;
             }
             this._position = pos;
-            if (!pos.isInCameraRange(this._camera)) {
-                this._camera.reset(pos);
-            }
+            //            if (!pos.isInCameraRange(this._camera)) {
+            this._camera.reset(pos);
+            //            }
             this._state = PlayerState.LOCALGATE_JUMPED;
             this._jumpWaitFramesRemain = Consts.LOCALGATE_PLAYER_WAIT_FRAME;
             this._samePosLastExecutedMapID = void 0;
@@ -4953,7 +4953,7 @@ var wwa_main;
                         else if (partsType === Consts.OBJECT_SELL) {
                             if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
                                 if (this._player.canHaveMoreItems() || this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
-                                    if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
+                                    if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] !== 0) {
                                         this._player.addItem(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
                                     }
                                     var status = new wwa_data.Status(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY], this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_STRENGTH], this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_DEFENCE], -this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD] // 払うので、マイナスになります。

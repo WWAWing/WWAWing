@@ -7,6 +7,7 @@ wwa.long.js: ./src/*.ts wwa_license_comment.js
 	echo "\n" >> $@
 
 wwa.link.js: wwa_license_comment.js wwa.long.js cryptojs/aes.js
+	echo "\n" >> $@
 	cat wwa.long.js cryptojs/aes.js > $@
 
 wwa.js: wwa.link.js closure/compiler.jar

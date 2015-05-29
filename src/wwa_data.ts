@@ -455,7 +455,7 @@ module wwa_data {
     export var speedList = [2, 5, 8, 10];
     export var speedNameList = ["低速", "準低速", "中速", "高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "W3.14-β1";
+        static VERSION_WWAJS: string = "W3.14-β2";
         static WWA_HOME: string = "http://wwajp.com";
 
         static ITEMBOX_SIZE: number = 12;

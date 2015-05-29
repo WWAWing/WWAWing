@@ -1978,7 +1978,7 @@ module wwa_main {
                         } else if (partsType === Consts.OBJECT_SELL) {
                             if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
                                 if (this._player.canHaveMoreItems() || this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM ] === 0 ) {
-                                    if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
+                                    if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] !== 0) {
                                         this._player.addItem(
                                             this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
                                     }

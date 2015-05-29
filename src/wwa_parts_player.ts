@@ -373,9 +373,9 @@ module wwa_parts_player {
             }
 
             this._position = pos;
-            if (!pos.isInCameraRange(this._camera)) {
+//            if (!pos.isInCameraRange(this._camera)) {
                 this._camera.reset(pos);
-            }
+//            }
 
             this._state = PlayerState.LOCALGATE_JUMPED;
             this._jumpWaitFramesRemain = Consts.LOCALGATE_PLAYER_WAIT_FRAME;
