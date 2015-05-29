@@ -1883,6 +1883,61 @@ var wwa_cgmanager;
     })();
     wwa_cgmanager.CGManager = CGManager;
 })(wwa_cgmanager || (wwa_cgmanager = {}));
+/// <reference path="./wwa_main.ts" />
+var wwa_util;
+(function (wwa_util) {
+    wwa_util.$id = function (id) {
+        return document.getElementById(id);
+    };
+    wwa_util.$class = function (className) {
+        return document.getElementsByClassName(className);
+    };
+    wwa_util.$tag = function (tagName) {
+        return document.getElementsByTagName(tagName);
+    };
+    wwa_util.$qs = function (selector) {
+        return document.querySelector(selector);
+    };
+    wwa_util.$qsh = function (selector) {
+        return document.querySelector(selector);
+    };
+    wwa_util.$qsAll = function (selector) {
+        return document.querySelectorAll(selector);
+    };
+    wwa_util.$localPos = function (mouseX, mouseY) {
+        var cx, cy;
+        var sx = window.pageXOffset ||
+            document.body.scrollLeft ||
+            document.documentElement.scrollLeft;
+        var sy = window.pageYOffset ||
+            document.body.scrollTop ||
+            document.documentElement.scrollTop;
+        cx = mouseX - wwa_util.$id("wwa-wrapper").offsetLeft + sx;
+        cy = mouseY - wwa_util.$id("wwa-wrapper").offsetTop + sy;
+        return new wwa_data.Coord(cx, cy);
+    };
+    // FIXME: この実装、大丈夫？
+    wwa_util.$escapedURI = function (uri) {
+        if (uri.match(/^https?:\/\//) || uri.match(/^\.\.\//)) {
+            return uri;
+        }
+        else {
+            return location.href = "./" + uri;
+        }
+    };
+    wwa_util.arr2str4save = function (x) {
+        var txt = "";
+        if (x instanceof Array) {
+            for (var i = 0; i < x.length; i++) {
+                txt += (wwa_util.arr2str4save(x[i]) + "/");
+            }
+            return txt;
+        }
+        else {
+            return x + "";
+        }
+    };
+})(wwa_util || (wwa_util = {}));
 /// <reference path="./wwa_data.ts" />
 var wwa_message;
 (function (wwa_message) {
@@ -4897,8 +4952,10 @@ var wwa_main;
                         }
                         else if (partsType === Consts.OBJECT_SELL) {
                             if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
-                                if (this._player.canHaveMoreItems()) {
-                                    this._player.addItem(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
+                                if (this._player.canHaveMoreItems() || this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
+                                    if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
+                                        this._player.addItem(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
+                                    }
                                     var status = new wwa_data.Status(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY], this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_STRENGTH], this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_DEFENCE], -this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD] // 払うので、マイナスになります。
                                     );
                                     var pstatus = this._player.getStatusWithoutEquipments();
@@ -4915,7 +4972,10 @@ var wwa_main;
                                 }
                                 else {
                                     // アイテムをボックスがいっぱい
-                                    this._messageQueue.push(new wwa_message.MessageInfo("これ以上、アイテムを持てません。", true));
+                                    if (this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] !== "BLANK") {
+                                        this._messageQueue.push(new wwa_message.MessageInfo(this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] === "" ?
+                                            "これ以上、アイテムを持てません。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM], true));
+                                    }
                                 }
                             }
                             else {
@@ -6251,59 +6311,4 @@ var wwa_main;
         window.addEventListener("load", start);
     }
 })(wwa_main || (wwa_main = {}));
-/// <reference path="./wwa_main.ts" />
-var wwa_util;
-(function (wwa_util) {
-    wwa_util.$id = function (id) {
-        return document.getElementById(id);
-    };
-    wwa_util.$class = function (className) {
-        return document.getElementsByClassName(className);
-    };
-    wwa_util.$tag = function (tagName) {
-        return document.getElementsByTagName(tagName);
-    };
-    wwa_util.$qs = function (selector) {
-        return document.querySelector(selector);
-    };
-    wwa_util.$qsh = function (selector) {
-        return document.querySelector(selector);
-    };
-    wwa_util.$qsAll = function (selector) {
-        return document.querySelectorAll(selector);
-    };
-    wwa_util.$localPos = function (mouseX, mouseY) {
-        var cx, cy;
-        var sx = window.pageXOffset ||
-            document.body.scrollLeft ||
-            document.documentElement.scrollLeft;
-        var sy = window.pageYOffset ||
-            document.body.scrollTop ||
-            document.documentElement.scrollTop;
-        cx = mouseX - wwa_util.$id("wwa-wrapper").offsetLeft + sx;
-        cy = mouseY - wwa_util.$id("wwa-wrapper").offsetTop + sy;
-        return new wwa_data.Coord(cx, cy);
-    };
-    // FIXME: この実装、大丈夫？
-    wwa_util.$escapedURI = function (uri) {
-        if (uri.match(/^https?:\/\//) || uri.match(/^\.\.\//)) {
-            return uri;
-        }
-        else {
-            return location.href = "./" + uri;
-        }
-    };
-    wwa_util.arr2str4save = function (x) {
-        var txt = "";
-        if (x instanceof Array) {
-            for (var i = 0; i < x.length; i++) {
-                txt += (wwa_util.arr2str4save(x[i]) + "/");
-            }
-            return txt;
-        }
-        else {
-            return x + "";
-        }
-    };
-})(wwa_util || (wwa_util = {}));
 //# sourceMappingURL=wwa.long.js.map

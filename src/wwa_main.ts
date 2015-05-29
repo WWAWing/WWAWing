@@ -1917,7 +1917,7 @@ module wwa_main {
                 return;
             }
             if (this._wwaData.message[wwa_data.SystemMessage1.ASK_LINK] === "BLANK") {
-                location.href = wwa_util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0])
+                location.href = wwa_util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0]);
                 return;
             }
             this.setMessageQueue(
@@ -1977,10 +1977,11 @@ module wwa_main {
                             }
                         } else if (partsType === Consts.OBJECT_SELL) {
                             if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
-                                if (this._player.canHaveMoreItems()) {
-
-                                    this._player.addItem(
-                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
+                                if (this._player.canHaveMoreItems() || this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM ] === 0 ) {
+                                    if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
+                                        this._player.addItem(
+                                            this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
+                                    }
                                     var status = new wwa_data.Status(
                                         this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY],
                                         this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_STRENGTH],
@@ -1990,7 +1991,7 @@ module wwa_main {
                                     var pstatus = this._player.getStatusWithoutEquipments();
 
                                     status.energy = status.energy > Consts.STATUS_MINUS_BORDER ?
-                                    Consts.STATUS_MINUS_BORDER - status.energy : status.energy
+                                    Consts.STATUS_MINUS_BORDER - status.energy : status.energy;
                                     this.setStatusChangedEffect(status);
                                     this._player.addStatusAll(status);
 
@@ -2002,7 +2003,15 @@ module wwa_main {
                                     this.appearParts(this._yesNoChoicePartsCoord, wwa_data.AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                                 } else {
                                     // アイテムをボックスがいっぱい
-                                    this._messageQueue.push( new wwa_message.MessageInfo( "これ以上、アイテムを持てません。", true) );
+                                    if (this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] !== "BLANK") {
+                                        this._messageQueue.push(
+                                            new wwa_message.MessageInfo(
+                                                this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] === "" ?
+                                                    "これ以上、アイテムを持てません。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
+                                                true
+                                            )
+                                        );
+                                    }
                                 }
                             } else {
                                 // 所持金が足りない
