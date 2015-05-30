@@ -666,7 +666,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.14-β3";
+        WWAConsts.VERSION_WWAJS = "W3.14";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -6335,4 +6335,5 @@ var wwa_main;
         window.addEventListener("load", start);
     }
 })(wwa_main || (wwa_main = {}));
-//# sourceMappingURL=wwa.long.js.tmp.map\n
+//# sourceMappingURL=wwa.long.js.tmp.map
+
