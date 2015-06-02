@@ -3720,7 +3720,6 @@ var wwa_main;
                     });
                 }
                 catch (e) {
-                    alert(e.message);
                     script.onload = function () {
                         loader_start({
                             data: {
