@@ -2551,14 +2551,17 @@ module wwa_main {
 
         private _generateMapDataHash( data: wwa_data.WWAData): string {
             var text = "A";
-            for( var y = 0; y < data.map.length; y++ ) {
-                for( var x = 0; x < data.map[y].length;  ) {
-                    var len = this._countSamePartsLength( data.map[y], x );
+            var len = 0;
+            var x = 0;
+            var y = 0;
+            for( y = 0; y < data.map.length; y++ ) {
+                for( x = 0; x < data.map[y].length;  ) {
+                    len = this._countSamePartsLength( data.map[y], x );
                     text += ( data.map[ y ][ x ] + "|" + len + "/" );
                     x += ( len );
                 }
                 for( x = 0; x < data.mapObject[y].length;  ) {
-                    var len = this._countSamePartsLength( data.mapObject[y], x );
+                    len = this._countSamePartsLength( data.mapObject[y], x );
                     text += ( data.mapObject[ y ][ x ] + "|" + len + "/" );
                     x += ( len );
                 }
@@ -2568,12 +2571,14 @@ module wwa_main {
                     text += data.mapAttribute[ mapi ][ mapatri ] + "/";
                 }
             }
+//            console.log( "B = "+ chksum );
             for(var obji = 0; obji < data.objectAttribute.length; obji++ ) {
                 for( var objatri = 0; objatri < data.objectAttribute[ obji ].length; objatri++ ) {
                     text += data.objectAttribute[ obji ][ objatri ] + "/";
                 }
             }
             text += "Z";
+//            console.log( "C = " + chksum );
             return CryptoJS.MD5( text ).toString();
         }
 

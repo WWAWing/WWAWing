@@ -666,7 +666,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.14";
+        WWAConsts.VERSION_WWAJS = "W3.14+";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -5487,14 +5487,17 @@ var wwa_main;
         };
         WWA.prototype._generateMapDataHash = function (data) {
             var text = "A";
-            for (var y = 0; y < data.map.length; y++) {
-                for (var x = 0; x < data.map[y].length;) {
-                    var len = this._countSamePartsLength(data.map[y], x);
+            var len = 0;
+            var x = 0;
+            var y = 0;
+            for (y = 0; y < data.map.length; y++) {
+                for (x = 0; x < data.map[y].length;) {
+                    len = this._countSamePartsLength(data.map[y], x);
                     text += (data.map[y][x] + "|" + len + "/");
                     x += (len);
                 }
                 for (x = 0; x < data.mapObject[y].length;) {
-                    var len = this._countSamePartsLength(data.mapObject[y], x);
+                    len = this._countSamePartsLength(data.mapObject[y], x);
                     text += (data.mapObject[y][x] + "|" + len + "/");
                     x += (len);
                 }
@@ -5504,12 +5507,14 @@ var wwa_main;
                     text += data.mapAttribute[mapi][mapatri] + "/";
                 }
             }
+            //            console.log( "B = "+ chksum );
             for (var obji = 0; obji < data.objectAttribute.length; obji++) {
                 for (var objatri = 0; objatri < data.objectAttribute[obji].length; objatri++) {
                     text += data.objectAttribute[obji][objatri] + "/";
                 }
             }
             text += "Z";
+            //            console.log( "C = " + chksum );
             return CryptoJS.MD5(text).toString();
         };
         WWA.prototype._generateSaveDataHash = function (data) {
@@ -6335,5 +6340,4 @@ var wwa_main;
         window.addEventListener("load", start);
     }
 })(wwa_main || (wwa_main = {}));
-//# sourceMappingURL=wwa.long.js.tmp.map
-
+//# sourceMappingURL=wwa.long.js.tmp.map\n
