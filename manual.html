@@ -36,7 +36,7 @@
 </head>
 <body>
     <div id="wrapper">
-        <h1>WWA Wing: 簡易マニュアル (ver. W3.14++)</h1>
+        <h1>WWA Wing: 簡易マニュアル (ver. W3.14++ - WIP)</h1>
         <p><a href="http://wwawing.com">WWA Wing</a>( WWA In the Next Generation )は、<a href="http://wwajp.com">WWA</a>のJavaScript実装です。
         煩わしい警告は出ず、一部のスマートフォンでも動作します。
         正式なマニュアルは後ほどのリリースに添付予定です。</p>
@@ -89,6 +89,10 @@
             <dt><code>data-wwa-title-img</code>属性</dt>
             <dd>起動時に表示されるタイトル画像を指定できます(形式: GIF, JPEG, PNGのいずれか, サイズ:横560ピクセル*縦440ピクセル。ただし下の16ピクセル分はステータスバーに隠されます。 )。
             指定しなかった場合は<code>cover.gif</code>になります。</dd>
+            <dt><code>data-wwa-audio-dir</code>属性</dt>
+            <dd>audio.min.jsと効果音ファイルが入っているフォルダを指定できます。ここを変更した場合は, script要素で読みだすaudio.min.jsのパスも変更してください。
+            指定しなかった場合は<code>./audio/</code>になります。</dd>
+
         </dl>
         <h2>注意</h2>
         <p class="important">HTMLファイル, CSSファイルの文字コードはUTF-8(BOMなし)としてください。</p>
@@ -104,6 +108,10 @@
             <li>ランダム選択パーツ</li>
         </ul>
         <p>WWA作成ツールは作者NAO氏の許可を得て再配布しております。また、WWA Debuggerは作者Aruneko氏の許可を得て再配布しております。</p>
+        <h2>W3.14++からこのリビジョンへの変更点</h2>
+        <ul>
+          <li>オーディオ関連ディレクトリの配置変更を配置変更可能に</li>
+        </ul>
         <h2>W3.14からW3.14++への変更点</h2>
         <ul>
           <li>WWA公式での<a href="http://wwajp.com/making.html">文字列ロードに関する不具合</a>への対応</li>
