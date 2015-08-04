@@ -3288,9 +3288,10 @@ var wwa_main;
     }
     wwa_main.getProgress = getProgress;
     var WWA = (function () {
-        function WWA(mapFileName, workerFileName, urlgateEnabled) {
+        function WWA(mapFileName, workerFileName, urlgateEnabled, audioDirectory) {
             var _this = this;
             if (urlgateEnabled === void 0) { urlgateEnabled = false; }
+            if (audioDirectory === void 0) { audioDirectory = ""; }
             try {
                 util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
             }
@@ -3299,6 +3300,13 @@ var wwa_main;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
             this._statusPressCounter = new wwa_data.Status(0, 0, 0, 0);
+            if (!audioDirectory) {
+                audioDirectory = "./audio/";
+            }
+            else if (audioDirectory[audioDirectory.length - 1] !== "/") {
+                audioDirectory += "/";
+            }
+            this._audioDirectory = audioDirectory;
             var t_start = new Date().getTime();
             var isLocal = !!location.href.match(/^file/);
             if (isLocal) {
@@ -3307,7 +3315,9 @@ var wwa_main;
                     "マップデータの確認を行う場合には同梱の「WWA Debugger」をご利用ください。");
             }
             if (window["audiojs"] === void 0) {
-                alert("Audio.jsのロードに失敗しました。audioフォルダの中にaudio.min.jsは配置されていますか？");
+                alert("Audio.jsのロードに失敗しました。\n" +
+                    "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
+                    "フォルダを変更される場合には data-wwa-audio-dir 属性を指定してください");
                 return;
             }
             this._loadHandler = function (e) {
@@ -3763,7 +3773,7 @@ var wwa_main;
             if (idx === 0 || this._audioJSInstances[idx] !== void 0 || idx === wwa_data.SystemSound.NO_SOUND) {
                 return;
             }
-            var file = (wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + ".mp3" : "./audio/" + idx + ".mp3");
+            var file = (wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + ".mp3" : this._audioDirectory + idx + ".mp3");
             var audioElement = new Audio(file);
             audioElement.preload = "auto";
             if (idx >= wwa_data.SystemSound.BGM_LB) {
@@ -6326,11 +6336,12 @@ var wwa_main;
         wwa_inject_html.inject(util.$id("wwa-wrapper"), titleImgName === null ? "cover.gif" : titleImgName);
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
         var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
+        var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
         var urlgateEnabled = true;
         if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
             urlgateEnabled = false;
         }
-        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled);
+        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, audioDirectory);
     }
     if (document.readyState === "complete") {
         start();
@@ -6339,5 +6350,4 @@ var wwa_main;
         window.addEventListener("load", start);
     }
 })(wwa_main || (wwa_main = {}));
-//# sourceMappingURL=wwa.long.js.tmp.map
-
+//# sourceMappingURL=wwa.long.js.tmp.map\n

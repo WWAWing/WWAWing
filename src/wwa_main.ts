@@ -136,7 +136,7 @@ module wwa_main {
 
         private _loadHandler: (e) => void;
 
-        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false,loaderAudioDirectory: string = "") {
+        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, audioDirectory: string = "") {
             try {
                 util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
             } catch (e) { }
@@ -145,10 +145,12 @@ module wwa_main {
             this._mainCallCounter = 0;
             this._animationCounter = 0;
             this._statusPressCounter = new wwa_data.Status(0, 0, 0, 0);
-            if(!loaderAudioDirectory){
-                loaderAudioDirectory = "./audio/";
+            if(!audioDirectory){
+              audioDirectory = "./audio/";
+            } else if( audioDirectory[ audioDirectory.length - 1 ] !== "/" ) {
+              audioDirectory += "/"; 
             }
-            this._audioDirectory = loaderAudioDirectory;
+            this._audioDirectory = audioDirectory;
             var t_start: number = new Date().getTime();
             var isLocal = !!location.href.match(/^file/);
             if (isLocal) {
@@ -159,7 +161,9 @@ module wwa_main {
                     );
             }
             if (window["audiojs"] === void 0) {
-                alert("Audio.jsのロードに失敗しました。audioフォルダの中にaudio.min.jsは配置されていますか？");
+                alert("Audio.jsのロードに失敗しました。\n" +
+                    "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
+                    "フォルダを変更される場合には data-wwa-audio-dir 属性を指定してください");
                 return;
             }
 
@@ -3513,12 +3517,12 @@ module wwa_main {
         wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"),  titleImgName === null ? "cover.gif" : titleImgName );
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
         var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
-        var loaderAudioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio");
+        var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
         var urlgateEnabled = true;
         if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
             urlgateEnabled = false;
         }
-        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled,loaderAudioDirectory);
+        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled,audioDirectory);
     }
 
 
