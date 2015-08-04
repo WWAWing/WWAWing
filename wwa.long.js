@@ -666,7 +666,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.14++";
+        WWAConsts.VERSION_WWAJS = "W3.14a";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -3400,38 +3400,53 @@ var wwa_main;
                     _this._keyStore.setPressInfo(e.keyCode);
                     if (e.keyCode === KeyCode.KEY_F5) {
                         e.preventDefault();
+                        return;
                     }
-                    else if (e.keyCode === KeyCode.KEY_DOWN ||
-                        e.keyCode === KeyCode.KEY_LEFT ||
-                        e.keyCode === KeyCode.KEY_RIGHT ||
-                        e.keyCode === KeyCode.KEY_UP ||
-                        e.keyCode === KeyCode.KEY_SHIFT ||
-                        e.keyCode === KeyCode.KEY_ENTER ||
-                        e.keyCode === KeyCode.KEY_1 ||
-                        e.keyCode === KeyCode.KEY_2 ||
-                        e.keyCode === KeyCode.KEY_3 ||
-                        e.keyCode === KeyCode.KEY_A ||
-                        e.keyCode === KeyCode.KEY_C ||
-                        e.keyCode === KeyCode.KEY_D ||
-                        e.keyCode === KeyCode.KEY_E ||
-                        e.keyCode === KeyCode.KEY_M ||
-                        e.keyCode === KeyCode.KEY_N ||
-                        e.keyCode === KeyCode.KEY_Q ||
-                        e.keyCode === KeyCode.KEY_S ||
-                        e.keyCode === KeyCode.KEY_W ||
-                        e.keyCode === KeyCode.KEY_X ||
-                        e.keyCode === KeyCode.KEY_Y ||
-                        e.keyCode === KeyCode.KEY_Z ||
-                        e.keyCode === KeyCode.KEY_ESC ||
-                        e.keyCode === KeyCode.KEY_F1 ||
-                        e.keyCode === KeyCode.KEY_F3 ||
-                        e.keyCode === KeyCode.KEY_F4 ||
-                        e.keyCode === KeyCode.KEY_F6 ||
-                        e.keyCode === KeyCode.KEY_F7 ||
-                        e.keyCode === KeyCode.KEY_F8 ||
-                        e.keyCode === KeyCode.KEY_F12 ||
-                        e.keyCode === KeyCode.KEY_SPACE) {
-                        if (!_this._player.isWaitingMessage() && !_this._player.isWaitingPasswordWindow()) {
+                    if (!_this._player.isWaitingMessage()) {
+                        if (!_this._player.isWaitingPasswordWindow()) {
+                            if (e.keyCode === KeyCode.KEY_DOWN ||
+                                e.keyCode === KeyCode.KEY_LEFT ||
+                                e.keyCode === KeyCode.KEY_RIGHT ||
+                                e.keyCode === KeyCode.KEY_UP ||
+                                e.keyCode === KeyCode.KEY_SHIFT ||
+                                e.keyCode === KeyCode.KEY_ENTER ||
+                                e.keyCode === KeyCode.KEY_1 ||
+                                e.keyCode === KeyCode.KEY_2 ||
+                                e.keyCode === KeyCode.KEY_3 ||
+                                e.keyCode === KeyCode.KEY_A ||
+                                e.keyCode === KeyCode.KEY_C ||
+                                e.keyCode === KeyCode.KEY_D ||
+                                e.keyCode === KeyCode.KEY_E ||
+                                e.keyCode === KeyCode.KEY_M ||
+                                e.keyCode === KeyCode.KEY_N ||
+                                e.keyCode === KeyCode.KEY_Q ||
+                                e.keyCode === KeyCode.KEY_S ||
+                                e.keyCode === KeyCode.KEY_W ||
+                                e.keyCode === KeyCode.KEY_X ||
+                                e.keyCode === KeyCode.KEY_Y ||
+                                e.keyCode === KeyCode.KEY_Z ||
+                                e.keyCode === KeyCode.KEY_ESC ||
+                                e.keyCode === KeyCode.KEY_F1 ||
+                                e.keyCode === KeyCode.KEY_F3 ||
+                                e.keyCode === KeyCode.KEY_F4 ||
+                                e.keyCode === KeyCode.KEY_F6 ||
+                                e.keyCode === KeyCode.KEY_F7 ||
+                                e.keyCode === KeyCode.KEY_F8 ||
+                                e.keyCode === KeyCode.KEY_F12 ||
+                                e.keyCode === KeyCode.KEY_SPACE) {
+                                e.preventDefault();
+                            }
+                        }
+                    }
+                    else {
+                        if (e.keyCode === KeyCode.KEY_DOWN ||
+                            e.keyCode === KeyCode.KEY_LEFT ||
+                            e.keyCode === KeyCode.KEY_RIGHT ||
+                            e.keyCode === KeyCode.KEY_UP ||
+                            e.keyCode === KeyCode.KEY_SHIFT ||
+                            e.keyCode === KeyCode.KEY_ENTER ||
+                            e.keyCode === KeyCode.KEY_ESC ||
+                            e.keyCode === KeyCode.KEY_SPACE) {
                             e.preventDefault();
                         }
                     }
