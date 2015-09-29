@@ -2605,9 +2605,10 @@ var wwa_main;
     }
     wwa_main.getProgress = getProgress;
     var WWA = (function () {
-        function WWA(mapFileName, workerFileName, urlgateEnabled) {
+        function WWA(mapFileName, workerFileName, urlgateEnabled, audioDirectory) {
             var _this = this;
             if (urlgateEnabled === void 0) { urlgateEnabled = false; }
+            if (audioDirectory === void 0) { audioDirectory = ""; }
             try {
                 util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
             }
@@ -2616,6 +2617,13 @@ var wwa_main;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
             this._statusPressCounter = new wwa_data.Status(0, 0, 0, 0);
+            if (!audioDirectory) {
+                audioDirectory = "./audio/";
+            }
+            else if (audioDirectory[audioDirectory.length - 1] !== "/") {
+                audioDirectory += "/";
+            }
+            this._audioDirectory = audioDirectory;
             var t_start = new Date().getTime();
             var isLocal = !!location.href.match(/^file/);
             if (isLocal) {
@@ -2624,7 +2632,9 @@ var wwa_main;
                     "マップデータの確認を行う場合には同梱の「WWA Debugger」をご利用ください。");
             }
             if (window["audiojs"] === void 0) {
-                alert("Audio.jsのロードに失敗しました。audioフォルダの中にaudio.min.jsは配置されていますか？");
+                alert("Audio.jsのロードに失敗しました。\n" +
+                    "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
+                    "フォルダを変更される場合には data-wwa-audio-dir 属性を指定してください");
                 return;
             }
             this._loadHandler = function (e) {
@@ -2707,38 +2717,53 @@ var wwa_main;
                     _this._keyStore.setPressInfo(e.keyCode);
                     if (e.keyCode === KeyCode.KEY_F5) {
                         e.preventDefault();
+                        return;
                     }
-                    else if (e.keyCode === KeyCode.KEY_DOWN ||
-                        e.keyCode === KeyCode.KEY_LEFT ||
-                        e.keyCode === KeyCode.KEY_RIGHT ||
-                        e.keyCode === KeyCode.KEY_UP ||
-                        e.keyCode === KeyCode.KEY_SHIFT ||
-                        e.keyCode === KeyCode.KEY_ENTER ||
-                        e.keyCode === KeyCode.KEY_1 ||
-                        e.keyCode === KeyCode.KEY_2 ||
-                        e.keyCode === KeyCode.KEY_3 ||
-                        e.keyCode === KeyCode.KEY_A ||
-                        e.keyCode === KeyCode.KEY_C ||
-                        e.keyCode === KeyCode.KEY_D ||
-                        e.keyCode === KeyCode.KEY_E ||
-                        e.keyCode === KeyCode.KEY_M ||
-                        e.keyCode === KeyCode.KEY_N ||
-                        e.keyCode === KeyCode.KEY_Q ||
-                        e.keyCode === KeyCode.KEY_S ||
-                        e.keyCode === KeyCode.KEY_W ||
-                        e.keyCode === KeyCode.KEY_X ||
-                        e.keyCode === KeyCode.KEY_Y ||
-                        e.keyCode === KeyCode.KEY_Z ||
-                        e.keyCode === KeyCode.KEY_ESC ||
-                        e.keyCode === KeyCode.KEY_F1 ||
-                        e.keyCode === KeyCode.KEY_F3 ||
-                        e.keyCode === KeyCode.KEY_F4 ||
-                        e.keyCode === KeyCode.KEY_F6 ||
-                        e.keyCode === KeyCode.KEY_F7 ||
-                        e.keyCode === KeyCode.KEY_F8 ||
-                        e.keyCode === KeyCode.KEY_F12 ||
-                        e.keyCode === KeyCode.KEY_SPACE) {
-                        if (!_this._player.isWaitingMessage() && !_this._player.isWaitingPasswordWindow()) {
+                    if (!_this._player.isWaitingMessage()) {
+                        if (!_this._player.isWaitingPasswordWindow()) {
+                            if (e.keyCode === KeyCode.KEY_DOWN ||
+                                e.keyCode === KeyCode.KEY_LEFT ||
+                                e.keyCode === KeyCode.KEY_RIGHT ||
+                                e.keyCode === KeyCode.KEY_UP ||
+                                e.keyCode === KeyCode.KEY_SHIFT ||
+                                e.keyCode === KeyCode.KEY_ENTER ||
+                                e.keyCode === KeyCode.KEY_1 ||
+                                e.keyCode === KeyCode.KEY_2 ||
+                                e.keyCode === KeyCode.KEY_3 ||
+                                e.keyCode === KeyCode.KEY_A ||
+                                e.keyCode === KeyCode.KEY_C ||
+                                e.keyCode === KeyCode.KEY_D ||
+                                e.keyCode === KeyCode.KEY_E ||
+                                e.keyCode === KeyCode.KEY_M ||
+                                e.keyCode === KeyCode.KEY_N ||
+                                e.keyCode === KeyCode.KEY_Q ||
+                                e.keyCode === KeyCode.KEY_S ||
+                                e.keyCode === KeyCode.KEY_W ||
+                                e.keyCode === KeyCode.KEY_X ||
+                                e.keyCode === KeyCode.KEY_Y ||
+                                e.keyCode === KeyCode.KEY_Z ||
+                                e.keyCode === KeyCode.KEY_ESC ||
+                                e.keyCode === KeyCode.KEY_F1 ||
+                                e.keyCode === KeyCode.KEY_F3 ||
+                                e.keyCode === KeyCode.KEY_F4 ||
+                                e.keyCode === KeyCode.KEY_F6 ||
+                                e.keyCode === KeyCode.KEY_F7 ||
+                                e.keyCode === KeyCode.KEY_F8 ||
+                                e.keyCode === KeyCode.KEY_F12 ||
+                                e.keyCode === KeyCode.KEY_SPACE) {
+                                e.preventDefault();
+                            }
+                        }
+                    }
+                    else {
+                        if (e.keyCode === KeyCode.KEY_DOWN ||
+                            e.keyCode === KeyCode.KEY_LEFT ||
+                            e.keyCode === KeyCode.KEY_RIGHT ||
+                            e.keyCode === KeyCode.KEY_UP ||
+                            e.keyCode === KeyCode.KEY_SHIFT ||
+                            e.keyCode === KeyCode.KEY_ENTER ||
+                            e.keyCode === KeyCode.KEY_ESC ||
+                            e.keyCode === KeyCode.KEY_SPACE) {
                             e.preventDefault();
                         }
                     }
@@ -3037,7 +3062,6 @@ var wwa_main;
                     });
                 }
                 catch (e) {
-                    alert(e.message);
                     script.onload = function () {
                         loader_start({
                             data: {
@@ -3081,7 +3105,7 @@ var wwa_main;
             if (idx === 0 || this._audioJSInstances[idx] !== void 0 || idx === wwa_data.SystemSound.NO_SOUND) {
                 return;
             }
-            var file = (wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + ".mp3" : "./audio/" + idx + ".mp3");
+            var file = (wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + ".mp3" : this._audioDirectory + idx + ".mp3");
             var audioElement = new Audio(file);
             audioElement.preload = "auto";
             if (idx >= wwa_data.SystemSound.BGM_LB) {
@@ -4694,7 +4718,7 @@ var wwa_main;
             var yTop = Math.max(0, camPos.y - 1);
             var yBottom = Math.min(this._wwaData.mapWidth - 1, camPos.y + Consts.V_PARTS_NUM_IN_WINDOW);
             for (var x = xLeft; x <= xRight; x++) {
-                for (var y = yTop; y < yBottom; y++) {
+                for (var y = yTop; y <= yBottom; y++) {
                     this._replaceRandomObject(new Coord(x, y));
                 }
             }
@@ -4971,6 +4995,7 @@ var wwa_main;
                 this._player.setPartsAppearedFlag();
             }
             this._wwaData = newData;
+            this._replaceAllRandomObjects();
             this.updateCSSRule();
         };
         WWA.prototype._restartGame = function () {
@@ -5063,7 +5088,8 @@ var wwa_main;
                     var partsID = this._wwaData.mapObject[posc.y][posc.x];
                     if (partsID === 0 ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] === wwa_data.MoveType.STATIC ||
-                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE) {
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE ||
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
                         continue;
                     }
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
@@ -5644,11 +5670,12 @@ var wwa_main;
         wwa_inject_html.inject(util.$id("wwa-wrapper"), titleImgName === null ? "cover.gif" : titleImgName);
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
         var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
+        var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
         var urlgateEnabled = true;
         if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
             urlgateEnabled = false;
         }
-        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled);
+        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, audioDirectory);
     }
     if (document.readyState === "complete") {
         start();
@@ -6082,7 +6109,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.14+";
+        WWAConsts.VERSION_WWAJS = "W3.14b";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;

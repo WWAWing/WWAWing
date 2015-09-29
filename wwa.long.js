@@ -666,7 +666,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.14a";
+        WWAConsts.VERSION_WWAJS = "W3.14b";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -5401,7 +5401,7 @@ var wwa_main;
             var yTop = Math.max(0, camPos.y - 1);
             var yBottom = Math.min(this._wwaData.mapWidth - 1, camPos.y + Consts.V_PARTS_NUM_IN_WINDOW);
             for (var x = xLeft; x <= xRight; x++) {
-                for (var y = yTop; y < yBottom; y++) {
+                for (var y = yTop; y <= yBottom; y++) {
                     this._replaceRandomObject(new Coord(x, y));
                 }
             }
@@ -5678,6 +5678,7 @@ var wwa_main;
                 this._player.setPartsAppearedFlag();
             }
             this._wwaData = newData;
+            this._replaceAllRandomObjects();
             this.updateCSSRule();
         };
         WWA.prototype._restartGame = function () {
@@ -5770,7 +5771,8 @@ var wwa_main;
                     var partsID = this._wwaData.mapObject[posc.y][posc.x];
                     if (partsID === 0 ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] === wwa_data.MoveType.STATIC ||
-                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE) {
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE ||
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
                         continue;
                     }
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
