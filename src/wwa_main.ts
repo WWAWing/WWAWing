@@ -2450,10 +2450,10 @@ module wwa_main {
             var yTop = Math.max( 0, camPos.y - 1 );
             var yBottom = Math.min( this._wwaData.mapWidth - 1 , camPos.y + Consts.V_PARTS_NUM_IN_WINDOW);
             for (var x = xLeft; x <= xRight; x++) {
-                for (var y = yTop; y < yBottom; y++) {
+                for (var y = yTop; y <= yBottom; y++) {
                     this._replaceRandomObject(new Coord(x, y));
                 }
-            } 
+            }
 
         }
 
@@ -2752,6 +2752,7 @@ module wwa_main {
                     this._player.setPartsAppearedFlag();
                 }
                 this._wwaData = newData;
+                this._replaceAllRandomObjects();
                 this.updateCSSRule();
         }
 
@@ -2858,7 +2859,8 @@ module wwa_main {
                     if (
                         partsID === 0 ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] === wwa_data.MoveType.STATIC  ||
-                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE  ||
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM
                         ) {
                         continue;
                     }
