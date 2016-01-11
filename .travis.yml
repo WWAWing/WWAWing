@@ -21,6 +21,8 @@ env:
 script:
   - pushd __DISTRIBUTE__
   - make clean
+  - git rm -rf wwawing_dist
+  - git rm -rf wwawing_update
   - popd
   - git commit -m "temporal remove directories"
   - '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_dist https://$GH_TOKEN@github.com/WWAWing/WWAWing.git distribute-all --squash'
