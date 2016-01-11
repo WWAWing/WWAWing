@@ -1594,6 +1594,7 @@ module wwa_main {
                 this._execObjectNormalEvent(pos, partsID, objAttr);
             // メッセージ
             } else if (objAttr === Consts.OBJECT_MESSAGE) {
+                console.log(1);
                 this._execObjectMessageEvent(pos, partsID, objAttr);
             // モンスター
             } else if (objAttr === Consts.OBJECT_MONSTER) {
@@ -1758,7 +1759,12 @@ module wwa_main {
                 pstatus.defence < status.defence - Consts.STATUS_MINUS_BORDER ||
                 status.gold > Consts.STATUS_MINUS_BORDER &&
                 pstatus.gold < status.gold - Consts.STATUS_MINUS_BORDER) {
+
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
+
+                // 前方パーツ重複実行防止
+                this._keyStore.allClear();
+                this._mouseStore.clear();
                 return;
             }
             status.energy = status.energy > Consts.STATUS_MINUS_BORDER ?
