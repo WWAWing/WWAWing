@@ -31,7 +31,7 @@ script:
 - make all
 - git add -A
 - popd
-- git commit -m "$msg" || echo "(nothing to commit)"
+- git commit -m "BUILD: "`date` || echo "(nothing to commit)"
 - '[ $GH_TOKEN ] && git subtree push --prefix=__DISTRIBUTE__/wwawing_dist https://$GH_TOKEN@github.com/WWAWing/WWAWing.git
   distribute-all >& /dev/null'
 - '[ $GH_TOKEN ] && git subtree push --prefix=__DISTRIBUTE__/wwawing_update https://$GH_TOKEN@github.com/WWAWing/WWAWing.git
