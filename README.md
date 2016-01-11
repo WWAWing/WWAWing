@@ -1,4 +1,4 @@
-# WWA Wing
+# WWA Wing [![Build Status](https://travis-ci.org/WWAWing/WWAWing.svg?branch=distribute-update)](https://travis-ci.org/WWAWing/WWAWing)
 WWA( http://wwajp.com )のJavaScript実装です。
 ## とりあえず触りたい人へ
 - src ディレクトリにすべての元になっているTypeScriptソースがあります。
