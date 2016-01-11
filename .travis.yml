@@ -21,8 +21,10 @@ env:
 script:
   - pushd __DISTRIBUTE__
   - make clean
+  - popd
   - '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_dist https://$GH_TOKEN@github.com/WWAWing/WWAWing.git distribute-all --squash'
   - '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_update  https://$GH_TOKEN@github.com/WWAWing/WWAWing.git distribute-update --squash'
+  - pushd __DISTRIBUTE__
   - make all
   - popd
   - '[ $GH_TOKEN ] && git subtree push --prefix=__DISTRIBUTE_/wwawing_dist https://$GH_TOKEN@github.com/WWAWing/WWAWing.git distribute-all >& /dev/null'
