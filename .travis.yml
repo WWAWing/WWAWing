@@ -18,7 +18,6 @@ script:
 - git checkout -b distribute-update
 - git checkout develop/W3.15
 - pushd __DISTRIBUTE__
-- make clean
 - git rm -rf wwawing_dist
 - git rm -rf wwawing_update
 - popd
@@ -28,8 +27,8 @@ script:
 - '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_update  https://$GH_TOKEN@github.com/WWAWing/WWAWing.git
   distribute-update --squash >& /dev/null'
 - pushd __DISTRIBUTE__
-- make wwawing_dist
-- make wwawing_update
+- make clean
+- make all
 - git add -A
 - popd
 - git status
