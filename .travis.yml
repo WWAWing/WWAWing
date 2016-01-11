@@ -1,0 +1,24 @@
+language: node_js
+
+branches:
+  only:
+    - master
+
+env:
+  global:
+    - GIT_COMMITTER_NAME="WWA Helper"
+    - GIT_COMMITTER_EMAIL="matsuyuki.eca@gmail.com"
+    - GIT_AUTHOR_NAME="WWA Helper"
+    - GIT_AUTHOR_EMAIL="matsuyuki.eca@gmail.com"
+    - secure: L9m2YU6jUxdhhx97/JlgdE+mK3fRT+59P+empt8j31Ec42hYdsP55zTBUNM49Mn8Ga8MFDscQkCIP0j4A9ebm4T7IMvkyfnAp1zUtw5wdREAeYt/vZDZ3LdeadTxeHMCyFROROHHCQ6Ht3E44KiGvxZ/5acRfa7ygQgax+Yz/PBYnfQxUwHFWk5w1tJQO0TB5bG7qBoFRTpVSmO+vxDhXbkhLy1CgkXhTYpfKhPuJlR83bFUz5HSs/NCbspAvLTb4r65eON0PRu0lR2vl9yXkSKpIpNmDygS5du0afBDByaDYkzI5Kg0Fr4AQJWUf1mxhN+k7/117JElnJ1cVXZtOAJG7Cm5AvZ5XGy6KRr/Mf2wqgwIu92ksdTZOsrjSpi65etRF1xLqNW8aUna71RMda457nJBpxp8vEDE5zA90H/e/Dr4XwdAc3bWCcYTxz/zrSIYyV2FXay9HedrO39Oowig1uiQW2hzsHeYMfxN/rvEsswUdOHs8kSC8x5MEpeiqE7IPxvdOJEm/mWh2RQf9tafLmQKLHsSgdCD147k8L7m67aV8HhnxXECbRYIb+TA7fBFZma2g4rRjhf9nCE4s4sQBYco/v4di83xx5WL09CcoHv8Csd3qesvFgFs7XSSTMSdj5+E0DOOvBVjFzQHUmxDqo4WqGSE2+AVtHDpPGI=
+
+script:
+  - '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_dist https://$GH_TOKEN@github.com/WWAWing/WWAWing.git distribute-all --squash'
+  - '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_update  https://$GH_TOKEN@github.com/WWAWing/WWAWing.git distribute-update --squash'
+  - pushd __DISTRIBUTE__
+  - make clean
+  - make all
+  - popd
+  - '[ $GH_TOKEN ] && git subtree push --prefix=__DISTRIBUTE_/wwawing_dist https://$GH_TOKEN@github.com/WWAWing/WWAWing.git distribute-all >& /dev/null'
+  - '[ $GH_TOKEN ] && git subtree push --prefix=__DISTRIBUTE_/wwawing_update https://$GH_TOKEN@github.com/WWAWing/WWAWing.git distribute-update >& /dev/null'
+    

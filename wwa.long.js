@@ -666,7 +666,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.14b+";
+        WWAConsts.VERSION_WWAJS = "W3.15";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -4797,6 +4797,9 @@ var wwa_main;
                 status.gold > Consts.STATUS_MINUS_BORDER &&
                     pstatus.gold < status.gold - Consts.STATUS_MINUS_BORDER) {
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
+                // 前方パーツ重複実行防止
+                this._keyStore.allClear();
+                this._mouseStore.clear();
                 return;
             }
             status.energy = status.energy > Consts.STATUS_MINUS_BORDER ?
@@ -6367,4 +6370,5 @@ var wwa_main;
         window.addEventListener("load", start);
     }
 })(wwa_main || (wwa_main = {}));
-//# sourceMappingURL=wwa.long.js.tmp.map\n
+//# sourceMappingURL=wwa.long.js.tmp.map
+
