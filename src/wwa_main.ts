@@ -1594,7 +1594,6 @@ module wwa_main {
                 this._execObjectNormalEvent(pos, partsID, objAttr);
             // メッセージ
             } else if (objAttr === Consts.OBJECT_MESSAGE) {
-                console.log(1);
                 this._execObjectMessageEvent(pos, partsID, objAttr);
             // モンスター
             } else if (objAttr === Consts.OBJECT_MONSTER) {
