@@ -19,7 +19,6 @@ script:
 - git checkout master
 - pushd __DISTRIBUTE__
 - popd
-- git commit -m "temporal remove directories"
 - '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_dist https://$GH_TOKEN@github.com/WWAWing/WWAWing.git
   distribute-all --squash >& /dev/null'
 - '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_update  https://$GH_TOKEN@github.com/WWAWing/WWAWing.git
