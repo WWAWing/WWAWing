@@ -1,5 +1,19 @@
 # WWA Wing [![Build Status](https://travis-ci.org/WWAWing/WWAWing.svg?branch=distribute-update)](https://travis-ci.org/WWAWing/WWAWing)
 WWA( http://wwajp.com )のJavaScript実装です。
+
+## forkされる方へ
+- `.travis.yml` の取り扱いにご注意ください.
+
+## このリポジトリで開発される方へ
+- `master` にコミットすると, Travis CI が動き出します。開発は `develop` の派生ブランチでお願いいたします。
+
+## ブランチについて
+- `master`: リリース用のブランチです。
+- `develop`: 開発用のブランチです。 このリポジトリ内で開発される方はここから分岐させたブランチで開発し, よさ気なら `develop` へのPull Request を作成してください.
+- `distribute-all`: 完全版の配布物です。 Travis CIにより `master` のコミットごとに自動生成されます。
+- `distribute-update`: 更新版の配布物です。Travis CIにより `master` のコミットごとに自動生成されます。
+
+
 ## とりあえず触りたい人へ
 - src ディレクトリにすべての元になっているTypeScriptソースがあります。
 - ビルドはこのREADMEがあるディレクトリで、端末等から<code>make</code>でできます。 
@@ -16,7 +30,7 @@ WWA( http://wwajp.com )のJavaScript実装です。
 ### 同梱物のライセンスについて
 同梱されているマップデータファイル「caves01.dat」「caves02.dat」 「island02.dat」「wwamap.dat」、 ゲーム中で使用される画像の内「caves01.gif」「caves02.gif」「island02.gif」「making.gif」「mapcg.gif」および WWA作成ツールに関しての著作権は原作者NAO氏が保持し、取り扱いについてはキャラバンサークル( http://wwajp.com )で定める通りとし、WWA Debuggerの実行ファイルおよびインストーラのバッチファイルに関しての著作権は、原作者Aruneko氏および アイコン制作者プチ氏が保持し、取り扱いについては同梱しているWWA Debuggerの説明文書によるものとします。
 
-## 構成(W3.13b++)
+## 構成
 ### ディレクトリ
 <pre>
 .
