@@ -5,7 +5,7 @@ install: true
 branches:
   only:
   - master
-  - develop/W3.15
+
 env:
   global:
   - GIT_COMMITTER_NAME="WWA Helper"
@@ -16,7 +16,7 @@ env:
 script:
 - git checkout -b distribute-all
 - git checkout -b distribute-update
-- git checkout develop/W3.15
+- git checkout master
 - pushd __DISTRIBUTE__
 - git rm -rf wwawing_dist
 - git rm -rf wwawing_update
