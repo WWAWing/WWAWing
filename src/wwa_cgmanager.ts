@@ -51,7 +51,7 @@ module wwa_cgmanager {
             ctx.drawImage(
                 this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
                 Consts.CHIP_SIZE * width, Consts.CHIP_SIZE * height, canvasX, canvasY,
-                Consts.CHIP_SIZE * 2, Consts.CHIP_SIZE * 2
+                Consts.CHIP_SIZE * width, Consts.CHIP_SIZE * height
            );
         }
 
