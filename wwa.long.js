@@ -666,7 +666,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.15";
+        WWAConsts.VERSION_WWAJS = "W3.15-G";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -1866,7 +1866,7 @@ var wwa_cgmanager;
             if (!this._isLoaded) {
                 throw new Error("No image was loaded.");
             }
-            ctx.drawImage(this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY, Consts.CHIP_SIZE * width, Consts.CHIP_SIZE * height, canvasX, canvasY, Consts.CHIP_SIZE * 2, Consts.CHIP_SIZE * 2);
+            ctx.drawImage(this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY, Consts.CHIP_SIZE * width, Consts.CHIP_SIZE * height, canvasX, canvasY, Consts.CHIP_SIZE * width, Consts.CHIP_SIZE * height);
         };
         CGManager.prototype.drawCanvasWithUpperYLimit = function (chipX, chipY, canvasX, canvasY, yLimit, isSub) {
             if (isSub === void 0) { isSub = false; }
@@ -3499,6 +3499,10 @@ var wwa_main;
                     _this._keyStore.allClear();
                     _this._mouseStore.clear();
                 });
+                window.addEventListener("devicemotion", function (e) {
+                    _this._accX = e.accelerationIncludingGravity.x;
+                    _this._accY = e.accelerationIncludingGravity.y;
+                });
                 // IEのF1キー対策
                 window.addEventListener("help", function (e) {
                     e.preventDefault();
@@ -4023,6 +4027,32 @@ var wwa_main;
             this._temporaryInputDisable = false;
             this._waitTimeInCurrentFrame = Consts.DEFAULT_FRAME_INTERVAL;
             this._stopUpdateByLoadFlag = false;
+            if (this._accX >= 5 && this._accXPrev < 5) {
+                this._keyStore.setPressInfo(KeyCode.KEY_LEFT);
+            }
+            if (this._accX < 5 && this._accXPrev >= 5) {
+                this._keyStore.setReleaseInfo(KeyCode.KEY_LEFT);
+            }
+            if (this._accX <= -5 && this._accXPrev > -5) {
+                this._keyStore.setPressInfo(KeyCode.KEY_RIGHT);
+            }
+            if (this._accX > -5 && this._accXPrev <= -5) {
+                this._keyStore.setReleaseInfo(KeyCode.KEY_RIGHT);
+            }
+            if (this._accY >= 5 && this._accYPrev < 5) {
+                this._keyStore.setPressInfo(KeyCode.KEY_DOWN);
+            }
+            if (this._accY < 5 && this._accYPrev >= 5) {
+                this._keyStore.setReleaseInfo(KeyCode.KEY_DOWN);
+            }
+            if (this._accY <= -5 && this._accYPrev > -5) {
+                this._keyStore.setPressInfo(KeyCode.KEY_UP);
+            }
+            if (this._accY > -5 && this._accYPrev <= -5) {
+                this._keyStore.setReleaseInfo(KeyCode.KEY_UP);
+            }
+            this._accXPrev = this._accX;
+            this._accYPrev = this._accY;
             // キー情報のアップデート
             this._keyStore.update();
             this._mouseStore.update();

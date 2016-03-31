@@ -129,6 +129,13 @@ module wwa_main {
 
         private _useConsole: boolean;
         private _audioDirectory : string;
+
+        private _accXPrev: number;
+        private _accYPrev: number;
+
+        private _accX: number;
+        private _accY: number;
+
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -351,6 +358,12 @@ module wwa_main {
                     this._keyStore.allClear();
                     this._mouseStore.clear();
                 });
+                 window.addEventListener("devicemotion", (e): void => {
+                   this._accX = e.accelerationIncludingGravity.x;
+                   this._accY = e.accelerationIncludingGravity.y;
+                });
+                
+
                 // IEのF1キー対策
                 window.addEventListener("help", (e): void => {
                     e.preventDefault();
@@ -922,9 +935,39 @@ module wwa_main {
             this._waitTimeInCurrentFrame = Consts.DEFAULT_FRAME_INTERVAL;
             this._stopUpdateByLoadFlag = false;
 
+            if( this._accX >= 5 && this._accXPrev < 5 ) {
+              this._keyStore.setPressInfo( KeyCode.KEY_LEFT );
+            }
+            if( this._accX < 5 && this._accXPrev >= 5 ) {
+              this._keyStore.setReleaseInfo( KeyCode.KEY_LEFT );
+            }
+            if( this._accX <= -5 && this._accXPrev > -5 ) {
+              this._keyStore.setPressInfo( KeyCode.KEY_RIGHT );
+            }
+            if( this._accX > -5 && this._accXPrev <= -5 ) {
+              this._keyStore.setReleaseInfo( KeyCode.KEY_RIGHT );
+            }
+            if( this._accY >= 5 && this._accYPrev < 5 ) {
+              this._keyStore.setPressInfo( KeyCode.KEY_DOWN );
+            }
+            if( this._accY < 5 && this._accYPrev >= 5 ) {
+              this._keyStore.setReleaseInfo( KeyCode.KEY_DOWN );
+            }
+            if( this._accY <= -5 && this._accYPrev > -5 ) {
+              this._keyStore.setPressInfo( KeyCode.KEY_UP );
+            }
+            if( this._accY > -5 && this._accYPrev <= -5 ) {
+              this._keyStore.setReleaseInfo( KeyCode.KEY_UP );
+            }
+
+            this._accXPrev = this._accX;
+            this._accYPrev = this._accY;
+
+
             // キー情報のアップデート
             this._keyStore.update();
             this._mouseStore.update();
+
 
             // メッセージウィンドウによる入力割り込みが発生した時
             if (this._yesNoJudgeInNextFrame !== void 0) {
