@@ -968,6 +968,7 @@ module wwa_parts_player {
         }
 
         constructor(wwa: wwa_main.WWA, pos: Position, camera: Camera, status: wwa_data.Status, em: number) {
+            super(pos);
             this._status = status;
             this._equipStatus = new wwa_data.EquipmentStatus(0, 0);
             this._itemBox = new Array(Consts.ITEMBOX_SIZE);
@@ -1000,7 +1001,6 @@ module wwa_parts_player {
             this._isPreparedForLookingAround = true;
             this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
             this._speedIndex = Consts.DEFAULT_SPEED_INDEX;
-            super(pos);
         }
 
     }
