@@ -79,9 +79,9 @@ module wwa_data {
         }
 
         public constructor( e: number, s: number, d: number, g: number) {
+            super(s, d);
             this.energy = e;
             this.gold = g;
-            super(s, d);
         }
 
     }
