@@ -6,11 +6,6 @@
  LICENSE: https://raw.githubusercontent.com/WWAWing/WWAWing/master/LICENSE
 
  */
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
 var wwa_input;
 (function (wwa_input) {
     (function (KeyState) {
@@ -151,7 +146,7 @@ var wwa_input;
         };
         KeyStore.KEY_BUFFER_MAX = 256;
         return KeyStore;
-    }());
+    })();
     wwa_input.KeyStore = KeyStore;
     (function (MouseState) {
         MouseState[MouseState["NONE"] = 0] = "NONE";
@@ -237,10 +232,15 @@ var wwa_input;
             return this._touchID;
         };
         return MouseStore;
-    }());
+    })();
     wwa_input.MouseStore = MouseStore;
 })(wwa_input || (wwa_input = {}));
 /// <reference path="./wwa_main.ts" />
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var wwa_data;
 (function (wwa_data) {
     var EquipmentStatus = (function () {
@@ -263,7 +263,7 @@ var wwa_data;
             return this.strength === e.strength && this.defence === e.defence;
         };
         return EquipmentStatus;
-    }());
+    })();
     wwa_data.EquipmentStatus = EquipmentStatus;
     var Status = (function (_super) {
         __extends(Status, _super);
@@ -297,7 +297,7 @@ var wwa_data;
             return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
         };
         return Status;
-    }(EquipmentStatus));
+    })(EquipmentStatus);
     wwa_data.Status = Status;
     /**
         Coordは座標(coordinate)を示す変数２つ組です。
@@ -353,7 +353,7 @@ var wwa_data;
             return "(" + this.x + ", " + this.y + ")";
         };
         return Coord;
-    }());
+    })();
     wwa_data.Coord = Coord;
     var Position = (function () {
         function Position(wwa, x, y, offsetX, offsetY) {
@@ -469,7 +469,7 @@ var wwa_data;
             return new Position(this._wwa, this._partsCoord.x, this._partsCoord.y, this._offsetCoord.x, this._offsetCoord.y);
         };
         return Position;
-    }());
+    })();
     wwa_data.Position = Position;
     var Face = (function () {
         function Face(destPos, srcPos, srcSize) {
@@ -478,7 +478,7 @@ var wwa_data;
             this.srcSize = srcSize.clone();
         }
         return Face;
-    }());
+    })();
     wwa_data.Face = Face;
     (function (Direction) {
         Direction[Direction["LEFT"] = 0] = "LEFT";
@@ -665,7 +665,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.15a";
+        WWAConsts.VERSION_WWAJS = "W3.15b";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -794,25 +794,25 @@ var wwa_data;
         WWAConsts.WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         WWAConsts.WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
         return WWAConsts;
-    }());
+    })();
     wwa_data.WWAConsts = WWAConsts;
     var LoaderResponse = (function () {
         function LoaderResponse() {
         }
         return LoaderResponse;
-    }());
+    })();
     wwa_data.LoaderResponse = LoaderResponse;
     var LoaderError = (function () {
         function LoaderError() {
         }
         return LoaderError;
-    }());
+    })();
     wwa_data.LoaderError = LoaderError;
     var LoaderProgress = (function () {
         function LoaderProgress() {
         }
         return LoaderProgress;
-    }());
+    })();
     wwa_data.LoaderProgress = LoaderProgress;
     (function (LoadStage) {
         LoadStage[LoadStage["INIT"] = 0] = "INIT";
@@ -912,7 +912,7 @@ var wwa_data;
             this.checkString = void 0;
         }
         return WWAData;
-    }());
+    })();
     wwa_data.WWAData = WWAData;
 })(wwa_data || (wwa_data = {}));
 /// <reference path="./wwa_data.ts" />
@@ -930,14 +930,14 @@ var wwa_parts_player;
             return this._position;
         };
         return Parts;
-    }());
+    })();
     var PartsObject = (function (_super) {
         __extends(PartsObject, _super);
         function PartsObject(pos) {
             _super.call(this, pos);
         }
         return PartsObject;
-    }(Parts));
+    })(Parts);
     wwa_parts_player.PartsObject = PartsObject;
     var PartsMap = (function (_super) {
         __extends(PartsMap, _super);
@@ -945,7 +945,7 @@ var wwa_parts_player;
             _super.call(this, pos);
         }
         return PartsMap;
-    }(Parts));
+    })(Parts);
     wwa_parts_player.PartsMap = PartsMap;
     var PlayerState;
     (function (PlayerState) {
@@ -1755,7 +1755,7 @@ var wwa_parts_player;
             return this._speedIndex = Math.max(Consts.MIN_SPEED_INDEX, this._speedIndex - 1);
         };
         return Player;
-    }(PartsObject));
+    })(PartsObject);
     wwa_parts_player.Player = Player;
 })(wwa_parts_player || (wwa_parts_player = {}));
 /// <reference path="./wwa_parts_player.ts" />
@@ -1817,7 +1817,7 @@ var wwa_camera;
             this._isResetting = true;
         };
         return Camera;
-    }());
+    })();
     wwa_camera.Camera = Camera;
 })(wwa_camera || (wwa_camera = {}));
 /// <reference path="./wwa_data.ts" />
@@ -1903,7 +1903,7 @@ var wwa_cgmanager;
             ctx.fillRect(x, y, w, h);
         };
         return CGManager;
-    }());
+    })();
     wwa_cgmanager.CGManager = CGManager;
 })(wwa_cgmanager || (wwa_cgmanager = {}));
 /// <reference path="./wwa_main.ts" />
@@ -1975,7 +1975,7 @@ var wwa_message;
             }
         }
         return MessageInfo;
-    }());
+    })();
     wwa_message.MessageInfo = MessageInfo;
     function strArrayToMessageInfoArray(strArray, isSystemMessage) {
         var newq = [];
@@ -2368,7 +2368,7 @@ var wwa_message;
             this._wwa.playSound(id);
         };
         return Macro;
-    }());
+    })();
     wwa_message.Macro = Macro;
     function parseMacro(wwa, partsID, partsType, position, macroStr) {
         var matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)$/);
@@ -2423,7 +2423,7 @@ var wwa_message;
             return this._isVisible;
         };
         return TextWindow;
-    }());
+    })();
     var MosterWindow = (function (_super) {
         __extends(MosterWindow, _super);
         function MosterWindow(wwa, coord, width, height, isVisible, parentElement, _cgFileName) {
@@ -2473,7 +2473,7 @@ var wwa_message;
             }
         };
         return MosterWindow;
-    }(TextWindow));
+    })(TextWindow);
     wwa_message.MosterWindow = MosterWindow;
     var ScoreWindow = (function (_super) {
         __extends(ScoreWindow, _super);
@@ -2494,7 +2494,7 @@ var wwa_message;
             }
         };
         return ScoreWindow;
-    }(TextWindow));
+    })(TextWindow);
     wwa_message.ScoreWindow = ScoreWindow;
     (function (Positioning) {
         Positioning[Positioning["TOP"] = 0] = "TOP";
@@ -2719,7 +2719,7 @@ var wwa_message;
             //            this._element.style.display = this._isVisible ? "block" : "none";
         };
         return MessageWindow /* implements TextWindow(予定)*/;
-    }());
+    })();
     wwa_message.MessageWindow /* implements TextWindow(予定)*/ = MessageWindow /* implements TextWindow(予定)*/;
 })(wwa_message || (wwa_message = {}));
 /// <reference path="./wwa_main.ts" />
@@ -2772,7 +2772,7 @@ var wwa_monster;
             this._battleEndCallback();
         };
         return Monster;
-    }());
+    })();
     wwa_monster.Monster = Monster;
 })(wwa_monster || (wwa_monster = {}));
 /// <reference path="./wwa_data.ts" />
@@ -2828,7 +2828,7 @@ var wwa_motion;
             configurable: true
         });
         return ObjectMovingData;
-    }());
+    })();
     wwa_motion.ObjectMovingData = ObjectMovingData;
     var ObjectMovingDataManager = (function () {
         // TODO: シングルトンにする
@@ -2880,7 +2880,7 @@ var wwa_motion;
             return result[0].currentPosition.getOffsetCoord();
         };
         return ObjectMovingDataManager;
-    }());
+    })();
     wwa_motion.ObjectMovingDataManager = ObjectMovingDataManager;
 })(wwa_motion || (wwa_motion = {}));
 /// <reference path="./wwa_data.ts" />
@@ -2948,7 +2948,7 @@ var wwa_estimate_battle;
             }
         };
         return EstimateDisplayElements;
-    }());
+    })();
     var BattleEstimateWindow = (function () {
         function BattleEstimateWindow(_wwa, _imgFileName, _parent) {
             var _this = this;
@@ -2997,7 +2997,7 @@ var wwa_estimate_battle;
             this._element.style.display = "none";
         };
         return BattleEstimateWindow;
-    }());
+    })();
     wwa_estimate_battle.BattleEstimateWindow = BattleEstimateWindow;
     var EstimateResult = (function () {
         function EstimateResult(isNoEffect, isOverMaxTurn, damage) {
@@ -3006,7 +3006,7 @@ var wwa_estimate_battle;
             this.damage = damage;
         }
         return EstimateResult;
-    }());
+    })();
     function calc(playerStatus, enemyStatus) {
         var energyE = enemyStatus.energy;
         var attackP = playerStatus.strength - enemyStatus.defence;
@@ -3240,7 +3240,7 @@ var wwa_password_window;
             }
         };
         return PasswordWindow;
-    }());
+    })();
     wwa_password_window.PasswordWindow = PasswordWindow;
 })(wwa_password_window || (wwa_password_window = {}));
 /// <reference path="./wwa_input.ts" />
@@ -3329,6 +3329,12 @@ var wwa_main;
                     return;
                 }
                 _this._wwaData = e.data.wwaData;
+                try {
+                    util.$id("version").textContent += (" (Map data Ver. "
+                        + Math.floor(_this._wwaData.version / 10) + "." +
+                        +_this._wwaData.version % 10 + ")");
+                }
+                catch (e) { }
                 _this.initCSSRule();
                 _this._setProgressBar(getProgress(0, 4, wwa_data.LoadStage.GAME_INIT));
                 var cgFile = new Image();
@@ -6049,7 +6055,9 @@ var wwa_main;
                     "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
                     " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" +
                     "現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS, false, true);
+                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                    "マップデータ バージョン: " +
+                    Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10, false, true);
             }
         };
         WWA.prototype._setNextMessage = function (displayCenter) {
@@ -6328,7 +6336,7 @@ var wwa_main;
             return this._useConsole;
         };
         return WWA;
-    }());
+    })();
     wwa_main.WWA = WWA;
     ;
     var isCopyRightClick = false;
