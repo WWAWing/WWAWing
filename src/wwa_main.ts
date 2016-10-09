@@ -178,6 +178,13 @@ module wwa_main {
                 }
 
                 this._wwaData = e.data.wwaData;
+                try {
+                    util.$id("version").textContent += (
+                            " (Map data Ver. "
+                            + Math.floor( this._wwaData.version / 10 ) + "." +
+                            + this._wwaData.version % 10 +")"
+                    );
+                } catch (e) { }
                 this.initCSSRule();
                 this._setProgressBar(getProgress(0, 4, wwa_data.LoadStage.GAME_INIT) );
                 var cgFile = new Image();
@@ -3193,7 +3200,9 @@ module wwa_main {
                     "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
                     " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" + 
                     "現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS,
+                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                    "マップデータ バージョン: " +
+                    Math.floor( this._wwaData.version / 10 ) + "." + this._wwaData.version % 10,
                     false, true
                     );
             }
