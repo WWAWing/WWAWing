@@ -615,7 +615,10 @@ module wwa_main {
                     document.getElementsByTagName("head")[0].appendChild(script);
                 } else {
                     script = <HTMLScriptElement>document.getElementById("wwaloader-ex");
-                    if (!script.src.match(/^http:\/\/wwawing\.com/) && !script.src.match(/^http:\/\/www\.wwawing\.com/)) {
+                    if (!script.src.match(/^http:\/\/wwawing\.com/) &&
+                        !script.src.match(/^http:\/\/www\.wwawing\.com/) &&
+                        !script.src.match(/^https:\/\/wwaphoenix\.github\.io/) &&
+                        !script.src.match(/^https:\/\/www\.wwaphoenix\.github\.io/)) {
                         throw new Error("SCRIPT ORIGIN ERROR");
                     }
                 }

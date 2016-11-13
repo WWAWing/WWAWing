@@ -1,3 +1,11 @@
+ /**
+ @license WWA Wing
+ http://wwawing.com/
+ Copyright (c) 1996-2015 NAO
+ Copyright (c) 2015 WWA Wing Team
+ LICENSE: https://raw.githubusercontent.com/WWAWing/WWAWing/master/LICENSE
+
+ */
 var wwa_input;
 (function (wwa_input) {
     (function (KeyState) {
@@ -3726,7 +3734,10 @@ var wwa_main;
                 }
                 else {
                     script = document.getElementById("wwaloader-ex");
-                    if (!script.src.match(/^http:\/\/wwawing\.com/) && !script.src.match(/^http:\/\/www\.wwawing\.com/)) {
+                    if (!script.src.match(/^http:\/\/wwawing\.com/) &&
+                        !script.src.match(/^http:\/\/www\.wwawing\.com/) &&
+                        !script.src.match(/^https:\/\/wwaphoenix\.github\.io/) &&
+                        !script.src.match(/^https:\/\/www\.wwaphoenix\.github\.io/)) {
                         throw new Error("SCRIPT ORIGIN ERROR");
                     }
                 }
@@ -6370,4 +6381,5 @@ var wwa_main;
         window.addEventListener("load", start);
     }
 })(wwa_main || (wwa_main = {}));
-//# sourceMappingURL=wwa.long.js.map
+//# sourceMappingURL=wwa.long.js.tmp.map
+
