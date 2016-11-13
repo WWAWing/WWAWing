@@ -1,11 +1,3 @@
- /**
- @license WWA Wing
- http://wwawing.com/
- Copyright (c) 1996-2015 NAO
- Copyright (c) 2015 WWA Wing Team
- LICENSE: https://raw.githubusercontent.com/WWAWing/WWAWing/master/LICENSE
-
- */
 var wwa_input;
 (function (wwa_input) {
     (function (KeyState) {
@@ -665,7 +657,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.15b+";
+        WWAConsts.VERSION_WWAJS = "W3.15b++";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -789,7 +781,8 @@ var wwa_data;
         WWAConsts.DEFAULT_STATUS_COLOR_G = 0x0;
         WWAConsts.DEFAULT_STATUS_COLOR_B = 0x0;
         WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM = 20;
-        WWAConsts.WWAP_SERVER = "http://wwawing.com/wwap";
+        WWAConsts.WWAP_SERVER_OLD = "http://wwawing.com/wwap";
+        WWAConsts.WWAP_SERVER = "https://wwaphoenix.github.io";
         WWAConsts.WWAP_SERVER_AUDIO_DIR = "audio";
         WWAConsts.WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         WWAConsts.WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
@@ -6377,5 +6370,4 @@ var wwa_main;
         window.addEventListener("load", start);
     }
 })(wwa_main || (wwa_main = {}));
-//# sourceMappingURL=wwa.long.js.tmp.map
-
+//# sourceMappingURL=wwa.long.js.map

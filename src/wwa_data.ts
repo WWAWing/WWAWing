@@ -472,7 +472,7 @@ module wwa_data {
     export var speedList = [2, 5, 8, 10];
     export var speedNameList = ["低速", "準低速", "中速", "高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "W3.15b+";
+        static VERSION_WWAJS: string = "W3.15b++";
         static WWA_HOME: string = "http://wwajp.com";
 
         static ITEMBOX_SIZE: number = 12;
@@ -633,7 +633,8 @@ module wwa_data {
 
         static KEYPRESS_MESSAGE_CHANGE_FRAME_NUM = 20;
 
-        static WWAP_SERVER = "http://wwawing.com/wwap";
+        static WWAP_SERVER_OLD = "http://wwawing.com/wwap";
+        static WWAP_SERVER = "https://wwaphoenix.github.io";
         static WWAP_SERVER_AUDIO_DIR = "audio";
         static WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         static WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
