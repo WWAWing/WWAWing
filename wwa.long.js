@@ -665,7 +665,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.15b+";
+        WWAConsts.VERSION_WWAJS = "W3.15b++";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -789,7 +789,8 @@ var wwa_data;
         WWAConsts.DEFAULT_STATUS_COLOR_G = 0x0;
         WWAConsts.DEFAULT_STATUS_COLOR_B = 0x0;
         WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM = 20;
-        WWAConsts.WWAP_SERVER = "http://wwawing.com/wwap";
+        WWAConsts.WWAP_SERVER_OLD = "http://wwawing.com/wwap";
+        WWAConsts.WWAP_SERVER = "https://wwaphoenix.github.io";
         WWAConsts.WWAP_SERVER_AUDIO_DIR = "audio";
         WWAConsts.WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         WWAConsts.WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
@@ -3733,7 +3734,10 @@ var wwa_main;
                 }
                 else {
                     script = document.getElementById("wwaloader-ex");
-                    if (!script.src.match(/^http:\/\/wwawing\.com/) && !script.src.match(/^http:\/\/www\.wwawing\.com/)) {
+                    if (!script.src.match(/^http:\/\/wwawing\.com/) &&
+                        !script.src.match(/^http:\/\/www\.wwawing\.com/) &&
+                        !script.src.match(/^https:\/\/wwaphoenix\.github\.io/) &&
+                        !script.src.match(/^https:\/\/www\.wwaphoenix\.github\.io/)) {
                         throw new Error("SCRIPT ORIGIN ERROR");
                     }
                 }
