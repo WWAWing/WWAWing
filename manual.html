@@ -36,7 +36,7 @@
 </head>
 <body>
     <div id="wrapper">
-        <h1>WWA Wing: 簡易マニュアル (ver. W3.15b+)</h1>
+        <h1>WWA Wing: 簡易マニュアル (ver. W3.15b++)</h1>
         <p><a href="http://wwawing.com">WWA Wing</a>( WWA In the Next Generation )は、<a href="http://wwajp.com">WWA</a>のJavaScript実装です。
         煩わしい警告は出ず、一部のスマートフォンでも動作します。
         正式なマニュアルは後ほどのリリースに添付予定です。</p>
@@ -81,9 +81,9 @@
         <h2>起動オプション属性一覧</h2>
         <dl>
             <dt><code>data-wwa-mapdata</code>属性</dt>
-            <dd>起動したいマップデータのファイル名を記述します。（例:wwamap.dat）</dd>
+            <dd>起動したいマップデータのファイル名を記述します。（例:<code>wwamap.dat</code>）</dd>
             <dt><code>data-wwa-loader</code>属性</dt>
-            <dd>ローダのファイル名を記述します。通常、wwaload.jsから変更する必要はありません。</dd>
+            <dd>ローダのファイル名を記述します。通常、<code>wwaload.js</code>から変更する必要はありません。</dd>
             <dt><code>data-wwa-urlgate-enable</code>属性</dt>
             <dd>通常は<code>true</code>を指定してください。falseを指定するとURLゲートが無効になります。</dd>
             <dt><code>data-wwa-title-img</code>属性</dt>
@@ -97,19 +97,19 @@
         <h2>注意</h2>
         <p class="important">HTMLファイル, CSSファイルの文字コードはUTF-8(BOMなし)としてください。</p>
         <p class="important">スマートフォンでもプレイできることはありますが、効果音/BGMは鳴りません。</p>
-        <p class="important">マップデータVer3.00未満のWWAはプレイできません。一旦作成ツールで開いて保存してください。</p>
         <p>現在、下記の機能の実装はありません。</p>
         <ul>
-            <li>アイテムエフェクト, マクロ$effitem</li>
+            <li>アイテムエフェクト, マクロ<code>$effitem</code></li>
         </ul>
         <p>下記の機能は本家とは異なる挙動をすることがあります。</p>
         <ul>
-            <li>物体ジャンプゲートから物体ジャンプゲートにジャンプしたとき</li>
+            <li>物体ジャンプゲートから物体ジャンプゲートにジャンプしたときのパーツメッセージ表示優先順位</li>
             <li>ランダム選択パーツ</li>
         </ul>
         <p>WWA作成ツールは作者NAO氏の許可を得て再配布しております。また、WWA Debuggerは作者Aruneko氏の許可を得て再配布しております。</p>
-        <h2>W3.15aからW3.15b+への変更点</h2>
+        <h2>W3.15aからW3.15b++への変更点</h2>
         <ul>
+            <li>WWA PhoenixのHTTPS対応(W3.15b++)</li>
             <li>ライセンスファイルの著作権表記微修正(W3.15b+)</li>
             <li>WWA V2.9でのマップデータ読み込み開始位置の修正(W3.15b+)</li>
             <li>マップデータバージョン2への対応(W3.15b)</li>
