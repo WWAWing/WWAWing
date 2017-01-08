@@ -476,11 +476,11 @@ module wwa_parts_player {
             this.updateStatusValueBox();
             return g;
         }
-
+		// 装備品込みのステータスを返す
         public getStatus(): wwa_data.Status {
             return this._status.plus(this._equipStatus);
         }
-
+		// 装備品なしのステータスを返す
         public getStatusWithoutEquipments(): wwa_data.Status {
             // クローンハック
             return this._status.plus(new wwa_data.EquipmentStatus(0, 0));

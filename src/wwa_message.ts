@@ -79,12 +79,68 @@ module wwa_message {
                 } else if (this.macroType === wwa_data.MacroType.SOUND) {
                     this._executeSoundMacro();
                 }
-
+                // JUMPGATEマクロ受け取り
+                else if (this.macroType === wwa_data.MacroType.JUMPGATE ){
+                	this._executeJumpGateMacro();
+                }
+				// 現在の座標を記憶
+				else if (this.macroType === wwa_data.MacroType.RECPOSITION ){
+                	this._executeRecPositionMacro();
+                }
+                // 記憶していた座標にジャンプ
+                else if (this.macroType === wwa_data.MacroType.JUMPRECPOSITION ){
+                	this._executeJumpRecPositionMacro();
+                }
+                // 変数デバッグ出力
+                else if (this.macroType === wwa_data.MacroType.CONSOLE_LOG ){
+                	this._executeConsoleLogMacro();
+                }
+                // 変数 <- HP
+                else if (this.macroType === wwa_data.MacroType.COPY_HP_TO ){
+                	this._executeCopyHpToMacro();
+                }
+                // HP <- 変数
+                else if (this.macroType === wwa_data.MacroType.SET_HP ){
+                	this._executeSetHPMacro();
+                }
+                // 変数 <- HPMAX
+                else if (this.macroType === wwa_data.MacroType.COPY_HPMAX_TO ){
+                	this._executeCopyHpMaxToMacro();
+                }
+                // HPMAX <- 変数
+                else if (this.macroType === wwa_data.MacroType.SET_HPMAX ){
+                	this._executeSetHpMaxMacro();
+                }
+                // 変数 <- AT
+                else if (this.macroType === wwa_data.MacroType.COPY_AT_TO ){
+                	this._executeCopyAtToMacro();
+                }
+                // AT <- 変数
+                else if (this.macroType === wwa_data.MacroType.SET_AT ){
+                	this._executeSetAtMacro();
+                }
+                // 変数 <- DF
+                else if (this.macroType === wwa_data.MacroType.COPY_DF_TO ){
+                	this._executeCopyDfToMacro();
+                }
+                // DF <- 変数
+                else if (this.macroType === wwa_data.MacroType.SET_DF ){
+                	this._executeSetDfMacro();
+                }
+                // 変数 <- MONEY
+                else if (this.macroType === wwa_data.MacroType.COPY_MONEY_TO ){
+                	this._executeCopyMoneyToMacro();
+                }
+                // MONEY <- 変数
+                else if (this.macroType === wwa_data.MacroType.SET_MOENEY ){
+                	this._executeSetMoneyMacro();
+                }
             } catch (e) {
                 // デベロッパーモードならエラーを吐くとかしたいね
+                console.log(e);
             }
         }
-
+		
         private _concatEmptyArgs(requiredLength: number): void {
             if (this.macroArgs.length < requiredLength) {
                 var ap = new Array(requiredLength - this.macroArgs.length);
@@ -102,7 +158,95 @@ module wwa_message {
             }
             return x;
         }
-
+		// JumpGateマクロ実行部
+		private _executeJumpGateMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.forcedJumpGate(x, y);
+		} 
+		// RecPositionマクロ実行部
+		private _executeRecPositionMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.recUserPosition(x, y);
+		} 
+		// JumpRecPositionマクロ実行部
+		private _executeJumpRecPositionMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.jumpRecUserPosition(x, y);
+		}
+		// consoleLogマクロ実行部
+		private _executeConsoleLogMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.outputUserVar(num);
+		}
+		// copy_hp_toマクロ実行部
+		private _executeCopyHpToMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setUserVarHP(num);
+		}
+		// copy_hpmax_toマクロ実行部
+		private _executeCopyHpMaxToMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setUserVarHPMAX(num);
+		}
+		// copy_at_toマクロ実行部
+		private _executeCopyAtToMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setUserVarAT(num);
+		}
+		// copy_df_toマクロ実行部
+		private _executeCopyDfToMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setUserVarDF(num);
+		}
+		// copy_money_toマクロ実行部
+		private _executeCopyMoneyToMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setUserVarMONEY(num);
+		}
+		// set_hpマクロ実行部
+		private _executeSetHPMacro(): void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setHPUserVar(num);
+		}
+		// set_hpmaxマクロ実行部
+		private _executeSetHpMaxMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setHPMAXUserVar(num);
+		}
+		// set_atマクロ実行部
+		private _executeSetAtMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setATUserVar(num);
+		}
+		// set_dfマクロ実行部
+		private _executeSetDfMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setDFUserVar(num);
+		}
+		// set_moneyマクロ実行部
+		private _executeSetMoneyMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setMONEYUserVar(num);
+		}
+		
+		// executeImgPlayerMacro
         private _executeImgPlayerMacro(): void {
             this._concatEmptyArgs(2);
             var x = this._parseInt(0);

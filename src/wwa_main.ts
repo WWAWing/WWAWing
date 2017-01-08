@@ -135,12 +135,19 @@ module wwa_main {
         ////////////////////////
 
         private _loadHandler: (e) => void;
+        
+        private _userVar: number[];
 
         constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, audioDirectory: string = "") {
             try {
                 util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
             } catch (e) { }
 
+			// User変数宣言
+			this._userVar = new Array(256);
+			for(var i=0; i<256; i++){
+				this._userVar[i] = 0;
+			}
             this._isURLGateEnable = urlgateEnabled;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
@@ -520,7 +527,7 @@ module wwa_main {
                 this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, (): void => {
                     if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "ON") {
                         this._isLoadedSound = true;
-                        this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
+                        this.setMessageQueue("あああゲームを開始します。\n画面をクリックしてください。\n" +
                             "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
                         this.loadSound();
 
@@ -529,7 +536,7 @@ module wwa_main {
                         return;
                     }  if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "OFF") {
                         this._isLoadedSound = false;
-                        this.setMessageQueue( "ゲームを開始します。\n画面をクリックしてください。", false, true );
+                        this.setMessageQueue( "ああゲームを開始します。\n画面をクリックしてください。", false, true );
                         this.openGameWindow();
                         return;
                     }
@@ -3512,6 +3519,79 @@ module wwa_main {
 
         public isConsoleOutputMode(): boolean {
             return this._useConsole;
+        }
+        // JumpGateマクロ実装ポイント
+        public forcedJumpGate(jx: number,jy: number): void{
+        	this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+        }
+        // User変数記憶
+        public setUserVar(no: number, value: number): void{
+        	this._userVar[ no ] = value;
+        }
+        // User変数取得
+        public getUserVar(no: number): number{
+        	return this._userVar[ no ];
+        }
+        // 現在の位置情報記憶
+        public recUserPosition(x: number, y: number): void{
+        	var pos = this._player.getPosition().getPartsCoord();
+			this.setUserVar(x, pos.x);
+			this.setUserVar(y, pos.y);
+			// console.log("X:"+this._userVar[x]);
+			// console.log("Y:"+this._userVar[y]);
+        }
+        // 記憶していた座標にジャンプ
+        public jumpRecUserPosition(x: number, y: number): void{
+        	this.forcedJumpGate(this._userVar[x], this._userVar[y]);
+        }
+        // 変数デバッグ出力
+        public outputUserVar(num: number):void{
+        	console.log("Var["+num+"] = "+this._userVar[num] );
+        }
+        // ユーザ変数 <= HP
+        public setUserVarHP(num: number): void{
+        	this._userVar[ num ] = this._player.getStatus().energy;
+        }
+        // ユーザ変数 <= HPMAX
+        public setUserVarHPMAX(num: number): void{
+        	this._userVar[ num ] = this._player.getEnergyMax();
+        }
+        // ユーザ変数 <= AT
+        public setUserVarAT(num: number): void{
+        	this._userVar[ num ] = this._player.getStatus().strength;
+        }
+        // ユーザ変数 <= DF
+        public setUserVarDF(num: number): void{
+        	this._userVar[ num ] = this._player.getStatus().defence;
+        }
+        // ユーザ変数 <= MONEY
+        public setUserVarMONEY(num: number): void{
+        	this._userVar[ num ] = this._player.getStatus().gold;
+        }
+        // HP <- ユーザ変数
+        public setHPUserVar(num: number): void{
+        	this._player.setEnergy( this._userVar[ num ] );
+        	this._player.updateStatusValueBox();
+        }
+        // HPMAX <- ユーザ変数
+        public setHPMAXUserVar(num: number): void{
+        	this._player.setEnergyMax( this._userVar[ num ] );
+        	this._player.updateStatusValueBox();
+        }
+        // AT <- ユーザ変数
+        public setATUserVar(num: number): void{
+        	this._player.setStrength( this._userVar[ num ] );
+        	this._player.updateStatusValueBox();
+        }
+        // DF <- ユーザ変数
+        public setDFUserVar(num: number): void{
+        	this._player.setDefence( this._userVar[ num ] );
+        	this._player.updateStatusValueBox();
+        }
+        // MONEY <- ユーザ変数
+        public setMONEYUserVar(num: number): void{
+        	this._player.setGold( this._userVar[ num ] );
+        	this._player.updateStatusValueBox();
         }
     };
 
