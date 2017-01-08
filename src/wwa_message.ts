@@ -135,6 +135,39 @@ module wwa_message {
                 else if (this.macroType === wwa_data.MacroType.SET_MOENEY ){
                 	this._executeSetMoneyMacro();
                 }
+                // HW3.16.4 より実装
+                // 歩数カウント代入
+                else if (this.macroType === wwa_data.MacroType.COPY_STEP_COUNT_TO ){
+                	this._executeSetStepCountMacro();
+                }
+                // 変数に定数代入
+                else if (this.macroType === wwa_data.MacroType.VAR_SET_VAL ){
+                	this._executeVarSetValMacro();
+                }
+                // 変数に変数代入
+                else if (this.macroType === wwa_data.MacroType.VAR_SET ){
+                	this._executeVarSetMacro();
+                }
+                // 足し算代入
+                else if (this.macroType === wwa_data.MacroType.VAR_ADD ){
+                	this._executeVarAddMacro();
+                }
+                // 引き算代入
+                else if (this.macroType === wwa_data.MacroType.VAR_SUB ){
+                	this._executeVarSubMacro();
+                }
+                // 掛け算代入
+                else if (this.macroType === wwa_data.MacroType.VAR_MUL ){
+                	this._executeVarMulMacro();
+                }
+                // 割り算代入
+                else if (this.macroType === wwa_data.MacroType.VAR_DIV ){
+                	this._executeVarDivMacro();
+                }
+                // 変数Xに1からYまでの乱数を代入
+                else if (this.macroType === wwa_data.MacroType.VAR_SET_RAND ){
+                	this._executeVarSetRandMacro();
+                }
             } catch (e) {
                 // デベロッパーモードならエラーを吐くとかしたいね
                 console.log(e);
@@ -244,6 +277,62 @@ module wwa_message {
 			this._concatEmptyArgs(1);
 			var num = this._parseInt(0);
 			this._wwa.setMONEYUserVar(num);
+		}
+		// copy_step_count_toマクロ実行部
+		private _executeSetStepCountMacro() : void{
+			this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setUserVarStep(num);
+		}
+		// var_set_valマクロ実行部
+		private _executeVarSetValMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var num = this._parseInt(1);
+			this._wwa.setUserVarVal(x, num);
+		}
+		// var_setマクロ実行部
+		private _executeVarSetMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.setUserValOtherUserVal(x,y);
+		}
+		// var_addマクロ実行部
+		private _executeVarAddMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.setUserValAdd(x,y);
+		}
+		// var_subマクロ実行部
+		private _executeVarSubMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.setUserValSub(x,y);
+		}
+		// var_mulマクロ実行部
+		private _executeVarMulMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.setUserValMul(x,y);
+			
+		}
+		// var_divマクロ実行部
+		private _executeVarDivMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.setUserValDiv(x,y);
+		}
+		// var_set_randマクロ実行部
+		private _executeVarSetRandMacro() : void{
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.setUserValRandNum(x,y);
 		}
 		
 		// executeImgPlayerMacro

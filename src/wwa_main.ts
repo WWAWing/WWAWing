@@ -3593,6 +3593,38 @@ module wwa_main {
         	this._player.setGold( this._userVar[ num ] );
         	this._player.updateStatusValueBox();
         }
+        // ユーザ変数 <- 歩数
+        public setUserVarStep(num: number):void{
+        	this._userVar[ num ] = this._player.getMoveCount();
+        }
+        // ユーザ変数 <- 定数
+        public setUserVarVal(x: number, num:number):void{
+        	this._userVar[ x ] = num;
+        }
+        // ユーザ変数X <- ユーザ変数Y
+        public setUserValOtherUserVal(x: number, y:number):void{
+        	this._userVar[ x ] = this._userVar[ y ];
+        }
+        // ユーザ変数X <- ユーザ変数X + ユーザ変数Y
+        public setUserValAdd(x: number, y:number):void{
+        	this._userVar[ x ] += this._userVar[ y ];
+        }
+        // ユーザ変数X <- ユーザ変数X - ユーザ変数Y
+        public setUserValSub(x: number, y:number):void{
+        	this._userVar[ x ] -= this._userVar[ y ];
+        }
+        // ユーザ変数X <- ユーザ変数X * ユーザ変数Y
+        public setUserValMul(x: number, y:number):void{
+        	this._userVar[ x ] *= this._userVar[ y ];
+        }
+        // ユーザ変数X <- ユーザ変数X / ユーザ変数Y
+        public setUserValDiv(x: number, y:number):void{
+        	this._userVar[ x ] /= this._userVar[ y ];
+        }
+        // ユーザ変数X <- rand
+        public setUserValRandNum(x:number, num:number):void{
+        	this._userVar[ x ] = Math.floor(Math.random()* (num+1));
+        }
     };
 
     var isCopyRightClick = false;

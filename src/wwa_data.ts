@@ -428,7 +428,15 @@ module wwa_data {
         COPY_DF_TO = 34,
         SET_DF = 35,
         COPY_MONEY_TO = 36,
-        SET_MOENEY = 37
+        SET_MOENEY = 37,
+        COPY_STEP_COUNT_TO = 38,
+        VAR_SET_VAL = 39,
+        VAR_SET = 40,
+        VAR_ADD = 41,
+        VAR_SUB = 42,
+        VAR_MUL = 43,
+        VAR_DIV = 44,
+        VAR_SET_RAND = 45
     }
 
     export var macrotable = {
@@ -456,9 +464,9 @@ module wwa_data {
         "$color"     : 21,
         "$wait"      : 22,
         "$sound"     : 23,
-        "$jumpgate"	 : 24,
-        "$recposition"    : 25,
-        "$jumprecposition": 26,
+        "$jumpgate"  : 24,
+        "$rec_pos"   : 25,
+        "$jump_rec_pos"   : 26,
         "$console_log"    : 27,
         "$copy_hp_to"     : 28,
         "$set_hp"         : 29,
@@ -469,7 +477,15 @@ module wwa_data {
         "$copy_df_to"     : 34,
         "$set_df"         : 35,
         "$copy_money_to"  : 36,
-        "$set_money"      : 37
+        "$set_money"      : 37,
+        "$copy_step_count_to" : 38,
+        "$var_set_val"    : 39,
+        "$var_set"        : 40,
+        "$var_add"        : 41,
+        "$var_sub"        : 42,
+        "$var_mul"        : 43,
+        "$var_div"        : 44,
+        "$var_set_rand"   : 45
     }
 
     export enum MacroStatusIndex {
@@ -500,7 +516,7 @@ module wwa_data {
     export var speedList = [2, 5, 8, 10];
     export var speedNameList = ["低速", "準低速", "中速", "高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "HW3.16.3";
+        static VERSION_WWAJS: string = "HW3.16.4";
         static WWA_HOME: string = "http://wwajp.com";
 
         static ITEMBOX_SIZE: number = 12;
