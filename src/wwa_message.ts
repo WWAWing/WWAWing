@@ -12,7 +12,7 @@ module wwa_message {
                 this.macro = [];
             }
         }
-        
+
     }
 
     export function strArrayToMessageInfoArray(strArray: string[], isSystemMessage: boolean): MessageInfo[] {
@@ -42,6 +42,8 @@ module wwa_message {
                     this._executeHPMaxMacro();
                 } else if (this.macroType === wwa_data.MacroType.SAVE) {
                     this._executeSaveMacro();
+                } else if (this.macroType === wwa_data.MacroType.PASS_SAVE) {
+                    this._executePassSaveMacro();
                 } else if (this.macroType === wwa_data.MacroType.ITEM) {
                     this._executeItemMacro();
                 } else if (this.macroType === wwa_data.MacroType.DEFAULT) {
@@ -168,12 +170,32 @@ module wwa_message {
                 else if (this.macroType === wwa_data.MacroType.VAR_SET_RAND ){
                 	this._executeVarSetRandMacro();
                 }
+                // 速度変更禁止マクロ
+                else if (this.macroType === wwa_data.MacroType.GAME_SPEED ){
+                	this._executeGameSpeedMacro();
+                }
+                // 変数付きのメッセージ表示
+                else if (this.macroType === wwa_data.MacroType.SHOW_STR ){
+                	this._executeShowStrMacro();
+                }
+                // 強制クイックセーブ
+                else if (this.macroType === wwa_data.MacroType.AUTO_SAVE ){
+                	this._executeAutoSaveMacro();
+                }
+                // IF文
+                else if (this.macroType === wwa_data.MacroType.IF ){
+                	this._executeIfMacro();
+                }
+                // 速度設定
+                else if (this.macroType === wwa_data.MacroType.SET_SPEED ){
+                	this._executeSetSpeedMacro();
+                }
             } catch (e) {
                 // デベロッパーモードならエラーを吐くとかしたいね
                 console.log(e);
             }
         }
-		
+
         private _concatEmptyArgs(requiredLength: number): void {
             if (this.macroArgs.length < requiredLength) {
                 var ap = new Array(requiredLength - this.macroArgs.length);
@@ -197,14 +219,14 @@ module wwa_message {
 			var x = this._parseInt(0);
 			var y = this._parseInt(1);
 			this._wwa.forcedJumpGate(x, y);
-		} 
+		}
 		// RecPositionマクロ実行部
 		private _executeRecPositionMacro() : void{
 			this._concatEmptyArgs(2);
 			var x = this._parseInt(0);
 			var y = this._parseInt(1);
 			this._wwa.recUserPosition(x, y);
-		} 
+		}
 		// JumpRecPositionマクロ実行部
 		private _executeJumpRecPositionMacro() : void{
 			this._concatEmptyArgs(2);
@@ -318,7 +340,7 @@ module wwa_message {
 			var x = this._parseInt(0);
 			var y = this._parseInt(1);
 			this._wwa.setUserValMul(x,y);
-			
+
 		}
 		// var_divマクロ実行部
 		private _executeVarDivMacro() : void{
@@ -334,7 +356,38 @@ module wwa_message {
 			var y = this._parseInt(1);
 			this._wwa.setUserValRandNum(x,y);
 		}
-		
+		// game_speedマクロ実行部
+		private _executeGameSpeedMacro():void{
+			this._concatEmptyArgs(1);
+            var speedChangeFlag = !!this._parseInt(0);
+            this._wwa.speedChangeJudge(speedChangeFlag);
+		}
+		// show_strマクロ実行部
+		private _executeShowStrMacro():void{
+			var max_num = 10;
+			var out_str = new String("");
+			this._concatEmptyArgs(max_num);
+			this._wwa.showUserValString(this.macroArgs);
+		}
+		// autoSaveマクロ実行部
+		private _executeAutoSaveMacro():void{
+			this._wwa.autoSave();
+		}
+		// IFマクロ実行部
+		private _executeIfMacro():void{
+			// 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
+			var str: string[] = new Array(11);
+			for(var i=0; i<10; i++){
+				str[i] = this.macroArgs[i];
+			}
+			this._wwa.userVarUserIf(this._triggerPartsPosition, str);
+		}
+    // SET_SPEEDマクロ実行部
+    private _executeSetSpeedMacro():void{
+      this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+      this._wwa.setPlayerSpeed(num);
+    }
 		// executeImgPlayerMacro
         private _executeImgPlayerMacro(): void {
             this._concatEmptyArgs(2);
@@ -360,6 +413,12 @@ module wwa_message {
             this._concatEmptyArgs(1);
             var disableSaveFlag = !!this._parseInt(0);
             this._wwa.disableSave(disableSaveFlag);
+        }
+
+        private _executePassSaveMacro(): void {
+            this._concatEmptyArgs(1);
+            var disablePassSaveFlag = !!this._parseInt(0);
+            this._wwa.disablePassSave(disablePassSaveFlag);
         }
 
         private _executeItemMacro(): void {
@@ -422,7 +481,7 @@ module wwa_message {
             var xstr = this.macroArgs[1];
             var ystr = this.macroArgs[2];
             var partsType = this._parseInt(3, wwa_data.PartsType.OBJECT);
-            
+
             if (partsID < 0) {
                 throw new Error("パーツ番号が不正です");
             }
@@ -444,7 +503,7 @@ module wwa_message {
             var dist = this._parseInt(1);
             var partsType = this._parseInt(2, wwa_data.PartsType.OBJECT);
             if (isNaN(partsID) || isNaN(dist) || isNaN(partsType)) {
-                throw new Error("引数が整数ではありません"); 
+                throw new Error("引数が整数ではありません");
             }
             if (partsID < 0) {
                 throw new Error("パーツ番号が不正です");
@@ -562,7 +621,7 @@ module wwa_message {
                 cropY = this._parseInt(i + 1);
                 if (cropY < 0) {
                     throw new Error("画像のパーツ座標指定は0以上の整数でなければなりません。");
-                } 
+                }
                 coords.push(new wwa_data.Coord(cropX, cropY));
             }
             this._wwa.setEffect( waitTime, coords);
@@ -588,7 +647,7 @@ module wwa_message {
             var x = this._parseInt(0);
             var y = this._parseInt(1);
             if (x < 0 || y < 0) {
-                throw new Error("引数が0以上の整数ではありません"); 
+                throw new Error("引数が0以上の整数ではありません");
             }
             this._wwa.setImgClick(new wwa_data.Coord(x, y));
         }
@@ -664,7 +723,7 @@ module wwa_message {
         if ( macroIndex === void 0) {
             // undefined macro
             return new Macro( wwa, partsID, partsType, position, wwa_data.MacroType.UNDEFINED, matchInfo[2].split(","));
-        } 
+        }
         return new Macro( wwa, partsID, partsType, position, macroIndex, matchInfo[2].split(",").map((e) => { return e.trim(); } ));
     }
 
@@ -769,7 +828,7 @@ module wwa_message {
             } else {
                 this._element.style.display = "none";
             }
-            
+
         }
 
         public update(monster?: wwa_monster.Monster) {
@@ -1071,7 +1130,7 @@ module wwa_message {
             //            this._element.style.display = this._isVisible ? "block" : "none";
         }
     }
-   
+
 
 
 }

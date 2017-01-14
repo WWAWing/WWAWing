@@ -142,7 +142,7 @@ module wwa_data {
             this.y = y;
         }
     }
-    
+
     export class Position {
         private _wwa: wwa_main.WWA;
         private _partsCoord: Coord;
@@ -269,7 +269,7 @@ module wwa_data {
             var w = this._wwa.getMapWidth();
             if (x < 0 || x >= w || x >= w - 1 && offsetX > 0 || y < 0 || y >= w || y >= w - 1 && offsetY > 0) {
                 throw new Error("範囲外の座標です!! parts:(" + x +", " + y + "), offset:(" + offsetX +", " + offsetY + "), mapWidth = " + w );
-            } 
+            }
             this._partsCoord = new Coord(x, y);
             this._offsetCoord = new Coord(offsetX, offsetY);
         }
@@ -436,7 +436,13 @@ module wwa_data {
         VAR_SUB = 42,
         VAR_MUL = 43,
         VAR_DIV = 44,
-        VAR_SET_RAND = 45
+        VAR_SET_RAND = 45,
+        SHOW_STR = 46,
+        GAME_SPEED = 47,
+        AUTO_SAVE = 48,
+        PASS_SAVE = 49,
+        IF = 50,
+        SET_SPEED = 51
     }
 
     export var macrotable = {
@@ -485,7 +491,13 @@ module wwa_data {
         "$var_sub"        : 42,
         "$var_mul"        : 43,
         "$var_div"        : 44,
-        "$var_set_rand"   : 45
+        "$var_set_rand"   : 45,
+        "$show_str"       : 46,
+        "$game_speed"     : 47,
+        "$auto_save"      : 48,
+        "$pass_save"      : 49,
+        "$if"             : 50,
+        "$set_speed"      : 51
     }
 
     export enum MacroStatusIndex {
@@ -513,10 +525,10 @@ module wwa_data {
         NO_SOUND = 99
     }
 
-    export var speedList = [2, 5, 8, 10];
-    export var speedNameList = ["低速", "準低速", "中速", "高速"];
+    export var speedList = [1, 2, 5, 8, 10, 20];
+    export var speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "HW3.16.4";
+        static VERSION_WWAJS: string = "HW3.16.6g";
         static WWA_HOME: string = "http://wwajp.com";
 
         static ITEMBOX_SIZE: number = 12;
@@ -529,7 +541,7 @@ module wwa_data {
         static ATR_CROP2: number = 2;
         */
         static ATR_TYPE: number = 3;
-        static ATR_MODE: number = 4; 
+        static ATR_MODE: number = 4;
         static ATR_STRING: number = 5;
         static ATR_X: number = 6;
         static ATR_Y: number = 7;
@@ -597,7 +609,7 @@ module wwa_data {
 
         static IMGPOS_DEFAULT_BATTLE_EFFECT_X: number = 3;
         static IMGPOS_DEFAULT_BATTLE_EFFECT_Y: number = 3;
-         
+
         static DEFAULT_DISABLE_SAVE: boolean = false;
         static DEFAULT_OLDMAP: boolean = false;
         static DEFAULT_OBJECT_NO_COLLAPSE: boolean = false;
@@ -615,7 +627,7 @@ module wwa_data {
         static H_PARTS_NUM_IN_WINDOW: number = WWAConsts.MAP_WINDOW_WIDTH  / WWAConsts.CHIP_SIZE;
         static V_PARTS_NUM_IN_WINDOW: number = WWAConsts.MAP_WINDOW_HEIGHT / WWAConsts.CHIP_SIZE;
 
-        static DEFAULT_SPEED_INDEX = 2;
+        static DEFAULT_SPEED_INDEX = 3;
         static MIN_SPEED_INDEX = 0;
         static MAX_SPEED_INDEX = speedList.length - 1;
 
@@ -790,6 +802,7 @@ module wwa_data {
         clickableItemSignImgPosY: number = void 0; // undefined時, 標準枠 注) 面倒なことがわかったので未実装
 
         disableSaveFlag: boolean = void 0;
+        disablePassSaveFlag: boolean = void 0;
         compatibleForOldMapFlag: boolean = void 0;
         objectNoCollapseDefaultFlag: boolean = void 0;
 

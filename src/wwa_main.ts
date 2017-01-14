@@ -135,12 +135,13 @@ module wwa_main {
         ////////////////////////
 
         private _loadHandler: (e) => void;
-        
+
         private _userVar: number[];
+        private _permitGameSpeed: boolean;
 
         constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, audioDirectory: string = "") {
             try {
-                util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
+                util.$id("version").textContent = "WWA Wing XE Ver." + Consts.VERSION_WWAJS;
             } catch (e) { }
 
 			// User変数宣言
@@ -148,6 +149,8 @@ module wwa_main {
 			for(var i=0; i<256; i++){
 				this._userVar[i] = 0;
 			}
+			// 速度変更許可
+			this._permitGameSpeed = true;
             this._isURLGateEnable = urlgateEnabled;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
@@ -155,7 +158,7 @@ module wwa_main {
             if(!audioDirectory){
               audioDirectory = "./audio/";
             } else if( audioDirectory[ audioDirectory.length - 1 ] !== "/" ) {
-              audioDirectory += "/"; 
+              audioDirectory += "/";
             }
             this._audioDirectory = audioDirectory;
             var t_start: number = new Date().getTime();
@@ -364,7 +367,7 @@ module wwa_main {
                 });
                 this._wwaWrapperElement = <HTMLDivElement>(wwa_util.$id("wwa-wrapper"));
                 this._mouseControllerElement = <HTMLDivElement>(wwa_util.$id("wwa-controller"));
-                
+
                 this._mouseControllerElement.addEventListener("mousedown", (e): void => {
                     if (e.which === 1) {
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
@@ -390,7 +393,7 @@ module wwa_main {
                         e.preventDefault();
                     }
                 });
-                
+
 
                 this._mouseControllerElement.addEventListener("mouseleave", (e): void => {
                     this._mouseStore.clear();
@@ -522,21 +525,21 @@ module wwa_main {
                     }
                 }
                 */
-                
+
 
                 this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, (): void => {
                     if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "ON") {
                         this._isLoadedSound = true;
-                        this.setMessageQueue("あああゲームを開始します。\n画面をクリックしてください。\n" +
+                        this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
                             "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
                         this.loadSound();
 
                         setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
-                        
+
                         return;
                     }  if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "OFF") {
                         this._isLoadedSound = false;
-                        this.setMessageQueue( "ああゲームを開始します。\n画面をクリックしてください。", false, true );
+                        this.setMessageQueue( "ゲームを開始します。\n画面をクリックしてください。", false, true );
                         this.openGameWindow();
                         return;
                     }
@@ -600,7 +603,7 @@ module wwa_main {
                         }
 
                     }, Consts.DEFAULT_FRAME_INTERVAL);
-                    
+
                 });
             }
             if (wwap_mode|| Worker === void 0) {
@@ -753,7 +756,7 @@ module wwa_main {
                 return;
             }
 
-            
+
             if (id < 0 || id > Consts.SOUND_MAX) {
                 throw new Error("サウンド番号が範囲外です。");
             }
@@ -902,7 +905,7 @@ module wwa_main {
         public onpasswordsavecalled( ) {
             var bg = <HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE]));
             bg.classList.add("onpress");
-            if (!this._wwaData.disableSaveFlag) {
+            if (!this._wwaData.disableSaveFlag && !this._wwaData.disablePassSaveFlag ) {
                 this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
                 this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
             } else {
@@ -911,16 +914,21 @@ module wwa_main {
         }
 
         public onchangespeed(type: wwa_data.SpeedChange) {
-            var speedIndex: number;
-            if (type === wwa_data.SpeedChange.UP) {
-                speedIndex = this._player.speedUp();
-            } else {
-                speedIndex = this._player.speedDown();
+        	if(this._permitGameSpeed ){
+        		var speedIndex: number;
+	            if (type === wwa_data.SpeedChange.UP) {
+	                speedIndex = this._player.speedUp();
+	            } else {
+	                speedIndex = this._player.speedDown();
+	            }
+	            this.setMessageQueue(
+	                "移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
+	                (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n":"") +
+	                "(" +( Consts.MAX_SPEED_INDEX + 1 ) + "段階中" + ( speedIndex + 1 ) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
+        	}
+            else{
+            	this.setMessageQueue("現在速度変更は出来ません。", false, true);
             }
-            this.setMessageQueue(
-                "移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
-                (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n":"") + 
-                "(" +( Consts.MAX_SPEED_INDEX + 1 ) + "段階中" + ( speedIndex + 1 ) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
         }
 
 
@@ -1045,7 +1053,7 @@ module wwa_main {
                 } else if (
                     this._keyStore.getKeyState(KeyCode.KEY_F1) === wwa_input.KeyState.KEYDOWN ||
                     this._keyStore.getKeyState(KeyCode.KEY_M) === wwa_input.KeyState.KEYDOWN ) {
-                    // 戦闘結果予測 
+                    // 戦闘結果予測
                     if (this.launchBattleEstimateWindow()) {
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {
@@ -1063,7 +1071,7 @@ module wwa_main {
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
                     this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12)) {
-                    // コマンドのヘルプ 
+                    // コマンドのヘルプ
                     this._displayHelp()
                 }
 
@@ -1142,7 +1150,7 @@ module wwa_main {
                 }
                 this._objectMovingDataManager.update();
             }
-            
+
             this._prevFrameEventExected = false;
             if (  this._player.getPosition().isJustPosition() && this._camera.getPosition().isScreenTopPosition() ) {
 
@@ -1294,7 +1302,7 @@ module wwa_main {
             this._drawEffect();
             this._drawFaces();
             this._drawFrame();
-            
+
         }
 
             // 背景描画
@@ -1306,7 +1314,7 @@ module wwa_main {
             var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW);
             var yTop = Math.max( 0, cpParts.y - 1 );
             var yBottom = Math.min( this._wwaData.mapWidth - 1 , cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW);
- 
+
             for (var x: number = xLeft; x <= xRight; x++) {
                 for (var y: number = yTop; y <= yBottom; y++) {
                     var partsID: number = this._wwaData.map[y][x];
@@ -1373,7 +1381,7 @@ module wwa_main {
             for (var x: number = xLeft; x <= xRight; x++) {
                 for (var y: number = yTop; y <= yBottom; y++) {
                     if (this._player.isFighting() &&
-                        this._player.isTurn() && 
+                        this._player.isTurn() &&
                         this._player.getPosition().getPartsCoord().equals(this._monster.position) &&
                         new wwa_data.Coord( x, y ).equals(this._monster.position)) {
                         continue;
@@ -1389,7 +1397,7 @@ module wwa_main {
                     var imgType: boolean = (
                         this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME ||
                         this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
-                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0 
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
                     );
                     var ppxo =
                         this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
@@ -1507,7 +1515,7 @@ module wwa_main {
             var pc = pos.getPartsCoord();
             var pid = this._wwaData.mapObject[pc.y][pc.x];
             return this._wwaData.objectAttribute[ pid ][ Consts.ATR_TYPE ];
-        } 
+        }
 
         public getMapAttributeByPosition(pos: Position, attr: number) {
             var pc = pos.getPartsCoord();
@@ -1586,7 +1594,7 @@ module wwa_main {
         // 物体パーツ判定
         public checkObject(pos?: Coord): void {
             var playerPos = this._player.getPosition().getPartsCoord();
-            pos = (pos !== void 0 && pos !== null) ? pos : playerPos; 
+            pos = (pos !== void 0 && pos !== null) ? pos : playerPos;
             var partsID: number = this._wwaData.mapObject[pos.y][pos.x];
             var objAttr: number = this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE];
             var isPlayerPositionExec = (pos.x === playerPos.x && pos.y === playerPos.y);
@@ -1644,7 +1652,7 @@ module wwa_main {
             var itemID = this._wwaData.mapAttribute[partsID][Consts.ATR_ITEM];
             if (itemID !== 0 && !this._player.hasItem(itemID)) {
                 return false;
-            } 
+            }
 
             this.appearParts(pos, wwa_data.AppearanceTriggerType.MAP);
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
@@ -1691,7 +1699,7 @@ module wwa_main {
                 jy = pos.y + jy - Consts.RELATIVE_COORD_BIAS;
             }
             this.appearParts(pos, wwa_data.AppearanceTriggerType.MAP);
-            if( 
+            if(
                 0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth &&
                 ( jx !== playerPos.x || jy !== playerPos.y )
                 ){
@@ -1707,7 +1715,7 @@ module wwa_main {
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             if (!this._isURLGateEnable) {
                 return true;
-            } 
+            }
             if (this._wwaData.message[wwa_data.SystemMessage1.ASK_LINK] === "BLANK") {
                 location.href = wwa_util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0])
                 return;
@@ -1781,7 +1789,7 @@ module wwa_main {
                 Consts.STATUS_MINUS_BORDER - status.defence : status.defence
             status.gold = status.gold > Consts.STATUS_MINUS_BORDER ?
                 Consts.STATUS_MINUS_BORDER - status.gold : status.gold
- 
+
 
             this._player.addStatusAll(status);
             this.setStatusChangedEffect(status);
@@ -2319,7 +2327,7 @@ module wwa_main {
                 } else if (targetY > Consts.RELATIVE_COORD_LOWER) {
                    targetY = pos.y + targetY - Consts.RELATIVE_COORD_BIAS;
                 }
- 
+
                 if (targetX === 0 && targetY === 0 ) {
                     continue;
                 }
@@ -2474,7 +2482,7 @@ module wwa_main {
                 for (var y = 0; y < this._wwaData.mapWidth; y++) {
                     this._replaceRandomObject(new Coord(x, y));
                 }
-            } 
+            }
         }
 
         public gameover() {
@@ -2914,7 +2922,7 @@ module wwa_main {
 
                 }
             }
-            
+
         }
 
         private _getCandidateCoord( playerIsMoving: boolean, currentPos: wwa_data.Position, moveType: wwa_data.MoveType): wwa_data.Coord {
@@ -2926,24 +2934,24 @@ module wwa_main {
             } catch( e ) {
                 throw new Error("予期せぬ方向への移動のようです。");
             }
-            var candidateCoord = currentCoord.clone(); 
+            var candidateCoord = currentCoord.clone();
             var dx = 0;
             var dy = 0;
 
 
             if (moveType === wwa_data.MoveType.CHASE_PLAYER) {
-                dx = 
+                dx =
                     currentCoord.x > playerNextCoord.x ?  1 :
                     currentCoord.x < playerNextCoord.x ? -1 : 0;
-                dy = 
+                dy =
                     currentCoord.y > playerNextCoord.y ?  1 :
                     currentCoord.y < playerNextCoord.y ? -1 : 0;
 
             } else if (moveType === wwa_data.MoveType.RUN_OUT) {
-                dx = 
+                dx =
                     currentCoord.x > playerNextCoord.x ? -1 :
                     currentCoord.x < playerNextCoord.x ?  1 : 0;
-                dy = 
+                dy =
                     currentCoord.y > playerNextCoord.y ? -1 :
                     currentCoord.y < playerNextCoord.y ?  1 : 0;
             }
@@ -2987,7 +2995,7 @@ module wwa_main {
             }
             if (this._objectCanMoveTo(playerIsMoving, yCand, objectsInNextFrame)) {
                 return wwa_data.SecondCandidateMoveType.MODE_Y;
-            } 
+            }
             return wwa_data.SecondCandidateMoveType.UNDECIDED;
         }
 
@@ -3000,7 +3008,7 @@ module wwa_main {
             var dir =
                 mode === wwa_data.MoveType.CHASE_PLAYER ?  1 :
                 mode === wwa_data.MoveType.RUN_OUT ? -1 : 0;
-            
+
             var npCoord = playerIsMoving ? this._player.getPosition().getNextJustPosition().getPartsCoord() : this._player.getPosition().getPartsCoord();
             var currentCoord = currentPos.getPartsCoord();
             var testCoord: Coord;
@@ -3151,7 +3159,7 @@ module wwa_main {
             }
             if (monsterList.length === 0) {
                 return false;
-            } 
+            }
             this._battleEstimateWindow.update(this._player.getStatus(), monsterList);
             this._battleEstimateWindow.show();
             this._player.setEstimateWindowWating();
@@ -3198,9 +3206,9 @@ module wwa_main {
                     //                                "Ｌ：リンクを別のウィンドウで開く\n" +
                     "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
                     "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
-                    " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" + 
+                    " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" +
                     "現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS,
+                    "WWA Wing XE バージョン:" + Consts.VERSION_WWAJS,
                     false, true
                     );
             }
@@ -3226,7 +3234,7 @@ module wwa_main {
                 for (var i = 0; i < macro.length; i++) {
                     this._execMacroListInNextFrame.push(macro[i]);
                 }
-                
+
                 // empty->hide
                 if (message !== "") {
                     this._messageWindow.hide();
@@ -3284,7 +3292,7 @@ module wwa_main {
             var xLeft = onlyThisSight ? Math.max(0, cpParts.x) : 0;
             var xRight = onlyThisSight ? Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1) : this._wwaData.mapWidth - 1;
             var yTop = onlyThisSight ? Math.max(0, cpParts.y) : 0;
-            var yBottom = onlyThisSight ? Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1 : this._wwaData.mapWidth - 1; 
+            var yBottom = onlyThisSight ? Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1 : this._wwaData.mapWidth - 1;
             for (var x: number = xLeft; x <= xRight; x++) {
                 for (var y: number = yTop; y <= yBottom; y++) {
                     if (partsType === wwa_data.PartsType.OBJECT) {
@@ -3338,7 +3346,10 @@ module wwa_main {
 
         public disableSave(flag: boolean): boolean {
             return this._wwaData.disableSaveFlag = flag;
-        } 
+        }
+        public disablePassSave(flag: boolean):boolean{
+            return this._wwaData.disablePassSaveFlag = flag;
+        }
 
         public isOldMap(): boolean {
             return this._wwaData.isOldMap;
@@ -3599,7 +3610,7 @@ module wwa_main {
         }
         // ユーザ変数 <- 定数
         public setUserVarVal(x: number, num:number):void{
-        	this._userVar[ x ] = num;
+        	this._userVar[ x ] = Math.floor( num );
         }
         // ユーザ変数X <- ユーザ変数Y
         public setUserValOtherUserVal(x: number, y:number):void{
@@ -3615,15 +3626,97 @@ module wwa_main {
         }
         // ユーザ変数X <- ユーザ変数X * ユーザ変数Y
         public setUserValMul(x: number, y:number):void{
-        	this._userVar[ x ] *= this._userVar[ y ];
+        	this._userVar[ x ] = Math.floor(this._userVar[ x ] * this._userVar[ y ]);
         }
         // ユーザ変数X <- ユーザ変数X / ユーザ変数Y
         public setUserValDiv(x: number, y:number):void{
-        	this._userVar[ x ] /= this._userVar[ y ];
+        	this._userVar[ x ] = Math.floor(this._userVar[ x ] / this._userVar[ y ]);
         }
         // ユーザ変数X <- rand
         public setUserValRandNum(x:number, num:number):void{
         	this._userVar[ x ] = Math.floor(Math.random()* (num+1));
+        }
+        // ユーザ変数付きの文字列を出力する。
+        public showUserValString(macroArgs: string[]){
+        	// 最終的に出力する文字列
+        	var out_str : string;
+        	out_str = "";
+        	for(var i=0; i<macroArgs.length; i++){
+        		if(isNaN(parseInt(macroArgs[i]) ) ){
+        			out_str += macroArgs[i];
+        		}
+        		else{
+        			out_str += this._userVar[ parseInt(macroArgs[i]) ].toString();
+        		}
+        	}
+        	// 出力
+        	// 何故か \n が反映されない？
+        	this.setMessageQueue(out_str, false, true);
+        }
+        // 速度変更禁止
+        public speedChangeJudge(speedChangeFlag: boolean):void{
+        	this._permitGameSpeed = speedChangeFlag;
+        }
+        // 自動セーブ
+        public autoSave():void{
+        	this._quickSave();
+        }
+        // ユーザ変数 IFElse
+        public userVarUserIf(_triggerPartsPosition: wwa_data.Coord, str: string[]):void{
+        	// 決定スイッチ
+        	var judge_if: boolean;
+        	if(str[5] === void 0){
+        		throw new Error("$if の引数不足 str=" + str);
+        	}
+        	else{
+	        	switch(str[1]){
+	        		case "==":
+	        			judge_if = (this._userVar[ Number(str[0]) ] == this._userVar[ Number(str[2]) ]);
+	        		break;
+	        		case "!=":
+	        			judge_if = (this._userVar[ Number(str[0]) ] != this._userVar[ Number(str[2]) ]);
+	        		break;
+	        		case ">=":
+	        			judge_if = (this._userVar[ Number(str[0]) ] >= this._userVar[ Number(str[2]) ]);
+	        		break;
+	        		case ">":
+	        			judge_if = (this._userVar[ Number(str[0]) ] > this._userVar[ Number(str[2]) ]);
+	        		break;
+	        		case "<=":
+	        			judge_if = (this._userVar[ Number(str[0]) ] <= this._userVar[ Number(str[2]) ]);
+	        		break;
+	        		case "<":
+	        			judge_if = (this._userVar[ Number(str[0]) ] < this._userVar[ Number(str[2]) ]);
+	        		break;
+
+	        	}
+	        	if(judge_if ){
+	        		this.appearPartsEval( _triggerPartsPosition, str[4], str[5], Number(str[3]), Number(str[6]) );
+	        	}
+	        	// undefined 判定
+	        	else if(str[9] !== void 0){
+	        		this.appearPartsEval( _triggerPartsPosition, str[8], str[9], Number(str[7]), Number(str[10]) );
+	        	}
+        	}
+        }
+        // プレイヤー速度設定
+        public setPlayerSpeed(num: number):void{
+          var speedIndex: number;
+          if(num > 6 && num < 1){
+            throw new Error("#set_speed の引数が異常です:"+num);
+          }
+          for(var i=0; i<6; i++){
+            speedIndex = this._player.speedDown();
+          }
+          for(var i=1; i<num; i++){
+            speedIndex = this._player.speedUp();
+          }
+          /*
+          this.setMessageQueue(
+              "移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
+              (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n":"") +
+              "(" +( Consts.MAX_SPEED_INDEX + 1 ) + "段階中" + ( speedIndex + 1 ) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
+          */
         }
     };
 
