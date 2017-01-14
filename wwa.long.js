@@ -623,6 +623,20 @@ var wwa_data;
         MacroType[MacroType["SET_DF"] = 35] = "SET_DF";
         MacroType[MacroType["COPY_MONEY_TO"] = 36] = "COPY_MONEY_TO";
         MacroType[MacroType["SET_MOENEY"] = 37] = "SET_MOENEY";
+        MacroType[MacroType["COPY_STEP_COUNT_TO"] = 38] = "COPY_STEP_COUNT_TO";
+        MacroType[MacroType["VAR_SET_VAL"] = 39] = "VAR_SET_VAL";
+        MacroType[MacroType["VAR_SET"] = 40] = "VAR_SET";
+        MacroType[MacroType["VAR_ADD"] = 41] = "VAR_ADD";
+        MacroType[MacroType["VAR_SUB"] = 42] = "VAR_SUB";
+        MacroType[MacroType["VAR_MUL"] = 43] = "VAR_MUL";
+        MacroType[MacroType["VAR_DIV"] = 44] = "VAR_DIV";
+        MacroType[MacroType["VAR_SET_RAND"] = 45] = "VAR_SET_RAND";
+        MacroType[MacroType["SHOW_STR"] = 46] = "SHOW_STR";
+        MacroType[MacroType["GAME_SPEED"] = 47] = "GAME_SPEED";
+        MacroType[MacroType["AUTO_SAVE"] = 48] = "AUTO_SAVE";
+        MacroType[MacroType["PASS_SAVE"] = 49] = "PASS_SAVE";
+        MacroType[MacroType["IF"] = 50] = "IF";
+        MacroType[MacroType["SET_SPEED"] = 51] = "SET_SPEED";
     })(MacroType = wwa_data.MacroType || (wwa_data.MacroType = {}));
     wwa_data.macrotable = {
         "": 0,
@@ -650,8 +664,8 @@ var wwa_data;
         "$wait": 22,
         "$sound": 23,
         "$jumpgate": 24,
-        "$recposition": 25,
-        "$jumprecposition": 26,
+        "$rec_pos": 25,
+        "$jump_rec_pos": 26,
         "$console_log": 27,
         "$copy_hp_to": 28,
         "$set_hp": 29,
@@ -662,7 +676,21 @@ var wwa_data;
         "$copy_df_to": 34,
         "$set_df": 35,
         "$copy_money_to": 36,
-        "$set_money": 37
+        "$set_money": 37,
+        "$copy_step_count_to": 38,
+        "$var_set_val": 39,
+        "$var_set": 40,
+        "$var_add": 41,
+        "$var_sub": 42,
+        "$var_mul": 43,
+        "$var_div": 44,
+        "$var_set_rand": 45,
+        "$show_str": 46,
+        "$game_speed": 47,
+        "$auto_save": 48,
+        "$pass_save": 49,
+        "$if": 50,
+        "$set_speed": 51
     };
     var MacroStatusIndex;
     (function (MacroStatusIndex) {
@@ -689,14 +717,14 @@ var wwa_data;
         SystemSound[SystemSound["BGM_LB"] = 70] = "BGM_LB";
         SystemSound[SystemSound["NO_SOUND"] = 99] = "NO_SOUND";
     })(SystemSound = wwa_data.SystemSound || (wwa_data.SystemSound = {}));
-    wwa_data.speedList = [2, 5, 8, 10];
-    wwa_data.speedNameList = ["低速", "準低速", "中速", "高速"];
+    wwa_data.speedList = [1, 2, 5, 8, 10, 20];
+    wwa_data.speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
     var WWAConsts = (function () {
         function WWAConsts() {
         }
         return WWAConsts;
     }());
-    WWAConsts.VERSION_WWAJS = "HW3.16.3";
+    WWAConsts.VERSION_WWAJS = "HW3.16.6g";
     WWAConsts.WWA_HOME = "http://wwajp.com";
     WWAConsts.ITEMBOX_SIZE = 12;
     WWAConsts.MAP_ATR_MAX = 60;
@@ -777,7 +805,7 @@ var wwa_data;
     WWAConsts.MAP_WINDOW_HEIGHT = 440;
     WWAConsts.H_PARTS_NUM_IN_WINDOW = WWAConsts.MAP_WINDOW_WIDTH / WWAConsts.CHIP_SIZE;
     WWAConsts.V_PARTS_NUM_IN_WINDOW = WWAConsts.MAP_WINDOW_HEIGHT / WWAConsts.CHIP_SIZE;
-    WWAConsts.DEFAULT_SPEED_INDEX = 2;
+    WWAConsts.DEFAULT_SPEED_INDEX = 3;
     WWAConsts.MIN_SPEED_INDEX = 0;
     WWAConsts.MAX_SPEED_INDEX = wwa_data.speedList.length - 1;
     WWAConsts.ANIMATION_REP_HALF_FRAME = 22;
@@ -824,6 +852,7 @@ var wwa_data;
     WWAConsts.WWAP_SERVER_AUDIO_DIR = "audio";
     WWAConsts.WWAP_SERVER_TITLE_IMG = "cover_p.gif";
     WWAConsts.WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
+    WWAConsts.USER_VAR_NUM = 256;
     wwa_data.WWAConsts = WWAConsts;
     var LoaderResponse = (function () {
         function LoaderResponse() {
@@ -920,6 +949,7 @@ var wwa_data;
             this.clickableItemSignImgPosX = void 0; // 0の時, 標準枠  注) 面倒なことがわかったので未実装
             this.clickableItemSignImgPosY = void 0; // undefined時, 標準枠 注) 面倒なことがわかったので未実装
             this.disableSaveFlag = void 0;
+            this.disablePassSaveFlag = void 0;
             this.compatibleForOldMapFlag = void 0;
             this.objectNoCollapseDefaultFlag = void 0;
             this.delPlayerFlag = void 0;
@@ -2041,6 +2071,9 @@ var wwa_message;
                 else if (this.macroType === wwa_data.MacroType.SAVE) {
                     this._executeSaveMacro();
                 }
+                else if (this.macroType === wwa_data.MacroType.PASS_SAVE) {
+                    this._executePassSaveMacro();
+                }
                 else if (this.macroType === wwa_data.MacroType.ITEM) {
                     this._executeItemMacro();
                 }
@@ -2136,6 +2169,45 @@ var wwa_message;
                 }
                 else if (this.macroType === wwa_data.MacroType.SET_MOENEY) {
                     this._executeSetMoneyMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.COPY_STEP_COUNT_TO) {
+                    this._executeSetStepCountMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.VAR_SET_VAL) {
+                    this._executeVarSetValMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.VAR_SET) {
+                    this._executeVarSetMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.VAR_ADD) {
+                    this._executeVarAddMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.VAR_SUB) {
+                    this._executeVarSubMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.VAR_MUL) {
+                    this._executeVarMulMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.VAR_DIV) {
+                    this._executeVarDivMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.VAR_SET_RAND) {
+                    this._executeVarSetRandMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.GAME_SPEED) {
+                    this._executeGameSpeedMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.SHOW_STR) {
+                    this._executeShowStrMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.AUTO_SAVE) {
+                    this._executeAutoSaveMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.IF) {
+                    this._executeIfMacro();
+                }
+                else if (this.macroType === wwa_data.MacroType.SET_SPEED) {
+                    this._executeSetSpeedMacro();
                 }
             }
             catch (e) {
@@ -2247,6 +2319,93 @@ var wwa_message;
             var num = this._parseInt(0);
             this._wwa.setMONEYUserVar(num);
         };
+        // copy_step_count_toマクロ実行部
+        Macro.prototype._executeSetStepCountMacro = function () {
+            this._concatEmptyArgs(1);
+            var num = this._parseInt(0);
+            this._wwa.setUserVarStep(num);
+        };
+        // var_set_valマクロ実行部
+        Macro.prototype._executeVarSetValMacro = function () {
+            this._concatEmptyArgs(2);
+            var x = this._parseInt(0);
+            var num = this._parseInt(1);
+            this._wwa.setUserVarVal(x, num);
+        };
+        // var_setマクロ実行部
+        Macro.prototype._executeVarSetMacro = function () {
+            this._concatEmptyArgs(2);
+            var x = this._parseInt(0);
+            var y = this._parseInt(1);
+            this._wwa.setUserValOtherUserVal(x, y);
+        };
+        // var_addマクロ実行部
+        Macro.prototype._executeVarAddMacro = function () {
+            this._concatEmptyArgs(2);
+            var x = this._parseInt(0);
+            var y = this._parseInt(1);
+            this._wwa.setUserValAdd(x, y);
+        };
+        // var_subマクロ実行部
+        Macro.prototype._executeVarSubMacro = function () {
+            this._concatEmptyArgs(2);
+            var x = this._parseInt(0);
+            var y = this._parseInt(1);
+            this._wwa.setUserValSub(x, y);
+        };
+        // var_mulマクロ実行部
+        Macro.prototype._executeVarMulMacro = function () {
+            this._concatEmptyArgs(2);
+            var x = this._parseInt(0);
+            var y = this._parseInt(1);
+            this._wwa.setUserValMul(x, y);
+        };
+        // var_divマクロ実行部
+        Macro.prototype._executeVarDivMacro = function () {
+            this._concatEmptyArgs(2);
+            var x = this._parseInt(0);
+            var y = this._parseInt(1);
+            this._wwa.setUserValDiv(x, y);
+        };
+        // var_set_randマクロ実行部
+        Macro.prototype._executeVarSetRandMacro = function () {
+            this._concatEmptyArgs(2);
+            var x = this._parseInt(0);
+            var y = this._parseInt(1);
+            this._wwa.setUserValRandNum(x, y);
+        };
+        // game_speedマクロ実行部
+        Macro.prototype._executeGameSpeedMacro = function () {
+            this._concatEmptyArgs(1);
+            var speedChangeFlag = !!this._parseInt(0);
+            this._wwa.speedChangeJudge(speedChangeFlag);
+        };
+        // show_strマクロ実行部
+        Macro.prototype._executeShowStrMacro = function () {
+            var max_num = 10;
+            var out_str = new String("");
+            this._concatEmptyArgs(max_num);
+            this._wwa.showUserValString(this.macroArgs);
+        };
+        // autoSaveマクロ実行部
+        Macro.prototype._executeAutoSaveMacro = function () {
+            this._wwa.autoSave();
+        };
+        // IFマクロ実行部
+        Macro.prototype._executeIfMacro = function () {
+            // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
+            var str = new Array(11);
+            for (var i = 0; i < 10; i++) {
+                str[i] = this.macroArgs[i];
+            }
+            this._wwa.userVarUserIf(this._triggerPartsPosition, str);
+        };
+        // SET_SPEEDマクロ実行部
+        Macro.prototype._executeSetSpeedMacro = function () {
+            this._concatEmptyArgs(1);
+            var num = this._parseInt(0);
+            this._wwa.setPlayerSpeed(num);
+        };
         // executeImgPlayerMacro
         Macro.prototype._executeImgPlayerMacro = function () {
             this._concatEmptyArgs(2);
@@ -2269,6 +2428,11 @@ var wwa_message;
             this._concatEmptyArgs(1);
             var disableSaveFlag = !!this._parseInt(0);
             this._wwa.disableSave(disableSaveFlag);
+        };
+        Macro.prototype._executePassSaveMacro = function () {
+            this._concatEmptyArgs(1);
+            var disablePassSaveFlag = !!this._parseInt(0);
+            this._wwa.disablePassSave(disablePassSaveFlag);
         };
         Macro.prototype._executeItemMacro = function () {
             this._concatEmptyArgs(2);
@@ -3454,19 +3618,23 @@ var wwa_main;
     }
     wwa_main.getProgress = getProgress;
     var WWA = (function () {
-        function WWA(mapFileName, workerFileName, urlgateEnabled, audioDirectory) {
+        function WWA(mapFileName, workerFileName, urlgateEnabled, audioDirectory, dumpElm) {
             if (urlgateEnabled === void 0) { urlgateEnabled = false; }
             if (audioDirectory === void 0) { audioDirectory = ""; }
+            if (dumpElm === void 0) { dumpElm = null; }
             var _this = this;
             try {
-                util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
+                util.$id("version").textContent = "WWA Wing XE Ver." + Consts.VERSION_WWAJS;
             }
             catch (e) { }
             // User変数宣言
-            this._userVar = new Array(256);
-            for (var i = 0; i < 256; i++) {
+            this._userVar = new Array(Consts.USER_VAR_NUM);
+            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
                 this._userVar[i] = 0;
             }
+            this._dumpElement = dumpElm;
+            // 速度変更許可
+            this._permitGameSpeed = true;
             this._isURLGateEnable = urlgateEnabled;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
@@ -3820,7 +3988,7 @@ var wwa_main;
                 _this._cgManager = new CGManager(ctx, ctxSub, _this._wwaData.mapCGName, function () {
                     if (_this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "ON") {
                         _this._isLoadedSound = true;
-                        _this.setMessageQueue("あああゲームを開始します。\n画面をクリックしてください。\n" +
+                        _this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
                             "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
                         _this.loadSound();
                         setTimeout(_this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, _this);
@@ -3828,7 +3996,7 @@ var wwa_main;
                     }
                     if (_this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "OFF") {
                         _this._isLoadedSound = false;
-                        _this.setMessageQueue("ああゲームを開始します。\n画面をクリックしてください。", false, true);
+                        _this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
                         _this.openGameWindow();
                         return;
                     }
@@ -4169,7 +4337,7 @@ var wwa_main;
         WWA.prototype.onpasswordsavecalled = function () {
             var bg = (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE]));
             bg.classList.add("onpress");
-            if (!this._wwaData.disableSaveFlag) {
+            if (!this._wwaData.disableSaveFlag && !this._wwaData.disablePassSaveFlag) {
                 this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
                 this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
             }
@@ -4178,16 +4346,21 @@ var wwa_main;
             }
         };
         WWA.prototype.onchangespeed = function (type) {
-            var speedIndex;
-            if (type === wwa_data.SpeedChange.UP) {
-                speedIndex = this._player.speedUp();
+            if (this._permitGameSpeed) {
+                var speedIndex;
+                if (type === wwa_data.SpeedChange.UP) {
+                    speedIndex = this._player.speedUp();
+                }
+                else {
+                    speedIndex = this._player.speedDown();
+                }
+                this.setMessageQueue("移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
+                    (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
+                    "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
             }
             else {
-                speedIndex = this._player.speedDown();
+                this.setMessageQueue("現在速度変更は出来ません。", false, true);
             }
-            this.setMessageQueue("移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
-                (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
-                "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
         };
         WWA.prototype._main = function () {
             var _this = this;
@@ -4330,7 +4503,7 @@ var wwa_main;
                 }
                 else if (this._keyStore.getKeyState(KeyCode.KEY_F1) === wwa_input.KeyState.KEYDOWN ||
                     this._keyStore.getKeyState(KeyCode.KEY_M) === wwa_input.KeyState.KEYDOWN) {
-                    // 戦闘結果予測 
+                    // 戦闘結果予測
                     if (this.launchBattleEstimateWindow()) {
                     }
                 }
@@ -4355,7 +4528,7 @@ var wwa_main;
                     this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA);
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_F12)) {
-                    // コマンドのヘルプ 
+                    // コマンドのヘルプ
                     this._displayHelp();
                 }
                 this._keyStore.memorizeKeyStateOnControllableFrame();
@@ -4512,6 +4685,11 @@ var wwa_main;
                     }
                     setTimeout(_this.mainCaller, _this._waitTimeInCurrentFrame, _this);
                 });
+            }
+            if (this._dumpElement !== null) {
+                for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+                    this._dumpElement.querySelector(".var" + i.toString(10)).textContent = this._userVar[i] + "";
+                }
             }
         };
         WWA.prototype._drawAll = function () {
@@ -6221,7 +6399,7 @@ var wwa_main;
                     "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
                     " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" +
                     "現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS, false, true);
+                    "WWA Wing XE バージョン:" + Consts.VERSION_WWAJS, false, true);
             }
         };
         WWA.prototype._setNextMessage = function (displayCenter) {
@@ -6337,6 +6515,9 @@ var wwa_main;
         };
         WWA.prototype.disableSave = function (flag) {
             return this._wwaData.disableSaveFlag = flag;
+        };
+        WWA.prototype.disablePassSave = function (flag) {
+            return this._wwaData.disablePassSaveFlag = flag;
         };
         WWA.prototype.isOldMap = function () {
             return this._wwaData.isOldMap;
@@ -6572,6 +6753,118 @@ var wwa_main;
             this._player.setGold(this._userVar[num]);
             this._player.updateStatusValueBox();
         };
+        // ユーザ変数 <- 歩数
+        WWA.prototype.setUserVarStep = function (num) {
+            this._userVar[num] = this._player.getMoveCount();
+        };
+        // ユーザ変数 <- 定数
+        WWA.prototype.setUserVarVal = function (x, num) {
+            this._userVar[x] = Math.floor(num);
+        };
+        // ユーザ変数X <- ユーザ変数Y
+        WWA.prototype.setUserValOtherUserVal = function (x, y) {
+            this._userVar[x] = this._userVar[y];
+        };
+        // ユーザ変数X <- ユーザ変数X + ユーザ変数Y
+        WWA.prototype.setUserValAdd = function (x, y) {
+            this._userVar[x] += this._userVar[y];
+        };
+        // ユーザ変数X <- ユーザ変数X - ユーザ変数Y
+        WWA.prototype.setUserValSub = function (x, y) {
+            this._userVar[x] -= this._userVar[y];
+        };
+        // ユーザ変数X <- ユーザ変数X * ユーザ変数Y
+        WWA.prototype.setUserValMul = function (x, y) {
+            this._userVar[x] = Math.floor(this._userVar[x] * this._userVar[y]);
+        };
+        // ユーザ変数X <- ユーザ変数X / ユーザ変数Y
+        WWA.prototype.setUserValDiv = function (x, y) {
+            this._userVar[x] = Math.floor(this._userVar[x] / this._userVar[y]);
+        };
+        // ユーザ変数X <- rand
+        WWA.prototype.setUserValRandNum = function (x, num) {
+            this._userVar[x] = Math.floor(Math.random() * (num + 1));
+        };
+        // ユーザ変数付きの文字列を出力する。
+        WWA.prototype.showUserValString = function (macroArgs) {
+            // 最終的に出力する文字列
+            var out_str;
+            out_str = "";
+            for (var i = 0; i < macroArgs.length; i++) {
+                if (isNaN(parseInt(macroArgs[i]))) {
+                    out_str += macroArgs[i];
+                }
+                else {
+                    out_str += this._userVar[parseInt(macroArgs[i])].toString();
+                }
+            }
+            // 出力
+            // 何故か \n が反映されない？
+            this.setMessageQueue(out_str, false, true);
+        };
+        // 速度変更禁止
+        WWA.prototype.speedChangeJudge = function (speedChangeFlag) {
+            this._permitGameSpeed = speedChangeFlag;
+        };
+        // 自動セーブ
+        WWA.prototype.autoSave = function () {
+            this._quickSave();
+        };
+        // ユーザ変数 IFElse
+        WWA.prototype.userVarUserIf = function (_triggerPartsPosition, str) {
+            // 決定スイッチ
+            var judge_if;
+            if (str[5] === void 0) {
+                throw new Error("$if の引数不足 str=" + str);
+            }
+            else {
+                switch (str[1]) {
+                    case "==":
+                        judge_if = (this._userVar[Number(str[0])] == this._userVar[Number(str[2])]);
+                        break;
+                    case "!=":
+                        judge_if = (this._userVar[Number(str[0])] != this._userVar[Number(str[2])]);
+                        break;
+                    case ">=":
+                        judge_if = (this._userVar[Number(str[0])] >= this._userVar[Number(str[2])]);
+                        break;
+                    case ">":
+                        judge_if = (this._userVar[Number(str[0])] > this._userVar[Number(str[2])]);
+                        break;
+                    case "<=":
+                        judge_if = (this._userVar[Number(str[0])] <= this._userVar[Number(str[2])]);
+                        break;
+                    case "<":
+                        judge_if = (this._userVar[Number(str[0])] < this._userVar[Number(str[2])]);
+                        break;
+                }
+                if (judge_if) {
+                    this.appearPartsEval(_triggerPartsPosition, str[4], str[5], Number(str[3]), Number(str[6]));
+                }
+                else if (str[9] !== void 0) {
+                    this.appearPartsEval(_triggerPartsPosition, str[8], str[9], Number(str[7]), Number(str[10]));
+                }
+            }
+        };
+        // プレイヤー速度設定
+        WWA.prototype.setPlayerSpeed = function (num) {
+            var speedIndex;
+            if (num > 6 && num < 1) {
+                throw new Error("#set_speed の引数が異常です:" + num);
+            }
+            for (var i = 0; i < 6; i++) {
+                speedIndex = this._player.speedDown();
+            }
+            for (var i = 1; i < num; i++) {
+                speedIndex = this._player.speedUp();
+            }
+            /*
+            this.setMessageQueue(
+                "移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
+                (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n":"") +
+                "(" +( Consts.MAX_SPEED_INDEX + 1 ) + "段階中" + ( speedIndex + 1 ) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
+            */
+        };
         return WWA;
     }());
     wwa_main.WWA = WWA;
@@ -6601,11 +6894,76 @@ var wwa_main;
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
         var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
         var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
+        var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
+        var dumpElm = null;
+        if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm")) {
+            dumpElm = util.$qs(dumpElmQuery);
+            var tableElm = document.createElement("table");
+            var headerTrElm = document.createElement("tr");
+            var headerThElm = document.createElement("th");
+            var hideButton = document.createElement("button");
+            hideButton.textContent = "隠す";
+            headerThElm.textContent = "変数一覧";
+            headerThElm.setAttribute("colspan", "10");
+            headerThElm.classList.add("varlist-header");
+            headerThElm.appendChild(hideButton);
+            headerTrElm.appendChild(headerThElm);
+            tableElm.appendChild(headerTrElm);
+            var trNumElm = null;
+            var trValElm = null;
+            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+                if (i % 10 === 0) {
+                    if (trNumElm !== null) {
+                        tableElm.appendChild(trNumElm);
+                        tableElm.appendChild(trValElm);
+                    }
+                    trNumElm = document.createElement("tr");
+                    trNumElm.classList.add("var-number");
+                    trValElm = document.createElement("tr");
+                    trValElm.classList.add("var-val");
+                }
+                var thNumElm = document.createElement("th");
+                var tdValElm = document.createElement("td");
+                thNumElm.textContent = i + "";
+                tdValElm.classList.add("var" + i);
+                tdValElm.textContent = "-";
+                trNumElm.appendChild(thNumElm);
+                trValElm.appendChild(tdValElm);
+            }
+            if (Consts.USER_VAR_NUM % 10 !== 0) {
+                tableElm.appendChild(trNumElm);
+                tableElm.appendChild(trValElm);
+            }
+            dumpElm.appendChild(tableElm);
+            var varDispStatus = true;
+            hideButton.addEventListener("click", function (e) {
+                if (varDispStatus) {
+                    this.textContent = "表示";
+                    Array.prototype.forEach.call(tableElm.querySelectorAll("tr.var-number"), function (etr) {
+                        etr.style.display = "none";
+                    });
+                    Array.prototype.forEach.call(tableElm.querySelectorAll("tr.var-val"), function (etr) {
+                        etr.style.display = "none";
+                    });
+                    varDispStatus = false;
+                }
+                else {
+                    this.textContent = "隠す";
+                    Array.prototype.forEach.call(tableElm.querySelectorAll("tr.var-number"), function (etr) {
+                        etr.style.display = "table-row";
+                    });
+                    Array.prototype.forEach.call(tableElm.querySelectorAll("tr.var-val"), function (etr) {
+                        etr.style.display = "table-row";
+                    });
+                    varDispStatus = true;
+                }
+            });
+        }
         var urlgateEnabled = true;
         if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
             urlgateEnabled = false;
         }
-        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, audioDirectory);
+        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, audioDirectory, dumpElm);
     }
     if (document.readyState === "complete") {
         start();

@@ -693,6 +693,9 @@ module wwa_data {
         static WWAP_SERVER_AUDIO_DIR = "audio";
         static WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         static WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
+
+
+        static USER_VAR_NUM = 256;
     }
 
     export class LoaderResponse {
