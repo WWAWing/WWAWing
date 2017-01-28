@@ -442,7 +442,8 @@ module wwa_data {
         AUTO_SAVE = 48,
         PASS_SAVE = 49,
         IF = 50,
-        SET_SPEED = 51
+        SET_SPEED = 51,
+        COPY_TIME_TO = 52
     }
 
     export var macrotable = {
@@ -497,7 +498,8 @@ module wwa_data {
         "$auto_save"      : 48,
         "$pass_save"      : 49,
         "$if"             : 50,
-        "$set_speed"      : 51
+        "$set_speed"      : 51,
+        "$copy_time_to"   : 52
     }
 
     export enum MacroStatusIndex {
@@ -528,7 +530,7 @@ module wwa_data {
     export var speedList = [1, 2, 5, 8, 10, 20];
     export var speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "HW3.16.6g";
+        static VERSION_WWAJS: string = "HW3.17.6";
         static WWA_HOME: string = "http://wwajp.com";
 
         static ITEMBOX_SIZE: number = 12;
@@ -836,6 +838,12 @@ module wwa_data {
 
         checkOriginalMapString: string = void 0;
         checkString: string = void 0;
+
+        // XE拡張:ここから
+        userVar: number[] = void 0;
+        permitGameSpeed: boolean = void 0;
+        gameSpeed: number = void 0;
+        playTime: number = void 0;
 
         constructor() { }
     }

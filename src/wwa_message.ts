@@ -190,6 +190,11 @@ module wwa_message {
                 else if (this.macroType === wwa_data.MacroType.SET_SPEED ){
                 	this._executeSetSpeedMacro();
                 }
+                // HW3.16.5 より実装
+                // プレイ時間変数代入
+                else if (this.macroType === wwa_data.MacroType.COPY_TIME_TO ){
+                	this._executeCopyTimeToMacro();
+                }
             } catch (e) {
                 // デベロッパーモードならエラーを吐くとかしたいね
                 console.log(e);
@@ -388,14 +393,19 @@ module wwa_message {
 			var num = this._parseInt(0);
       this._wwa.setPlayerSpeed(num);
     }
+    // COPY_TO_TIMEマクロ実行部
+    private _executeCopyTimeToMacro():void{
+      this._concatEmptyArgs(1);
+			var num = this._parseInt(0);
+			this._wwa.setUserVarPlayTime(num);
+    }
 		// executeImgPlayerMacro
-        private _executeImgPlayerMacro(): void {
-            this._concatEmptyArgs(2);
-            var x = this._parseInt(0);
-            var y = this._parseInt(1);
-            this._wwa.setPlayerImgCoord(new wwa_data.Coord(x, y));
-        }
-
+    private _executeImgPlayerMacro(): void {
+        this._concatEmptyArgs(2);
+        var x = this._parseInt(0);
+        var y = this._parseInt(1);
+        this._wwa.setPlayerImgCoord(new wwa_data.Coord(x, y));
+    }
         private _executeImgYesNoMacro(): void {
             this._concatEmptyArgs(2);
             var x = this._parseInt(0);

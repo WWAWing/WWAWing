@@ -637,6 +637,7 @@ var wwa_data;
         MacroType[MacroType["PASS_SAVE"] = 49] = "PASS_SAVE";
         MacroType[MacroType["IF"] = 50] = "IF";
         MacroType[MacroType["SET_SPEED"] = 51] = "SET_SPEED";
+        MacroType[MacroType["COPY_TIME_TO"] = 52] = "COPY_TIME_TO";
     })(MacroType = wwa_data.MacroType || (wwa_data.MacroType = {}));
     wwa_data.macrotable = {
         "": 0,
@@ -690,7 +691,8 @@ var wwa_data;
         "$auto_save": 48,
         "$pass_save": 49,
         "$if": 50,
-        "$set_speed": 51
+        "$set_speed": 51,
+        "$copy_time_to": 52
     };
     var MacroStatusIndex;
     (function (MacroStatusIndex) {
@@ -724,7 +726,7 @@ var wwa_data;
         }
         return WWAConsts;
     }());
-    WWAConsts.VERSION_WWAJS = "HW3.16.6g";
+    WWAConsts.VERSION_WWAJS = "HW3.17.6";
     WWAConsts.WWA_HOME = "http://wwajp.com";
     WWAConsts.ITEMBOX_SIZE = 12;
     WWAConsts.MAP_ATR_MAX = 60;
@@ -970,6 +972,11 @@ var wwa_data;
             this.statusColorB = void 0;
             this.checkOriginalMapString = void 0;
             this.checkString = void 0;
+            // XE拡張:ここから
+            this.userVar = void 0;
+            this.permitGameSpeed = void 0;
+            this.gameSpeed = void 0;
+            this.playTime = void 0;
         }
         return WWAData;
     }());
@@ -2209,6 +2216,9 @@ var wwa_message;
                 else if (this.macroType === wwa_data.MacroType.SET_SPEED) {
                     this._executeSetSpeedMacro();
                 }
+                else if (this.macroType === wwa_data.MacroType.COPY_TIME_TO) {
+                    this._executeCopyTimeToMacro();
+                }
             }
             catch (e) {
                 // デベロッパーモードならエラーを吐くとかしたいね
@@ -2405,6 +2415,12 @@ var wwa_message;
             this._concatEmptyArgs(1);
             var num = this._parseInt(0);
             this._wwa.setPlayerSpeed(num);
+        };
+        // COPY_TO_TIMEマクロ実行部
+        Macro.prototype._executeCopyTimeToMacro = function () {
+            this._concatEmptyArgs(1);
+            var num = this._parseInt(0);
+            this._wwa.setUserVarPlayTime(num);
         };
         // executeImgPlayerMacro
         Macro.prototype._executeImgPlayerMacro = function () {
@@ -3628,13 +3644,14 @@ var wwa_main;
             }
             catch (e) { }
             // User変数宣言
-            this._userVar = new Array(Consts.USER_VAR_NUM);
-            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                this._userVar[i] = 0;
-            }
+            /*
+                  this._wwaData.userVar = new Array(Consts.USER_VAR_NUM);
+                  for(var i=0; i<Consts.USER_VAR_NUM; i++){
+                      this._wwaData.userVar[i] = 0;
+                  }
+            */
             this._dumpElement = dumpElm;
             // 速度変更許可
-            this._permitGameSpeed = true;
             this._isURLGateEnable = urlgateEnabled;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
@@ -3669,6 +3686,20 @@ var wwa_main;
                     return;
                 }
                 _this._wwaData = e.data.wwaData;
+                /* WWAWing XE 拡張部分 */
+                //
+                _this._wwaData.permitGameSpeed = true;
+                _this._wwaData.userVar = new Array(Consts.USER_VAR_NUM);
+                for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+                    _this._wwaData.userVar[i] = 0;
+                }
+                _this._wwaData.gameSpeed = 3;
+                // プレイ時間関連
+                _this._wwaData.playTime = 0;
+                var _nowTime;
+                _nowTime = new Date();
+                _this._startTime = _nowTime.getTime();
+                /* WWAWing XE 拡張部分ここまで */
                 _this.initCSSRule();
                 _this._setProgressBar(getProgress(0, 4, wwa_data.LoadStage.GAME_INIT));
                 var cgFile = new Image();
@@ -4346,17 +4377,17 @@ var wwa_main;
             }
         };
         WWA.prototype.onchangespeed = function (type) {
-            if (this._permitGameSpeed) {
+            if (this._wwaData.permitGameSpeed) {
                 var speedIndex;
                 if (type === wwa_data.SpeedChange.UP) {
-                    speedIndex = this._player.speedUp();
+                    this._wwaData.gameSpeed = this._player.speedUp();
                 }
                 else {
-                    speedIndex = this._player.speedDown();
+                    this._wwaData.gameSpeed = this._player.speedDown();
                 }
-                this.setMessageQueue("移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
-                    (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
-                    "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
+                this.setMessageQueue("移動速度を【" + wwa_data.speedNameList[this._wwaData.gameSpeed] + "】に切り替えました。\n" +
+                    (this._wwaData.gameSpeed === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
+                    "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (this._wwaData.gameSpeed + 1) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
             }
             else {
                 this.setMessageQueue("現在速度変更は出来ません。", false, true);
@@ -4688,7 +4719,7 @@ var wwa_main;
             }
             if (this._dumpElement !== null) {
                 for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                    this._dumpElement.querySelector(".var" + i.toString(10)).textContent = this._userVar[i] + "";
+                    this._dumpElement.querySelector(".var" + i.toString(10)).textContent = this._wwaData.userVar[i] + "";
                 }
             }
         };
@@ -6005,6 +6036,9 @@ var wwa_main;
             if (apply) {
                 this._applyQuickLoad(newData);
             }
+            /* WWAWingXE */
+            this.setPlayerSpeed(newData.gameSpeed + 1);
+            /* WWAWingXE */
             return newData;
         };
         WWA.prototype._applyQuickLoad = function (newData) {
@@ -6383,6 +6417,7 @@ var wwa_main;
         };
         WWA.prototype._displayHelp = function () {
             if (this._player.isControllable()) {
+                this.setNowPlayTime();
                 this.setMessageQueue("【ショートカットキーの一覧】\n" +
                     "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
                     //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
@@ -6399,7 +6434,8 @@ var wwa_main;
                     "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
                     " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" +
                     "現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                    "WWA Wing XE バージョン:" + Consts.VERSION_WWAJS, false, true);
+                    "WWA Wing XE バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                    "現在のプレイ時間：" + Math.floor(this._wwaData.playTime / 1000) + "秒", false, true);
             }
         };
         WWA.prototype._setNextMessage = function (displayCenter) {
@@ -6686,104 +6722,104 @@ var wwa_main;
         };
         // User変数記憶
         WWA.prototype.setUserVar = function (no, value) {
-            this._userVar[no] = value;
+            this._wwaData.userVar[no] = value;
         };
         // User変数取得
         WWA.prototype.getUserVar = function (no) {
-            return this._userVar[no];
+            return this._wwaData.userVar[no];
         };
         // 現在の位置情報記憶
         WWA.prototype.recUserPosition = function (x, y) {
             var pos = this._player.getPosition().getPartsCoord();
             this.setUserVar(x, pos.x);
             this.setUserVar(y, pos.y);
-            // console.log("X:"+this._userVar[x]);
-            // console.log("Y:"+this._userVar[y]);
+            // console.log("X:"+this._wwaData.userVar[x]);
+            // console.log("Y:"+this._wwaData.userVar[y]);
         };
         // 記憶していた座標にジャンプ
         WWA.prototype.jumpRecUserPosition = function (x, y) {
-            this.forcedJumpGate(this._userVar[x], this._userVar[y]);
+            this.forcedJumpGate(this._wwaData.userVar[x], this._wwaData.userVar[y]);
         };
         // 変数デバッグ出力
         WWA.prototype.outputUserVar = function (num) {
-            console.log("Var[" + num + "] = " + this._userVar[num]);
+            console.log("Var[" + num + "] = " + this._wwaData.userVar[num]);
         };
         // ユーザ変数 <= HP
         WWA.prototype.setUserVarHP = function (num) {
-            this._userVar[num] = this._player.getStatus().energy;
+            this._wwaData.userVar[num] = this._player.getStatus().energy;
         };
         // ユーザ変数 <= HPMAX
         WWA.prototype.setUserVarHPMAX = function (num) {
-            this._userVar[num] = this._player.getEnergyMax();
+            this._wwaData.userVar[num] = this._player.getEnergyMax();
         };
         // ユーザ変数 <= AT
         WWA.prototype.setUserVarAT = function (num) {
-            this._userVar[num] = this._player.getStatus().strength;
+            this._wwaData.userVar[num] = this._player.getStatus().strength;
         };
         // ユーザ変数 <= DF
         WWA.prototype.setUserVarDF = function (num) {
-            this._userVar[num] = this._player.getStatus().defence;
+            this._wwaData.userVar[num] = this._player.getStatus().defence;
         };
         // ユーザ変数 <= MONEY
         WWA.prototype.setUserVarMONEY = function (num) {
-            this._userVar[num] = this._player.getStatus().gold;
+            this._wwaData.userVar[num] = this._player.getStatus().gold;
         };
         // HP <- ユーザ変数
         WWA.prototype.setHPUserVar = function (num) {
-            this._player.setEnergy(this._userVar[num]);
+            this._player.setEnergy(this._wwaData.userVar[num]);
             this._player.updateStatusValueBox();
         };
         // HPMAX <- ユーザ変数
         WWA.prototype.setHPMAXUserVar = function (num) {
-            this._player.setEnergyMax(this._userVar[num]);
+            this._player.setEnergyMax(this._wwaData.userVar[num]);
             this._player.updateStatusValueBox();
         };
         // AT <- ユーザ変数
         WWA.prototype.setATUserVar = function (num) {
-            this._player.setStrength(this._userVar[num]);
+            this._player.setStrength(this._wwaData.userVar[num]);
             this._player.updateStatusValueBox();
         };
         // DF <- ユーザ変数
         WWA.prototype.setDFUserVar = function (num) {
-            this._player.setDefence(this._userVar[num]);
+            this._player.setDefence(this._wwaData.userVar[num]);
             this._player.updateStatusValueBox();
         };
         // MONEY <- ユーザ変数
         WWA.prototype.setMONEYUserVar = function (num) {
-            this._player.setGold(this._userVar[num]);
+            this._player.setGold(this._wwaData.userVar[num]);
             this._player.updateStatusValueBox();
         };
         // ユーザ変数 <- 歩数
         WWA.prototype.setUserVarStep = function (num) {
-            this._userVar[num] = this._player.getMoveCount();
+            this._wwaData.userVar[num] = this._player.getMoveCount();
         };
         // ユーザ変数 <- 定数
         WWA.prototype.setUserVarVal = function (x, num) {
-            this._userVar[x] = Math.floor(num);
+            this._wwaData.userVar[x] = Math.floor(num);
         };
         // ユーザ変数X <- ユーザ変数Y
         WWA.prototype.setUserValOtherUserVal = function (x, y) {
-            this._userVar[x] = this._userVar[y];
+            this._wwaData.userVar[x] = this._wwaData.userVar[y];
         };
         // ユーザ変数X <- ユーザ変数X + ユーザ変数Y
         WWA.prototype.setUserValAdd = function (x, y) {
-            this._userVar[x] += this._userVar[y];
+            this._wwaData.userVar[x] += this._wwaData.userVar[y];
         };
         // ユーザ変数X <- ユーザ変数X - ユーザ変数Y
         WWA.prototype.setUserValSub = function (x, y) {
-            this._userVar[x] -= this._userVar[y];
+            this._wwaData.userVar[x] -= this._wwaData.userVar[y];
         };
         // ユーザ変数X <- ユーザ変数X * ユーザ変数Y
         WWA.prototype.setUserValMul = function (x, y) {
-            this._userVar[x] = Math.floor(this._userVar[x] * this._userVar[y]);
+            this._wwaData.userVar[x] = Math.floor(this._wwaData.userVar[x] * this._wwaData.userVar[y]);
         };
         // ユーザ変数X <- ユーザ変数X / ユーザ変数Y
         WWA.prototype.setUserValDiv = function (x, y) {
-            this._userVar[x] = Math.floor(this._userVar[x] / this._userVar[y]);
+            this._wwaData.userVar[x] = Math.floor(this._wwaData.userVar[x] / this._wwaData.userVar[y]);
         };
         // ユーザ変数X <- rand
         WWA.prototype.setUserValRandNum = function (x, num) {
-            this._userVar[x] = Math.floor(Math.random() * (num + 1));
+            this._wwaData.userVar[x] = Math.floor(Math.random() * (num + 1));
         };
         // ユーザ変数付きの文字列を出力する。
         WWA.prototype.showUserValString = function (macroArgs) {
@@ -6795,16 +6831,16 @@ var wwa_main;
                     out_str += macroArgs[i];
                 }
                 else {
-                    out_str += this._userVar[parseInt(macroArgs[i])].toString();
+                    out_str += this._wwaData.userVar[parseInt(macroArgs[i])].toString();
                 }
             }
             // 出力
             // 何故か \n が反映されない？
-            this.setMessageQueue(out_str, false, true);
+            this.setMessageQueue(out_str.replace(/\\n/g, "\n"), false, true);
         };
         // 速度変更禁止
         WWA.prototype.speedChangeJudge = function (speedChangeFlag) {
-            this._permitGameSpeed = speedChangeFlag;
+            this._wwaData.permitGameSpeed = speedChangeFlag;
         };
         // 自動セーブ
         WWA.prototype.autoSave = function () {
@@ -6820,22 +6856,22 @@ var wwa_main;
             else {
                 switch (str[1]) {
                     case "==":
-                        judge_if = (this._userVar[Number(str[0])] == this._userVar[Number(str[2])]);
+                        judge_if = (this._wwaData.userVar[Number(str[0])] == this._wwaData.userVar[Number(str[2])]);
                         break;
                     case "!=":
-                        judge_if = (this._userVar[Number(str[0])] != this._userVar[Number(str[2])]);
+                        judge_if = (this._wwaData.userVar[Number(str[0])] != this._wwaData.userVar[Number(str[2])]);
                         break;
                     case ">=":
-                        judge_if = (this._userVar[Number(str[0])] >= this._userVar[Number(str[2])]);
+                        judge_if = (this._wwaData.userVar[Number(str[0])] >= this._wwaData.userVar[Number(str[2])]);
                         break;
                     case ">":
-                        judge_if = (this._userVar[Number(str[0])] > this._userVar[Number(str[2])]);
+                        judge_if = (this._wwaData.userVar[Number(str[0])] > this._wwaData.userVar[Number(str[2])]);
                         break;
                     case "<=":
-                        judge_if = (this._userVar[Number(str[0])] <= this._userVar[Number(str[2])]);
+                        judge_if = (this._wwaData.userVar[Number(str[0])] <= this._wwaData.userVar[Number(str[2])]);
                         break;
                     case "<":
-                        judge_if = (this._userVar[Number(str[0])] < this._userVar[Number(str[2])]);
+                        judge_if = (this._wwaData.userVar[Number(str[0])] < this._wwaData.userVar[Number(str[2])]);
                         break;
                 }
                 if (judge_if) {
@@ -6853,10 +6889,10 @@ var wwa_main;
                 throw new Error("#set_speed の引数が異常です:" + num);
             }
             for (var i = 0; i < 6; i++) {
-                speedIndex = this._player.speedDown();
+                this._wwaData.gameSpeed = this._player.speedDown();
             }
             for (var i = 1; i < num; i++) {
-                speedIndex = this._player.speedUp();
+                this._wwaData.gameSpeed = this._player.speedUp();
             }
             /*
             this.setMessageQueue(
@@ -6864,6 +6900,18 @@ var wwa_main;
                 (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n":"") +
                 "(" +( Consts.MAX_SPEED_INDEX + 1 ) + "段階中" + ( speedIndex + 1 ) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
             */
+        };
+        // ユーザ変数にプレイ時間を代入
+        WWA.prototype.setUserVarPlayTime = function (num) {
+            this.setNowPlayTime();
+            this._wwaData.userVar[num] = this._wwaData.playTime;
+        };
+        // 現在時刻セット
+        WWA.prototype.setNowPlayTime = function () {
+            var _nowTime;
+            _nowTime = new Date();
+            this._wwaData.playTime += (_nowTime.getTime() - this._startTime);
+            this._startTime = _nowTime.getTime();
         };
         return WWA;
     }());

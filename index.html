@@ -5,27 +5,56 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Cache-Control" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <title>WWA Wing - a World Wide Adventure implementation in JavaScript</title>
+    <title>World Wide Adventure Wing</title>
+    <link rel="stylesheet" href="style.css" type="text/css" />
+    <style>
+      #vardump {
+        margin: 0 auto;
+      }
+      #vardump>table {
+        margin: 0 auto;
+        text-align: center;
+        width: 560px;
+      }
+      #vardump>table th.varlist-header {
+        background-color: orange;
+      }
+      #vardump>table tr.var-number>th {
+        background-color: #FFFF66;
+      }
+      #vardump>table tr.var-val>td {
+        background-color: #FFFFCC;
+      }
+      #vardump>table th, #vardump>table td {
+        width: 3em;
+      }
+    </style>
+    <!--  WWA requirements-->
+    <link rel="stylesheet" href="wwa.css" type="text/css" />
+    <script src="cryptojs/aes.js"></script>
+    <script src="audio/audio.min.js"></script>
+    <script src="wwa.long.js"></script>
+    <!-- /WWA requirements -->
 
 </head>
 <body>
     <div id="wrapper">
-        <h1>WWA Wing メニュー</h1>
-        <h2>ゲーム</h2>
-        <ul>
-            <li><a href="test.html">テストマップ</a></li>
-            <li><a href="wwamap.html">Standard Map</a></li>
-            <li><a href="island02.html">Fantasy Island</a>(<em>BGM音量注意</em>)</li>
-            <li><a href="caves01.html">Cave Dungeon I</a>(<em>BGM音量注意</em>)</li>
-            <li><a href="caves02.html">Cave Dungeon II</a>(<em>BGM音量注意</em>)</li>
-        </ul>
-        <h2>使用ライブラリ</h2>
-        <ul>
-            <li><a href="http://kolber.github.io/audiojs/">audio.js</a>(<a href="./audio/LICENSE.txt">ライセンス情報</a>)</li>
-            <li><a href="https://code.google.com/p/crypto-js/">CryptoJS</a>(<a href="https://code.google.com/p/crypto-js/wiki/License">ライセンス情報</a>)</li>
-        </ul>
-        <p> Internet RPG &quot;<a href="http://www.wwajp.com">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
-        <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2016 WWA Wing Team</p>
+        <!-- WWA -->
+        <div id="wwa-wrapper" class="wwa-size-box"
+             data-wwa-mapdata="wingxemap.dat"
+             data-wwa-loader="wwaload.js"
+             data-wwa-audio-dir="./audio/"
+             data-wwa-urlgate-enable="false"
+             data-wwa-title-img="cover.gif"
+             data-wwa-var-dump-elm="#vardump">
+        </div>
+        <!-- /WWA -->
     </div>
+    <div id="vardump">
+    </div>
+    <footer id="copyright">
+        <p> Internet RPG &quot;<a href="http://www.wwajp.com" class="wwa-copyright">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
+        <p> &quot;<a href="http://wwawing.com/" class="wwa-copyright">WWA Wing</a>&quot; &copy;2013-2016 WWA Wing Team</p>
+    </footer>
 </body>
 </html>
