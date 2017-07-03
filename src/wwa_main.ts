@@ -65,6 +65,7 @@ module wwa_main {
     export class WWA {
         private _cvs: HTMLCanvasElement;
         private _cvsSub: HTMLCanvasElement;
+        private _cvsCover: HTMLCanvasElement;
         private _cgManager: CGManager;
         private _wwaData: Data;
         private _mainCallCounter: number;
@@ -129,6 +130,8 @@ module wwa_main {
 
         private _useConsole: boolean;
         private _audioDirectory : string;
+        private _classicMode: boolean;
+
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -136,9 +139,22 @@ module wwa_main {
 
         private _loadHandler: (e) => void;
 
-        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, audioDirectory: string = "") {
+        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, classicMode, audioDirectory: string = "") {
+            if (this._classicMode = classicMode) {
+                this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
+                var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+                ctxCover.fillStyle = "rgb(0, 0, 0)";
+            }
+
             try {
-                util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
+                if (this._classicMode) {
+                    ctxCover.font = "bold " + Consts.PROGRESSTITLE_SIZE + "px monospace";
+                    ctxCover.fillText(wwa_data.loadMessagesClassic[wwa_data.loadMessagesClassic.length - 1], Consts.PROGRESSMSG_X, Consts.PROGRESSMSG_Y); // Welcome to WWA Wing!みたいなあれ
+                    ctxCover.font = "bold " + Consts.PROGRESSMSG_SIZE + "px monospace";
+                    ctxCover.fillText("WWA Wing Ver." + Consts.VERSION_WWAJS, Consts.PROGRESSMSG_X, Consts.PROGRESSMSG_Y + (Consts.PROGRESSMSG_LINE * (wwa_data.loadMessagesClassic.length + 1)));
+                } else {
+                    util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
+                }
             } catch (e) { }
 
             this._isURLGateEnable = urlgateEnabled;
@@ -161,9 +177,15 @@ module wwa_main {
                     );
             }
             if (window["audiojs"] === void 0) {
-                alert("Audio.jsのロードに失敗しました。\n" +
+                if (classicMode) {
+                    ctxCover.fillText("Audio.jsのロードに失敗しました。\n" +
+                    "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
+                    "フォルダを変更される場合には data-wwa-audio-dir 属性を指定してください", Consts.PROGRESSMSG_X, Consts.PROGRESSMSG_Y);
+                } else {
+                    alert("Audio.jsのロードに失敗しました。\n" +
                     "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
                     "フォルダを変更される場合には data-wwa-audio-dir 属性を指定してください");
+                }
                 return;
             }
 
@@ -190,8 +212,13 @@ module wwa_main {
                 var cgFile = new Image();
                 cgFile.src = this._wwaData.mapCGName;
                 cgFile.addEventListener("error", (): void => {
-                    alert("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
+                    if (classicMode) {
+                        ctxCover.fillText("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
+                        "管理者の方へ: データがアップロードされているか、パーミッションを確かめてください。", Consts.PROGRESSMSG_X, Consts.PROGRESSMSG_Y)
+                    } else {
+                        alert("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
                         "管理者の方へ: データがアップロードされているか、パーミッションを確かめてください。");
+                    }
                 });
                 this._restartData = JSON.parse(JSON.stringify(this._wwaData));
 
@@ -656,24 +683,43 @@ module wwa_main {
         }
 
         private _setProgressBar(progress: wwa_data.LoaderProgress) {
+            if (this._classicMode) {
+                var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+            }
 
             if (progress.stage <= Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO) {
-                (wwa_util.$id("progress-message-container")).textContent =
-                (progress.stage === Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO ? "World Name: " + this._wwaData.worldName : wwa_data.loadMessages[progress.stage]);
+                if (this._classicMode) {
+                    if (progress.stage === Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO) { // すべて読み込んだ場合はメッセージ表示のため隠す
+                        ctxCover.fillStyle = "rgb(255, 255, 255)";
+                        ctxCover.fillRect(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT);
+                        ctxCover.fillStyle = "rgb(0, 0, 0)"; // 次サウンド読み込みのためのお口直し
+                        ctxCover.fillText("World Name: " + this._wwaData.worldName, Consts.PROGRESSMSG_X, Consts.PROGRESSMSG_Y + (Consts.PROGRESSMSG_LINE * (wwa_data.loadMessagesClassic.length + 2)));
+                    } else {
+                        ctxCover.fillText(wwa_data.loadMessagesClassic[progress.stage], Consts.PROGRESSMSG_X, Consts.PROGRESSMSG_Y + (Consts.PROGRESSMSG_LINE * (progress.stage + 1))); // なるべくWelcome to WWA Wing!と被らないように調整する
+                    }
+                } else {
+                    (wwa_util.$id("progress-message-container")).textContent =
+                    (progress.stage === Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO ? "World Name: " + this._wwaData.worldName : wwa_data.loadMessages[progress.stage]);
 
-                (wwa_util.$id("progress-bar")).style.width =
-                (1 * progress.stage + (progress.current / progress.total) * 1) / (Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO + 1) * Consts.MAP_WINDOW_WIDTH + "px";
+                    (wwa_util.$id("progress-bar")).style.width =
+                    (1 * progress.stage + (progress.current / progress.total) * 1) / (Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO + 1) * Consts.MAP_WINDOW_WIDTH + "px";
 
-                (wwa_util.$id("progress-disp")).textContent =
-                ((1 * progress.stage + (progress.current / progress.total) * 1) / (Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO + 1) * 100).toFixed(2) + "%";
+                    (wwa_util.$id("progress-disp")).textContent =
+                    ((1 * progress.stage + (progress.current / progress.total) * 1) / (Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO + 1) * 100).toFixed(2) + "%";
+                }
+
             } else {
-                (wwa_util.$id("progress-message-container")).textContent = "効果音/BGMを読み込んでいます。(スペースキーでスキップ）";
+                if (this._classicMode) {
+                    ctxCover.fillText("Now Sound data Loading .....", Consts.PROGRESSMSG_X, Consts.PROGRESSMSG_Y + (Consts.PROGRESSMSG_LINE * (wwa_data.loadMessagesClassic.length + 1)));
+                } else {
+                    (wwa_util.$id("progress-message-container")).textContent = "効果音/BGMを読み込んでいます。(スペースキーでスキップ）";
 
-                (wwa_util.$id("progress-bar-audio")).style.width =
-                ( progress.current * Consts.MAP_WINDOW_WIDTH / progress.total ) + "px";
+                    (wwa_util.$id("progress-bar-audio")).style.width =
+                    ( progress.current * Consts.MAP_WINDOW_WIDTH / progress.total ) + "px";
 
-                (wwa_util.$id("progress-disp")).textContent =
-                ((progress.current / progress.total * 100).toFixed(2) ) + "%";
+                    (wwa_util.$id("progress-disp")).textContent =
+                    ((progress.current / progress.total * 100).toFixed(2) ) + "%";
+                }
             }
         }
 
@@ -3548,7 +3594,7 @@ module wwa_main {
         var titleImgName = wwap_mode ?
             Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG :
             util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
-        wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"),  titleImgName === null ? "cover.gif" : titleImgName );
+        wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"),  titleImgName);
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
         var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
         var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
@@ -3556,7 +3602,7 @@ module wwa_main {
         if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
             urlgateEnabled = false;
         }
-        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled,audioDirectory);
+        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName === null, audioDirectory);
     }
 
 

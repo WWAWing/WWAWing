@@ -638,6 +638,12 @@ module wwa_data {
         static WWAP_SERVER_AUDIO_DIR = "audio";
         static WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         static WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
+
+        static PROGRESSMSG_SIZE = 20;
+        static PROGRESSTITLE_SIZE = 30;
+        static PROGRESSMSG_X = 10;
+        static PROGRESSMSG_Y = 75;
+        static PROGRESSMSG_LINE = 30;
     }
 
     export class LoaderResponse {
@@ -680,6 +686,17 @@ module wwa_data {
         "メッセージを読み込んでます。",
         "Welcome to WWA Wing!"
     ]; // Welcome は実際には表示されません。詰め物程度に。
+
+    export var loadMessagesClassic = [
+        "Now getting ready to Map data Loading .....",
+        "Now Map Parts data Loading .....",
+        "Now Object Parts data Loading .....",
+        "Now Map Parts attributes Loading .....",
+        "Now Object Parts attributes Loading .....",
+        "Now Random Parts data Loading .....",
+        "Now Message Loading .....",
+        "Welcome to WWA Wing!"
+    ];
 
     export enum ChangeStyleType {
         COLOR_FRAME = 0,
