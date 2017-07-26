@@ -1,4 +1,4 @@
-﻿/// <reference path="./wwa_util.ts" />
+/// <reference path="./wwa_util.ts" />
 /// <reference path="./wwa_main.ts" />
 
 // FIXME: innerHTML使う実装、あんまりよくないけど、許して。
@@ -57,7 +57,7 @@ module wwa_inject_html {
             parent.innerHTML = inject_html_classic;
             var canvas = document.createElement("canvas");
             canvas.height = 440;
-            canvas.width = 440;
+            canvas.width = 560;
             canvas.id = "progress-panel";
             wwa_util.$id("wwa-cover").appendChild(canvas);
         } else {
