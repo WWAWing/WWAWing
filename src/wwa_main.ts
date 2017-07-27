@@ -550,10 +550,14 @@ module wwa_main {
 
                 this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, (): void => {
                     this._isSkippedSoundMessage = true;
+                    if (this._classicMode) {
+                        var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+                    }
                     if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "ON") {
                         this._isLoadedSound = true;
                         this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
                             "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
+                        this._setLoadingMessage(ctxCover, wwa_data.LoadStage.AUDIO);
                         this.loadSound();
 
                         setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
@@ -565,7 +569,6 @@ module wwa_main {
                         this.openGameWindow();
                         return;
                     } else if (this._classicMode) {
-                        var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
                         ctxCover.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
                         this._isSkippedSoundMessage = false; // _isSkippedSoundMessage は _classicMode が true の時にしか働かないのでとりあえずこれでも
                     }
@@ -607,6 +610,7 @@ module wwa_main {
                                     self._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
                                     self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
                                     self._isLoadedSound = true;
+                                    this._setLoadingMessage(ctxCover, wwa_data.LoadStage.AUDIO);
                                     self.loadSound();
                                     setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
                                 }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
@@ -844,7 +848,6 @@ module wwa_main {
             }
             if (loadedNum < total && !this._soundLoadSkipFlag) {
                 this._setProgressBar(getProgress(loadedNum, total, wwa_data.LoadStage.AUDIO));
-                this._setLoadingMessage(ctxCover, wwa_data.LoadStage.AUDIO);
                 setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
                 return;
             }
