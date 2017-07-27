@@ -312,6 +312,7 @@ module wwa_main {
                             e.keyCode === KeyCode.KEY_Z ||
                             e.keyCode === KeyCode.KEY_ESC ||
                             e.keyCode === KeyCode.KEY_F1 ||
+                            e.keyCode === KeyCode.KEY_F2 ||
                             e.keyCode === KeyCode.KEY_F3 ||
                             e.keyCode === KeyCode.KEY_F4 ||
                             e.keyCode === KeyCode.KEY_F6 ||
@@ -1150,7 +1151,9 @@ module wwa_main {
                     this.onselectitem(12);
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_I)) {
                     this.onchangespeed(wwa_data.SpeedChange.DOWN);
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_P)) {
+                } else if (
+                    this._keyStore.checkHitKey(KeyCode.KEY_P) ||
+                    this._keyStore.checkHitKey(KeyCode.KEY_F2)) {
                     this.onchangespeed(wwa_data.SpeedChange.UP);
                 } else if (
                     this._keyStore.getKeyState(KeyCode.KEY_F1) === wwa_input.KeyState.KEYDOWN ||
@@ -1451,13 +1454,7 @@ module wwa_main {
 
             if (this._player.isLookingAround() && !this._player.isWaitingMessage()) {
                 crop = this._wwaData.playerImgPosX + dirChanger[ Math.floor(this._mainCallCounter % 64 / 8)];
-                // 基準マスから半マス以上踏み出している場合は右の画像パーツで描画
-            } else if (
-                (dir === wwa_data.Direction.LEFT || dir === wwa_data.Direction.RIGHT) &&
-                Math.abs(poso.x) > Math.floor(Consts.CHIP_SIZE / 2) ||
-                (dir === wwa_data.Direction.UP || dir === wwa_data.Direction.DOWN) &&
-                Math.abs(poso.y) > Math.floor(Consts.CHIP_SIZE / 2)
-                ) {
+            } else if (this._player.isMovingImage()) {
                 crop = this._wwaData.playerImgPosX + relpcrop + 1;
             } else {
                 crop = this._wwaData.playerImgPosX + relpcrop;
@@ -3581,7 +3578,7 @@ module wwa_main {
             if (this._sheet.addRule !== void 0) {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(
                     "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window",
-                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);" +
+                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1);" +
                     "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" +
                     "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);"
                     );
@@ -3593,7 +3590,7 @@ module wwa_main {
             } else {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(
                     "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window {\n"+
-                        "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);\n" +
+                        "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1);\n" +
                         "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);\n" +
                        "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);\n" +
                     "}",0);
