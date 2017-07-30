@@ -642,6 +642,8 @@ module wwa_data {
         static SCREEN_WIDTH = 560;
         static SCREEN_HEIGHT = 440;
         static LOADING_FONT = "Times New Roman";
+
+        static MSG_STR_WIDTH = 16;
     }
 
     export class LoaderResponse {

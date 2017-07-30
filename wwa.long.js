@@ -804,6 +804,7 @@ var wwa_data;
         WWAConsts.SCREEN_WIDTH = 560;
         WWAConsts.SCREEN_HEIGHT = 440;
         WWAConsts.LOADING_FONT = "Times New Roman";
+        WWAConsts.MSG_STR_WIDTH = 16;
         return WWAConsts;
     }());
     wwa_data.WWAConsts = WWAConsts;
@@ -2589,10 +2590,11 @@ var wwa_message;
             this._element.style.zIndex = "400";
             //            this._element.style.opacity = "0.9";
             this._msgWrapperElement = document.createElement("div");
-            this._msgWrapperElement.style.padding = "7px";
+            this._msgWrapperElement.style.padding = "8px 0 8px 8px";
             this._msgWrapperElement.style.margin = "0";
             this._msgWrapperElement.style.textAlign = "left";
             this._msgWrapperElement.style.wordWrap = "break-word";
+            this._msgWrapperElement.style.letterSpacing = ".08em";
             this._element.appendChild(this._msgWrapperElement);
             this._dummyElement = document.createElement("div");
             this._dummyElement.style.display = "none";
@@ -2727,6 +2729,9 @@ var wwa_message;
         MessageWindow.prototype.isVisible = function () {
             return this._isVisible;
         };
+        MessageWindow.prototype.isWideChar = function (char) {
+            return (char.match(/^[^\x01-\x7E\xA1-\xDF]+$/) !== null);
+        };
         MessageWindow.prototype.update = function () {
             var base = this._wwa.getYesNoImgCoord();
             if (this._isYesno) {
@@ -2763,7 +2768,30 @@ var wwa_message;
             var mesArray = this._message.split("\n");
             for (var i = 0; i < mesArray.length; i++) {
                 var sp = document.createElement("span");
-                sp.textContent = mesArray[i];
+                var count = 0, lineStr = "";
+                console.log(mesArray[i].length);
+                for (var j = 0; j < mesArray[i].length || count != 0; j++) {
+                    if (this.isWideChar(mesArray[i].charAt(j))) {
+                        count += 2; // 全角の場合
+                    }
+                    else {
+                        count += 1; // 半角の場合
+                    }
+                    lineStr += mesArray[i].charAt(j);
+                    if (count >= wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
+                        if (mesArray[i].charAt(j + 1) === "。" || mesArray[i].charAt(j + 1) === "、") {
+                            lineStr += mesArray[i].charAt(j + 1); // 句読点の場合は行末に入れる
+                            j++;
+                        }
+                        var line = document.createElement("span");
+                        line.style.display = "inline-block";
+                        line.textContent = lineStr;
+                        sp.appendChild(line);
+                        count = 0;
+                        lineStr = "";
+                    }
+                }
+                //sp.textContent = mesArray[i];
                 this._msgWrapperElement.appendChild(sp);
                 this._msgWrapperElement.appendChild(document.createElement("br"));
             }
@@ -4617,14 +4645,10 @@ var wwa_main;
             var dir = this._player.getDir();
             var crop;
             var dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
-            // console.log(poso); // 8 16 24 32
             if (this._player.isLookingAround() && !this._player.isWaitingMessage()) {
                 crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
             }
-            else if (
-            /*((dir === wwa_data.Direction.LEFT || dir === wwa_data.Direction.RIGHT) && Math.abs(poso.x) > Math.floor(Consts.CHIP_SIZE / 2)) ||
-            ((dir === wwa_data.Direction.UP || dir === wwa_data.Direction.DOWN) && Math.abs(poso.y) > Math.floor(Consts.CHIP_SIZE / 2)) ||*/
-            this._player.isMovingImage()) {
+            else if (this._player.isMovingImage()) {
                 crop = this._wwaData.playerImgPosX + relpcrop + 1;
             }
             else {
