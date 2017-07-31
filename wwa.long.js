@@ -2590,11 +2590,10 @@ var wwa_message;
             this._element.style.zIndex = "400";
             //            this._element.style.opacity = "0.9";
             this._msgWrapperElement = document.createElement("div");
-            this._msgWrapperElement.style.padding = "8px 0 8px 8px";
-            this._msgWrapperElement.style.margin = "0";
+            this._msgWrapperElement.style.margin = "8px auto 8px";
             this._msgWrapperElement.style.textAlign = "left";
+            this._msgWrapperElement.style.width = (wwa_data.WWAConsts.MSG_STR_WIDTH + 1) + "em";
             this._msgWrapperElement.style.wordWrap = "break-word";
-            this._msgWrapperElement.style.letterSpacing = ".08em";
             this._element.appendChild(this._msgWrapperElement);
             this._dummyElement = document.createElement("div");
             this._dummyElement.style.display = "none";
@@ -2769,7 +2768,6 @@ var wwa_message;
             for (var i = 0; i < mesArray.length; i++) {
                 var sp = document.createElement("span");
                 var count = 0, lineStr = "";
-                console.log(mesArray[i].length);
                 for (var j = 0; j < mesArray[i].length || count != 0; j++) {
                     if (this.isWideChar(mesArray[i].charAt(j))) {
                         count += 2; // 全角の場合
@@ -2778,7 +2776,7 @@ var wwa_message;
                         count += 1; // 半角の場合
                     }
                     lineStr += mesArray[i].charAt(j);
-                    if (count >= wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
+                    if (count + 2 > wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
                         if (mesArray[i].charAt(j + 1) === "。" || mesArray[i].charAt(j + 1) === "、") {
                             lineStr += mesArray[i].charAt(j + 1); // 句読点の場合は行末に入れる
                             j++;
@@ -6262,7 +6260,7 @@ var wwa_main;
         };
         WWA.prototype._displayHelp = function () {
             if (this._player.isControllable()) {
-                this.setMessageQueue("【ショートカットキーの一覧】\n" +
+                this.setMessageQueue("　【ショートカットキーの一覧】\n" +
                     "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
                     //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
                     "Ｆ３：復帰用パスワード入力\n" +
@@ -6275,11 +6273,13 @@ var wwa_main;
                     "Ｆ１２：このリストの表示\n" +
                     //                                "Ｌ：リンクを別のウィンドウで開く\n" +
                     "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
-                    "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
-                    " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" +
-                    "現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
-                    "マップデータ バージョン: " +
+                    "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
+                    "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
+                    "　　　Ｉ: 移動速度を落とす／\n" +
+                    "Ｆ２、Ｐ: 移動速度を上げる\n" +
+                    "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                    "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                    "　マップデータ バージョン: " +
                     Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10, false, true);
             }
         };

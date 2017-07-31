@@ -3291,7 +3291,7 @@ module wwa_main {
         private _displayHelp(): void {
             if (this._player.isControllable()) {
                 this.setMessageQueue(
-                    "【ショートカットキーの一覧】\n" +
+                    "　【ショートカットキーの一覧】\n" +
                     "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
                     //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
                     "Ｆ３：復帰用パスワード入力\n" +
@@ -3304,11 +3304,13 @@ module wwa_main {
                     "Ｆ１２：このリストの表示\n" +
                     //                                "Ｌ：リンクを別のウィンドウで開く\n" +
                     "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
-                    "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
-                    " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" + 
-                    "現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
-                    "マップデータ バージョン: " +
+                    "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
+                    "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
+                    "　　　Ｉ: 移動速度を落とす／\n" + 
+                    "Ｆ２、Ｐ: 移動速度を上げる\n" + 
+                    "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                    "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                    "　マップデータ バージョン: " +
                     Math.floor( this._wwaData.version / 10 ) + "." + this._wwaData.version % 10,
                     false, true
                     );

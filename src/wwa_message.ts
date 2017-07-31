@@ -640,11 +640,10 @@ module wwa_message {
             this._element.style.zIndex = "400";
 //            this._element.style.opacity = "0.9";
             this._msgWrapperElement = document.createElement("div");
-            this._msgWrapperElement.style.padding = "8px 0 8px 8px";
-            this._msgWrapperElement.style.margin = "0";
+            this._msgWrapperElement.style.margin = "8px auto 8px";
             this._msgWrapperElement.style.textAlign = "left";
+            this._msgWrapperElement.style.width = (wwa_data.WWAConsts.MSG_STR_WIDTH + 1) + "em";
             this._msgWrapperElement.style.wordWrap = "break-word";
-            this._msgWrapperElement.style.letterSpacing = ".08em";
             this._element.appendChild(this._msgWrapperElement);
             this._dummyElement = document.createElement("div");
             this._dummyElement.style.display = "none";
@@ -824,7 +823,6 @@ module wwa_message {
             for (var i = 0; i < mesArray.length; i++) {
                 var sp = document.createElement("span");
                 var count = 0, lineStr = "";
-                console.log(mesArray[i].length);
                 for (var j = 0; j < mesArray[i].length || count != 0; j++) { // 1文字
                     if (this.isWideChar(mesArray[i].charAt(j))) {
                         count += 2; // 全角の場合
@@ -832,7 +830,7 @@ module wwa_message {
                         count += 1; // 半角の場合
                     }
                     lineStr += mesArray[i].charAt(j);
-                    if (count >= wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
+                    if (count + 2 > wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
                         if (mesArray[i].charAt(j + 1) === "。" || mesArray[i].charAt(j + 1) === "、") {
                             lineStr += mesArray[i].charAt(j + 1); // 句読点の場合は行末に入れる
                             j++;
