@@ -104,7 +104,7 @@ module wwa_cgmanager {
         public constructor(ctx: CanvasRenderingContext2D, ctxSub: CanvasRenderingContext2D, fileName: string, loadCompleteCallBack: () => void) {
             this._ctx = ctx;
             this._ctxSub = ctxSub;
-            this._fileName = fileName;  
+            this._fileName = fileName;
             this._loadCompleteCallBack = loadCompleteCallBack;
             this._load();
         } 

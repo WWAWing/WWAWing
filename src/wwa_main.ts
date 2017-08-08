@@ -128,6 +128,7 @@ module wwa_main {
         private _execMacroListInNextFrame: wwa_message.Macro[];
         private _clearFacesInNextFrame: boolean;
         private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
+        private _isStopDrawFlag: boolean; // メッセージ表示中は描画を止めるフラグ
 
         private _useConsole: boolean;
         private _audioDirectory : string;
@@ -141,10 +142,11 @@ module wwa_main {
         private _loadHandler: (e) => void;
 
         constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, classicMode, audioDirectory: string = "") {
+            var ctxCover;
             this._classicMode = classicMode
             if (this._classicMode) {
                 this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
-                var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+                ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
                 ctxCover.fillStyle = "rgb(0, 0, 0)";
             }
 
@@ -179,13 +181,13 @@ module wwa_main {
                 this._setErrorMessage("Audio.jsのロードに失敗しました。\n" +
                     "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
                     "フォルダを変更される場合には data-wwa-audio-dir 属性を\n" + 
-                    "指定してください");
+                    "指定してください", ctxCover);
                 return;
             }
 
             this._loadHandler = (e): void => {
                 if (e.data.error !== null && e.data.error !== void 0 ) {
-                    this._setErrorMessage("下記のエラーが発生しました。: \n" + e.data.error.message);
+                    this._setErrorMessage("下記のエラーが発生しました。: \n" + e.data.error.message, ctxCover);
                     return;
                 }
                 if (e.data.progress !== null && e.data.progress !== void 0) {
@@ -213,7 +215,7 @@ module wwa_main {
                 cgFile.addEventListener("error", (): void => {
                     this._setErrorMessage("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
                         "管理者の方へ: データがアップロードされているか、\n" + 
-                        "パーミッションを確かめてください。");
+                        "パーミッションを確かめてください。", ctxCover);
                 });
                 this._restartData = JSON.parse(JSON.stringify(this._wwaData));
 
@@ -551,9 +553,6 @@ module wwa_main {
 
                 this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, (): void => {
                     this._isSkippedSoundMessage = true;
-                    if (this._classicMode) {
-                        var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
-                    }
                     if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "ON") {
                         this._isLoadedSound = true;
                         this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
@@ -569,9 +568,11 @@ module wwa_main {
                         this.setMessageQueue( "ゲームを開始します。\n画面をクリックしてください。", false, true );
                         this.openGameWindow();
                         return;
-                    } else if (this._classicMode) {
+                    } else {
+                        this._isSkippedSoundMessage = false;
+                    }
+                    if (this._classicMode && !this._isSkippedSoundMessage) {
                         ctxCover.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
-                        this._isSkippedSoundMessage = false; // _isSkippedSoundMessage は _classicMode が true の時にしか働かないのでとりあえずこれでも
                     }
 
                     this._messageWindow.setMessage(
@@ -719,35 +720,33 @@ module wwa_main {
                 return;
             } // 注意！this._classicMode が true でないと動きません！
             
-            if (mode <= wwa_data.loadMessagesClassic.length) { // 読み込み途中
-                if (mode <= 0) { // タイトル描画
-                    ctx.font = wwa_data.LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
-                    ctx.fillText(wwa_data.loadMessagesClassic[0], wwa_data.LoadingMessagePosition.TITLE_X, wwa_data.LoadingMessagePosition.TITLE_Y);
+            if (mode <= 0) { // タイトル画面
+                ctx.font = wwa_data.LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
+                ctx.fillText(wwa_data.loadMessagesClassic[0], wwa_data.LoadingMessagePosition.TITLE_X, wwa_data.LoadingMessagePosition.TITLE_Y);
+                ctx.font = wwa_data.LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
+                ctx.fillText("WWA Wing Ver." + Consts.VERSION_WWAJS, wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.COPYRIGHT_Y);
+            } else if (mode <= wwa_data.loadMessagesClassic.length) { // 読み込み途中
+                ctx.font = wwa_data.LoadingMessageSize.LOADING + "px " + Consts.LOADING_FONT;
+                if (mode >= 2) {
+                    ctx.clearRect(wwa_data.LoadingMessagePosition.LOADING_X,
+                        wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 3)),
+                        Consts.SCREEN_WIDTH - wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LINE
+                        ); // 文字が太ましく見えるので一旦消去
+                    ctx.fillText(wwa_data.loadMessagesClassic[mode - 1] + " Complete!", wwa_data.LoadingMessagePosition.LOADING_X,
+                        wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 2))
+                        );
+                }
+                if (mode < wwa_data.loadMessagesClassic.length) {
+                    ctx.fillText(wwa_data.loadMessagesClassic[mode], wwa_data.LoadingMessagePosition.LOADING_X,
+                        wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 1))
+                        );
+                }
+                if (mode == 1) { // ワールド名を表示
                     ctx.font = wwa_data.LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
-                    ctx.fillText("WWA Wing Ver." + Consts.VERSION_WWAJS, wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.COPYRIGHT_Y);
-                } else {
-                    ctx.font = wwa_data.LoadingMessageSize.LOADING + "px " + Consts.LOADING_FONT;
-                    if (mode >= 2) {
-                        ctx.clearRect(wwa_data.LoadingMessagePosition.LOADING_X,
-                            wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 3)),
-                            Consts.SCREEN_WIDTH - wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LINE
-                            ); // 文字が太ましく見えるので一旦消去
-                        ctx.fillText(wwa_data.loadMessagesClassic[mode - 1] + " Complete!", wwa_data.LoadingMessagePosition.LOADING_X,
-                            wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 2))
-                            );
-                    }
-                    if (mode < wwa_data.loadMessagesClassic.length) { // 最後は消去のみ
-                        ctx.fillText(wwa_data.loadMessagesClassic[mode], wwa_data.LoadingMessagePosition.LOADING_X,
-                            wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 1))
-                            );
-                    }
-                    if (mode == 1) { // ワールド名を表示
-                        ctx.font = wwa_data.LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
-                        ctx.fillText("World Name  " + this._wwaData.worldName,
-                            wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y);
-                        ctx.fillText(" (Map data Ver. " + Math.floor( this._wwaData.version / 10 ) + "." + this._wwaData.version % 10 +")",
-                            wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y + wwa_data.LoadingMessagePosition.LINE);
-                    }
+                    ctx.fillText("World Name  " + this._wwaData.worldName,
+                        wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y);
+                    ctx.fillText(" (Map data Ver. " + Math.floor( this._wwaData.version / 10 ) + "." + this._wwaData.version % 10 +")",
+                        wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y + wwa_data.LoadingMessagePosition.LINE);
                 }
             } else { // 読み込み完了後、サウンドの読み込み時
                 var messageY;
@@ -766,14 +765,13 @@ module wwa_main {
             }
         }
 
-        private _setErrorMessage(message: string) {
+        private _setErrorMessage(message: string, ctx: CanvasRenderingContext2D) {
             if (this._classicMode) {
-                var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
-                ctxCover.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
-                ctxCover.font = wwa_data.LoadingMessageSize.ERRROR + "px " + Consts.LOADING_FONT;
+                ctx.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
+                ctx.font = wwa_data.LoadingMessageSize.ERRROR + "px " + Consts.LOADING_FONT;
                 var errorMessage = message.split('\n');
                 errorMessage.forEach(function(line, i) {
-                    ctxCover.fillText(line, wwa_data.LoadingMessagePosition.ERROR_X,
+                    ctx.fillText(line, wwa_data.LoadingMessagePosition.ERROR_X,
                         wwa_data.LoadingMessagePosition.ERROR_Y + (wwa_data.LoadingMessagePosition.LINE * i)
                     );
                 });
@@ -829,7 +827,7 @@ module wwa_main {
             var total = 0;
             if (this._classicMode) {
                 var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
-            }
+            } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
             this._keyStore.update();
             if (this._keyStore.getKeyState(wwa_input.KeyCode.KEY_SPACE) === wwa_input.KeyState.KEYDOWN) {
                 this._soundLoadSkipFlag = true;
@@ -1302,12 +1300,13 @@ module wwa_main {
             }
 
             // draw
-
             this._drawAll();
 
             this._mainCallCounter++;
             this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
-            this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
+            if (!this._player.isWaitingMessage()) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
+                this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
+            }
             if (this._camera.isResetting()) {
                 this._camera.advanceTransitionStepNum();
             }
@@ -1496,7 +1495,7 @@ module wwa_main {
                     var imgType: boolean = (
                         this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME ||
                         this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
-                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0 
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
                     );
                     var ppxo =
                         this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;

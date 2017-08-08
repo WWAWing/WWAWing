@@ -3034,7 +3034,7 @@ var wwa_estimate_battle;
                 this.damageDispElem.textContent = "長期戦が予想されます";
             }
             else {
-                this.damageDispElem.textContent = "予想ダメージ " + result.damage;
+                this.damageDispElem.textContent = "予測ダメージ " + result.damage;
             }
         };
         return EstimateDisplayElements;
@@ -3392,10 +3392,11 @@ var wwa_main;
             if (urlgateEnabled === void 0) { urlgateEnabled = false; }
             if (audioDirectory === void 0) { audioDirectory = ""; }
             var _this = this;
+            var ctxCover;
             this._classicMode = classicMode;
             if (this._classicMode) {
                 this._cvsCover = util.$id("progress-panel");
-                var ctxCover = this._cvsCover.getContext("2d");
+                ctxCover = this._cvsCover.getContext("2d");
                 ctxCover.fillStyle = "rgb(0, 0, 0)";
             }
             try {
@@ -3429,12 +3430,12 @@ var wwa_main;
                 this._setErrorMessage("Audio.jsのロードに失敗しました。\n" +
                     "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
                     "フォルダを変更される場合には data-wwa-audio-dir 属性を\n" +
-                    "指定してください");
+                    "指定してください", ctxCover);
                 return;
             }
             this._loadHandler = function (e) {
                 if (e.data.error !== null && e.data.error !== void 0) {
-                    _this._setErrorMessage("下記のエラーが発生しました。: \n" + e.data.error.message);
+                    _this._setErrorMessage("下記のエラーが発生しました。: \n" + e.data.error.message, ctxCover);
                     return;
                 }
                 if (e.data.progress !== null && e.data.progress !== void 0) {
@@ -3461,7 +3462,7 @@ var wwa_main;
                 cgFile.addEventListener("error", function () {
                     _this._setErrorMessage("画像ファイル「" + _this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
                         "管理者の方へ: データがアップロードされているか、\n" +
-                        "パーミッションを確かめてください。");
+                        "パーミッションを確かめてください。", ctxCover);
                 });
                 _this._restartData = JSON.parse(JSON.stringify(_this._wwaData));
                 var escapedFilename = _this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
@@ -3776,9 +3777,6 @@ var wwa_main;
                 */
                 _this._cgManager = new CGManager(ctx, ctxSub, _this._wwaData.mapCGName, function () {
                     _this._isSkippedSoundMessage = true;
-                    if (_this._classicMode) {
-                        var ctxCover = _this._cvsCover.getContext("2d");
-                    }
                     if (_this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "ON") {
                         _this._isLoadedSound = true;
                         _this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
@@ -3794,9 +3792,11 @@ var wwa_main;
                         _this.openGameWindow();
                         return;
                     }
-                    else if (_this._classicMode) {
+                    else {
+                        _this._isSkippedSoundMessage = false;
+                    }
+                    if (_this._classicMode && !_this._isSkippedSoundMessage) {
                         ctxCover.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
-                        _this._isSkippedSoundMessage = false; // _isSkippedSoundMessage は _classicMode が true の時にしか働かないのでとりあえずこれでも
                     }
                     _this._messageWindow.setMessage((_this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "" ?
                         "効果音・ＢＧＭデータをロードしますか？" :
@@ -3931,27 +3931,25 @@ var wwa_main;
             if (!this._classicMode) {
                 return;
             } // 注意！this._classicMode が true でないと動きません！
-            if (mode <= wwa_data.loadMessagesClassic.length) {
-                if (mode <= 0) {
-                    ctx.font = wwa_data.LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
-                    ctx.fillText(wwa_data.loadMessagesClassic[0], wwa_data.LoadingMessagePosition.TITLE_X, wwa_data.LoadingMessagePosition.TITLE_Y);
-                    ctx.font = wwa_data.LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
-                    ctx.fillText("WWA Wing Ver." + Consts.VERSION_WWAJS, wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.COPYRIGHT_Y);
+            if (mode <= 0) {
+                ctx.font = wwa_data.LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
+                ctx.fillText(wwa_data.loadMessagesClassic[0], wwa_data.LoadingMessagePosition.TITLE_X, wwa_data.LoadingMessagePosition.TITLE_Y);
+                ctx.font = wwa_data.LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
+                ctx.fillText("WWA Wing Ver." + Consts.VERSION_WWAJS, wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.COPYRIGHT_Y);
+            }
+            else if (mode <= wwa_data.loadMessagesClassic.length) {
+                ctx.font = wwa_data.LoadingMessageSize.LOADING + "px " + Consts.LOADING_FONT;
+                if (mode >= 2) {
+                    ctx.clearRect(wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 3)), Consts.SCREEN_WIDTH - wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LINE); // 文字が太ましく見えるので一旦消去
+                    ctx.fillText(wwa_data.loadMessagesClassic[mode - 1] + " Complete!", wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 2)));
                 }
-                else {
-                    ctx.font = wwa_data.LoadingMessageSize.LOADING + "px " + Consts.LOADING_FONT;
-                    if (mode >= 2) {
-                        ctx.clearRect(wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 3)), Consts.SCREEN_WIDTH - wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LINE); // 文字が太ましく見えるので一旦消去
-                        ctx.fillText(wwa_data.loadMessagesClassic[mode - 1] + " Complete!", wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 2)));
-                    }
-                    if (mode < wwa_data.loadMessagesClassic.length) {
-                        ctx.fillText(wwa_data.loadMessagesClassic[mode], wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 1)));
-                    }
-                    if (mode == 1) {
-                        ctx.font = wwa_data.LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
-                        ctx.fillText("World Name  " + this._wwaData.worldName, wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y);
-                        ctx.fillText(" (Map data Ver. " + Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10 + ")", wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y + wwa_data.LoadingMessagePosition.LINE);
-                    }
+                if (mode < wwa_data.loadMessagesClassic.length) {
+                    ctx.fillText(wwa_data.loadMessagesClassic[mode], wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 1)));
+                }
+                if (mode == 1) {
+                    ctx.font = wwa_data.LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
+                    ctx.fillText("World Name  " + this._wwaData.worldName, wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y);
+                    ctx.fillText(" (Map data Ver. " + Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10 + ")", wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y + wwa_data.LoadingMessagePosition.LINE);
                 }
             }
             else {
@@ -3971,14 +3969,13 @@ var wwa_main;
                 }
             }
         };
-        WWA.prototype._setErrorMessage = function (message) {
+        WWA.prototype._setErrorMessage = function (message, ctx) {
             if (this._classicMode) {
-                var ctxCover = this._cvsCover.getContext("2d");
-                ctxCover.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
-                ctxCover.font = wwa_data.LoadingMessageSize.ERRROR + "px " + Consts.LOADING_FONT;
+                ctx.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
+                ctx.font = wwa_data.LoadingMessageSize.ERRROR + "px " + Consts.LOADING_FONT;
                 var errorMessage = message.split('\n');
                 errorMessage.forEach(function (line, i) {
-                    ctxCover.fillText(line, wwa_data.LoadingMessagePosition.ERROR_X, wwa_data.LoadingMessagePosition.ERROR_Y + (wwa_data.LoadingMessagePosition.LINE * i));
+                    ctx.fillText(line, wwa_data.LoadingMessagePosition.ERROR_X, wwa_data.LoadingMessagePosition.ERROR_Y + (wwa_data.LoadingMessagePosition.LINE * i));
                 });
             }
             else {
@@ -4029,7 +4026,7 @@ var wwa_main;
             var total = 0;
             if (this._classicMode) {
                 var ctxCover = this._cvsCover.getContext("2d");
-            }
+            } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
             this._keyStore.update();
             if (this._keyStore.getKeyState(wwa_input.KeyCode.KEY_SPACE) === wwa_input.KeyState.KEYDOWN) {
                 this._soundLoadSkipFlag = true;
@@ -4509,7 +4506,9 @@ var wwa_main;
             this._drawAll();
             this._mainCallCounter++;
             this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
-            this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
+            if (!this._player.isWaitingMessage()) {
+                this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
+            }
             if (this._camera.isResetting()) {
                 this._camera.advanceTransitionStepNum();
             }
@@ -6602,4 +6601,3 @@ var wwa_main;
     }
 })(wwa_main || (wwa_main = {}));
 //# sourceMappingURL=wwa.long.js.tmp.map
-

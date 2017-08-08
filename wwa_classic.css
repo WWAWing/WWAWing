@@ -13,7 +13,7 @@
     height: 440px;
     font-size: 18px;
     /*font-family: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro', 'メイリオ','Meiryo','ＭＳ Ｐゴシック',sans-serif;*/
-    font-family: 'Courier New', 'Meiryo', monospace;
+    font-family: 'ＭＳ ゴシック', 'Osaka-mono', monospace;
     line-height: 1.2;
     text-indent: 0px;
     text-shadow: 1px 0px 0px gray;
@@ -208,6 +208,7 @@ div#wwa-sidebar>div.item-cell.onpress/*, div#wwa-sidebar>div.item-cell:hover */ 
     top: 370px;
     left: 0px;
     z-index: 121;
+    font-size: 14px!important;
 }
 
 #cell-gotowwa {
@@ -401,18 +402,16 @@ div.item-disp {
     position: absolute;
     top: 0;
     left: 0;
-    width: 400px;
-    height: 400px;
-    padding: 0;
-    margin: 18px;
+    width: 440px;
+    height: 440px;
+    padding: 18px;
+    box-sizing: border-box;
     border-style: solid;
     border-width: 2px;
     border-color: #000000;
-    border-radius: 10px;
 /*    background-color: rgba( 255, 255, 255, 0.9 ); */ /*システムで指定することになりました。$colorで。*/
     cursor: pointer;
     overflow: auto;
-    opacity: 0.9;
 }
 
 #wwa-battle-estimate {
