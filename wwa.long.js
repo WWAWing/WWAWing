@@ -2585,14 +2585,19 @@ var wwa_message;
             this._element.style.position = "absolute";
             this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "15px";
+            if (wwa.isClassicMode()) {
+                this._element.style.borderRadius = "15px";
+            }
+            else {
+                this._element.style.borderRadius = "10px";
+                this._element.style.opacity = "0.9";
+            }
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = "400";
-            //            this._element.style.opacity = "0.9";
             this._msgWrapperElement = document.createElement("div");
-            this._msgWrapperElement.style.margin = "8px auto 8px";
+            this._msgWrapperElement.style.margin = "8px 0 8px 16px";
             this._msgWrapperElement.style.textAlign = "left";
-            this._msgWrapperElement.style.width = (wwa_data.WWAConsts.MSG_STR_WIDTH + 1) + "em";
+            // this._msgWrapperElement.style.width = (wwa_data.WWAConsts.MSG_STR_WIDTH + 1) + "em";
             this._msgWrapperElement.style.wordWrap = "break-word";
             this._element.appendChild(this._msgWrapperElement);
             this._dummyElement = document.createElement("div");
@@ -3121,6 +3126,7 @@ var wwa_estimate_battle;
         }
     }
 })(wwa_estimate_battle || (wwa_estimate_battle = {}));
+/// <reference path="./wwa_data.ts" />
 /// <reference path="./wwa_util.ts" />
 /// <reference path="./wwa_main.ts" />
 // FIXME: innerHTML使う実装、あんまりよくないけど、許して。
@@ -3128,7 +3134,7 @@ var wwa_estimate_battle;
 var wwa_inject_html;
 (function (wwa_inject_html) {
     var inject_html = "            <canvas id=\"wwa-map\" class=\"wwa-canvas\" width=\"440\" height=\"440\">                このブラウザは、Canvas要素をサポートしていません。            </canvas>            <canvas id=\"wwa-map-sub\" class=\"wwa-canvas\" width=\"440\" height=\"440\"></canvas>            <div id=\"wwa-sidebar\">                <div class=\"wide-cell-row\" id=\"disp-energy\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-strength\"><div class=\"status-icon\"></div><div class=\"status-value-box\"> 0 </div></div>                <div class=\"wide-cell-row\" id=\"disp-defence\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-gold\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"item-cell\" id=\"item0\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item1\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item2\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item3\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item4\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item5\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item6\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item7\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item8\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item9\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item10\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item11\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"wide-cell-row\" id=\"cell-load\">Password</div><div class=\"wide-button\" id=\"button-load\"></div>                <div class=\"wide-cell-row\" id=\"cell-save\">Quick Save</div><div class=\"wide-button\" id=\"button-save\"></div>                <div class=\"wide-cell-row\" id=\"cell-restart\">Restart Game</div><div class=\"wide-button\" id=\"button-restart\"></div>                <div class=\"wide-cell-row\" id=\"cell-gotowwa\">Goto WWA</div><div class=\"wide-button\" id=\"button-gotowwa\"></div>            </div>            <div id=\"wwa-controller\"></div>            <div id=\"wwa-fader\"></div>            <div id=\"wwa-cover\">                 <div id=\"version\"></div>                 <div id=\"progress-message-container\">開始しています...</div>                 <div id=\"progress-bar-bg\"></div>                 <div id=\"progress-bar\" class=\"progress-bar\"></div>                 <div id=\"progress-bar-audio\" class=\"progress-bar\"></div>                 <div id=\"progress-disp\">---</div>            </div>            <div id=\"wwa-audio-wrapper\"></div>    ";
-    var inject_html_classic = "            <canvas id=\"wwa-map\" class=\"wwa-canvas\" width=\"440\" height=\"440\">                このブラウザは、Canvas要素をサポートしていません。            </canvas>            <canvas id=\"wwa-map-sub\" class=\"wwa-canvas\" width=\"440\" height=\"440\"></canvas>            <div id=\"wwa-sidebar\">                <div class=\"wide-cell-row\" id=\"disp-energy\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-strength\"><div class=\"status-icon\"></div><div class=\"status-value-box\"> 0 </div></div>                <div class=\"wide-cell-row\" id=\"disp-defence\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-gold\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"item-cell\" id=\"item0\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item1\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item2\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item3\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item4\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item5\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item6\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item7\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item8\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item9\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item10\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item11\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"wide-cell-row\" id=\"cell-load\">Password</div><div class=\"wide-button\" id=\"button-load\"></div>                <div class=\"wide-cell-row\" id=\"cell-save\">Quick Save</div><div class=\"wide-button\" id=\"button-save\"></div>                <div class=\"wide-cell-row\" id=\"cell-restart\">Restart Game</div><div class=\"wide-button\" id=\"button-restart\"></div>                <div class=\"wide-cell-row\" id=\"cell-gotowwa\">Goto WWA</div><div class=\"wide-button\" id=\"button-gotowwa\"></div>            </div>            <div id=\"wwa-controller\"></div>            <div id=\"wwa-fader\"></div>            <div id=\"wwa-cover\"></div>            <div id=\"wwa-audio-wrapper\"></div>    ";
+    var inject_html_no_img = "            <canvas id=\"wwa-map\" class=\"wwa-canvas\" width=\"440\" height=\"440\">                このブラウザは、Canvas要素をサポートしていません。            </canvas>            <canvas id=\"wwa-map-sub\" class=\"wwa-canvas\" width=\"440\" height=\"440\"></canvas>            <div id=\"wwa-sidebar\">                <div class=\"wide-cell-row\" id=\"disp-energy\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-strength\"><div class=\"status-icon\"></div><div class=\"status-value-box\"> 0 </div></div>                <div class=\"wide-cell-row\" id=\"disp-defence\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"wide-cell-row\" id=\"disp-gold\"><div class=\"status-icon\"></div><div class=\"status-value-box\">0</div></div>                <div class=\"item-cell\" id=\"item0\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item1\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item2\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item3\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item4\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item5\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item6\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item7\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item8\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item9\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item10\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"item-cell\" id=\"item11\"><div class=\"item-click-border\"></div><div class=\"item-disp\"></div></div>                <div class=\"wide-cell-row\" id=\"cell-load\">Password</div><div class=\"wide-button\" id=\"button-load\"></div>                <div class=\"wide-cell-row\" id=\"cell-save\">Quick Save</div><div class=\"wide-button\" id=\"button-save\"></div>                <div class=\"wide-cell-row\" id=\"cell-restart\">Restart Game</div><div class=\"wide-button\" id=\"button-restart\"></div>                <div class=\"wide-cell-row\" id=\"cell-gotowwa\">Goto WWA</div><div class=\"wide-button\" id=\"button-gotowwa\"></div>            </div>            <div id=\"wwa-controller\"></div>            <div id=\"wwa-fader\"></div>            <div id=\"wwa-cover\"></div>            <div id=\"wwa-audio-wrapper\"></div>    ";
     /*
     var inject_html = "\
             <canvas id=\"wwa-map\" class=\"wwa-canvas\" width=\"440\" height=\"440\">\
@@ -3176,10 +3182,10 @@ var wwa_inject_html;
         style.setAttribute("id", wwa_data.WWAConsts.WWA_STYLE_TAG_ID);
         wwa_util.$tag("head")[0].appendChild(style);
         if (titleImgName === null) {
-            parent.innerHTML = inject_html_classic;
+            parent.innerHTML = inject_html_no_img;
             var canvas = document.createElement("canvas");
-            canvas.height = 440;
-            canvas.width = 560;
+            canvas.height = wwa_data.WWAConsts.SCREEN_HEIGHT;
+            canvas.width = wwa_data.WWAConsts.SCREEN_WIDTH;
             canvas.id = "progress-panel";
             wwa_util.$id("wwa-cover").appendChild(canvas);
         }
@@ -3388,27 +3394,31 @@ var wwa_main;
     }
     wwa_main.getProgress = getProgress;
     var WWA = (function () {
-        function WWA(mapFileName, workerFileName, urlgateEnabled, classicMode, audioDirectory) {
+        function WWA(mapFileName, workerFileName, urlgateEnabled, titleImgName, classicModeEnabled, audioDirectory) {
             if (urlgateEnabled === void 0) { urlgateEnabled = false; }
             if (audioDirectory === void 0) { audioDirectory = ""; }
             var _this = this;
             var ctxCover;
-            this._classicMode = classicMode;
-            if (this._classicMode) {
+            if (titleImgName === null) {
+                this._hasTitleImg = false;
                 this._cvsCover = util.$id("progress-panel");
                 ctxCover = this._cvsCover.getContext("2d");
                 ctxCover.fillStyle = "rgb(0, 0, 0)";
             }
+            else {
+                this._hasTitleImg = true;
+            }
             try {
-                if (this._classicMode) {
-                    this._setLoadingMessage(ctxCover, 0);
+                if (this._hasTitleImg) {
+                    util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
                 }
                 else {
-                    util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
+                    this._setLoadingMessage(ctxCover, 0);
                 }
             }
             catch (e) { }
             this._isURLGateEnable = urlgateEnabled;
+            this._isClassicModeEnable = classicModeEnabled;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
             this._statusPressCounter = new wwa_data.Status(0, 0, 0, 0);
@@ -3444,13 +3454,13 @@ var wwa_main;
                 }
                 _this._wwaData = e.data.wwaData;
                 try {
-                    if (_this._classicMode) {
-                        _this._setLoadingMessage(ctxCover, 1);
-                    }
-                    else {
+                    if (_this._hasTitleImg) {
                         util.$id("version").textContent += (" (Map data Ver. "
                             + Math.floor(_this._wwaData.version / 10) + "." +
                             +_this._wwaData.version % 10 + ")");
+                    }
+                    else {
+                        _this._setLoadingMessage(ctxCover, 1);
                     }
                 }
                 catch (e) { }
@@ -3791,11 +3801,9 @@ var wwa_main;
                         _this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
                         _this.openGameWindow();
                         return;
-                    }
-                    else {
-                        _this._isSkippedSoundMessage = false;
-                    }
-                    if (_this._classicMode && !_this._isSkippedSoundMessage) {
+                    } // 読み込みメッセージをスキップした場合、処理はここまで
+                    _this._isSkippedSoundMessage = false;
+                    if (!_this._hasTitleImg) {
                         ctxCover.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
                     }
                     _this._messageWindow.setMessage((_this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "" ?
@@ -3908,7 +3916,7 @@ var wwa_main;
             }
         }
         WWA.prototype._setProgressBar = function (progress) {
-            if (this._classicMode) {
+            if (!this._hasTitleImg) {
                 return;
             }
             if (progress.stage <= Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO) {
@@ -3928,9 +3936,9 @@ var wwa_main;
             }
         };
         WWA.prototype._setLoadingMessage = function (ctx, mode) {
-            if (!this._classicMode) {
+            if (this._hasTitleImg) {
                 return;
-            } // 注意！this._classicMode が true でないと動きません！
+            } // 注意！this._hasTitleImg が false でないと動きません！
             if (mode <= 0) {
                 ctx.font = wwa_data.LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
                 ctx.fillText(wwa_data.loadMessagesClassic[0], wwa_data.LoadingMessagePosition.TITLE_X, wwa_data.LoadingMessagePosition.TITLE_Y);
@@ -3970,16 +3978,16 @@ var wwa_main;
             }
         };
         WWA.prototype._setErrorMessage = function (message, ctx) {
-            if (this._classicMode) {
+            if (this._hasTitleImg) {
+                alert(message);
+            }
+            else {
                 ctx.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
                 ctx.font = wwa_data.LoadingMessageSize.ERRROR + "px " + Consts.LOADING_FONT;
                 var errorMessage = message.split('\n');
                 errorMessage.forEach(function (line, i) {
                     ctx.fillText(line, wwa_data.LoadingMessagePosition.ERROR_X, wwa_data.LoadingMessagePosition.ERROR_Y + (wwa_data.LoadingMessagePosition.LINE * i));
                 });
-            }
-            else {
-                alert(message);
             }
         };
         WWA.prototype.createAudioJSInstance = function (idx, isSub) {
@@ -4024,7 +4032,7 @@ var wwa_main;
         WWA.prototype.checkAllSoundLoaded = function () {
             var loadedNum = 0;
             var total = 0;
-            if (this._classicMode) {
+            if (!this._hasTitleImg) {
                 var ctxCover = this._cvsCover.getContext("2d");
             } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
             this._keyStore.update();
@@ -4506,7 +4514,7 @@ var wwa_main;
             this._drawAll();
             this._mainCallCounter++;
             this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
-            if (!this._player.isWaitingMessage()) {
+            if (!this._player.isWaitingMessage() || !this._isClassicModeEnable) {
                 this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
             }
             if (this._camera.isResetting()) {
@@ -6555,6 +6563,9 @@ var wwa_main;
         WWA.prototype.showMonsterWindow = function () {
             this._monsterWindow.show();
         };
+        WWA.prototype.isClassicMode = function () {
+            return this._isClassicModeEnable;
+        };
         WWA.prototype.isConsoleOutputMode = function () {
             return this._useConsole;
         };
@@ -6591,7 +6602,12 @@ var wwa_main;
         if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
             urlgateEnabled = false;
         }
-        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName === null, audioDirectory);
+        var classicModeAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-classic-mode-enable"); // null値の可能性もあるので一旦属性を取得する
+        var classicModeEnabled = false;
+        if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
+            classicModeEnabled = true;
+        }
+        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, audioDirectory);
     }
     if (document.readyState === "complete") {
         start();

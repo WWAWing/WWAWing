@@ -635,14 +635,18 @@ module wwa_message {
             this._element.style.position = "absolute";
             this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "15px";
+            if (wwa.isClassicMode()) {
+                this._element.style.borderRadius = "15px";
+            } else {
+                this._element.style.borderRadius = "10px";
+                this._element.style.opacity = "0.9";
+            }
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = "400";
-//            this._element.style.opacity = "0.9";
             this._msgWrapperElement = document.createElement("div");
-            this._msgWrapperElement.style.margin = "8px auto 8px";
+            this._msgWrapperElement.style.margin = "8px 0 8px 16px";
             this._msgWrapperElement.style.textAlign = "left";
-            this._msgWrapperElement.style.width = (wwa_data.WWAConsts.MSG_STR_WIDTH + 1) + "em";
+            // this._msgWrapperElement.style.width = (wwa_data.WWAConsts.MSG_STR_WIDTH + 1) + "em";
             this._msgWrapperElement.style.wordWrap = "break-word";
             this._element.appendChild(this._msgWrapperElement);
             this._dummyElement = document.createElement("div");

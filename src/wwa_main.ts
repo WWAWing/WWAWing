@@ -117,7 +117,7 @@ module wwa_main {
         private _temporaryInputDisable: boolean;
 
         private _isLoadedSound: boolean;
-        private _isSkippedSoundMessage: boolean;
+        private _isSkippedSoundMessage: boolean; // メッセージの読み込みジャッジを飛ばすフラグ(汎用的に使えるようにプロパティに入れている)
 
         private _soundLoadSkipFlag: boolean;
 
@@ -128,11 +128,11 @@ module wwa_main {
         private _execMacroListInNextFrame: wwa_message.Macro[];
         private _clearFacesInNextFrame: boolean;
         private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
-        private _isStopDrawFlag: boolean; // メッセージ表示中は描画を止めるフラグ
+        private _isClassicModeEnable: boolean;
 
         private _useConsole: boolean;
-        private _audioDirectory : string;
-        private _classicMode: boolean;
+        private _audioDirectory: string;
+        private _hasTitleImg: boolean;
 
         ////////////////////////
         public debug: boolean;
@@ -141,24 +141,27 @@ module wwa_main {
 
         private _loadHandler: (e) => void;
 
-        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, classicMode, audioDirectory: string = "") {
+        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
             var ctxCover;
-            this._classicMode = classicMode
-            if (this._classicMode) {
+            if (titleImgName === null) {
+                this._hasTitleImg = false;
                 this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
                 ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
                 ctxCover.fillStyle = "rgb(0, 0, 0)";
+            } else {
+                this._hasTitleImg = true;
             }
 
             try {
-                if (this._classicMode) {
-                    this._setLoadingMessage(ctxCover, 0);
-                } else {
+                if (this._hasTitleImg) {
                     util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
+                } else {
+                    this._setLoadingMessage(ctxCover, 0);
                 }
             } catch (e) { }
 
             this._isURLGateEnable = urlgateEnabled;
+            this._isClassicModeEnable = classicModeEnabled;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
             this._statusPressCounter = new wwa_data.Status(0, 0, 0, 0);
@@ -197,14 +200,14 @@ module wwa_main {
 
                 this._wwaData = e.data.wwaData;
                 try {
-                    if (this._classicMode) {
-                        this._setLoadingMessage(ctxCover, 1);
-                    } else {
+                    if (this._hasTitleImg) {
                         util.$id("version").textContent += (
                                 " (Map data Ver. "
                                 + Math.floor( this._wwaData.version / 10 ) + "." +
                                 + this._wwaData.version % 10 +")"
                             );
+                    } else {
+                        this._setLoadingMessage(ctxCover, 1);
                     }
                 } catch (e) { }
                 this.initCSSRule();
@@ -568,10 +571,9 @@ module wwa_main {
                         this.setMessageQueue( "ゲームを開始します。\n画面をクリックしてください。", false, true );
                         this.openGameWindow();
                         return;
-                    } else {
-                        this._isSkippedSoundMessage = false;
-                    }
-                    if (this._classicMode && !this._isSkippedSoundMessage) {
+                    } // 読み込みメッセージをスキップした場合、処理はここまで
+                    this._isSkippedSoundMessage = false;
+                    if (!this._hasTitleImg) {
                         ctxCover.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
                     }
 
@@ -691,7 +693,7 @@ module wwa_main {
         }
 
         private _setProgressBar(progress: wwa_data.LoaderProgress) {
-            if (this._classicMode) {
+            if (!this._hasTitleImg) {
                 return;
             }
 
@@ -716,9 +718,9 @@ module wwa_main {
         }
 
         private _setLoadingMessage(ctx: CanvasRenderingContext2D, mode: number) {
-            if (!this._classicMode) {
+            if (this._hasTitleImg) {
                 return;
-            } // 注意！this._classicMode が true でないと動きません！
+            } // 注意！this._hasTitleImg が false でないと動きません！
             
             if (mode <= 0) { // タイトル画面
                 ctx.font = wwa_data.LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
@@ -766,7 +768,9 @@ module wwa_main {
         }
 
         private _setErrorMessage(message: string, ctx: CanvasRenderingContext2D) {
-            if (this._classicMode) {
+            if (this._hasTitleImg) {
+                alert(message);
+            } else {
                 ctx.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
                 ctx.font = wwa_data.LoadingMessageSize.ERRROR + "px " + Consts.LOADING_FONT;
                 var errorMessage = message.split('\n');
@@ -775,8 +779,6 @@ module wwa_main {
                         wwa_data.LoadingMessagePosition.ERROR_Y + (wwa_data.LoadingMessagePosition.LINE * i)
                     );
                 });
-            } else {
-                alert(message);
             }
         }
 
@@ -825,7 +827,7 @@ module wwa_main {
         public checkAllSoundLoaded(): void {
             var loadedNum = 0;
             var total = 0;
-            if (this._classicMode) {
+            if (!this._hasTitleImg) {
                 var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
             } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
             this._keyStore.update();
@@ -1304,7 +1306,7 @@ module wwa_main {
 
             this._mainCallCounter++;
             this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
-            if (!this._player.isWaitingMessage()) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
+            if (!this._player.isWaitingMessage() || !this._isClassicModeEnable) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
                 this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
             }
             if (this._camera.isResetting()) {
@@ -3627,6 +3629,10 @@ module wwa_main {
             this._monsterWindow.show();
         }
 
+        public isClassicMode(): boolean {
+            return this._isClassicModeEnable;
+        }
+
         public isConsoleOutputMode(): boolean {
             return this._useConsole;
         }
@@ -3653,7 +3659,7 @@ module wwa_main {
         var titleImgName = wwap_mode ?
             Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG :
             util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
-        wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"),  titleImgName);
+        wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName);
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
         var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
         var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
@@ -3661,7 +3667,12 @@ module wwa_main {
         if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
             urlgateEnabled = false;
         }
-        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName === null, audioDirectory);
+        var classicModeAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-classic-mode-enable"); // null値の可能性もあるので一旦属性を取得する
+        var classicModeEnabled = false;
+        if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
+            classicModeEnabled = true;
+        }
+        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, audioDirectory);
     }
 
 
