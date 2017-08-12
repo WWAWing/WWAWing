@@ -453,7 +453,11 @@ module wwa_message {
             this._element.style.position = "absolute";
             this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "15px"
+            if (_wwa.isClassicMode()) {
+                this._element.style.borderRadius = "15px";
+            } else {
+                this._element.style.borderRadius = "10px";
+            }
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = zIndex + "";
 //            this._element.style.opacity = "0.9";
@@ -559,7 +563,15 @@ module wwa_message {
             isVisible: boolean,
             parentElement: HTMLElement
             ) {
-            super(wwa, new wwa_data.Coord(coord.x, coord.y), 340, 30, isVisible, parentElement, 202);
+            if (wwa.isClassicMode()) {
+                super(wwa, new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE * 2, 30), wwa_data.WWAConsts.CHIP_SIZE * 7, 40, isVisible, parentElement, 202);
+                this._element.style.borderWidth = "0";
+                this._element.style.borderRadius = "4px";
+                this._element.style.fontSize = "20px";
+                this._element.style.lineHeight = "40px";
+            } else {
+                super(wwa, new wwa_data.Coord(coord.x, coord.y), 340, 30, isVisible, parentElement, 202);
+            }
             this._element.style.textAlign = "center";
             if (this._isVisible) {
                 this._element.style.display = "block";
@@ -833,7 +845,7 @@ module wwa_message {
                         count += 1; // 半角の場合
                     }
                     lineStr += mesArray[i].charAt(j);
-                    if (count + 2 > wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
+                    if (count + 1 > wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
                         if (mesArray[i].charAt(j + 1) === "。" || mesArray[i].charAt(j + 1) === "、") {
                             lineStr += mesArray[i].charAt(j + 1); // 句読点の場合は行末に入れる
                             j++;
