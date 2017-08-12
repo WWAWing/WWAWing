@@ -3565,6 +3565,7 @@ module wwa_main {
             this.updateCSSRule();
         }
         public updateCSSRule() {
+            var messageOpacity = this._isClassicModeEnable ? 1 : 0.9;
             if (this._stylePos === void 0) {
                 this._stylePos = new Array(2);
             } else {
@@ -3581,9 +3582,9 @@ module wwa_main {
             if (this._sheet.addRule !== void 0) {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(
                     "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window",
-                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1);" +
-                    "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" +
-                    "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);"
+                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");" +
+                    "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);" +
+                    "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);"
                     );
                 this._stylePos[wwa_data.SelectorType.SIDEBAR] = this._sheet.addRule(
                     "div#wwa-sidebar",
@@ -3593,9 +3594,9 @@ module wwa_main {
             } else {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(
                     "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window {\n"+
-                        "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1);\n" +
-                        "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);\n" +
-                       "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);\n" +
+                        "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");\n" +
+                        "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);\n" +
+                       "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);\n" +
                     "}",0);
                 this._stylePos[wwa_data.SelectorType.SIDEBAR] = this._sheet.insertRule(
                     "div#wwa-sidebar {\n" +

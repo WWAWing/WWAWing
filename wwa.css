@@ -411,7 +411,6 @@ div.item-disp {
 /*    background-color: rgba( 255, 255, 255, 0.9 ); */ /*システムで指定することになりました。$colorで。*/
     cursor: pointer;
     overflow: auto;
-    opacity: 0.9;
 }
 
 #wwa-battle-estimate {
