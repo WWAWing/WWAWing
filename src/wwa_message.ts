@@ -639,7 +639,6 @@ module wwa_message {
                 this._element.style.borderRadius = "15px";
             } else {
                 this._element.style.borderRadius = "10px";
-                this._element.style.opacity = "0.9";
             }
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = "400";
@@ -841,6 +840,7 @@ module wwa_message {
                         }
                         var line = document.createElement("span");
                             line.style.display = "inline-block";
+                            line.style.width = "100%";
                             line.textContent = lineStr;
                         sp.appendChild(line);
                         count = 0;

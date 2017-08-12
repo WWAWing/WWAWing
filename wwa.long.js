@@ -2590,7 +2590,6 @@ var wwa_message;
             }
             else {
                 this._element.style.borderRadius = "10px";
-                this._element.style.opacity = "0.9";
             }
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = "400";
@@ -2788,6 +2787,7 @@ var wwa_message;
                         }
                         var line = document.createElement("span");
                         line.style.display = "inline-block";
+                        line.style.width = "100%";
                         line.textContent = lineStr;
                         sp.appendChild(line);
                         count = 0;
@@ -6503,6 +6503,7 @@ var wwa_main;
             this.updateCSSRule();
         };
         WWA.prototype.updateCSSRule = function () {
+            var messageOpacity = this._isClassicModeEnable ? 1 : 0.9;
             if (this._stylePos === void 0) {
                 this._stylePos = new Array(2);
             }
@@ -6519,17 +6520,17 @@ var wwa_main;
                 }
             }
             if (this._sheet.addRule !== void 0) {
-                this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.addRule("div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window", "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1);" +
-                    "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" +
-                    "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);");
+                this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.addRule("div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window", "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");" +
+                    "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);" +
+                    "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);");
                 this._stylePos[wwa_data.SelectorType.SIDEBAR] = this._sheet.addRule("div#wwa-sidebar", "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);" +
                     "font-weight: bold;");
             }
             else {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule("div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window {\n" +
-                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",1);\n" +
-                    "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);\n" +
-                    "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);\n" +
+                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");\n" +
+                    "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);\n" +
+                    "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);\n" +
                     "}", 0);
                 this._stylePos[wwa_data.SelectorType.SIDEBAR] = this._sheet.insertRule("div#wwa-sidebar {\n" +
                     "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);\n" +
