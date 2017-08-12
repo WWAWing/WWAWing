@@ -453,7 +453,11 @@ module wwa_message {
             this._element.style.position = "absolute";
             this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "15px"
+            if (_wwa.isClassicMode()) {
+                this._element.style.borderRadius = "15px";
+            } else {
+                this._element.style.borderRadius = "10px";
+            }
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = zIndex + "";
 //            this._element.style.opacity = "0.9";
