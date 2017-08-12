@@ -2547,11 +2547,17 @@ var wwa_message;
     var ScoreWindow = (function (_super) {
         __extends(ScoreWindow, _super);
         function ScoreWindow(wwa, coord, isVisible, parentElement) {
-            var _this = _super.call(this, wwa, new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE * 2, 30), wwa_data.WWAConsts.CHIP_SIZE * 7, 40, isVisible, parentElement, 202) || this;
-            _this._element.style.borderWidth = "0";
-            _this._element.style.borderRadius = "4px";
-            _this._element.style.fontSize = "20px";
-            _this._element.style.lineHeight = "40px";
+            var _this = this;
+            if (wwa.isClassicMode()) {
+                _this = _super.call(this, wwa, new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE * 2, 30), wwa_data.WWAConsts.CHIP_SIZE * 7, 40, isVisible, parentElement, 202) || this;
+                _this._element.style.borderWidth = "0";
+                _this._element.style.borderRadius = "4px";
+                _this._element.style.fontSize = "20px";
+                _this._element.style.lineHeight = "40px";
+            }
+            else {
+                _this = _super.call(this, wwa, new wwa_data.Coord(coord.x, coord.y), 340, 30, isVisible, parentElement, 202) || this;
+            }
             _this._element.style.textAlign = "center";
             if (_this._isVisible) {
                 _this._element.style.display = "block";

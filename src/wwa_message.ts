@@ -563,11 +563,15 @@ module wwa_message {
             isVisible: boolean,
             parentElement: HTMLElement
             ) {
-            super(wwa, new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE * 2, 30), wwa_data.WWAConsts.CHIP_SIZE * 7, 40, isVisible, parentElement, 202);
-            this._element.style.borderWidth = "0";
-            this._element.style.borderRadius = "4px";
-            this._element.style.fontSize = "20px";
-            this._element.style.lineHeight = "40px";
+            if (wwa.isClassicMode()) {
+                super(wwa, new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE * 2, 30), wwa_data.WWAConsts.CHIP_SIZE * 7, 40, isVisible, parentElement, 202);
+                this._element.style.borderWidth = "0";
+                this._element.style.borderRadius = "4px";
+                this._element.style.fontSize = "20px";
+                this._element.style.lineHeight = "40px";
+            } else {
+                super(wwa, new wwa_data.Coord(coord.x, coord.y), 340, 30, isVisible, parentElement, 202);
+            }
             this._element.style.textAlign = "center";
             if (this._isVisible) {
                 this._element.style.display = "block";
