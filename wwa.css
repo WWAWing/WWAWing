@@ -11,16 +11,13 @@
 .wwa-size-box {
     width: 560px;
     height: 440px;
-    font-size: 18px;
-    /*font-family: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro', 'メイリオ','Meiryo','ＭＳ Ｐゴシック',sans-serif;*/
-    font-family: 'Consolas', 'Meiryo', monospace;
-    line-height: 1.2;
-    text-indent: 0px;
-    letter-spacing: 0px;
+    font-size: 16px;
+    font-family: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro', 'メイリオ','Meiryo','ＭＳ Ｐゴシック',sans-serif;
+    line-height:1.2;
+    text-indent:0px;
+    letter-spacing:0px;
     word-spacing: 0px;
-    writing-mode: horizontal-tb;
-    /* image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges; /* 高解像度のディスプレイでくっきり表示させるCSSコード(仮) */
+    writing-mode:horizontal-tb;
 }
 
 div#wwa-wrapper {
@@ -61,7 +58,7 @@ div#wwa-sidebar>div.wide-cell-row {
     border: 0px;
     width: 120px;
     height: 25px;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 div#wwa-sidebar>div.wide-cell-row.onpress/*, div#wwa-sidebar>div.wide-cell-row:hover*/ {
@@ -421,8 +418,8 @@ div.item-disp {
 }
 #wwa-password-window>div.wwa-password-description {
     text-align: left;
-    font-size: 14px;
-    padding: 8px;
+    font-size: 12px;
+    padding: 5px;
 }
 
 #wwa-password-window>textarea {

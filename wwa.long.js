@@ -1062,7 +1062,7 @@ var wwa_parts_player;
                 }
                 if (next.isJustPosition()) {
                     this._state = PlayerState.CONTROLLABLE;
-                    this.changeMovingImage();
+                    this.toggleMovingImage();
                     this._moves++;
                     this._isPartsEventExecuted = false;
                     this._samePosLastExecutedMapID = void 0;
@@ -1197,7 +1197,7 @@ var wwa_parts_player;
         Player.prototype.isMovingImage = function () {
             return this._isMovingImage;
         };
-        Player.prototype.changeMovingImage = function () {
+        Player.prototype.toggleMovingImage = function () {
             if (this._isMovingImage) {
                 this._isMovingImage = false;
             }
@@ -2609,10 +2609,15 @@ var wwa_message;
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = "400";
             this._msgWrapperElement = document.createElement("div");
-            this._msgWrapperElement.style.margin = "8px 0 8px 16px";
             this._msgWrapperElement.style.textAlign = "left";
-            // this._msgWrapperElement.style.width = (wwa_data.WWAConsts.MSG_STR_WIDTH + 1) + "em";
             this._msgWrapperElement.style.wordWrap = "break-word";
+            if (wwa.isClassicMode()) {
+                this._msgWrapperElement.style.margin = "8px 0 8px 16px";
+            }
+            else {
+                this._msgWrapperElement.style.margin = "0";
+                this._msgWrapperElement.style.padding = "7px";
+            }
             this._element.appendChild(this._msgWrapperElement);
             this._dummyElement = document.createElement("div");
             this._dummyElement.style.display = "none";
@@ -2751,6 +2756,7 @@ var wwa_message;
             return (char.match(/^[^\x01-\x7E\xA1-\xDF]+$/) !== null);
         };
         MessageWindow.prototype.update = function () {
+            var _this = this;
             var base = this._wwa.getYesNoImgCoord();
             if (this._isYesno) {
                 if (this._wwa.getYesNoState() === wwa_data.YesNoState.YES) {
@@ -2784,35 +2790,39 @@ var wwa_message;
             }
             this._msgWrapperElement.textContent = "";
             var mesArray = this._message.split("\n");
-            for (var i = 0; i < mesArray.length; i++) {
-                var sp = document.createElement("span");
-                var count = 0, lineStr = "";
-                for (var j = 0; j < mesArray[i].length || count != 0; j++) {
-                    if (this.isWideChar(mesArray[i].charAt(j))) {
-                        count += 2; // 全角の場合
-                    }
-                    else {
-                        count += 1; // 半角の場合
-                    }
-                    lineStr += mesArray[i].charAt(j);
-                    if (count + 1 > wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
-                        if (mesArray[i].charAt(j + 1) === "。" || mesArray[i].charAt(j + 1) === "、") {
-                            lineStr += mesArray[i].charAt(j + 1); // 句読点の場合は行末に入れる
-                            j++;
+            mesArray.forEach(function (line, i) {
+                var lsp = document.createElement("span"); // Logical SPan
+                if (_this._wwa.isClassicMode()) {
+                    var count = 0, lineStr = "";
+                    for (var j = 0; j < mesArray[i].length || count != 0; j++) {
+                        if (_this.isWideChar(mesArray[i].charAt(j))) {
+                            count += 2; // 全角の場合
                         }
-                        var line = document.createElement("span");
-                        line.style.display = "inline-block";
-                        line.style.width = "100%";
-                        line.textContent = lineStr;
-                        sp.appendChild(line);
-                        count = 0;
-                        lineStr = "";
+                        else {
+                            count += 1; // 半角の場合
+                        }
+                        lineStr += mesArray[i].charAt(j);
+                        if (count + 1 > wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
+                            if (mesArray[i].charAt(j + 1) === "。" || mesArray[i].charAt(j + 1) === "、") {
+                                lineStr += mesArray[i].charAt(j + 1); // 句読点の場合は行末に入れる
+                                j++;
+                            }
+                            var vsp = document.createElement("span"); // View SPan
+                            vsp.style.display = "inline-block";
+                            vsp.style.width = "100%";
+                            vsp.textContent = lineStr;
+                            lsp.appendChild(vsp);
+                            count = 0;
+                            lineStr = "";
+                        }
                     }
                 }
-                //sp.textContent = mesArray[i];
-                this._msgWrapperElement.appendChild(sp);
-                this._msgWrapperElement.appendChild(document.createElement("br"));
-            }
+                else {
+                    lsp.textContent = mesArray[i];
+                }
+                _this._msgWrapperElement.appendChild(lsp);
+                _this._msgWrapperElement.appendChild(document.createElement("br"));
+            });
             if (this._isVisible) {
                 this._element.style.left = this._x + "px";
                 this._element.style.top = this._y + "px";
@@ -4176,7 +4186,7 @@ var wwa_main;
                 }
                 else {
                     this.setMessageQueue(this._wwaData.message[wwa_data.SystemMessage1.USE_ITEM] === "" ?
-                        "このアイテムを使用します。\nよろしいですか?" :
+                        "このアイテムを使います。\nよろしいですか?" :
                         this._wwaData.message[wwa_data.SystemMessage1.USE_ITEM], true, true);
                     this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_ITEM_USE;
                     this._yesNoUseItemPos = itemPos;
@@ -6236,7 +6246,7 @@ var wwa_main;
             var xLeft = Math.max(0, cpParts.x);
             var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1);
             var yTop = Math.max(0, cpParts.y);
-            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1;
+            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
             var monsterList = [];
             this.playSound(wwa_data.SystemSound.DECISION);
             for (var x = xLeft; x <= xRight; x++) {

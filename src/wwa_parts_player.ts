@@ -111,7 +111,7 @@ module wwa_parts_player {
                 }
                 if (next.isJustPosition()) {
                     this._state = PlayerState.CONTROLLABLE;
-                    this.changeMovingImage();
+                    this.toggleMovingImage();
                     this._moves++;
                     this._isPartsEventExecuted = false;
                     this._samePosLastExecutedMapID = void 0;
@@ -285,7 +285,7 @@ module wwa_parts_player {
             return this._isMovingImage;
         }
 
-        public changeMovingImage(): void {
+        public toggleMovingImage(): void {
             if (this._isMovingImage) {
                 this._isMovingImage = false;
             } else {
