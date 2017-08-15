@@ -6,16 +6,27 @@
  LICENSE: https://raw.githubusercontent.com/WWAWing/WWAWing/master/LICENSE
 
  */
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var wwa_input;
 (function (wwa_input) {
+    var KeyState;
     (function (KeyState) {
         KeyState[KeyState["NONE"] = 0] = "NONE";
         KeyState[KeyState["KEYDOWN"] = 1] = "KEYDOWN";
         KeyState[KeyState["KEYPRESS"] = 2] = "KEYPRESS";
         KeyState[KeyState["KEYUP"] = 3] = "KEYUP";
         KeyState[KeyState["KEYPRESS_MESSAGECHANGE"] = 4] = "KEYPRESS_MESSAGECHANGE";
-    })(wwa_input.KeyState || (wwa_input.KeyState = {}));
-    var KeyState = wwa_input.KeyState;
+    })(KeyState = wwa_input.KeyState || (wwa_input.KeyState = {}));
+    var KeyCode;
     (function (KeyCode) {
         KeyCode[KeyCode["KEY_ENTER"] = 13] = "KEY_ENTER";
         KeyCode[KeyCode["KEY_SHIFT"] = 16] = "KEY_SHIFT";
@@ -50,8 +61,7 @@ var wwa_input;
         KeyCode[KeyCode["KEY_F7"] = 118] = "KEY_F7";
         KeyCode[KeyCode["KEY_F8"] = 119] = "KEY_F8";
         KeyCode[KeyCode["KEY_F12"] = 123] = "KEY_F12";
-    })(wwa_input.KeyCode || (wwa_input.KeyCode = {}));
-    var KeyCode = wwa_input.KeyCode;
+    })(KeyCode = wwa_input.KeyCode || (wwa_input.KeyCode = {}));
     var KeyStore = (function () {
         function KeyStore() {
             var i;
@@ -146,15 +156,15 @@ var wwa_input;
         };
         KeyStore.KEY_BUFFER_MAX = 256;
         return KeyStore;
-    })();
+    }());
     wwa_input.KeyStore = KeyStore;
+    var MouseState;
     (function (MouseState) {
         MouseState[MouseState["NONE"] = 0] = "NONE";
         MouseState[MouseState["MOUSEDOWN"] = 1] = "MOUSEDOWN";
         MouseState[MouseState["MOUSEPRESS"] = 2] = "MOUSEPRESS";
         MouseState[MouseState["MOUSEUP"] = 3] = "MOUSEUP";
-    })(wwa_input.MouseState || (wwa_input.MouseState = {}));
-    var MouseState = wwa_input.MouseState;
+    })(MouseState = wwa_input.MouseState || (wwa_input.MouseState = {}));
     var MouseStore = (function () {
         function MouseStore() {
             this._prevMouseState = false;
@@ -232,15 +242,10 @@ var wwa_input;
             return this._touchID;
         };
         return MouseStore;
-    })();
+    }());
     wwa_input.MouseStore = MouseStore;
 })(wwa_input || (wwa_input = {}));
 /// <reference path="./wwa_main.ts" />
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
 var wwa_data;
 (function (wwa_data) {
     var EquipmentStatus = (function () {
@@ -263,14 +268,15 @@ var wwa_data;
             return this.strength === e.strength && this.defence === e.defence;
         };
         return EquipmentStatus;
-    })();
+    }());
     wwa_data.EquipmentStatus = EquipmentStatus;
     var Status = (function (_super) {
         __extends(Status, _super);
         function Status(e, s, d, g) {
-            _super.call(this, s, d);
-            this.energy = e;
-            this.gold = g;
+            var _this = _super.call(this, s, d) || this;
+            _this.energy = e;
+            _this.gold = g;
+            return _this;
         }
         Status.prototype.add = function (s) {
             if (s instanceof Status) {
@@ -297,7 +303,7 @@ var wwa_data;
             return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
         };
         return Status;
-    })(EquipmentStatus);
+    }(EquipmentStatus));
     wwa_data.Status = Status;
     /**
         Coordは座標(coordinate)を示す変数２つ組です。
@@ -353,7 +359,7 @@ var wwa_data;
             return "(" + this.x + ", " + this.y + ")";
         };
         return Coord;
-    })();
+    }());
     wwa_data.Coord = Coord;
     var Position = (function () {
         function Position(wwa, x, y, offsetX, offsetY) {
@@ -469,7 +475,7 @@ var wwa_data;
             return new Position(this._wwa, this._partsCoord.x, this._partsCoord.y, this._offsetCoord.x, this._offsetCoord.y);
         };
         return Position;
-    })();
+    }());
     wwa_data.Position = Position;
     var Face = (function () {
         function Face(destPos, srcPos, srcSize) {
@@ -478,8 +484,9 @@ var wwa_data;
             this.srcSize = srcSize.clone();
         }
         return Face;
-    })();
+    }());
     wwa_data.Face = Face;
+    var Direction;
     (function (Direction) {
         Direction[Direction["LEFT"] = 0] = "LEFT";
         Direction[Direction["RIGHT"] = 1] = "RIGHT";
@@ -492,38 +499,38 @@ var wwa_data;
         Direction[Direction["RIGHT_UP"] = 7] = "RIGHT_UP";
         // 向きなしは、マクロ$movesで「プレイヤーの動きなしに物体を動かす」時に使う
         Direction[Direction["NO_DIRECTION"] = 8] = "NO_DIRECTION";
-    })(wwa_data.Direction || (wwa_data.Direction = {}));
-    var Direction = wwa_data.Direction;
+    })(Direction = wwa_data.Direction || (wwa_data.Direction = {}));
     ;
     wwa_data.vx = [-1, 1, 0, 0, -1, -1, 1, 1, 0];
     wwa_data.vy = [0, 0, 1, -1, 1, -1, 1, -1, 0];
     wwa_data.dirToPos = [4, 6, 2, 0]; // 仮
     wwa_data.dirToKey = [wwa_input.KeyCode.KEY_LEFT, wwa_input.KeyCode.KEY_RIGHT, wwa_input.KeyCode.KEY_DOWN, wwa_input.KeyCode.KEY_UP];
+    var YesNoState;
     (function (YesNoState) {
         YesNoState[YesNoState["YES"] = 0] = "YES";
         YesNoState[YesNoState["NO"] = 1] = "NO";
         YesNoState[YesNoState["UNSELECTED"] = 2] = "UNSELECTED";
-    })(wwa_data.YesNoState || (wwa_data.YesNoState = {}));
-    var YesNoState = wwa_data.YesNoState;
+    })(YesNoState = wwa_data.YesNoState || (wwa_data.YesNoState = {}));
+    var AppearanceTriggerType;
     (function (AppearanceTriggerType) {
         AppearanceTriggerType[AppearanceTriggerType["MAP"] = 0] = "MAP";
         AppearanceTriggerType[AppearanceTriggerType["OBJECT"] = 1] = "OBJECT";
         //        USE_ITEM,
         AppearanceTriggerType[AppearanceTriggerType["CHOICE_YES"] = 2] = "CHOICE_YES";
         AppearanceTriggerType[AppearanceTriggerType["CHOICE_NO"] = 3] = "CHOICE_NO";
-    })(wwa_data.AppearanceTriggerType || (wwa_data.AppearanceTriggerType = {}));
-    var AppearanceTriggerType = wwa_data.AppearanceTriggerType;
+    })(AppearanceTriggerType = wwa_data.AppearanceTriggerType || (wwa_data.AppearanceTriggerType = {}));
+    var ItemMode;
     (function (ItemMode) {
         ItemMode[ItemMode["NORMAL"] = 0] = "NORMAL";
         ItemMode[ItemMode["CAN_USE"] = 1] = "CAN_USE";
         ItemMode[ItemMode["NOT_DISAPPEAR"] = 2] = "NOT_DISAPPEAR";
-    })(wwa_data.ItemMode || (wwa_data.ItemMode = {}));
-    var ItemMode = wwa_data.ItemMode;
+    })(ItemMode = wwa_data.ItemMode || (wwa_data.ItemMode = {}));
+    var PartsType;
     (function (PartsType) {
         PartsType[PartsType["MAP"] = 1] = "MAP";
         PartsType[PartsType["OBJECT"] = 0] = "OBJECT";
-    })(wwa_data.PartsType || (wwa_data.PartsType = {}));
-    var PartsType = wwa_data.PartsType;
+    })(PartsType = wwa_data.PartsType || (wwa_data.PartsType = {}));
+    var ChoiceCallInfo;
     (function (ChoiceCallInfo) {
         ChoiceCallInfo[ChoiceCallInfo["NONE"] = 0] = "NONE";
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_MAP_PARTS"] = 1] = "CALL_BY_MAP_PARTS";
@@ -535,53 +542,53 @@ var wwa_data;
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_GOTO_WWA"] = 7] = "CALL_BY_GOTO_WWA";
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_PASSWORD_SAVE"] = 8] = "CALL_BY_PASSWORD_SAVE";
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_PASSWORD_LOAD"] = 9] = "CALL_BY_PASSWORD_LOAD";
-    })(wwa_data.ChoiceCallInfo || (wwa_data.ChoiceCallInfo = {}));
-    var ChoiceCallInfo = wwa_data.ChoiceCallInfo;
+    })(ChoiceCallInfo = wwa_data.ChoiceCallInfo || (wwa_data.ChoiceCallInfo = {}));
+    var SidebarButton;
     (function (SidebarButton) {
         SidebarButton[SidebarButton["QUICK_LOAD"] = 0] = "QUICK_LOAD";
         SidebarButton[SidebarButton["QUICK_SAVE"] = 1] = "QUICK_SAVE";
         SidebarButton[SidebarButton["RESTART_GAME"] = 2] = "RESTART_GAME";
         SidebarButton[SidebarButton["GOTO_WWA"] = 3] = "GOTO_WWA";
-    })(wwa_data.SidebarButton || (wwa_data.SidebarButton = {}));
-    var SidebarButton = wwa_data.SidebarButton;
+    })(SidebarButton = wwa_data.SidebarButton || (wwa_data.SidebarButton = {}));
+    var SpeedChange;
     (function (SpeedChange) {
         SpeedChange[SpeedChange["UP"] = 0] = "UP";
         SpeedChange[SpeedChange["DOWN"] = 1] = "DOWN";
-    })(wwa_data.SpeedChange || (wwa_data.SpeedChange = {}));
-    var SpeedChange = wwa_data.SpeedChange;
+    })(SpeedChange = wwa_data.SpeedChange || (wwa_data.SpeedChange = {}));
+    var LoadType;
     (function (LoadType) {
         LoadType[LoadType["QUICK_LOAD"] = 0] = "QUICK_LOAD";
         LoadType[LoadType["RESTART_GAME"] = 1] = "RESTART_GAME";
         LoadType[LoadType["PASSWORD"] = 2] = "PASSWORD";
-    })(wwa_data.LoadType || (wwa_data.LoadType = {}));
-    var LoadType = wwa_data.LoadType;
+    })(LoadType = wwa_data.LoadType || (wwa_data.LoadType = {}));
+    var MoveType;
     (function (MoveType) {
         MoveType[MoveType["STATIC"] = 0] = "STATIC";
         MoveType[MoveType["CHASE_PLAYER"] = 1] = "CHASE_PLAYER";
         MoveType[MoveType["RUN_OUT"] = 2] = "RUN_OUT";
         MoveType[MoveType["HANG_AROUND"] = 3] = "HANG_AROUND";
-    })(wwa_data.MoveType || (wwa_data.MoveType = {}));
-    var MoveType = wwa_data.MoveType;
+    })(MoveType = wwa_data.MoveType || (wwa_data.MoveType = {}));
+    var SecondCandidateMoveType;
     (function (SecondCandidateMoveType) {
         SecondCandidateMoveType[SecondCandidateMoveType["MODE_X"] = 0] = "MODE_X";
         SecondCandidateMoveType[SecondCandidateMoveType["MODE_Y"] = 1] = "MODE_Y";
         SecondCandidateMoveType[SecondCandidateMoveType["UNDECIDED"] = 2] = "UNDECIDED";
-    })(wwa_data.SecondCandidateMoveType || (wwa_data.SecondCandidateMoveType = {}));
-    var SecondCandidateMoveType = wwa_data.SecondCandidateMoveType;
+    })(SecondCandidateMoveType = wwa_data.SecondCandidateMoveType || (wwa_data.SecondCandidateMoveType = {}));
     wwa_data.sidebarButtonCellElementID = ["cell-load", "cell-save", "cell-restart", "cell-gotowwa"];
+    var SystemMessage1;
     (function (SystemMessage1) {
         SystemMessage1[SystemMessage1["ASK_LINK"] = 5] = "ASK_LINK";
         SystemMessage1[SystemMessage1["NO_MONEY"] = 6] = "NO_MONEY";
         SystemMessage1[SystemMessage1["NO_ITEM"] = 7] = "NO_ITEM";
         SystemMessage1[SystemMessage1["USE_ITEM"] = 8] = "USE_ITEM";
-    })(wwa_data.SystemMessage1 || (wwa_data.SystemMessage1 = {}));
-    var SystemMessage1 = wwa_data.SystemMessage1;
+    })(SystemMessage1 = wwa_data.SystemMessage1 || (wwa_data.SystemMessage1 = {}));
+    var SystemMessage2;
     (function (SystemMessage2) {
         SystemMessage2[SystemMessage2["CLICKABLE_ITEM"] = 0] = "CLICKABLE_ITEM";
         SystemMessage2[SystemMessage2["FULL_ITEM"] = 1] = "FULL_ITEM";
         SystemMessage2[SystemMessage2["LOAD_SE"] = 2] = "LOAD_SE";
-    })(wwa_data.SystemMessage2 || (wwa_data.SystemMessage2 = {}));
-    var SystemMessage2 = wwa_data.SystemMessage2;
+    })(SystemMessage2 = wwa_data.SystemMessage2 || (wwa_data.SystemMessage2 = {}));
+    var MacroType;
     (function (MacroType) {
         MacroType[MacroType["UNDEFINED"] = 0] = "UNDEFINED";
         MacroType[MacroType["IMGPLAYER"] = 1] = "IMGPLAYER";
@@ -607,8 +614,7 @@ var wwa_data;
         MacroType[MacroType["COLOR"] = 21] = "COLOR";
         MacroType[MacroType["WAIT"] = 22] = "WAIT";
         MacroType[MacroType["SOUND"] = 23] = "SOUND";
-    })(wwa_data.MacroType || (wwa_data.MacroType = {}));
-    var MacroType = wwa_data.MacroType;
+    })(MacroType = wwa_data.MacroType || (wwa_data.MacroType = {}));
     wwa_data.macrotable = {
         "": 0,
         "$imgplayer": 1,
@@ -635,14 +641,15 @@ var wwa_data;
         "$wait": 22,
         "$sound": 23
     };
+    var MacroStatusIndex;
     (function (MacroStatusIndex) {
         MacroStatusIndex[MacroStatusIndex["ENERGY"] = 0] = "ENERGY";
         MacroStatusIndex[MacroStatusIndex["STRENGTH"] = 1] = "STRENGTH";
         MacroStatusIndex[MacroStatusIndex["DEFENCE"] = 2] = "DEFENCE";
         MacroStatusIndex[MacroStatusIndex["GOLD"] = 3] = "GOLD";
         MacroStatusIndex[MacroStatusIndex["MOVES"] = 4] = "MOVES";
-    })(wwa_data.MacroStatusIndex || (wwa_data.MacroStatusIndex = {}));
-    var MacroStatusIndex = wwa_data.MacroStatusIndex;
+    })(MacroStatusIndex = wwa_data.MacroStatusIndex || (wwa_data.MacroStatusIndex = {}));
+    var MacroImgFrameIndex;
     (function (MacroImgFrameIndex) {
         MacroImgFrameIndex[MacroImgFrameIndex["ENERGY"] = 0] = "ENERGY";
         MacroImgFrameIndex[MacroImgFrameIndex["STRENGTH"] = 1] = "STRENGTH";
@@ -651,21 +658,20 @@ var wwa_data;
         MacroImgFrameIndex[MacroImgFrameIndex["WIDE_CELL_ROW"] = 4] = "WIDE_CELL_ROW";
         MacroImgFrameIndex[MacroImgFrameIndex["ITEM_BG"] = 5] = "ITEM_BG";
         MacroImgFrameIndex[MacroImgFrameIndex["MAIN_FRAME"] = 6] = "MAIN_FRAME";
-    })(wwa_data.MacroImgFrameIndex || (wwa_data.MacroImgFrameIndex = {}));
-    var MacroImgFrameIndex = wwa_data.MacroImgFrameIndex;
+    })(MacroImgFrameIndex = wwa_data.MacroImgFrameIndex || (wwa_data.MacroImgFrameIndex = {}));
+    var SystemSound;
     (function (SystemSound) {
         SystemSound[SystemSound["DECISION"] = 1] = "DECISION";
         SystemSound[SystemSound["ATTACK"] = 3] = "ATTACK";
         SystemSound[SystemSound["BGM_LB"] = 70] = "BGM_LB";
         SystemSound[SystemSound["NO_SOUND"] = 99] = "NO_SOUND";
-    })(wwa_data.SystemSound || (wwa_data.SystemSound = {}));
-    var SystemSound = wwa_data.SystemSound;
+    })(SystemSound = wwa_data.SystemSound || (wwa_data.SystemSound = {}));
     wwa_data.speedList = [2, 5, 8, 10];
     wwa_data.speedNameList = ["低速", "準低速", "中速", "高速"];
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.15b++";
+        WWAConsts.VERSION_WWAJS = "W3.15b+++";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -795,26 +801,27 @@ var wwa_data;
         WWAConsts.WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         WWAConsts.WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
         return WWAConsts;
-    })();
+    }());
     wwa_data.WWAConsts = WWAConsts;
     var LoaderResponse = (function () {
         function LoaderResponse() {
         }
         return LoaderResponse;
-    })();
+    }());
     wwa_data.LoaderResponse = LoaderResponse;
     var LoaderError = (function () {
         function LoaderError() {
         }
         return LoaderError;
-    })();
+    }());
     wwa_data.LoaderError = LoaderError;
     var LoaderProgress = (function () {
         function LoaderProgress() {
         }
         return LoaderProgress;
-    })();
+    }());
     wwa_data.LoaderProgress = LoaderProgress;
+    var LoadStage;
     (function (LoadStage) {
         LoadStage[LoadStage["INIT"] = 0] = "INIT";
         LoadStage[LoadStage["MAP_LOAD"] = 1] = "MAP_LOAD";
@@ -825,8 +832,7 @@ var wwa_data;
         LoadStage[LoadStage["MESSAGE"] = 6] = "MESSAGE";
         LoadStage[LoadStage["GAME_INIT"] = 7] = "GAME_INIT";
         LoadStage[LoadStage["AUDIO"] = 8] = "AUDIO";
-    })(wwa_data.LoadStage || (wwa_data.LoadStage = {}));
-    var LoadStage = wwa_data.LoadStage;
+    })(LoadStage = wwa_data.LoadStage || (wwa_data.LoadStage = {}));
     wwa_data.loadMessages = [
         "ロードの準備をしています。",
         "背景パーツを読み込んでいます。",
@@ -837,20 +843,21 @@ var wwa_data;
         "メッセージを読み込んでます。",
         "Welcome to WWA Wing!"
     ]; // Welcome は実際には表示されません。詰め物程度に。
+    var ChangeStyleType;
     (function (ChangeStyleType) {
         ChangeStyleType[ChangeStyleType["COLOR_FRAME"] = 0] = "COLOR_FRAME";
         ChangeStyleType[ChangeStyleType["COLOR_FRAMEOUT"] = 1] = "COLOR_FRAMEOUT";
         ChangeStyleType[ChangeStyleType["COLOR_STR"] = 2] = "COLOR_STR";
         //        COLOR_STRBACK = 3,
         ChangeStyleType[ChangeStyleType["COLOR_STATUS_STR"] = 4] = "COLOR_STATUS_STR";
-    })(wwa_data.ChangeStyleType || (wwa_data.ChangeStyleType = {}));
-    var ChangeStyleType = wwa_data.ChangeStyleType;
+        //        COLOR_STATUS_STRBACK = 5
+    })(ChangeStyleType = wwa_data.ChangeStyleType || (wwa_data.ChangeStyleType = {}));
     ;
+    var SelectorType;
     (function (SelectorType) {
         SelectorType[SelectorType["MESSAGE_WINDOW"] = 0] = "MESSAGE_WINDOW";
         SelectorType[SelectorType["SIDEBAR"] = 1] = "SIDEBAR";
-    })(wwa_data.SelectorType || (wwa_data.SelectorType = {}));
-    var SelectorType = wwa_data.SelectorType;
+    })(SelectorType = wwa_data.SelectorType || (wwa_data.SelectorType = {}));
     ;
     var WWAData = (function () {
         function WWAData() {
@@ -913,7 +920,7 @@ var wwa_data;
             this.checkString = void 0;
         }
         return WWAData;
-    })();
+    }());
     wwa_data.WWAData = WWAData;
 })(wwa_data || (wwa_data = {}));
 /// <reference path="./wwa_data.ts" />
@@ -931,22 +938,22 @@ var wwa_parts_player;
             return this._position;
         };
         return Parts;
-    })();
+    }());
     var PartsObject = (function (_super) {
         __extends(PartsObject, _super);
         function PartsObject(pos) {
-            _super.call(this, pos);
+            return _super.call(this, pos) || this;
         }
         return PartsObject;
-    })(Parts);
+    }(Parts));
     wwa_parts_player.PartsObject = PartsObject;
     var PartsMap = (function (_super) {
         __extends(PartsMap, _super);
         function PartsMap(pos) {
-            _super.call(this, pos);
+            return _super.call(this, pos) || this;
         }
         return PartsMap;
-    })(Parts);
+    }(Parts));
     wwa_parts_player.PartsMap = PartsMap;
     var PlayerState;
     (function (PlayerState) {
@@ -962,38 +969,39 @@ var wwa_parts_player;
     var Player = (function (_super) {
         __extends(Player, _super);
         function Player(wwa, pos, camera, status, em) {
-            _super.call(this, pos);
-            this._status = status;
-            this._equipStatus = new wwa_data.EquipmentStatus(0, 0);
-            this._itemBox = new Array(Consts.ITEMBOX_SIZE);
-            this._itemBoxElement = new Array(Consts.ITEMBOX_SIZE);
-            this._itemUsingEvent = new Array(Consts.ITEMBOX_SIZE);
-            for (var i = 0; i < this._itemBox.length; i++) {
-                this._itemBox[i] = 0;
-                this._itemBoxElement[i] = wwa_util.$qsh("#item" + i + ">.item-disp");
+            var _this = _super.call(this, pos) || this;
+            _this._status = status;
+            _this._equipStatus = new wwa_data.EquipmentStatus(0, 0);
+            _this._itemBox = new Array(Consts.ITEMBOX_SIZE);
+            _this._itemBoxElement = new Array(Consts.ITEMBOX_SIZE);
+            _this._itemUsingEvent = new Array(Consts.ITEMBOX_SIZE);
+            for (var i = 0; i < _this._itemBox.length; i++) {
+                _this._itemBox[i] = 0;
+                _this._itemBoxElement[i] = wwa_util.$qsh("#item" + i + ">.item-disp");
             }
-            this.updateItemBox();
-            this._energyMax = em;
-            this._dir = Direction.DOWN;
-            this._wwa = wwa;
-            this._state = PlayerState.CONTROLLABLE;
-            this._camera = camera;
-            this._isPartsEventExecuted = false;
-            this._energyValueElement = wwa_util.$qsh("#disp-energy>.status-value-box");
-            this._strengthValueElement = wwa_util.$qsh("#disp-strength>.status-value-box");
-            this._defenceValueElement = wwa_util.$qsh("#disp-defence>.status-value-box");
-            this._goldValueElement = wwa_util.$qsh("#disp-gold>.status-value-box");
-            this._isReadyToUseItem = false;
-            this._isClickableItemGot = false;
-            this._moves = 0;
-            this._moveMacroWaitingRemainMoves = 0;
-            this._moveObjectAutoExecTimer = 0;
-            this.updateStatusValueBox();
-            this._partsAppeared = false;
-            this._afterMoveMacroFlag = false;
-            this._isPreparedForLookingAround = true;
-            this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
-            this._speedIndex = Consts.DEFAULT_SPEED_INDEX;
+            _this.updateItemBox();
+            _this._energyMax = em;
+            _this._dir = Direction.DOWN;
+            _this._wwa = wwa;
+            _this._state = PlayerState.CONTROLLABLE;
+            _this._camera = camera;
+            _this._isPartsEventExecuted = false;
+            _this._energyValueElement = wwa_util.$qsh("#disp-energy>.status-value-box");
+            _this._strengthValueElement = wwa_util.$qsh("#disp-strength>.status-value-box");
+            _this._defenceValueElement = wwa_util.$qsh("#disp-defence>.status-value-box");
+            _this._goldValueElement = wwa_util.$qsh("#disp-gold>.status-value-box");
+            _this._isReadyToUseItem = false;
+            _this._isClickableItemGot = false;
+            _this._moves = 0;
+            _this._moveMacroWaitingRemainMoves = 0;
+            _this._moveObjectAutoExecTimer = 0;
+            _this.updateStatusValueBox();
+            _this._partsAppeared = false;
+            _this._afterMoveMacroFlag = false;
+            _this._isPreparedForLookingAround = true;
+            _this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
+            _this._speedIndex = Consts.DEFAULT_SPEED_INDEX;
+            return _this;
         }
         Player.prototype.move = function () {
             if (this.isControllable()) {
@@ -1005,6 +1013,7 @@ var wwa_parts_player;
                     this._camera.move(this._dir);
                 }
                 catch (e) {
+                    // この時点で範囲外になることはないとは思うが...
                 }
                 if (this._isOnCameraStopPosition()) {
                     this._state = PlayerState.CONTROLLABLE;
@@ -1015,6 +1024,7 @@ var wwa_parts_player;
                     var next = this._position.getNextFramePosition(this._dir, wwa_data.speedList[this._speedIndex], wwa_data.speedList[this._speedIndex]);
                 }
                 catch (e) {
+                    // この時点で範囲外になることはないとは思うが...
                 }
                 if (next.isJustPosition()) {
                     this._state = PlayerState.CONTROLLABLE;
@@ -1234,6 +1244,7 @@ var wwa_parts_player;
             // ジャンプ先がジャンプゲートの場合、下向きに設定
             if (pos.hasLocalGate()) {
                 this._dir = Direction.DOWN;
+                // 隣接4方向のジャンプゲートがある場合、ジャンプゲートの反対方向に向きを設定
             }
             else if (pos.getPartsCoord().y <= this._wwa.getMapWidth() - 2 && pos.getNextJustPosition(Direction.DOWN).hasLocalGate()) {
                 this._dir = Direction.UP;
@@ -1380,6 +1391,7 @@ var wwa_parts_player;
                 }
                 //                this._itemBox[insertPos - 1] = objID;
                 this._forceSetItemBox(insertPos, objID);
+                // 特定位置挿入 (上書きしない: 取得しているアイテムはずらす)
             }
             else if (isOverwrite === false) {
                 insertPos = itemPos;
@@ -1399,6 +1411,7 @@ var wwa_parts_player;
                 else {
                     this._forceSetItemBox(insertPos, objID);
                 }
+                // 特定位置挿入（上書きする）
             }
             else {
                 insertPos = itemPos;
@@ -1631,6 +1644,7 @@ var wwa_parts_player;
                         if (playerStatus.strength > enemyStatus.defence) {
                             this._enemy.damage(playerStatus.strength - enemyStatus.defence);
                         }
+                        // プレイヤー勝利
                     }
                     else {
                         this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
@@ -1666,6 +1680,7 @@ var wwa_parts_player;
                     // プレイヤーがまだ生きてる
                     if (playerStatus.energy > enemyStatus.strength - playerStatus.defence) {
                         this.damage(enemyStatus.strength - playerStatus.defence);
+                        // モンスター勝利
                     }
                     else {
                         this.setEnergy(0);
@@ -1756,7 +1771,7 @@ var wwa_parts_player;
             return this._speedIndex = Math.max(Consts.MIN_SPEED_INDEX, this._speedIndex - 1);
         };
         return Player;
-    })(PartsObject);
+    }(PartsObject));
     wwa_parts_player.Player = Player;
 })(wwa_parts_player || (wwa_parts_player = {}));
 /// <reference path="./wwa_parts_player.ts" />
@@ -1818,7 +1833,7 @@ var wwa_camera;
             this._isResetting = true;
         };
         return Camera;
-    })();
+    }());
     wwa_camera.Camera = Camera;
 })(wwa_camera || (wwa_camera = {}));
 /// <reference path="./wwa_data.ts" />
@@ -1904,7 +1919,7 @@ var wwa_cgmanager;
             ctx.fillRect(x, y, w, h);
         };
         return CGManager;
-    })();
+    }());
     wwa_cgmanager.CGManager = CGManager;
 })(wwa_cgmanager || (wwa_cgmanager = {}));
 /// <reference path="./wwa_main.ts" />
@@ -1976,7 +1991,7 @@ var wwa_message;
             }
         }
         return MessageInfo;
-    })();
+    }());
     wwa_message.MessageInfo = MessageInfo;
     function strArrayToMessageInfoArray(strArray, isSystemMessage) {
         var newq = [];
@@ -2065,6 +2080,7 @@ var wwa_message;
                 }
             }
             catch (e) {
+                // デベロッパーモードならエラーを吐くとかしたいね
             }
         };
         Macro.prototype._concatEmptyArgs = function (requiredLength) {
@@ -2369,7 +2385,7 @@ var wwa_message;
             this._wwa.playSound(id);
         };
         return Macro;
-    })();
+    }());
     wwa_message.Macro = Macro;
     function parseMacro(wwa, partsID, partsType, position, macroStr) {
         var matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)$/);
@@ -2424,45 +2440,46 @@ var wwa_message;
             return this._isVisible;
         };
         return TextWindow;
-    })();
+    }());
     var MosterWindow = (function (_super) {
         __extends(MosterWindow, _super);
         function MosterWindow(wwa, coord, width, height, isVisible, parentElement, _cgFileName) {
-            _super.call(this, wwa, new wwa_data.Coord(coord.x, coord.y), width, height, isVisible, parentElement, 201);
-            this._cgFileName = _cgFileName;
-            this._monsterBox = document.createElement("div");
-            this._monsterBox.style.width = wwa_data.WWAConsts.CHIP_SIZE + "px";
-            this._monsterBox.style.height = wwa_data.WWAConsts.CHIP_SIZE + "px";
-            this._monsterBox.style.position = "absolute";
-            this._monsterBox.style.left = "10px";
-            this._monsterBox.style.top = "10px";
-            this._monsterBox.style.backgroundImage = "url(" + this._cgFileName.replace("(", "\\(").replace(")", "\\)") + ")";
-            this._monsterBox.style.backgroundPosition = "0 0";
-            this._element.appendChild(this._monsterBox);
-            this._energyBox = document.createElement("div");
-            this._energyBox.style.position = "absolute";
-            this._energyBox.style.left = "80px";
-            this._energyBox.style.top = "10px";
-            this._energyBox.textContent = "生命力 0";
-            this._element.appendChild(this._energyBox);
-            this._strengthBox = document.createElement("div");
-            this._strengthBox.style.position = "absolute";
-            this._strengthBox.style.left = "80px";
-            this._strengthBox.style.top = "30px";
-            this._strengthBox.textContent = "攻撃力 0";
-            this._element.appendChild(this._strengthBox);
-            this._defenceBox = document.createElement("div");
-            this._defenceBox.style.position = "absolute";
-            this._defenceBox.style.left = "180px";
-            this._defenceBox.style.top = "30px";
-            this._defenceBox.textContent = "防御力 0";
-            this._element.appendChild(this._defenceBox);
-            if (this._isVisible) {
-                this._element.style.display = "block";
+            var _this = _super.call(this, wwa, new wwa_data.Coord(coord.x, coord.y), width, height, isVisible, parentElement, 201) || this;
+            _this._cgFileName = _cgFileName;
+            _this._monsterBox = document.createElement("div");
+            _this._monsterBox.style.width = wwa_data.WWAConsts.CHIP_SIZE + "px";
+            _this._monsterBox.style.height = wwa_data.WWAConsts.CHIP_SIZE + "px";
+            _this._monsterBox.style.position = "absolute";
+            _this._monsterBox.style.left = "10px";
+            _this._monsterBox.style.top = "10px";
+            _this._monsterBox.style.backgroundImage = "url(" + _this._cgFileName.replace("(", "\\(").replace(")", "\\)") + ")";
+            _this._monsterBox.style.backgroundPosition = "0 0";
+            _this._element.appendChild(_this._monsterBox);
+            _this._energyBox = document.createElement("div");
+            _this._energyBox.style.position = "absolute";
+            _this._energyBox.style.left = "80px";
+            _this._energyBox.style.top = "10px";
+            _this._energyBox.textContent = "生命力 0";
+            _this._element.appendChild(_this._energyBox);
+            _this._strengthBox = document.createElement("div");
+            _this._strengthBox.style.position = "absolute";
+            _this._strengthBox.style.left = "80px";
+            _this._strengthBox.style.top = "30px";
+            _this._strengthBox.textContent = "攻撃力 0";
+            _this._element.appendChild(_this._strengthBox);
+            _this._defenceBox = document.createElement("div");
+            _this._defenceBox.style.position = "absolute";
+            _this._defenceBox.style.left = "180px";
+            _this._defenceBox.style.top = "30px";
+            _this._defenceBox.textContent = "防御力 0";
+            _this._element.appendChild(_this._defenceBox);
+            if (_this._isVisible) {
+                _this._element.style.display = "block";
             }
             else {
-                this._element.style.display = "none";
+                _this._element.style.display = "none";
             }
+            return _this;
         }
         MosterWindow.prototype.update = function (monster) {
             if (monster !== void 0) {
@@ -2474,20 +2491,21 @@ var wwa_message;
             }
         };
         return MosterWindow;
-    })(TextWindow);
+    }(TextWindow));
     wwa_message.MosterWindow = MosterWindow;
     var ScoreWindow = (function (_super) {
         __extends(ScoreWindow, _super);
         function ScoreWindow(wwa, coord, isVisible, parentElement) {
-            _super.call(this, wwa, new wwa_data.Coord(coord.x, coord.y), 340, 30, isVisible, parentElement, 202);
-            this._element.style.textAlign = "center";
-            if (this._isVisible) {
-                this._element.style.display = "block";
+            var _this = _super.call(this, wwa, new wwa_data.Coord(coord.x, coord.y), 340, 30, isVisible, parentElement, 202) || this;
+            _this._element.style.textAlign = "center";
+            if (_this._isVisible) {
+                _this._element.style.display = "block";
             }
             else {
-                this._element.style.display = "none";
+                _this._element.style.display = "none";
             }
-            this.update(0);
+            _this.update(0);
+            return _this;
         }
         ScoreWindow.prototype.update = function (score) {
             if (score !== void 0) {
@@ -2495,17 +2513,17 @@ var wwa_message;
             }
         };
         return ScoreWindow;
-    })(TextWindow);
+    }(TextWindow));
     wwa_message.ScoreWindow = ScoreWindow;
+    var Positioning;
     (function (Positioning) {
         Positioning[Positioning["TOP"] = 0] = "TOP";
         Positioning[Positioning["CENTER"] = 1] = "CENTER";
         Positioning[Positioning["BOTTOM"] = 2] = "BOTTOM";
         Positioning[Positioning["SCORE"] = 3] = "SCORE";
-    })(wwa_message.Positioning || (wwa_message.Positioning = {}));
-    var Positioning = wwa_message.Positioning;
+    })(Positioning = wwa_message.Positioning || (wwa_message.Positioning = {}));
     var MessageWindow /* implements TextWindow(予定)*/ = (function () {
-        function MessageWindow /* implements TextWindow(予定)*/(wwa, x, y, width, height, message, cgFileName, isVisible, isYesno, parentElement) {
+        function MessageWindow(wwa, x, y, width, height, message, cgFileName, isVisible, isYesno, parentElement) {
             var thisA = this;
             var escapedFilename = cgFileName.replace("(", "\\(").replace(")", "\\)");
             this._wwa = wwa;
@@ -2584,14 +2602,14 @@ var wwa_message;
             thisA._isInputDisable = false;
             this.update();
         }
-        MessageWindow /* implements TextWindow(予定)*/.prototype.setPosition = function (x, y, width, height) {
+        MessageWindow.prototype.setPosition = function (x, y, width, height) {
             this._x = x;
             this._y = y;
             this._width = width;
             this._height = height;
             this.update();
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.setPositionByPlayerPosition = function (existsFaces, existsScoreWindow, displayCenter, playerPos, cameraPos) {
+        MessageWindow.prototype.setPositionByPlayerPosition = function (existsFaces, existsScoreWindow, displayCenter, playerPos, cameraPos) {
             var playerInScreenY = playerPos.getPartsCoord().substract(cameraPos.getPartsCoord()).y;
             var pos;
             if (existsFaces) {
@@ -2611,7 +2629,7 @@ var wwa_message;
             }
             this.setPositionEasy(pos);
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.setPositionEasy = function (pos) {
+        MessageWindow.prototype.setPositionEasy = function (pos) {
             var centerPos = Math.floor(this._element.clientHeight / 2);
             if (pos === Positioning.CENTER) {
                 this._y = wwa_data.WWAConsts.MAP_WINDOW_HEIGHT / 2 - centerPos;
@@ -2634,37 +2652,37 @@ var wwa_message;
                 return;
             }
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.setMessage = function (message) {
+        MessageWindow.prototype.setMessage = function (message) {
             this._message = message;
             this.update();
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.setYesNoChoice = function (isYesNo) {
+        MessageWindow.prototype.setYesNoChoice = function (isYesNo) {
             this._isInputDisable = false;
             this._isYesno = isYesNo;
             this.update();
             return this._isYesno;
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.isYesNoChoice = function () {
+        MessageWindow.prototype.isYesNoChoice = function () {
             return this._isYesno;
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.setInputDisable = function () {
+        MessageWindow.prototype.setInputDisable = function () {
             this._isInputDisable = true;
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.isInputDisable = function () {
+        MessageWindow.prototype.isInputDisable = function () {
             return this._isInputDisable;
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.show = function () {
+        MessageWindow.prototype.show = function () {
             this._isVisible = true;
             this.update();
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.hide = function () {
+        MessageWindow.prototype.hide = function () {
             this._isVisible = false;
             this.update();
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.isVisible = function () {
+        MessageWindow.prototype.isVisible = function () {
             return this._isVisible;
         };
-        MessageWindow /* implements TextWindow(予定)*/.prototype.update = function () {
+        MessageWindow.prototype.update = function () {
             var base = this._wwa.getYesNoImgCoord();
             if (this._isYesno) {
                 if (this._wwa.getYesNoState() === wwa_data.YesNoState.YES) {
@@ -2719,9 +2737,9 @@ var wwa_message;
             this._dummyElement.style.display = this._isYesno ? "block" : "none";
             //            this._element.style.display = this._isVisible ? "block" : "none";
         };
-        return MessageWindow /* implements TextWindow(予定)*/;
-    })();
-    wwa_message.MessageWindow /* implements TextWindow(予定)*/ = MessageWindow /* implements TextWindow(予定)*/;
+        return MessageWindow;
+    }());
+    wwa_message.MessageWindow = MessageWindow;
 })(wwa_message || (wwa_message = {}));
 /// <reference path="./wwa_main.ts" />
 var wwa_monster;
@@ -2773,7 +2791,7 @@ var wwa_monster;
             this._battleEndCallback();
         };
         return Monster;
-    })();
+    }());
     wwa_monster.Monster = Monster;
 })(wwa_monster || (wwa_monster = {}));
 /// <reference path="./wwa_data.ts" />
@@ -2829,7 +2847,7 @@ var wwa_motion;
             configurable: true
         });
         return ObjectMovingData;
-    })();
+    }());
     wwa_motion.ObjectMovingData = ObjectMovingData;
     var ObjectMovingDataManager = (function () {
         // TODO: シングルトンにする
@@ -2881,7 +2899,7 @@ var wwa_motion;
             return result[0].currentPosition.getOffsetCoord();
         };
         return ObjectMovingDataManager;
-    })();
+    }());
     wwa_motion.ObjectMovingDataManager = ObjectMovingDataManager;
 })(wwa_motion || (wwa_motion = {}));
 /// <reference path="./wwa_data.ts" />
@@ -2949,7 +2967,7 @@ var wwa_estimate_battle;
             }
         };
         return EstimateDisplayElements;
-    })();
+    }());
     var BattleEstimateWindow = (function () {
         function BattleEstimateWindow(_wwa, _imgFileName, _parent) {
             var _this = this;
@@ -2998,7 +3016,7 @@ var wwa_estimate_battle;
             this._element.style.display = "none";
         };
         return BattleEstimateWindow;
-    })();
+    }());
     wwa_estimate_battle.BattleEstimateWindow = BattleEstimateWindow;
     var EstimateResult = (function () {
         function EstimateResult(isNoEffect, isOverMaxTurn, damage) {
@@ -3007,7 +3025,7 @@ var wwa_estimate_battle;
             this.damage = damage;
         }
         return EstimateResult;
-    })();
+    }());
     function calc(playerStatus, enemyStatus) {
         var energyE = enemyStatus.energy;
         var attackP = playerStatus.strength - enemyStatus.defence;
@@ -3123,11 +3141,11 @@ var wwa_psave;
 /// <reference path="./wwa_main.ts" />
 var wwa_password_window;
 (function (wwa_password_window) {
+    var Mode;
     (function (Mode) {
         Mode[Mode["SAVE"] = 0] = "SAVE";
         Mode[Mode["LOAD"] = 1] = "LOAD";
-    })(wwa_password_window.Mode || (wwa_password_window.Mode = {}));
-    var Mode = wwa_password_window.Mode;
+    })(Mode = wwa_password_window.Mode || (wwa_password_window.Mode = {}));
     var DESCRIPTION_LOAD = ("下のボックスに前回のプレイで取得した\n" +
         "復帰用パスワードを入力してください。\n" +
         "テキストは、Ctrl+Cでコピー、Ctrl+Vで貼り付けできます。\n" +
@@ -3241,7 +3259,7 @@ var wwa_password_window;
             }
         };
         return PasswordWindow;
-    })();
+    }());
     wwa_password_window.PasswordWindow = PasswordWindow;
 })(wwa_password_window || (wwa_password_window = {}));
 /// <reference path="./wwa_input.ts" />
@@ -3289,9 +3307,9 @@ var wwa_main;
     wwa_main.getProgress = getProgress;
     var WWA = (function () {
         function WWA(mapFileName, workerFileName, urlgateEnabled, audioDirectory) {
-            var _this = this;
             if (urlgateEnabled === void 0) { urlgateEnabled = false; }
             if (audioDirectory === void 0) { audioDirectory = ""; }
+            var _this = this;
             try {
                 util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
             }
@@ -4447,6 +4465,7 @@ var wwa_main;
             var dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
             if (this._player.isLookingAround() && !this._player.isWaitingMessage()) {
                 crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
+                // 基準マスから半マス以上踏み出している場合は右の画像パーツで描画
             }
             else if ((dir === wwa_data.Direction.LEFT || dir === wwa_data.Direction.RIGHT) &&
                 Math.abs(poso.x) > Math.floor(Consts.CHIP_SIZE / 2) ||
@@ -4636,12 +4655,15 @@ var wwa_main;
             // 道
             if (mapAttr === Consts.MAP_STREET) {
                 eventExecuted = this._execMapStreetEvent(pos, partsID, mapAttr);
+                // 壁
             }
             else if (mapAttr === Consts.MAP_WALL) {
                 eventExecuted = this._execMapWallEvent(pos, partsID, mapAttr);
+                // ジャンプゲート
             }
             else if (mapAttr === Consts.MAP_LOCALGATE) {
                 eventExecuted = this._execMapLocalGateEvent(pos, partsID, mapAttr);
+                // URLゲート
             }
             else if (mapAttr === Consts.MAP_URLGATE) {
                 eventExecuted = this._execMapUrlGateEvent(pos, partsID, mapAttr);
@@ -4666,36 +4688,47 @@ var wwa_main;
             // 通常物体
             if (objAttr === Consts.OBJECT_NORMAL) {
                 this._execObjectNormalEvent(pos, partsID, objAttr);
+                // メッセージ
             }
             else if (objAttr === Consts.OBJECT_MESSAGE) {
                 this._execObjectMessageEvent(pos, partsID, objAttr);
+                // モンスター
             }
             else if (objAttr === Consts.OBJECT_MONSTER) {
                 this._execObjectMonsterEvent(pos, partsID, objAttr);
+                // アイテム
             }
             else if (objAttr === Consts.OBJECT_ITEM) {
                 this._execObjectItemEvent(pos, partsID, objAttr);
+                // 扉
             }
             else if (objAttr === Consts.OBJECT_DOOR) {
                 this._execObjectDoorEvent(pos, partsID, objAttr);
+                // ステータス変化
             }
             else if (objAttr === Consts.OBJECT_STATUS) {
                 this._execObjectStatusEvent(pos, partsID, objAttr);
+                // 物を買う
             }
             else if (objAttr === Consts.OBJECT_BUY) {
                 this._execObjectBuyEvent(pos, partsID, objAttr);
+                // 物を売る
             }
             else if (objAttr === Consts.OBJECT_SELL) {
                 this._execObjectSellEvent(pos, partsID, objAttr);
+                // URLゲート
             }
             else if (objAttr === Consts.OBJECT_URLGATE) {
                 this._execObjectUrlGateEvent(pos, partsID, objAttr);
+                // スコア表示
             }
             else if (objAttr === Consts.OBJECT_SCORE) {
                 this._execObjectScoreEvent(pos, partsID, objAttr);
+                // 二者択一
             }
             else if (objAttr === Consts.OBJECT_SELECT) {
                 this._execObjectYesNoChoiceEvent(pos, partsID, objAttr);
+                // ジャンプゲート
             }
             else if (objAttr === Consts.OBJECT_LOCALGATE) {
                 this._execObjectLocalGateEvent(pos, partsID, objAttr);
@@ -4881,6 +4914,7 @@ var wwa_main;
                 this._player.addItem(partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER]);
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
                 if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
+                    // 使用型アイテム の場合は、処理は使用時です。
                 }
                 else {
                     this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
@@ -5229,6 +5263,7 @@ var wwa_main;
                             // それ以外のメッセージ、マクロは一切エンキューしない。(原作どおり)
                             // なので、「あああ$map=1,1,1」の「あああ」は表示されず、map文だけが処理される。
                             macroQueue.push(macro);
+                            // 行頭コメントはpushしない
                         }
                         else if (!lines[i].match(/^\$/)) {
                             linesWithoutMacro.push(lines[i]);
@@ -5316,6 +5351,7 @@ var wwa_main;
                     }
                 }
                 catch (e) {
+                    // 範囲外座標の場合と範囲外IDの場合はパーツ指定がなかったことにする。
                 }
             }
         };
@@ -5382,6 +5418,7 @@ var wwa_main;
                 }
             }
             catch (e) {
+                // 範囲外座標の場合と範囲外IDの場合はパーツ指定がなかったことにする。
             }
         };
         WWA.prototype._replaceRandomObject = function (pos) {
@@ -5759,6 +5796,10 @@ var wwa_main;
                     //                    if (this._wwaData.objectAttribute[objID][Consts.ATR_MOVE] === wwa_data.MoveType.STATIC) {
                     objectsInNextFrame[localY + 1][localX + 1] = this._wwaData.mapObject[posc.y][posc.x];
                     this.hoge[localY + 1][localX + 1] = -this._wwaData.mapObject[posc.y][posc.x];
+                    //                    } else {
+                    //                        objectsInNextFrame[localY + 1][localX + 1] = 0;
+                    //                        this.hoge[localY + 1][localX + 1] = 0;
+                    //                    }
                 }
             }
             //            for (localY = -1; localY <= Consts.V_PARTS_NUM_IN_WINDOW; localY++) {
@@ -5997,7 +6038,7 @@ var wwa_main;
             var xLeft = Math.max(0, cpParts.x);
             var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1);
             var yTop = Math.max(0, cpParts.y);
-            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1;
+            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
             var monsterList = [];
             this.playSound(wwa_data.SystemSound.DECISION);
             for (var x = xLeft; x <= xRight; x++) {
@@ -6224,6 +6265,7 @@ var wwa_main;
                 this._player.addItem(id, pos, true);
             }
             catch (e) {
+                // アイテムを持てない時、メッセージを出さない。
             }
         };
         WWA.prototype.setFrameCoord = function (coord) {
@@ -6340,7 +6382,7 @@ var wwa_main;
             return this._useConsole;
         };
         return WWA;
-    })();
+    }());
     wwa_main.WWA = WWA;
     ;
     var isCopyRightClick = false;
@@ -6382,4 +6424,3 @@ var wwa_main;
     }
 })(wwa_main || (wwa_main = {}));
 //# sourceMappingURL=wwa.long.js.tmp.map
-
