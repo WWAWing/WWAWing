@@ -969,7 +969,7 @@ module wwa_main {
                 } else {
                     this.setMessageQueue(
                         this._wwaData.message[wwa_data.SystemMessage1.USE_ITEM] === "" ?
-                        "このアイテムを使用します。\nよろしいですか?" :
+                        "このアイテムを使います。\nよろしいですか?" :
                         this._wwaData.message[wwa_data.SystemMessage1.USE_ITEM], true, true);
                     this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_ITEM_USE;
                     this._yesNoUseItemPos = itemPos;
@@ -3244,7 +3244,7 @@ module wwa_main {
             var xLeft = Math.max(0, cpParts.x);
             var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1);
             var yTop = Math.max(0, cpParts.y);
-            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1;
+            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
             var monsterList: number[] = [];
             this.playSound(wwa_data.SystemSound.DECISION);
             for (var x: number = xLeft; x <= xRight; x++) {
