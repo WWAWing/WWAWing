@@ -2987,10 +2987,6 @@ module wwa_main {
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
                     if (moveMode !== wwa_data.MoveType.HANG_AROUND) {
                         var candCoord = this._getCandidateCoord( playerIsMoving, pos, moveMode);
-                        if( this._wwaData.version < 31 ) {
-                            this._setObjectsInNextFrame(posc, candCoord, leftX, topY, objectsInNextFrame, partsID);
-                            continue;
-                        }
                         var xCand = new Coord(candCoord.x, posc.y);
                         var yCand = new Coord(posc.x, candCoord.y);
                         var thirdCand: wwa_data.Coord = null;
@@ -2998,6 +2994,12 @@ module wwa_main {
                         if (this._objectCanMoveTo(playerIsMoving, candCoord, objectsInNextFrame)) {
                             this._setObjectsInNextFrame(posc, candCoord, leftX, topY, objectsInNextFrame, partsID);
                         } else {
+                            if( this._wwaData.version < 31 ) {
+                              // うろうろする
+                              randomCand = this._getRandomMoveCoord(playerIsMoving, pos, objectsInNextFrame);
+                              this._setObjectsInNextFrame(posc, randomCand, leftX, topY, objectsInNextFrame, partsID);
+                              continue;
+                            }
                             var mode = this._getSecondCandidateMoveMode(
                                 playerIsMoving, posc, candCoord, xCand, yCand,
                                 this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_MONSTER,

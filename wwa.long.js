@@ -672,7 +672,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.15b+++";
+        WWAConsts.VERSION_WWAJS = "W3.15cβ1";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -6040,10 +6040,6 @@ var wwa_main;
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
                     if (moveMode !== wwa_data.MoveType.HANG_AROUND) {
                         var candCoord = this._getCandidateCoord(playerIsMoving, pos, moveMode);
-                        if (this._wwaData.version < 31) {
-                            this._setObjectsInNextFrame(posc, candCoord, leftX, topY, objectsInNextFrame, partsID);
-                            continue;
-                        }
                         var xCand = new Coord(candCoord.x, posc.y);
                         var yCand = new Coord(posc.x, candCoord.y);
                         var thirdCand = null;
@@ -6052,6 +6048,12 @@ var wwa_main;
                             this._setObjectsInNextFrame(posc, candCoord, leftX, topY, objectsInNextFrame, partsID);
                         }
                         else {
+                            if (this._wwaData.version < 31) {
+                                // うろうろする
+                                randomCand = this._getRandomMoveCoord(playerIsMoving, pos, objectsInNextFrame);
+                                this._setObjectsInNextFrame(posc, randomCand, leftX, topY, objectsInNextFrame, partsID);
+                                continue;
+                            }
                             var mode = this._getSecondCandidateMoveMode(playerIsMoving, posc, candCoord, xCand, yCand, this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_MONSTER, objectsInNextFrame);
                             if (mode === wwa_data.SecondCandidateMoveType.MODE_X) {
                                 this._setObjectsInNextFrame(posc, xCand, leftX, topY, objectsInNextFrame, partsID);
