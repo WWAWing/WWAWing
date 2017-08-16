@@ -1,4 +1,4 @@
-﻿/// <reference path="./wwa_main.ts" />
+/// <reference path="./wwa_main.ts" />
 
 module wwa_data {
     export class EquipmentStatus {
@@ -638,6 +638,12 @@ module wwa_data {
         static WWAP_SERVER_AUDIO_DIR = "audio";
         static WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         static WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
+        
+        static SCREEN_WIDTH = 560;
+        static SCREEN_HEIGHT = 440;
+        static LOADING_FONT = "Times New Roman";
+
+        static MSG_STR_WIDTH = 16;
     }
 
     export class LoaderResponse {
@@ -666,9 +672,9 @@ module wwa_data {
         RAND_PARTS = 5,
         MESSAGE = 6,
         GAME_INIT = 7,
-        AUDIO = 8
+        AUDIO = 8,
+        FINISH = 9
     }
-
 
     export var loadMessages = [
         "ロードの準備をしています。",
@@ -680,6 +686,34 @@ module wwa_data {
         "メッセージを読み込んでます。",
         "Welcome to WWA Wing!"
     ]; // Welcome は実際には表示されません。詰め物程度に。
+
+    export var loadMessagesClassic = [
+        "Welcome to WWA Wing!",
+        "Now Map Data Loading .....",
+        "Now CG Data Loading .....",
+        "Now Making chara CG ....."
+    ];
+
+    export enum LoadingMessagePosition {
+        LINE = 30, // 1行分のサイズだけど描画位置でよく利用するのでPositionに入る
+        TITLE_X = 100,
+        TITLE_Y = 70,
+        LOADING_X = 50,
+        LOADING_Y = 140,
+        ERROR_X = 10,
+        ERROR_Y = 180,
+        FOOTER_X = 160,
+        FOOTER_Y = 360,
+        WORLD_Y = FOOTER_Y - LINE, // マップデータのバージョンを表示する領域を確保したいので1行分減らす
+        COPYRIGHT_Y = FOOTER_Y + LINE
+    }
+
+    export enum LoadingMessageSize {
+        TITLE = 32,
+        LOADING = 22,
+        FOOTER = 18,
+        ERRROR = 16
+    }
 
     export enum ChangeStyleType {
         COLOR_FRAME = 0,

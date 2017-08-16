@@ -33,6 +33,7 @@
          KEY_Y = 89,
          KEY_Z = 90,
          KEY_F1 = 112,
+         KEY_F2 = 113,
          KEY_F3 = 114,
          KEY_F4 = 115,
          KEY_F5 = 116,

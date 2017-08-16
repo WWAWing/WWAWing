@@ -55,6 +55,7 @@ WWA( http://wwajp.com )のJavaScript実装です。
 ├── manual.html - マニュアル
 ├── style.css - 標準マップで使用している用CSS
 ├── wwa.css - WWAで使用するCSS
+├── wwa_classic.css - WWAで使用するCSS(本家再現版)
 ├── wwa.js - WWA Wing本体(minify済)
 ├── wwa.long.js - WWA Wing本体(minifyなし)
 ├── wwa.long.js.map - wwa.long.js のソースマップ
