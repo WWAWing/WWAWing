@@ -41,7 +41,7 @@
 <body>
     <div id="wrapper">
         <section>
-            <h1>WWA Wing: 簡易マニュアル (ver. W3.15b+++)</h1>
+            <h1>WWA Wing: 簡易マニュアル (ver. W3.15cβ1)</h1>
             <p><a href="http://wwawing.com">WWA Wing</a>( WWA In the Next Generation )は、<a href="http://wwajp.com">WWA</a>のJavaScript実装です。
             煩わしい警告は出ず、一部のスマートフォンでも動作します。
             正式なマニュアルは後ほどのリリースに添付予定です。</p>
@@ -63,7 +63,7 @@
       +-- wwaload.js - wwa.jsから起動するマップデータのローダです。名前は「起動するには」で紹介する「data-wwa-loader」属性で変更できます。
       +-- wwa.css - WWAの見栄えを調整するCSSファイルです。アップロードしないと見栄えがかなり大変なことになります。名前はHTML中のlink要素で変更できます。
       +-- style.css - ページのWWAの部分以外の見栄えを調整するCSSファイルです。自由に編集してみてください。
-      +-- cover.gif - タイトル画像を指定しなかった場合のタイトル画像です。
+      +-- cover.gif - タイトル画像です。
       +-- ***.dat - WWAのマップデータファイルです。
       +-- ***.html - WWAを配置するWebページです。「wwa-wrappeer」のIDを持つdiv要素の中にWWAが立ち上がります。
       +-- ***.gif - WWAのマップで使う画像です。</pre>
@@ -86,7 +86,7 @@
 
             <section>
                 <h2>起動オプション属性一覧</h2>
-                <p class="require">太字と斜体の項目は必須項目です。1つでも指定しないと起動しません!!</p>
+                <p class="require">太字・斜体の項目は必須項目です。必須項目はすべて指定しないと起動しません!!</p>
                 <dl>
                     <dt class="require"><code>data-wwa-mapdata</code>属性</dt>
                     <dd>起動したいマップデータのファイル名を記述します。（例:<code>wwamap.dat</code>）</dd>
@@ -129,12 +129,17 @@
             <section>
                 <h2>更新情報</h2>
                 <section>
-                    <h3>W3.15aからW3.15b+++への変更点</h3>
+                    <h3>W3.15bからW3.15cβ1への変更点</h3>
+                    <li>Classic Modeを実装(W3.15cβ1)</li>
+                    <li>カバー画像未指定時に本家同様のWelcome To WWA! を表示するように変更(W3.15cβ1)</li>
+                    <li>マップデータ最下端にいるモンスターの戦闘結果予測ができない不具合を修正(W3.15b+++)</li>
+                    <li>WWA PhoenixのHTTPS対応(W3.15b++)</li>
+                    <li>ライセンスファイルの著作権表記微修正(W3.15b+)</li>
+                    <li>WWA V2.9でのマップデータ読み込み開始位置の修正(W3.15b+)</li>
+                </section>
+                <section>
+                    <h3>W3.15aからW3.15bへの変更点</h3>
                     <ul>
-                        <li>マップデータ最下端にいるモンスターの戦闘結果予測ができない不具合を修正(W3.15b+++)</li>
-                        <li>WWA PhoenixのHTTPS対応(W3.15b++)</li>
-                        <li>ライセンスファイルの著作権表記微修正(W3.15b+)</li>
-                        <li>WWA V2.9でのマップデータ読み込み開始位置の修正(W3.15b+)</li>
                         <li>マップデータバージョン2への対応(W3.15b)</li>
                         <li>マップデータバージョンをバージョン情報各所に併記(W3.15b)</li>
                     </ul>
