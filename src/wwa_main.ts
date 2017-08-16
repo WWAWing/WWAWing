@@ -2987,6 +2987,10 @@ module wwa_main {
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
                     if (moveMode !== wwa_data.MoveType.HANG_AROUND) {
                         var candCoord = this._getCandidateCoord( playerIsMoving, pos, moveMode);
+                        if( this._wwaData.version < 31 ) {
+                            this._setObjectsInNextFrame(posc, candCoord, leftX, topY, objectsInNextFrame, partsID);
+                            continue;
+                        }
                         var xCand = new Coord(candCoord.x, posc.y);
                         var yCand = new Coord(posc.x, candCoord.y);
                         var thirdCand: wwa_data.Coord = null;
@@ -3164,7 +3168,8 @@ module wwa_main {
         private _getRandomMoveCoord(playerIsMoving: boolean, currentPos: wwa_data.Position, objectsInNextFrame: number[][]): wwa_data.Coord {
             var currentCoord = currentPos.getPartsCoord();
             var resultCoord: wwa_data.Coord = currentCoord.clone();
-            for (var i = 0; i < Consts.RANDOM_MOVE_ITERATION_NUM; i++) {
+            var iterNum = this._wwaData.version < 31 ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31 : Consts.RANDOM_MOVE_ITERATION_NUM;
+            for (var i = 0; i < iterNum; i++) {
                 var rand = Math.floor(Math.random() * 8);
                 resultCoord.x = currentCoord.x + wwa_data.vx[ rand ];
                 resultCoord.y = currentCoord.y + wwa_data.vy[ rand ];

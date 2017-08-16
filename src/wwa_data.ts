@@ -603,6 +603,7 @@ module wwa_data {
         static BATTLE_SPEED_CHANGE_TURN_NUM: number = 40; // モンスターターンを含む, バトルを早送りにするまでのターン数
 
         static RANDOM_MOVE_ITERATION_NUM: number = 50;
+        static RANDOM_MOVE_ITERATION_NUM_BEFORE_V31: number = 8;
 
         static BATTLE_ESTIMATE_MONSTER_TYPE_MAX: number = 8;
 

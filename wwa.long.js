@@ -774,6 +774,7 @@ var wwa_data;
         WWAConsts.BATTLE_INTERVAL_FRAME_NUM = 10; // f [200/20]
         WWAConsts.BATTLE_SPEED_CHANGE_TURN_NUM = 40; // モンスターターンを含む, バトルを早送りにするまでのターン数
         WWAConsts.RANDOM_MOVE_ITERATION_NUM = 50;
+        WWAConsts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31 = 8;
         WWAConsts.BATTLE_ESTIMATE_MONSTER_TYPE_MAX = 8;
         WWAConsts.SOUND_MAX = 100;
         WWAConsts.ITEM_BORDER_IMG_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAArklEQVRYR" +
@@ -6039,6 +6040,10 @@ var wwa_main;
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
                     if (moveMode !== wwa_data.MoveType.HANG_AROUND) {
                         var candCoord = this._getCandidateCoord(playerIsMoving, pos, moveMode);
+                        if (this._wwaData.version < 31) {
+                            this._setObjectsInNextFrame(posc, candCoord, leftX, topY, objectsInNextFrame, partsID);
+                            continue;
+                        }
                         var xCand = new Coord(candCoord.x, posc.y);
                         var yCand = new Coord(posc.x, candCoord.y);
                         var thirdCand = null;
@@ -6178,7 +6183,8 @@ var wwa_main;
         WWA.prototype._getRandomMoveCoord = function (playerIsMoving, currentPos, objectsInNextFrame) {
             var currentCoord = currentPos.getPartsCoord();
             var resultCoord = currentCoord.clone();
-            for (var i = 0; i < Consts.RANDOM_MOVE_ITERATION_NUM; i++) {
+            var iterNum = this._wwaData.version < 31 ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31 : Consts.RANDOM_MOVE_ITERATION_NUM;
+            for (var i = 0; i < iterNum; i++) {
                 var rand = Math.floor(Math.random() * 8);
                 resultCoord.x = currentCoord.x + wwa_data.vx[rand];
                 resultCoord.y = currentCoord.y + wwa_data.vy[rand];
