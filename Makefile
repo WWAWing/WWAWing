@@ -16,3 +16,5 @@ wwa.js: wwa.link.js closure/compiler.jar
 .PHONY: clean
 clean:
 	$(RM) wwa.long.js wwa.long.js.tmp wwa.link.js wwa.js
+
+
