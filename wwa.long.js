@@ -6048,12 +6048,6 @@ var wwa_main;
                             this._setObjectsInNextFrame(posc, candCoord, leftX, topY, objectsInNextFrame, partsID);
                         }
                         else {
-                            if (this._wwaData.version < 31) {
-                                // うろうろする
-                                randomCand = this._getRandomMoveCoord(playerIsMoving, pos, objectsInNextFrame);
-                                this._setObjectsInNextFrame(posc, randomCand, leftX, topY, objectsInNextFrame, partsID);
-                                continue;
-                            }
                             var mode = this._getSecondCandidateMoveMode(playerIsMoving, posc, candCoord, xCand, yCand, this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_MONSTER, objectsInNextFrame);
                             if (mode === wwa_data.SecondCandidateMoveType.MODE_X) {
                                 this._setObjectsInNextFrame(posc, xCand, leftX, topY, objectsInNextFrame, partsID);
@@ -6063,7 +6057,8 @@ var wwa_main;
                             }
                             else {
                                 thirdCand = this._getThirdCandidate(playerIsMoving, pos, candCoord, moveMode, objectsInNextFrame);
-                                if (thirdCand !== null) {
+                                // thirdCandを用いた第三候補の作成は WWA 3.10以降のみで有効
+                                if (thirdCand !== null && this._wwaData.version >= 31) {
                                     this._setObjectsInNextFrame(posc, thirdCand, leftX, topY, objectsInNextFrame, partsID);
                                 }
                                 else {
