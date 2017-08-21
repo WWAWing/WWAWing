@@ -3660,7 +3660,7 @@ module wwa_main {
             }
         });
         var titleImgName = wwap_mode ?
-            Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG :
+            null :
             util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
         wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName);
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");

@@ -672,7 +672,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.15cβ1";
+        WWAConsts.VERSION_WWAJS = "W3.15cβ2";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -6621,7 +6621,7 @@ var wwa_main;
             }
         });
         var titleImgName = wwap_mode ?
-            Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG :
+            null :
             util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
         wwa_inject_html.inject(util.$id("wwa-wrapper"), titleImgName);
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
