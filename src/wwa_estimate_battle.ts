@@ -79,7 +79,7 @@ module wwa_estimate_battle {
             } else if (result.isOverMaxTurn) {
                 this.damageDispElem.textContent = "長期戦が予想されます";
             } else {
-                this.damageDispElem.textContent = "予想ダメージ " + result.damage;
+                this.damageDispElem.textContent = "予測ダメージ " + result.damage;
             }
         }
     }

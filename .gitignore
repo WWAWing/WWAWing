@@ -10,3 +10,4 @@ compile.bat
 wwaload.long.js
 wwaload.long.noworker.js
 .DS_Store
+.vs
