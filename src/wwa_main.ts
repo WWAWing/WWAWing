@@ -2978,11 +2978,18 @@ module wwa_main {
                     var partsID = this._wwaData.mapObject[posc.y][posc.x];
                     if (
                         partsID === 0 ||
-                        this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] === wwa_data.MoveType.STATIC  ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE  ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM
                         ) {
                         continue;
+                    }
+                    // 作成ツールで空白の移動属性が指定でき、その場合に意図しない値が入ることがあるため、これらの属性でなければ静止とみなす.
+                    if (
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.CHASE_PLAYER &&
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.RUN_OUT &&
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.HANG_AROUND
+                    ) {
+                    continue;
                     }
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
                     if (moveMode !== wwa_data.MoveType.HANG_AROUND) {
