@@ -133,7 +133,8 @@ module wwa_main {
         private _useConsole: boolean;
         private _audioDirectory: string;
         private _hasTitleImg: boolean;
-
+  
+        private _isActive: boolean;
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -392,9 +393,18 @@ module wwa_main {
                 window.addEventListener("help", (e): void => {
                     e.preventDefault();
                 });
+
+                
                 this._wwaWrapperElement = <HTMLDivElement>(wwa_util.$id("wwa-wrapper"));
                 this._mouseControllerElement = <HTMLDivElement>(wwa_util.$id("wwa-controller"));
-                
+                window.addEventListener("click", (e): void=> {
+                  // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
+                  console.log( "outside clicked");
+                });
+                wwa_util.$id("wwa-wrapper").addEventListener("click", (e): void=> {
+                  console.log( "inside clicked");
+                  e.stopPropagation();
+                });
                 this._mouseControllerElement.addEventListener("mousedown", (e): void => {
                     if (e.which === 1) {
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {

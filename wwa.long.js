@@ -3670,6 +3670,14 @@ var wwa_main;
                 });
                 _this._wwaWrapperElement = (wwa_util.$id("wwa-wrapper"));
                 _this._mouseControllerElement = (wwa_util.$id("wwa-controller"));
+                window.addEventListener("click", function (e) {
+                    // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
+                    console.log("outside clicked");
+                });
+                wwa_util.$id("wwa-wrapper").addEventListener("click", function (e) {
+                    console.log("inside clicked");
+                    e.stopPropagation();
+                });
                 _this._mouseControllerElement.addEventListener("mousedown", function (e) {
                     if (e.which === 1) {
                         if (_this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
