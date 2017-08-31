@@ -144,6 +144,16 @@ module wwa_main {
 
         constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
             var ctxCover;
+          window.addEventListener("click", (e): void=> {
+            // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
+            this._isActive = false;
+          });
+          wwa_util.$id("wwa-wrapper").addEventListener("click", (e): void=> {
+            e.stopPropagation();
+            this._isActive = true;
+          });
+          this._isActive = true;
+
             if (titleImgName === null) {
                 this._hasTitleImg = false;
                 this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
@@ -288,6 +298,7 @@ module wwa_main {
                 this._setProgressBar(getProgress(2, 4, wwa_data.LoadStage.GAME_INIT) );
                 this._setLoadingMessage(ctxCover, 4);
                 window.addEventListener("keydown", (e): void => {
+                    if( !this._isActive ) { return; }
                     this._keyStore.setPressInfo(e.keyCode);
                     if( e.keyCode === KeyCode.KEY_F5 ) {
                         e.preventDefault()
@@ -343,6 +354,7 @@ module wwa_main {
                     }
                 });
                 window.addEventListener("keyup", (e): void => {
+                    if( !this._isActive ) { return; }
                     this._keyStore.setReleaseInfo(e.keyCode);
                     if( e.keyCode === KeyCode.KEY_F5 ) {
                         e.preventDefault()
@@ -391,21 +403,15 @@ module wwa_main {
                 });
                 // IEのF1キー対策
                 window.addEventListener("help", (e): void => {
+                    if( !this._isActive ) { return; }
                     e.preventDefault();
                 });
 
                 
                 this._wwaWrapperElement = <HTMLDivElement>(wwa_util.$id("wwa-wrapper"));
                 this._mouseControllerElement = <HTMLDivElement>(wwa_util.$id("wwa-controller"));
-                window.addEventListener("click", (e): void=> {
-                  // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
-                  console.log( "outside clicked");
-                });
-                wwa_util.$id("wwa-wrapper").addEventListener("click", (e): void=> {
-                  console.log( "inside clicked");
-                  e.stopPropagation();
-                });
                 this._mouseControllerElement.addEventListener("mousedown", (e): void => {
+                    if( !this._isActive ) { return; }
                     if (e.which === 1) {
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
@@ -436,6 +442,7 @@ module wwa_main {
                     this._mouseStore.clear();
                 });
                 this._mouseControllerElement.addEventListener("mouseup", (e): void => {
+                    if( !this._isActive ) { return; }
                     if (e.which === 1) {
                         this._mouseStore.setReleaseInfo();
                         e.preventDefault();
@@ -445,6 +452,7 @@ module wwa_main {
                 //////////////// タッチ関連 超β ////////////////////////////
                 if (window["TouchEvent"] /* ←コンパイルエラー回避 */ ) {
                     this._mouseControllerElement.addEventListener("touchstart", (e: any /*←コンパイルエラー回避*/): void => {
+                      if( !this._isActive ) { return; }
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
                             return;
@@ -471,6 +479,7 @@ module wwa_main {
                     });
 
                     this._mouseControllerElement.addEventListener("touchend", (e: any): void => {
+                        if( !this._isActive ) { return; }
                         for (var i = 0; i < e.changedTouches.length; i++) {
                             if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
                                 this._mouseStore.setReleaseInfo();
@@ -482,6 +491,7 @@ module wwa_main {
 
 
                     this._mouseControllerElement.addEventListener("touchcancel", (e: any): void => {
+                        if( !this._isActive ) { return; }
                         for (var i = 0; i < e.changedTouches.length; i++) {
                             if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
                                 this._mouseStore.setReleaseInfo();
