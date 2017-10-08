@@ -1,0 +1,33 @@
+{
+  "name": "wwa-wing",
+  "version": "3.1.6",
+  "description": "World Wide Adventure: an RPG Engine.",
+  "main": "wwa.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run build:tsc && npm run build:uglify && npm run build:cat",
+    "build:tsc": "tsc --sourceMap ./src/wwa_main.ts -t ES5 --outDir .. --out wwa.long.js",
+    "build:uglify": "uglifyjs -c -o wwa-nolink.js --source-map  --in-source-map ./wwa.long.js.map ./wwa.long.js",
+    "build:cat": "concat -o wwa.js wwa_license_comment.js wwa-nolink.js cryptojs/aes.js",
+    "clean": "rimraf wwa.long.js wwa.long.js.map wwa-nolink.js wwa-nolink.js.map wwa.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WWAWing/WWAWing.git"
+  },
+  "keywords": [
+    "wwa",
+    "typescript"
+  ],
+  "author": "rmn_e",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WWAWing/WWAWing/issues"
+  },
+  "homepage": "https://github.com/WWAWing/WWAWing#readme",
+  "devDependencies": {
+    "concat": "^1.0.3",
+    "rimraf": "^2.6.2",
+    "uglify-js": "^3.1.3"
+  }
+}
