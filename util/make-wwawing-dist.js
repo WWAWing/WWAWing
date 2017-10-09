@@ -48,7 +48,7 @@ function makeDistribution(isUpdate) {
                 copy("*.css", "mapdata"), 
                 copy("wwamk310/WinWwamk.exe"),
                 copy("wwawing-disp.png", "mapdata"),
-                copy("audio"),
+                copy("audio/*.*","mapdata/audio"),
                 copy("*.{dat,gif}", "mapdata"),
                 copy("dist_html/*.html", "mapdata"),
             ];
