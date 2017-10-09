@@ -6,6 +6,7 @@ WWA( http://wwajp.com )のJavaScript実装です。
 
 ## このリポジトリで開発される方へ
 - `master` にコミットすると, Travis CI が動き出します。開発は `develop` の派生ブランチでお願いいたします。
+- `develop` からブランチを作って、 `develop` に対する Pull Request を作ってくれると喜びます。
 
 ## ブランチについて
 - `master`: リリース用のブランチです。
@@ -16,10 +17,13 @@ WWA( http://wwajp.com )のJavaScript実装です。
 
 ## とりあえず触りたい人へ
 - src ディレクトリにすべての元になっているTypeScriptソースがあります。
-- ビルドはこのREADMEがあるディレクトリで、端末等から<code>make</code>でできます。 
-- TypeScriptのコンパイラとGoogle Closure Compilerが必要です。ディレクトリ「closure」にClosure Compilerのjarファイルを置いてください。
-- TypeScriptコンパイラは、Node.jsを入れた上で<code>npm install -g typescript</code>で入れてください。
-- 成果物は、TypeScriptでコンパイルした結果が「wwa.long.js」で、Closure Compilerで minify した結果が「wwa.js」です。
+- 下記の手順でビルドができます。 [node.js](https://nodejs.org) が必要です。
+
+``` sh
+$ npm install
+$ npm run build
+```
+
 - 配布用ZIPを作りたい場合はディレクトリ「\_\_DISTRIBUTE\_\_」へ。
 - wwaload.js と wwaload.noworker は WWALoader( https://github.com/WWAWing/WWALoader )により生成されたものです。
 
@@ -36,16 +40,17 @@ WWA( http://wwajp.com )のJavaScript実装です。
 .
 ├── __DISTRIBUTE__ - 配布用ファイル生成用ディレクトリ
 ├── audio - 音楽関連のディレクトリ
-├── closure - Closure Compilerを配置するディレクトリ(コンパイラは同梱してません)
+├── cryptojs - パスワードセーブの生成に使っている [crypto-js](https://www.npmjs.com/package/crypto-js) の一部が入っています。
 ├── debugger - WWA Debugger 関連
 ├── dist_html - 配布用ZIPに入れるサンプルマップ用HTMLを含むディレクトリ
 ├── src - WWA WingのTypeScriptソースを含むディレクトリ
 ├── wwamk310 - WWA作成ツール関連
+├── node_modules - 依存しているライブラリなどが入るディレクトリ ( `npm install` で作成されます)
 </pre>
 ### ファイル
 .gitignore, マップデータ, WWAでロードされる画像ファイル, WWAを配置するHTMLファイル(_convert.htmlを除く)は省略
 <pre>
-├── Makefile - ビルド用Makefile
+├── package.json - node.jsのパッケージ設定。ビルド手順やバージョン情報、依存ライブラリの情報が書かれています。
 ├── README.md - このファイル
 ├── _convert.html - WebWorker非使用版のテストページ
 ├── classictitle.gif - タイトル画像に使える画像の例
@@ -57,7 +62,9 @@ WWA( http://wwajp.com )のJavaScript実装です。
 ├── wwa.css - WWAで使用するCSS
 ├── wwa_classic.css - WWAで使用するCSS(本家再現版)
 ├── wwa.js - WWA Wing本体(minify済)
-├── wwa.long.js - WWA Wing本体(minifyなし)
+├── wwa-nolink.js - WWA Wing本体(minify済・crypto-jsとの結合なし)
+├── wwa-nolink.js.map - wwa-nolink.js のソースマップ
+├── wwa.long.js - WWA Wing本体(minifyなし・crypto-jsとの結合なし)
 ├── wwa.long.js.map - wwa.long.js のソースマップ
 ├── wwaload.js - WWA Loader(Worker版)
 ├── wwaload.noworker.js(Workerなし版)
