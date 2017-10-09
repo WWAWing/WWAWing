@@ -7,7 +7,6 @@ var fs = require("fs");
 var path = require("path");
 var glob = require("glob");
 var Promise = require("es6-promise");
-var dirName = "__DISTRIBUTE__";
 var baseDir = ".";
 
 makeZip("wwawing-dist");
@@ -19,7 +18,7 @@ function joinPathArray(prev, cur) {
 
 function makeZip (target) {
     var zip = new JSZip();
-    glob(baseDir + "/" + dirName + "/" + target + "/**/*.*", function(error, matches) {
+    glob(baseDir + "/" + target + "/**/*.*", function(error, matches) {
         Promise.all(matches.map(function(itemPath) {
             return new Promise(function(resolve, reject) {
 
@@ -29,16 +28,13 @@ function makeZip (target) {
                 var itemPathArray = itemPath.split("/")
                 var itemPathFs = itemPathArray.reduce(joinPathArray, "");
 
-                // アーカイブのパスには, パスの頭は使わないので外す
-                var archivePath = itemPathArray.slice(2, itemPathArray.length).reduce(joinPathArray, "");
-
                 fs.readFile(itemPathFs, function(err, itemData) {
                     console.log("including " + itemPath);
                     if( err ) {
                         reject(err);
                         return;
                     }
-                    zip.file(archivePath, itemData);
+                    zip.file(itemPathFs, itemData);
                     resolve();
                 });
             });

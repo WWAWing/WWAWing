@@ -7,18 +7,16 @@ var fs = require("fs");
 var path = require("path");
 var Promise = require("es6-promise");
 
-var distributeDirName = "__DISTRIBUTE__";
-
 var wwawingDistDirName = "wwawing-dist";
 var wwawingUpdateDirName = "wwawing-update";
 
 // cpx (glob) 用 Windowsでもパス区切りは / でOK
-var destBaseGlob = "./" + distributeDirName + "/" + wwawingDistDirName;
-var destUpdateBaseGlob = "./" + distributeDirName + "/" + wwawingUpdateDirName;
+var destBaseGlob = "./" + wwawingDistDirName;
+var destUpdateBaseGlob = "./" + wwawingUpdateDirName;
 
 // fs.mkdir 用 パス区切りが / でない環境も考慮する
-var destBasePath = path.join(".", distributeDirName, wwawingDistDirName);
-var destUpdateBasePath = path.join(".", distributeDirName, wwawingUpdateDirName);
+var destBasePath = path.join(".", wwawingDistDirName);
+var destUpdateBasePath = path.join(".", wwawingUpdateDirName);
 
 // 完全版配布物を生成
 makeDistribution(false);
