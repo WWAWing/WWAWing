@@ -76,8 +76,13 @@ function makeDistribution(isUpdate) {
             ( dest ? dest : "" )
         );
         return new Promise(function (resolve, reject) {
-            cpx.copy(src, destFull, function (error) {
+            console.log("copy " + src + " to " +  destFull);
+            cpx.copy(src, destFull, {
+                clean: true,
+                includeEmptyDirs: true
+            }, function (error) {
                 if (error) {
+                    console.error( "copy " + src + " was rejected!" );
                     reject(error);
                     return;
                 }
@@ -92,13 +97,17 @@ function makeDistribution(isUpdate) {
              dest
         ); 
         return new Promise(function (resolve, reject) {
-            fs.mkdir(destFull, function(error) {
-                if (error) {
-                    reject(error);
-                    return;
-                }
+            if (fs.existsSync(destFull)) {
                 resolve();
-            });
+            } else {
+                fs.mkdir(destFull, function(error) {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve();
+                });
+            }
         });
     }       
 }

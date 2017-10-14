@@ -5,12 +5,15 @@
   "main": "wwa.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run build:tsc && npm run build:uglify && npm run build:cat && npm run build:dist",
-    "build:tsc": "tsc --sourceMap ./src/wwa_main.ts -t ES5 --outDir .. --out wwa.long.js",
-    "build:uglify": "uglifyjs -c -o wwa-nolink.js --source-map  --in-source-map ./wwa.long.js.map ./wwa.long.js",
-    "build:cat": "concat -o wwa.js wwa_license_comment.js wwa-nolink.js cryptojs/aes.js",
-    "build:dist": "node ./util/make-wwawing-dist && node ./util/make-zip",
-    "clean": "rimraf wwawing-dist wwawing-update wwawing-dist.zip wwawing-update.zip wwa.long.js wwa.long.js.map wwa-nolink.js wwa-nolink.js.map wwa.js"
+    "build": "npm run build:js && npm run build:dist",
+    "build:js": "npm run build:js:tsc && npm run build:js:uglify && npm run build:js:cat",
+    "build:js:tsc": "tsc --sourceMap ./src/wwa_main.ts -t ES5 --outDir .. --out wwa.long.js",
+    "build:js:uglify": "uglifyjs -c -o wwa-nolink.js --source-map  --in-source-map ./wwa.long.js.map ./wwa.long.js",
+    "build:js:cat": "concat -o wwa.js wwa_license_comment.js wwa-nolink.js cryptojs/aes.js",
+    "build:dist": "npm run clean:dist && node ./util/make-wwawing-dist && node ./util/make-zip",
+    "clean": "npm run clean:dist && npm run clean:js",
+    "clean:js": "rimraf wwa.long.js wwa.long.js.map wwa-nolink.js wwa-nolink.js.map wwa.js",
+    "clean:dist": "rimraf wwawing-dist wwawing-update wwawing-dist.zip wwawing-update.zip"
   },
   "repository": {
     "type": "git",
