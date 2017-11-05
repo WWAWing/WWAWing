@@ -2133,7 +2133,7 @@ module wwa_main {
                                 if (this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] !== "BLANK") {
                                  this._messageQueue.push( new wwa_message.MessageInfo(
                                      this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] === "" ?
-                                     "アイテムをもっていない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
+                                     "アイテムを持っていない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
                                      true)
                                     );
                                  };
@@ -2166,23 +2166,23 @@ module wwa_main {
                                     this.appearParts(this._yesNoChoicePartsCoord, wwa_data.AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                                 } else {
                                     // アイテムをボックスがいっぱい
-                                    if (this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] !== "BLANK") {
+                                    if (this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM] !== "BLANK") {
                                         this._messageQueue.push(
                                             new wwa_message.MessageInfo(
-                                                this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] === "" ?
-                                                    "これ以上、アイテムを持てません。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
+                                                this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM] === "" ?
+                                                    "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM],
                                                 true
                                             )
                                         );
                                     }
                                 }
                             } else {
-                                // 所持金が足りない
+                                // 所持金がたりない
                                 if (this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY] !== "BLANK") {
                                     this._messageQueue.push(
                                         new wwa_message.MessageInfo(
                                         this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY] === "" ?
-                                            "所持金が足りない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY],
+                                            "所持金がたりない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY],
                                             true
                                             )
                                     );
