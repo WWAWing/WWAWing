@@ -981,7 +981,7 @@ module wwa_main {
             // キー入力とプレイヤー移動
             ////////////// DEBUG IMPLEMENTATION //////////////////////
             /////// 本番では必ず消すこと /////////////////////////////
-            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
+            // this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
             //////////////////////////////////////////////////////////
             var prevPosition = this._player.getPosition();
 
