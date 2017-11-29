@@ -443,7 +443,8 @@ module wwa_data {
         PASS_SAVE = 49,
         IF = 50,
         SET_SPEED = 51,
-        COPY_TIME_TO = 52
+        COPY_TIME_TO = 52,
+        HIDE_STATUS = 53
     }
 
     export var macrotable = {
@@ -499,7 +500,8 @@ module wwa_data {
         "$pass_save"      : 49,
         "$if"             : 50,
         "$set_speed"      : 51,
-        "$copy_time_to"   : 52
+        "$copy_time_to"   : 52,
+        "$hide_status"    : 53
     }
 
     export enum MacroStatusIndex {
@@ -530,7 +532,7 @@ module wwa_data {
     export var speedList = [1, 2, 5, 8, 10, 20];
     export var speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "HW3.17.6";
+        static VERSION_WWAJS: string = "HW3.18.0";
         static WWA_HOME: string = "http://wwajp.com";
 
         static ITEMBOX_SIZE: number = 12;

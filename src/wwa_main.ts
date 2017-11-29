@@ -981,7 +981,7 @@ module wwa_main {
             // キー入力とプレイヤー移動
             ////////////// DEBUG IMPLEMENTATION //////////////////////
             /////// 本番では必ず消すこと /////////////////////////////
-//            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
+            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
             //////////////////////////////////////////////////////////
             var prevPosition = this._player.getPosition();
 
@@ -3758,6 +3758,14 @@ module wwa_main {
           _nowTime = new Date();
           this._wwaData.playTime += (_nowTime.getTime() - this._startTime);
           this._startTime = _nowTime.getTime();
+        }
+        // 各種ステータスを非表示にする
+        public hideStatus(no:number, isHide:boolean): void {
+			if(no < 0 || no > 4){
+				throw new Error("隠すパラメータは０から３の間で指定してください。");
+			}
+			this._player.setHideStatus(no, isHide);
+			this._player.updateStatusValueBox();
         }
     };
 

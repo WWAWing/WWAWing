@@ -195,6 +195,10 @@ module wwa_message {
                 else if (this.macroType === wwa_data.MacroType.COPY_TIME_TO ){
                 	this._executeCopyTimeToMacro();
                 }
+                // HW3.18.0 より実装
+                else if (this.macroType === wwa_data.MacroType.HIDE_STATUS ){
+                	this._hideStatusMacro();
+                }
             } catch (e) {
                 // デベロッパーモードならエラーを吐くとかしたいね
                 console.log(e);
@@ -387,25 +391,33 @@ module wwa_message {
 			}
 			this._wwa.userVarUserIf(this._triggerPartsPosition, str);
 		}
-    // SET_SPEEDマクロ実行部
-    private _executeSetSpeedMacro():void{
-      this._concatEmptyArgs(1);
+		// SET_SPEEDマクロ実行部
+		private _executeSetSpeedMacro():void{
+			this._concatEmptyArgs(1);
 			var num = this._parseInt(0);
-      this._wwa.setPlayerSpeed(num);
-    }
-    // COPY_TO_TIMEマクロ実行部
-    private _executeCopyTimeToMacro():void{
-      this._concatEmptyArgs(1);
+			this._wwa.setPlayerSpeed(num);
+		}
+		// COPY_TO_TIMEマクロ実行部
+		private _executeCopyTimeToMacro():void{
+			this._concatEmptyArgs(1);
 			var num = this._parseInt(0);
 			this._wwa.setUserVarPlayTime(num);
-    }
+		}
+		// HIDE_STATUS マクロ実行部
+		private _hideStatusMacro(): void {
+			this._concatEmptyArgs(2);
+			var no = this._parseInt(0);
+			var isHideNumber = this._parseInt(1);
+			var isHide = (isHideNumber === 0)?false:true;
+			this._wwa.hideStatus(no,isHide);
+		}
 		// executeImgPlayerMacro
-    private _executeImgPlayerMacro(): void {
-        this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
-        this._wwa.setPlayerImgCoord(new wwa_data.Coord(x, y));
-    }
+		private _executeImgPlayerMacro(): void {
+			this._concatEmptyArgs(2);
+			var x = this._parseInt(0);
+			var y = this._parseInt(1);
+			this._wwa.setPlayerImgCoord(new wwa_data.Coord(x, y));
+		}
         private _executeImgYesNoMacro(): void {
             this._concatEmptyArgs(2);
             var x = this._parseInt(0);

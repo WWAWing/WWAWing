@@ -86,6 +86,10 @@ module wwa_parts_player {
         protected _lookingAroundTimer: number;
 
         protected _speedIndex: number;
+        
+        // ステータス表示の有無
+        // WWAWingXE追加部分
+        protected _hideStatus: boolean[];
 
         public move(): void {
             if (this.isControllable()) {
@@ -488,10 +492,12 @@ module wwa_parts_player {
 
         public updateStatusValueBox(): void {
             var totalStatus = this._status.plus(this._equipStatus);
-            var e = totalStatus.energy;
-            var s = totalStatus.strength;
-            var d = totalStatus.defence;
-            var g = totalStatus.gold;
+            // WWAWingXE 追加部分
+            // this._hideStatusに従って指定したステータスを非表示にする
+            var e = this._hideStatus[0] ? "" : totalStatus.energy;
+            var s = this._hideStatus[1] ? "" : totalStatus.strength;
+            var d = this._hideStatus[2] ? "" : totalStatus.defence;
+            var g = this._hideStatus[3] ? "" : totalStatus.gold;
             this._energyValueElement.textContent = e + "";
             this._strengthValueElement.textContent = s + "";
             this._defenceValueElement.textContent = d + "";
@@ -966,9 +972,23 @@ module wwa_parts_player {
         public speedDown(): number {
             return this._speedIndex = Math.max(Consts.MIN_SPEED_INDEX, this._speedIndex - 1);
         }
+        // WWAWingXE 追加部分
+        public setHideStatus(no:number, isHide:boolean): void {
+			if(no < 0 || no > 4){
+				throw new Error("隠すパラメータは０から３の間で指定してください。");
+			}
+			this._hideStatus[ no ] = isHide;
+        }
 
         constructor(wwa: wwa_main.WWA, pos: Position, camera: Camera, status: wwa_data.Status, em: number) {
-            super(pos);
+			super(pos);
+			// どっかで定数化させたい
+			var statusNum = 4;
+			this._hideStatus = new Array(statusNum);
+			// WWAWingXE 追加部分
+            for(var i=0; i<statusNum; i++){
+				this._hideStatus[i] = false;
+            }
             this._status = status;
             this._equipStatus = new wwa_data.EquipmentStatus(0, 0);
             this._itemBox = new Array(Consts.ITEMBOX_SIZE);
@@ -1001,6 +1021,7 @@ module wwa_parts_player {
             this._isPreparedForLookingAround = true;
             this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
             this._speedIndex = Consts.DEFAULT_SPEED_INDEX;
+
         }
 
     }
