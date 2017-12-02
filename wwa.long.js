@@ -731,7 +731,7 @@ var wwa_data;
     var WWAConsts = (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "HW3.18.0";
+        WWAConsts.VERSION_WWAJS = "HW3.18.2";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -1395,6 +1395,7 @@ var wwa_parts_player;
         };
         Player.prototype.setStrength = function (s) {
             this._status.strength = s;
+            this.updateStatusValueBox();
             return s;
         };
         Player.prototype.setDefence = function (d) {
@@ -4462,7 +4463,7 @@ var wwa_main;
             // キー入力とプレイヤー移動
             ////////////// DEBUG IMPLEMENTATION //////////////////////
             /////// 本番では必ず消すこと /////////////////////////////
-            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
+            // this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
             //////////////////////////////////////////////////////////
             var prevPosition = this._player.getPosition();
             var pdir = this._player.getDir();

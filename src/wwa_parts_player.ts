@@ -468,6 +468,7 @@ module wwa_parts_player {
         }
         public setStrength(s: number): number {
             this._status.strength = s;
+            this.updateStatusValueBox();
             return s;
         }
         public setDefence(d: number): number {
