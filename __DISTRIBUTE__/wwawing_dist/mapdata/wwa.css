@@ -1,0 +1,588 @@
+﻿@charset "UTF-8";
+
+/**
+    wwa.css
+    @author Matsuyuki(rmn.)
+    このファイルは、WWAの起動時に必要です。
+    フォントやフォントサイズは自由に変更できます。
+*/
+
+
+.wwa-size-box {
+    width: 560px;
+    height: 440px;
+    font-size: 16px;
+    font-family: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro', 'メイリオ','Meiryo','ＭＳ Ｐゴシック',sans-serif;
+    line-height:1.2;
+    text-indent:0px;
+    letter-spacing:0px;
+    word-spacing: 0px;
+    writing-mode:horizontal-tb;
+}
+
+div#wwa-wrapper {
+    position: relative;
+    margin: 0 auto;
+    text-align: center;
+}
+
+canvas.wwa-canvas {
+    display: block;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+canvas#wwa-map {
+    z-index: 100;
+}
+
+canvas#wwa-map-sub {
+    z-index: 101;
+}
+
+div#wwa-sidebar {
+    position: absolute;
+    top: 0px;
+    left: 440px;
+    width: 120px;
+    height: 440px;
+    z-index: 102;
+    background-color: #000000;
+}
+
+
+div#wwa-sidebar>div.wide-cell-row {
+    position: absolute;
+    padding: 10px 0 0 0;
+    margin: 0px;
+    border: 0px;
+    width: 120px;
+    height: 25px;
+    font-size: 14px;
+}
+
+div#wwa-sidebar>div.wide-cell-row.onpress/*, div#wwa-sidebar>div.wide-cell-row:hover*/ {
+    position: absolute;
+    padding: 10px 0 0 0;
+    margin: 0px;
+    border-width: 3px 0 0 3px;
+    border-style: solid;
+    border-color : #000000;
+    width: 117px;
+    height: 22px;
+}
+
+div#wwa-sidebar>div.item-cell  {
+    position: absolute;
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    width: 40px;
+    height:40px;
+}
+
+div#wwa-sidebar>div.item-cell.onpress/*, div#wwa-sidebar>div.item-cell:hover */  {
+    position: absolute;
+    padding: 0px;
+    margin: 0px;
+    border-width: 3px 0 0 3px;
+    border-color: #000000;
+    border-style: solid;
+    width: 37px;
+    height:37px;
+}
+
+#disp-energy {
+    top: 0px;
+    left: 0px;
+    z-index: 103;
+}
+
+#disp-strength {
+    top: 35px;
+    left: 0px;
+    z-index: 104;
+}
+
+#disp-defence {
+    top: 70px;
+    left: 0px;
+    z-index: 105;
+}
+
+#disp-gold {
+    top: 105px;
+    left: 0px;
+    z-index: 106;
+}
+
+#item0 {
+    top: 140px;
+    left: 0px;
+    z-index: 107;
+}
+
+#item1 {
+    top: 140px;
+    left: 40px;
+    z-index: 108;
+}
+
+#item2 {
+    top: 140px;
+    left: 80px;
+    z-index: 109;
+}
+
+#item3 {
+    top: 180px;
+    left: 0px;
+    z-index: 110;
+}
+
+#item4 {
+    top: 180px;
+    left: 40px;
+    z-index: 111;
+}
+
+#item5 {
+    top: 180px;
+    left: 80px;
+    z-index: 112;
+}
+
+#item6 {
+    top: 220px;
+    left: 0px;
+    z-index: 113;
+}
+
+#item7 {
+    top: 220px;
+    left: 40px;
+    z-index: 114;
+}
+
+#item8 {
+    top: 220px;
+    left: 80px;
+    z-index: 115;
+}
+
+#item9 {
+    top: 260px;
+    left: 0px;
+    z-index: 116;
+}
+
+#item10 {
+    top: 260px;
+    left: 40px;
+    z-index: 117;
+}
+
+#item11 {
+    top: 260px;
+    left: 80px;
+    z-index: 118;
+}
+
+#cell-load {
+    top: 300px;
+    left: 0px;
+    z-index: 119;
+}
+
+#cell-save {
+    top: 335px;
+    left: 0px;
+    z-index: 120;
+}
+
+#cell-restart {
+    top: 370px;
+    left: 0px;
+    z-index: 121;
+}
+
+#cell-gotowwa {
+    top: 405px;
+    left: 0px;
+    z-index: 122;
+}
+
+div.status-icon {
+    position: absolute;
+    top: 0px;
+    left: 6px;
+    width: 40px;
+    height: 40px;
+    padding: 0px;
+    margin: 0px;
+}
+
+div.status-value-box {
+    position: absolute;
+    top: 0px;
+    left: 46px;
+    width: 74px;
+    height: 25px;
+    padding: 10px 0px 0px 0px;
+    margin: 0px;
+    text-align: center;
+}
+
+div.item-click-border {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 40px;
+    height: 40px;
+    padding: 0px;
+    margin: 0px;
+}
+
+div.item-disp {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 40px;
+    height: 40px;
+    padding: 0px;
+    margin: 0px;
+}
+
+#disp-energy>.status-icon{
+    z-index: 140;
+}
+#disp-strength>.status-icon{
+    z-index: 141;
+}
+#disp-defence>.status-icon{
+    z-index: 142;
+}
+#disp-gold>.status-icon{
+    z-index: 143;
+}
+
+#disp-energy>.status-value-box{
+    z-index: 150;
+}
+#disp-strength>.status-value-box{
+    z-index: 151;
+}
+#disp-defence>.status-value-box{
+    z-index: 152;
+}
+#disp-gold>.status-value-box{
+    z-index: 153;
+}
+
+#item0>.item-disp {
+    z-index: 160;
+}
+#item1>.item-disp {
+    z-index: 161;
+}
+#item2>.item-disp {
+    z-index: 162;
+}
+#item3.item-disp {
+    z-index: 163;
+}
+#item4>.item-disp {
+    z-index: 164;
+}
+#item5>.item-disp {
+    z-index: 165;
+}
+#item6>.item-disp {
+    z-index: 166;
+}
+#item7>.item-disp {
+    z-index: 167;
+}
+#item8>.item-disp {
+    z-index: 168;
+}
+#item9>.item-disp {
+    z-index: 169;
+}
+#item10>.item-disp {
+    z-index: 170;
+}
+#item11>.item-disp {
+    z-index: 171;
+}
+
+#item0>.item-click-border {
+    z-index: 170;
+}
+#item1>.item-click-border {
+    z-index: 171;
+}
+#item2>.item-click-border {
+    z-index: 172;
+}
+#item3>.item-click-border {
+    z-index: 173;
+}
+#item4>.item-click-border {
+    z-index: 174;
+}
+#item5>.item-click-border {
+    z-index: 175;
+}
+#item6>.item-click-border {
+    z-index: 176;
+}
+#item7>.item-click-border {
+    z-index: 177;
+}
+#item8>.item-click-border {
+    z-index: 178;
+}
+#item9>.item-click-border {
+    z-index: 179;
+}
+#item10>.item-click-border {
+    z-index: 180;
+}
+#item11>.item-click-border {
+    z-index: 181;
+}
+
+#wwa-controller {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 440px;
+    height: 440px;
+    padding: 0;
+    margin: 0;
+    z-index: 200;
+}
+
+.wide-button {
+    position: absolute;
+    width: 120px;
+    left: 0px;
+    height: 40px;
+    cursor: pointer;
+}
+
+#button-load {
+    top: 300px;
+    z-index: 201;
+}
+
+#button-save {
+    top: 335px;
+    z-index: 202;
+}
+
+#button-restart {
+    top: 370px;
+    z-index: 203;
+}
+
+#button-gotowwa {
+    top: 405px;
+    z-index: 204;
+}
+
+
+#wwa-battle-estimate, #wwa-password-window {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 400px;
+    padding: 0;
+    margin: 18px;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #000000;
+    border-radius: 10px;
+/*    background-color: rgba( 255, 255, 255, 0.9 ); */ /*システムで指定することになりました。$colorで。*/
+    cursor: pointer;
+    overflow: auto;
+}
+
+#wwa-battle-estimate {
+    z-index: 230;
+}
+#wwa-password-window {
+    z-index: 231;
+}
+#wwa-password-window>div.wwa-password-description {
+    text-align: left;
+    font-size: 12px;
+    padding: 5px;
+}
+
+#wwa-password-window>textarea {
+    font-size: 12px;
+}
+
+#wwa-battle-estimate>.est {
+    width: 100%;
+    height: 50px;
+    padding: 0;
+    margin: 0;
+}
+
+#wwa-battle-estimate>.est>.est-img-wrapper {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    margin: 5px;
+    float: left;
+}
+
+#wwa-battle-estimate>.est>.est-status-wrapper {
+    height: 40px;
+    padding: 0;
+    margin: 5px;
+    background-color: #FFFFFF;
+    float: left;
+    text-align: left;
+    position: relative;
+}
+
+#wwa-battle-estimate>.est>.est-status-wrapper>div {
+    width: 150px;
+    overflow: hidden;
+    font-size: 16px;
+    position: absolute;
+}
+
+#wwa-battle-estimate>.est>.est-status-wrapper>.est-energy {
+    top: 0;
+    left: 0;
+}
+
+#wwa-battle-estimate>.est>.est-status-wrapper>.est-strength {
+    top: 0;
+    left: 140px;
+}
+
+#wwa-battle-estimate>.est>.est-status-wrapper>.est-defence {
+    top: 20px;
+    left: 0;
+}
+
+#wwa-battle-estimate>.est>.est-status-wrapper>.est-damage{
+    top: 20px;
+    left: 140px;
+    color: #FF0000;
+}
+
+
+
+#wwa-fader {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 440px;
+	height: 440px;
+	border-width: 0;
+	border-color: #808080;
+	border-style: solid;
+    display: none;
+    z-index: 250;
+}
+
+
+#wwa-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 560px;
+    height: 440px;
+    z-index: 300;
+    background-color: #FFFFFF;
+/*    transition:ease 0.5s;
+    transition-property: opacity;
+    cursor: pointer; */
+}
+
+ #wwa-cover>#version {
+     position: absolute;
+     top: 392px;
+     left: 0;
+     height: 16px;
+     font-size: 12px;
+     color: #000000;
+}
+
+#wwa-cover>#progress-message-container {
+    position: absolute;
+    top: 408px;
+    left: 0;
+    width: 560px;
+    height: 16px;
+    color: #000000;
+    font-size: 12px;
+    overflow: hidden;
+    text-align: left;
+    z-index: 305;
+}
+
+#wwa-cover>#progress-bar-bg {
+    position: absolute;
+    top: 424px;
+    left: 0;
+    width: 560px;
+    height: 16px;
+    background-color: #808080;
+    z-index: 310;
+}
+
+#wwa-cover>.progress-bar {
+    position: absolute;
+    top: 424px;
+    left: 0;
+    width: 0;
+    height: 16px;
+}
+
+#wwa-cover>#progress-bar {
+    background-color: #00FF90;
+    z-index: 315;
+}
+
+#wwa-cover>#progress-bar-audio {
+    background-color: #008aff;
+    z-index: 316;
+    
+}
+
+#wwa-cover>#progress-disp {
+    position: absolute;
+    top: 424px;
+    left: 440px;
+    width: 120px;
+    height: 16px;
+    background-color: #FF6A00;
+    color: #FFFFFF;
+    text-align: center;
+    font-weight: bold;
+    z-index: 320;
+    font-size: 12px;
+    overflow: hidden;
+}
+
+/* message window: z-index 400 */
+
+#wwa-audio-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: none;
+    width: 440px;
+    height: 440px;
+    overflow: hidden;
+    z-index: -9999;
+}
