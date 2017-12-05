@@ -133,7 +133,8 @@ module wwa_main {
         private _useConsole: boolean;
         private _audioDirectory: string;
         private _hasTitleImg: boolean;
-
+  
+        private _isActive: boolean;
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -143,6 +144,16 @@ module wwa_main {
 
         constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
             var ctxCover;
+          window.addEventListener("click", (e): void=> {
+            // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
+            this._isActive = false;
+          });
+          wwa_util.$id("wwa-wrapper").addEventListener("click", (e): void=> {
+            e.stopPropagation();
+            this._isActive = true;
+          });
+          this._isActive = true;
+
             if (titleImgName === null) {
                 this._hasTitleImg = false;
                 this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
@@ -287,6 +298,7 @@ module wwa_main {
                 this._setProgressBar(getProgress(2, 4, wwa_data.LoadStage.GAME_INIT) );
                 this._setLoadingMessage(ctxCover, 4);
                 window.addEventListener("keydown", (e): void => {
+                    if( !this._isActive ) { return; }
                     this._keyStore.setPressInfo(e.keyCode);
                     if( e.keyCode === KeyCode.KEY_F5 ) {
                         e.preventDefault()
@@ -342,6 +354,7 @@ module wwa_main {
                     }
                 });
                 window.addEventListener("keyup", (e): void => {
+                    if( !this._isActive ) { return; }
                     this._keyStore.setReleaseInfo(e.keyCode);
                     if( e.keyCode === KeyCode.KEY_F5 ) {
                         e.preventDefault()
@@ -390,12 +403,15 @@ module wwa_main {
                 });
                 // IEのF1キー対策
                 window.addEventListener("help", (e): void => {
+                    if( !this._isActive ) { return; }
                     e.preventDefault();
                 });
+
+                
                 this._wwaWrapperElement = <HTMLDivElement>(wwa_util.$id("wwa-wrapper"));
                 this._mouseControllerElement = <HTMLDivElement>(wwa_util.$id("wwa-controller"));
-                
                 this._mouseControllerElement.addEventListener("mousedown", (e): void => {
+                    if( !this._isActive ) { return; }
                     if (e.which === 1) {
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
@@ -426,6 +442,7 @@ module wwa_main {
                     this._mouseStore.clear();
                 });
                 this._mouseControllerElement.addEventListener("mouseup", (e): void => {
+                    if( !this._isActive ) { return; }
                     if (e.which === 1) {
                         this._mouseStore.setReleaseInfo();
                         e.preventDefault();
@@ -435,6 +452,7 @@ module wwa_main {
                 //////////////// タッチ関連 超β ////////////////////////////
                 if (window["TouchEvent"] /* ←コンパイルエラー回避 */ ) {
                     this._mouseControllerElement.addEventListener("touchstart", (e: any /*←コンパイルエラー回避*/): void => {
+                      if( !this._isActive ) { return; }
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
                             return;
@@ -461,6 +479,7 @@ module wwa_main {
                     });
 
                     this._mouseControllerElement.addEventListener("touchend", (e: any): void => {
+                        if( !this._isActive ) { return; }
                         for (var i = 0; i < e.changedTouches.length; i++) {
                             if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
                                 this._mouseStore.setReleaseInfo();
@@ -472,6 +491,7 @@ module wwa_main {
 
 
                     this._mouseControllerElement.addEventListener("touchcancel", (e: any): void => {
+                        if( !this._isActive ) { return; }
                         for (var i = 0; i < e.changedTouches.length; i++) {
                             if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
                                 this._mouseStore.setReleaseInfo();
@@ -2113,7 +2133,7 @@ module wwa_main {
                                 if (this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] !== "BLANK") {
                                  this._messageQueue.push( new wwa_message.MessageInfo(
                                      this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] === "" ?
-                                     "アイテムをもっていない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
+                                     "アイテムを持っていない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
                                      true)
                                     );
                                  };
@@ -2146,23 +2166,23 @@ module wwa_main {
                                     this.appearParts(this._yesNoChoicePartsCoord, wwa_data.AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                                 } else {
                                     // アイテムをボックスがいっぱい
-                                    if (this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] !== "BLANK") {
+                                    if (this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM] !== "BLANK") {
                                         this._messageQueue.push(
                                             new wwa_message.MessageInfo(
-                                                this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] === "" ?
-                                                    "これ以上、アイテムを持てません。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
+                                                this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM] === "" ?
+                                                    "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM],
                                                 true
                                             )
                                         );
                                     }
                                 }
                             } else {
-                                // 所持金が足りない
+                                // 所持金がたりない
                                 if (this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY] !== "BLANK") {
                                     this._messageQueue.push(
                                         new wwa_message.MessageInfo(
                                         this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY] === "" ?
-                                            "所持金が足りない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY],
+                                            "所持金がたりない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY],
                                             true
                                             )
                                     );
@@ -2978,11 +2998,18 @@ module wwa_main {
                     var partsID = this._wwaData.mapObject[posc.y][posc.x];
                     if (
                         partsID === 0 ||
-                        this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] === wwa_data.MoveType.STATIC  ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE  ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM
                         ) {
                         continue;
+                    }
+                    // 作成ツールで空白の移動属性が指定でき、その場合に意図しない値が入ることがあるため、これらの属性でなければ静止とみなす.
+                    if (
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.CHASE_PLAYER &&
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.RUN_OUT &&
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.HANG_AROUND
+                    ) {
+                    continue;
                     }
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
                     if (moveMode !== wwa_data.MoveType.HANG_AROUND) {
@@ -3004,7 +3031,8 @@ module wwa_main {
                                 this._setObjectsInNextFrame(posc, yCand, leftX, topY, objectsInNextFrame, partsID);
                             } else {
                                 thirdCand = this._getThirdCandidate(playerIsMoving, pos, candCoord, moveMode, objectsInNextFrame);
-                                if (thirdCand !== null) {
+                                // thirdCandを用いた第三候補の作成は WWA 3.10以降のみで有効
+                                if (thirdCand !== null &&  this._wwaData.version >= 31 ) {
                                     this._setObjectsInNextFrame(posc, thirdCand, leftX, topY, objectsInNextFrame, partsID);
                                 } else {
                                     // うろうろする
@@ -3164,7 +3192,8 @@ module wwa_main {
         private _getRandomMoveCoord(playerIsMoving: boolean, currentPos: wwa_data.Position, objectsInNextFrame: number[][]): wwa_data.Coord {
             var currentCoord = currentPos.getPartsCoord();
             var resultCoord: wwa_data.Coord = currentCoord.clone();
-            for (var i = 0; i < Consts.RANDOM_MOVE_ITERATION_NUM; i++) {
+            var iterNum = this._wwaData.version < 31 ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31 : Consts.RANDOM_MOVE_ITERATION_NUM;
+            for (var i = 0; i < iterNum; i++) {
                 var rand = Math.floor(Math.random() * 8);
                 resultCoord.x = currentCoord.x + wwa_data.vx[ rand ];
                 resultCoord.y = currentCoord.y + wwa_data.vy[ rand ];
@@ -3658,7 +3687,7 @@ module wwa_main {
             }
         });
         var titleImgName = wwap_mode ?
-            Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG :
+            null :
             util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
         wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName);
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");

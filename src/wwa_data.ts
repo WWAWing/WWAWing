@@ -472,7 +472,8 @@ module wwa_data {
     export var speedList = [2, 5, 8, 10];
     export var speedNameList = ["低速", "準低速", "中速", "高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "W3.15b++";
+        static VERSION_WWAJS: string = "W3.15dβ3";
+
         static WWA_HOME: string = "http://wwajp.com";
 
         static ITEMBOX_SIZE: number = 12;
@@ -603,6 +604,7 @@ module wwa_data {
         static BATTLE_SPEED_CHANGE_TURN_NUM: number = 40; // モンスターターンを含む, バトルを早送りにするまでのターン数
 
         static RANDOM_MOVE_ITERATION_NUM: number = 50;
+        static RANDOM_MOVE_ITERATION_NUM_BEFORE_V31: number = 8;
 
         static BATTLE_ESTIMATE_MONSTER_TYPE_MAX: number = 8;
 

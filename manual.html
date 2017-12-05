@@ -41,10 +41,9 @@
 <body>
     <div id="wrapper">
         <section>
-            <h1>WWA Wing: 簡易マニュアル (ver. W3.15b++)</h1>
+            <h1>WWA Wing: 簡易マニュアル (ver. W3.15dβ2)</h1>
             <p><a href="http://wwawing.com">WWA Wing</a>( WWA In the Next Generation )は、<a href="http://wwajp.com">WWA</a>のJavaScript実装です。
-            煩わしい警告は出ず、一部のスマートフォンでも動作します。
-            正式なマニュアルは後ほどのリリースに添付予定です。</p>
+            煩わしい警告は出ず、一部のスマートフォンでも動作します。</p>
             
             <section>
                 <h2>サーバにアップロードするファイルについて</h2>
@@ -62,8 +61,9 @@
       +-- wwa.js - wwa本体です。本家のWWA.classに相当します。名前はHTML中のscript要素で変更できます。
       +-- wwaload.js - wwa.jsから起動するマップデータのローダです。名前は「起動するには」で紹介する「data-wwa-loader」属性で変更できます。
       +-- wwa.css - WWAの見栄えを調整するCSSファイルです。アップロードしないと見栄えがかなり大変なことになります。名前はHTML中のlink要素で変更できます。
+      +-- wwa_classic.css - wwa.cssのメッセージウィンドウを、WWA原作(Java版)風味に近づけたものです。こちらを指定する場合にはwwa.cssは不要です。
       +-- style.css - ページのWWAの部分以外の見栄えを調整するCSSファイルです。自由に編集してみてください。
-      +-- cover.gif - タイトル画像を指定しなかった場合のタイトル画像です。
+      +-- cover.gif - タイトル画像です。
       +-- ***.dat - WWAのマップデータファイルです。
       +-- ***.html - WWAを配置するWebページです。「wwa-wrappeer」のIDを持つdiv要素の中にWWAが立ち上がります。
       +-- ***.gif - WWAのマップで使う画像です。</pre>
@@ -86,7 +86,7 @@
 
             <section>
                 <h2>起動オプション属性一覧</h2>
-                <p class="require">太字と斜体の項目は必須項目です。1つでも指定しないと起動しません!!</p>
+                <p class="require">太字・斜体の項目は必須項目です。必須項目はすべて指定しないと起動しません!!</p>
                 <dl>
                     <dt class="require"><code>data-wwa-mapdata</code>属性</dt>
                     <dd>起動したいマップデータのファイル名を記述します。（例:<code>wwamap.dat</code>）</dd>
@@ -100,7 +100,7 @@
                     <dt><code>data-wwa-audio-dir</code>属性</dt>
                     <dd>audio.min.jsと効果音ファイルが入っているフォルダを指定できます。ここを変更した場合は, script要素で読みだすaudio.min.jsのパスも変更してください。
                     指定しなかった場合は<code>./audio/</code>になります。</dd>
-                    <dt><code>data-classic-mode-enable</code>属性</dt>
+                    <dt><code>data-wwa-classic-mode-enable</code>属性</dt>
                     <dd><code>true</code>を指定すると、本家と類似した挙動で動作します(詳細は後述)。
                     指定しなかった場合は<code>false</code>になります。</dd>
                 </dl>
@@ -109,8 +109,8 @@
             <section>
                 <h2>注意</h2>
                 <p class="important">HTMLファイル, CSSファイルの文字コードはUTF-8(BOMなし)としてください。</p>
-                <p class="important">スマートフォンでもプレイできることはありますが、効果音/BGMは鳴りません。</p>
-                <p>現在、下記の機能の実装はありません。</p>
+                <p class="important">スマートフォンでもプレイできる場合がありますが、効果音/BGMは鳴りません。</p>
+                <p>下記機能については、本家WWAには実装されていますが、WWA Wingには実装されていません。</p>
                 <ul>
                     <li>アイテムエフェクト, マクロ<code>$effitem</code></li>
                 </ul>
@@ -119,21 +119,40 @@
                     <li>物体ジャンプゲートから物体ジャンプゲートにジャンプしたときのパーツメッセージ表示優先順位</li>
                     <li>ランダム選択パーツ</li>
                 </ul>
-                <p>下記は<code>data-classic-mode-enable</code>を<code>false</code>した場合に、異なる挙動をすることがあります。</p>
+                <p>下記は<code>data-wwa-classic-mode-enable</code>を<code>false</code>した場合に、異なる挙動をします。</p>
                 <ul>
                     <li>メッセージ表示中の物体パーツのアニメーション</li>
                 </ul>
-                <p>WWA作成ツールは作者NAO氏の許可を得て再配布しております。また、WWA Debuggerは作者Aruneko氏の許可を得て再配布しております。</p>
+                <p>WWA作成ツールは作者NAO氏の許可を得て再配布しております。</p>
             </section>
             
             <section>
                 <h2>更新情報</h2>
                 <section>
-                    <h3>W3.15aからW3.15b++への変更点</h3>
+                    <h3>W3.15cからW3.15dβ2への変更点</h3>
                     <ul>
-                        <li>WWA PhoenixのHTTPS対応(W3.15b++)</li>
-                        <li>ライセンスファイルの著作権表記微修正(W3.15b+)</li>
-                        <li>WWA V2.9でのマップデータ読み込み開始位置の修正(W3.15b+)</li>
+
+                    <li>β版とは異なる内容でW3.15cがリリースされたため、変更差分を取り込む。リリース予定のバージョンをW3.15dに変更(W3.15dβ2)</li>
+                    <li>WWA PhoenixのWelcome To表示がクラシックになっていない問題を修正(W3.15cβ2)</li>
+                    <li>wwa_classic.cssを追加 (W3.15cβ1)</li>
+                    <li>マップデータバージョンが3.0以下の場合 (作成ツールが3.02c以下で作成した場合)、追尾/逃げる属性の挙動を当時のWWAに合わせる (W3.15cβ1)</li>
+                    <li>一部のシステムメッセージを本家準拠に変更(W3.15cβ1)</li>
+                    <li>Classic Modeを実装(W3.15cβ1)</li>
+                    <li>カバー画像未指定時に本家同様のWelcome To WWA! を表示するように変更(W3.15cβ1)</li>
+                    <li>攻撃力をマクロ<code>$status</code>で変更した時にステータス欄に反映されない不具合を修正(W3.15c+)</li>
+                    </ul>
+                    <h3>W3.15bからW3.15cへの変更点</h3>
+                    <ul>
+                    <li>動作属性が空白の場合に物体が静止するように対応(W3.15c)</li>
+                    <li>マップデータ最下端にいるモンスターの戦闘結果予測ができない不具合を修正(W3.15b+++)</li>
+                    <li>WWA PhoenixのHTTPS対応(W3.15b++)</li>
+                    <li>ライセンスファイルの著作権表記微修正(W3.15b+)</li>
+                    <li>WWA V2.9でのマップデータ読み込み開始位置の修正(W3.15b+)</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>W3.15aからW3.15bへの変更点</h3>
+                    <ul>
                         <li>マップデータバージョン2への対応(W3.15b)</li>
                         <li>マップデータバージョンをバージョン情報各所に併記(W3.15b)</li>
                     </ul>
