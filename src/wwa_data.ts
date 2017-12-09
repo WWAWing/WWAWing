@@ -1,4 +1,5 @@
 /// <reference path="./wwa_main.ts" />
+/// <reference path="./wwa_picture.ts" />
 
 module wwa_data {
     export class EquipmentStatus {
@@ -414,7 +415,9 @@ module wwa_data {
         EFFITEM = 20,
         COLOR = 21,
         WAIT = 22,
-        SOUND = 23
+        SOUND = 23,
+        PICTURE = 60,
+        PICTURE_DEFINE = 61
     }
 
     export var macrotable = {
@@ -441,7 +444,9 @@ module wwa_data {
         "$effitem"   : 20,
         "$color"     : 21,
         "$wait"      : 22,
-        "$sound"     : 23
+        "$sound"     : 23,
+        "$picture"   : 60,
+        "$picture_define": 61
     }
 
     export enum MacroStatusIndex {
@@ -472,7 +477,7 @@ module wwa_data {
     export var speedList = [2, 5, 8, 10];
     export var speedNameList = ["低速", "準低速", "中速", "高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "W3.15dβ3";
+        static VERSION_WWAJS: string = "AW3.17";
 
         static WWA_HOME: string = "http://wwajp.com";
 
@@ -646,6 +651,8 @@ module wwa_data {
         static LOADING_FONT = "Times New Roman";
 
         static MSG_STR_WIDTH = 16;
+
+        static PICTURE_SIZE = 16;
     }
 
     export class LoaderResponse {
@@ -813,6 +820,8 @@ module wwa_data {
 
         checkOriginalMapString: string = void 0;
         checkString: string = void 0;
+
+        pictureData: wwa_picture.WWAPictureData[] = new Array(16);
 
         constructor() { }
     }

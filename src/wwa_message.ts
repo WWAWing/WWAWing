@@ -78,6 +78,10 @@ module wwa_message {
                     this._executeWaitMacro();
                 } else if (this.macroType === wwa_data.MacroType.SOUND) {
                     this._executeSoundMacro();
+                } else if (this.macroType === wwa_data.MacroType.PICTURE) {
+                    this._executePictureMacro();
+                } else if (this.macroType === wwa_data.MacroType.PICTURE_DEFINE) {
+                    this._exexutePictureDefineMacro();
                 }
 
             } catch (e) {
@@ -101,6 +105,24 @@ module wwa_message {
                 return fallback;
             }
             return x;
+        }
+
+        private _checkPartsID(partsID: number, partsType: number): boolean {
+            if (partsID < 0) {
+                throw new Error("パーツ番号が不正です");
+            }
+            if (partsType === wwa_data.PartsType.OBJECT) {
+                if (partsID >= this._wwa.getObjectPartsNum() ) {
+                    throw new Error("パーツ番号が不正です");
+                }
+            } else if (partsType === wwa_data.PartsType.MAP) {
+                if (partsID >= this._wwa.getMapPartsNum() ) {
+                    throw new Error("パーツ番号が不正です");
+                }
+            } else {
+                throw new Error("パーツ種別が不明です");
+            }
+            return true;
         }
 
         private _executeImgPlayerMacro(): void {
@@ -411,6 +433,21 @@ module wwa_message {
             this._concatEmptyArgs(1);
             var id = parseInt(this.macroArgs[0]);
             this._wwa.playSound( id );
+        }
+
+        private _executePictureMacro(): void {
+            this._concatEmptyArgs(2);
+            var partsID = this._parseInt(1);
+            var id = this._parseInt(2);
+            if (id >= wwa_data.WWAConsts.PICTURE_SIZE) {
+                throw new Error("IDが範囲外です");
+            }
+            this._checkPartsID(partsID, wwa_data.PartsType.OBJECT);
+            this._wwa.createPictureData(partsID, id);
+        }
+
+        private _exexutePictureDefineMacro(): void {
+            this._concatEmptyArgs(0);
         }
     }
 

@@ -10,6 +10,7 @@
 /// <reference path="./wwa_inject_html.ts" />
 /// <reference path="./wwa_psave.ts" />
 /// <reference path="./wwa_password_window.ts" />
+/// <reference path="./wwa_picture.ts" />
 
 interface AudioJSInstance{
     play(): void;
@@ -1606,6 +1607,16 @@ module wwa_main {
                 objType === Consts.OBJECT_BUY || objType === Consts.OBJECT_SELL ||
                 objType === Consts.OBJECT_LOCALGATE
                 );
+        }
+
+        private _getMessage(partsID: number, partsType: number): String {
+            var messageID;
+            if (partsType === wwa_data.PartsType.OBJECT) {
+                messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
+            } else if (partsType === wwa_data.PartsType.MAP) {
+                messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
+            }
+            return this._wwaData.message[messageID];
         }
 
         public getMapWidth(): number {
@@ -3653,6 +3664,12 @@ module wwa_main {
                 this._wwaData.statusColorB = b;
             }
             this.updateCSSRule();
+        }
+
+        public createPictureData(partsID: number, id: number) {
+            this._wwaData.pictureData[id] = new wwa_picture.WWAPictureData();
+            var message = this._getMessage(partsID, wwa_data.PartsType.OBJECT);
+            this._wwaData.pictureData[id].setItem(message);
         }
 
         public showMonsterWindow(): void {
