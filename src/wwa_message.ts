@@ -437,9 +437,9 @@ module wwa_message {
 
         private _executePictureMacro(): void {
             this._concatEmptyArgs(2);
-            var partsID = this._parseInt(1);
-            var id = this._parseInt(2);
-            if (id >= wwa_data.WWAConsts.PICTURE_SIZE) {
+            var partsID = this._parseInt(0);
+            var id = this._parseInt(1);
+            if (id >= wwa_data.WWAConsts.PICTURE_LENGTH) {
                 throw new Error("IDが範囲外です");
             }
             this._checkPartsID(partsID, wwa_data.PartsType.OBJECT);

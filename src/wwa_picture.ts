@@ -20,33 +20,92 @@ module wwa_picture {
         "next"  : 6
     };
     export class WWAPictureData {
-        private _startTime: number;
+        // dest** は元変数から update 関数で出力した値
+        public destPos: wwa_data.Coord;
+        public destSize: wwa_data.Coord;
+        
+        public imageCrop: wwa_data.Coord;
+        public cropSize: wwa_data.Coord;
+        public startTime: number;
+        public endTime: number;
+        
+        private _available: boolean;
         private _pos: wwa_data.Coord;
         private _size: wwa_data.Coord;
+        private _soundNum: number;
         private _opacity: number;
         private _anim: Array<WWAPictureAnimation>;
-        private _zoon: WWAPictureZoom;
+        private _zoom: WWAPictureZoom;
         constructor() {
+            this._available = false;
         }
-        public parseToItem(message: string) {
-            var lines = message
-                .split(/\n\<c\>/i)[0]
-                .split(/\<c\>/i)[0]
-                .split(/\n/i);
-            lines.forEach((value, i) => {
-                var property = value.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)/);
-                if (property === null || property.length !== 3) {
-                    throw new Error("プロパティではありません");
+        // イメージの場所や各行の配列を引数にします
+        public setData(imgCropX: number, imgCropY: number, soundNum: number, message: Array<string>) {
+            this.imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
+            this.cropSize = new wwa_data.Coord(1, 1);
+
+            this._pos = new wwa_data.Coord(0, 0);
+            this._size = new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE, wwa_data.WWAConsts.CHIP_SIZE);
+
+            this._soundNum = soundNum;
+            message.forEach((line, index) => {
+                var propery = new wwa_picture.Property(line);
+                this.setProperty(propery);
+            }, this);
+            this._available = true;
+        }
+        public setProperty(property: Property) {
+            try {
+                if (property.getType() === propertyType.POS) {
+                    var x = property.getNumberValue(0);
+                    var y = property.getNumberValue(1);
+                    this._pos = new wwa_data.Coord(x, y);
+                } else if (property.getType() === propertyType.DELAY) {
+                    var time = property.getNumberValue(0);
+                    this.startTime = time;
+                } else if (property.getType() === propertyType.TIME) {
+                    var time = property.getNumberValue(0);
+                    this.endTime = time;
+                } else if (property.getType() === propertyType.SIZE) {
+                    var x = property.getNumberValue(0);
+                    var y = property.getNumberValue(1);
+                    this._size = new wwa_data.Coord(x, y);
+                } else if (property.getType() === propertyType.CLIP) {
+                    var x = property.getNumberValue(0);
+                    var y = property.getNumberValue(1);
+                    this.cropSize = new wwa_data.Coord(x, y);
                 }
-                
-            });
+            } catch (e) {
+
+            }
         }
-        public setItem(item) {
-            this._pos = new wwa_data.Coord(item.pos__X, item.pos__Y);
-            this._size = new wwa_data.Coord(item.size__X, item.size__Y);
-            this._opacity = item.opacity;
+        public isAvailable(): boolean {
+            return this._available;
         }
         public update() {
+            this.destPos = this._pos;
+            this.destSize = this._size;
+        }
+    }
+    export class Property {
+        private _key: string;
+        private _value: Array<string>;
+        constructor(line: string) {
+            var property = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)/);
+            if (property === null || property.length !== 3) {
+                throw new Error("プロパティではありません");
+            }
+            this._key = property[1];
+            this._value = property[2].split(",");
+        }
+        public getType(): propertyType {
+            return propertyTable[this._key];
+        }
+        public getNumberValue(num: number): number {
+            return parseInt(this._value[num], 10);
+        }
+        public getStringValue(num: number): string {
+            return this._value[num];
         }
     }
     export interface WWAPictureAnimation {

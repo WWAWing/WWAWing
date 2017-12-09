@@ -55,6 +55,18 @@ module wwa_cgmanager {
            );
         }
 
+        public drawCanvasWithSizeAndScale(chipX: number, chipY: number, cropX: number, cropY: number, width: number, height: number, canvasX: number, canvasY:number, isSub: boolean = false): void {
+            var ctx = isSub ? this._ctxSub : this._ctx;
+            if (!this._isLoaded) {
+                throw new Error("No image was loaded.");
+            }
+            ctx.drawImage(
+                this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
+                Consts.CHIP_SIZE * cropX, Consts.CHIP_SIZE * cropY, canvasX, canvasY,
+                width * cropX, height * cropY
+            )
+        }
+
 
         public drawCanvasWithUpperYLimit(chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;

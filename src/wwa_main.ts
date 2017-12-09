@@ -211,6 +211,12 @@ module wwa_main {
                 }
 
                 this._wwaData = e.data.wwaData;
+                // start PE
+                this._wwaData.pictureData = new Array(wwa_data.WWAConsts.PICTURE_LENGTH);
+                for (var i = 0; i < wwa_data.WWAConsts.PICTURE_LENGTH; i++) {
+                    this._wwaData.pictureData[i] = new wwa_picture.WWAPictureData();
+                }
+                // end PE
                 try {
                     if (this._hasTitleImg) {
                         util.$id("version").textContent += (
@@ -1381,6 +1387,7 @@ module wwa_main {
                 return;
             }
             this._cgManager.clearCanvas(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT);
+            this._cgManager.clearCanvas(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT, true);
             this._cgManager.drawBase(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT);
 
             if (this._camera.isResetting()) {
@@ -1428,6 +1435,7 @@ module wwa_main {
             }
             this._drawEffect();
             this._drawFaces();
+            this._drawPictures();
             this._drawFrame();
             
         }
@@ -1592,6 +1600,21 @@ module wwa_main {
 
         }
 
+        private _drawPictures() {
+            this._wwaData.pictureData.forEach((data, index) => {
+                if (data.isAvailable()) {
+                    data.update();
+                    this._cgManager.drawCanvasWithSizeAndScale(
+                        data.imageCrop.x, data.imageCrop.y,
+                        data.cropSize.x, data.cropSize.y,
+                        data.destSize.x, data.destSize.y,
+                        data.destPos.x, data.destPos.y,
+                        true
+                    );
+                }
+            }, this);
+        }
+
         private _checkNoDrawObject(objCoord: Coord, objType: number, atrNumber: number): boolean {
             var pPos: Position = this._player.getPosition();
             var pCoord: Coord = pPos.getPartsCoord();
@@ -1607,16 +1630,6 @@ module wwa_main {
                 objType === Consts.OBJECT_BUY || objType === Consts.OBJECT_SELL ||
                 objType === Consts.OBJECT_LOCALGATE
                 );
-        }
-
-        private _getMessage(partsID: number, partsType: number): String {
-            var messageID;
-            if (partsType === wwa_data.PartsType.OBJECT) {
-                messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
-            } else if (partsType === wwa_data.PartsType.MAP) {
-                messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
-            }
-            return this._wwaData.message[messageID];
         }
 
         public getMapWidth(): number {
@@ -2848,6 +2861,7 @@ module wwa_main {
                 newData = this._decodePassword( password );
             } else {
                 newData = <wwa_data.WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._quickSaveData));
+                console.log(newData);
             }
             // TODO: WWAEvalの属性変更対策, もう少しスマートなディープコピー方法考える
             newData.message = <string[]>JSON.parse(JSON.stringify(this._restartData.message ) );
@@ -2881,30 +2895,30 @@ module wwa_main {
         }
 
         private _applyQuickLoad( newData: wwa_data.WWAData): void {
-                this._player.setEnergyMax(newData.statusEnergyMax);
-                this._player.setEnergy(newData.statusEnergy);
-                this._player.setStrength(newData.statusStrength);
-                this._player.setDefence(newData.statusDefence);
-                this._player.setGold(newData.statusGold);
-                this._player.setMoveCount(newData.moves);
-                this._player.clearItemBox();
-                for (var i = 0; i < newData.itemBox.length; i++) {
-                    this._player.addItem(newData.itemBox[ i ], i + 1, true);
-                }
+            this._player.setEnergyMax(newData.statusEnergyMax);
+            this._player.setEnergy(newData.statusEnergy);
+            this._player.setStrength(newData.statusStrength);
+            this._player.setDefence(newData.statusDefence);
+            this._player.setGold(newData.statusGold);
+            this._player.setMoveCount(newData.moves);
+            this._player.clearItemBox();
+            for (var i = 0; i < newData.itemBox.length; i++) {
+                this._player.addItem(newData.itemBox[ i ], i + 1, true);
+            }
 
-                this._player.systemJumpTo(new wwa_data.Position(this, newData.playerX, newData.playerY, 0, 0));
-                if (newData.bgm === 0) {
-                    this.playSound(wwa_data.SystemSound.NO_SOUND);
-                } else {
-                    this.playSound(newData.bgm);
-                }
-                this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
-                if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
-                    this._player.setPartsAppearedFlag();
-                }
-                this._wwaData = newData;
-                this._replaceAllRandomObjects();
-                this.updateCSSRule();
+            this._player.systemJumpTo(new wwa_data.Position(this, newData.playerX, newData.playerY, 0, 0));
+            if (newData.bgm === 0) {
+                this.playSound(wwa_data.SystemSound.NO_SOUND);
+            } else {
+                this.playSound(newData.bgm);
+            }
+            this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
+            if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
+                this._player.setPartsAppearedFlag();
+            }
+            this._wwaData = newData;
+            this._replaceAllRandomObjects();
+            this.updateCSSRule();
         }
 
         private _restartGame(): void {
@@ -3667,9 +3681,23 @@ module wwa_main {
         }
 
         public createPictureData(partsID: number, id: number) {
-            this._wwaData.pictureData[id] = new wwa_picture.WWAPictureData();
-            var message = this._getMessage(partsID, wwa_data.PartsType.OBJECT);
-            this._wwaData.pictureData[id].setItem(message);
+            var mesID = this.getObjectAttributeById(partsID, wwa_data.WWAConsts.ATR_STRING);
+            var message = this.getMessageById(mesID);
+            var lines = message
+                .split(/\n\<c\>/i)[0]
+                .split(/\<c\>/i)[0]
+                .split(/\n/i);
+            if (lines[0] !== "$picture_define") {
+                throw new Error("イメージを定義するマクロ文がありません");
+            } else {
+                lines.splice(0, 1);
+            }
+            this._wwaData.pictureData[id].setData(
+                this.getObjectCropXById(partsID) / wwa_data.WWAConsts.CHIP_SIZE,
+                this.getObjectCropYById(partsID) / wwa_data.WWAConsts.CHIP_SIZE,
+                this.getObjectAttributeById(partsID, wwa_data.WWAConsts.ATR_SOUND),
+                lines
+            );
         }
 
         public showMonsterWindow(): void {
