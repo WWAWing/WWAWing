@@ -29,18 +29,15 @@ module wwa_picture {
         public startTime: number;
         public endTime: number;
         
-        private _available: boolean;
         private _pos: wwa_data.Coord;
         private _size: wwa_data.Coord;
         private _soundNum: number;
         private _opacity: number;
+
         private _anim: Array<WWAPictureAnimation>;
         private _zoom: WWAPictureZoom;
-        constructor() {
-            this._available = false;
-        }
-        // イメージの場所や各行の配列を引数にします
-        public setData(imgCropX: number, imgCropY: number, soundNum: number, message: Array<string>) {
+        
+        constructor(imgCropX: number, imgCropY: number, soundNum: number, message: Array<string>) {
             this.imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
             this.cropSize = new wwa_data.Coord(1, 1);
 
@@ -49,10 +46,9 @@ module wwa_picture {
 
             this._soundNum = soundNum;
             message.forEach((line, index) => {
-                var propery = new wwa_picture.Property(line);
+                var propery = new Property(line);
                 this.setProperty(propery);
             }, this);
-            this._available = true;
         }
         public setProperty(property: Property) {
             try {
@@ -78,9 +74,6 @@ module wwa_picture {
             } catch (e) {
 
             }
-        }
-        public isAvailable(): boolean {
-            return this._available;
         }
         public update() {
             this.destPos = this._pos;

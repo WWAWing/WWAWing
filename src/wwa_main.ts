@@ -136,6 +136,7 @@ module wwa_main {
         private _hasTitleImg: boolean;
   
         private _isActive: boolean;
+        private _pictureData: wwa_picture.WWAPictureData[];
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -212,9 +213,10 @@ module wwa_main {
 
                 this._wwaData = e.data.wwaData;
                 // start PE
-                this._wwaData.pictureData = new Array(wwa_data.WWAConsts.PICTURE_LENGTH);
+                this._wwaData.pictureID = new Array(wwa_data.WWAConsts.PICTURE_LENGTH);
+                this._pictureData = new Array(wwa_data.WWAConsts.PICTURE_LENGTH);
                 for (var i = 0; i < wwa_data.WWAConsts.PICTURE_LENGTH; i++) {
-                    this._wwaData.pictureData[i] = new wwa_picture.WWAPictureData();
+                    this._wwaData.pictureID[i] = 0;
                 }
                 // end PE
                 try {
@@ -1601,8 +1603,9 @@ module wwa_main {
         }
 
         private _drawPictures() {
-            this._wwaData.pictureData.forEach((data, index) => {
-                if (data.isAvailable()) {
+            this._wwaData.pictureID.forEach((partsID, id) => {
+                if (partsID != 0) {
+                    var data = this._pictureData[id];
                     data.update();
                     this._cgManager.drawCanvasWithSizeAndScale(
                         data.imageCrop.x, data.imageCrop.y,
@@ -2861,7 +2864,6 @@ module wwa_main {
                 newData = this._decodePassword( password );
             } else {
                 newData = <wwa_data.WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._quickSaveData));
-                console.log(newData);
             }
             // TODO: WWAEvalの属性変更対策, もう少しスマートなディープコピー方法考える
             newData.message = <string[]>JSON.parse(JSON.stringify(this._restartData.message ) );
@@ -2874,6 +2876,13 @@ module wwa_main {
             if( newData.mapObject === void 0 ) {
                 newData.mapObject = this._decompressMap(newData.mapObjectCompressed);
                 newData.mapObjectCompressed = void 0;
+            }
+            if (!restart) {
+                this._wwaData.pictureID.forEach((partsID, id) => {
+                    if (partsID != 0) {
+                        this.createPictureData(partsID, id);
+                    }
+                }, this);
             }
 
             if( password !== null ) {
@@ -3692,12 +3701,14 @@ module wwa_main {
             } else {
                 lines.splice(0, 1);
             }
-            this._wwaData.pictureData[id].setData(
+            this._pictureData[id] = new wwa_picture.WWAPictureData(
                 this.getObjectCropXById(partsID) / wwa_data.WWAConsts.CHIP_SIZE,
                 this.getObjectCropYById(partsID) / wwa_data.WWAConsts.CHIP_SIZE,
                 this.getObjectAttributeById(partsID, wwa_data.WWAConsts.ATR_SOUND),
                 lines
             );
+            console.log(this._pictureData[id]);
+            this._wwaData.pictureID[id] = partsID;
         }
 
         public showMonsterWindow(): void {

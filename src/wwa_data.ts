@@ -821,7 +821,7 @@ module wwa_data {
         checkOriginalMapString: string = void 0;
         checkString: string = void 0;
 
-        pictureData: wwa_picture.WWAPictureData[] = void 0;
+        pictureID: number[] = void 0;
 
         constructor() { }
     }
