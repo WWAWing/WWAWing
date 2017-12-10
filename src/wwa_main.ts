@@ -213,9 +213,9 @@ module wwa_main {
 
                 this._wwaData = e.data.wwaData;
                 // start PE
-                this._wwaData.pictureID = new Array(wwa_data.WWAConsts.PICTURE_LENGTH);
-                this._pictureData = new Array(wwa_data.WWAConsts.PICTURE_LENGTH);
-                for (var i = 0; i < wwa_data.WWAConsts.PICTURE_LENGTH; i++) {
+                this._wwaData.pictureID = new Array(Consts.PICTURE_LENGTH);
+                this._pictureData = new Array(Consts.PICTURE_LENGTH);
+                for (var i = 0; i < Consts.PICTURE_LENGTH; i++) {
                     this._wwaData.pictureID[i] = 0;
                 }
                 // end PE
@@ -1377,6 +1377,10 @@ module wwa_main {
             }
         }
 
+        private _isPrimaryAnimation(): boolean {
+            return this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
+        }
+
         private _drawAll() {
             var cpParts = this._camera.getPosition().getPartsCoord();
             var cpOffset = this._camera.getPosition().getOffsetCoord();
@@ -1526,7 +1530,7 @@ module wwa_main {
                         }
                     }
                     var imgType: boolean = (
-                        this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME ||
+                        this._isPrimaryAnimation() ||
                         this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
                         this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
                     );
@@ -1606,9 +1610,11 @@ module wwa_main {
             this._wwaData.pictureID.forEach((partsID, id) => {
                 if (partsID != 0) {
                     var data = this._pictureData[id];
+                    var isPrimaryAnimation = this._isPrimaryAnimation() || data.imageAnimCrop.x == 0 && data.imageAnimCrop.y == 0;
                     data.update();
                     this._cgManager.drawCanvasWithSizeAndScale(
-                        data.imageCrop.x, data.imageCrop.y,
+                        isPrimaryAnimation ? data.imageCrop.x : data.imageAnimCrop.x,
+                        isPrimaryAnimation ? data.imageCrop.y : data.imageAnimCrop.y,
                         data.cropSize.x, data.cropSize.y,
                         data.destSize.x, data.destSize.y,
                         data.destPos.x, data.destPos.y,
@@ -1689,11 +1695,19 @@ module wwa_main {
             return this._wwaData.objectAttribute[id][attr];
         }
 
-        public getObjectCropXById(id: number): number {
-            return this._wwaData.objectAttribute[id][Consts.ATR_X];
+        public getObjectCropXById(id: number, isSub: boolean = false): number {
+            if (isSub) {
+                return this._wwaData.objectAttribute[id][Consts.ATR_X2];
+            } else {
+                return this._wwaData.objectAttribute[id][Consts.ATR_X];
+            }
         }
-        public getObjectCropYById(id: number): number {
-            return this._wwaData.objectAttribute[id][Consts.ATR_Y];
+        public getObjectCropYById(id: number, isSub: boolean = false): number {
+            if (isSub) {
+                return this._wwaData.objectAttribute[id][Consts.ATR_Y2];
+            } else {
+                return this._wwaData.objectAttribute[id][Consts.ATR_Y];
+            }
         }
 
         public getMessageById(messageID: number): string {
@@ -3690,21 +3704,23 @@ module wwa_main {
         }
 
         public createPictureData(partsID: number, id: number) {
-            var mesID = this.getObjectAttributeById(partsID, wwa_data.WWAConsts.ATR_STRING);
+            var mesID = this.getObjectAttributeById(partsID, Consts.ATR_STRING);
             var message = this.getMessageById(mesID);
             var lines = message
                 .split(/\n\<c\>/i)[0]
                 .split(/\<c\>/i)[0]
                 .split(/\n/i);
-            if (lines[0] !== "$picture_define") {
+            if (wwa_data.macrotable[lines[0]] !== wwa_data.MacroType.PICTURE_DEFINE) {
                 throw new Error("イメージを定義するマクロ文がありません");
             } else {
                 lines.splice(0, 1);
             }
             this._pictureData[id] = new wwa_picture.WWAPictureData(
-                this.getObjectCropXById(partsID) / wwa_data.WWAConsts.CHIP_SIZE,
-                this.getObjectCropYById(partsID) / wwa_data.WWAConsts.CHIP_SIZE,
-                this.getObjectAttributeById(partsID, wwa_data.WWAConsts.ATR_SOUND),
+                this.getObjectCropXById(partsID) / Consts.CHIP_SIZE,
+                this.getObjectCropYById(partsID) / Consts.CHIP_SIZE,
+                this.getObjectCropXById(partsID, true) / Consts.CHIP_SIZE,
+                this.getObjectCropYById(partsID, true) / Consts.CHIP_SIZE,
+                this.getObjectAttributeById(partsID, Consts.ATR_SOUND),
                 lines
             );
             console.log(this._pictureData[id]);

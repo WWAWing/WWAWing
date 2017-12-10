@@ -6,39 +6,83 @@ module wwa_picture {
         POS = 1,
         DELAY = 2,
         TIME = 3,
-        SIZE = 4,
-        CLIP = 5,
-        NEXT = 6
+        NEXT = 4,
+        SIZE = 5,
+        CLIP = 6,
+        ANGLE = 7,
+        REPEAT = 8,
+        FILL = 9,
+        OPACITY = 10,
+        TEXT = 11,
+        TEXT_VAR = 12,
+        FONT = 13,
+        COLOR = 14,
+        ANIM_STRAIGHT = 21,
+        ANIM_CIRCLE = 22,
+        ANIM_ZOOM = 23,
+        ANIM_ROTATE = 24,
+        ANIM_FADE = 25,
+        ACCEL_STRAIGHT = 31,
+        ACCEL_CIRCLE = 32,
+        ACCEL_ZOOM = 33,
+        ACCEL_ROTATE = 34,
+        ACCEL_FADE = 35
     }
     export var propertyTable = {
-        ""      : 0,
-        "pos"   : 1,
-        "delay" : 2,
-        "time"  : 3,
-        "size"  : 4,
-        "clip"  : 5,
-        "next"  : 6
+        ""         : 0,
+        "pos"      : 1,
+        "delay"    : 2,
+        "time"     : 3,
+        "next"     : 4,
+        "size"     : 5,
+        "clip"     : 6,
+        "angle"    : 7,
+        "repeat"   : 8,
+        "fill"     : 9,
+        "opacity"  : 10,
+        "text"     : 11,
+        "text_var" : 12,
+        "font"     : 13,
+        "color"    : 14,
+        "anim_straight" : 21,
+        "anim_circle"   : 22,
+        "anim_zoom"     : 23,
+        "anim_rotate"   : 24,
+        "anim_fade"     : 25,
+        "accel_straight" : 31,
+        "accel_circle"   : 32,
+        "accel_zoom"     : 33,
+        "accel_rotate"   : 34,
+        "accel_fade"     : 35
     };
     export class WWAPictureData {
         // dest** は元変数から update 関数で出力した値
         public destPos: wwa_data.Coord;
         public destSize: wwa_data.Coord;
-        
-        public imageCrop: wwa_data.Coord;
-        public cropSize: wwa_data.Coord;
-        public startTime: number;
-        public endTime: number;
+        public destAngle: wwa_data.Coord;
+        public destOpacity: number;
         
         private _pos: wwa_data.Coord;
         private _size: wwa_data.Coord;
-        private _soundNum: number;
+        private _angle: wwa_data.Coord;
         private _opacity: number;
+        
+        public imageCrop: wwa_data.Coord;
+        public imageAnimCrop: wwa_data.Coord;
+        public cropSize: wwa_data.Coord;
+        public startTime: number;
+        public endTime: number;
 
+        private _soundNum: number;
         private _anim: Array<WWAPictureAnimation>;
         private _zoom: WWAPictureZoom;
         
-        constructor(imgCropX: number, imgCropY: number, soundNum: number, message: Array<string>) {
+        constructor(
+            imgCropX: number, imgCropY: number,
+            imgAnimCropX: number, imgAnimCropY: number,
+            soundNum: number, message: Array<string>) {
             this.imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
+            this.imageAnimCrop = new wwa_data.Coord(imgAnimCropX, imgAnimCropY);
             this.cropSize = new wwa_data.Coord(1, 1);
 
             this._pos = new wwa_data.Coord(0, 0);
@@ -62,6 +106,8 @@ module wwa_picture {
                 } else if (property.getType() === propertyType.TIME) {
                     var time = property.getNumberValue(0);
                     this.endTime = time;
+                } else if (property.getType() === propertyType.NEXT) {
+
                 } else if (property.getType() === propertyType.SIZE) {
                     var x = property.getNumberValue(0);
                     var y = property.getNumberValue(1);
@@ -70,6 +116,14 @@ module wwa_picture {
                     var x = property.getNumberValue(0);
                     var y = property.getNumberValue(1);
                     this.cropSize = new wwa_data.Coord(x, y);
+                } else if (property.getType() === propertyType.ANGLE) {
+
+                } else if (property.getType() === propertyType.REPEAT) {
+
+                } else if (property.getType() === propertyType.FILL) {
+
+                } else if (property.getType() === propertyType.OPACITY) {
+
                 }
             } catch (e) {
 
