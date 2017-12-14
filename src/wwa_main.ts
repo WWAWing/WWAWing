@@ -136,7 +136,7 @@ module wwa_main {
         private _hasTitleImg: boolean;
   
         private _isActive: boolean;
-        private _pictureData: wwa_picture.WWAPictureData[];
+        private _pictureData: wwa_picture.PictureData[];
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -1620,6 +1620,10 @@ module wwa_main {
                         data.destPos.x, data.destPos.y,
                         true
                     );
+                    if (data.isTimeOut()) {
+                        this._wwaData.pictureID[id] = 0; // partsID = 0 だと動かなかったので
+                        this._pictureData[id] = null;
+                    }
                 }
             }, this);
         }
@@ -3715,12 +3719,13 @@ module wwa_main {
             } else {
                 lines.splice(0, 1);
             }
-            this._pictureData[id] = new wwa_picture.WWAPictureData(
+            this._pictureData[id] = new wwa_picture.PictureData(
                 this.getObjectCropXById(partsID) / Consts.CHIP_SIZE,
                 this.getObjectCropYById(partsID) / Consts.CHIP_SIZE,
                 this.getObjectCropXById(partsID, true) / Consts.CHIP_SIZE,
                 this.getObjectCropYById(partsID, true) / Consts.CHIP_SIZE,
                 this.getObjectAttributeById(partsID, Consts.ATR_SOUND),
+                this.getObjectAttributeById(partsID, Consts.ATR_NUMBER),
                 lines
             );
             console.log(this._pictureData[id]);

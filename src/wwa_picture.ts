@@ -4,15 +4,14 @@ module wwa_picture {
     export enum propertyType {
         UNDEFINED = 0,
         POS = 1,
-        DELAY = 2,
-        TIME = 3,
-        NEXT = 4,
-        SIZE = 5,
-        CLIP = 6,
-        ANGLE = 7,
-        REPEAT = 8,
-        FILL = 9,
-        OPACITY = 10,
+        TIME = 2,
+        NEXT = 3,
+        SIZE = 4,
+        CLIP = 5,
+        ANGLE = 6,
+        REPEAT = 7,
+        FILL = 8,
+        OPACITY = 9,
         TEXT = 11,
         TEXT_VAR = 12,
         FONT = 13,
@@ -31,15 +30,14 @@ module wwa_picture {
     export var propertyTable = {
         ""         : 0,
         "pos"      : 1,
-        "delay"    : 2,
-        "time"     : 3,
-        "next"     : 4,
-        "size"     : 5,
-        "clip"     : 6,
-        "angle"    : 7,
-        "repeat"   : 8,
-        "fill"     : 9,
-        "opacity"  : 10,
+        "time"     : 2,
+        "next"     : 3,
+        "size"     : 4,
+        "clip"     : 5,
+        "angle"    : 6,
+        "repeat"   : 7,
+        "fill"     : 8,
+        "opacity"  : 9,
         "text"     : 11,
         "text_var" : 12,
         "font"     : 13,
@@ -55,7 +53,7 @@ module wwa_picture {
         "accel_rotate"   : 34,
         "accel_fade"     : 35
     };
-    export class WWAPictureData {
+    export class PictureData {
         // dest** は元変数から update 関数で出力した値
         public destPos: wwa_data.Coord;
         public destSize: wwa_data.Coord;
@@ -74,16 +72,19 @@ module wwa_picture {
         public endTime: number;
 
         private _soundNum: number;
+        private _timer: number;
         private _anim: Array<WWAPictureAnimation>;
         private _zoom: WWAPictureZoom;
         
         constructor(
-            imgCropX: number, imgCropY: number,
-            imgAnimCropX: number, imgAnimCropY: number,
-            soundNum: number, message: Array<string>) {
+        imgCropX: number, imgCropY: number,
+        imgAnimCropX: number, imgAnimCropY: number,
+        soundNum: number, waitTime: number, message: Array<string>) {
             this.imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
             this.imageAnimCrop = new wwa_data.Coord(imgAnimCropX, imgAnimCropY);
             this.cropSize = new wwa_data.Coord(1, 1);
+            this.startTime = waitTime;
+            this._timer = 0;
 
             this._pos = new wwa_data.Coord(0, 0);
             this._size = new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE, wwa_data.WWAConsts.CHIP_SIZE);
@@ -100,14 +101,10 @@ module wwa_picture {
                     var x = property.getNumberValue(0);
                     var y = property.getNumberValue(1);
                     this._pos = new wwa_data.Coord(x, y);
-                } else if (property.getType() === propertyType.DELAY) {
-                    var time = property.getNumberValue(0);
-                    this.startTime = time;
                 } else if (property.getType() === propertyType.TIME) {
                     var time = property.getNumberValue(0);
                     this.endTime = time;
                 } else if (property.getType() === propertyType.NEXT) {
-
                 } else if (property.getType() === propertyType.SIZE) {
                     var x = property.getNumberValue(0);
                     var y = property.getNumberValue(1);
@@ -132,6 +129,13 @@ module wwa_picture {
         public update() {
             this.destPos = this._pos;
             this.destSize = this._size;
+            this._timer++;
+        }
+        public isTimeOut(): boolean {
+            if (this.endTime === undefined) {
+                return false;
+            }
+            return this._timer >= this.endTime;
         }
     }
     export class Property {
