@@ -288,6 +288,51 @@ module wwa_data {
         }
     }
 
+    export class Timer {
+        public isSet: boolean;
+        private _time: number;
+        private _isAvailable: boolean;
+        // コンストラクタでは、タイムが0でなければ自動で開始します。
+        constructor(time: number) {
+            this._time = time;
+            if (this._time > 0) {
+                this.isSet = true;
+            } else {
+                this.isSet = false;
+            }
+            // タイマーは、自動では開始されません。
+            this._isAvailable = false;
+        }
+        tick() {
+            if (this.isAvailable()) {
+                this._time--;
+            }
+        }
+        start() {
+            if (this.isSet) {
+                this._isAvailable = true;
+            }
+        }
+        stop() {
+            this._isAvailable = false;
+        }
+        isAvailable(): boolean {
+            if (!this.isSet) {
+                return false;
+            }
+            return this._isAvailable;
+        }
+        isTimeOut(): boolean {
+            if (!this.isSet) {
+                return false;
+            }
+            return this._time <= 0;
+        }
+        get time() {
+            return this._time;
+        }
+    }
+
     export enum Direction {
         LEFT  = 0,
         RIGHT = 1,

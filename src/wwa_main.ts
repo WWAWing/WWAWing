@@ -1608,10 +1608,13 @@ module wwa_main {
 
         private _drawPictures() {
             this._wwaData.pictureID.forEach((partsID, id) => {
-                if (partsID != 0) {
-                    var data = this._pictureData[id];
-                    var isPrimaryAnimation = this._isPrimaryAnimation() || data.imageAnimCrop.x == 0 && data.imageAnimCrop.y == 0;
-                    data.update();
+                if (partsID == 0) {
+                    return;
+                }
+                var data = this._pictureData[id];
+                var isPrimaryAnimation = this._isPrimaryAnimation() || !data.hasSecondaryImage();
+                data.update();
+                if (data.isVisible()) {
                     this._cgManager.drawCanvasWithSizeAndScale(
                         isPrimaryAnimation ? data.imageCrop.x : data.imageAnimCrop.x,
                         isPrimaryAnimation ? data.imageCrop.y : data.imageAnimCrop.y,
@@ -1620,9 +1623,12 @@ module wwa_main {
                         data.destPos.x, data.destPos.y,
                         true
                     );
-                    if (data.isTimeOut()) {
-                        this._wwaData.pictureID[id] = 0; // partsID = 0 だと動かなかったので
-                        this._pictureData[id] = null;
+                }
+                if (data.isTimeOut()) {
+                    this._wwaData.pictureID[id] = data.nextPictureData; // partsID = 0 だと動かなかったので
+                    this._pictureData[id] = null;
+                    if (data.nextPictureData != 0) {
+                        this.createPictureData(data.nextPictureData, id);
                     }
                 }
             }, this);
