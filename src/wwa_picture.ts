@@ -63,21 +63,24 @@ module wwa_picture {
         // プロパティ指定
         public destPos: wwa_data.Coord;
         public destSize: wwa_data.Coord;
-        public destAngle: wwa_data.Coord;
+        public destAngle: number;
         public destOpacity: number;
         public cropSize: wwa_data.Coord;
+        public repeat: wwa_data.Coord;
         public nextPictureData: number;
         public nextParts: number;
         // dest** は元変数から update 関数で出力した値
         private _pos: wwa_data.Coord;
         private _size: wwa_data.Coord;
         private _angle: number;
-        private _repeat: wwa_data.Coord;
         private _opacity: number;
         // 内部制御用
         private _timer: wwa_data.Timer; // 参照される側
         private _anim: Array<WWAPictureAnimation>;
         private _zoom: WWAPictureZoom;
+
+        public startTimeOutCallBack: () => void;
+        public dispTimeOutCallBack: () => void;
         
         constructor(
         imgCropX: number, imgCropY: number,
@@ -86,20 +89,27 @@ module wwa_picture {
             this.imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
             this.imageAnimCrop = new wwa_data.Coord(secondImgCropX, secondImgCropY);
             this.cropSize = new wwa_data.Coord(1, 1);
+            this.repeat = new wwa_data.Coord(1, 1);
             this.nextPictureData = 0;
-            this._startTimer = new wwa_data.Timer(waitTime);
+            this._startTimer = new wwa_data.Timer(waitTime, () => {
+                if (this._startTimer.isTimeOut() && this._dispTimer !== undefined) {
+                    this._changeTimer(this._dispTimer);
+                }
+            });
             this._timer = this._startTimer;
-            this._timer.start();
             
             // 既定値を設定
             this._pos = new wwa_data.Coord(0, 0);
             this._size = new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE, wwa_data.WWAConsts.CHIP_SIZE);
+            this._angle = 0;
+            this._opacity = 1.0;
             this._soundNum = soundNum;
 
             message.forEach((line, index) => {
                 var property = new Property(this, line);
                 property.setProperty();
             }, this);
+            this._timer.start();
         }
         public update() {
             this._timer.tick();
@@ -110,6 +120,8 @@ module wwa_picture {
         private _animate() {
             this.destPos = this._pos;
             this.destSize = this._size;
+            this.destAngle = this._angle;
+            this.destOpacity = this._opacity;
         }
         public isVisible(): boolean {
             if (!this._startTimer.isSet) {
@@ -118,12 +130,12 @@ module wwa_picture {
             return this._startTimer.isTimeOut();
         }
         public isTimeOut(): boolean {
-            if (this._startTimer.isTimeOut() && this._dispTimer !== undefined) {
-                this._timer.stop();
-                this._timer = this._dispTimer;
-                this._timer.start();
-            }
             return this._timer.isTimeOut();
+        }
+        private _changeTimer(newTimer: wwa_data.Timer) {
+            this._timer.stop();
+            this._timer = newTimer;
+            this._timer.start();
         }
         public hasSecondaryImage(): boolean {
             return this.imageAnimCrop.x != 0 || this.imageAnimCrop.y != 0;
@@ -135,7 +147,6 @@ module wwa_picture {
             this._dispTimer = new wwa_data.Timer(time);
             if (!this._startTimer.isSet) {
                 this._timer = this._dispTimer;
-                this._timer.start();
             }
         }
         set size(size: wwa_data.Coord) {
@@ -144,14 +155,11 @@ module wwa_picture {
         set angle(angle: number) {
             this._angle = angle;
         }
-        set repeat(repeat: wwa_data.Coord) {
-            this._repeat = repeat;
-        }
         set opacity(opacity: number) {
             if (opacity > 1.0) {
-                this.opacity = 1.0;
+                this._opacity = 1.0;
             } else {
-                this.opacity = opacity;
+                this._opacity = opacity;
             }
         }
     }
@@ -169,42 +177,50 @@ module wwa_picture {
         public setProperty() {
             try {
                 if (this._type === propertyType.POS) {
-                    var x = this.getNumberValue(0);
-                    var y = this.getNumberValue(1);
+                    var x = this.getIntValue(0);
+                    var y = this.getIntValue(1);
                     this._data.pos = new wwa_data.Coord(x, y);
                 } else if (this._type === propertyType.TIME) {
-                    var time = this.getNumberValue(0);
-                    var next = this.getNumberValue(1, 0);
+                    var time = this.getIntValue(0);
+                    var next = this.getIntValue(1, 0);
                     this._data.endTime = time;
                     this._data.nextPictureData = next;
                 } else if (this._type === propertyType.NEXT) {
                 } else if (this._type === propertyType.SIZE) {
-                    var w = this.getNumberValue(0);
-                    var h = this.getNumberValue(1);
+                    var w = this.getIntValue(0);
+                    var h = this.getIntValue(1);
                     this._data.size = new wwa_data.Coord(w, h);
                 } else if (this._type === propertyType.CLIP) {
-                    var w = this.getNumberValue(0);
-                    var h = this.getNumberValue(1);
+                    var w = this.getIntValue(0);
+                    var h = this.getIntValue(1);
                     this._data.cropSize = new wwa_data.Coord(w, h);
                 } else if (this._type === propertyType.ANGLE) {
-                    var angle = this.getNumberValue(0);
+                    var angle = this.getFloatValue(0);
                     this._data.angle = angle;
                 } else if (this._type === propertyType.REPEAT) {
-                    var w = this.getNumberValue(0);
-                    var h = this.getNumberValue(1);
+                    var w = this.getIntValue(0);
+                    var h = this.getIntValue(1);
                     this._data.repeat = new wwa_data.Coord(w, h);
                 } else if (this._type === propertyType.FILL) {
                     // SCREEN_WIDTH は横幅14マスなんだよなあ、ステータス欄を除外するように調整したい
                     this._data.repeat = new wwa_data.Coord(wwa_data.WWAConsts.SCREEN_WIDTH / wwa_data.WWAConsts.CHIP_SIZE, wwa_data.WWAConsts.SCREEN_HEIGHT / wwa_data.WWAConsts.CHIP_SIZE);
                 } else if (this._type === propertyType.OPACITY) {
-                    this._data.opacity;
+                    var v = this.getFloatValue(0);
+                    this._data.opacity = v;
                 }
             } catch (e) {
 
             }
         }
-        public getNumberValue(num: number, fallback: number = 0): number {
+        public getIntValue(num: number, fallback: number = 0): number {
             var value = parseInt(this._value[num], 10);
+            if (isNaN(value)) {
+                return fallback;
+            }
+            return value;
+        }
+        public getFloatValue(num: number, fallback: number = 0.0): number {
+            var value = parseFloat(this._value[num]);
             if (isNaN(value)) {
                 return fallback;
             }

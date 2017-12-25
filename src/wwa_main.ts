@@ -137,6 +137,7 @@ module wwa_main {
   
         private _isActive: boolean;
         private _pictureData: wwa_picture.PictureData[];
+        private _pictureManager: wwa_cgmanager.PictureManager;
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -668,6 +669,7 @@ module wwa_main {
                     }, Consts.DEFAULT_FRAME_INTERVAL);
                     
                 });
+                this._pictureManager = new wwa_cgmanager.PictureManager(ctx, ctxSub, this._wwaData.mapCGName, (): void => {});
             }
             if (wwap_mode|| Worker === void 0) {
                 var script: HTMLScriptElement;
@@ -1615,14 +1617,7 @@ module wwa_main {
                 var isPrimaryAnimation = this._isPrimaryAnimation() || !data.hasSecondaryImage();
                 data.update();
                 if (data.isVisible()) {
-                    this._cgManager.drawCanvasWithSizeAndScale(
-                        isPrimaryAnimation ? data.imageCrop.x : data.imageAnimCrop.x,
-                        isPrimaryAnimation ? data.imageCrop.y : data.imageAnimCrop.y,
-                        data.cropSize.x, data.cropSize.y,
-                        data.destSize.x, data.destSize.y,
-                        data.destPos.x, data.destPos.y,
-                        true
-                    );
+                    this._pictureManager.drawPictureData(data, true);
                 }
                 if (data.isTimeOut()) {
                     this._wwaData.pictureID[id] = data.nextPictureData; // partsID = 0 だと動かなかったので

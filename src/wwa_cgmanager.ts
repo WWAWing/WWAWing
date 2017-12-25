@@ -1,15 +1,16 @@
 ﻿/// <reference path="./wwa_data.ts" />
 /// <reference path="./wwa_input.ts" />
 /// <reference path="./wwa_camera.ts" />
+/// <reference path="./wwa_picture.ts" />
 /// <reference path="./wwa_main.ts" />
 
 module wwa_cgmanager {
     import Consts = wwa_data.WWAConsts;
     import Position = wwa_data.Position;
     export class CGManager {
-        private _ctx: CanvasRenderingContext2D;
-        private _ctxSub: CanvasRenderingContext2D;
-        private _isLoaded: boolean = false;
+        protected _ctx: CanvasRenderingContext2D;
+        protected _ctxSub: CanvasRenderingContext2D;
+        protected _isLoaded: boolean = false;
         private _fileName: string;
         private _loadCompleteCallBack: () => void;
         private _image: HTMLImageElement;
@@ -29,6 +30,10 @@ module wwa_cgmanager {
             });
             this._image.src = this._fileName;
             this._isLoaded = true;
+        }
+
+        public getImage(): HTMLImageElement {
+            return this._image;
         }
         
         public drawCanvas(chipX: number, chipY: number, canvasX: number, canvasY: number, isSub: boolean = false): void {
@@ -54,19 +59,6 @@ module wwa_cgmanager {
                 Consts.CHIP_SIZE * width, Consts.CHIP_SIZE * height
            );
         }
-
-        public drawCanvasWithSizeAndScale(chipX: number, chipY: number, cropX: number, cropY: number, width: number, height: number, canvasX: number, canvasY:number, isSub: boolean = false): void {
-            var ctx = isSub ? this._ctxSub : this._ctx;
-            if (!this._isLoaded) {
-                throw new Error("No image was loaded.");
-            }
-            ctx.drawImage(
-                this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
-                Consts.CHIP_SIZE * cropX, Consts.CHIP_SIZE * cropY, canvasX, canvasY,
-                width * cropX, height * cropY
-            )
-        }
-
 
         public drawCanvasWithUpperYLimit(chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;
@@ -120,6 +112,38 @@ module wwa_cgmanager {
             this._loadCompleteCallBack = loadCompleteCallBack;
             this._load();
         } 
+    }
+
+    export class PictureManager extends CGManager {
+
+        public drawPictureData(pictureData: wwa_picture.PictureData, isSub: boolean = false): void {
+            var ctx = isSub ? this._ctxSub : this._ctx;
+            ctx.rotate(pictureData.destAngle);
+            ctx.globalAlpha = pictureData.destOpacity;
+            if (!this._isLoaded) {
+                throw new Error("No image was loaded.");
+            }
+            this.drawCanvasWithPictureData(pictureData, isSub);
+        }
+
+        public drawCanvasWithPictureData(pictureData: wwa_picture.PictureData, isSub: boolean = false): void {
+            var ctx = isSub ? this._ctxSub : this._ctx;
+            
+            for (var y = 0; y < pictureData.repeat.y; y++) {
+                for (var x = 0; x < pictureData.repeat.x; x++) {
+                    ctx.drawImage(
+                        this.getImage(), Consts.CHIP_SIZE * pictureData.imageCrop.x, Consts.CHIP_SIZE * pictureData.imageCrop.y,
+                        Consts.CHIP_SIZE * pictureData.cropSize.x, Consts.CHIP_SIZE * pictureData.cropSize.y,
+                        pictureData.destPos.x + (x * Consts.CHIP_SIZE), pictureData.destPos.y + (y * Consts.CHIP_SIZE),
+                        pictureData.destSize.x * pictureData.cropSize.x, pictureData.destSize.y * pictureData.cropSize.y
+                    );
+                }
+            }
+        }
+        
+        public constructor(ctx: CanvasRenderingContext2D, ctxSub: CanvasRenderingContext2D, fileName: string, loadCompleteCallBack: () => void) {
+            super(ctx, ctxSub, fileName, loadCompleteCallBack);
+        }
     }
 
 }

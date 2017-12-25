@@ -292,20 +292,25 @@ module wwa_data {
         public isSet: boolean;
         private _time: number;
         private _isAvailable: boolean;
+        private _isTimeOutCallBack: () => void;
         // コンストラクタでは、タイムが0でなければ自動で開始します。
-        constructor(time: number) {
+        constructor(time: number, isTimeOutCallBack: () => void = () => {}) {
             this._time = time;
             if (this._time > 0) {
                 this.isSet = true;
             } else {
                 this.isSet = false;
             }
+            this._isTimeOutCallBack = isTimeOutCallBack;
             // タイマーは、自動では開始されません。
             this._isAvailable = false;
         }
         tick() {
             if (this.isAvailable()) {
                 this._time--;
+            }
+            if (this.isTimeOut()) {
+                this._isTimeOutCallBack();
             }
         }
         start() {
