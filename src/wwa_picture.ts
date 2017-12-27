@@ -54,9 +54,10 @@ module wwa_picture {
         "accel_fade"     : 35
     };
     export class PictureData {
+        public static isPrimaryAnimationTime: boolean = true;
         // 初期設定
-        public imageCrop: wwa_data.Coord;
-        public imageAnimCrop: wwa_data.Coord;
+        private _imageCrop: wwa_data.Coord;
+        private _secondImageCrop: wwa_data.Coord;
         private _startTimer: wwa_data.Timer;
         private _dispTimer: wwa_data.Timer;
         private _soundNum: number;
@@ -75,28 +76,24 @@ module wwa_picture {
         private _angle: number;
         private _opacity: number;
         // 内部制御用
-        private _timer: wwa_data.Timer; // 参照される側
         private _anim: Array<WWAPictureAnimation>;
         private _zoom: WWAPictureZoom;
 
-        public startTimeOutCallBack: () => void;
-        public dispTimeOutCallBack: () => void;
-        
         constructor(
         imgCropX: number, imgCropY: number,
         secondImgCropX: number, secondImgCropY: number,
         soundNum: number, waitTime: number, message: Array<string>) {
-            this.imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
-            this.imageAnimCrop = new wwa_data.Coord(secondImgCropX, secondImgCropY);
+            this._imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
+            this._secondImageCrop = new wwa_data.Coord(secondImgCropX, secondImgCropY);
             this.cropSize = new wwa_data.Coord(1, 1);
             this.repeat = new wwa_data.Coord(1, 1);
             this.nextPictureData = 0;
-            this._startTimer = new wwa_data.Timer(waitTime, () => {
-                if (this._startTimer.isTimeOut() && this._dispTimer !== undefined) {
-                    this._changeTimer(this._dispTimer);
-                }
-            });
-            this._timer = this._startTimer;
+            this._startTimer = waitTime > 0
+            ? new wwa_data.NormalTimer(waitTime, true, () => {
+                this._dispTimer.start();
+            })
+            : new wwa_data.EmptyTimer();
+            this._dispTimer = new wwa_data.EmptyTimer();
             
             // 既定値を設定
             this._pos = new wwa_data.Coord(0, 0);
@@ -109,10 +106,9 @@ module wwa_picture {
                 var property = new Property(this, line);
                 property.setProperty();
             }, this);
-            this._timer.start();
         }
         public update() {
-            this._timer.tick();
+            this.getTimer().tick();
             if (this.isVisible()) {
                 this._animate();
             }
@@ -124,30 +120,31 @@ module wwa_picture {
             this.destOpacity = this._opacity;
         }
         public isVisible(): boolean {
-            if (!this._startTimer.isSet) {
-                return true;
+            return !this._startTimer.isAvailable();
+        }
+        public getTimer(): wwa_data.Timer {
+            if (this._startTimer.isAvailable()) {
+                return this._startTimer;
             }
-            return this._startTimer.isTimeOut();
+            return this._dispTimer;
         }
         public isTimeOut(): boolean {
-            return this._timer.isTimeOut();
+            return this.getTimer().isTimeOut();
         }
-        private _changeTimer(newTimer: wwa_data.Timer) {
-            this._timer.stop();
-            this._timer = newTimer;
-            this._timer.start();
+        public getImageCrop(): wwa_data.Coord {
+            if (this.hasSecondaryImage()) {
+                return PictureData.isPrimaryAnimationTime ? this._imageCrop : this._secondImageCrop;
+            }
+            return this._imageCrop;
         }
         public hasSecondaryImage(): boolean {
-            return this.imageAnimCrop.x != 0 || this.imageAnimCrop.y != 0;
+            return this._secondImageCrop.x != 0 || this._secondImageCrop.y != 0;
         }
         set pos(pos: wwa_data.Coord) {
             this._pos = pos;
         }
         set endTime(time: number) {
-            this._dispTimer = new wwa_data.Timer(time);
-            if (!this._startTimer.isSet) {
-                this._timer = this._dispTimer;
-            }
+            this._dispTimer = new wwa_data.NormalTimer(time, !this._startTimer.isAvailable());
         }
         set size(size: wwa_data.Coord) {
             this._size = size;

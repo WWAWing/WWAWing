@@ -288,53 +288,63 @@ module wwa_data {
         }
     }
 
-    export class Timer {
-        public isSet: boolean;
+    export interface Timer {
+        tick();
+        start();
+        stop();
+        isAvailable(): boolean;
+        isTimeOut(): boolean;
+    }
+
+    export class NormalTimer implements Timer {
         private _time: number;
         private _isAvailable: boolean;
         private _isTimeOutCallBack: () => void;
-        // コンストラクタでは、タイムが0でなければ自動で開始します。
-        constructor(time: number, isTimeOutCallBack: () => void = () => {}) {
+        constructor(time: number, autoStart: boolean, isTimeOutCallBack: () => void = () => {}) {
             this._time = time;
-            if (this._time > 0) {
-                this.isSet = true;
-            } else {
-                this.isSet = false;
-            }
             this._isTimeOutCallBack = isTimeOutCallBack;
-            // タイマーは、自動では開始されません。
-            this._isAvailable = false;
+            this._isAvailable = autoStart;
         }
-        tick() {
+        public tick() {
             if (this.isAvailable()) {
                 this._time--;
-            }
-            if (this.isTimeOut()) {
-                this._isTimeOutCallBack();
-            }
-        }
-        start() {
-            if (this.isSet) {
-                this._isAvailable = true;
+                if (this.isTimeOut()) {
+                    this.stop();
+                    this._isTimeOutCallBack();
+                }
             }
         }
-        stop() {
+        public start() {
+            this._isAvailable = true;
+        }
+        public stop() {
             this._isAvailable = false;
         }
-        isAvailable(): boolean {
-            if (!this.isSet) {
-                return false;
-            }
+        public isAvailable(): boolean {
             return this._isAvailable;
         }
-        isTimeOut(): boolean {
-            if (!this.isSet) {
-                return false;
-            }
+        public isTimeOut(): boolean {
             return this._time <= 0;
         }
         get time() {
             return this._time;
+        }
+    }
+
+    export class EmptyTimer implements Timer {
+        constructor() {
+        }
+        public tick(){
+        }
+        public start() {
+        }
+        public stop() {
+        }
+        public isAvailable(): boolean{
+            return false;
+        }
+        public isTimeOut(): boolean {
+            return false;
         }
     }
 

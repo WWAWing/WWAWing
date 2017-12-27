@@ -1614,13 +1614,13 @@ module wwa_main {
                     return;
                 }
                 var data = this._pictureData[id];
-                var isPrimaryAnimation = this._isPrimaryAnimation() || !data.hasSecondaryImage();
+                wwa_picture.PictureData.isPrimaryAnimationTime = this._isPrimaryAnimation();
                 data.update();
                 if (data.isVisible()) {
                     this._pictureManager.drawPictureData(data, true);
                 }
                 if (data.isTimeOut()) {
-                    this._wwaData.pictureID[id] = data.nextPictureData; // partsID = 0 だと動かなかったので
+                    this._wwaData.pictureID[id] = data.nextPictureData;
                     this._pictureData[id] = null;
                     if (data.nextPictureData != 0) {
                         this.createPictureData(data.nextPictureData, id);
