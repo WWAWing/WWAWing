@@ -444,6 +444,7 @@ module wwa_message {
             }
             this._checkPartsID(partsID, wwa_data.PartsType.OBJECT);
             this._wwa.createPictureData(partsID, id);
+            this._wwa.addStartPictureTimerWaiting(id);
         }
 
         private _exexutePictureDefineMacro(): void {

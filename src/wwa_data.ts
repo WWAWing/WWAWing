@@ -288,63 +288,37 @@ module wwa_data {
         }
     }
 
-    export interface Timer {
-        tick();
-        start();
-        stop();
-        isAvailable(): boolean;
-        isTimeOut(): boolean;
-    }
-
-    export class NormalTimer implements Timer {
+    export class Timer {
         private _time: number;
         private _isAvailable: boolean;
-        private _isTimeOutCallBack: () => void;
-        constructor(time: number, autoStart: boolean, isTimeOutCallBack: () => void = () => {}) {
-            this._time = time;
-            this._isTimeOutCallBack = isTimeOutCallBack;
+        private _isTimeout: boolean;
+        public timeoutCallBack: () => void;
+        constructor(time: number, autoStart: boolean, timeoutCallBack: () => void = () => {}) {
+            this._time = time * 100;
             this._isAvailable = autoStart;
-        }
-        public tick() {
-            if (this.isAvailable()) {
-                this._time--;
-                if (this.isTimeOut()) {
-                    this.stop();
-                    this._isTimeOutCallBack();
-                }
+            this.timeoutCallBack = timeoutCallBack;
+            if (autoStart) {
+                this.start();
             }
+            this._isTimeout = false;
         }
         public start() {
             this._isAvailable = true;
+            setTimeout(this.timeout, this._time, this);
         }
         public stop() {
             this._isAvailable = false;
+            this._isTimeout = true;
         }
-        public isAvailable(): boolean {
+        public timeout(self: Timer) {
+            self.stop();
+            self.timeoutCallBack();
+        }
+        get isAvailable() {
             return this._isAvailable;
         }
-        public isTimeOut(): boolean {
-            return this._time <= 0;
-        }
-        get time() {
-            return this._time;
-        }
-    }
-
-    export class EmptyTimer implements Timer {
-        constructor() {
-        }
-        public tick(){
-        }
-        public start() {
-        }
-        public stop() {
-        }
-        public isAvailable(): boolean{
-            return false;
-        }
-        public isTimeOut(): boolean {
-            return false;
+        get isTimeout() {
+            return this._isTimeout;
         }
     }
 

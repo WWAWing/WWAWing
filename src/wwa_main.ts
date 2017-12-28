@@ -138,6 +138,7 @@ module wwa_main {
         private _isActive: boolean;
         private _pictureData: wwa_picture.PictureData[];
         private _pictureManager: wwa_cgmanager.PictureManager;
+        private _reservedStartPictureTimerTurn: number[];
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -216,6 +217,7 @@ module wwa_main {
                 // start PE
                 this._wwaData.pictureID = new Array(Consts.PICTURE_LENGTH);
                 this._pictureData = new Array(Consts.PICTURE_LENGTH);
+                this._reservedStartPictureTimerTurn = new Array();
                 for (var i = 0; i < Consts.PICTURE_LENGTH; i++) {
                     this._wwaData.pictureID[i] = 0;
                 }
@@ -1623,7 +1625,7 @@ module wwa_main {
                     this._wwaData.pictureID[id] = data.nextPictureData;
                     this._pictureData[id] = null;
                     if (data.nextPictureData != 0) {
-                        this.createPictureData(data.nextPictureData, id);
+                        this.createPictureData(data.nextPictureData, id, true);
                     }
                 }
             }, this);
@@ -3409,6 +3411,10 @@ module wwa_main {
                 this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                 this._reservedMoveMacroTurn = void 0;
             }
+            while (this._reservedStartPictureTimerTurn.length > 0) {
+                var id = this._reservedStartPictureTimerTurn.shift();
+                this._pictureData[id].start();
+            }
             if (this._messageQueue.length === 0) {
                 this._hideMessageWindow();
             } else {
@@ -3637,6 +3643,10 @@ module wwa_main {
             this._faces = [];
         }
 
+        public addStartPictureTimerWaiting(id: number): void {
+            this._reservedStartPictureTimerTurn.push(id);
+        }
+
 
         private _stylePos: number[]; // w
         private _styleElm: HTMLStyleElement;
@@ -3708,7 +3718,7 @@ module wwa_main {
             this.updateCSSRule();
         }
 
-        public createPictureData(partsID: number, id: number) {
+        public createPictureData(partsID: number, id: number, autoStart: boolean = false) {
             var mesID = this.getObjectAttributeById(partsID, Consts.ATR_STRING);
             var message = this.getMessageById(mesID);
             var lines = message
@@ -3731,6 +3741,11 @@ module wwa_main {
             );
             console.log(this._pictureData[id]);
             this._wwaData.pictureID[id] = partsID;
+            if (autoStart) {
+                this._pictureData[id].start();
+            } else {
+                this.addStartPictureTimerWaiting(id);
+            }
         }
 
         public showMonsterWindow(): void {
