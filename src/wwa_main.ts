@@ -1617,7 +1617,6 @@ module wwa_main {
                 }
                 var data = this._pictureData[id];
                 wwa_picture.PictureData.isPrimaryAnimationTime = this._isPrimaryAnimation();
-                data.update();
                 if (data.isVisible()) {
                     this._pictureManager.drawPictureData(data, true);
                 }
@@ -2901,7 +2900,7 @@ module wwa_main {
             if (!restart) {
                 this._wwaData.pictureID.forEach((partsID, id) => {
                     if (partsID != 0) {
-                        this.createPictureData(partsID, id);
+                        this.createPictureData(partsID, id, true);
                     }
                 }, this);
             }

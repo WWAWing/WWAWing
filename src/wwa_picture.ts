@@ -77,9 +77,9 @@ module wwa_picture {
         private _opacity: number;
         // 内部制御用
         private _isVisible: boolean;
-        private _isAnimatable: boolean;
         private _isTimeout: boolean;
-        private _anim: Array<WWAPictureAnimation>;
+        private _intervalID: number;
+        private _anims: Array<Animation>;
         private _zoom: WWAPictureZoom;
 
         constructor(
@@ -98,8 +98,8 @@ module wwa_picture {
                 }
             });
             this._isVisible = waitTime <= 0;
-            this._isAnimatable = false;
             this._isTimeout = false;
+            this._anims = new Array();
             
             // 既定値を設定
             this._pos = new wwa_data.Coord(0, 0);
@@ -112,23 +112,23 @@ module wwa_picture {
                 var property = new Property(this, line);
                 property.setProperty();
             }, this);
-            this._animate();
-        }
-        public update() {
-            if (this._isAnimatable) {
-                this._animate();
-            }
-        }
-        private _animate() {
             this.destPos = this._pos;
             this.destSize = this._size;
             this.destAngle = this._angle;
             this.destOpacity = this._opacity;
         }
+        public update() {
+            /*this._anims.forEach((anim) => {
+                anim.update(this);
+            }, this);*/
+        }
         /** メッセージ表示後にイメージ表示を行いたいので、タイマーの開始はコンストラクタに含めない */
         public start() {
-            this._isAnimatable = true;
             this._startTimer.start();
+            this._intervalID = setInterval(this.update, 10);
+        }
+        public addAnimation(anim: Animation) {
+            this._anims.push(anim);
         }
         public isVisible(): boolean {
             return this._isVisible;
@@ -145,14 +145,20 @@ module wwa_picture {
         public hasSecondaryImage(): boolean {
             return this._secondImageCrop.x != 0 || this._secondImageCrop.y != 0;
         }
+        get width(): number {
+            return this.repeat.x * wwa_data.WWAConsts.CHIP_SIZE;
+        }
+        get height(): number {
+            return this.repeat.y * wwa_data.WWAConsts. CHIP_SIZE;
+        }
         set pos(pos: wwa_data.Coord) {
             this._pos = pos;
         }
         set endTime(time: number) {
             this._dispTimer = new wwa_data.Timer(time, false, () => {
                 this._isVisible = false;
-                this._isAnimatable = false;
                 this._isTimeout = true;
+                clearInterval(this._intervalID);
             });
         }
         set size(size: wwa_data.Coord) {
@@ -170,49 +176,22 @@ module wwa_picture {
         }
     }
     export class Property {
-        private _type: propertyType;
+        private _type: string;
         private _value: Array<string>;
         constructor(private _data: PictureData, line: string) {
             var property = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)/);
             if (property === null || property.length !== 3) {
                 throw new Error("プロパティではありません");
             }
-            this._type = propertyTable[property[1]];
+            this._type = property[1];
             this._value = property[2].split(",");
         }
         public setProperty() {
             try {
-                if (this._type === propertyType.POS) {
-                    var x = this.getIntValue(0);
-                    var y = this.getIntValue(1);
-                    this._data.pos = new wwa_data.Coord(x, y);
-                } else if (this._type === propertyType.TIME) {
-                    var time = this.getIntValue(0);
-                    var next = this.getIntValue(1, 0);
-                    this._data.endTime = time;
-                    this._data.nextPictureData = next;
-                } else if (this._type === propertyType.NEXT) {
-                } else if (this._type === propertyType.SIZE) {
-                    var w = this.getIntValue(0);
-                    var h = this.getIntValue(1);
-                    this._data.size = new wwa_data.Coord(w, h);
-                } else if (this._type === propertyType.CLIP) {
-                    var w = this.getIntValue(0);
-                    var h = this.getIntValue(1);
-                    this._data.cropSize = new wwa_data.Coord(w, h);
-                } else if (this._type === propertyType.ANGLE) {
-                    var angle = this.getFloatValue(0);
-                    this._data.angle = angle;
-                } else if (this._type === propertyType.REPEAT) {
-                    var w = this.getIntValue(0);
-                    var h = this.getIntValue(1);
-                    this._data.repeat = new wwa_data.Coord(w, h);
-                } else if (this._type === propertyType.FILL) {
-                    // SCREEN_WIDTH は横幅14マスなんだよなあ、ステータス欄を除外するように調整したい
-                    this._data.repeat = new wwa_data.Coord(wwa_data.WWAConsts.SCREEN_WIDTH / wwa_data.WWAConsts.CHIP_SIZE, wwa_data.WWAConsts.SCREEN_HEIGHT / wwa_data.WWAConsts.CHIP_SIZE);
-                } else if (this._type === propertyType.OPACITY) {
-                    var v = this.getFloatValue(0);
-                    this._data.opacity = v;
+                if (this._type in propertyObject) {
+                    propertyObject[this._type].set(this, this._data);
+                } else {
+                    throw new Error("プロパティが見つかりません");
                 }
             } catch (e) {
 
@@ -236,11 +215,64 @@ module wwa_picture {
             return this._value[num];
         }
     }
-    export interface WWAPictureAnimation {
-        // updateメソッドはX座標とY座標の差分を返します
-        update(): wwa_data.Coord;
+    export interface PropertySetter {
+        set(property: Property, data: PictureData);
     }
-    class StraightAnimation implements WWAPictureAnimation {
+    class PosSetter implements PropertySetter {
+        set(property: Property, data: PictureData) {
+            var x = property.getIntValue(0);
+            var y = property.getIntValue(1);
+            data.pos = new wwa_data.Coord(x, y);
+        }
+        setAnimation(property: Property, data: PictureData) {
+            var x = property.getIntValue(0);
+            var y = property.getIntValue(1);
+            data.addAnimation(new StraightAnimation(x, y));
+        }
+    }
+    class TimeSetter implements PropertySetter {
+        set(property: Property, data: PictureData) {
+            var time = property.getIntValue(0);
+            var next = property.getIntValue(1, 0);
+            data.endTime = time;
+            data.nextPictureData = next;
+        }
+    }
+    class SizeSetter implements PropertySetter {
+        set(property: Property, data: PictureData) {
+            var w = property.getIntValue(0);
+            var h = property.getIntValue(1);
+            data.size = new wwa_data.Coord(w, h);
+        }
+    }
+    class ClipSetter implements PropertySetter {
+        set (property: Property, data: PictureData) {
+            data.cropSize.x = property.getIntValue(0);
+            data.cropSize.y = property.getIntValue(1);
+        }
+    }
+    class AngleSetter implements PropertySetter {
+        set (property: Property, data: PictureData) {
+            var angle = property.getFloatValue(0);
+            data.angle = angle;
+        }
+    }
+    class RepeatSetter implements PropertySetter {
+        set (property: Property, data: PictureData) {
+            data.repeat.x = property.getIntValue(0);
+            data.repeat.y = property.getIntValue(1);
+        }
+    }
+    class OpacitySetter implements PropertySetter {
+        set (property: Property, data: PictureData) {
+            var v = property.getFloatValue(0);
+            data.opacity = v;
+        }
+    }
+    export interface Animation {
+        update(data: PictureData): void;
+    }
+    class StraightAnimation implements Animation {
         private _speedX: number;
         private _speedY: number;
         private _accelX: number;
@@ -255,11 +287,12 @@ module wwa_picture {
             this._accelX = x;
             this._accelY = y;
         }
-        update(): wwa_data.Coord {
-            return new wwa_data.Coord(this._accelX, this._accelY);
+        update(data: PictureData): void {
+            data.destPos.x += this._speedX;
+            data.destPos.y += this._speedY;
         }
     }
-    class CircleAnimation implements WWAPictureAnimation {
+    class CircleAnimation implements Animation {
         private _distance: number;
         private _speedDeg: number;
         private _accelDeg: number;
@@ -273,12 +306,11 @@ module wwa_picture {
         setAccel(deg: number) {
             this._accelDeg = deg;
         }
-        update(): wwa_data.Coord {
+        update(data: PictureData) {
             let x = Math.cos(this._deg) * this._distance;
             let y = Math.sin(this._deg) * this._distance;
-            this._deg += this._speedDeg;
+            data.destAngle += this._speedDeg;
             this._speedDeg += this._accelDeg;
-            return new wwa_data.Coord(x, y);
         }
     }
     export class WWAPictureZoom {
@@ -295,5 +327,14 @@ module wwa_picture {
             this._zoom += this._accelZoom;
             return this._zoom;
         }
+    }
+    var propertyObject: { [key: string]: PropertySetter } = {
+        "pos": new PosSetter(),
+        "time": new TimeSetter(),
+        "size": new SizeSetter(),
+        "clip": new ClipSetter(),
+        "angle": new AngleSetter(),
+        "repeat": new RepeatSetter(),
+        "opacity": new OpacitySetter()
     }
 }

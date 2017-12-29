@@ -680,8 +680,14 @@ module wwa_data {
         static WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         static WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
         
-        static SCREEN_WIDTH = 560;
-        static SCREEN_HEIGHT = 440;
+        static FIELD_WIDTH = 11;
+        static FIELD_HEIGHT = 11;
+        static CANVAS_WIDTH = WWAConsts.FIELD_WIDTH * WWAConsts.CHIP_SIZE;
+        static CANVAS_HEIGHT = WWAConsts.FIELD_HEIGHT * WWAConsts.CHIP_SIZE;
+        static STATUS_WIDTH = 3 * WWAConsts.CHIP_SIZE;
+        static STATUS_HEIGHT = WWAConsts.CANVAS_HEIGHT;
+        static SCREEN_WIDTH = WWAConsts.CANVAS_WIDTH + WWAConsts.STATUS_WIDTH;
+        static SCREEN_HEIGHT = WWAConsts.CANVAS_HEIGHT;
         static LOADING_FONT = "Times New Roman";
 
         static MSG_STR_WIDTH = 16;

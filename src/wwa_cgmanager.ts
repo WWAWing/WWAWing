@@ -118,12 +118,16 @@ module wwa_cgmanager {
 
         public drawPictureData(pictureData: wwa_picture.PictureData, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;
-            ctx.rotate(pictureData.destAngle);
+            ctx.save();
+            ctx.translate(Consts.CANVAS_WIDTH / 2, Consts.CANVAS_HEIGHT / 2);
+            ctx.rotate(pictureData.destAngle * Math.PI / 180);
+            ctx.translate(-Consts.CANVAS_WIDTH / 2, -Consts.CANVAS_HEIGHT / 2);
             ctx.globalAlpha = pictureData.destOpacity;
             if (!this._isLoaded) {
                 throw new Error("No image was loaded.");
             }
             this.drawCanvasWithPictureData(pictureData, isSub);
+            ctx.restore();
         }
 
         public drawCanvasWithPictureData(pictureData: wwa_picture.PictureData, isSub: boolean = false): void {
