@@ -1,33 +1,9 @@
 /// <reference path="./wwa_data.ts" />
+/// <reference path="./wwa_main.ts" />
 
 module wwa_picture {
-    export enum propertyType {
-        UNDEFINED = 0,
-        POS = 1,
-        TIME = 2,
-        NEXT = 3,
-        SIZE = 4,
-        CLIP = 5,
-        ANGLE = 6,
-        REPEAT = 7,
-        FILL = 8,
-        OPACITY = 9,
-        TEXT = 11,
-        TEXT_VAR = 12,
-        FONT = 13,
-        COLOR = 14,
-        ANIM_STRAIGHT = 21,
-        ANIM_CIRCLE = 22,
-        ANIM_ZOOM = 23,
-        ANIM_ROTATE = 24,
-        ANIM_FADE = 25,
-        ACCEL_STRAIGHT = 31,
-        ACCEL_CIRCLE = 32,
-        ACCEL_ZOOM = 33,
-        ACCEL_ROTATE = 34,
-        ACCEL_FADE = 35
-    }
-    export var propertyTable = {
+    import Consts = wwa_data.WWAConsts;
+    var propertyTable = {
         ""         : 0,
         "pos"      : 1,
         "time"     : 2,
@@ -53,288 +29,460 @@ module wwa_picture {
         "accel_rotate"   : 34,
         "accel_fade"     : 35
     };
+    var properties: { [key: string]: (data: Picture, value: Array<string>) => void } = {
+        "pos": (data, value) => {
+            data.setProperty("pos", value);
+        },
+        "time": (data, value) => {
+            data.setProperty("time", value);
+        },
+        "next": (data, value) => {
+        },
+        "size": (data, value) => {
+            data.setProperty("size", value);
+        },
+        "clip": (data, value) => {
+            data.setProperty("clip", value);
+        },
+        "angle": (data, value) => {
+            data.setProperty("angle", value);
+        },
+        "repeat": (data, value) => {
+            data.setProperty("repeat", value);
+        },
+        "fill": (data, value) => {
+            var isFill = Util.getIntValue(value[0]);
+            if (isFill == 1) {
+                var fillValue = [Consts.FIELD_WIDTH.toString(), Consts.FIELD_HEIGHT.toString()];
+                data.setProperty("repeat", fillValue);
+            }
+        },
+        "opacity": (data, value) => {
+            data.setProperty("opacity", value);
+        },
+        "anim_straight": (data, value) => {
+            data.setAnimation("pos", value);
+        }
+    };
     export class PictureData {
+        private _pictures: Array<Picture>;
+        /** ピクチャを複数格納するクラスです。
+         * @param size ピクチャが格納できる個数を指定します。
+         */
+        constructor(size: number) {
+            this._pictures = new Array(size);
+        }
+        /**
+         * 指定したIDがデータの範囲内か確認します。
+         * @param id ID(0から指定)
+         */
+        public checkID(id: number): boolean {
+            if (id < 0 || id >= this._pictures.length) {
+                throw new Error("指定したIDが範囲外です。");
+            }
+            return true;
+        }
+        /**
+         * 指定したIDのピクチャが空でないか確認します
+         * @param id ID(0から指定)
+         */
+        public isEmpty(id: number): boolean {
+            if (this._pictures[id] === void 0) {
+                return true;
+            }
+            return false;
+        }
+        /**
+         * ピクチャのデータにピクチャを指定します。
+         * @param picture 作成するピクチャのインスタンス
+         * @param id ID(0から指定)
+         */
+        public setPicture(picture: Picture, id: number): void {
+            this.checkID(id);
+            this._pictures[id] = picture;
+        }
+        /**
+         * 指定したIDのピクチャを削除します。
+         * @param id ID(0から指定)
+         */
+        public removePicture(id: number) {
+            this._pictures[id] = void 0;
+        }
+        /**
+         * 格納しているピクチャすべての動きを開始します。
+         */
+        public start(): void {
+            this._pictures.forEach((picture, id) => {
+                if (!this.isEmpty(id)) {
+                    picture.start();
+                }
+            }, this);
+        }
+        /**
+         * 指定したIDのピクチャの動きを開始します。
+         * @param id (0から指定)
+         */
+        public startPicture(id: number): void {
+            this.checkID(id);
+            this._pictures[id].start();
+        }
+        /**
+         * 格納しているピクチャすべての動きを止めます。
+         */
+        public stop() {
+            this._pictures.forEach((picture, id) => {
+                if (!this.isEmpty(id)) {
+                    picture.stop();
+                }
+            }, this);
+        }
+        /**
+         * 格納しているピクチャすべてを動かします。
+         */
+        public update(): void {
+            this._pictures.forEach((picture, id) => {
+                if (!this.isEmpty(id)) {
+                    picture.update(picture);
+                }
+            })
+        }
+        /**
+         * 指定したIDのピクチャを返します。
+         * @param id ID(0から指定)
+         */
+        public getPicture(id: number): Picture {
+            this.checkID(id);
+            return this._pictures[id];
+        }
+    }
+    export class Picture {
         public static isPrimaryAnimationTime: boolean = true;
         // 初期設定
         private _imageCrop: wwa_data.Coord;
         private _secondImageCrop: wwa_data.Coord;
         private _startTimer: wwa_data.Timer;
-        private _dispTimer: wwa_data.Timer;
         private _soundNum: number;
-        // プロパティ指定
-        public destPos: wwa_data.Coord;
-        public destSize: wwa_data.Coord;
-        public destAngle: number;
-        public destOpacity: number;
-        public cropSize: wwa_data.Coord;
-        public repeat: wwa_data.Coord;
-        public nextPictureData: number;
         public nextParts: number;
-        // dest** は元変数から update 関数で出力した値
-        private _pos: wwa_data.Coord;
-        private _size: wwa_data.Coord;
-        private _angle: number;
-        private _opacity: number;
+        private _properties: {
+            "pos": Pos,
+            "time": Time,
+            "size": Size,
+            "clip": Clip,
+            "angle": Angle,
+            "repeat": Repeat,
+            "opacity": Opacity
+        };
+        private _anims: Array<Animation>;
         // 内部制御用
         private _isVisible: boolean;
         private _isTimeout: boolean;
         private _intervalID: number;
-        private _anims: Array<Animation>;
-        private _zoom: WWAPictureZoom;
 
+        /**
+         * @param imgCropX イメージの参照先のX座標です。
+         * @param imgCropY イメージの参照先のY座標です。
+         * @param secondImgCropX イメージの第2参照先のX座標で、アニメーションが設定されている場合に使います。
+         * @param secondImgCropY イメージの第2参照先のY座標で、アニメーションが設定されている場合に使います。
+         * @param soundNum サウンド番号です。0の場合は鳴りません。
+         * @param waitTime 待ち時間です。10で1秒になります。
+         * @param message ピクチャを表示するパーツのメッセージです。各行を配列にした形で設定します。
+         */
         constructor(
         imgCropX: number, imgCropY: number,
         secondImgCropX: number, secondImgCropY: number,
         soundNum: number, waitTime: number, message: Array<string>) {
             this._imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
             this._secondImageCrop = new wwa_data.Coord(secondImgCropX, secondImgCropY);
-            this.cropSize = new wwa_data.Coord(1, 1);
-            this.repeat = new wwa_data.Coord(1, 1);
-            this.nextPictureData = 0;
+            this._soundNum = soundNum;
+            this._properties = {
+                pos: new Pos(),
+                time: new Time(() => {
+                    this._isVisible = false;
+                    this._isTimeout = true;
+                }),
+                size: new Size(),
+                clip: new Clip(),
+                angle: new Angle(),
+                repeat: new Repeat(),
+                opacity: new Opacity()
+            }
+            this._anims = new Array();
             this._startTimer = new wwa_data.Timer(waitTime, false, () => {
                 this._isVisible = true;
-                if (this._dispTimer !== void 0) {
-                    this._dispTimer.start();
+                if (this._properties.time !== void 0) {
+                    this._properties.time.start();
                 }
             });
             this._isVisible = waitTime <= 0;
             this._isTimeout = false;
-            this._anims = new Array();
-            
-            // 既定値を設定
-            this._pos = new wwa_data.Coord(0, 0);
-            this._size = new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE, wwa_data.WWAConsts.CHIP_SIZE);
-            this._angle = 0;
-            this._opacity = 1.0;
-            this._soundNum = soundNum;
             
             message.forEach((line, index) => {
-                var property = new Property(this, line);
-                property.setProperty();
+                var property = this.createProperty(line);
+                properties[property.type](this, property.value);
             }, this);
-            this.destPos = this._pos;
-            this.destSize = this._size;
-            this.destAngle = this._angle;
-            this.destOpacity = this._opacity;
         }
-        public update() {
-            /*this._anims.forEach((anim) => {
-                anim.update(this);
-            }, this);*/
+        /** プロパティを表記した1行からプロパティを生成します。
+         * @param line プロパティの表記をした1行を指定します。
+         */
+        public createProperty(line: string): {
+            type: string,
+            value: Array<string>
+        } {
+            var property = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)/);
+            if (property === null || property.length !== 3) {
+                throw new Error("プロパティではありません");
+            }
+            return {
+                type: property[1],
+                value: property[2].split(",")
+            };
         }
-        /** メッセージ表示後にイメージ表示を行いたいので、タイマーの開始はコンストラクタに含めない */
+        /** 種類が決まったプロパティをピクチャに割り当てます。
+         * @param type プロパティの種類名です。
+         * @param value プロパティの内容を記述した配列です。
+         */
+        public setProperty(type: string, value: Array<string>) {
+            this._properties[type].setProperty(value);
+        }
+        public setAnimation(type: string, value: Array<string>) {
+            var animation = new StraightAnimation(this._properties[type]);
+            animation.setProperty(value);
+            this._anims.push(animation);
+        }
+        /**
+         * ピクチャを動かします。
+         */
+        public update(self: Picture) {
+            self._anims.forEach((anim) => {
+                anim.update();
+            }, self);
+        }
+        /**
+         *  メッセージ表示後にイメージ表示を行いたいので、タイマーの開始はコンストラクタに含めない
+         */
         public start() {
-            this._startTimer.start();
-            this._intervalID = setInterval(this.update, 10);
+            if (this.isVisible) {
+                this._properties.time.start();
+            } else {
+                this._startTimer.start();
+            }
+            this._intervalID = setInterval(this.update, 10, this);
         }
-        public addAnimation(anim: Animation) {
-            this._anims.push(anim);
-        }
-        public isVisible(): boolean {
-            return this._isVisible;
-        }
-        public isTimeOut(): boolean {
-            return this._isTimeout;
+        /**
+         * ピクチャの動きを止めます。
+         */
+        public stop() {
+            if (this.isVisible) {
+                this._properties.time.stop();
+            } else {
+                this._startTimer.stop();
+            }
+            clearInterval(this._intervalID);
         }
         public getImageCrop(): wwa_data.Coord {
             if (this.hasSecondaryImage()) {
-                return PictureData.isPrimaryAnimationTime ? this._imageCrop : this._secondImageCrop;
+                return Picture.isPrimaryAnimationTime ? this._imageCrop : this._secondImageCrop;
             }
             return this._imageCrop;
         }
         public hasSecondaryImage(): boolean {
             return this._secondImageCrop.x != 0 || this._secondImageCrop.y != 0;
         }
+        get isVisible(): boolean {
+            return this._isVisible;
+        }
+        get isTimeout(): boolean {
+            return this._isTimeout;
+        }
+        get nextPictureNumber(): number {
+            return this._properties.time.nextPicture;
+        }
         get width(): number {
-            return this.repeat.x * wwa_data.WWAConsts.CHIP_SIZE;
+            return this._properties.repeat.x * Consts.CHIP_SIZE;
         }
         get height(): number {
-            return this.repeat.y * wwa_data.WWAConsts. CHIP_SIZE;
+            return this._properties.repeat.y * Consts.CHIP_SIZE;
         }
-        set pos(pos: wwa_data.Coord) {
-            this._pos = pos;
+        get pos(): wwa_data.Coord {
+            return this._properties.pos;
         }
-        set endTime(time: number) {
-            this._dispTimer = new wwa_data.Timer(time, false, () => {
-                this._isVisible = false;
-                this._isTimeout = true;
-                clearInterval(this._intervalID);
-            });
+        get size(): wwa_data.Coord {
+            return this._properties.size;
         }
-        set size(size: wwa_data.Coord) {
-            this._size = size;
+        get cropSize(): wwa_data.Coord {
+            return this._properties.clip;
         }
-        set angle(angle: number) {
-            this._angle = angle;
+        get opacity(): number {
+            return this._properties.opacity.value;
         }
-        set opacity(opacity: number) {
+        get angle(): number {
+            return this._properties.angle.degree;
+        }
+        get repeat(): wwa_data.Coord {
+            return this._properties.repeat;
+        }
+    }
+    /** プロパティ
+     * ===
+     * - Q. なんでコンストラクタではなくて専用の関数でプロパティをセットするの？
+     *    - A. プロパティがセットされるかどうかは文字列で判定する都合上、全部がセットされるかどうかはわからないので！
+     */
+    export interface Property {
+        setProperty(value: Array<string>);
+    }
+    interface Animation extends Property {
+        update();
+    }
+    class Pos extends wwa_data.Coord implements Property {
+        constructor() {
+            super(0, 0);
+        }
+        public setProperty(value) {
+            this.x = Util.getIntValue(value[0]);
+            this.y = Util.getIntValue(value[1]);
+        }
+    }
+    class StraightAnimation extends Pos implements Animation {
+        private _parent: Pos;
+        constructor(parent: Pos) {
+            super();
+            this._parent = parent;
+        }
+        public update() {
+            this._parent.x += this.x;
+            this._parent.y += this.y;
+        }
+    }
+    class Time extends wwa_data.Timer implements Property {
+        private _isSet: boolean;
+        private _nextPictureNumber: number;
+        constructor(timeoutCallback: () => void = () => {}) {
+            super(0, false, timeoutCallback);
+            this._isSet = false;
+            this._nextPictureNumber = 0;
+        }
+        public setProperty(value) {
+            var time = Util.getIntValue(value[0]);
+            if (time < 0) {
+                throw new Error("タイマーの値が不正です。");
+            }
+            this.time = time;
+            this._nextPictureNumber = Util.getIntValue(value[1], 0);
+            this._isSet = true;
+        }
+        public start(): void {
+            if (this._isSet) {
+                super.start();
+            }
+        }
+        public stop(): void {
+            if (this._isSet) {
+                super.stop();
+            }
+        }
+        get nextPicture(): number {
+            return this._nextPictureNumber;
+        }
+        get isSet(): boolean {
+            return this._isSet;
+        }
+    }
+    class Size extends wwa_data.Coord implements Property {
+        constructor() {
+            super(Consts.CHIP_SIZE, Consts.CHIP_SIZE);
+        }
+        public setProperty(value) {
+            this.x = Util.getIntValue(value[0]);
+            this.y = Util.getIntValue(value[1]);
+        }
+    }
+    class Zoom extends Size implements Animation {
+        private _parent: Size;
+        constructor(parent: Size) {
+            super();
+            this._parent = parent;
+        }
+        public update() {
+            this._parent.x += this.x;
+            this._parent.y += this.y;
+        }
+    }
+    class Clip extends wwa_data.Coord implements Property {
+        constructor() {
+            super(1, 1);
+        }
+        public setProperty(value) {
+            this.x = Util.getIntValue(value[0]);
+            this.y = Util.getIntValue(value[1]);
+        }
+    }
+    class Angle implements Property {
+        private _degree: number;
+        constructor() {
+            this._degree = 0;
+        }
+        public setProperty(value) {
+            var degree = Util.getIntValue(value[0]);
+            degree = degree % 360;
+            this._degree = degree;
+        }
+        public update() {
+            
+        }
+        get degree() {
+            return this._degree;
+        }
+    }
+    class Repeat extends wwa_data.Coord implements Property {
+        constructor() {
+            super(1, 1);
+        }
+        public setProperty(value) {
+            this.x = Util.getIntValue(value[0]);
+            this.y = Util.getIntValue(value[1]);
+        }
+    }
+    class Opacity implements Property {
+        private _value: number;
+        constructor() {
+            this._value = 1.0;
+        }
+        public setProperty(value) {
+            var opacity = Util.getFloatValue(value[0]);
             if (opacity > 1.0) {
-                this._opacity = 1.0;
-            } else {
-                this._opacity = opacity;
+                throw new Error("透明度は 1.0 以下である必要があります。");
+            } else if (opacity < 0) {
+                throw new Error("透明度は 0 以上である必要があります。");
             }
+            this._value = opacity;
+        }
+        get value() {
+            return this._value;
         }
     }
-    export class Property {
-        private _type: string;
-        private _value: Array<string>;
-        constructor(private _data: PictureData, line: string) {
-            var property = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)/);
-            if (property === null || property.length !== 3) {
-                throw new Error("プロパティではありません");
-            }
-            this._type = property[1];
-            this._value = property[2].split(",");
-        }
-        public setProperty() {
-            try {
-                if (this._type in propertyObject) {
-                    propertyObject[this._type].set(this, this._data);
-                } else {
-                    throw new Error("プロパティが見つかりません");
+    export class Util {
+        public static getIntValue(str: string, fallback: number = void 0): number {
+            var value = parseInt(str, 10);
+            if (isNaN(value)) {
+                if (fallback === void 0) {
+                    throw new Error("値が正しく定義されていません");
                 }
-            } catch (e) {
-
-            }
-        }
-        public getIntValue(num: number, fallback: number = 0): number {
-            var value = parseInt(this._value[num], 10);
-            if (isNaN(value)) {
                 return fallback;
             }
             return value;
         }
-        public getFloatValue(num: number, fallback: number = 0.0): number {
-            var value = parseFloat(this._value[num]);
+        public static getFloatValue(str: string, fallback: number = void 0): number {
+            var value = parseFloat(str);
             if (isNaN(value)) {
+                if (fallback !== void 0) {
+                    throw new Error("値が正しく定義されていません");
+                }
                 return fallback;
             }
             return value;
         }
-        public getStringValue(num: number): string {
-            return this._value[num];
+        public static getStringValue(str: string): string {
+            return str;
         }
-    }
-    export interface PropertySetter {
-        set(property: Property, data: PictureData);
-    }
-    class PosSetter implements PropertySetter {
-        set(property: Property, data: PictureData) {
-            var x = property.getIntValue(0);
-            var y = property.getIntValue(1);
-            data.pos = new wwa_data.Coord(x, y);
-        }
-        setAnimation(property: Property, data: PictureData) {
-            var x = property.getIntValue(0);
-            var y = property.getIntValue(1);
-            data.addAnimation(new StraightAnimation(x, y));
-        }
-    }
-    class TimeSetter implements PropertySetter {
-        set(property: Property, data: PictureData) {
-            var time = property.getIntValue(0);
-            var next = property.getIntValue(1, 0);
-            data.endTime = time;
-            data.nextPictureData = next;
-        }
-    }
-    class SizeSetter implements PropertySetter {
-        set(property: Property, data: PictureData) {
-            var w = property.getIntValue(0);
-            var h = property.getIntValue(1);
-            data.size = new wwa_data.Coord(w, h);
-        }
-    }
-    class ClipSetter implements PropertySetter {
-        set (property: Property, data: PictureData) {
-            data.cropSize.x = property.getIntValue(0);
-            data.cropSize.y = property.getIntValue(1);
-        }
-    }
-    class AngleSetter implements PropertySetter {
-        set (property: Property, data: PictureData) {
-            var angle = property.getFloatValue(0);
-            data.angle = angle;
-        }
-    }
-    class RepeatSetter implements PropertySetter {
-        set (property: Property, data: PictureData) {
-            data.repeat.x = property.getIntValue(0);
-            data.repeat.y = property.getIntValue(1);
-        }
-    }
-    class OpacitySetter implements PropertySetter {
-        set (property: Property, data: PictureData) {
-            var v = property.getFloatValue(0);
-            data.opacity = v;
-        }
-    }
-    export interface Animation {
-        update(data: PictureData): void;
-    }
-    class StraightAnimation implements Animation {
-        private _speedX: number;
-        private _speedY: number;
-        private _accelX: number;
-        private _accelY: number;
-        constructor(x: number, y: number) {
-            this._speedX = x;
-            this._speedY = y;
-            this._accelX = 0;
-            this._accelY = 0;
-        }
-        setAccel(x: number, y: number) {
-            this._accelX = x;
-            this._accelY = y;
-        }
-        update(data: PictureData): void {
-            data.destPos.x += this._speedX;
-            data.destPos.y += this._speedY;
-        }
-    }
-    class CircleAnimation implements Animation {
-        private _distance: number;
-        private _speedDeg: number;
-        private _accelDeg: number;
-        private _deg: number;
-        constructor(distance: number, deg: number) {
-            this._distance = distance;
-            this._speedDeg = deg;
-            this._accelDeg = 0;
-            this._deg = 0;
-        }
-        setAccel(deg: number) {
-            this._accelDeg = deg;
-        }
-        update(data: PictureData) {
-            let x = Math.cos(this._deg) * this._distance;
-            let y = Math.sin(this._deg) * this._distance;
-            data.destAngle += this._speedDeg;
-            this._speedDeg += this._accelDeg;
-        }
-    }
-    export class WWAPictureZoom {
-        private _zoom: number;
-        private _accelZoom: number;
-        constructor(zoom: number) {
-            this._zoom = zoom;
-            this._accelZoom = 0;
-        }
-        setAccel(zoom: number) {
-            this._accelZoom = zoom;
-        }
-        update(): number {
-            this._zoom += this._accelZoom;
-            return this._zoom;
-        }
-    }
-    var propertyObject: { [key: string]: PropertySetter } = {
-        "pos": new PosSetter(),
-        "time": new TimeSetter(),
-        "size": new SizeSetter(),
-        "clip": new ClipSetter(),
-        "angle": new AngleSetter(),
-        "repeat": new RepeatSetter(),
-        "opacity": new OpacitySetter()
     }
 }

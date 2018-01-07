@@ -136,7 +136,7 @@ module wwa_main {
         private _hasTitleImg: boolean;
   
         private _isActive: boolean;
-        private _pictureData: wwa_picture.PictureData[];
+        private _pictureData: wwa_picture.PictureData;
         private _pictureManager: wwa_cgmanager.PictureManager;
         private _reservedStartPictureTimerTurn: number[];
         ////////////////////////
@@ -216,7 +216,7 @@ module wwa_main {
                 this._wwaData = e.data.wwaData;
                 // start PE
                 this._wwaData.pictureID = new Array(Consts.PICTURE_LENGTH);
-                this._pictureData = new Array(Consts.PICTURE_LENGTH);
+                this._pictureData = new wwa_picture.PictureData(Consts.PICTURE_LENGTH);
                 this._reservedStartPictureTimerTurn = new Array();
                 for (var i = 0; i < Consts.PICTURE_LENGTH; i++) {
                     this._wwaData.pictureID[i] = 0;
@@ -1615,16 +1615,16 @@ module wwa_main {
                 if (partsID == 0) {
                     return;
                 }
-                var data = this._pictureData[id];
-                wwa_picture.PictureData.isPrimaryAnimationTime = this._isPrimaryAnimation();
-                if (data.isVisible()) {
-                    this._pictureManager.drawPictureData(data, true);
+                var picture = this._pictureData.getPicture(id);
+                wwa_picture.Picture.isPrimaryAnimationTime = this._isPrimaryAnimation();
+                if (picture.isVisible) {
+                    this._pictureManager.drawPictureData(picture, true);
                 }
-                if (data.isTimeOut()) {
-                    this._wwaData.pictureID[id] = data.nextPictureData;
-                    this._pictureData[id] = null;
-                    if (data.nextPictureData != 0) {
-                        this.createPictureData(data.nextPictureData, id, true);
+                if (picture.isTimeout) {
+                    this._wwaData.pictureID[id] = picture.nextPictureNumber;
+                    this._pictureData.removePicture(id);
+                    if (picture.nextPictureNumber != 0) {
+                        this.createPicture(picture.nextPictureNumber, id, true);
                     }
                 }
             }, this);
@@ -2900,7 +2900,7 @@ module wwa_main {
             if (!restart) {
                 this._wwaData.pictureID.forEach((partsID, id) => {
                     if (partsID != 0) {
-                        this.createPictureData(partsID, id, true);
+                        this.createPicture(partsID, id, true);
                     }
                 }, this);
             }
@@ -3410,10 +3410,7 @@ module wwa_main {
                 this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                 this._reservedMoveMacroTurn = void 0;
             }
-            while (this._reservedStartPictureTimerTurn.length > 0) {
-                var id = this._reservedStartPictureTimerTurn.shift();
-                this._pictureData[id].start();
-            }
+            this._pictureData.start();
             if (this._messageQueue.length === 0) {
                 this._hideMessageWindow();
             } else {
@@ -3717,7 +3714,7 @@ module wwa_main {
             this.updateCSSRule();
         }
 
-        public createPictureData(partsID: number, id: number, autoStart: boolean = false) {
+        public createPicture(partsID: number, id: number, autoStart: boolean = false) {
             var mesID = this.getObjectAttributeById(partsID, Consts.ATR_STRING);
             var message = this.getMessageById(mesID);
             var lines = message
@@ -3729,7 +3726,7 @@ module wwa_main {
             } else {
                 lines.splice(0, 1);
             }
-            this._pictureData[id] = new wwa_picture.PictureData(
+            var picture = new wwa_picture.Picture(
                 this.getObjectCropXById(partsID) / Consts.CHIP_SIZE,
                 this.getObjectCropYById(partsID) / Consts.CHIP_SIZE,
                 this.getObjectCropXById(partsID, true) / Consts.CHIP_SIZE,
@@ -3738,12 +3735,11 @@ module wwa_main {
                 this.getObjectAttributeById(partsID, Consts.ATR_NUMBER),
                 lines
             );
-            console.log(this._pictureData[id]);
+            this._pictureData.setPicture(picture, id);
             this._wwaData.pictureID[id] = partsID;
+            console.log(picture);
             if (autoStart) {
-                this._pictureData[id].start();
-            } else {
-                this.addStartPictureTimerWaiting(id);
+                picture.start();
             }
         }
 

@@ -116,13 +116,13 @@ module wwa_cgmanager {
 
     export class PictureManager extends CGManager {
 
-        public drawPictureData(pictureData: wwa_picture.PictureData, isSub: boolean = false): void {
+        public drawPictureData(pictureData: wwa_picture.Picture, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;
             ctx.save();
             ctx.translate(Consts.CANVAS_WIDTH / 2, Consts.CANVAS_HEIGHT / 2);
-            ctx.rotate(pictureData.destAngle * Math.PI / 180);
+            ctx.rotate(pictureData.angle * Math.PI / 180);
             ctx.translate(-Consts.CANVAS_WIDTH / 2, -Consts.CANVAS_HEIGHT / 2);
-            ctx.globalAlpha = pictureData.destOpacity;
+            ctx.globalAlpha = pictureData.opacity;
             if (!this._isLoaded) {
                 throw new Error("No image was loaded.");
             }
@@ -130,7 +130,7 @@ module wwa_cgmanager {
             ctx.restore();
         }
 
-        public drawCanvasWithPictureData(pictureData: wwa_picture.PictureData, isSub: boolean = false): void {
+        public drawCanvasWithPictureData(pictureData: wwa_picture.Picture, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;
             
             for (var y = 0; y < pictureData.repeat.y; y++) {
@@ -138,8 +138,8 @@ module wwa_cgmanager {
                     ctx.drawImage(
                         this.getImage(), Consts.CHIP_SIZE * pictureData.getImageCrop().x, Consts.CHIP_SIZE * pictureData.getImageCrop().y,
                         Consts.CHIP_SIZE * pictureData.cropSize.x, Consts.CHIP_SIZE * pictureData.cropSize.y,
-                        pictureData.destPos.x + (x * Consts.CHIP_SIZE), pictureData.destPos.y + (y * Consts.CHIP_SIZE),
-                        pictureData.destSize.x * pictureData.cropSize.x, pictureData.destSize.y * pictureData.cropSize.y
+                        pictureData.pos.x + (x * Consts.CHIP_SIZE), pictureData.pos.y + (y * Consts.CHIP_SIZE),
+                        pictureData.size.x * pictureData.cropSize.x, pictureData.size.y * pictureData.cropSize.y
                     );
                 }
             }

@@ -1,5 +1,4 @@
 /// <reference path="./wwa_main.ts" />
-/// <reference path="./wwa_picture.ts" />
 
 module wwa_data {
     export class EquipmentStatus {
@@ -290,35 +289,48 @@ module wwa_data {
 
     export class Timer {
         private _time: number;
-        private _isAvailable: boolean;
+        private _intervalID: number;
         private _isTimeout: boolean;
-        public timeoutCallBack: () => void;
+        private _timeoutCallBack: () => void;
+        /**
+         * タイマーです。
+         * @param time 時間をミリ秒で指定します。
+         * @param autoStart インスタンスを生成した時に自動で開始するか指定します。
+         * @param timeoutCallBack タイムアウトした時に実行する処理を指定します。
+         */
         constructor(time: number, autoStart: boolean, timeoutCallBack: () => void = () => {}) {
-            this._time = time * 100;
-            this._isAvailable = autoStart;
-            this.timeoutCallBack = timeoutCallBack;
+            this.time = time;
+            this._timeoutCallBack = timeoutCallBack;
             if (autoStart) {
                 this.start();
             }
             this._isTimeout = false;
         }
         public start() {
-            this._isAvailable = true;
-            setTimeout(this.timeout, this._time, this);
+            this._intervalID = setInterval(this._tick, 10, this);
         }
         public stop() {
-            this._isAvailable = false;
             this._isTimeout = true;
+            clearInterval(this._intervalID);
         }
-        public timeout(self: Timer) {
-            self.stop();
-            self.timeoutCallBack();
+        private _tick(self: Timer) {
+            self._time -= 10;
+            if (self._time <= 0) {
+                self._timeout();
+            }
         }
-        get isAvailable() {
-            return this._isAvailable;
+        private _timeout() {
+            this.stop();
+            this._timeoutCallBack();
         }
-        get isTimeout() {
+        get isTimeout(): boolean {
             return this._isTimeout;
+        }
+        set time(time: number) {
+            this._time = time * 100;
+            if (this._time % 10 != 0) {
+                throw new Error("タイマーは小数点第一位までの対応です。");
+            }
         }
     }
 

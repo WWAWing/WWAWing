@@ -443,7 +443,7 @@ module wwa_message {
                 throw new Error("IDが範囲外です");
             }
             this._checkPartsID(partsID, wwa_data.PartsType.OBJECT);
-            this._wwa.createPictureData(partsID, id);
+            this._wwa.createPicture(partsID, id);
             this._wwa.addStartPictureTimerWaiting(id);
         }
 
