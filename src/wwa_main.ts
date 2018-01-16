@@ -138,7 +138,6 @@ module wwa_main {
         private _isActive: boolean;
         private _pictureData: wwa_picture.PictureData;
         private _pictureManager: wwa_cgmanager.PictureManager;
-        private _reservedStartPictureTimerTurn: number[];
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -217,7 +216,6 @@ module wwa_main {
                 // start PE
                 this._wwaData.pictureID = new Array(Consts.PICTURE_LENGTH);
                 this._pictureData = new wwa_picture.PictureData(Consts.PICTURE_LENGTH);
-                this._reservedStartPictureTimerTurn = new Array();
                 for (var i = 0; i < Consts.PICTURE_LENGTH; i++) {
                     this._wwaData.pictureID[i] = 0;
                 }
@@ -1621,10 +1619,11 @@ module wwa_main {
                     this._pictureManager.drawPictureData(picture, true);
                 }
                 if (picture.isTimeout) {
-                    this._wwaData.pictureID[id] = picture.nextPictureNumber;
-                    this._pictureData.removePicture(id);
-                    if (picture.nextPictureNumber != 0) {
+                    if (picture.nextPictureNumber !== 0) {
+                        this._wwaData.pictureID[id] = picture.nextPictureNumber;
                         this.createPicture(picture.nextPictureNumber, id, true);
+                    } else {
+                        this.removePicture(id);
                     }
                 }
             }, this);
@@ -3639,11 +3638,6 @@ module wwa_main {
             this._faces = [];
         }
 
-        public addStartPictureTimerWaiting(id: number): void {
-            this._reservedStartPictureTimerTurn.push(id);
-        }
-
-
         private _stylePos: number[]; // w
         private _styleElm: HTMLStyleElement;
         private _sheet: CSSStyleSheet;
@@ -3737,10 +3731,17 @@ module wwa_main {
             );
             this._pictureData.setPicture(picture, id);
             this._wwaData.pictureID[id] = partsID;
+            // TODO: 待ち時間を指定した場合は、表示後に鳴らすようにする
+            this.playSound(picture.soundNumber);
             console.log(picture);
             if (autoStart) {
                 picture.start();
             }
+        }
+
+        public removePicture(id: number) {
+            this._wwaData.pictureID[id] = 0;
+            this._pictureData.removePicture(id);
         }
 
         public showMonsterWindow(): void {

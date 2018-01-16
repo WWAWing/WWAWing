@@ -439,12 +439,15 @@ module wwa_message {
             this._concatEmptyArgs(2);
             var partsID = this._parseInt(0);
             var id = this._parseInt(1);
-            if (id >= wwa_data.WWAConsts.PICTURE_LENGTH) {
+            if (id < 0 || id >= wwa_data.WWAConsts.PICTURE_LENGTH) {
                 throw new Error("IDが範囲外です");
             }
             this._checkPartsID(partsID, wwa_data.PartsType.OBJECT);
-            this._wwa.createPicture(partsID, id);
-            this._wwa.addStartPictureTimerWaiting(id);
+            if (partsID === 0) {
+                this._wwa.removePicture(id);
+            } else {
+                this._wwa.createPicture(partsID, id);
+            }
         }
 
         private _exexutePictureDefineMacro(): void {

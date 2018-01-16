@@ -29,26 +29,33 @@ module wwa_picture {
         "accel_rotate"   : 34,
         "accel_fade"     : 35
     };
-    var properties: { [key: string]: (data: Picture, value: Array<string>) => void } = {
+    var properties: { [key: string]: (data: Picture, value: Array<string>) => string } = {
         "pos": (data, value) => {
             data.setProperty("pos", value);
+            return "pos";
         },
         "time": (data, value) => {
             data.setProperty("time", value);
+            return "time";
         },
         "next": (data, value) => {
+            return null;
         },
         "size": (data, value) => {
             data.setProperty("size", value);
+            return "size";
         },
         "clip": (data, value) => {
             data.setProperty("clip", value);
+            return "clip";
         },
         "angle": (data, value) => {
             data.setProperty("angle", value);
+            return "angle";
         },
         "repeat": (data, value) => {
             data.setProperty("repeat", value);
+            return "repeat";
         },
         "fill": (data, value) => {
             var isFill = Util.getIntValue(value[0]);
@@ -56,12 +63,18 @@ module wwa_picture {
                 var fillValue = [Consts.FIELD_WIDTH.toString(), Consts.FIELD_HEIGHT.toString()];
                 data.setProperty("repeat", fillValue);
             }
+            return "repeat";
         },
         "opacity": (data, value) => {
             data.setProperty("opacity", value);
+            return "opacity"
         },
         "anim_straight": (data, value) => {
             data.setAnimation("pos", value);
+            return "pos";
+        },
+        "anim_circle": (data, value) => {
+            return "pos";
         }
     };
     export class PictureData {
@@ -144,7 +157,7 @@ module wwa_picture {
                 if (!this.isEmpty(id)) {
                     picture.update(picture);
                 }
-            })
+            });
         }
         /**
          * 指定したIDのピクチャを返します。
@@ -161,7 +174,7 @@ module wwa_picture {
         private _imageCrop: wwa_data.Coord;
         private _secondImageCrop: wwa_data.Coord;
         private _startTimer: wwa_data.Timer;
-        private _soundNum: number;
+        private _soundNumber: number;
         public nextParts: number;
         private _properties: {
             "pos": Pos,
@@ -183,17 +196,17 @@ module wwa_picture {
          * @param imgCropY イメージの参照先のY座標です。
          * @param secondImgCropX イメージの第2参照先のX座標で、アニメーションが設定されている場合に使います。
          * @param secondImgCropY イメージの第2参照先のY座標で、アニメーションが設定されている場合に使います。
-         * @param soundNum サウンド番号です。0の場合は鳴りません。
+         * @param soundNumber サウンド番号です。0の場合は鳴りません。
          * @param waitTime 待ち時間です。10で1秒になります。
          * @param message ピクチャを表示するパーツのメッセージです。各行を配列にした形で設定します。
          */
         constructor(
         imgCropX: number, imgCropY: number,
         secondImgCropX: number, secondImgCropY: number,
-        soundNum: number, waitTime: number, message: Array<string>) {
+        soundNumber: number, waitTime: number, message: Array<string>) {
             this._imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
             this._secondImageCrop = new wwa_data.Coord(secondImgCropX, secondImgCropY);
-            this._soundNum = soundNum;
+            this._soundNumber = soundNumber;
             this._properties = {
                 pos: new Pos(),
                 time: new Time(() => {
@@ -218,7 +231,7 @@ module wwa_picture {
             
             message.forEach((line, index) => {
                 var property = this.createProperty(line);
-                properties[property.type](this, property.value);
+                var propertyType = properties[property.type](this, property.value);
             }, this);
         }
         /** プロパティを表記した1行からプロパティを生成します。
@@ -244,6 +257,20 @@ module wwa_picture {
         public setProperty(type: string, value: Array<string>) {
             this._properties[type].setProperty(value);
         }
+        /**
+         * 文字列からプロパティを取得します。
+         * @param type プロパティのタイプ
+         */
+        public getProperty(type: string): Property {
+            if (type in this._properties) {
+                return this._properties[type];
+            } else {
+                throw new Error(`${type} のプロパティが見つかりません。`);
+            }
+        }
+        public createAnimation(anim: Animation) {
+            this._anims.push(anim);
+        }
         public setAnimation(type: string, value: Array<string>) {
             var animation = new StraightAnimation(this._properties[type]);
             animation.setProperty(value);
@@ -251,6 +278,7 @@ module wwa_picture {
         }
         /**
          * ピクチャを動かします。
+         * @param self 動かすピクチャ (setInterval内でこのメソッドを指定した場合、thisの対象がwindowに移るため)
          */
         public update(self: Picture) {
             self._anims.forEach((anim) => {
@@ -258,7 +286,7 @@ module wwa_picture {
             }, self);
         }
         /**
-         *  メッセージ表示後にイメージ表示を行いたいので、タイマーの開始はコンストラクタに含めない
+         * メッセージ表示後にイメージ表示を行いたいので、タイマーの開始はコンストラクタに含めない
          */
         public start() {
             if (this.isVisible) {
@@ -293,6 +321,9 @@ module wwa_picture {
         }
         get isTimeout(): boolean {
             return this._isTimeout;
+        }
+        get soundNumber(): number {
+            return this._soundNumber;
         }
         get nextPictureNumber(): number {
             return this._properties.time.nextPicture;
@@ -426,11 +457,18 @@ module wwa_picture {
             degree = degree % 360;
             this._degree = degree;
         }
-        public update() {
-            
-        }
         get degree() {
             return this._degree;
+        }
+    }
+    class Rotate extends Angle implements Animation {
+        private _interval: number;
+        public setProperty(value) {
+            super.setProperty(value);
+            var interval = Util.getIntValue(value[1]);
+            this._interval = interval;
+        }
+        public update() {
         }
     }
     class Repeat extends wwa_data.Coord implements Property {
