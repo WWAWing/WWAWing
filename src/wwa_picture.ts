@@ -3,32 +3,6 @@
 
 module wwa_picture {
     import Consts = wwa_data.WWAConsts;
-    var propertyTable = {
-        ""         : 0,
-        "pos"      : 1,
-        "time"     : 2,
-        "next"     : 3,
-        "size"     : 4,
-        "clip"     : 5,
-        "angle"    : 6,
-        "repeat"   : 7,
-        "fill"     : 8,
-        "opacity"  : 9,
-        "text"     : 11,
-        "text_var" : 12,
-        "font"     : 13,
-        "color"    : 14,
-        "anim_straight" : 21,
-        "anim_circle"   : 22,
-        "anim_zoom"     : 23,
-        "anim_rotate"   : 24,
-        "anim_fade"     : 25,
-        "accel_straight" : 31,
-        "accel_circle"   : 32,
-        "accel_zoom"     : 33,
-        "accel_rotate"   : 34,
-        "accel_fade"     : 35
-    };
     var properties: { [key: string]: (data: Picture, value: Array<string>) => void } = {
         "pos": (data, value) => {
             data.setProperty("pos", value);
@@ -59,6 +33,18 @@ module wwa_picture {
         },
         "opacity": (data, value) => {
             data.setProperty("opacity", value);
+        },
+        "text": (data, value) => {
+            data.setProperty("text", value);
+        },
+        "text_var": (data, value) => {
+
+        },
+        "font": (data, value) => {
+
+        },
+        "color": (data, value) => {
+
         },
         "anim_straight": (data, value) => {
             data.setAnimation("anim_straight", "pos", value);
@@ -173,7 +159,8 @@ module wwa_picture {
             "clip": Clip,
             "angle": Angle,
             "repeat": Repeat,
-            "opacity": Opacity
+            "opacity": Opacity,
+            "text": Text
         };
         private _anims: Array<Animation>;
         // 内部制御用
@@ -207,7 +194,8 @@ module wwa_picture {
                 clip: new Clip(),
                 angle: new Angle(),
                 repeat: new Repeat(),
-                opacity: new Opacity()
+                opacity: new Opacity(),
+                text: new Text()
             }
             this._anims = new Array();
             this._startTimer = new wwa_data.Timer(waitTime, false, () => {
@@ -356,7 +344,6 @@ module wwa_picture {
         update();
     }
     class Pos extends wwa_data.Coord implements Property {
-        private _anims: Array<Animation>;
         constructor() {
             super(0, 0);
         }
@@ -517,6 +504,26 @@ module wwa_picture {
         }
         get value() {
             return this._value;
+        }
+    }
+    class Text implements Property {
+        private _str: string;
+        constructor() {
+            this._str = "";
+        }
+        public setProperty(value) {
+            this._str = Util.getStringValue(value[0]);
+        }
+        public createAnimation(animationType) {
+            return null;
+        }
+    }
+    class Font extends Text implements Animation {
+        public setProperty(value) {
+            super.setProperty(value);
+        }
+        public update() {
+
         }
     }
     export class Util {
