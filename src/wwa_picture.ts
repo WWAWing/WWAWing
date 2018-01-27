@@ -225,7 +225,7 @@ module wwa_picture {
             }
             return {
                 type: property[1],
-                value: property[2].split(",")
+                value: property[2].match(/"[^"]*"|[^,]+/g)
             };
         }
         /** 種類が決まったプロパティをピクチャに割り当てます。
@@ -329,6 +329,9 @@ module wwa_picture {
         }
         get repeat(): wwa_data.Coord {
             return this._properties.repeat;
+        }
+        get text(): string {
+            return this._properties.text.str;
         }
     }
     /** プロパティ
@@ -517,6 +520,9 @@ module wwa_picture {
         public createAnimation(animationType) {
             return null;
         }
+        get str(): string {
+            return this._str;
+        }
     }
     class Font extends Text implements Animation {
         public setProperty(value) {
@@ -548,7 +554,8 @@ module wwa_picture {
             return value;
         }
         public static getStringValue(str: string): string {
-            return str;
+            var trimmedStr = str.match(/[^"]*/g);
+            return trimmedStr[1];
         }
     }
 }

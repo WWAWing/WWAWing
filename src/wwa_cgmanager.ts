@@ -143,6 +143,7 @@ module wwa_cgmanager {
                     );
                 }
             }
+            ctx.fillText(pictureData.text, pictureData.pos.x, pictureData.pos.y);
         }
         
         public constructor(ctx: CanvasRenderingContext2D, ctxSub: CanvasRenderingContext2D, fileName: string, loadCompleteCallBack: () => void) {
