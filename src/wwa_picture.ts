@@ -554,8 +554,15 @@ module wwa_picture {
             return value;
         }
         public static getStringValue(str: string): string {
-            var trimmedStr = str.match(/[^"]*/g);
-            return trimmedStr[1];
+            var trimmedStr = Util.trimString(str, '"');
+            return trimmedStr;
+        }
+        public static trimString(str: string, trimmingChar: string): string {
+            if (str.charAt(0) === trimmingChar && str.charAt(str.length - 1) === trimmingChar) {
+                return str.slice(1, -1);
+            } else {
+                throw new Error("両端に切り取る記号がありません");
+            }
         }
     }
 }
