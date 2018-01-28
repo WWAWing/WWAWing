@@ -116,34 +116,35 @@ module wwa_cgmanager {
 
     export class PictureManager extends CGManager {
 
-        public drawPictureData(pictureData: wwa_picture.Picture, isSub: boolean = false): void {
+        public drawPictureData(picture: wwa_picture.Picture, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;
             ctx.save();
             ctx.translate(Consts.CANVAS_WIDTH / 2, Consts.CANVAS_HEIGHT / 2);
-            ctx.rotate(pictureData.angle * Math.PI / 180);
+            ctx.rotate(picture.angle * Math.PI / 180);
             ctx.translate(-Consts.CANVAS_WIDTH / 2, -Consts.CANVAS_HEIGHT / 2);
-            ctx.globalAlpha = pictureData.opacity;
+            ctx.globalAlpha = picture.opacity;
+            ctx.font = picture.font;
             if (!this._isLoaded) {
                 throw new Error("No image was loaded.");
             }
-            this.drawCanvasWithPictureData(pictureData, isSub);
+            this.drawCanvasWithPicture(picture, isSub);
             ctx.restore();
         }
 
-        public drawCanvasWithPictureData(pictureData: wwa_picture.Picture, isSub: boolean = false): void {
+        public drawCanvasWithPicture(picture: wwa_picture.Picture, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;
             
-            for (var y = 0; y < pictureData.repeat.y; y++) {
-                for (var x = 0; x < pictureData.repeat.x; x++) {
+            for (var y = 0; y < picture.repeat.y; y++) {
+                for (var x = 0; x < picture.repeat.x; x++) {
                     ctx.drawImage(
-                        this.getImage(), Consts.CHIP_SIZE * pictureData.getImageCrop().x, Consts.CHIP_SIZE * pictureData.getImageCrop().y,
-                        Consts.CHIP_SIZE * pictureData.cropSize.x, Consts.CHIP_SIZE * pictureData.cropSize.y,
-                        pictureData.pos.x + (x * Consts.CHIP_SIZE), pictureData.pos.y + (y * Consts.CHIP_SIZE),
-                        pictureData.size.x * pictureData.cropSize.x, pictureData.size.y * pictureData.cropSize.y
+                        this.getImage(), Consts.CHIP_SIZE * picture.getImageCrop().x, Consts.CHIP_SIZE * picture.getImageCrop().y,
+                        Consts.CHIP_SIZE * picture.cropSize.x, Consts.CHIP_SIZE * picture.cropSize.y,
+                        picture.pos.x + (x * Consts.CHIP_SIZE), picture.pos.y + (y * Consts.CHIP_SIZE),
+                        picture.size.x * picture.cropSize.x, picture.size.y * picture.cropSize.y
                     );
                 }
             }
-            ctx.fillText(pictureData.text, pictureData.pos.x, pictureData.pos.y);
+            ctx.fillText(picture.text, picture.pos.x, picture.pos.y);
         }
         
         public constructor(ctx: CanvasRenderingContext2D, ctxSub: CanvasRenderingContext2D, fileName: string, loadCompleteCallBack: () => void) {

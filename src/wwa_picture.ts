@@ -41,7 +41,7 @@ module wwa_picture {
 
         },
         "font": (data, value) => {
-
+            data.setProperty("font", value);
         },
         "color": (data, value) => {
 
@@ -160,7 +160,8 @@ module wwa_picture {
             "angle": Angle,
             "repeat": Repeat,
             "opacity": Opacity,
-            "text": Text
+            "text": Text,
+            "font": Font
         };
         private _anims: Array<Animation>;
         // 内部制御用
@@ -195,7 +196,8 @@ module wwa_picture {
                 angle: new Angle(),
                 repeat: new Repeat(),
                 opacity: new Opacity(),
-                text: new Text()
+                text: new Text(),
+                font: new Font()
             }
             this._anims = new Array();
             this._startTimer = new wwa_data.Timer(waitTime, false, () => {
@@ -332,6 +334,9 @@ module wwa_picture {
         }
         get text(): string {
             return this._properties.text.str;
+        }
+        get font(): string {
+            return this._properties.font.font;
         }
     }
     /** プロパティ
@@ -524,12 +529,19 @@ module wwa_picture {
             return this._str;
         }
     }
-    class Font extends Text implements Animation {
-        public setProperty(value) {
-            super.setProperty(value);
+    class Font implements Property {
+        private _font: string;
+        constructor() {
+            this._font = "";
         }
-        public update() {
-
+        public setProperty(value) {
+            this._font = Util.getStringValue(value[0]);
+        }
+        public createAnimation(animationType) {
+            return null;
+        }
+        get font(): string {
+            return this._font;
         }
     }
     export class Util {
