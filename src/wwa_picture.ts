@@ -53,6 +53,17 @@ module wwa_picture {
             data.setAnimation("anim_circle", "pos", value);
         }
     };
+    const AlignNumber: [string] = [
+        "start",
+        "center",
+        "end"
+    ];
+    const BaseLineNumber: [string] = [
+        "top",
+        "middle",
+        "alphabetic",
+        "bottom"
+    ];
     export class PictureData {
         private _pictures: Array<Picture>;
         /** ピクチャを複数格納するクラスです。
@@ -335,6 +346,12 @@ module wwa_picture {
         get text(): string {
             return this._properties.text.str;
         }
+        get textAlign(): string {
+            return this._properties.text.align;
+        }
+        get textBaseline(): string {
+            return this._properties.text.baseline;
+        }
         get font(): string {
             return this._properties.font.font;
         }
@@ -516,17 +533,27 @@ module wwa_picture {
     }
     class Text implements Property {
         private _str: string;
+        private _align: number;
+        private _baseline: number;
         constructor() {
             this._str = "";
         }
         public setProperty(value) {
             this._str = Util.getStringValue(value[0]);
+            this._align = Util.getIntValue(value[1], 0);
+            this._baseline = Util.getIntValue(value[2], 0);
         }
         public createAnimation(animationType) {
             return null;
         }
         get str(): string {
             return this._str;
+        }
+        get align(): string {
+            return AlignNumber[this._align];
+        }
+        get baseline(): string {
+            return BaseLineNumber[this._baseline];
         }
     }
     class Font implements Property {

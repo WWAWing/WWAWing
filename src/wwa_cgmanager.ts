@@ -123,6 +123,9 @@ module wwa_cgmanager {
             ctx.rotate(picture.angle * Math.PI / 180);
             ctx.translate(-Consts.CANVAS_WIDTH / 2, -Consts.CANVAS_HEIGHT / 2);
             ctx.globalAlpha = picture.opacity;
+            ctx.textAlign = picture.textAlign;
+            ctx.textBaseline = picture.textBaseline
+            
             ctx.font = picture.font;
             if (!this._isLoaded) {
                 throw new Error("No image was loaded.");
