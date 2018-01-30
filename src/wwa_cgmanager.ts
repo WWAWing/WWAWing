@@ -125,9 +125,9 @@ module wwa_cgmanager {
             ctx.globalAlpha = picture.opacity;
             ctx.textAlign = picture.textAlign;
             ctx.textBaseline = picture.textBaseline;
-            ctx.fillStyle = picture.fillStyle;
             
             ctx.font = picture.font;
+            ctx.fillStyle = picture.fillStyle;
             if (!this._isLoaded) {
                 throw new Error("No image was loaded.");
             }

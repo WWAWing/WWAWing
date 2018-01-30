@@ -565,18 +565,31 @@ module wwa_picture {
      * フォントです。文字のサイズなどを指定しますが、 Text クラスとは別に取り扱っています。
      */
     class Font implements Property {
-        private _font: string;
+        private _size: number;
+        private _weight: boolean;
+        private _italic: boolean;
+        private _family: string;
+        static DEFAULT_SIZE = 16;
+        static DEFAILT_FAMILY = "sans-serif";
         constructor() {
-            this._font = "";
+            this._size = Font.DEFAULT_SIZE;
+            this._weight = false;
+            this._italic = false;
+            this._family = Font.DEFAILT_FAMILY;
         }
         public setProperty(value) {
-            this._font = Util.getStringValue(value[0]);
+            this._size = Util.getIntValue(value[0]);
+            this._weight = Util.getBoolValue(value[1], false);
+            this._italic = Util.getBoolValue(value[2], false);
+            this._family = Util.getStringValue(value[3], Font.DEFAILT_FAMILY);
         }
         public createAnimation(animationType) {
             return null;
         }
         get font(): string {
-            return this._font;
+            var weight = this._weight ? "bold" : "normal";
+            var style = this._italic ? "italic" : "normal";
+            return `${style} ${weight} ${this._size}px ${this._family}`;
         }
     }
     class Color extends wwa_data.Color implements Property {
@@ -595,28 +608,75 @@ module wwa_picture {
     export class Util {
         public static getIntValue(str: string, fallback: number = void 0): number {
             var value = parseInt(str, 10);
-            if (isNaN(value)) {
-                if (fallback === void 0) {
-                    throw new Error("値が正しく定義されていません");
-                }
+            if (Util.checkFallbackNumber(value, fallback)) {
                 return fallback;
             }
             return value;
         }
         public static getFloatValue(str: string, fallback: number = void 0): number {
             var value = parseFloat(str);
-            if (isNaN(value)) {
-                if (fallback !== void 0) {
-                    throw new Error("値が正しく定義されていません");
-                }
+            if (Util.checkFallbackNumber(value, fallback)) {
                 return fallback;
             }
             return value;
         }
-        public static getStringValue(str: string): string {
+        /**
+         * フォールバック値も含めた数字を代入して、ちゃんとフォールバックできたか確認します。
+         * フォールバックせず、本来の数字が存在する場合は false になります。
+         * @param value 本来の数字
+         * @param fallback フォールバック値
+         */
+        public static checkFallbackNumber(value: number, fallback: number): boolean {
+            if (isNaN(value)) {
+                if (fallback === void 0) {
+                    throw new Error("値が正しく定義されていません。");
+                }
+                return true;
+            }
+            return false;
+        }
+        public static getBoolValue(str: string, fallback: boolean = void 0): boolean {
+            var fallbackNumber = Util.parseIntFromBool(fallback);
+            var value = Util.getIntValue(str, fallbackNumber);
+            return Util.parseBool(value);
+        }
+        /**
+         * 数字の値を引数に、bool値を返します
+         * @param value 数字
+         */
+        public static parseBool(value: number): boolean {
+            if (value) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        /**
+         * boolの値を引数に、0か1かどちらかを返します
+         * @param value bool値
+         */
+        public static parseIntFromBool(value: boolean): number {
+            if (value) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        public static getStringValue(str: string, fallback: string = void 0): string {
+            if (str === void 0) {
+                if (fallback === void 0) {
+                    throw new Error("値が正しく定義されていません。");
+                }
+                return fallback;
+            }
             var trimmedStr = Util.trimString(str, '"');
             return trimmedStr;
         }
+        /**
+         * 文字列の両端の記号を切り取ります
+         * @param str 切り取られる文字列(両端に対象の記号がないと正常に処理できません)
+         * @param trimmingChar 切り取り対象の記号
+         */
         public static trimString(str: string, trimmingChar: string): string {
             if (str.charAt(0) === trimmingChar && str.charAt(str.length - 1) === trimmingChar) {
                 return str.slice(1, -1);
