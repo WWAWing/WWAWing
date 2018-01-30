@@ -3,7 +3,7 @@
 
 module wwa_picture {
     import Consts = wwa_data.WWAConsts;
-    var properties: { [key: string]: (data: Picture, value: Array<string>) => void } = {
+    const PropertyTable: { [key: string]: (data: Picture, value: Array<string>) => void } = {
         "pos": (data, value) => {
             data.setProperty("pos", value);
         },
@@ -53,12 +53,12 @@ module wwa_picture {
             data.setAnimation("anim_circle", "pos", value);
         }
     };
-    const AlignNumber: [string] = [
+    const AlignTable: [string] = [
         "start",
         "center",
         "end"
     ];
-    const BaseLineNumber: [string] = [
+    const BaselineTable: [string] = [
         "top",
         "middle",
         "alphabetic",
@@ -222,7 +222,7 @@ module wwa_picture {
             
             message.forEach((line, index) => {
                 var property = this.createProperty(line);
-                properties[property.type](this, property.value);
+                PropertyTable[property.type](this, property.value);
             }, this);
         }
         /** プロパティを表記した1行からプロパティを生成します。
@@ -550,12 +550,15 @@ module wwa_picture {
             return this._str;
         }
         get align(): string {
-            return AlignNumber[this._align];
+            return AlignTable[this._align];
         }
         get baseline(): string {
-            return BaseLineNumber[this._baseline];
+            return BaselineTable[this._baseline];
         }
     }
+    /**
+     * フォントです。文字のサイズなどを指定しますが、 Text クラスとは別に取り扱っています。
+     */
     class Font implements Property {
         private _font: string;
         constructor() {
