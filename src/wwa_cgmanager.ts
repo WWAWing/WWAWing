@@ -124,7 +124,8 @@ module wwa_cgmanager {
             ctx.translate(-Consts.CANVAS_WIDTH / 2, -Consts.CANVAS_HEIGHT / 2);
             ctx.globalAlpha = picture.opacity;
             ctx.textAlign = picture.textAlign;
-            ctx.textBaseline = picture.textBaseline
+            ctx.textBaseline = picture.textBaseline;
+            ctx.fillStyle = picture.fillStyle;
             
             ctx.font = picture.font;
             if (!this._isLoaded) {

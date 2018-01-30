@@ -334,6 +334,41 @@ module wwa_data {
         }
     }
 
+    export class Color {
+        private _red: number;
+        private _green: number;
+        private _blue: number;
+        constructor(red, green, blue) {
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
+        public static checkValue(value): boolean {
+            if (value < 0 || value > 255) {
+                throw new Error("指定した色の値が範囲外です。");
+            }
+            return true;
+        }
+        get cssColorValue(): string {
+            return `rgb(${this._red}, ${this._green}, ${this._blue})`;
+        }
+        set red(value) {
+            if (Color.checkValue(value)) {
+                this._red = value;
+            }
+        }
+        set green(value) {
+            if (Color.checkValue(value)) {
+                this._green = value;
+            }
+        }
+        set blue(value) {
+            if (Color.checkValue(value)) {
+                this._blue = value;
+            }
+        }
+    }
+
     export enum Direction {
         LEFT  = 0,
         RIGHT = 1,

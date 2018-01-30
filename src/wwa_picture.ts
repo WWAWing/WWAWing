@@ -44,7 +44,7 @@ module wwa_picture {
             data.setProperty("font", value);
         },
         "color": (data, value) => {
-
+            data.setProperty("color", value);
         },
         "anim_straight": (data, value) => {
             data.setAnimation("anim_straight", "pos", value);
@@ -172,7 +172,8 @@ module wwa_picture {
             "repeat": Repeat,
             "opacity": Opacity,
             "text": Text,
-            "font": Font
+            "font": Font,
+            "color": Color
         };
         private _anims: Array<Animation>;
         // 内部制御用
@@ -208,7 +209,8 @@ module wwa_picture {
                 repeat: new Repeat(),
                 opacity: new Opacity(),
                 text: new Text(),
-                font: new Font()
+                font: new Font(),
+                color: new Color()
             }
             this._anims = new Array();
             this._startTimer = new wwa_data.Timer(waitTime, false, () => {
@@ -354,6 +356,9 @@ module wwa_picture {
         }
         get font(): string {
             return this._properties.font.font;
+        }
+        get fillStyle(): string {
+            return this._properties.color.cssColorValue;
         }
     }
     /** プロパティ
@@ -572,6 +577,19 @@ module wwa_picture {
         }
         get font(): string {
             return this._font;
+        }
+    }
+    class Color extends wwa_data.Color implements Property {
+        constructor() {
+            super(0, 0, 0);
+        }
+        public setProperty(value) {
+            this.red = Util.getIntValue(value[0]);
+            this.green = Util.getIntValue(value[1]);
+            this.blue = Util.getIntValue(value[2]);
+        }
+        public createAnimation(animationType) {
+            return null;
         }
     }
     export class Util {
