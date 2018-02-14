@@ -53,12 +53,12 @@ module wwa_picture {
             data.setAnimation("anim_circle", "pos", value);
         }
     };
-    const AlignTable: [string] = [
+    const AlignTable: Array<string> = [
         "start",
         "center",
         "end"
     ];
-    const BaselineTable: [string] = [
+    const BaselineTable: Array<string> = [
         "top",
         "middle",
         "alphabetic",
