@@ -11,6 +11,7 @@ module wwa_picture {
             data.setProperty("time", value);
         },
         "next": (data, value) => {
+            data.setProperty("next", value);
         },
         "size": (data, value) => {
             data.setProperty("size", value);
@@ -65,11 +66,13 @@ module wwa_picture {
         "bottom"
     ];
     export class PictureData {
+        private _wwa: wwa_main.WWA;
         private _pictures: Array<Picture>;
         /** ピクチャを複数格納するクラスです。
          * @param size ピクチャが格納できる個数を指定します。
          */
-        constructor(size: number) {
+        constructor(wwa: wwa_main.WWA, size: number) {
+            this._wwa = wwa;
             this._pictures = new Array(size);
         }
         /**
@@ -154,9 +157,14 @@ module wwa_picture {
             this.checkID(id);
             return this._pictures[id];
         }
+
+        get parentWWA(): wwa_main.WWA {
+            return this._wwa;
+        }
     }
     export class Picture {
         public static isPrimaryAnimationTime: boolean = true;
+        private _parent: PictureData;
         // 初期設定
         private _imageCrop: wwa_data.Coord;
         private _secondImageCrop: wwa_data.Coord;
@@ -166,6 +174,7 @@ module wwa_picture {
         private _properties: {
             "pos": Pos,
             "time": Time,
+            "next": Next,
             "size": Size,
             "clip": Clip,
             "angle": Angle,
@@ -191,9 +200,11 @@ module wwa_picture {
          * @param message ピクチャを表示するパーツのメッセージです。各行を配列にした形で設定します。
          */
         constructor(
+        parent: PictureData,
         imgCropX: number, imgCropY: number,
         secondImgCropX: number, secondImgCropY: number,
         soundNumber: number, waitTime: number, message: Array<string>) {
+            this._parent = parent;
             this._imageCrop = new wwa_data.Coord(imgCropX, imgCropY);
             this._secondImageCrop = new wwa_data.Coord(secondImgCropX, secondImgCropY);
             this._soundNumber = soundNumber;
@@ -202,7 +213,9 @@ module wwa_picture {
                 time: new Time(() => {
                     this._isVisible = false;
                     this._isTimeout = true;
+                    this._properties.next.appearParts(this._parent.parentWWA);
                 }),
+                next: new Next(),
                 size: new Size(),
                 clip: new Clip(),
                 angle: new Angle(),
@@ -434,6 +447,34 @@ module wwa_picture {
         }
         get isSet(): boolean {
             return this._isSet;
+        }
+    }
+    class Next implements Property {
+        private _nextParts: number;
+        private _partsType: wwa_data.PartsType;
+        constructor() {
+            this._nextParts = 0;
+            this._partsType = wwa_data.PartsType.OBJECT;
+        }
+        public setProperty(value) {
+            this._nextParts = Util.getIntValue(value[0]);
+            var isMapParts = Util.getBoolValue(value[1], false);
+            this._partsType = isMapParts ? wwa_data.PartsType.MAP : wwa_data.PartsType.OBJECT;
+        }
+        public createAnimation(animationType) {
+            return null;
+        }
+        public appearParts(wwa: wwa_main.WWA) {
+            wwa.appearPartsByDirection(0, this._nextParts, this._partsType);
+        }
+        get nextParts(): number {
+            return this._nextParts;
+        }
+        get partsType(): wwa_data.PartsType {
+            return this._partsType;
+        }
+        get isSet(): boolean {
+            return this._nextParts !== 0;
         }
     }
     class Size extends wwa_data.Coord implements Property {

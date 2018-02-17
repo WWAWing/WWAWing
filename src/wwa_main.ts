@@ -215,7 +215,7 @@ module wwa_main {
                 this._wwaData = e.data.wwaData;
                 // start PE
                 this._wwaData.pictureID = new Array(Consts.PICTURE_LENGTH);
-                this._pictureData = new wwa_picture.PictureData(Consts.PICTURE_LENGTH);
+                this._pictureData = new wwa_picture.PictureData(this, Consts.PICTURE_LENGTH);
                 for (var i = 0; i < Consts.PICTURE_LENGTH; i++) {
                     this._wwaData.pictureID[i] = 0;
                 }
@@ -3721,6 +3721,7 @@ module wwa_main {
                 lines.splice(0, 1);
             }
             var picture = new wwa_picture.Picture(
+                this._pictureData,
                 this.getObjectCropXById(partsID) / Consts.CHIP_SIZE,
                 this.getObjectCropYById(partsID) / Consts.CHIP_SIZE,
                 this.getObjectCropXById(partsID, true) / Consts.CHIP_SIZE,
