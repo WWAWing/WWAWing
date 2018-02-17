@@ -3708,6 +3708,12 @@ module wwa_main {
             this.updateCSSRule();
         }
 
+        /**
+         * ピクチャを作成します。
+         * @param partsID ピクチャのプロパティが記述されているパーツ番号
+         * @param id ピクチャを表示する領域のID
+         * @param autoStart 作成時と同時にパーツのタイマー処理を走らせるか
+         */
         public createPicture(partsID: number, id: number, autoStart: boolean = false) {
             var mesID = this.getObjectAttributeById(partsID, Consts.ATR_STRING);
             var message = this.getMessageById(mesID);
@@ -3737,6 +3743,18 @@ module wwa_main {
             console.log(picture);
             if (autoStart) {
                 picture.start();
+            }
+        }
+
+        public startPictureWaiting(picture: wwa_picture.Picture) {
+            if (picture.isSetNextParts) {
+                this._player.setPictureWaiting();
+            }
+        }
+        
+        public stopPictureWaiting(picture: wwa_picture.Picture) {
+            if (picture.isSetNextParts) {
+                this._player.clearPictureWaiting();
             }
         }
 

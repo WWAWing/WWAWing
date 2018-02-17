@@ -189,8 +189,8 @@ module wwa_picture {
         private _isVisible: boolean;
         private _isTimeout: boolean;
         private _intervalID: number;
-
         /**
+         * @param parent ピクチャを格納するピクチャデータ
          * @param imgCropX イメージの参照先のX座標です。
          * @param imgCropY イメージの参照先のY座標です。
          * @param secondImgCropX イメージの第2参照先のX座標で、アニメーションが設定されている場合に使います。
@@ -213,7 +213,10 @@ module wwa_picture {
                 time: new Time(() => {
                     this._isVisible = false;
                     this._isTimeout = true;
-                    this._properties.next.appearParts(this._parent.parentWWA);
+                    if (this._properties.next.isSet) {
+                        this._parent.parentWWA.stopPictureWaiting(this);
+                        this._properties.next.appearParts(this._parent.parentWWA);
+                    }
                 }),
                 next: new Next(),
                 size: new Size(),
@@ -295,6 +298,9 @@ module wwa_picture {
          * メッセージ表示後にイメージ表示を行いたいので、タイマーの開始はコンストラクタに含めない
          */
         public start() {
+            if (this.isSetNextParts) {
+                this._parent.parentWWA.startPictureWaiting(this);
+            }
             if (this.isVisible) {
                 this._properties.time.start();
             } else {
@@ -333,6 +339,9 @@ module wwa_picture {
         }
         get nextPictureNumber(): number {
             return this._properties.time.nextPicture;
+        }
+        get isSetNextParts(): boolean {
+            return this._properties.next.isSet;
         }
         get width(): number {
             return this._properties.repeat.x * Consts.CHIP_SIZE;
