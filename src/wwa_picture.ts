@@ -362,7 +362,7 @@ module wwa_picture {
             return this._properties.opacity.value;
         }
         get angle(): number {
-            return this._properties.angle.degree;
+            return this._properties.angle.rad;
         }
         get repeat(): wwa_data.Coord {
             return this._properties.repeat;
@@ -443,17 +443,17 @@ module wwa_picture {
     class CircleAnimation implements Animation {
         private _parent: Pos;
         private _angle: wwa_data.Angle;
-        private _degree: wwa_data.Angle;
+        private _speed: wwa_data.Angle;
         private _round: number;
         constructor(parent: Pos) {
             this._parent = parent;
             this._angle = new wwa_data.Angle(0);
-            this._degree = new wwa_data.Angle(0);
+            this._speed = new wwa_data.Angle(0);
             this._round = 0;
         }
         public setProperty(value) {
             this._round = Util.getIntValue(value[0]);
-            this._degree.value = Util.getFloatValue(value[1]);
+            this._speed.value = Util.getFloatValue(value[1]);
         }
         public createAnimation(animationType) {
             return null;
@@ -461,7 +461,7 @@ module wwa_picture {
         public update() {
             this._parent.x = (Math.cos(this._angle.rad) * this._round) + this._parent.basePos.x;
             this._parent.y = (Math.sin(this._angle.rad) * this._round) + this._parent.basePos.y;
-            this._angle.rotate(this._degree.degree);
+            this._angle.rotate(this._speed.degree);
         }
     }
     class Time extends wwa_data.Timer implements Property {
@@ -564,21 +564,16 @@ module wwa_picture {
             return null;
         }
     }
-    class Angle implements Property {
-        private _degree: number;
+    class Angle extends wwa_data.Angle implements Property {
         constructor() {
-            this._degree = 0;
+            super(0);
         }
         public setProperty(value) {
             var degree = Util.getIntValue(value[0]);
-            degree = degree % 360;
-            this._degree = degree;
+            this.value = degree;
         }
         public createAnimation(animationType) {
             return new Rotate(this);
-        }
-        get degree() {
-            return this._degree;
         }
     }
     class Rotate extends Angle implements Animation {
@@ -594,6 +589,7 @@ module wwa_picture {
             this._interval = interval;
         }
         public update() {
+            this._parent.value = this._parent.value + this.degree;
         }
     }
     class Repeat extends wwa_data.Coord implements Property {

@@ -120,7 +120,7 @@ module wwa_cgmanager {
             var ctx = isSub ? this._ctxSub : this._ctx;
             ctx.save();
             ctx.translate(Consts.CANVAS_WIDTH / 2, Consts.CANVAS_HEIGHT / 2);
-            ctx.rotate(picture.angle * Math.PI / 180);
+            ctx.rotate(picture.angle);
             ctx.translate(-Consts.CANVAS_WIDTH / 2, -Consts.CANVAS_HEIGHT / 2);
             ctx.globalAlpha = picture.opacity;
             ctx.textAlign = picture.textAlign;
