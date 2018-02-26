@@ -369,6 +369,38 @@ module wwa_data {
         }
     }
 
+    export class Angle {
+        private _degree: number;
+        /**
+         * 角度を表すクラスです。
+         * @param degree 角度です。0〜360の間を指定します。
+         */
+        constructor(degree: number) {
+            this.value = degree;
+        }
+        /**
+         * 角度を回転します。
+         */
+        public rotate(degree: number) {
+            this.value = this._degree + degree;
+        }
+        /**
+         * 角度を取得します。
+         */
+        get degree(): number {
+            return this._degree;
+        }
+        /**
+         * ラジアン値を取得します。
+         */
+        get rad(): number {
+            return this._degree * Math.PI / 180.0;
+        }
+        set value(degree: number) {
+            this._degree = degree % 360;
+        }
+    }
+
     export enum Direction {
         LEFT  = 0,
         RIGHT = 1,

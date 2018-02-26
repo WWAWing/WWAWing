@@ -396,18 +396,38 @@ module wwa_picture {
         update();
     }
     class Pos extends wwa_data.Coord implements Property {
+        private _basePos: wwa_data.Coord;
         constructor() {
             super(0, 0);
+            this._basePos = new wwa_data.Coord(0, 0);
         }
         public setProperty(value) {
             this.x = Util.getIntValue(value[0]);
             this.y = Util.getIntValue(value[1]);
+            this._basePos.x = this.x;
+            this._basePos.y = this.y;
         }
         public createAnimation(animationType) {
             if (animationType === "anim_straight") {
                 return new StraightAnimation(this);
+            } else if (animationType === "anim_circle") {
+                return new CircleAnimation(this);
             }
             return null;
+        }
+        /**
+         * ベースの位置を移動します。
+         * @param x 移動するX座標
+         * @param y 移動するY座標
+         */
+        public move(x: number, y: number) {
+            this._basePos.x += x;
+            this._basePos.y += y;
+            this.x = this._basePos.x;
+            this.y = this._basePos.y;
+        }
+        get basePos(): wwa_data.Coord {
+            return this._basePos;
         }
     }
     class StraightAnimation extends Pos implements Animation {
@@ -417,8 +437,31 @@ module wwa_picture {
             this._parent = parent;
         }
         public update() {
-            this._parent.x += this.x;
-            this._parent.y += this.y;
+            this._parent.move(this.x, this.y);
+        }
+    }
+    class CircleAnimation implements Animation {
+        private _parent: Pos;
+        private _angle: wwa_data.Angle;
+        private _degree: wwa_data.Angle;
+        private _round: number;
+        constructor(parent: Pos) {
+            this._parent = parent;
+            this._angle = new wwa_data.Angle(0);
+            this._degree = new wwa_data.Angle(0);
+            this._round = 0;
+        }
+        public setProperty(value) {
+            this._round = Util.getIntValue(value[0]);
+            this._degree.value = Util.getFloatValue(value[1]);
+        }
+        public createAnimation(animationType) {
+            return null;
+        }
+        public update() {
+            this._parent.x = (Math.cos(this._angle.rad) * this._round) + this._parent.basePos.x;
+            this._parent.y = (Math.sin(this._angle.rad) * this._round) + this._parent.basePos.y;
+            this._angle.rotate(this._degree.degree);
         }
     }
     class Time extends wwa_data.Timer implements Property {
