@@ -237,6 +237,7 @@ module wwa_picture {
             });
             this._isVisible = waitTime <= 0;
             this._isTimeout = false;
+            this._intervalID = null;
             
             message.forEach((line, index) => {
                 var property = this.createProperty(line);
@@ -306,7 +307,9 @@ module wwa_picture {
             } else {
                 this._startTimer.start();
             }
-            this._intervalID = setInterval(this.update, 10, this);
+            if (!this._intervalID) {
+                this._intervalID = setInterval(this.update, 10, this);
+            }
         }
         /**
          * ピクチャの動きを止めます。
