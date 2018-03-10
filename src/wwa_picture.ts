@@ -52,6 +52,12 @@ module wwa_picture {
         },
         "anim_circle": (data, value) => {
             data.setAnimation("anim_circle", "pos", value);
+        },
+        "anim_zoom": (data, value) => {
+            data.setAnimation("anim_zoom", "size", value);
+        },
+        "anim_rotate": (data, value) => {
+            data.setAnimation("anim_rotate", "angle", value);
         }
     };
     const AlignTable: Array<string> = [
