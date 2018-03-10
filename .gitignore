@@ -9,6 +9,7 @@ wwaload.long.noworker.js
 .DS_Store
 .vs
 node_modules
+package-lock.json
 
 wwa.js
 wwa.long.js
