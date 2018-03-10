@@ -313,7 +313,7 @@ module wwa_picture {
             } else {
                 this._startTimer.start();
             }
-            if (!this._intervalID) {
+            if (this._intervalID == null) {
                 this._intervalID = setInterval(this.update, 10, this);
             }
         }
@@ -463,6 +463,7 @@ module wwa_picture {
         public setProperty(value) {
             this._round = Util.getIntValue(value[0]);
             this._speed.value = Util.getFloatValue(value[1]);
+            this.update();
         }
         public createAnimation(animationType) {
             return null;
