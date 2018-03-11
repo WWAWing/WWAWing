@@ -463,6 +463,7 @@ module wwa_picture {
         public setProperty(value) {
             this._round = Util.getIntValue(value[0]);
             this._speed.value = Util.getFloatValue(value[1]);
+            this._angle.value = Util.getFloatValue(value[2], 0);
             this.update();
         }
         public createAnimation(animationType) {
@@ -579,8 +580,7 @@ module wwa_picture {
             super(0);
         }
         public setProperty(value) {
-            var degree = Util.getIntValue(value[0]);
-            this.value = degree;
+            this.value = Util.getIntValue(value[0]);
         }
         public createAnimation(animationType) {
             return new Rotate(this);
@@ -588,18 +588,12 @@ module wwa_picture {
     }
     class Rotate extends Angle implements Animation {
         private _parent: Angle;
-        private _interval: number;
         constructor(parent: Angle) {
             super();
             this._parent = parent;
         }
-        public setProperty(value) {
-            super.setProperty(value);
-            var interval = Util.getIntValue(value[1]);
-            this._interval = interval;
-        }
         public update() {
-            this._parent.value = this._parent.value + this.degree;
+            this._parent.rotate(this.degree);
         }
     }
     class Repeat extends wwa_data.Coord implements Property {
