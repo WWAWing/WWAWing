@@ -58,6 +58,9 @@ module wwa_picture {
         },
         "anim_rotate": (data, value) => {
             data.setAnimation("anim_rotate", "angle", value);
+        },
+        "anim_fade": (data, value) => {
+            data.setAnimation("anim_fade", "opacity", value);
         }
     };
     const AlignTable: Array<string> = [
@@ -583,7 +586,10 @@ module wwa_picture {
             this.value = Util.getIntValue(value[0]);
         }
         public createAnimation(animationType) {
-            return new Rotate(this);
+            if (animationType === "anim_rotate") {
+                return new Rotate(this);
+            }
+            return null;
         }
     }
     class Rotate extends Angle implements Animation {
@@ -604,14 +610,14 @@ module wwa_picture {
             this.x = Util.getIntValue(value[0]);
             this.y = Util.getIntValue(value[1]);
         }
-        public createAnimation() {
+        public createAnimation(animationType) {
             return null;
         }
     }
     class Opacity implements Property {
         private _value: number;
         constructor() {
-            this._value = 1.0;
+            this.value = 1.0;
         }
         public setProperty(value) {
             var opacity = Util.getFloatValue(value[0]);
@@ -620,13 +626,35 @@ module wwa_picture {
             } else if (opacity < 0) {
                 throw new Error("透明度は 0 以上である必要があります。");
             }
-            this._value = opacity;
+            this.value = opacity;
         }
-        public createAnimation() {
+        public createAnimation(animationType) {
+            if (animationType === "anim_fade") {
+                return new Fade(this);
+            }
             return null;
         }
         get value() {
             return this._value;
+        }
+        set value(value: number) {
+            if (value > 1.0) {
+                this._value = 1.0;
+            } else if (value < 0) {
+                this._value = 0.0;
+            } else {
+                this._value = value;
+            }
+        }
+    }
+    class Fade extends Opacity implements Animation {
+        private _parent: Opacity;
+        constructor(parent: Opacity) {
+            super();
+            this._parent = parent;
+        }
+        public update() {
+            this._parent.value += this.value;
         }
     }
     class Text implements Property {
