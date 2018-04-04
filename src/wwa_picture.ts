@@ -48,19 +48,19 @@ module wwa_picture {
             data.setProperty("color", value);
         },
         "anim_straight": (data, value) => {
-            data.setAnimation("anim_straight", "pos", value);
+            data.setAnimation(new StraightAnimation(data), value);
         },
         "anim_circle": (data, value) => {
-            data.setAnimation("anim_circle", "pos", value);
+            data.setAnimation(new CircleAnimation(data), value);
         },
         "anim_zoom": (data, value) => {
-            data.setAnimation("anim_zoom", "size", value);
+            data.setAnimation(new Zoom(data), value);
         },
         "anim_rotate": (data, value) => {
-            data.setAnimation("anim_rotate", "angle", value);
+            data.setAnimation(new Rotate(data), value);
         },
         "anim_fade": (data, value) => {
-            data.setAnimation("anim_fade", "opacity", value);
+            data.setAnimation(new Fade(data), value);
         }
     };
     const AlignTable: Array<string> = [
@@ -290,10 +290,9 @@ module wwa_picture {
         public createAnimation(anim: Animation) {
             this._anims.push(anim);
         }
-        public setAnimation(animationType: string, propertyType: string, value: Array<string>) {
-            var animation = this._properties[propertyType].createAnimation(animationType);
+        public setAnimation(animation: Animation, value: Array<string>) {
             animation.setProperty(value);
-            this._anims.push(animation);
+            this.createAnimation(animation);
         }
         /**
          * ピクチャを動かします。
@@ -340,6 +339,48 @@ module wwa_picture {
         public hasSecondaryImage(): boolean {
             return this._secondImageCrop.x != 0 || this._secondImageCrop.y != 0;
         }
+        /**
+         * ピクチャのベース位置を移動します。
+         * @param x 移動するX座標
+         * @param y 移動するY座標
+         */
+        public move(x: number, y: number) {
+            this._properties.pos.move(x, y); 
+        }
+        /**
+         * ピクチャを一時的に移動します。
+         * @param x 移動するX座標
+         * @param y 移動するY座標
+         */
+        public jump(x: number, y: number) {
+            this._properties.pos.x = x;
+            this._properties.pos.y = y;
+        }
+        /**
+         * ピクチャのサイズを変えます。
+         * @param x 拡大するX座標
+         * @param Y 拡大するY座標
+         */
+        public resize(x: number, y: number) {
+            this._properties.size.x += x;
+            this._properties.size.y += y;
+            this._properties.pos.x -= x / 2;
+            this._properties.pos.y -= y / 2;
+        }
+        /**
+         * ピクチャを回転します。
+         * @param degree 回転する角度
+         */
+        public rotate(degree: number) {
+            this._properties.angle.rotate(degree);
+        }
+        /**
+         * ピクチャの透明度を変えます。
+         * @param value 変更する透明度
+         */
+        public fade(value: number) {
+            this._properties.opacity.value += value;
+        }
         get isVisible(): boolean {
             return this._isVisible;
         }
@@ -363,6 +404,9 @@ module wwa_picture {
         }
         get pos(): wwa_data.Coord {
             return this._properties.pos;
+        }
+        get basePos(): wwa_data.Coord {
+            return this._properties.pos.basePos;
         }
         get size(): wwa_data.Coord {
             return this._properties.size;
@@ -402,7 +446,6 @@ module wwa_picture {
      */
     export interface Property {
         setProperty(value: Array<string>);
-        createAnimation(animationType: string): Animation;
     }
     interface Animation extends Property {
         update();
@@ -418,14 +461,6 @@ module wwa_picture {
             this.y = Util.getIntValue(value[1]);
             this._basePos.x = this.x;
             this._basePos.y = this.y;
-        }
-        public createAnimation(animationType) {
-            if (animationType === "anim_straight") {
-                return new StraightAnimation(this);
-            } else if (animationType === "anim_circle") {
-                return new CircleAnimation(this);
-            }
-            return null;
         }
         /**
          * ベースの位置を移動します。
@@ -443,8 +478,8 @@ module wwa_picture {
         }
     }
     class StraightAnimation extends Pos implements Animation {
-        private _parent: Pos;
-        constructor(parent: Pos) {
+        private _parent: Picture;
+        constructor(parent: Picture) {
             super();
             this._parent = parent;
         }
@@ -453,11 +488,11 @@ module wwa_picture {
         }
     }
     class CircleAnimation implements Animation {
-        private _parent: Pos;
+        private _parent: Picture;
         private _angle: wwa_data.Angle;
         private _speed: wwa_data.Angle;
         private _round: number;
-        constructor(parent: Pos) {
+        constructor(parent: Picture) {
             this._parent = parent;
             this._angle = new wwa_data.Angle(0);
             this._speed = new wwa_data.Angle(0);
@@ -469,12 +504,8 @@ module wwa_picture {
             this._angle.value = Util.getFloatValue(value[2], 0);
             this.update();
         }
-        public createAnimation(animationType) {
-            return null;
-        }
         public update() {
-            this._parent.x = (Math.cos(this._angle.rad) * this._round) + this._parent.basePos.x;
-            this._parent.y = (Math.sin(this._angle.rad) * this._round) + this._parent.basePos.y;
+            this._parent.jump((Math.cos(this._angle.rad) * this._round) + this._parent.basePos.x, (Math.sin(this._angle.rad) * this._round) + this._parent.basePos.y);
             this._angle.rotate(this._speed.degree);
         }
     }
@@ -494,9 +525,6 @@ module wwa_picture {
             this.time = time;
             this._nextPictureNumber = Util.getIntValue(value[1], 0);
             this._isSet = true;
-        }
-        public createAnimation(animationType) {
-            return null;
         }
         public start(): void {
             if (this._isSet) {
@@ -527,9 +555,6 @@ module wwa_picture {
             var isMapParts = Util.getBoolValue(value[1], false);
             this._partsType = isMapParts ? wwa_data.PartsType.MAP : wwa_data.PartsType.OBJECT;
         }
-        public createAnimation(animationType) {
-            return null;
-        }
         public appearParts(wwa: wwa_main.WWA) {
             wwa.appearPartsByDirection(0, this._nextParts, this._partsType);
         }
@@ -551,19 +576,15 @@ module wwa_picture {
             this.x = Util.getIntValue(value[0]);
             this.y = Util.getIntValue(value[1]);
         }
-        public createAnimation(animationType) {
-            return new Zoom(this);
-        }
     }
     class Zoom extends Size implements Animation {
-        private _parent: Size;
-        constructor(parent: Size) {
+        private _parent: Picture;
+        constructor(parent: Picture) {
             super();
             this._parent = parent;
         }
         public update() {
-            this._parent.x += this.x;
-            this._parent.y += this.y;
+            this._parent.resize(this.x, this.y);
         }
     }
     class Clip extends wwa_data.Coord implements Property {
@@ -574,9 +595,6 @@ module wwa_picture {
             this.x = Util.getIntValue(value[0]);
             this.y = Util.getIntValue(value[1]);
         }
-        public createAnimation(animationType) {
-            return null;
-        }
     }
     class Angle extends wwa_data.Angle implements Property {
         constructor() {
@@ -585,16 +603,10 @@ module wwa_picture {
         public setProperty(value) {
             this.value = Util.getIntValue(value[0]);
         }
-        public createAnimation(animationType) {
-            if (animationType === "anim_rotate") {
-                return new Rotate(this);
-            }
-            return null;
-        }
     }
     class Rotate extends Angle implements Animation {
-        private _parent: Angle;
-        constructor(parent: Angle) {
+        private _parent: Picture;
+        constructor(parent: Picture) {
             super();
             this._parent = parent;
         }
@@ -609,9 +621,6 @@ module wwa_picture {
         public setProperty(value) {
             this.x = Util.getIntValue(value[0]);
             this.y = Util.getIntValue(value[1]);
-        }
-        public createAnimation(animationType) {
-            return null;
         }
     }
     class Opacity implements Property {
@@ -628,12 +637,6 @@ module wwa_picture {
             }
             this.value = opacity;
         }
-        public createAnimation(animationType) {
-            if (animationType === "anim_fade") {
-                return new Fade(this);
-            }
-            return null;
-        }
         get value() {
             return this._value;
         }
@@ -648,13 +651,13 @@ module wwa_picture {
         }
     }
     class Fade extends Opacity implements Animation {
-        private _parent: Opacity;
-        constructor(parent: Opacity) {
+        private _parent: Picture;
+        constructor(parent: Picture) {
             super();
             this._parent = parent;
         }
         public update() {
-            this._parent.value += this.value;
+            this._parent.fade(this.value);
         }
     }
     class Text implements Property {
@@ -668,9 +671,6 @@ module wwa_picture {
             this._str = Util.getStringValue(value[0]);
             this._align = Util.getIntValue(value[1], 0);
             this._baseline = Util.getIntValue(value[2], 0);
-        }
-        public createAnimation(animationType) {
-            return null;
         }
         get str(): string {
             return this._str;
@@ -704,9 +704,6 @@ module wwa_picture {
             this._italic = Util.getBoolValue(value[2], false);
             this._family = Util.getStringValue(value[3], Font.DEFAILT_FAMILY);
         }
-        public createAnimation(animationType) {
-            return null;
-        }
         get font(): string {
             var weight = this._weight ? "bold" : "normal";
             var style = this._italic ? "italic" : "normal";
@@ -721,9 +718,6 @@ module wwa_picture {
             this.red = Util.getIntValue(value[0]);
             this.green = Util.getIntValue(value[1]);
             this.blue = Util.getIntValue(value[2]);
-        }
-        public createAnimation(animationType) {
-            return null;
         }
     }
     export class Util {
