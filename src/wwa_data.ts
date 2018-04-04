@@ -404,6 +404,37 @@ module wwa_data {
         }
     }
 
+    export class Rate {
+        private _value: number;
+        private _allowMinusValue: boolean;
+        /**
+         * 0〜1.0 までを表す値です。
+         * @param value 値です。
+         * @param allowMinusValue マイナス値を有効にするか設定します。
+         */
+        constructor(value: number, allowMinusValue: boolean = false) {
+            this.value = value;
+            this._allowMinusValue = allowMinusValue;
+        }
+        get value(): number {
+            return this._value;
+        }
+        set value(value: number) {
+            this._value = value;
+            if (this._value > 1.0) {
+                this._value = 1.0;
+            } else if (this._value < 0.0) {
+                if (this._allowMinusValue) {
+                    if (this._value < -1.0) {
+                        this._value = -1.0;
+                    }
+                } else {
+                    this._value = 0.0;
+                }
+            }
+        }
+    }
+
     export enum Direction {
         LEFT  = 0,
         RIGHT = 1,
