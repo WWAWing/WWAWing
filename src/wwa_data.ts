@@ -327,6 +327,9 @@ module wwa_data {
             return this._isTimeout;
         }
         set time(time: number) {
+            if (time < 0) {
+                throw new Error("タイマーの値が不正です。");
+            }
             this._time = time * 100;
             if (this._time % 10 != 0) {
                 throw new Error("タイマーは小数点第一位までの対応です。");
