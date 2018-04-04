@@ -48,19 +48,34 @@ module wwa_picture {
             data.setProperty("color", value);
         },
         "anim_straight": (data, value) => {
-            data.setAnimation(new StraightAnimation(data), value);
+            data.setAnimation("StraightAnimation", new StraightAnimation(data), value);
+        },
+        "accel_straight": (data, value) => {
+            data.setAccel("StraightAnimation", value);
         },
         "anim_circle": (data, value) => {
-            data.setAnimation(new CircleAnimation(data), value);
+            data.setAnimation("CircleAnimation", new CircleAnimation(data), value);
+        },
+        "accel_circle": (data, value) => {
+            data.setAccel("CircleAnimation", value);
         },
         "anim_zoom": (data, value) => {
-            data.setAnimation(new Zoom(data), value);
+            data.setAnimation("Zoom", new Zoom(data), value);
+        },
+        "accel_zoom": (data, value) => {
+            data.setAccel("Zoom", value);
         },
         "anim_rotate": (data, value) => {
-            data.setAnimation(new Rotate(data), value);
+            data.setAnimation("Rotate", new Rotate(data), value);
+        },
+        "accel_rotate": (data, value) => {
+            data.setAccel("Rotate", value);
         },
         "anim_fade": (data, value) => {
-            data.setAnimation(new Fade(data), value);
+            data.setAnimation("Fade", new Fade(data), value);
+        },
+        "accel_fade": (data, value) => {
+            data.setAccel("Fade", value);
         }
     };
     const AlignTable: Array<string> = [
@@ -193,7 +208,8 @@ module wwa_picture {
             "font": Font,
             "color": Color
         };
-        private _anims: Array<Animation>;
+        private _anims: { [key: string]: Animation };
+        private _accelProperties: { [key: string]: Array<string> };
         // 内部制御用
         private _isVisible: boolean;
         private _isTimeout: boolean;
@@ -237,7 +253,8 @@ module wwa_picture {
                 font: new Font(),
                 color: new Color()
             }
-            this._anims = new Array();
+            this._anims = {};
+            this._accelProperties = {};
             this._startTimer = new wwa_data.Timer(waitTime, false, () => {
                 this._isVisible = true;
                 if (this._properties.time !== void 0) {
@@ -252,6 +269,10 @@ module wwa_picture {
                 var property = this.createProperty(line);
                 PropertyTable[property.type](this, property.value);
             }, this);
+
+            for (var accelType in this._accelProperties) {
+                this._anims[accelType].setAccel(this._accelProperties[accelType]);
+            }
         }
         /** プロパティを表記した1行からプロパティを生成します。
          * @param line プロパティの表記をした1行を指定します。
@@ -287,21 +308,40 @@ module wwa_picture {
                 throw new Error(`${type} のプロパティが見つかりません。`);
             }
         }
-        public createAnimation(anim: Animation) {
-            this._anims.push(anim);
+        /**
+         * アニメーションをピクチャ内の配列に追加します。
+         * @param type アニメーションの種類名
+         * @param anim アニメーションのインスタンス
+         */
+        public createAnimation(type: string, anim: Animation) {
+            this._anims[type] = anim;
         }
-        public setAnimation(animation: Animation, value: Array<string>) {
+        /**
+         * 種類が決まったアニメーションをピクチャに割り当てます
+         * @param type アニメーションの種類名(クラスの名前をそのまま使います)
+         * @param animation アニメーションのインスタンス
+         * @param value アニメーションの内容を記したプロパティの配列
+         */
+        public setAnimation(type: string, animation: Animation, value: Array<string>) {
             animation.setProperty(value);
-            this.createAnimation(animation);
+            this.createAnimation(type, animation);
+        }
+        /**
+         * 種類が決まった加速の情報をピクチャに一旦保存します
+         * @param type アニメーションの種類名
+         * @param value 加速の内容を記したプロパティの配列
+         */
+        public setAccel(type: string, value: Array<string>) {
+            this._accelProperties[type] = value;
         }
         /**
          * ピクチャを動かします。
          * @param self 動かすピクチャ (setInterval内でこのメソッドを指定した場合、thisの対象がwindowに移るため)
          */
         public update(self: Picture) {
-            self._anims.forEach((anim) => {
-                anim.update();
-            }, self);
+            for (var animationType in self._anims) {
+                self._anims[animationType].update();
+            }
         }
         /**
          * メッセージ表示後にイメージ表示を行いたいので、タイマーの開始はコンストラクタに含めない
@@ -448,7 +488,9 @@ module wwa_picture {
         setProperty(value: Array<string>);
     }
     interface Animation extends Property {
+        setAccel(value: Array<string>);
         update();
+        accel();
     }
     class Pos extends wwa_data.Coord implements Property {
         private _basePos: wwa_data.Coord;
@@ -477,14 +519,29 @@ module wwa_picture {
             return this._basePos;
         }
     }
-    class StraightAnimation extends Pos implements Animation {
+    class StraightAnimation extends wwa_data.Coord implements Animation {
         private _parent: Picture;
+        private _accel: wwa_data.Coord;
         constructor(parent: Picture) {
-            super();
+            super(0, 0);
             this._parent = parent;
+            this._accel = new wwa_data.Coord(0, 0);
+        }
+        public setProperty(value) {
+            this.x = Util.getFloatValue(value[0]);
+            this.y = Util.getFloatValue(value[1]);
+        }
+        public setAccel(value) {
+            this._accel.x = Util.getFloatValue(value[0]);
+            this._accel.y = Util.getFloatValue(value[1]);
         }
         public update() {
             this._parent.move(this.x, this.y);
+            this.accel();
+        }
+        public accel() {
+            this.x += this._accel.x;
+            this.y += this._accel.y;
         }
     }
     class CircleAnimation implements Animation {
@@ -492,11 +549,19 @@ module wwa_picture {
         private _angle: wwa_data.Angle;
         private _speed: wwa_data.Angle;
         private _round: number;
+        private _accel: {
+            angle: wwa_data.Angle,
+            round: number
+        };
         constructor(parent: Picture) {
             this._parent = parent;
             this._angle = new wwa_data.Angle(0);
             this._speed = new wwa_data.Angle(0);
             this._round = 0;
+            this._accel = {
+                angle: new wwa_data.Angle(0),
+                round: 0
+            };
         }
         public setProperty(value) {
             this._round = Util.getIntValue(value[0]);
@@ -504,9 +569,18 @@ module wwa_picture {
             this._angle.value = Util.getFloatValue(value[2], 0);
             this.update();
         }
+        public setAccel(value) {
+            this._accel.round = Util.getIntValue(value[0]);
+            this._accel.angle.value = Util.getFloatValue(value[1]);
+        }
         public update() {
             this._parent.jump((Math.cos(this._angle.rad) * this._round) + this._parent.basePos.x, (Math.sin(this._angle.rad) * this._round) + this._parent.basePos.y);
             this._angle.rotate(this._speed.degree);
+            this.accel();
+        }
+        public accel() {
+            this._speed.rotate(this._accel.angle.degree);
+            this._round += this._accel.round;
         }
     }
     class Time extends wwa_data.Timer implements Property {
@@ -579,12 +653,23 @@ module wwa_picture {
     }
     class Zoom extends Size implements Animation {
         private _parent: Picture;
+        private _accel: wwa_data.Coord;
         constructor(parent: Picture) {
             super();
             this._parent = parent;
+            this._accel = new wwa_data.Coord(0, 0);
+        }
+        public setAccel(value) {
+            this._accel.x = Util.getIntValue(value[0]);
+            this._accel.y = Util.getIntValue(value[1]);
         }
         public update() {
             this._parent.resize(this.x, this.y);
+            this.accel();
+        }
+        public accel() {
+            this.x += this._accel.x;
+            this.y += this._accel.y;
         }
     }
     class Clip extends wwa_data.Coord implements Property {
@@ -606,12 +691,21 @@ module wwa_picture {
     }
     class Rotate extends Angle implements Animation {
         private _parent: Picture;
+        private _accel: wwa_data.Angle;
         constructor(parent: Picture) {
             super();
             this._parent = parent;
+            this._accel = new wwa_data.Angle(0);
+        }
+        public setAccel(value) {
+            this._accel.value = Util.getIntValue(value[0]);
         }
         public update() {
             this._parent.rotate(this.degree);
+            this.accel();
+        }
+        public accel() {
+            this.rotate(this._accel.value);
         }
     }
     class Repeat extends wwa_data.Coord implements Property {
@@ -623,41 +717,31 @@ module wwa_picture {
             this.y = Util.getIntValue(value[1]);
         }
     }
-    class Opacity implements Property {
-        private _value: number;
+    class Opacity extends wwa_data.Rate implements Property {
         constructor() {
-            this.value = 1.0;
+            super(1.0, false);
         }
         public setProperty(value) {
-            var opacity = Util.getFloatValue(value[0]);
-            if (opacity > 1.0) {
-                throw new Error("透明度は 1.0 以下である必要があります。");
-            } else if (opacity < 0) {
-                throw new Error("透明度は 0 以上である必要があります。");
-            }
-            this.value = opacity;
-        }
-        get value() {
-            return this._value;
-        }
-        set value(value: number) {
-            if (value > 1.0) {
-                this._value = 1.0;
-            } else if (value < 0) {
-                this._value = 0.0;
-            } else {
-                this._value = value;
-            }
+            this.value = Util.getFloatValue(value[0]);
         }
     }
     class Fade extends Opacity implements Animation {
         private _parent: Picture;
+        private _accel: wwa_data.Rate;
         constructor(parent: Picture) {
             super();
             this._parent = parent;
+            this._accel = new wwa_data.Rate(0.0);
+        }
+        public setAccel(value) {
+            this._accel.value = Util.getFloatValue(value[0]);
         }
         public update() {
             this._parent.fade(this.value);
+            this.accel();
+        }
+        public accel() {
+            this.value += this._accel.value;
         }
     }
     class Text implements Property {
