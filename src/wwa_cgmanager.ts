@@ -137,16 +137,26 @@ module wwa_cgmanager {
 
         public drawCanvasWithPicture(picture: wwa_picture.Picture, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;
-            
+            var posX = picture.isFill ? ( picture.pos.x % picture.chipSize.x ) - picture.chipSize.x : picture.pos.x;
+            var posY = picture.isFill ? ( picture.pos.y % picture.chipSize.y ) - picture.chipSize.y : picture.pos.y;
+            var beginX = posX;
+            var beginY = posY;
+
             for (var y = 0; y < picture.repeat.y; y++) {
                 for (var x = 0; x < picture.repeat.x; x++) {
                     ctx.drawImage(
                         this.getImage(), Consts.CHIP_SIZE * picture.getImageCrop().x, Consts.CHIP_SIZE * picture.getImageCrop().y,
                         Consts.CHIP_SIZE * picture.cropSize.x, Consts.CHIP_SIZE * picture.cropSize.y,
-                        picture.pos.x + (x * Consts.CHIP_SIZE), picture.pos.y + (y * Consts.CHIP_SIZE),
+                        posX, posY,
                         picture.size.x * picture.cropSize.x, picture.size.y * picture.cropSize.y
                     );
+                    posX += picture.chipSize.x;
+                    posY += picture.shift.y;
                 }
+                beginY += picture.chipSize.y;
+                posY = beginY;
+                beginX += picture.shift.x;
+                posX = beginX;
             }
             ctx.fillText(picture.text, picture.pos.x, picture.pos.y);
         }

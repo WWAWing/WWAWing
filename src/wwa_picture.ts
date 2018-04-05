@@ -25,12 +25,8 @@ module wwa_picture {
         "repeat": (data, value) => {
             data.setProperty("repeat", value);
         },
-        "fill": (data, value) => {
-            var isFill = Util.getIntValue(value[0]);
-            if (isFill == 1) {
-                var fillValue = [Consts.FIELD_WIDTH.toString(), Consts.FIELD_HEIGHT.toString()];
-                data.setProperty("repeat", fillValue);
-            }
+        "interval": (data, value) => {
+            data.setProperty("interval", value);
         },
         "opacity": (data, value) => {
             data.setProperty("opacity", value);
@@ -203,6 +199,7 @@ module wwa_picture {
             "clip": Clip,
             "angle": Angle,
             "repeat": Repeat,
+            "interval": Interval,
             "opacity": Opacity,
             "text": Text,
             "font": Font,
@@ -248,6 +245,7 @@ module wwa_picture {
                 clip: new Clip(),
                 angle: new Angle(),
                 repeat: new Repeat(),
+                interval: new Interval(),
                 opacity: new Opacity(),
                 text: new Text(),
                 font: new Font(),
@@ -300,6 +298,7 @@ module wwa_picture {
         /**
          * 文字列からプロパティを取得します。
          * @param type プロパティのタイプ
+         * @returns プロパティのインスタンス
          */
         public getProperty(type: string): Property {
             if (type in this._properties) {
@@ -437,10 +436,16 @@ module wwa_picture {
             return this._properties.next.isSet;
         }
         get width(): number {
-            return this._properties.repeat.x * Consts.CHIP_SIZE;
+            if (this.isFill) {
+                return Consts.CANVAS_WIDTH;
+            }
+            return (this.repeat.x + this.interval.x) * this.size.x - this.interval.x;
         }
         get height(): number {
-            return this._properties.repeat.y * Consts.CHIP_SIZE;
+            if (this.isFill) {
+                return Consts.CANVAS_HEIGHT;
+            }
+            return (this.repeat.y + this.interval.y) * this.size.y - this.interval.y;
         }
         get pos(): wwa_data.Coord {
             return this._properties.pos;
@@ -461,7 +466,23 @@ module wwa_picture {
             return this._properties.angle.rad;
         }
         get repeat(): wwa_data.Coord {
+            if (this.isFill) {
+                // 敷き詰める設定だと画面外から描画を開始する場合があるので、描画漏れ防止として 1 を足しています
+                return new wwa_data.Coord(Consts.FIELD_WIDTH + 1, Consts.FIELD_HEIGHT + 1);
+            }
             return this._properties.repeat;
+        }
+        get interval(): wwa_data.Coord {
+            return this._properties.interval;
+        }
+        get shift(): wwa_data.Coord {
+            return this._properties.interval.shift;
+        }
+        get isFill(): boolean {
+            return this._properties.repeat.isFill;
+        }
+        get chipSize(): wwa_data.Coord {
+            return new wwa_data.Coord(this.size.x + this.interval.x, this.size.y + this.interval.y);
         }
         get text(): string {
             return this._properties.text.str;
@@ -709,12 +730,34 @@ module wwa_picture {
         }
     }
     class Repeat extends wwa_data.Coord implements Property {
+        private _isFill: boolean;
         constructor() {
             super(1, 1);
+            this._isFill = false;
         }
         public setProperty(value) {
             this.x = Util.getIntValue(value[0]);
             this.y = Util.getIntValue(value[1]);
+            this._isFill = Util.getBoolValue(value[2], false);
+        }
+        get isFill(): boolean {
+            return this._isFill;
+        }
+    }
+    class Interval extends wwa_data.Coord implements Property {
+        private _shift: wwa_data.Coord;
+        constructor() {
+            super(0, 0);
+            this._shift = new wwa_data.Coord(0, 0);
+        }
+        public setProperty(value) {
+            this.x = Util.getIntValue(value[0]);
+            this.y = Util.getIntValue(value[1]);
+            this._shift.x = Util.getIntValue(value[2], 0);
+            this._shift.y = Util.getIntValue(value[3], 0);
+        }
+        get shift(): wwa_data.Coord {
+            return this._shift;
         }
     }
     class Opacity extends wwa_data.Rate implements Property {
