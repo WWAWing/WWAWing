@@ -408,7 +408,7 @@ module wwa_data {
         private _value: number;
         private _allowMinusValue: boolean;
         /**
-         * 0〜1.0 までを表す値です。
+         * 0〜1.0 までを表す値です。指定によっては -1.0 まで伸ばせます。
          * @param value 値です。
          * @param allowMinusValue マイナス値を有効にするか設定します。
          */

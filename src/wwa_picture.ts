@@ -768,13 +768,16 @@ module wwa_picture {
             this.value = Util.getFloatValue(value[0]);
         }
     }
-    class Fade extends Opacity implements Animation {
+    class Fade extends wwa_data.Rate implements Animation {
         private _parent: Picture;
         private _accel: wwa_data.Rate;
         constructor(parent: Picture) {
-            super();
+            super(0.0, true);
             this._parent = parent;
-            this._accel = new wwa_data.Rate(0.0);
+            this._accel = new wwa_data.Rate(0.0, true);
+        }
+        public setProperty(value) {
+            this.value = Util.getFloatValue(value[0]);
         }
         public setAccel(value) {
             this._accel.value = Util.getFloatValue(value[0]);
