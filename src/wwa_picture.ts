@@ -10,6 +10,12 @@ module wwa_picture {
         "time": (data, value) => {
             data.setProperty("time", value);
         },
+        "time_anim": (data, value) => {
+            data.setProperty("time_anim", value);
+        },
+        "wait": (data, value) => {
+            data.setProperty("wait", value);
+        },
         "next": (data, value) => {
             data.setProperty("next", value);
         },
@@ -194,9 +200,11 @@ module wwa_picture {
         private _properties: {
             "pos": Pos,
             "time": Time,
+            "time_anim": AnimationTimer,
+            "wait": Time,
             "next": Next,
-            "size": Size,
-            "clip": Clip,
+            "size": CoordProperty,
+            "clip": CoordProperty,
             "angle": Angle,
             "repeat": Repeat,
             "interval": Interval,
@@ -240,9 +248,13 @@ module wwa_picture {
                         this._properties.next.appearParts(this._parent.parentWWA);
                     }
                 }),
+                time_anim: new AnimationTimer(this),
+                wait: new Time(() => {
+
+                }),
                 next: new Next(),
-                size: new Size(),
-                clip: new Clip(),
+                size: new CoordProperty(Consts.CHIP_SIZE, Consts.CHIP_SIZE),
+                clip: new CoordProperty(1, 1),
                 angle: new Angle(),
                 repeat: new Repeat(),
                 interval: new Interval(),
@@ -423,6 +435,9 @@ module wwa_picture {
         get isVisible(): boolean {
             return this._isVisible;
         }
+        get isAnimatable(): boolean {
+            return this._properties.time_anim.isAnimatable;
+        }
         get isTimeout(): boolean {
             return this._isTimeout;
         }
@@ -506,6 +521,10 @@ module wwa_picture {
      *    - A. プロパティがセットされるかどうかは文字列で判定する都合上、全部がセットされるかどうかはわからないので！
      */
     export interface Property {
+        /**
+         * プロパティを記した配列から、プロパティをセットします。
+         * @param value 
+         */
         setProperty(value: Array<string>);
     }
     interface Animation extends Property {
@@ -513,15 +532,28 @@ module wwa_picture {
         update();
         accel();
     }
-    class Pos extends wwa_data.Coord implements Property {
+    class CoordProperty extends wwa_data.Coord implements Property {
+        /**
+         * 座標を表すプロパティです。このまま単体で使用することもできますし、汎化して拡張することもできます。
+         * @param x X座標
+         * @param y Y座標
+         */
+        constructor(x: number, y: number) {
+            super(x, y);
+        }
+        public setProperty(value: Array<string>) {
+            this.x = Util.getIntValue(value[0]);
+            this.y = Util.getIntValue(value[1]);
+        }
+    }
+    class Pos extends CoordProperty implements Property {
         private _basePos: wwa_data.Coord;
         constructor() {
             super(0, 0);
             this._basePos = new wwa_data.Coord(0, 0);
         }
         public setProperty(value) {
-            this.x = Util.getIntValue(value[0]);
-            this.y = Util.getIntValue(value[1]);
+            super.setProperty(value);
             this._basePos.x = this.x;
             this._basePos.y = this.y;
         }
@@ -638,6 +670,25 @@ module wwa_picture {
             return this._isSet;
         }
     }
+    class AnimationTimer implements Property {
+        private _beginTime: wwa_data.Timer;
+        private _endTime: wwa_data.Timer;
+        constructor(picture: Picture) {
+            this._beginTime = new wwa_data.Timer(0, false, () => {
+                picture.start();
+            });
+            this._endTime = new wwa_data.Timer(0, false, () => {
+                picture.stop();
+            });
+        }
+        public setProperty(value) {
+            this._beginTime.time = Util.getIntValue(value[0]);
+            this._endTime.time = Util.getIntValue(value[1]);
+        }
+        get isAnimatable(): boolean {
+            return this._beginTime.isTimeout && !this._endTime.isTimeout;
+        }
+    }
     class Next implements Property {
         private _nextParts: number;
         private _partsType: wwa_data.PartsType;
@@ -663,20 +714,11 @@ module wwa_picture {
             return this._nextParts !== 0;
         }
     }
-    class Size extends wwa_data.Coord implements Property {
-        constructor() {
-            super(Consts.CHIP_SIZE, Consts.CHIP_SIZE);
-        }
-        public setProperty(value) {
-            this.x = Util.getIntValue(value[0]);
-            this.y = Util.getIntValue(value[1]);
-        }
-    }
-    class Zoom extends Size implements Animation {
+    class Zoom extends CoordProperty implements Animation {
         private _parent: Picture;
         private _accel: wwa_data.Coord;
         constructor(parent: Picture) {
-            super();
+            super(0, 0);
             this._parent = parent;
             this._accel = new wwa_data.Coord(0, 0);
         }
@@ -691,15 +733,6 @@ module wwa_picture {
         public accel() {
             this.x += this._accel.x;
             this.y += this._accel.y;
-        }
-    }
-    class Clip extends wwa_data.Coord implements Property {
-        constructor() {
-            super(1, 1);
-        }
-        public setProperty(value) {
-            this.x = Util.getIntValue(value[0]);
-            this.y = Util.getIntValue(value[1]);
         }
     }
     class Angle extends wwa_data.Angle implements Property {
@@ -729,30 +762,28 @@ module wwa_picture {
             this.rotate(this._accel.value);
         }
     }
-    class Repeat extends wwa_data.Coord implements Property {
+    class Repeat extends CoordProperty implements Property {
         private _isFill: boolean;
         constructor() {
             super(1, 1);
             this._isFill = false;
         }
         public setProperty(value) {
-            this.x = Util.getIntValue(value[0]);
-            this.y = Util.getIntValue(value[1]);
+            super.setProperty(value);
             this._isFill = Util.getBoolValue(value[2], false);
         }
         get isFill(): boolean {
             return this._isFill;
         }
     }
-    class Interval extends wwa_data.Coord implements Property {
+    class Interval extends CoordProperty implements Property {
         private _shift: wwa_data.Coord;
         constructor() {
             super(0, 0);
             this._shift = new wwa_data.Coord(0, 0);
         }
         public setProperty(value) {
-            this.x = Util.getIntValue(value[0]);
-            this.y = Util.getIntValue(value[1]);
+            super.setProperty(value);
             this._shift.x = Util.getIntValue(value[2], 0);
             this._shift.y = Util.getIntValue(value[3], 0);
         }
