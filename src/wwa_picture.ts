@@ -218,7 +218,7 @@ module wwa_picture {
         // 内部制御用
         private _isVisible: boolean;
         private _isTimeout: boolean;
-        private _intervalID: number;
+        private _animationIntervalID: number;
         /**
          * @param parent ピクチャを格納するピクチャデータ
          * @param imgCropX イメージの参照先のX座標です。
@@ -265,15 +265,16 @@ module wwa_picture {
             }
             this._anims = {};
             this._accelProperties = {};
-            this._startTimer = new wwa_data.Timer(waitTime, false, () => {
+            this._startTimer = new wwa_data.Timer(waitTime, false, false, () => {
                 this._isVisible = true;
                 if (this._properties.time !== void 0) {
                     this._properties.time.start();
+                    this._properties.time_anim.start();
                 }
             });
             this._isVisible = waitTime <= 0;
             this._isTimeout = false;
-            this._intervalID = null;
+            this._animationIntervalID = null;
             
             message.forEach((line, index) => {
                 var property = this.createProperty(line);
@@ -345,6 +346,7 @@ module wwa_picture {
         public setAccel(type: string, value: Array<string>) {
             this._accelProperties[type] = value;
         }
+
         /**
          * ピクチャを動かします。
          * @param self 動かすピクチャ (setInterval内でこのメソッドを指定した場合、thisの対象がwindowに移るため)
@@ -355,41 +357,57 @@ module wwa_picture {
             }
         }
         /**
-         * メッセージ表示後にイメージ表示を行いたいので、タイマーの開始はコンストラクタに含めない
+         * ピクチャのタイマーを開始します。
          */
         public start() {
             if (this.isSetNextParts) {
                 this._parent.parentWWA.startPictureWaiting(this);
             }
+            this.startTimer();
+            this.startAnimation();
+        }
+        /**
+         * ピクチャのタイマーだけを開始します。
+         */
+        public startTimer() {
             if (this.isVisible) {
                 this._properties.time.start();
             } else {
                 this._startTimer.start();
             }
-            if (this._intervalID == null) {
-                this._intervalID = setInterval(this.update, 10, this);
+        }
+        /**
+         * ピクチャのアニメーションを開始します。
+         */
+        public startAnimation() {
+            if (this._animationIntervalID === null && this.isAnimatable) {
+                this._animationIntervalID = setInterval(this.update, 10, this);
             }
         }
         /**
-         * ピクチャの動きを止めます。
+         * ピクチャのタイマーを止めます。
          */
         public stop() {
+            this.stopTimer();
+            this.stopAnimation();
+        }
+        /**
+         * ピクチャのタイマーだけを止めます。
+         */
+        public stopTimer() {
             if (this.isVisible) {
                 this._properties.time.stop();
             } else {
                 this._startTimer.stop();
             }
-            clearInterval(this._intervalID);
         }
-        public getImageCrop(): wwa_data.Coord {
-            if (this.hasSecondaryImage()) {
-                return Picture.isPrimaryAnimationTime ? this._imageCrop : this._secondImageCrop;
-            }
-            return this._imageCrop;
+        /**
+         * ピクチャのアニメーションを止めます。
+         */
+        public stopAnimation() {
+            clearInterval(this._animationIntervalID);
         }
-        public hasSecondaryImage(): boolean {
-            return this._secondImageCrop.x != 0 || this._secondImageCrop.y != 0;
-        }
+
         /**
          * ピクチャのベース位置を移動します。
          * @param x 移動するX座標
@@ -432,6 +450,7 @@ module wwa_picture {
         public fade(value: number) {
             this._properties.opacity.value += value;
         }
+
         get isVisible(): boolean {
             return this._isVisible;
         }
@@ -440,6 +459,16 @@ module wwa_picture {
         }
         get isTimeout(): boolean {
             return this._isTimeout;
+        }
+        get hasSecondaryImage(): boolean {
+            return this._secondImageCrop.x != 0 || this._secondImageCrop.y != 0;
+        }
+
+        get imageCrop(): wwa_data.Coord {
+            if (this.hasSecondaryImage) {
+                return Picture.isPrimaryAnimationTime ? this._imageCrop : this._secondImageCrop;
+            }
+            return this._imageCrop;
         }
         get soundNumber(): number {
             return this._soundNumber;
@@ -637,11 +666,9 @@ module wwa_picture {
         }
     }
     class Time extends wwa_data.Timer implements Property {
-        private _isSet: boolean;
         private _nextPictureNumber: number;
         constructor(timeoutCallback: () => void = () => {}) {
-            super(0, false, timeoutCallback);
-            this._isSet = false;
+            super(0, false, true, timeoutCallback);
             this._nextPictureNumber = 0;
         }
         public setProperty(value) {
@@ -651,39 +678,29 @@ module wwa_picture {
             }
             this.time = time;
             this._nextPictureNumber = Util.getIntValue(value[1], 0);
-            this._isSet = true;
-        }
-        public start(): void {
-            if (this._isSet) {
-                super.start();
-            }
-        }
-        public stop(): void {
-            if (this._isSet) {
-                super.stop();
-            }
         }
         get nextPicture(): number {
             return this._nextPictureNumber;
-        }
-        get isSet(): boolean {
-            return this._isSet;
         }
     }
     class AnimationTimer implements Property {
         private _beginTime: wwa_data.Timer;
         private _endTime: wwa_data.Timer;
         constructor(picture: Picture) {
-            this._beginTime = new wwa_data.Timer(0, false, () => {
-                picture.start();
+            this._beginTime = new wwa_data.Timer(0, false, false, () => {
+                picture.startAnimation();
+                this._endTime.start();
             });
-            this._endTime = new wwa_data.Timer(0, false, () => {
-                picture.stop();
+            this._endTime = new wwa_data.Timer(0, false, true, () => {
+                picture.stopAnimation();
             });
         }
         public setProperty(value) {
             this._beginTime.time = Util.getIntValue(value[0]);
             this._endTime.time = Util.getIntValue(value[1]);
+        }
+        public start() {
+            this._beginTime.start();
         }
         get isAnimatable(): boolean {
             return this._beginTime.isTimeout && !this._endTime.isTimeout;

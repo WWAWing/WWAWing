@@ -145,7 +145,7 @@ module wwa_cgmanager {
             for (var y = 0; y < picture.repeat.y; y++) {
                 for (var x = 0; x < picture.repeat.x; x++) {
                     ctx.drawImage(
-                        this.getImage(), Consts.CHIP_SIZE * picture.getImageCrop().x, Consts.CHIP_SIZE * picture.getImageCrop().y,
+                        this.getImage(), Consts.CHIP_SIZE * picture.imageCrop.x, Consts.CHIP_SIZE * picture.imageCrop.y,
                         Consts.CHIP_SIZE * picture.cropSize.x, Consts.CHIP_SIZE * picture.cropSize.y,
                         posX, posY,
                         picture.size.x * picture.cropSize.x, picture.size.y * picture.cropSize.y

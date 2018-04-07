@@ -291,15 +291,18 @@ module wwa_data {
         private _time: number;
         private _intervalID: number;
         private _isTimeout: boolean;
+        private _noFinishWithZero: boolean;
         private _timeoutCallBack: () => void;
         /**
          * タイマーです。
          * @param time 時間をミリ秒で指定します。
          * @param autoStart インスタンスを生成した時に自動で開始するか指定します。
+         * @param noFinishWithZero 時間を 0 と指定した場合、タイムアウトを禁止するか指定します。
          * @param timeoutCallBack タイムアウトした時に実行する処理を指定します。
          */
-        constructor(time: number, autoStart: boolean, timeoutCallBack: () => void = () => {}) {
+        constructor(time: number, autoStart: boolean, noFinishWithZero: boolean, timeoutCallBack: () => void = () => {}) {
             this.time = time;
+            this._noFinishWithZero = noFinishWithZero;
             this._timeoutCallBack = timeoutCallBack;
             if (autoStart) {
                 this.start();
@@ -307,10 +310,11 @@ module wwa_data {
             this._isTimeout = false;
         }
         public start() {
-            this._intervalID = setInterval(this._tick, 10, this);
+            if (this.time != 0 || !this._noFinishWithZero) {
+                this._intervalID = setInterval(this._tick, 10, this);
+            }
         }
         public stop() {
-            this._isTimeout = true;
             clearInterval(this._intervalID);
         }
         private _tick(self: Timer) {
@@ -321,6 +325,7 @@ module wwa_data {
         }
         private _timeout() {
             this.stop();
+            this._isTimeout = true;
             this._timeoutCallBack();
         }
         get isTimeout(): boolean {
