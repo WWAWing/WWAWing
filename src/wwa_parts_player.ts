@@ -39,7 +39,8 @@ module wwa_parts_player {
         LOCALGATE_JUMPED,
         BATTLE,
         ESTIMATE_WINDOW_WAITING,
-        PASSWORD_WINDOW_WAITING
+        PASSWORD_WINDOW_WAITING,
+        PICTURE_WAITING
     }
 
     export class Player extends PartsObject {
@@ -344,6 +345,16 @@ module wwa_parts_player {
 
         public clearPasswordWindowWaiting(): void {
             if (this._state === PlayerState.PASSWORD_WINDOW_WAITING) {
+                this._state = PlayerState.CONTROLLABLE;
+            }
+        }
+
+        public setPictureWaiting(): void {
+            this._state = PlayerState.PICTURE_WAITING;
+        }
+
+        public clearPictureWaiting(): void {
+            if (this._state === PlayerState.PICTURE_WAITING) {
                 this._state = PlayerState.CONTROLLABLE;
             }
         }

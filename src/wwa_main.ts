@@ -10,6 +10,7 @@
 /// <reference path="./wwa_inject_html.ts" />
 /// <reference path="./wwa_psave.ts" />
 /// <reference path="./wwa_password_window.ts" />
+/// <reference path="./wwa_picture.ts" />
 
 interface AudioJSInstance{
     play(): void;
@@ -135,6 +136,8 @@ module wwa_main {
         private _hasTitleImg: boolean;
   
         private _isActive: boolean;
+        private _pictureData: wwa_picture.PictureData;
+        private _pictureManager: wwa_cgmanager.PictureManager;
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -210,6 +213,13 @@ module wwa_main {
                 }
 
                 this._wwaData = e.data.wwaData;
+                // start PE
+                this._wwaData.pictureID = new Array(Consts.PICTURE_LENGTH);
+                this._pictureData = new wwa_picture.PictureData(this, Consts.PICTURE_LENGTH);
+                for (var i = 0; i < Consts.PICTURE_LENGTH; i++) {
+                    this._wwaData.pictureID[i] = 0;
+                }
+                // end PE
                 try {
                     if (this._hasTitleImg) {
                         util.$id("version").textContent += (
@@ -659,6 +669,7 @@ module wwa_main {
                     }, Consts.DEFAULT_FRAME_INTERVAL);
                     
                 });
+                this._pictureManager = new wwa_cgmanager.PictureManager(ctx, ctxSub, this._wwaData.mapCGName, (): void => {});
             }
             if (wwap_mode|| Worker === void 0) {
                 var script: HTMLScriptElement;
@@ -1368,6 +1379,10 @@ module wwa_main {
             }
         }
 
+        private _isPrimaryAnimation(): boolean {
+            return this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
+        }
+
         private _drawAll() {
             var cpParts = this._camera.getPosition().getPartsCoord();
             var cpOffset = this._camera.getPosition().getOffsetCoord();
@@ -1380,6 +1395,7 @@ module wwa_main {
                 return;
             }
             this._cgManager.clearCanvas(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT);
+            this._cgManager.clearCanvas(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT, true);
             this._cgManager.drawBase(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT);
 
             if (this._camera.isResetting()) {
@@ -1427,6 +1443,7 @@ module wwa_main {
             }
             this._drawEffect();
             this._drawFaces();
+            this._drawPictures();
             this._drawFrame();
             
         }
@@ -1515,7 +1532,7 @@ module wwa_main {
                         }
                     }
                     var imgType: boolean = (
-                        this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME ||
+                        this._isPrimaryAnimation() ||
                         this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
                         this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
                     );
@@ -1591,6 +1608,27 @@ module wwa_main {
 
         }
 
+        private _drawPictures() {
+            this._wwaData.pictureID.forEach((partsID, id) => {
+                if (partsID == 0) {
+                    return;
+                }
+                var picture = this._pictureData.getPicture(id);
+                wwa_picture.Picture.isPrimaryAnimationTime = this._isPrimaryAnimation();
+                if (picture.isVisible) {
+                    this._pictureManager.drawPictureData(picture, true);
+                }
+                if (picture.isTimeout) {
+                    if (picture.nextPictureNumber !== 0) {
+                        this._wwaData.pictureID[id] = picture.nextPictureNumber;
+                        this.createPicture(picture.nextPictureNumber, id, true);
+                    } else {
+                        this.removePicture(id);
+                    }
+                }
+            }, this);
+        }
+
         private _checkNoDrawObject(objCoord: Coord, objType: number, atrNumber: number): boolean {
             var pPos: Position = this._player.getPosition();
             var pCoord: Coord = pPos.getPartsCoord();
@@ -1662,11 +1700,19 @@ module wwa_main {
             return this._wwaData.objectAttribute[id][attr];
         }
 
-        public getObjectCropXById(id: number): number {
-            return this._wwaData.objectAttribute[id][Consts.ATR_X];
+        public getObjectCropXById(id: number, isSub: boolean = false): number {
+            if (isSub) {
+                return this._wwaData.objectAttribute[id][Consts.ATR_X2];
+            } else {
+                return this._wwaData.objectAttribute[id][Consts.ATR_X];
+            }
         }
-        public getObjectCropYById(id: number): number {
-            return this._wwaData.objectAttribute[id][Consts.ATR_Y];
+        public getObjectCropYById(id: number, isSub: boolean = false): number {
+            if (isSub) {
+                return this._wwaData.objectAttribute[id][Consts.ATR_Y2];
+            } else {
+                return this._wwaData.objectAttribute[id][Consts.ATR_Y];
+            }
         }
 
         public getMessageById(messageID: number): string {
@@ -2850,6 +2896,13 @@ module wwa_main {
                 newData.mapObject = this._decompressMap(newData.mapObjectCompressed);
                 newData.mapObjectCompressed = void 0;
             }
+            if (!restart) {
+                this._wwaData.pictureID.forEach((partsID, id) => {
+                    if (partsID != 0) {
+                        this.createPicture(partsID, id, true);
+                    }
+                }, this);
+            }
 
             if( password !== null ) {
                 var checkString = this._generateSaveDataHash( newData );
@@ -2870,30 +2923,30 @@ module wwa_main {
         }
 
         private _applyQuickLoad( newData: wwa_data.WWAData): void {
-                this._player.setEnergyMax(newData.statusEnergyMax);
-                this._player.setEnergy(newData.statusEnergy);
-                this._player.setStrength(newData.statusStrength);
-                this._player.setDefence(newData.statusDefence);
-                this._player.setGold(newData.statusGold);
-                this._player.setMoveCount(newData.moves);
-                this._player.clearItemBox();
-                for (var i = 0; i < newData.itemBox.length; i++) {
-                    this._player.addItem(newData.itemBox[ i ], i + 1, true);
-                }
+            this._player.setEnergyMax(newData.statusEnergyMax);
+            this._player.setEnergy(newData.statusEnergy);
+            this._player.setStrength(newData.statusStrength);
+            this._player.setDefence(newData.statusDefence);
+            this._player.setGold(newData.statusGold);
+            this._player.setMoveCount(newData.moves);
+            this._player.clearItemBox();
+            for (var i = 0; i < newData.itemBox.length; i++) {
+                this._player.addItem(newData.itemBox[ i ], i + 1, true);
+            }
 
-                this._player.systemJumpTo(new wwa_data.Position(this, newData.playerX, newData.playerY, 0, 0));
-                if (newData.bgm === 0) {
-                    this.playSound(wwa_data.SystemSound.NO_SOUND);
-                } else {
-                    this.playSound(newData.bgm);
-                }
-                this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
-                if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
-                    this._player.setPartsAppearedFlag();
-                }
-                this._wwaData = newData;
-                this._replaceAllRandomObjects();
-                this.updateCSSRule();
+            this._player.systemJumpTo(new wwa_data.Position(this, newData.playerX, newData.playerY, 0, 0));
+            if (newData.bgm === 0) {
+                this.playSound(wwa_data.SystemSound.NO_SOUND);
+            } else {
+                this.playSound(newData.bgm);
+            }
+            this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
+            if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
+                this._player.setPartsAppearedFlag();
+            }
+            this._wwaData = newData;
+            this._replaceAllRandomObjects();
+            this.updateCSSRule();
         }
 
         private _restartGame(): void {
@@ -3356,6 +3409,7 @@ module wwa_main {
                 this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                 this._reservedMoveMacroTurn = void 0;
             }
+            this._pictureData.start();
             if (this._messageQueue.length === 0) {
                 this._hideMessageWindow();
             } else {
@@ -3584,7 +3638,6 @@ module wwa_main {
             this._faces = [];
         }
 
-
         private _stylePos: number[]; // w
         private _styleElm: HTMLStyleElement;
         private _sheet: CSSStyleSheet;
@@ -3653,6 +3706,61 @@ module wwa_main {
                 this._wwaData.statusColorB = b;
             }
             this.updateCSSRule();
+        }
+
+        /**
+         * ピクチャを作成します。
+         * @param partsID ピクチャのプロパティが記述されているパーツ番号
+         * @param id ピクチャを表示する領域のID
+         * @param autoStart 作成時と同時にパーツのタイマー処理を走らせるか
+         */
+        public createPicture(partsID: number, id: number, autoStart: boolean = false) {
+            var mesID = this.getObjectAttributeById(partsID, Consts.ATR_STRING);
+            var message = this.getMessageById(mesID);
+            var lines = message
+                .split(/\n\<c\>/i)[0]
+                .split(/\<c\>/i)[0]
+                .split(/\n/i);
+            if (wwa_data.macrotable[lines[0]] !== wwa_data.MacroType.PICTURE_DEFINE) {
+                throw new Error("イメージを定義するマクロ文がありません");
+            } else {
+                lines.splice(0, 1);
+            }
+            var picture = new wwa_picture.Picture(
+                this._pictureData,
+                this.getObjectCropXById(partsID) / Consts.CHIP_SIZE,
+                this.getObjectCropYById(partsID) / Consts.CHIP_SIZE,
+                this.getObjectCropXById(partsID, true) / Consts.CHIP_SIZE,
+                this.getObjectCropYById(partsID, true) / Consts.CHIP_SIZE,
+                this.getObjectAttributeById(partsID, Consts.ATR_SOUND),
+                this.getObjectAttributeById(partsID, Consts.ATR_NUMBER),
+                lines
+            );
+            this._pictureData.setPicture(picture, id);
+            this._wwaData.pictureID[id] = partsID;
+            // TODO: 待ち時間を指定した場合は、表示後に鳴らすようにする
+            this.playSound(picture.soundNumber);
+            console.log(picture);
+            if (autoStart) {
+                picture.start();
+            }
+        }
+
+        public startPictureWaiting(picture: wwa_picture.Picture) {
+            if (picture.isSetNextParts) {
+                this._player.setPictureWaiting();
+            }
+        }
+        
+        public stopPictureWaiting(picture: wwa_picture.Picture) {
+            if (picture.isSetNextParts) {
+                this._player.clearPictureWaiting();
+            }
+        }
+
+        public removePicture(id: number) {
+            this._wwaData.pictureID[id] = 0;
+            this._pictureData.removePicture(id);
         }
 
         public showMonsterWindow(): void {

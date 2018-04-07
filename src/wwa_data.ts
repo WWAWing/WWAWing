@@ -287,6 +287,154 @@ module wwa_data {
         }
     }
 
+    export class Timer {
+        private _time: number;
+        private _intervalID: number;
+        private _isTimeout: boolean;
+        private _timeoutCallBack: () => void;
+        /**
+         * タイマーです。
+         * @param time 時間をミリ秒で指定します。
+         * @param autoStart インスタンスを生成した時に自動で開始するか指定します。
+         * @param timeoutCallBack タイムアウトした時に実行する処理を指定します。
+         */
+        constructor(time: number, autoStart: boolean, timeoutCallBack: () => void = () => {}) {
+            this.time = time;
+            this._timeoutCallBack = timeoutCallBack;
+            if (autoStart) {
+                this.start();
+            }
+            this._isTimeout = false;
+        }
+        public start() {
+            this._intervalID = setInterval(this._tick, 10, this);
+        }
+        public stop() {
+            this._isTimeout = true;
+            clearInterval(this._intervalID);
+        }
+        private _tick(self: Timer) {
+            self._time -= 10;
+            if (self._time <= 0) {
+                self._timeout();
+            }
+        }
+        private _timeout() {
+            this.stop();
+            this._timeoutCallBack();
+        }
+        get isTimeout(): boolean {
+            return this._isTimeout;
+        }
+        set time(time: number) {
+            if (time < 0) {
+                throw new Error("タイマーの値が不正です。");
+            }
+            this._time = time * 100;
+            if (this._time % 10 != 0) {
+                throw new Error("タイマーは小数点第一位までの対応です。");
+            }
+        }
+    }
+
+    export class Color {
+        private _red: number;
+        private _green: number;
+        private _blue: number;
+        constructor(red, green, blue) {
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
+        public static checkValue(value): boolean {
+            if (value < 0 || value > 255) {
+                throw new Error("指定した色の値が範囲外です。");
+            }
+            return true;
+        }
+        get cssColorValue(): string {
+            return `rgb(${this._red}, ${this._green}, ${this._blue})`;
+        }
+        set red(value) {
+            if (Color.checkValue(value)) {
+                this._red = value;
+            }
+        }
+        set green(value) {
+            if (Color.checkValue(value)) {
+                this._green = value;
+            }
+        }
+        set blue(value) {
+            if (Color.checkValue(value)) {
+                this._blue = value;
+            }
+        }
+    }
+
+    export class Angle {
+        private _degree: number;
+        /**
+         * 角度を表すクラスです。
+         * @param degree 角度です。0〜360の間を指定します。
+         */
+        constructor(degree: number) {
+            this.value = degree;
+        }
+        /**
+         * 角度を回転します。
+         */
+        public rotate(degree: number) {
+            this.value = this._degree + degree;
+        }
+        /**
+         * 角度を取得します。
+         */
+        get degree(): number {
+            return this._degree;
+        }
+        /**
+         * ラジアン値を取得します。
+         */
+        get rad(): number {
+            return this._degree * Math.PI / 180.0;
+        }
+        set value(degree: number) {
+            this._degree = degree % 360;
+        }
+    }
+
+    export class Rate {
+        private _value: number;
+        private _allowMinusValue: boolean;
+        /**
+         * 0〜1.0 までを表す値です。指定によっては -1.0 まで伸ばせます。
+         * @param value 値です。
+         * @param allowMinusValue マイナス値を有効にするか設定します。
+         */
+        constructor(value: number, allowMinusValue: boolean = false) {
+            this.value = value;
+            this._allowMinusValue = allowMinusValue;
+        }
+        get value(): number {
+            return this._value;
+        }
+        set value(value: number) {
+            this._value = value;
+            if (this._value > 1.0) {
+                this._value = 1.0;
+            } else if (this._value < 0.0) {
+                if (this._allowMinusValue) {
+                    if (this._value < -1.0) {
+                        this._value = -1.0;
+                    }
+                } else {
+                    this._value = 0.0;
+                }
+            }
+        }
+    }
+
     export enum Direction {
         LEFT  = 0,
         RIGHT = 1,
@@ -414,7 +562,9 @@ module wwa_data {
         EFFITEM = 20,
         COLOR = 21,
         WAIT = 22,
-        SOUND = 23
+        SOUND = 23,
+        PICTURE = 60,
+        PICTURE_DEFINE = 61
     }
 
     export var macrotable = {
@@ -441,7 +591,9 @@ module wwa_data {
         "$effitem"   : 20,
         "$color"     : 21,
         "$wait"      : 22,
-        "$sound"     : 23
+        "$sound"     : 23,
+        "$picture"   : 60,
+        "$picture_define": 61
     }
 
     export enum MacroStatusIndex {
@@ -472,7 +624,7 @@ module wwa_data {
     export var speedList = [2, 5, 8, 10];
     export var speedNameList = ["低速", "準低速", "中速", "高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "W3.15dβ3";
+        static VERSION_WWAJS: string = "AW3.17";
 
         static WWA_HOME: string = "http://wwajp.com";
 
@@ -641,11 +793,19 @@ module wwa_data {
         static WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         static WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";
         
-        static SCREEN_WIDTH = 560;
-        static SCREEN_HEIGHT = 440;
+        static FIELD_WIDTH = 11;
+        static FIELD_HEIGHT = 11;
+        static CANVAS_WIDTH = WWAConsts.FIELD_WIDTH * WWAConsts.CHIP_SIZE;
+        static CANVAS_HEIGHT = WWAConsts.FIELD_HEIGHT * WWAConsts.CHIP_SIZE;
+        static STATUS_WIDTH = 3 * WWAConsts.CHIP_SIZE;
+        static STATUS_HEIGHT = WWAConsts.CANVAS_HEIGHT;
+        static SCREEN_WIDTH = WWAConsts.CANVAS_WIDTH + WWAConsts.STATUS_WIDTH;
+        static SCREEN_HEIGHT = WWAConsts.CANVAS_HEIGHT;
         static LOADING_FONT = "Times New Roman";
 
         static MSG_STR_WIDTH = 16;
+
+        static PICTURE_LENGTH = 16;
     }
 
     export class LoaderResponse {
@@ -813,6 +973,8 @@ module wwa_data {
 
         checkOriginalMapString: string = void 0;
         checkString: string = void 0;
+
+        pictureID: number[] = void 0;
 
         constructor() { }
     }

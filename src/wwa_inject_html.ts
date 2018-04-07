@@ -49,13 +49,13 @@ module wwa_inject_html {
     ";
     */
     export function inject(parent: HTMLDivElement, titleImgName: string): void {
-      var style = document.createElement("style");
-      style.type = "text/css";
-      style.setAttribute("id", wwa_data.WWAConsts.WWA_STYLE_TAG_ID);
-      wwa_util.$tag("head")[0].appendChild(style);
+        var style = document.createElement("style");
+        style.type = "text/css";
+        style.setAttribute("id", wwa_data.WWAConsts.WWA_STYLE_TAG_ID);
+        wwa_util.$tag("head")[0].appendChild(style);
 
-      if (titleImgName === null) {
-        parent.innerHTML = inject_html_no_img;
+        if (titleImgName === null) {
+            parent.innerHTML = inject_html_no_img;
             var canvas = document.createElement("canvas");
             canvas.height = wwa_data.WWAConsts.SCREEN_HEIGHT;
             canvas.width = wwa_data.WWAConsts.SCREEN_WIDTH;

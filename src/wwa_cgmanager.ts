@@ -1,15 +1,16 @@
 ﻿/// <reference path="./wwa_data.ts" />
 /// <reference path="./wwa_input.ts" />
 /// <reference path="./wwa_camera.ts" />
+/// <reference path="./wwa_picture.ts" />
 /// <reference path="./wwa_main.ts" />
 
 module wwa_cgmanager {
     import Consts = wwa_data.WWAConsts;
     import Position = wwa_data.Position;
     export class CGManager {
-        private _ctx: CanvasRenderingContext2D;
-        private _ctxSub: CanvasRenderingContext2D;
-        private _isLoaded: boolean = false;
+        protected _ctx: CanvasRenderingContext2D;
+        protected _ctxSub: CanvasRenderingContext2D;
+        protected _isLoaded: boolean = false;
         private _fileName: string;
         private _loadCompleteCallBack: () => void;
         private _image: HTMLImageElement;
@@ -29,6 +30,10 @@ module wwa_cgmanager {
             });
             this._image.src = this._fileName;
             this._isLoaded = true;
+        }
+
+        public getImage(): HTMLImageElement {
+            return this._image;
         }
         
         public drawCanvas(chipX: number, chipY: number, canvasX: number, canvasY: number, isSub: boolean = false): void {
@@ -54,7 +59,6 @@ module wwa_cgmanager {
                 Consts.CHIP_SIZE * width, Consts.CHIP_SIZE * height
            );
         }
-
 
         public drawCanvasWithUpperYLimit(chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;
@@ -108,6 +112,58 @@ module wwa_cgmanager {
             this._loadCompleteCallBack = loadCompleteCallBack;
             this._load();
         } 
+    }
+
+    export class PictureManager extends CGManager {
+
+        public drawPictureData(picture: wwa_picture.Picture, isSub: boolean = false): void {
+            var ctx = isSub ? this._ctxSub : this._ctx;
+            ctx.save();
+            ctx.translate(Consts.CANVAS_WIDTH / 2, Consts.CANVAS_HEIGHT / 2);
+            ctx.rotate(picture.angle);
+            ctx.translate(-Consts.CANVAS_WIDTH / 2, -Consts.CANVAS_HEIGHT / 2);
+            ctx.globalAlpha = picture.opacity;
+            ctx.textAlign = picture.textAlign;
+            ctx.textBaseline = picture.textBaseline;
+            
+            ctx.font = picture.font;
+            ctx.fillStyle = picture.fillStyle;
+            if (!this._isLoaded) {
+                throw new Error("No image was loaded.");
+            }
+            this.drawCanvasWithPicture(picture, isSub);
+            ctx.restore();
+        }
+
+        public drawCanvasWithPicture(picture: wwa_picture.Picture, isSub: boolean = false): void {
+            var ctx = isSub ? this._ctxSub : this._ctx;
+            var posX = picture.isFill ? ( picture.pos.x % picture.chipSize.x ) - picture.chipSize.x : picture.pos.x;
+            var posY = picture.isFill ? ( picture.pos.y % picture.chipSize.y ) - picture.chipSize.y : picture.pos.y;
+            var beginX = posX;
+            var beginY = posY;
+
+            for (var y = 0; y < picture.repeat.y; y++) {
+                for (var x = 0; x < picture.repeat.x; x++) {
+                    ctx.drawImage(
+                        this.getImage(), Consts.CHIP_SIZE * picture.getImageCrop().x, Consts.CHIP_SIZE * picture.getImageCrop().y,
+                        Consts.CHIP_SIZE * picture.cropSize.x, Consts.CHIP_SIZE * picture.cropSize.y,
+                        posX, posY,
+                        picture.size.x * picture.cropSize.x, picture.size.y * picture.cropSize.y
+                    );
+                    posX += picture.chipSize.x;
+                    posY += picture.shift.y;
+                }
+                beginY += picture.chipSize.y;
+                posY = beginY;
+                beginX += picture.shift.x;
+                posX = beginX;
+            }
+            ctx.fillText(picture.text, picture.pos.x, picture.pos.y);
+        }
+        
+        public constructor(ctx: CanvasRenderingContext2D, ctxSub: CanvasRenderingContext2D, fileName: string, loadCompleteCallBack: () => void) {
+            super(ctx, ctxSub, fileName, loadCompleteCallBack);
+        }
     }
 
 }
