@@ -171,7 +171,7 @@ module wwa_picture {
         public update(): void {
             this._pictures.forEach((picture, id) => {
                 if (!this.isEmpty(id)) {
-                    picture.update();
+                    picture.update(picture);
                 }
             });
         }
@@ -250,7 +250,11 @@ module wwa_picture {
                         this._properties.next.appearParts(this._parent.parentWWA);
                     }
                 }),
-                time_anim: new AnimationTimer(this.update),
+                time_anim: new AnimationTimer(() => {
+                    this.startAnimation();
+                }, () => {
+                    this.stopAnimation();
+                }),
                 wait: new Wait(() => {
                     this._parent.parentWWA.stopPictureWaiting(this);
                 }),
@@ -350,9 +354,9 @@ module wwa_picture {
         /**
          * ピクチャを動かします。
          */
-        public update() {
-            for (var animationType in this._anims) {
-                this._anims[animationType].update();
+        public update(self: Picture) {
+            for (var animationType in self._anims) {
+                self._anims[animationType].update();
             }
         }
         /**
@@ -365,12 +369,22 @@ module wwa_picture {
             this._properties.time.start();
             this._properties.time_anim.start();
         }
+        public startAnimation() {
+            if (this._animationIntervalID === null) {
+                this._animationIntervalID = setInterval(this.update, 10, this);
+            }
+        }
         /**
          * ピクチャのタイマーを止めます。
          */
         public stop() {
             this._properties.time.stop();
             this._properties.time_anim.stop();
+        }
+        public stopAnimation() {
+            if (this._animationIntervalID !== null) {
+                clearInterval(this._animationIntervalID);
+            }
         }
 
         /**
@@ -651,10 +665,11 @@ module wwa_picture {
         }
     }
     class AnimationTimer extends wwa_data.TimerArea implements Property {
-        constructor(update: () => void) {
-            super(0, 0, update, () => {
+        constructor(beginTimeout: () => void, endTimeout: () => void) {
+            super(0, 0, () => {}, () => {
+                beginTimeout();
                 this._endTime.start();
-            });
+            }, endTimeout);
         }
         public setProperty(value) {
             this._beginTime.setTime(Util.getIntValue(value[0]));
