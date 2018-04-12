@@ -641,7 +641,9 @@ module wwa_picture {
             this._accel.angle.value = Util.getFloatValue(value[1]);
         }
         public update() {
-            this._parent.jump((Math.cos(this._angle.rad) * this._round) + this._parent.basePos.x, (Math.sin(this._angle.rad) * this._round) + this._parent.basePos.y);
+            let x = Math.floor((Math.cos(this._angle.rad) * this._round));
+            let y = Math.floor((Math.sin(this._angle.rad) * this._round));
+            this._parent.jump(x + this._parent.basePos.x, y + this._parent.basePos.y);
             this._angle.rotate(this._speed.degree);
             this.accel();
         }
