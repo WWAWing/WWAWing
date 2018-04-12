@@ -242,6 +242,7 @@ module wwa_picture {
                 pos: new Pos(),
                 time: new Time(waitTime, () => {
                     this._isVisible = true;
+                    this._properties.time_anim.start();
                     this._parent.parentWWA.playSound(this._soundNumber);
                 }, () => {
                     this._isVisible = false;
@@ -367,7 +368,9 @@ module wwa_picture {
                 this._parent.parentWWA.startPictureWaiting(this);
             }
             this._properties.time.start();
-            this._properties.time_anim.start();
+            if (this.isVisible) {
+                this._properties.time_anim.start();
+            }
         }
         public startAnimation() {
             if (this._animationIntervalID === null) {
