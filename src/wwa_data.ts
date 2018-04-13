@@ -463,19 +463,14 @@ module wwa_data {
         }
         /**
          * 角度を回転します。
+         * @param degree 加減する角度
          */
         public rotate(degree: number) {
             this.value = this._degree + degree;
         }
-        /**
-         * 角度を取得します。
-         */
         get degree(): number {
             return this._degree;
         }
-        /**
-         * ラジアン値を取得します。
-         */
         get rad(): number {
             return this._degree * Math.PI / 180.0;
         }

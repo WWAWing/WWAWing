@@ -448,6 +448,9 @@ module wwa_picture {
         get hasSecondaryImage(): boolean {
             return this._secondImageCrop.x != 0 || this._secondImageCrop.y != 0;
         }
+        get hasAngle(): boolean {
+            return this._properties.angle.degree !== 0;
+        }
 
         get imageCrop(): wwa_data.Coord {
             if (this.hasSecondaryImage) {
@@ -762,7 +765,7 @@ module wwa_picture {
             this.accel();
         }
         public accel() {
-            this.rotate(this._accel.value);
+            this.rotate(this._accel.degree);
         }
     }
     class Repeat extends CoordProperty implements Property {

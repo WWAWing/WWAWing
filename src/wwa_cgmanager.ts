@@ -119,9 +119,13 @@ module wwa_cgmanager {
         public drawPictureData(picture: wwa_picture.Picture, isSub: boolean = false): void {
             var ctx = isSub ? this._ctxSub : this._ctx;
             ctx.save();
-            ctx.translate(Consts.CANVAS_WIDTH / 2, Consts.CANVAS_HEIGHT / 2);
-            ctx.rotate(picture.angle);
-            ctx.translate(-Consts.CANVAS_WIDTH / 2, -Consts.CANVAS_HEIGHT / 2);
+            if (picture.hasAngle) {
+                let translateX = picture.pos.x + (picture.width / 2);
+                let translateY = picture.pos.y + (picture.height / 2);
+                ctx.translate(translateX, translateY);
+                ctx.rotate(picture.angle);
+                ctx.translate(-translateX, -translateY);
+            }
             ctx.globalAlpha = picture.opacity;
             ctx.textAlign = picture.textAlign;
             ctx.textBaseline = picture.textBaseline;
