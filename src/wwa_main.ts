@@ -1615,7 +1615,7 @@ module wwa_main {
                 }
                 var picture = this._pictureData.getPicture(id);
                 wwa_picture.Picture.isPrimaryAnimationTime = this._isPrimaryAnimation();
-                if (picture.isVisible) {
+                if (picture.isVisible || picture.hasNoWaitTime) {
                     this._pictureManager.drawPictureData(picture, true);
                 }
                 if (picture.isTimeout) {
@@ -3738,8 +3738,6 @@ module wwa_main {
             );
             this._pictureData.setPicture(picture, id);
             this._wwaData.pictureID[id] = partsID;
-            // TODO: 待ち時間を指定した場合は、表示後に鳴らすようにする
-            this.playSound(picture.soundNumber);
             console.log(picture);
             if (autoStart) {
                 picture.start();

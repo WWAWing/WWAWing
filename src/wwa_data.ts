@@ -288,45 +288,66 @@ module wwa_data {
     }
 
     export class Timer {
-        private _time: number;
+        protected _time: number;
         private _intervalID: number;
         private _isTimeout: boolean;
-        private _timeoutCallBack: () => void;
+        private _updateCallback: () => void;
+        private _timeoutCallback: () => void;
         /**
          * タイマーです。
-         * @param time 時間をミリ秒で指定します。
-         * @param autoStart インスタンスを生成した時に自動で開始するか指定します。
-         * @param timeoutCallBack タイムアウトした時に実行する処理を指定します。
+         * @param time 終了するまでのミリ秒
+         * @param updateCallback タイマーが進行している間に実行する処理
+         * @param timeoutCallback タイムアウトした時に実行する処理
          */
-        constructor(time: number, autoStart: boolean, timeoutCallBack: () => void = () => {}) {
-            this.time = time;
-            this._timeoutCallBack = timeoutCallBack;
-            if (autoStart) {
-                this.start();
-            }
-            this._isTimeout = false;
+        constructor(time: number, updateCallback: () => void = () => {}, timeoutCallback: () => void = () => {}) {
+            this.setTime(time);
+            this._updateCallback = updateCallback;
+            this._timeoutCallback = timeoutCallback;
+            this._intervalID = null;
         }
         public start() {
-            this._intervalID = setInterval(this._tick, 10, this);
+            if (this._intervalID == null) {
+                this._intervalID = setInterval(this.update, 10, this);
+            }
         }
         public stop() {
-            this._isTimeout = true;
-            clearInterval(this._intervalID);
+            if (this._intervalID != null) {
+                clearInterval(this._intervalID);
+                this._intervalID = null;
+            }
         }
-        private _tick(self: Timer) {
-            self._time -= 10;
-            if (self._time <= 0) {
-                self._timeout();
+        /**
+         * タイマーの繰り返し処理を行います。
+         * @param self タイマー自身(setIntervalで呼び出した場合、thisの対象がwindowに移るため)
+         */
+        public update(self: Timer) {
+            self.tick();
+        }
+        public tick() {
+            if (this.checkTimeout()) {
+                this._timeout();
+            } else {
+                this._updateCallback();
+                this._time -= 10;
             }
         }
         private _timeout() {
             this.stop();
-            this._timeoutCallBack();
+            this._isTimeout = true;
+            this._timeoutCallback();
         }
-        get isTimeout(): boolean {
-            return this._isTimeout;
+        /**
+         * 時間が切れていないか確認します。
+         * @returns 時間切れかどうか、 true の場合は時間切れとなる
+         */
+        public checkTimeout(): boolean {
+            return this._time <= 0;
         }
-        set time(time: number) {
+        /**
+         * 時間を再設定します。
+         * @param time 時間の値
+         */
+        public setTime(time: number) {
             if (time < 0) {
                 throw new Error("タイマーの値が不正です。");
             }
@@ -334,6 +355,65 @@ module wwa_data {
             if (this._time % 10 != 0) {
                 throw new Error("タイマーは小数点第一位までの対応です。");
             }
+        }
+
+        get isTimeout(): boolean {
+            return this._isTimeout;
+        }
+    }
+
+    export class NonFinishTimer extends Timer {
+        private _hasNoTimeout: boolean;
+        constructor(time: number, updateCallback: () => void = () => {}, timeoutCallback: () => void = () => {}) {
+            super(time, updateCallback, timeoutCallback);
+        }
+        public checkTimeout(): boolean {
+            if (this._hasNoTimeout) {
+                return false;
+            }
+            return super.checkTimeout();
+        }
+        public setTime(time: number) {
+            super.setTime(time);
+            if (time <= 0) {
+                this._hasNoTimeout = true;
+            } else {
+                this._hasNoTimeout = false;
+            }
+        }
+    }
+
+    export class TimerArea {
+        protected _beginTime: wwa_data.Timer;
+        protected _endTime: wwa_data.NonFinishTimer;
+        /**
+         * 開始と終了の範囲が定まったタイマーです。
+         * @param beginTime 開始してから endTime が始まるまでの時間
+         * @param endTime 開始してから終了するまでの時間
+         * @param update endTime が進行している間に進む時間
+         * @param beginTimeout 開始のタイマーが終了した際に実行する関数
+         * @param endTimeout 終了のタイマーが終了した際に実行する関数
+         */
+        constructor(beginTime: number, endTime: number, update: () => void, beginTimeout: () => void = () => {}, endTimeout: () => void = () => {}) {
+            this._beginTime = new wwa_data.Timer(beginTime, () => {}, beginTimeout);
+            this._endTime = new wwa_data.NonFinishTimer(endTime, update, endTimeout);
+        }
+        public start() {
+            if (!this._beginTime.isTimeout) {
+                this._beginTime.start();
+            } else if (!this._endTime.isTimeout) {
+                this._endTime.start();
+            }
+        }
+        public stop() {
+            if (!this._beginTime.isTimeout) {
+                this._beginTime.stop();
+            } else if (!this._endTime.isTimeout) {
+                this._endTime.stop();
+            }
+        }
+        get isTimeout(): boolean {
+            return this._endTime.isTimeout;
         }
     }
 
@@ -383,19 +463,14 @@ module wwa_data {
         }
         /**
          * 角度を回転します。
+         * @param degree 加減する角度
          */
         public rotate(degree: number) {
             this.value = this._degree + degree;
         }
-        /**
-         * 角度を取得します。
-         */
         get degree(): number {
             return this._degree;
         }
-        /**
-         * ラジアン値を取得します。
-         */
         get rad(): number {
             return this._degree * Math.PI / 180.0;
         }
