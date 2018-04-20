@@ -772,10 +772,6 @@ module wwa_main {
                         if (this.readyState === 4) {
                             if (this.status === 0 || this.status === 200) {
                                 var decodeTime = +new Date();
-                                console.log(file);
-                                console.log(this.status);
-                                console.log(this.response);
-                                console.log(this.response.byteLength);
                                 audioContext.decodeAudioData(this.response, function (buffer) {
                                     if (buffer.length === 0) {
                                         if (error_count > 10) {
