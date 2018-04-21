@@ -38,6 +38,8 @@ module wwa_main {
     import KeyStore = wwa_input.KeyStore;
     import MouseState = wwa_input.MouseState;
     import MouseStore = wwa_input.MouseStore;
+    import GamePadState = wwa_input.GamePadState;
+    import GamePadStore = wwa_input.GamePadStore;
     import CGManager = wwa_cgmanager.CGManager;
     import Consts = wwa_data.WWAConsts;
     import Data = wwa_data.WWAData;
@@ -136,6 +138,7 @@ module wwa_main {
         private _monster: wwa_monster.Monster;
         private _keyStore: KeyStore;
         private _mouseStore: MouseStore;
+        private _gamePadStore: GamePadStore;
         private _camera: Camera;
         private _objectMovingDataManager: wwa_motion.ObjectMovingDataManager;
         private _messageWindow: wwa_message.MessageWindow;
@@ -316,6 +319,7 @@ module wwa_main {
                 this._camera.setPlayer(this._player);
                 this._keyStore = new KeyStore();
                 this._mouseStore = new MouseStore();
+                this._gamePadStore = new GamePadStore();
                 this._messageQueue = [];
                 this._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
                 this._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
@@ -613,16 +617,19 @@ module wwa_main {
                     this._setProgressBar(getProgress(4, 4, wwa_data.LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
                         self._keyStore.update();
+                        self._gamePadStore.update();
 
                         if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.UNSELECTED) {
                             if (
                                 self._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                                self._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN
+                                self._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
+                                self._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A)
                                 ) {
                                 self._yesNoJudgeInNextFrame = wwa_data.YesNoState.YES
                             } else if (
                                 self._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
-                                self._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN
+                                self._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                                self._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_B)
                                 ) {
                                 self._yesNoJudgeInNextFrame = wwa_data.YesNoState.NO
                             }
@@ -1108,6 +1115,7 @@ module wwa_main {
             // キー情報のアップデート
             this._keyStore.update();
             this._mouseStore.update();
+            this._gamePadStore.update();
 
             // メッセージウィンドウによる入力割り込みが発生した時
             if (this._yesNoJudgeInNextFrame !== void 0) {
@@ -1159,35 +1167,23 @@ module wwa_main {
                     this._player.controll(pdir);
                     this._objectMovingDataManager.update();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                    this._mouseStore.checkClickMouse(wwa_data.Direction.LEFT)) {
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.LEFT) ||
+                    this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_LEFT)) {
                     this._player.controll(wwa_data.Direction.LEFT);
                     this._objectMovingDataManager.update();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                    this._mouseStore.checkClickMouse(wwa_data.Direction.UP)) {
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.UP) ||
+                    this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_UP)) {
                     this._player.controll(wwa_data.Direction.UP);
                     this._objectMovingDataManager.update();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                    this._mouseStore.checkClickMouse(wwa_data.Direction.RIGHT)) {
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.RIGHT) ||
+                    this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
                     this._player.controll(wwa_data.Direction.RIGHT);
                     this._objectMovingDataManager.update();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                    this._mouseStore.checkClickMouse(wwa_data.Direction.DOWN)) {
-                    this._player.controll(wwa_data.Direction.DOWN);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                    this._mouseStore.checkClickMouse(wwa_data.Direction.LEFT)) {
-                    this._player.controll(wwa_data.Direction.LEFT);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                    this._mouseStore.checkClickMouse(wwa_data.Direction.UP)) {
-                    this._player.controll(wwa_data.Direction.UP);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                    this._mouseStore.checkClickMouse(wwa_data.Direction.RIGHT)) {
-                    this._player.controll(wwa_data.Direction.RIGHT);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                    this._mouseStore.checkClickMouse(wwa_data.Direction.DOWN)) {
+                    this._mouseStore.checkClickMouse(wwa_data.Direction.DOWN) ||
+                    this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_DOWN)) {
                     this._player.controll(wwa_data.Direction.DOWN);
                     this._objectMovingDataManager.update();
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_1) === wwa_input.KeyState.KEYDOWN) {
@@ -1220,7 +1216,8 @@ module wwa_main {
                     this.onchangespeed(wwa_data.SpeedChange.UP);
                 } else if (
                     this._keyStore.getKeyState(KeyCode.KEY_F1) === wwa_input.KeyState.KEYDOWN ||
-                    this._keyStore.getKeyState(KeyCode.KEY_M) === wwa_input.KeyState.KEYDOWN ) {
+                    this._keyStore.getKeyState(KeyCode.KEY_M) === wwa_input.KeyState.KEYDOWN ||
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_Y) ) {
                     // 戦闘結果予測 
                     if (this.launchBattleEstimateWindow()) {
                     }
@@ -1230,11 +1227,14 @@ module wwa_main {
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
                     this.playSound(wwa_data.SystemSound.DECISION);
                     this.onpasswordsavecalled()
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F5)) {
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F5) ||
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZR)) {
                     this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F6)) {
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F6) ||
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZL)) {
                     this.onselectbutton(wwa_data.SidebarButton.QUICK_SAVE);
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F7)) {
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F7) ||
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_R)) {
                     this.onselectbutton(wwa_data.SidebarButton.RESTART_GAME);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
                     this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA);
@@ -1265,7 +1265,8 @@ module wwa_main {
                     if (enter === KeyState.KEYDOWN || enter === KeyState.KEYPRESS_MESSAGECHANGE ||
                         space === KeyState.KEYDOWN || space === KeyState.KEYPRESS_MESSAGECHANGE ||
                         esc === KeyState.KEYDOWN || esc === KeyState.KEYPRESS_MESSAGECHANGE ||
-                        this._mouseStore.getMouseState() === MouseState.MOUSEDOWN) {
+                        this._mouseStore.getMouseState() === MouseState.MOUSEDOWN ||
+                        this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A,wwa_input.GamePadState.BUTTON_INDEX_B)) {
                         for (var i = 0; i < wwa_data.sidebarButtonCellElementID.length; i++) {
                             var elm = <HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[i]));
                             if (elm.classList.contains("onpress")) {
@@ -1280,12 +1281,14 @@ module wwa_main {
                         if (this._yesNoJudge === wwa_data.YesNoState.UNSELECTED) {
                             if (
                                 this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                                this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN
+                                this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
+                                this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A)
                                 ) {
                                 this._yesNoJudge = wwa_data.YesNoState.YES
                             } else if (
                                 this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
-                                this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN
+                                this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                                this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_B)
                                 ) {
                                 this._yesNoJudge = wwa_data.YesNoState.NO
                             }
@@ -1305,7 +1308,8 @@ module wwa_main {
                 }
             } else if (this._player.isWatingEstimateWindow()) {
                 if (this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                    this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
+                    this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A)) {
                     this.hideBattleEstimateWindow();
                 }
             } else if (this._player.isFighting()) {
