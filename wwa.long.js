@@ -62,7 +62,7 @@ var wwa_input;
         KeyCode[KeyCode["KEY_F8"] = 119] = "KEY_F8";
         KeyCode[KeyCode["KEY_F12"] = 123] = "KEY_F12";
     })(KeyCode = wwa_input.KeyCode || (wwa_input.KeyCode = {}));
-    var KeyStore = (function () {
+    var KeyStore = /** @class */ (function () {
         function KeyStore() {
             var i;
             this._nextKeyState = new Array(KeyStore.KEY_BUFFER_MAX);
@@ -165,7 +165,7 @@ var wwa_input;
         MouseState[MouseState["MOUSEPRESS"] = 2] = "MOUSEPRESS";
         MouseState[MouseState["MOUSEUP"] = 3] = "MOUSEUP";
     })(MouseState = wwa_input.MouseState || (wwa_input.MouseState = {}));
-    var MouseStore = (function () {
+    var MouseStore = /** @class */ (function () {
         function MouseStore() {
             this._prevMouseState = false;
             this._mouseState = false;
@@ -248,7 +248,7 @@ var wwa_input;
 /// <reference path="./wwa_main.ts" />
 var wwa_data;
 (function (wwa_data) {
-    var EquipmentStatus = (function () {
+    var EquipmentStatus = /** @class */ (function () {
         function EquipmentStatus(s, d) {
             this.strength = s;
             this.defence = d;
@@ -270,7 +270,7 @@ var wwa_data;
         return EquipmentStatus;
     }());
     wwa_data.EquipmentStatus = EquipmentStatus;
-    var Status = (function (_super) {
+    var Status = /** @class */ (function (_super) {
         __extends(Status, _super);
         function Status(e, s, d, g) {
             var _this = _super.call(this, s, d) || this;
@@ -309,7 +309,7 @@ var wwa_data;
         Coordは座標(coordinate)を示す変数２つ組です。
         パーツ座標や、画面座標を用いるのに使用します。
     */
-    var Coord = (function () {
+    var Coord = /** @class */ (function () {
         function Coord(x, y) {
             if (x === void 0) { x = 0; }
             if (y === void 0) { y = 0; }
@@ -361,7 +361,7 @@ var wwa_data;
         return Coord;
     }());
     wwa_data.Coord = Coord;
-    var Position = (function () {
+    var Position = /** @class */ (function () {
         function Position(wwa, x, y, offsetX, offsetY) {
             if (offsetX === void 0) { offsetX = 0; }
             if (offsetY === void 0) { offsetY = 0; }
@@ -477,7 +477,7 @@ var wwa_data;
         return Position;
     }());
     wwa_data.Position = Position;
-    var Face = (function () {
+    var Face = /** @class */ (function () {
         function Face(destPos, srcPos, srcSize) {
             this.destPos = destPos.clone();
             this.srcPos = srcPos.clone();
@@ -644,6 +644,7 @@ var wwa_data;
         MacroType[MacroType["SET_SPEED"] = 51] = "SET_SPEED";
         MacroType[MacroType["COPY_TIME_TO"] = 52] = "COPY_TIME_TO";
         MacroType[MacroType["HIDE_STATUS"] = 53] = "HIDE_STATUS";
+        MacroType[MacroType["VAR_MAP"] = 54] = "VAR_MAP";
     })(MacroType = wwa_data.MacroType || (wwa_data.MacroType = {}));
     wwa_data.macrotable = {
         "": 0,
@@ -699,7 +700,8 @@ var wwa_data;
         "$if": 50,
         "$set_speed": 51,
         "$copy_time_to": 52,
-        "$hide_status": 53
+        "$hide_status": 53,
+        "$var_map": 54
     };
     var MacroStatusIndex;
     (function (MacroStatusIndex) {
@@ -728,10 +730,10 @@ var wwa_data;
     })(SystemSound = wwa_data.SystemSound || (wwa_data.SystemSound = {}));
     wwa_data.speedList = [1, 2, 5, 8, 10, 20];
     wwa_data.speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
-    var WWAConsts = (function () {
+    var WWAConsts = /** @class */ (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "HW3.18.2";
+        WWAConsts.VERSION_WWAJS = "HW3.19.0";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -863,19 +865,19 @@ var wwa_data;
         return WWAConsts;
     }());
     wwa_data.WWAConsts = WWAConsts;
-    var LoaderResponse = (function () {
+    var LoaderResponse = /** @class */ (function () {
         function LoaderResponse() {
         }
         return LoaderResponse;
     }());
     wwa_data.LoaderResponse = LoaderResponse;
-    var LoaderError = (function () {
+    var LoaderError = /** @class */ (function () {
         function LoaderError() {
         }
         return LoaderError;
     }());
     wwa_data.LoaderError = LoaderError;
-    var LoaderProgress = (function () {
+    var LoaderProgress = /** @class */ (function () {
         function LoaderProgress() {
         }
         return LoaderProgress;
@@ -919,7 +921,7 @@ var wwa_data;
         SelectorType[SelectorType["SIDEBAR"] = 1] = "SIDEBAR";
     })(SelectorType = wwa_data.SelectorType || (wwa_data.SelectorType = {}));
     ;
-    var WWAData = (function () {
+    var WWAData = /** @class */ (function () {
         function WWAData() {
             this.version = void 0;
             this.gameoverX = void 0;
@@ -996,7 +998,7 @@ var wwa_parts_player;
 (function (wwa_parts_player) {
     var Direction = wwa_data.Direction;
     var Consts = wwa_data.WWAConsts;
-    var Parts = (function () {
+    var Parts = /** @class */ (function () {
         function Parts(pos) {
             this._position = pos;
         }
@@ -1005,7 +1007,7 @@ var wwa_parts_player;
         };
         return Parts;
     }());
-    var PartsObject = (function (_super) {
+    var PartsObject = /** @class */ (function (_super) {
         __extends(PartsObject, _super);
         function PartsObject(pos) {
             return _super.call(this, pos) || this;
@@ -1013,7 +1015,7 @@ var wwa_parts_player;
         return PartsObject;
     }(Parts));
     wwa_parts_player.PartsObject = PartsObject;
-    var PartsMap = (function (_super) {
+    var PartsMap = /** @class */ (function (_super) {
         __extends(PartsMap, _super);
         function PartsMap(pos) {
             return _super.call(this, pos) || this;
@@ -1032,7 +1034,7 @@ var wwa_parts_player;
         PlayerState[PlayerState["ESTIMATE_WINDOW_WAITING"] = 6] = "ESTIMATE_WINDOW_WAITING";
         PlayerState[PlayerState["PASSWORD_WINDOW_WAITING"] = 7] = "PASSWORD_WINDOW_WAITING";
     })(PlayerState || (PlayerState = {}));
-    var Player = (function (_super) {
+    var Player = /** @class */ (function (_super) {
         __extends(Player, _super);
         function Player(wwa, pos, camera, status, em) {
             var _this = _super.call(this, pos) || this;
@@ -1864,7 +1866,7 @@ var wwa_parts_player;
 var wwa_camera;
 (function (wwa_camera) {
     var Consts = wwa_data.WWAConsts;
-    var Camera = (function () {
+    var Camera = /** @class */ (function () {
         /**
           現在のプレイヤー座標が含まれるカメラ位置(表示画面左上)を含むカメラを作ります.
           @param position: wwa_data.Position 現在のプレイヤー座標
@@ -1928,7 +1930,7 @@ var wwa_camera;
 var wwa_cgmanager;
 (function (wwa_cgmanager) {
     var Consts = wwa_data.WWAConsts;
-    var CGManager = (function () {
+    var CGManager = /** @class */ (function () {
         function CGManager(ctx, ctxSub, fileName, loadCompleteCallBack) {
             this._isLoaded = false;
             this._ctx = ctx;
@@ -2065,7 +2067,7 @@ var wwa_util;
 /// <reference path="./wwa_data.ts" />
 var wwa_message;
 (function (wwa_message) {
-    var MessageInfo = (function () {
+    var MessageInfo = /** @class */ (function () {
         function MessageInfo(message, isSystemMessage, isEndOfPartsEvent, macro) {
             this.message = message;
             this.isSystemMessage = isSystemMessage;
@@ -2086,7 +2088,7 @@ var wwa_message;
         return newq;
     }
     wwa_message.strArrayToMessageInfoArray = strArrayToMessageInfoArray;
-    var Macro = (function () {
+    var Macro = /** @class */ (function () {
         function Macro(_wwa, _triggerPartsID, _triggerPartsType, _triggerPartsPosition, macroType, macroArgs) {
             this._wwa = _wwa;
             this._triggerPartsID = _triggerPartsID;
@@ -2166,92 +2168,129 @@ var wwa_message;
                 else if (this.macroType === wwa_data.MacroType.SOUND) {
                     this._executeSoundMacro();
                 }
+                // JUMPGATEマクロ受け取り
                 else if (this.macroType === wwa_data.MacroType.JUMPGATE) {
                     this._executeJumpGateMacro();
                 }
+                // 現在の座標を記憶
                 else if (this.macroType === wwa_data.MacroType.RECPOSITION) {
                     this._executeRecPositionMacro();
                 }
+                // 記憶していた座標にジャンプ
                 else if (this.macroType === wwa_data.MacroType.JUMPRECPOSITION) {
                     this._executeJumpRecPositionMacro();
                 }
+                // 変数デバッグ出力
                 else if (this.macroType === wwa_data.MacroType.CONSOLE_LOG) {
                     this._executeConsoleLogMacro();
                 }
+                // 変数 <- HP
                 else if (this.macroType === wwa_data.MacroType.COPY_HP_TO) {
                     this._executeCopyHpToMacro();
                 }
+                // HP <- 変数
                 else if (this.macroType === wwa_data.MacroType.SET_HP) {
                     this._executeSetHPMacro();
                 }
+                // 変数 <- HPMAX
                 else if (this.macroType === wwa_data.MacroType.COPY_HPMAX_TO) {
                     this._executeCopyHpMaxToMacro();
                 }
+                // HPMAX <- 変数
                 else if (this.macroType === wwa_data.MacroType.SET_HPMAX) {
                     this._executeSetHpMaxMacro();
                 }
+                // 変数 <- AT
                 else if (this.macroType === wwa_data.MacroType.COPY_AT_TO) {
                     this._executeCopyAtToMacro();
                 }
+                // AT <- 変数
                 else if (this.macroType === wwa_data.MacroType.SET_AT) {
                     this._executeSetAtMacro();
                 }
+                // 変数 <- DF
                 else if (this.macroType === wwa_data.MacroType.COPY_DF_TO) {
                     this._executeCopyDfToMacro();
                 }
+                // DF <- 変数
                 else if (this.macroType === wwa_data.MacroType.SET_DF) {
                     this._executeSetDfMacro();
                 }
+                // 変数 <- MONEY
                 else if (this.macroType === wwa_data.MacroType.COPY_MONEY_TO) {
                     this._executeCopyMoneyToMacro();
                 }
+                // MONEY <- 変数
                 else if (this.macroType === wwa_data.MacroType.SET_MOENEY) {
                     this._executeSetMoneyMacro();
                 }
+                // HW3.16.4 より実装
+                // 歩数カウント代入
                 else if (this.macroType === wwa_data.MacroType.COPY_STEP_COUNT_TO) {
                     this._executeSetStepCountMacro();
                 }
+                // 変数に定数代入
                 else if (this.macroType === wwa_data.MacroType.VAR_SET_VAL) {
                     this._executeVarSetValMacro();
                 }
+                // 変数に変数代入
                 else if (this.macroType === wwa_data.MacroType.VAR_SET) {
                     this._executeVarSetMacro();
                 }
+                // 足し算代入
                 else if (this.macroType === wwa_data.MacroType.VAR_ADD) {
                     this._executeVarAddMacro();
                 }
+                // 引き算代入
                 else if (this.macroType === wwa_data.MacroType.VAR_SUB) {
                     this._executeVarSubMacro();
                 }
+                // 掛け算代入
                 else if (this.macroType === wwa_data.MacroType.VAR_MUL) {
                     this._executeVarMulMacro();
                 }
+                // 割り算代入
                 else if (this.macroType === wwa_data.MacroType.VAR_DIV) {
                     this._executeVarDivMacro();
                 }
+                // 変数Xに1からYまでの乱数を代入
                 else if (this.macroType === wwa_data.MacroType.VAR_SET_RAND) {
                     this._executeVarSetRandMacro();
                 }
+                // 速度変更禁止マクロ
                 else if (this.macroType === wwa_data.MacroType.GAME_SPEED) {
                     this._executeGameSpeedMacro();
                 }
+                // 変数付きのメッセージ表示
                 else if (this.macroType === wwa_data.MacroType.SHOW_STR) {
                     this._executeShowStrMacro();
                 }
+                // 強制クイックセーブ
                 else if (this.macroType === wwa_data.MacroType.AUTO_SAVE) {
                     this._executeAutoSaveMacro();
                 }
+                // IF文
                 else if (this.macroType === wwa_data.MacroType.IF) {
                     this._executeIfMacro();
                 }
+                // 速度設定
                 else if (this.macroType === wwa_data.MacroType.SET_SPEED) {
                     this._executeSetSpeedMacro();
                 }
+                // HW3.16.5 より実装
+                // プレイ時間変数代入
                 else if (this.macroType === wwa_data.MacroType.COPY_TIME_TO) {
                     this._executeCopyTimeToMacro();
                 }
+                // HW3.18.0 より実装
+                // ステータスを隠す
                 else if (this.macroType === wwa_data.MacroType.HIDE_STATUS) {
                     this._hideStatusMacro();
+                }
+                // HW3.19.0 より実装
+                // $map の変数対応版
+                else if (this.macroType === wwa_data.MacroType.VAR_MAP) {
+                    this._varMapMacro();
                 }
             }
             catch (e) {
@@ -2463,6 +2502,19 @@ var wwa_message;
             var isHideNumber = this._parseInt(1);
             var isHide = (isHideNumber === 0) ? false : true;
             this._wwa.hideStatus(no, isHide);
+        };
+        // VAR_MAP マクロ実行部
+        Macro.prototype._varMapMacro = function () {
+            this._concatEmptyArgs(4);
+            var partsID = this._parseInt(0);
+            var xstr = this.macroArgs[1];
+            var ystr = this.macroArgs[2];
+            var partsType = this._parseInt(3, wwa_data.PartsType.OBJECT);
+            if (partsID < 0) {
+                throw new Error("入力変数が不正です");
+            }
+            this._wwa.varMap(this._triggerPartsPosition, xstr, ystr, partsID, partsType);
+            // this._wwa.appearPartsEval( this._triggerPartsPosition, xstr, ystr, partsID, partsType);
         };
         // executeImgPlayerMacro
         Macro.prototype._executeImgPlayerMacro = function () {
@@ -2771,7 +2823,7 @@ var wwa_message;
         return new Macro(wwa, partsID, partsType, position, macroIndex, matchInfo[2].split(",").map(function (e) { return e.trim(); }));
     }
     wwa_message.parseMacro = parseMacro;
-    var TextWindow = (function () {
+    var TextWindow = /** @class */ (function () {
         function TextWindow(_wwa, _coord, _width, _height, _isVisible, _parentElement, zIndex) {
             this._wwa = _wwa;
             this._coord = _coord;
@@ -2811,7 +2863,7 @@ var wwa_message;
         };
         return TextWindow;
     }());
-    var MosterWindow = (function (_super) {
+    var MosterWindow = /** @class */ (function (_super) {
         __extends(MosterWindow, _super);
         function MosterWindow(wwa, coord, width, height, isVisible, parentElement, _cgFileName) {
             var _this = _super.call(this, wwa, new wwa_data.Coord(coord.x, coord.y), width, height, isVisible, parentElement, 201) || this;
@@ -2863,7 +2915,7 @@ var wwa_message;
         return MosterWindow;
     }(TextWindow));
     wwa_message.MosterWindow = MosterWindow;
-    var ScoreWindow = (function (_super) {
+    var ScoreWindow = /** @class */ (function (_super) {
         __extends(ScoreWindow, _super);
         function ScoreWindow(wwa, coord, isVisible, parentElement) {
             var _this = _super.call(this, wwa, new wwa_data.Coord(coord.x, coord.y), 340, 30, isVisible, parentElement, 202) || this;
@@ -2892,7 +2944,7 @@ var wwa_message;
         Positioning[Positioning["BOTTOM"] = 2] = "BOTTOM";
         Positioning[Positioning["SCORE"] = 3] = "SCORE";
     })(Positioning = wwa_message.Positioning || (wwa_message.Positioning = {}));
-    var MessageWindow /* implements TextWindow(予定)*/ = (function () {
+    var MessageWindow /* implements TextWindow(予定)*/ = /** @class */ (function () {
         function MessageWindow(wwa, x, y, width, height, message, cgFileName, isVisible, isYesno, parentElement) {
             var thisA = this;
             var escapedFilename = cgFileName.replace("(", "\\(").replace(")", "\\)");
@@ -3114,7 +3166,7 @@ var wwa_message;
 /// <reference path="./wwa_main.ts" />
 var wwa_monster;
 (function (wwa_monster) {
-    var Monster = (function () {
+    var Monster = /** @class */ (function () {
         function Monster(_partsID, _position, _imgCoord, _status, _message, _item, _battleEndCallback) {
             this._partsID = _partsID;
             this._position = _position;
@@ -3167,7 +3219,7 @@ var wwa_monster;
 /// <reference path="./wwa_data.ts" />
 var wwa_motion;
 (function (wwa_motion) {
-    var ObjectMovingData = (function () {
+    var ObjectMovingData = /** @class */ (function () {
         function ObjectMovingData(_player, _objectID, _srcPos, _destPos, _dir) {
             this._player = _player;
             this._objectID = _objectID;
@@ -3219,7 +3271,7 @@ var wwa_motion;
         return ObjectMovingData;
     }());
     wwa_motion.ObjectMovingData = ObjectMovingData;
-    var ObjectMovingDataManager = (function () {
+    var ObjectMovingDataManager = /** @class */ (function () {
         // TODO: シングルトンにする
         function ObjectMovingDataManager(_wwa, _player) {
             this._wwa = _wwa;
@@ -3275,7 +3327,7 @@ var wwa_motion;
 /// <reference path="./wwa_data.ts" />
 var wwa_estimate_battle;
 (function (wwa_estimate_battle) {
-    var EstimateDisplayElements = (function () {
+    var EstimateDisplayElements = /** @class */ (function () {
         function EstimateDisplayElements(id, imgFileName, parent) {
             this.id = id;
             this.imgFileName = imgFileName;
@@ -3338,7 +3390,7 @@ var wwa_estimate_battle;
         };
         return EstimateDisplayElements;
     }());
-    var BattleEstimateWindow = (function () {
+    var BattleEstimateWindow = /** @class */ (function () {
         function BattleEstimateWindow(_wwa, _imgFileName, _parent) {
             var _this = this;
             this._wwa = _wwa;
@@ -3388,7 +3440,7 @@ var wwa_estimate_battle;
         return BattleEstimateWindow;
     }());
     wwa_estimate_battle.BattleEstimateWindow = BattleEstimateWindow;
-    var EstimateResult = (function () {
+    var EstimateResult = /** @class */ (function () {
         function EstimateResult(isNoEffect, isOverMaxTurn, damage) {
             this.isNoEffect = isNoEffect;
             this.isOverMaxTurn = isOverMaxTurn;
@@ -3528,7 +3580,7 @@ var wwa_password_window;
         "保存してください。ボックスをクリックで全体を選択、\n" +
         "「Ctrl+C」でコピー、「Ctrl+V」で貼り付けできます。\n" +
         "通常数万文字程度ありますので、ご注意ください。");
-    var PasswordWindow = (function () {
+    var PasswordWindow = /** @class */ (function () {
         function PasswordWindow(_wwa, _parent) {
             var _this = this;
             this._wwa = _wwa;
@@ -3675,7 +3727,7 @@ var wwa_main;
         return progress;
     }
     wwa_main.getProgress = getProgress;
-    var WWA = (function () {
+    var WWA = /** @class */ (function () {
         function WWA(mapFileName, workerFileName, urlgateEnabled, audioDirectory, dumpElm) {
             if (urlgateEnabled === void 0) { urlgateEnabled = false; }
             if (audioDirectory === void 0) { audioDirectory = ""; }
@@ -6943,6 +6995,7 @@ var wwa_main;
                 if (judge_if) {
                     this.appearPartsEval(_triggerPartsPosition, str[4], str[5], Number(str[3]), Number(str[6]));
                 }
+                // undefined 判定
                 else if (str[9] !== void 0) {
                     this.appearPartsEval(_triggerPartsPosition, str[8], str[9], Number(str[7]), Number(str[10]));
                 }
@@ -6986,6 +7039,27 @@ var wwa_main;
             }
             this._player.setHideStatus(no, isHide);
             this._player.updateStatusValueBox();
+        };
+        // 指定位置にパーツを出現を変数で行う
+        WWA.prototype.varMap = function (triggerPartsPos, xstr, ystr, partsID, targetPartsType) {
+            if (partsID > Consts.USER_VAR_NUM) {
+                throw new Error("入力変数が不正です");
+            }
+            var targetPartsID = this._wwaData.userVar[partsID];
+            if (targetPartsID < 0) {
+                throw new Error("パーツ番号が不正です");
+            }
+            if (targetPartsType === wwa_data.PartsType.OBJECT) {
+                if (targetPartsID >= this.getObjectPartsNum()) {
+                    throw new Error("パーツ番号が不正です");
+                }
+            }
+            else {
+                if (targetPartsID >= this.getMapPartsNum()) {
+                    throw new Error("パーツ番号が不正です");
+                }
+            }
+            this.appearPartsEval(triggerPartsPos, xstr, ystr, targetPartsID, targetPartsType);
         };
         return WWA;
     }());

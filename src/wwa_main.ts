@@ -3761,11 +3761,37 @@ module wwa_main {
         }
         // 各種ステータスを非表示にする
         public hideStatus(no:number, isHide:boolean): void {
-			if(no < 0 || no > 4){
-				throw new Error("隠すパラメータは０から３の間で指定してください。");
-			}
-			this._player.setHideStatus(no, isHide);
-			this._player.updateStatusValueBox();
+    			if(no < 0 || no > 4){
+    				throw new Error("隠すパラメータは０から３の間で指定してください。");
+    			}
+    			this._player.setHideStatus(no, isHide);
+    			this._player.updateStatusValueBox();
+        }
+        // 指定位置にパーツを出現を変数で行う
+        public varMap(
+          triggerPartsPos: Coord,
+          xstr: string,
+          ystr: string,
+          partsID: number,
+          targetPartsType: wwa_data.PartsType
+        ):void{
+          if(partsID > Consts.USER_VAR_NUM){
+            throw new Error("入力変数が不正です");
+          }
+          var targetPartsID = this._wwaData.userVar[ partsID ];
+          if (targetPartsID < 0) {
+              throw new Error("パーツ番号が不正です");
+          }
+          if (targetPartsType === wwa_data.PartsType.OBJECT) {
+              if (targetPartsID >= this.getObjectPartsNum() ) {
+                  throw new Error("パーツ番号が不正です");
+              }
+          } else {
+              if (targetPartsID >= this.getMapPartsNum()) {
+                  throw new Error("パーツ番号が不正です");
+              }
+          }
+          this.appearPartsEval( triggerPartsPos, xstr, ystr, targetPartsID, targetPartsType);
         }
     };
 
