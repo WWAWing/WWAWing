@@ -781,7 +781,11 @@ module wwa_main {
                 (wwa_util.$id("progress-disp")).textContent =
                 ((1 * progress.stage + (progress.current / progress.total) * 1) / (Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO + 1) * 100).toFixed(2) + "%";
             } else {
-                (wwa_util.$id("progress-message-container")).textContent = "効果音/BGMを読み込んでいます。(スペースキーでスキップ）";
+                if (this._usePassword) {
+                    (wwa_util.$id("progress-message-container")).textContent = "効果音/BGMを読み込んでいます。(スペースキーでスキップ）";
+                } else {
+                    (wwa_util.$id("progress-message-container")).textContent = "ゲームデータを読み込んでいます。";
+                }
 
                 (wwa_util.$id("progress-bar-audio")).style.width =
                 ( progress.current * Consts.MAP_WINDOW_WIDTH / progress.total ) + "px";
@@ -3502,6 +3506,10 @@ module wwa_main {
         }
 
         private _displayHelp(): void {
+            if (!this._usePassword) {
+                //パスワードなしの場合はヘルプを開かない
+                return;
+            }
             if (this._player.isControllable()) {
                 this.setMessageQueue(
                     "【ショートカットキーの一覧】\n" +
