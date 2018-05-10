@@ -78,10 +78,10 @@ module wwa_data {
             return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
         }
 
-        public constructor( e: number, s: number, d: number, g: number) {
+        public constructor(e: number, s: number, d: number, g: number) {
+            super(s, d);
             this.energy = e;
             this.gold = g;
-            super(s, d);
         }
 
     }
@@ -342,7 +342,8 @@ module wwa_data {
         CALL_BY_RESTART_GAME,
         CALL_BY_GOTO_WWA,
         CALL_BY_PASSWORD_SAVE,
-        CALL_BY_PASSWORD_LOAD
+        CALL_BY_PASSWORD_LOAD,
+        CALL_BY_GAME_END
     }
 
     export enum SidebarButton {
