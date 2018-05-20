@@ -856,7 +856,8 @@ module wwa_parts_player {
                         // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
                         this._wwa.appearParts(this._enemy.position, wwa_data.AppearanceTriggerType.OBJECT, this._enemy.partsID);
                         this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-                        this._wwa.setMessageQueue(this._enemy.message, false, false);
+                        // モンスターとスコア表示の$mapの問題
+                        this._wwa.setMessageQueue(this._enemy.message, false, false, this._enemy.partsID, false, this._enemy.position);
                         this._enemy.battleEndProcess();
                         this._battleTurnNum = 0;
                         this._enemy = null;
