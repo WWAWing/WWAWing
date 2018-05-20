@@ -2104,9 +2104,9 @@ module wwa_main {
             score += this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD] * playerStatus.gold;
             this._scoreWindow.update(score);
             this._scoreWindow.show();
-            this.setMessageQueue( messageID === 0 ? "スコアを表示します。" : this._wwaData.message[ messageID ], false, false);
+            // モンスターとスコア表示の$mapの問題
+            this.setMessageQueue( messageID === 0 ? "スコアを表示します。" : this._wwaData.message[ messageID ], false, false, partsID, false, pos);
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
-
         }
 
         private _execChoiceWindowRunningEvent() {
