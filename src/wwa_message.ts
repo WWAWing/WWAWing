@@ -437,7 +437,7 @@ module wwa_message {
 
 
 
-    class TextWindow {
+    export class TextWindow {
         protected _element: HTMLElement;
 
         constructor(

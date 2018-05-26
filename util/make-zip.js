@@ -2,12 +2,12 @@
  * assumed call by npm scripts. 
  */
 
-var JSZip = require("jszip");
-var fs = require("fs");
-var path = require("path");
-var glob = require("glob");
-var Promise = require("es6-promise");
-var baseDir = ".";
+const JSZip = require("jszip");
+const fs = require("fs");
+const path = require("path");
+const glob = require("glob");
+const Promise = require("es6-promise");
+const baseDir = ".";
 
 makeZip("wwawing-dist");
 makeZip("wwawing-update");
@@ -16,53 +16,42 @@ function joinPathArray(prev, cur) {
     return path.join(prev, cur);
 }
 
-function makeZip (target) {
-    var zip = new JSZip();
-    glob(baseDir + "/" + target + "/**/*.*", function(error, matches) {
-        Promise.all(matches.map(function(itemPath) {
-            return new Promise(function(resolve, reject) {
+function makeZip(target) {
+    const zip = new JSZip();
+    glob(baseDir + "/" + target + "/**/*.*", (error, matches) => {
+        Promise.all(matches.map(itemPath => new Promise((resolve, reject) => {
+            // Windows のエクスプローラでもzipが開けるように
+            // globから出てくるパスセパレータ( / )を
+            // 動作環境におけるパスセパレータに変換する.
+            const itemPathArray = itemPath.split("/");
+            const itemPathFs = itemPathArray.reduce(joinPathArray, "");
 
-                // Windows のエクスプローラでもzipが開けるように
-                // globから出てくるパスセパレータ( / )を
-                // 動作環境におけるパスセパレータに変換する.
-                var itemPathArray = itemPath.split("/")
-                var itemPathFs = itemPathArray.reduce(joinPathArray, "");
-
-                fs.readFile(itemPathFs, function(err, itemData) {
-                    console.log("including " + itemPath);
-                    if( err ) {
-                        reject(err);
-                        return;
-                    }
-                    zip.file(itemPathFs, itemData);
-                    resolve();
-                });
+            fs.readFile(itemPathFs, (err, itemData) => {
+                console.log(`including ${itemPath}`);
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                zip.file(itemPathFs, itemData);
+                resolve();
             });
-        }))
-            .then( function() {
-                var dest = target + ".zip";
-                return new Promise( function(resolve, reject) {
-                    zip
-                        .generateAsync({type:"nodebuffer"})
-                        .then( function(content) {
-                            fs.writeFile(dest, content, function(err) {
-                                if( err ) {
-                                    reject( err );
-                                    return;
-                                }
-                                resolve(dest);
-                            });
-                        })
-                        .catch(function(err) {
-                            reject(err);
+        })))
+            .then(() => new Promise((resolve, reject) => {
+                const dest = `${target}.zip`;
+                zip
+                    .generateAsync({ type: "nodebuffer" })
+                    .then(content => {
+                        fs.writeFile(dest, content, err => {
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+                            resolve(dest);
                         });
-                    });
-            })
-            .then( function(dest) {
-                console.log(dest + " written.");
-            })
-            .catch( function(e) {
-                console.error(e);
-            });
+                    })
+                    .catch(err => reject(err));
+            }))
+            .then(dest => console.log(dest + " written."))
+            .catch(e => console.error(e));
     });
 }

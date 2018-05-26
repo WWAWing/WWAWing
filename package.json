@@ -1,19 +1,18 @@
 {
-  "name": "wwa-wing",
+  "name": "@wwawing/wwawing",
   "version": "3.1.6",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "wwa.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run build:js && npm run build:dist",
-    "build:js": "npm run build:js:tsc && npm run build:js:uglify && npm run build:js:cat",
-    "build:js:tsc": "tsc --sourceMap ./src/wwa_main.ts -t ES5 --outDir .. --out wwa.long.js",
-    "build:js:uglify": "uglifyjs -c -o wwa-nolink.js --source-map  --in-source-map ./wwa.long.js.map ./wwa.long.js",
-    "build:js:cat": "concat -o wwa.js wwa_license_comment.js wwa-nolink.js cryptojs/aes.js",
+    "build:js": "npm run build:js:webpack && npm run build:js:cat",
+    "build:js:webpack": "webpack --config webpack.config.prod.js",
+    "build:js:cat": "shx cat wwa_license_comment.js ./lib/wwa-nolink.js cryptojs/aes.js > ./lib/wwa.js",
     "build:dist": "npm run clean:dist && node ./util/make-wwawing-dist && node ./util/make-zip",
     "clean": "npm run clean:dist && npm run clean:js",
-    "clean:js": "rimraf wwa.long.js wwa.long.js.map wwa-nolink.js wwa-nolink.js.map wwa.js",
-    "clean:dist": "rimraf wwawing-dist wwawing-update wwawing-dist.zip wwawing-update.zip"
+    "clean:js": "shx rm -rf lib",
+    "clean:dist": "shx rm -rf wwawing-dist wwawing-update wwawing-dist.zip wwawing-update.zip"
   },
   "repository": {
     "type": "git",
@@ -30,13 +29,16 @@
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
-    "concat": "^1.0.3",
-    "cpx": "^1.5.0",
     "glob": "^7.1.2",
     "jszip": "^3.1.4",
-    "rimraf": "^2.6.2",
+    "shelljs": "^0.8.2",
+    "shx": "^0.2.2",
+    "ts-loader": "^4.3.0",
     "typescript": "^2.5.3",
-    "uglify-js": "^3.1.3"
+    "uglify-js": "^3.3.27",
+    "uglifyjs-webpack-plugin": "^1.2.5",
+    "webpack": "^4.9.1",
+    "webpack-cli": "^2.1.4"
   },
   "dependencies": {
     "@types/es6-promise": "0.0.33",

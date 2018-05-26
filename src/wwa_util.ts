@@ -4,7 +4,7 @@ module wwa_util {
     export var $id = (id: string): HTMLElement => {
         return document.getElementById(id);
     };
-    export var $class = (className: string): NodeList => {
+    export var $class = (className: string) => {
         return document.getElementsByClassName(className);
     };
     export var $tag = (tagName: string): NodeList => {

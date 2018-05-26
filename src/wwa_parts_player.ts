@@ -8,7 +8,7 @@ module wwa_parts_player {
     import Consts = wwa_data.WWAConsts;
     import Camera = wwa_camera.Camera;
 
-    class Parts {
+    export class Parts {
         protected _position: Position;
         protected _wwa: wwa_main.WWA;
         public getPosition(): Position {
@@ -31,7 +31,7 @@ module wwa_parts_player {
         }
     }
 
-    enum PlayerState {
+    export enum PlayerState {
         CONTROLLABLE,
         MOVING,
         CAMERA_MOVING,
