@@ -51,7 +51,7 @@ function makeZip(target) {
                     })
                     .catch(err => reject(err));
             }))
-            .then(dest => console.log(dest + " written."))
+            .then(dest => console.log(`${dest} was written.`))
             .catch(e => console.error(e));
     });
 }
