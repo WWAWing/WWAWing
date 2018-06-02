@@ -9,10 +9,6 @@ const customPageConfig: WWAPageConfig = {
 };
 
 const pageConfig = fillDefaultConfig(customPageConfig);
-
 const pugFile = path.join(__dirname, "..", "template", "wwa.pug");
-const compileTemplate = pug.compileFile(pugFile, {
-    pretty: true
-});
-
+const compileTemplate = pug.compileFile(pugFile, { pretty: true });
 console.log(compileTemplate(pageConfig));

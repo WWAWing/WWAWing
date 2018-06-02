@@ -1,9 +1,19 @@
+import * as _ from "lodash";
+
 export interface WWAConfig {
     mapdata: string;
     loader?: string;
-    audioDir?: string;
     urlgateEnable?: "false";
     titleImg?: string;
+    resources?: {
+        audio: {
+            dir: string;
+            js: string;
+        };
+        wwaJs: string;
+        wwaCss: string;
+        cryptoJsInDevMode?: string;
+    };
 }
 
 export interface Copyright {
@@ -12,7 +22,7 @@ export interface Copyright {
     product: {
         name: string;
         href: string;
-    }
+    };
     credit: string;
     genre?: string;
 }
@@ -31,7 +41,16 @@ const defaultPageConfig: WWAPageConfig = {
     title: "World Wide Adventure Wing",
     mode: "production",
     wwa: {
-        mapdata: "mapdata.dat"
+        mapdata: "mapdata.dat",
+        resources: {
+            audio: {
+                dir: "./audio/",
+                js: "audio.min.js"
+            },
+            wwaJs: "wwa.js",
+            wwaCss: "wwa.css",
+            cryptoJsInDevMode: "cryptojs/aes.js"
+        }
     },
     copyright: {
         wwa: {
@@ -56,9 +75,14 @@ const defaultPageConfig: WWAPageConfig = {
     }
 };
 
-export function fillDefaultConfig(customPageConfig: WWAPageConfig) {
-    return {
-        ...defaultPageConfig,
-        ...customPageConfig
-    };
+export function fillDefaultConfig(customPageConfig: WWAPageConfig): WWAPageConfig {
+    if (
+        customPageConfig.mode === "development" &&
+        customPageConfig.wwa.resources &&
+        !customPageConfig.wwa.resources.cryptoJsInDevMode
+    ) {
+        throw new Error("In development mode, cryproJsInDevMode property is required.");
+    }
+
+    return _.merge(defaultPageConfig, customPageConfig);
 }

@@ -1,3 +1,20 @@
+mixin wwaRequirements()
+    - const resources = wwa.resources
+    // wwa requirements
+    link(rel="stylesheet" href=resources.wwaCss)
+    - const audioJsFile = resources.audio.dir + (resources.audio.dir.endsWith("/") ? "" : "/" ) + resources.audio.js
+    
+    case mode
+        when "production"
+            script(src=audioJsFile)
+            script(src=resources.wwaJs)
+        when "development"
+            script(src=resources.cryptoJsInDevMode)
+            script(src=audioJsFile)
+            script(src=resources.wwaJs)
+    // /wwa requirements
+
+
 mixin copyright(config)
     p
         | #{config.genre} &quot;
@@ -10,25 +27,14 @@ html(lang="ja")
     head
         meta(charset="UTF-8")
         title #{title}
-
-        // wwa requirements
-        link(rel="stylesheet" href="wwa.css")
-        case mode
-            when "production"
-                script(src="audio/audio.min.js")
-                script(src="wwa.js")
-            when "development"
-                script(src="cryptojs/aes.js")
-                script(src="audio/audio.min.js")
-                script(src="wwa.long.js")
-        // /wwa requirements
+        +wwaRequirements(wwa.resources)
 
     body
         #wrapper
             #wwa-wrapper.wwa-size-box(
                 data-wwa-mapdata=wwa.mapdata,
                 data-wwa-loader=wwa.loader
-                data-wwa-audio-dir=wwa.audioDir,
+                data-wwa-audio-dir=wwa.resources.dir,
                 data-wwa-urlgate-enable=wwa.urlgateEnable,
                 data-wwa-title-img=wwa.titleImg
             )
