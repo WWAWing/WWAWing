@@ -1,0 +1,25 @@
+{
+  "name": "@wwawing/html-generator",
+  "version": "0.0.0",
+  "description": "a HTML file generator for WWA Wing",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WWAWing/html-generator.git"
+  },
+  "keywords": [
+    "WWA"
+  ],
+  "author": "WWA Wing Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WWAWing/html-generator/issues"
+  },
+  "homepage": "https://github.com/WWAWing/html-generator#readme",
+  "devDependencies": {
+    "jade": "^1.11.0"
+  }
+}
