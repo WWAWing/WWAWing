@@ -1,8 +1,11 @@
 .idea/
+lib/
 *.tmp
 wwa.link.js
-__DISTRIBUTE__/wwawing_dist
-__DISTRIBUTE__/wwawing_update
+wwawing-dist.zip
+wwawing-update.zip
+wwawing-dist
+wwawing-update
 compile.bat
 wwaload.long.js
 wwaload.long.noworker.js

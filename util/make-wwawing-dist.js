@@ -1,0 +1,89 @@
+/*
+ * assumed call by npm scripts. 
+ */
+
+const fs = require("fs");
+const path = require("path");
+const shell = require("shelljs");
+
+const wwawingDistDirName = "wwawing-dist";
+const wwawingUpdateDirName = "wwawing-update";
+
+// fs.mkdir 用 パス区切りが / でない環境も考慮する
+const destBasePath = path.join(".", wwawingDistDirName);
+const destUpdateBasePath = path.join(".", wwawingUpdateDirName);
+
+// fatal を設定しないとshelljsの cp などが例外を吐かない
+// @see https://github.com/shelljs/shelljs#configfatal
+shell.config.fatal = true;
+
+Promise.all([
+    // 完全版配布物を生成
+    makeDistribution(false),
+    // 更新版配布物を生成
+    makeDistribution(true)
+]).catch(e => {
+    console.error(e);
+    process.exit(1);
+})
+
+function makeDistribution(isUpdate) {
+    shell.mkdir("-p", isUpdate ? destUpdateBasePath : destBasePath);
+    if (!isUpdate) {
+        shell.mkdir("-p", path.join(destBasePath, "mapdata"));
+        shell.mkdir("-p", path.join(destBasePath, "mapdata", "audio"));
+        shell.mkdir("-p", path.join(destBasePath, "mapdata", "backup"));
+    }
+    return new Promise((resolve, reject) => {
+        let tasks = [];
+
+        if (isUpdate) {
+            tasks = [
+                copy("LICENSE"),
+                copy("manual.html"),
+                copy("wwa.js"),
+                copy("wwaload.js"),
+                copy("*.css")
+            ];
+        } else {
+            tasks = [
+                // debugger は廃止のためコピーなし
+                copy("LICENSE"),
+                copy("manual.html"),
+                copy(path.join("lib", "wwa.js"), "mapdata"),
+                copy("wwaload.js", "mapdata"), // npm 移行後変更予定
+                copy("*.css", "mapdata"),
+                copy(path.join("wwamk310", "WinWwamk.exe")),
+                copy("wwawing-disp.png", "mapdata"),
+                copy(path.join("audio", "*"), path.join("mapdata", "audio")),
+                copy("*.dat", "mapdata"),
+                copy("*.gif", "mapdata"),
+                copy(path.join("dist_html", "*.html"), "mapdata")
+            ];
+        }
+        Promise.all(tasks)
+            .then(() => {
+                console.log((isUpdate ? "update" : "full") + " version done.");
+                resolve();
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
+
+    function copy(src, dest) {
+        return new Promise((resolve, reject) => {
+            const destFull = path.join(
+                (isUpdate ? destUpdateBasePath : destBasePath),
+                (dest ? dest : "")
+            );
+            console.log("copy " + src + " to " + destFull);
+            try {
+                shell.cp(src, destFull);
+                resolve();
+            } catch (e) {
+                reject(e);
+            }
+        });
+    }
+}

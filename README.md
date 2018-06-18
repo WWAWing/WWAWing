@@ -19,12 +19,24 @@ WWA( http://wwajp.com )のJavaScript実装です。
 - src ディレクトリにすべての元になっているTypeScriptソースがあります。
 - 下記の手順でビルドができます。 [node.js](https://nodejs.org) が必要です。
 
+## ビルド手順
 ``` sh
 $ npm install
 $ npm run build
 ```
 
-- 配布用ZIPを作りたい場合はディレクトリ「\_\_DISTRIBUTE\_\_」へ。
+## ビルドにより生成されるファイルとディレクトリ
+- wwawing-dist: WWA Wing 完全版配布物
+- wwawing-update: WWA Wing 更新版配布物
+- wwawing-dist.zip: WWA Wing 完全版配布物 (zip圧縮)
+- wwawing-update.zip: WWA Wing 更新版配布物 (zip圧縮)
+- wwa.long.js: WWA Wing 本体のJavaScriptへのコンパイル結果 (CryptoJSリンクなし)
+- wwa.long.js.map: WWA Wing本体のTypeScriptからJavaScriptへのソースマップ
+- wwa-nolink.js: WWA Wing本体のminify結果 (CryptoJSリンクなし)
+- wwa-nolink.js.map: WWA Wing本体のTypeScriptからminify結果へのソースマップ
+- wwa.js: WWA Wing本体
+
+## 注意
 - wwaload.js と wwaload.noworker は WWALoader( https://github.com/WWAWing/WWALoader )により生成されたものです。
 
 ## ライセンス
@@ -38,7 +50,6 @@ $ npm run build
 ### ディレクトリ
 <pre>
 .
-├── __DISTRIBUTE__ - 配布用ファイル生成用ディレクトリ
 ├── audio - 音楽関連のディレクトリ
 ├── cryptojs - パスワードセーブの生成に使っている [crypto-js](https://www.npmjs.com/package/crypto-js) の一部が入っています。
 ├── debugger - WWA Debugger 関連
@@ -48,7 +59,7 @@ $ npm run build
 ├── node_modules - 依存しているライブラリなどが入るディレクトリ ( `npm install` で作成されます)
 </pre>
 ### ファイル
-.gitignore, マップデータ, WWAでロードされる画像ファイル, WWAを配置するHTMLファイル(_convert.htmlを除く)は省略
+.gitignore, マップデータ, WWAでロードされる画像ファイル, WWAを配置するHTMLファイル(_convert.htmlを除く), 先に紹介した生成物は省略
 <pre>
 ├── package.json - node.jsのパッケージ設定。ビルド手順やバージョン情報、依存ライブラリの情報が書かれています。
 ├── README.md - このファイル
@@ -61,11 +72,6 @@ $ npm run build
 ├── style.css - 標準マップで使用している用CSS
 ├── wwa.css - WWAで使用するCSS
 ├── wwa_classic.css - WWAで使用するCSS(本家再現版)
-├── wwa.js - WWA Wing本体(minify済)
-├── wwa-nolink.js - WWA Wing本体(minify済・crypto-jsとの結合なし)
-├── wwa-nolink.js.map - wwa-nolink.js のソースマップ
-├── wwa.long.js - WWA Wing本体(minifyなし・crypto-jsとの結合なし)
-├── wwa.long.js.map - wwa.long.js のソースマップ
 ├── wwaload.js - WWA Loader(Worker版)
 ├── wwaload.noworker.js(Workerなし版)
 └── wwawing-disp.png - バナー
