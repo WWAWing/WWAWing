@@ -1,16 +1,10 @@
 import * as fs from "fs";
 import * as pug from "pug";
 import * as path from "path";
-import { WWAPageConfig, fillDefaultConfig } from "./config";
-
-const customPageConfig: WWAPageConfig = {
-  wwa: {
-    mapdata: "island02.dat"
-  }
-};
+import { readConfig } from "./config";
 
 const pugFileNameWithoutExtention = "wwa";
-const pageConfig = fillDefaultConfig(customPageConfig);
+const pageConfig = readConfig();
 const pugFilePath = path.join(
   __dirname,
   "..",

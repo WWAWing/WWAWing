@@ -4,11 +4,11 @@ mixin wwaRequirements()
     link(rel="stylesheet" href=resources.wwaCss)
     - const audioJsFile = resources.audio.dir + (resources.audio.dir.endsWith("/") ? "" : "/" ) + resources.audio.js
     
-    case mode
-        when "production"
+    case isDevMode
+        when false
             script(src=audioJsFile)
             script(src=resources.wwaJs)
-        when "development"
+        when true
             script(src=resources.cryptoJsInDevMode)
             script(src=audioJsFile)
             script(src=resources.wwaJs)
@@ -32,8 +32,8 @@ html(lang="ja")
     body
         #wrapper
             #wwa-wrapper.wwa-size-box(
-                data-wwa-mapdata=wwa.mapdata,
-                data-wwa-loader=wwa.loader
+                data-wwa-mapdata=wwa.resources.mapdata,
+                data-wwa-loader=wwa.resources.loader
                 data-wwa-audio-dir=wwa.resources.dir,
                 data-wwa-urlgate-enable=wwa.urlgateEnable,
                 data-wwa-title-img=wwa.titleImg
@@ -41,5 +41,6 @@ html(lang="ja")
     
         if copyright
             footer#copyright
-                +copyright(copyright.wwa)
-                +copyright(copyright.wing)
+                each copyright in copyrights
+                    +copyright(copyright)
+

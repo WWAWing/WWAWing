@@ -1,88 +1,81 @@
-import * as _ from "lodash";
+import * as config from "config";
+import * as jsonschema from "jsonschema";
 
 export interface WWAConfig {
-    mapdata: string;
-    loader?: string;
-    urlgateEnable?: "false";
-    titleImg?: string;
-    resources?: {
+    urlgateEnable: boolean;
+    resources: {
+        mapdata: string;
+        loader: string;
         audio: {
             dir: string;
             js: string;
         };
         wwaJs: string;
         wwaCss: string;
+        titleImg: string;
         cryptoJsInDevMode?: string;
     };
 }
 
 export interface Copyright {
     startYear: number;
-    presentYear: number;
+    presentYear: number | "latest";
     product: {
         name: string;
         href: string;
     };
     credit: string;
-    genre?: string;
+    genre: string;
 }
 
 export interface WWAPageConfig {
-    title?: string;
+    title: string;
+    isDevMode?: boolean;
     wwa: WWAConfig;
-    copyright?: {
-        wwa: Copyright;
-        wing: Copyright;
-    };
-    mode?: "production" | "development";
+    copyrights?: Copyright[]
 }
 
-const defaultPageConfig: WWAPageConfig = {
-    title: "World Wide Adventure Wing",
-    mode: "production",
-    wwa: {
-        mapdata: "mapdata.dat",
-        resources: {
-            audio: {
-                dir: "./audio/",
-                js: "audio.min.js"
-            },
-            wwaJs: "wwa.js",
-            wwaCss: "wwa.css",
-            cryptoJsInDevMode: "cryptojs/aes.js"
-        }
-    },
-    copyright: {
+const schema = {
+    properties: {
         wwa: {
-            startYear: 1996,
-            presentYear: 2016,
-            credit: "NAO",
-            product: {
-                name: "World Wide Adventure",
-                href: "http://wwajp.com/"
-            },
-            genre: "Internet RPG"
+            urlgateEnable: { type: "boolean" },
+            resources: {
+                mapdata: { type: "string" },
+                audio: {
+                    dir: { type: "string" },
+                    js: { type: "string" },
+                },
+                wwaJs: { type: "string" },
+                wwaCss: { type: "string" },
+                titleImg: { type: "string" },
+                cryptoJsInDevMode: { type: "boolean" }
+            }
         },
-        wing: {
-            startYear: 2013,
-            presentYear: new Date().getFullYear(),
-            credit: "WWA Wing Team",
-            product: {
-                name: "WWA Wing",
-                href: "https://www.wwawing.com/"
+        copyright: {
+            type: "array",
+            items: {
+                startYear: { type: "number" },
+                presentYear: { type: "number" },
+                credit: { type: "string" },
+                product: {
+                    name: { type: "string" },
+                    href: { type: "string" }
+                }
             }
         }
-    }
+    },
 };
 
-export function fillDefaultConfig(customPageConfig: WWAPageConfig): WWAPageConfig {
-    if (
-        customPageConfig.mode === "development" &&
-        customPageConfig.wwa.resources &&
-        !customPageConfig.wwa.resources.cryptoJsInDevMode
-    ) {
-        throw new Error("In development mode, cryproJsInDevMode property is required.");
+export function readConfig(): WWAPageConfig {
+    const wwaPageConfig = config.get("page");
+    if (validate(wwaPageConfig)) {
+        return wwaPageConfig;
     }
+    throw new Error("ERROR");
+}
 
-    return _.merge(defaultPageConfig, customPageConfig);
+export function validate(config: any): config is WWAPageConfig {
+    const validateResult = jsonschema.validate(config, schema);
+    console.log(validateResult);
+    return validateResult.valid;
 }
