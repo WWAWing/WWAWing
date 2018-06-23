@@ -16,10 +16,13 @@ mixin wwaRequirements()
 
 
 mixin copyright(config)
+    - const thisYear = new Date().getFullYear();
+    - const lastYear = !config.range ? "" :(config.range.lastYear === "present" ? thisYear : config.range.lastYear);
+    - const range = config.range ? `${config.range.firstYear}-${lastYear}` : "";
     p
         | #{config.genre} &quot;
         a(href=config.product.href).wwa-copyright #{config.product.name}
-        | &quot; &copy; #{config.startYear}-#{config.presentYear} #{config.credit}
+        | &quot; &copy; #{range} #{config.credit}
 
 
 doctype html
@@ -39,7 +42,7 @@ html(lang="ja")
                 data-wwa-title-img=wwa.titleImg
             )
     
-        if copyright
+        if copyrights
             footer#copyright
                 each copyright in copyrights
                     +copyright(copyright)
