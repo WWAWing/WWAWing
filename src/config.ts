@@ -1,4 +1,6 @@
-import * as config from "config";
+import * as fs from "fs";
+import * as path from "path";
+import * as jsYaml from "js-yaml";
 import * as jsonschema from "jsonschema";
 import * as _ from "lodash";
 
@@ -37,10 +39,12 @@ interface Utils {
 }
 
 interface WWAPageConfigWithDefaults {
-    title: string;
-    isDevMode: boolean;
-    wwa: WWAConfigWithDefaults;
-    copyrights?: CopyrightWithDefaults[];
+    page: {
+        title: string;
+        isDevMode: boolean;
+        wwa: WWAConfigWithDefaults;
+        copyrights?: CopyrightWithDefaults[];
+    };
 }
 
 export type WWAPageConfigForRendering = WWAPageConfigWithDefaults & {
@@ -79,80 +83,89 @@ export interface Copyright {
 }
 
 export interface WWAPageConfig {
-    title: string;
-    isDevMode?: boolean;
-    wwa: WWAConfig;
-    copyrights?: Copyright[]
+    page: {
+        title: string;
+        isDevMode?: boolean;
+        wwa: WWAConfig;
+        copyrights?: Copyright[]
+    }
 }
 
 const schema = {
     properties: {
-        wwa: {
+        page: {
             properties: {
-                urlgateEnable: { type: "boolean" },
-                resources: {
+                wwa: {
                     properties: {
-                        mapdata: { type: "string" },
-                        audio: {
+                        urlgateEnable: { type: "boolean" },
+                        resources: {
                             properties: {
-                                dir: { type: "string" },
-                                js: { type: "string" }
-                            }
-                        },
-                        wwaJs: { type: "string" },
-                        wwaCss: { type: "string" },
-                        titleImg: { type: "string" },
-                        cryptoJsInDevMode: { type: "string" }
-                    },
-                    required: ["mapdata"]
+                                mapdata: { type: "string" },
+                                audio: {
+                                    properties: {
+                                        dir: { type: "string" },
+                                        js: { type: "string" }
+                                    }
+                                },
+                                wwaJs: { type: "string" },
+                                wwaCss: { type: "string" },
+                                titleImg: { type: "string" },
+                                cryptoJsInDevMode: { type: "string" }
+                            },
+                            required: ["mapdata"]
+                        }
+                    }
+                },
+                copyrights: {
+                    type: "array",
+                    items: {
+                        properties: {
+                            range: {
+                                properties: {
+                                    firstYear: { type: "number" },
+                                    lastYear: {
+                                        type: ["number", "string"],
+                                        pattern: "^present$"
+                                    }
+                                },
+                                required: ["firstYear"]
+                            },
+                            credit: { type: "string" },
+                            product: {
+                                properties: {
+                                    name: { type: "string" },
+                                    href: { type: "string" }
+                                },
+                                required: ["name", "href"]
+                            },
+                            required: ["startYear", "credit", "product"]
+                        }
+                    }
                 }
-            }
+            },
+            required: ["wwa"]
         },
-        copyrights: {
-            type: "array",
-            items: {
-                properties: {
-                    range: {
-                        properties: {
-                            firstYear: { type: "number" },
-                            lastYear: {
-                                type: ["number", "string"],
-                                pattern: "^present$"
-                            }
-                        },
-                        required: ["firstYear"]
-                    },
-                    credit: { type: "string" },
-                    product: {
-                        properties: {
-                            name: { type: "string" },
-                            href: { type: "string" }
-                        },
-                        required: ["name", "href"]
-                    },
-                    required: ["startYear", "credit", "product"]
-                }
-            }
-        }
-    },
-    required: ["wwa"]
+        required: ["page"]
+    }
 };
 
 
 const defaultConfig: WWAPageConfigWithDefaults = {
-    title: "World Wide Adventure Wing",
-    isDevMode: false,
-    wwa: {
-        urlGateEnable: true,
-        resources: {
-            mapdata: "mapdata.dat",
-            loader: "wwaloader.js",
-            audio: {
-                dir: "audio/",
-                js: "audio.min.js"
-            },
-            wwaJs: "wwa.js",
-            wwaCss: "wwa.css"
+    page: {
+        title: "World Wide Adventure Wing",
+        isDevMode: false,
+        wwa: {
+            urlGateEnable: true,
+            resources: {
+                mapdata: "mapdata.dat",
+                loader: "wwaloader.js",
+                audio: {
+                    dir: "audio/",
+                    js: "audio.min.js"
+                },
+                wwaJs: "wwa.js",
+                wwaCss: "wwa.css"
+            }
         }
     }
 };
@@ -175,8 +188,12 @@ export function readConfig(): WWAPageConfigWithDefaults {
         validationErrors = validateResult.errors.map(e => e.message);
         return validateResult.valid;
     }
-
-    const wwaPageConfig = config.get("page");
+    const wwaPageConfig = jsYaml.safeLoad(
+        fs.readFileSync(path.join(__dirname, "..", "config", "default.yml"), "utf8")
+    );
+    if (!wwaPageConfig) {
+        throw new Error("jsyaml returns undefined.");
+    }
     if (validate(wwaPageConfig)) {
         return fillDefaultsAndUtil(wwaPageConfig);
     }

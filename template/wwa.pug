@@ -1,4 +1,4 @@
-mixin wwaRequirements(resources, concatDirAndFile)
+mixin wwaRequirements(resources, concatDirAndFile, isDevMode)
     // wwa requirements
     link(rel="stylesheet" href=resources.wwaCss)
     - const audioJsFile = concatDirAndFile(resources.audio.dir, resources.audio.js)
@@ -33,21 +33,20 @@ doctype html
 html(lang="ja")
     head
         meta(charset="UTF-8")
-        title #{title}
-        +wwaRequirements(wwa.resources, utils.concatDirAndFile)
+        title #{page.title}
+        +wwaRequirements(page.wwa.resources, utils.concatDirAndFile, page.isDevMode)
 
     body
         #wrapper
             #wwa-wrapper.wwa-size-box(
-                data-wwa-mapdata=wwa.resources.mapdata,
-                data-wwa-loader=wwa.resources.loader
-                data-wwa-audio-dir=wwa.resources.dir,
-                data-wwa-urlgate-enable=wwa.urlgateEnable,
-                data-wwa-title-img=wwa.titleImg
+                data-wwa-mapdata=page.wwa.resources.mapdata,
+                data-wwa-loader=page.wwa.resources.loader
+                data-wwa-audio-dir=page.wwa.resources.dir,
+                data-wwa-urlgate-enable=page.wwa.urlgateEnable,
+                data-wwa-title-img=page.wwa.titleImg
             )
     
-        if copyrights
+        if page.copyrights
             footer#copyright
-                each copyright in copyrights
+                each copyright in page.copyrights
                     +copyright(copyright, utils.thisYear)
-
