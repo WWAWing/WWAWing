@@ -35,11 +35,12 @@ interface CopyrightWithDefaults {
 
 interface Utils {
     thisYear: number;
-    concatDirAndFile: (dir: string, file:string) => string
+    concatDirAndFile: (dir: string, file: string) => string
 }
 
 interface WWAPageConfigWithDefaults {
     page: {
+        template: string;
         title: string;
         isDevMode: boolean;
         wwa: WWAConfigWithDefaults;
@@ -84,6 +85,7 @@ export interface Copyright {
 
 export interface WWAPageConfig {
     page: {
+        template?: string;
         title: string;
         isDevMode?: boolean;
         wwa: WWAConfig;
@@ -95,6 +97,7 @@ const schema = {
     properties: {
         page: {
             properties: {
+                template: { type: "string" },
                 wwa: {
                     properties: {
                         urlgateEnable: { type: "boolean" },
@@ -150,21 +153,24 @@ const schema = {
 };
 
 
-const defaultConfig: WWAPageConfigWithDefaults = {
-    page: {
-        title: "World Wide Adventure Wing",
-        isDevMode: false,
-        wwa: {
-            urlGateEnable: true,
-            resources: {
-                mapdata: "mapdata.dat",
-                loader: "wwaloader.js",
-                audio: {
-                    dir: "audio/",
-                    js: "audio.min.js"
-                },
-                wwaJs: "wwa.js",
-                wwaCss: "wwa.css"
+function getDefaultConfig(): WWAPageConfigWithDefaults {
+    return {
+        page: {
+            template: "../template/wwa.pug",
+            title: "World Wide Adventure Wing",
+            isDevMode: false,
+            wwa: {
+                urlGateEnable: true,
+                resources: {
+                    mapdata: "mapdata.dat",
+                    loader: "wwaloader.js",
+                    audio: {
+                        dir: "audio/",
+                        js: "audio.min.js"
+                    },
+                    wwaJs: "wwa.js",
+                    wwaCss: "wwa.css"
+                }
             }
         }
     }
@@ -172,7 +178,7 @@ const defaultConfig: WWAPageConfigWithDefaults = {
 
 function fillDefaultsAndUtil(wwaPageConfig: WWAPageConfig): WWAPageConfigForRendering {
     return {
-        ..._.merge(wwaPageConfig, defaultConfig),
+        ..._.merge(getDefaultConfig(), wwaPageConfig),
         utils: {
             thisYear: new Date().getFullYear(),
             concatDirAndFile: (dir, file) => `${dir}${dir.endsWith("/") ? "" : "/"}${file}`
@@ -180,7 +186,7 @@ function fillDefaultsAndUtil(wwaPageConfig: WWAPageConfig): WWAPageConfigForRend
     };
 }
 
-export function readConfig(): WWAPageConfigWithDefaults {
+export function readConfig(configFilePath: string): WWAPageConfigWithDefaults {
     let validationErrors: string[] = [];
 
     function validate(config: any): config is WWAPageConfig {
@@ -188,8 +194,9 @@ export function readConfig(): WWAPageConfigWithDefaults {
         validationErrors = validateResult.errors.map(e => e.message);
         return validateResult.valid;
     }
+
     const wwaPageConfig = jsYaml.safeLoad(
-        fs.readFileSync(path.join(__dirname, "..", "config", "default.yml"), "utf8")
+        fs.readFileSync(path.join(__dirname, path.normalize(configFilePath)), "utf8")
     );
     if (!wwaPageConfig) {
         throw new Error("jsyaml returns undefined.");
