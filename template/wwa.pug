@@ -1,8 +1,7 @@
-mixin wwaRequirements()
-    - const resources = wwa.resources
+mixin wwaRequirements(resources, concatDirAndFile)
     // wwa requirements
     link(rel="stylesheet" href=resources.wwaCss)
-    - const audioJsFile = resources.audio.dir + (resources.audio.dir.endsWith("/") ? "" : "/" ) + resources.audio.js
+    - const audioJsFile = concatDirAndFile(resources.audio.dir, resources.audio.js)
     
     case isDevMode
         when false
@@ -14,23 +13,28 @@ mixin wwaRequirements()
             script(src=resources.wwaJs)
     // /wwa requirements
 
-
-mixin copyright(config)
-    - const thisYear = new Date().getFullYear();
-    - const lastYear = !config.range ? "" :(config.range.lastYear === "present" ? thisYear : config.range.lastYear);
-    - const range = config.range ? `${config.range.firstYear}-${lastYear}` : "";
+mixin copyrightWithRange(config, range)
     p
         | #{config.genre} &quot;
         a(href=config.product.href).wwa-copyright #{config.product.name}
-        | &quot; &copy; #{range} #{config.credit}
+        | &quot; #{range} &copy; #{config.credit}
 
+mixin copyright(config, thisYear)
+    case !!config.range
+        when true 
+            - const firstYear = config.range.firstYear;
+            - const lastYear = config.range.lastYear === "present" ? thisYear : config.range.lastYear;
+            - const range = `${firstYear}-${lastYear}`;
+            +copyrightWithRange(config, range)
+        when false
+            +copyrightWithRange(config)
 
 doctype html
 html(lang="ja")
     head
         meta(charset="UTF-8")
         title #{title}
-        +wwaRequirements(wwa.resources)
+        +wwaRequirements(wwa.resources, utils.concatDirAndFile)
 
     body
         #wrapper
@@ -45,5 +49,5 @@ html(lang="ja")
         if copyrights
             footer#copyright
                 each copyright in copyrights
-                    +copyright(copyright)
+                    +copyright(copyright, utils.thisYear)
 

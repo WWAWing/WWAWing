@@ -2,7 +2,7 @@ page:
 
   # タイトルです
   # 無指定はデフォルトのタイトルが指定されます
-  title: "World Wide Adventure Wing"
+#  title: "World Wide Adventure Wing"
 
   # 生成するHTMLがWWA開発用のモードかどうかを指定します
   # 無指定は false と同じ扱いになります
@@ -12,6 +12,7 @@ page:
   # 各項目無指定はデフォルトになります
   # ただし、マップデータは必須です
   wwa:
+    # URLゲートを有効にする場合は true, しない場合はfalseを指定します
     urlgateEnable: true
     
     resources:
@@ -20,7 +21,7 @@ page:
 
       audio:
         # オーディオファイルを配置するディレクトリを指定します　
-        dir: "./audio/"
+        dir: "./audio"
         # オーディオファイル内のaudioJsのファイル位置を指定します
         js: "audio.min.js"
 
@@ -36,6 +37,8 @@ page:
       # 開発モードの場合はcrypro.js の場所を指定します
       cryptoJsInDevMode: "cryptojs/aes.js"
 
+  # ページ下部の著作権情報
+  # 無指定の場合は生成されません。
   copyrights:
     # WWA本家の著作権情報をページに記述する場合はもろもろ指定します
     -
