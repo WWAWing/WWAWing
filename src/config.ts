@@ -55,7 +55,7 @@ export type WWAPageConfigForRendering = WWAPageConfigWithDefaults & {
 // TODO: TS型定義自動生成
 // @see https://github.com/bcherny/json-schema-to-typescript
 export interface WWAConfig {
-    urlgateEnable: boolean;
+    urlgateEnable?: boolean;
     resources?: {
         mapdata: string;
         loader?: string;
