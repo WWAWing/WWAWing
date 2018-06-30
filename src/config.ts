@@ -86,7 +86,7 @@ export interface Copyright {
 export interface WWAPageConfig {
     page: {
         template?: string;
-        title: string;
+        title?: string;
         isDevMode?: boolean;
         wwa: WWAConfig;
         copyrights?: Copyright[]
@@ -176,7 +176,7 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
     }
 };
 
-function fillDefaultsAndUtil(wwaPageConfig: WWAPageConfig): WWAPageConfigForRendering {
+export function fillDefaultsAndUtil(wwaPageConfig: WWAPageConfig): WWAPageConfigForRendering {
     return {
         ..._.merge(getDefaultConfig(), wwaPageConfig),
         utils: {
@@ -186,7 +186,7 @@ function fillDefaultsAndUtil(wwaPageConfig: WWAPageConfig): WWAPageConfigForRend
     };
 }
 
-export function readConfig(configFilePath: string): WWAPageConfigWithDefaults {
+export function getConfigFromFile(configFilePath: string): WWAPageConfigForRendering {
     let validationErrors: string[] = [];
 
     function validate(config: any): config is WWAPageConfig {
