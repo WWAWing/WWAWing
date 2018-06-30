@@ -169,7 +169,8 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
                         js: "audio.min.js"
                     },
                     wwaJs: "wwa.js",
-                    wwaCss: "wwa.css"
+                    wwaCss: "wwa.css",
+                    cryptoJsInDevMode: "cryptojs/aes.js"
                 }
             }
         }

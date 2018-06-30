@@ -14,8 +14,8 @@ export function generateWWAPageFromConfig(inputConfig: WWAPageConfig): string {
   return generateWWAPageByConfigForRendering(pageConfig);
 }
 
-export function generateWWAPageFromMapdataName(mapDataName: string): string {
-  return generateWWAPageFromConfig({ page: { wwa: { resources: { mapdata: mapDataName } } } });
+export function generateWWAPageFromMapdataName(mapDataName: string, isDevMode = false): string {
+  return generateWWAPageFromConfig({ page: { wwa: { resources: { mapdata: mapDataName } }, isDevMode } });
 }
 
 function generateWWAPageByConfigForRendering(pageConfig: WWAPageConfigForRendering): string {
