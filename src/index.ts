@@ -4,18 +4,18 @@ import { getConfigFromFile, WWAPageConfig, WWAPageConfigForRendering, fillDefaul
 
 export { WWAPageConfig };
 
-export function generateWWAPatgeFromConfigFile(configFilePath: string): string {
-  const pageConfig = getConfigFromFile(configFilePath);
+export function generateWWAPatgeFromConfigFile(configFilePath: string, overwriteDefaultCopyrights: boolean = false): string {
+  const pageConfig = getConfigFromFile(configFilePath, overwriteDefaultCopyrights);
   return generateWWAPageByConfigForRendering(pageConfig);
 }
 
-export function generateWWAPageFromConfig(inputConfig: WWAPageConfig): string {
-  const pageConfig = fillDefaultsAndUtil(inputConfig);
+export function generateWWAPageFromConfig(inputConfig: WWAPageConfig, overwriteDefaultCopyrights: boolean = false): string {
+  const pageConfig = fillDefaultsAndUtil(inputConfig, overwriteDefaultCopyrights);
   return generateWWAPageByConfigForRendering(pageConfig);
 }
 
-export function generateWWAPageFromMapdataName(mapDataName: string, isDevMode = false): string {
-  return generateWWAPageFromConfig({ page: { wwa: { resources: { mapdata: mapDataName } }, isDevMode } });
+export function generateWWAPageFromMapdataName(mapDataName: string, isDevMode = false, overwriteDefaultCopyrights = false): string {
+  return generateWWAPageFromConfig({ page: { wwa: { resources: { mapdata: mapDataName } }, isDevMode } }, overwriteDefaultCopyrights);
 }
 
 function generateWWAPageByConfigForRendering(pageConfig: WWAPageConfigForRendering): string {

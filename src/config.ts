@@ -177,7 +177,38 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
     }
 };
 
-export function fillDefaultsAndUtil(wwaPageConfig: WWAPageConfig): WWAPageConfigForRendering {
+function getDefaultCopyrights(): Copyright[] {
+    return [
+        {
+            range: {
+                firstYear: 1996,
+                lastYear: 2016
+            },
+            product: {
+                name: "World Wide Adventure",
+                href: "http://wwajp.com/"
+            },
+            credit: "NAO",
+            genre: "Internet RPG"
+        },
+        {
+            range: {
+                firstYear: 2013,
+                lastYear: "present"
+            },
+            product: {
+                name: "WWA Wing",
+                href: "https://wwawing.com/"
+            },
+            credit: "WWA Wing Team",
+        }
+    ]
+}
+
+export function fillDefaultsAndUtil(wwaPageConfig: WWAPageConfig, overwriteDefaultCopyrights: boolean = false): WWAPageConfigForRendering {
+    if (overwriteDefaultCopyrights) {
+        wwaPageConfig.page.copyrights = getDefaultCopyrights();
+    }
     return {
         ..._.merge(getDefaultConfig(), wwaPageConfig),
         utils: {
@@ -187,7 +218,7 @@ export function fillDefaultsAndUtil(wwaPageConfig: WWAPageConfig): WWAPageConfig
     };
 }
 
-export function getConfigFromFile(configFilePath: string): WWAPageConfigForRendering {
+export function getConfigFromFile(configFilePath: string, overwriteDefaultCopyrights: boolean = false): WWAPageConfigForRendering {
     let validationErrors: string[] = [];
 
     function validate(config: any): config is WWAPageConfig {
@@ -203,7 +234,7 @@ export function getConfigFromFile(configFilePath: string): WWAPageConfigForRende
         throw new Error("jsyaml returns undefined.");
     }
     if (validate(wwaPageConfig)) {
-        return fillDefaultsAndUtil(wwaPageConfig);
+        return fillDefaultsAndUtil(wwaPageConfig, overwriteDefaultCopyrights);
     }
     throw new Error(validationErrors[0]);
 }
