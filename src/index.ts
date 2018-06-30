@@ -14,6 +14,10 @@ export function generateWWAPageFromConfig(inputConfig: WWAPageConfig): string {
   return generateWWAPageByConfigForRendering(pageConfig);
 }
 
+export function generateWWAPageFromMapdataName(mapDataName: string): string {
+  return generateWWAPageFromConfig({ page: { wwa: { resources: { mapdata: mapDataName } } } });
+}
+
 function generateWWAPageByConfigForRendering(pageConfig: WWAPageConfigForRendering): string {
   const pugFilePath = path.join(__dirname, path.normalize(pageConfig.page.template));
   const compileTemplate = pug.compileFile(pugFilePath, { pretty: true });
