@@ -29,19 +29,13 @@
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
-    "glob": "^7.1.2",
-    "jszip": "^3.1.4",
     "shelljs": "^0.8.2",
-    "shx": "^0.2.2",
+    "shx": "^0.3.1",
     "ts-loader": "^4.3.0",
     "typescript": "^2.5.3",
     "uglify-js": "^3.3.27",
     "uglifyjs-webpack-plugin": "^1.2.5",
     "webpack": "^4.9.1",
     "webpack-cli": "^2.1.4"
-  },
-  "dependencies": {
-    "@types/es6-promise": "0.0.33",
-    "es6-promise": "^4.1.1"
   }
 }

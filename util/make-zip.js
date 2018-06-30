@@ -6,7 +6,6 @@ const JSZip = require("jszip");
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
-const Promise = require("es6-promise");
 const baseDir = ".";
 
 makeZip("wwawing-dist");

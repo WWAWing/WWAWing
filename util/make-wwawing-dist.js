@@ -41,7 +41,7 @@ function makeDistribution(isUpdate) {
             tasks = [
                 copy("LICENSE"),
                 copy("manual.html"),
-                copy("wwa.js"),
+                copy(path.join("lib","wwa.js"), "wwa.js"),
                 copy("wwaload.js"),
                 copy("*.css")
             ];
