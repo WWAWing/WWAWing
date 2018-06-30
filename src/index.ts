@@ -12,7 +12,7 @@ export function createPage(configFilePath: string): string {
 
 // 暫定CLI. CLIを別パッケージに分割したら消す
 const fileName = process.argv.length < 3 ? "../config/default.yml" : process.argv[2];
-const html = createPage(fileName);
+const html = createPage(fileName) + "\n";
 fs.writeFileSync(
   path.join(__dirname, "..", "output", "wwa.html"),
   html
