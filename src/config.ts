@@ -186,7 +186,7 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
     }
 };
 
-function getDefaultCopyrights(): Copyright[] {
+export function getDefaultCopyrights(): Copyright[] {
     return [
         {
             range: {

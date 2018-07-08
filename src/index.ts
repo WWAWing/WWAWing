@@ -1,8 +1,8 @@
 import * as pug from "pug";
 import * as path from "path";
-import { getConfigFromFile, WWAPageConfig, WWAPageConfigForRendering, fillDefaultsAndUtil } from "./config";
+import { getConfigFromFile, WWAPageConfig, WWAPageConfigForRendering, fillDefaultsAndUtil, getDefaultCopyrights } from "./config";
 
-export { WWAPageConfig };
+export { WWAPageConfig, getDefaultCopyrights };
 
 export function generateWWAPatgeFromConfigFile(configFilePath: string, overwriteDefaultCopyrights: boolean = false): string {
   const pageConfig = getConfigFromFile(configFilePath, overwriteDefaultCopyrights);
