@@ -34,6 +34,9 @@ html(lang="ja")
     head
         meta(charset="UTF-8")
         title #{page.title}
+        if page.additionalCssFiles
+            each cssFileName in page.additionalCssFiles
+                link(rel="stylesheet" href=cssFileName)
         +wwaRequirements(page.wwa.resources, utils.concatDirAndFile, page.isDevMode)
 
     body

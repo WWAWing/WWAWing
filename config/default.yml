@@ -11,6 +11,11 @@ page:
   # 無指定は false と同じ扱いになります
   isDevMode: false
 
+  # (wwa.cssでなくページに関して)追加のCSSファイルがある場合は並べて指定します
+  additionalCssFiles:
+    - "style.css"
+    # - "andmore.css"
+
   # WWA に関する設定です
   # 各項目無指定はデフォルトになります
   # ただし、マップデータは必須です

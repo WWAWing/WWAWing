@@ -43,6 +43,7 @@ interface WWAPageConfigWithDefaults {
         template: string;
         title: string;
         isDevMode: boolean;
+        additionalCssFiles?: string[];
         wwa: WWAConfigWithDefaults;
         copyrights?: CopyrightWithDefaults[];
     };
@@ -88,6 +89,7 @@ export interface WWAPageConfig {
         template?: string;
         title?: string;
         isDevMode?: boolean;
+        additionalCssFiles?: string[];
         wwa: WWAConfig;
         copyrights?: Copyright[]
     }
@@ -118,6 +120,10 @@ const schema = {
                             required: ["mapdata"]
                         }
                     }
+                },
+                additionalCssFiles: {
+                    type: "array",
+                    items: { type: "string" }
                 },
                 copyrights: {
                     type: "array",
@@ -159,6 +165,9 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
             template: "../template/wwa.pug",
             title: "World Wide Adventure Wing",
             isDevMode: false,
+            additionalCssFiles: [
+                "style.css"
+            ],
             wwa: {
                 urlGateEnable: true,
                 resources: {
