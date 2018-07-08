@@ -1,3 +1,8 @@
+mixin additionalCss(additionalCssFiles)
+    if additionalCssFiles
+        each cssFileName in additionalCssFiles
+            link(rel="stylesheet" href=cssFileName)
+
 mixin wwaRequirements(resources, concatDirAndFile, isDevMode)
     // wwa requirements
     link(rel="stylesheet" href=resources.wwaCss)
@@ -34,9 +39,7 @@ html(lang="ja")
     head
         meta(charset="UTF-8")
         title #{page.title}
-        if page.additionalCssFiles
-            each cssFileName in page.additionalCssFiles
-                link(rel="stylesheet" href=cssFileName)
+        +additionalCss(page.additionalCssFiles)
         +wwaRequirements(page.wwa.resources, utils.concatDirAndFile, page.isDevMode)
 
     body
