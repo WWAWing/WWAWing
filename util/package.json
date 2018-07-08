@@ -8,7 +8,9 @@
   },
   "scripts": {
     "build": "tsc -p .",
-    "start": "npm run build && node ./lib/make-wwapage",
+    "start": "npm run build && node ./lib/make-wwapage all",
+    "start:dev": "npm run build && node ./lib/make-wwapage dev",
+    "start:dist": "npm run build && node ./lib/make-wwapage dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "WWA Wing Team",

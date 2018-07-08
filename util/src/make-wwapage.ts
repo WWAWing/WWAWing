@@ -31,7 +31,7 @@ function createHTMLFilePromises(mapNames: string[], isDevMode = false): Promise<
     return mapNames
         .map(mapName => ({
             mapName,
-            html: generateWWAPageFromConfig(createConfig(mapName, isDevMode))
+            html: generateWWAPageFromConfig(createConfig(`${mapName}.dat`, isDevMode))
         }))
         .map(params => createWriteFilePromise(
             isDevMode ?
@@ -41,14 +41,14 @@ function createHTMLFilePromises(mapNames: string[], isDevMode = false): Promise<
         ));
 }
 
-function createConfig(mapName: string, isDevMode: boolean): WWAPageConfig {
+function createConfig(mapdata: string, isDevMode: boolean): WWAPageConfig {
     return {
         page: {
             additionalCssFiles: ["style.css"],
             isDevMode,
             wwa: {
                 resources: {
-                    mapdata: mapName,
+                    mapdata,
                     titleImg: "cover.gif"
                 },
                 urlgateEnable: true
