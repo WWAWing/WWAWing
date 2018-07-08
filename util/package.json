@@ -7,6 +7,8 @@
     "lib": "lib"
   },
   "scripts": {
+    "build": "tsc -p .",
+    "start": "npm run build && node ./lib/make-wwapage",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "WWA Wing Team",

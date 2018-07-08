@@ -1,4 +1,4 @@
-import { generateWWAPageFromMapdataName } from "@wwawing/html-generator";
+import { generateWWAPageFromConfig } from "@wwawing/html-generator";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -17,10 +17,43 @@ function createHTMLFilePromises(isDevMode = false): Promise<void>[] {
     return mapNames
         .map(mapName => ({
             mapName,
-            html: generateWWAPageFromMapdataName(`${mapName}.dat`, isDevMode, true)
+            html: generateWWAPageFromConfig({
+                page: {
+                    additionalCssFiles: ["style.css"],
+                    isDevMode,
+                    wwa: {
+                        resources: { mapdata: mapName }
+                    },
+                    copyrights: [
+                        {
+                            product: {
+                                name: "World Wide Adventure",
+                                href: "http://wwajp.com"
+                            },
+                            credit: "NAO",
+                            range: {
+                                firstYear: 1996,
+                                lastYear: 2016
+                            },
+                            genre: "Internet RPG"
+                        },
+                        {
+                            product: {
+                                name: "WWA Wing",
+                                href: "https://wwawing.com"
+                            },
+                            credit: "WWA Wing Team",
+                            range: {
+                                firstYear: 2013,
+                                lastYear: "present"
+                            }
+                        }
+                    ]
+                }
+            })
         }))
         .map(params => createWriteFilePromise(
-            path.join(__dirname, "out", `${params.mapName}${isDevMode?"-dev":""}.html`), params.html));
+            path.join(__dirname, "out", `${params.mapName}${isDevMode ? "-dev" : ""}.html`), params.html));
 }
 
 function createWriteFilePromise(filePath: string, content: string): Promise<void> {
