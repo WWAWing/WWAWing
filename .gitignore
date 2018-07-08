@@ -1,5 +1,6 @@
 .idea/
 lib/
+debug/
 *.tmp
 wwa.link.js
 wwawing-dist.zip

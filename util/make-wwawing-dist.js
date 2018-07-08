@@ -42,8 +42,8 @@ function makeDistribution(isUpdate) {
                 copy("LICENSE"),
                 copy("manual.html"),
                 copy(path.join("lib","wwa.js"), "wwa.js"),
-                copy("wwaload.js"),
-                copy("*.css")
+                copy(path.join("assets","wwaload.js")),
+                copy(path.join("assets", "*.css"))
             ];
         } else {
             tasks = [
@@ -51,13 +51,13 @@ function makeDistribution(isUpdate) {
                 copy("LICENSE"),
                 copy("manual.html"),
                 copy(path.join("lib", "wwa.js"), "mapdata"),
-                copy("wwaload.js", "mapdata"), // npm 移行後変更予定
-                copy("*.css", "mapdata"),
+                copy(path.join("assets", "wwaload.js"), "mapdata"), // npm 移行後変更予定
+                copy(path.join("assets", "*.css"), "mapdata"),
                 copy(path.join("wwamk310", "WinWwamk.exe")),
-                copy("wwawing-disp.png", "mapdata"),
-                copy(path.join("audio", "*"), path.join("mapdata", "audio")),
-                copy("*.dat", "mapdata"),
-                copy("*.gif", "mapdata"),
+                copy(path.join("assets","wwawing-disp.png"), "mapdata"),
+                copy(path.join("assets", "audio", "*"), path.join("mapdata", "audio")),
+                copy(path.join("assets","*.dat"), "mapdata"),
+                copy(path.join("assets", "*.gif"), "mapdata"),
                 copy(path.join("dist_html", "*.html"), "mapdata")
             ];
         }
