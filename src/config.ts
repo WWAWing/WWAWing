@@ -172,7 +172,7 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
                 urlGateEnable: true,
                 resources: {
                     mapdata: "mapdata.dat",
-                    loader: "wwaloader.js",
+                    loader: "wwaload.js",
                     audio: {
                         dir: "audio/",
                         js: "audio.min.js"
