@@ -2,7 +2,6 @@
  * assumed call by npm scripts. 
  */
 
-const fs = require("fs");
 const path = require("path");
 const shell = require("shelljs");
 
@@ -53,7 +52,7 @@ function makeDistribution(isUpdate) {
                 copy(path.join("lib", "wwa.js"), "mapdata"),
                 copy(path.join("assets", "wwaload.js"), "mapdata"), // npm 移行後変更予定
                 copy(path.join("assets", "*.css"), "mapdata"),
-                copy(path.join("wwamk310", "WinWwamk.exe")),
+                copy(path.join("assets", "wwamk310", "WinWwamk.exe")),
                 copy(path.join("assets","wwawing-disp.png"), "mapdata"),
                 copy(path.join("assets", "audio", "*"), path.join("mapdata", "audio")),
                 copy(path.join("assets","*.dat"), "mapdata"),
