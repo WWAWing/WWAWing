@@ -38,18 +38,18 @@ function makeDistribution(isUpdate) {
 
         if (isUpdate) {
             tasks = [
-                copy("LICENSE"),
+                copy(path.join("engine", "LICENSE")),
                 copy("manual.html"),
-                copy(path.join("lib","wwa.js"), "wwa.js"),
+                copy(path.join("engine", "lib", "wwa.js"), "wwa.js"),
                 copy(path.join("assets","wwaload.js")),
                 copy(path.join("assets", "*.css"))
             ];
         } else {
             tasks = [
                 // debugger は廃止のためコピーなし
-                copy("LICENSE"),
+                copy(path.join("engine","LICENSE")),
                 copy("manual.html"),
-                copy(path.join("lib", "wwa.js"), "mapdata"),
+                copy(path.join("engine", "lib", "wwa.js"), "mapdata"),
                 copy(path.join("assets", "wwaload.js"), "mapdata"), // npm 移行後変更予定
                 copy(path.join("assets", "*.css"), "mapdata"),
                 copy(path.join("assets", "wwamk310", "WinWwamk.exe")),

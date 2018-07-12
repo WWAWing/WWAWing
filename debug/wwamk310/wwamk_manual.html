@@ -1,0 +1,513 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<TITLE>ＷＷＡマップ作成ツール</TITLE>
+</HEAD>
+<BODY BGCOLOR=#F0F0F0 TEXT=#323232 LINK=#3232FF>
+<CENTER>
+
+
+<TABLE BORDER=0 WIDTH=580 BGCOLOR=#FFC0C0><TR><TD><CENTER>
+<FONT SIZE=4 COLOR=#FFFFC0><TT><B>
+☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆<BR>
+★★★★★　<FONT COLOR=#505050>Ｗｏｒｌｄ　Ｗｉｄｅ　Ａｄｖｅｎｔｕｒｅ</FONT>　★★★★★<BR>
+★★★★★　　　<FONT COLOR=#505050>マップ作成ツール　Ｖｅｒ３．１０</FONT>　　　★★★★★<BR>
+☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆<BR>
+</B></TT></FONT>
+</CENTER></TD></TR></TABLE>
+<P>
+
+
+
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#C0FFC0>
+はじめに
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+このソフトウェアは、インターネット指向型ロールプレイングゲーム「World Wide Adventure」のマップ作成ツールです。
+　このツールでオリジナルのＷＷＡワールドを作成することができます。
+<P>
+作成したＷＷＡワールドは、自由にホームページに組み込むことができ、他のＷＷＡワールドとリンクすることによって、１つのワールドにすることができます。
+<!--
+<P>
+ご連絡を頂ければ、サイトで紹介いたしますので、ぜひオリジナルのワールド作成に挑戦してみてください。-->
+</TD></TR></TABLE>
+<P>
+
+
+<A NAME="environment"></A>
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#C0FFC0>
+動作環境、起動方法
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+Windows95,98,2000,Me,NT,XP,Vista,7,8,8.1に対応しています。<BR>
+<P>
+<FONT COLOR=#C00000>ツールの起動はフォルダ内の「WinWwamk」（アプリケーションファイル）を実行してください。</FONT></B>
+　「mapdata」フォルダにある標準設定のマップ「wwamap.dat」が自動的に読み込まれてツールが起動します。
+　この拡張子（種類）「dat」のファイルをツールに関連付けしておけば、マップデータをダブルクリックして直接起動することもできます（詳細は「よくある質問」を参照）
+</TD></TR></TABLE>
+<P>
+
+
+<!--
+<TABLE BORDER=0><TR><TH BGCOLOR=#C0C0FF>
+索引
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+<A HREF="#usetool">ＷＷＡマップの作成方法について</A><BR>
+<A HREF="#setup">ホームページへの組み込み方</A><BR>
+<A HREF="#tips_cg">自作の画像を使用したい場合</A><BR>
+<A HREF="#tips_keybord">キーボード操作</A><BR>
+<A HREF="#tips_set">パーツをまとめて置きたい場合</A><BR>
+<A HREF="#tips_rclick">右クリックの機能</A><BR>
+<A HREF="#wwafaq">よくある質問＆マニュアル補足事項</A><BR>
+<A HREF="#battle">戦闘システムについて</A><BR>
+<A HREF="#sound">効果音について</A><BR>
+<A HREF="#url_cgi">マップ内からのCGIの呼び出し</A><BR>
+<A HREF="#max">各種上限について</A><BR>
+<A HREF="#faq_linkform">ＷＷＡワールドを作成された方へ</A><BR>
+</TD></TR></TABLE>
+<P>
+-->
+
+
+
+<BR>
+<TABLE BORDER=0 WIDTH=580 BGCOLOR=#FFC0C0><TR><TD><CENTER>
+<FONT SIZE=4><B>ＷＷＡ作成ツール使用方法</B></FONT>
+</CENTER></TD></TR></TABLE>
+<P>
+
+<A NAME="usetool"></A>
+<TABLE BORDER=0 WIDTH=580><TR><TH BGCOLOR=#C0FFC0>
+ＷＷＡマップの作成方法について
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+マップ作成に関する細かい説明は、このマニュアルでは省いています。
+　作成ツールを起動すると、最初にサンプルのマップが読み込まれます。
+　このサンプルマップを見ているうちに、ツールの使い方が理解できるようになっています。
+　ブラウザでサンプルマップをひととおり見て回ったあと、作成ツールを起動して、このサンプルマップの内容をいろいろ書きかえてみてください。
+　しだいにツールの使い方が解かってくるはずです。
+</TD></TR></TABLE>
+<P>
+
+
+<A NAME="setup"></A>
+<TABLE BORDER=0 WIDTH=580><TR><TH BGCOLOR=#C0FFC0>
+ホームページへの組込み方
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+<!--
+ＷＷＡをホームページに組み込むのに必要なファイルは、以下の５種類です。
+　<FONT COLOR=#C00000>現在のエクスプローラーでは、ファイル名は拡張子（.htmlや.gifや.class）が表示されない（種類で表示）のが標準ですが、
+ＦＴＰでサーバーにアップロードするときやホームページにアクセスするときはファイル名の後ろに拡張子が付いてくることを知っておく必要があります。</FONT>
+　エクスプローラーでファイルの拡張子を表示するにはメニューバーの「ツール→ フォルダオプション→ 表示」で「登録されている拡張子は表示しない」のチェックをはずします。
+<P>
+<B>wwa.html</B>　→ＷＷＡページ起動用ＨＴＭＬファイル<BR>
+<B>WWA.class</B>　→ＷＷＡ起動用ＣＬＡＳＳファイル<BR>
+<B>wwamap.dat</B>　→マップデータ用ＤＡＴファイル<BR>
+<B>mapcg.gif</B>　→マップ画像用ＧＩＦイメージ<BR>
+<B>***.au</B>　→効果音用ＡＵ形式サウンド（無くても可）<BR>
+<P>
+この５種類のファイルを自分のホームページにアップロードして「wwa.html」を開けばＷＷＡが起動します。
+　試しにサンプルのデータを自分のホームページにアップロードして、起動してみてください。
+　設置がうまくいかない場合は「よくある質問」をどうぞ。
+<P>
+-->
+詳細は、<a href="../manual.html">WWA Wing簡易マニュアル</a>をご覧下さい。
+もしケーブダンジョンをホームページに組み込みたければ、<B>「caves01.html」「wwa.js」「wwaload.js」「cover.gif」「wwa.css」「style.css」「caves01.dat」「caves01.gif」</B>
+の８つのファイルとフォルダ「audio」を同じフォルダにアップロードして「caves01.html」にリンクすればよいです。
+<!--
+<P>
+マップ作成中にブラウザでマップを見る機能を使うと「user.html」というファイルが自動生成されますので、これをそのままホームページに使うこともできます。
+-->
+</TD></TR></TABLE>
+<P>
+
+
+
+
+<BR>
+<!--
+<TABLE BORDER=0 WIDTH=580 BGCOLOR=#FFC0C0><TR><TD><CENTER>
+<FONT SIZE=4><B>付属サンプルマップ</B></FONT>
+</CENTER></TD></TR></TABLE>
+<P>
+
+<TABLE BORDER=0 WIDTH=500><TR><TH BGCOLOR=#C0FFC0>
+<A HREF="mapdata/wwa.html">標準設定マップ</A>
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+<B>構成ファイル： wwamap.dat wwacg.gif wwa.html WWA.class<BR></B>
+<FONT SIZE=2 COLOR=#009600>ツール起動時に読み込まれるマップです。
+　作成ツール説明用マップと同内容です。</FONT>
+</TH></TR></TABLE>
+<P>
+
+<TABLE BORDER=0 WIDTH=500><TR><TH BGCOLOR=#C0FFC0>
+<A HREF="mapdata/making.html">作成ツール説明用マップ</A>
+</TH></TR><TR><TH BGCOLOR=#FFFFC0>
+構成ファイル： making.dat making.gif making.html WWA.class
+</TH></TR></TABLE>
+<P>
+
+<TABLE BORDER=0 WIDTH=500><TR><TH BGCOLOR=#C0FFC0>
+<A HREF="mapdata/island02.html">ファンタジーアイランド</A>
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+<B>構成ファイル： island02.dat island02.gif island02.html WWA.class<BR></B>
+<FONT SIZE=2 COLOR=#009600>古いバージョンで作成したマップデータが基本になっていますので、
+劇イベントの実現方法など現在のシステムでは必ずしも手本とはいえない手法も含まれています。</FONT>
+</TD></TR></TABLE>
+<P>
+
+<TABLE BORDER=0 WIDTH=500><TR><TH BGCOLOR=#C0FFC0>
+<A HREF="mapdata/caves01.html">ケーブダンジョン１</A>
+</TH></TR><TR><TH BGCOLOR=#FFFFC0>
+構成ファイル： caves01.dat caves01.gif caves01.html WWA.class
+</TH></TR></TABLE>
+<P>
+
+<TABLE BORDER=0 WIDTH=500><TR><TH BGCOLOR=#C0FFC0>
+<A HREF="mapdata/caves02.html">ケーブダンジョン２</A>
+</TH></TR><TR><TH BGCOLOR=#FFFFC0>
+構成ファイル： caves02.dat caves02.gif caves02.html WWA.class
+</TH></TR></TABLE>
+<P>
+
+<TABLE BORDER=0 WIDTH=500><TR><TH BGCOLOR=#C0FFC0>
+<A HREF="拡張クラス/extend.html">拡張クラスサンプルマップ</A>
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+<B>構成ファイル： extend.dat making.gif extend.html WWA.class<BR></B>
+<FONT SIZE=2 COLOR=#009600>ＷＷＡ本体のシステムをマップ作成者が自由に拡張できるようにするためのものです。<BR>
+使用にはJavaプログラミングに関する知識が必要です。</FONT>
+</TD></TR></TABLE>
+<P>
+
+<TABLE BORDER=0 WIDTH=410><TR><TH BGCOLOR=#C0FFC0>
+<A HREF="mapdata/minisize.html">ミニサイズＷＷＡ</A>
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+用途によっては右端をカットした４４０×４４０サイズのＷＷＡを置いてもらってかまいません。
+</TD></TR></TABLE>
+<P>
+
+<TABLE BORDER=0 WIDTH=410><TR><TH BGCOLOR=#C0FFC0>
+<A HREF="mapdata/material.gif">ＷＷＡ用画像素材</A>
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+画像編集ツールなどを使用して、この画像素材から使いたいパーツ画像を切り貼りしてください。
+</TD></TR></TABLE>
+<P>
+
+<TABLE BORDER=0 WIDTH=410><TR><TH BGCOLOR=#C0FFC0>
+<A HREF="http://www.wwajp.com/material.html">ユーザー提供画像素材</A>
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+ＷＷＡ作成者の方などに提供していただいた画像素材です。
+　かなりの数がありますので、自分で画像を描けなくても、それなりに見栄えのあるマップを作成できます。
+</TD></TR></TABLE>
+<P>
+
+-->
+
+<BR>
+<TABLE BORDER=0 WIDTH=580 BGCOLOR=#FFC0C0><TR><TD><CENTER>
+<FONT SIZE=4><B>画像関連</B></FONT>
+</CENTER></TD></TR></TABLE>
+<P>
+
+<A NAME="tips_cg">
+<TABLE BORDER=0 WIDTH=580><TR><TH BGCOLOR=#C0C0FF>
+自作の画像を使用したい場合
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+ゲームに自作の画像を使用したい場合は、GIF透明化に対応した画像編集ツールを使って、マップに使用するGIF画像ファイルを描きかえてください。
+　対応ツールについては「よくある質問」をどうぞ。
+　<FONT COLOR=#C00000>透明化GIF画像として保存しないと物体パーツの背景が灰色のままになってしまうので注意してください。</FONT>
+</TD></TR></TABLE>
+<P>
+
+
+<TABLE BORDER=1 WIDTH=580><TR><TH BGCOLOR=#C0FFC0 COLSPAN=2>
+画像の内容説明
+</TH></TR><TR><TD BGCOLOR=#FFFFFF COLSPAN=2>
+下は画像の上四段（１０×４パーツ分）をイメージした図です。<BR>
+“□”は４０×４０ドットのパーツ画像を表していると考えてください。
+</TD></TR><TR><TH BGCOLOR=#E0FFFF>
+<NOBR>
+□□<FONT COLOR=#FF0000>□□□□□□□□</FONT><BR>
+□□□□□□□□□□<BR>
+□□□□□□□□□□<BR>
+□□□□□□□□□□<BR>
+</NOBR>
+</TH><TD BGCOLOR=#FFFFC0>
+赤い部分がプレーヤーのパーツ画像になっています。
+　左から後ろ向き２パーツ、前向き２パーツ・・・となります。
+</TD></TR><TR><TH BGCOLOR=#E0FFFF>
+□□□□□□□□□□<BR>
+<FONT COLOR=#FF0000>□□□</FONT>□□□□□□□<BR>
+<FONT COLOR=#FF0000>□□□</FONT>□□□□□□□<BR>
+<FONT COLOR=#FF0000>□□□</FONT>□□□□□□□<BR>
+</TH><TD BGCOLOR=#FFFFC0>
+この３×３パーツ分の個所は、ゲーム画面の四方を囲む枠になっています。
+　中心の枠がアイテムボックスに使用される枠になります。
+</TD></TR><TR><TH BGCOLOR=#E0FFFF>
+□□□□□□□□□□<BR>
+□□□<FONT COLOR=#FF0000>□□□□</FONT>□□□<BR>
+□□□□□□□□□□<BR>
+□□□□□□□□□□<BR>
+</TH><TD BGCOLOR=#FFFFC0>
+この４パーツはＹｅｓ、Ｎｏの選択ボタンに使用されます。
+　右側の２パーツはボタンを押したときの画像です。
+</TD></TR><TR><TH BGCOLOR=#E0FFFF>
+□□□□□□□□□□<BR>
+□□□□□□□□□□<BR>
+□□□<FONT COLOR=#FF0000>□□□□</FONT>□□□<BR>
+□□□□□□□□□□<BR>
+</TH><TD BGCOLOR=#FFFFC0>
+この４パーツは左からそれぞれ生命力、攻撃力、防御力、所持金のステータス表示に使われる画像です。
+</TD></TR><TR><TH BGCOLOR=#E0FFFF>
+□□□□□□□□□□<BR>
+□□□□□□□□□□<BR>
+□□□□□□□□□□<BR>
+□□□<FONT COLOR=#FF0000>□□□□</FONT>□□□<BR>
+</TH><TD BGCOLOR=#FFFFC0>
+一番左が敵との戦闘時に表示される爆発マーク、右の３キャラクタ分がステータスの表示に使用される枠です。
+　ステータス枠は高さが３５ドットであることに注意してください。
+　高さ４０ドットの画像だと下部が若干切れてしまいます。
+</TD></TR><TR><TH BGCOLOR=#E0FFFF>
+<FONT COLOR=#FF0000>□□</FONT>□□□□□□□□<BR>
+□□□□□□□□□□<BR>
+□□□□□□□□□□<BR>
+□□□□□□□□□□<BR>
+</TH><TD BGCOLOR=#FFFFC0>
+一番左上の黒の部分は画像番号０の画像です。
+　パーツに画像が設定されていないときに使用されます。
+　黒のままにしておくのが無難です。
+　その右の灰色の部分は透明色で埋めています。
+　透明なパーツを作るときに使用してください。
+　環境によっては作成ツールで、この部分の色が透明色として扱われます。
+</TD></TR><TR><TD FONT COLOR=#FFFFC0 COLSPAN=2>
+上記以外の部分はゲーム中に使用するキャラクタとして自由に使用できます。<BR>
+上四段は将来拡張用に使用する可能性がありますので使用しないほうが無難です。
+</TD></TR></TABLE>
+<P>
+
+
+
+<BR>
+<TABLE BORDER=0 WIDTH=580 BGCOLOR=#FFC0C0><TR><TD><CENTER>
+<FONT SIZE=4><B>システム関連</B></FONT>
+</CENTER></TD></TR></TABLE>
+<P>
+
+<A NAME="battle"></A>
+<TABLE BORDER=0 WIDTH=580><TR><TH BGCOLOR=#C0FFC0>
+戦闘システムについて
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+戦闘はプレーヤー、モンスター、プレーヤー、モンスター、・・・の順で交互に攻撃し、先に生命力が０になった方の負けです。
+　ＷＷＡのシステムでは、戦闘で受けるダメージはランダムでは決まらず、同じ条件で戦えば必ず同じ結果がでるようになっています。
+　戦闘時の計算方法は、以下のようになっています。
+<P>
+１回の攻撃でモンスターに与えられるダメージ<BR>
+　　　　　　　＝　プレーヤーの攻撃力　－　モンスターの防御力
+<BR>
+１回の攻撃でプレーヤーが受けるダメージ<BR>
+　　　　　　　＝　モンスターの攻撃力　－　プレーヤーの防御力
+<P>
+これから何回の攻撃でモンスターが倒せて、どれだけのダメージを受けるのか計算することが出来ます。
+　また自分の攻撃力以上の防御力を持った敵は攻撃できないことになります。
+　戦闘結果は作成ツールメニューの「編集→戦闘結果の計算」で調べることができます。
+</TD></TR></TABLE>
+<P>
+
+
+<A NAME="sound"></A>
+<TABLE BORDER=0 WIDTH=580><TR><TH BGCOLOR=#C0FFC0>
+効果音について
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+ＷＷＡで使用するMP3形式の効果音ファイルを作成するには、MP3形式に対応した効果音編集ツールを使用するか、
+WAV形式のデータをMP3形式に変換するツールを使用する方法があります。
+<!--　対応ツールについては「よくある質問」をどうぞ。-->
+<P>
+効果音ファイルは、すべて「10.mp3」のように、効果音番号＋拡張子「mp3」というファイル名にします。
+　効果音が鳴るタイミングは、メッセージパーツならそのパーツに話しかけた時、モンスターならそのモンスターを倒した時と、それぞれ異なります。
+<P>
+現在の効果音システム予約は、１番「1.mp3」のボタンのクリック音と３番「3.mp3」の戦闘時の攻撃音です。<BR>
+</TD></TR></TABLE>
+<P>
+
+<!--
+<A NAME="url_cgi"></A>
+<TABLE BORDER=0 WIDTH=580><TR><TH BGCOLOR=#C0FFC0>
+マップ内からのCGIの呼び出し
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+URLゲートを使用してリンクを張るときに拡張子が「.cgi」のページを指定すると生命力や攻撃力などのステータスも同時に送信されるようになります
+（複数のマップ間でアイテムなどのデータを共有したり、スコア登録機能を付けたい場合などに使用します）
+<P>
+例えば、アドレスに「<B>http://wwajp.com/cgibin/****.cgi</B>」<BR>
+を指定すると、実際にホームページに接続するときには、<BR>
+<FONT COLOR=#C00000>http://wwajp.com/cgibin/****.cgi?HP=800&AT=600&DF=400&GD=200<BR>
+PX=10&PY=10&WNAME=GateWorld&ITEM1=0&ITEM2=0&ITEM3=0.....</FONT><BR>
+のような形で呼び出されます。
+<P>
+あとは、CGIの方で、これらのデータを抽出してやれば良いです。<BR>
+HP = 生命力，AT = 攻撃力， DF = 防御力，GD = 所持金，<BR>
+PX = プレーヤーのＸ座標，PY = Ｙ座標，WNAME = ワールド名，<BR>
+ITEM (1～12) = 所有アイテムの物体パーツ番号
+<P>
+スコアランキングなどのCGIは作成ツールのダウンロードページで専用のものを配布していますので、そちらをどうぞ。
+</TD></TR></TABLE>
+<P>
+-->
+
+<A NAME="max"></A>
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#C0FFC0>
+各種上限について
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+<B>マップサイズの最大値</B>　１００１×１００１（１００×１００画面分）<BR>
+<B>背景、および物体パーツの最大値</B>　各４０００パーツ<BR>
+<B>メッセージ最大作成数</B>　５０００<BR>
+<B>マップデータファイル最大サイズ</B><　６メガバイト<BR>
+<B>１メッセージの最大文字数</B><　全角７５０文字
+</TD></TR></TABLE>
+<P>
+
+
+
+<BR>
+<TABLE BORDER=0 WIDTH=580 BGCOLOR=#FFC0C0><TR><TD><CENTER>
+<FONT SIZE=4><B>ツール操作関連</B></FONT>
+</CENTER></TD></TR></TABLE>
+<P>
+
+<A NAME="tips_keybord">
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#C0C0FF>
+キーボード操作
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+作成ツールでは、マウスでほとんどの操作をすることができますが、
+ショートカットキーを併用すると操作が効率的になります。
+</TH></TR><TR><TH BGCOLOR=#FFC0C0>
+メインウィンドウ
+</TH></TR></TABLE>
+<TABLE BORDER=0 WIDTH=440>
+<TR><TH BGCOLOR=#C0FFC0 WIDTH=140>カーソルキー</TH><TD BGCOLOR=#FFFFC0>マップ画面のスクロール</TD></TR>
+<TR><TH BGCOLOR=#C0FFC0>F1キー</TH><TD BGCOLOR=#FFFFC0>背景設置モード</TD></TR>
+<TR><TH BGCOLOR=#C0FFC0>F2キー</TH><TD BGCOLOR=#FFFFC0>物体設置モード</TD></TR>
+<TR><TH BGCOLOR=#C0FFC0>F3キー</TH><TD BGCOLOR=#FFFFC0>背景編集モード</TD></TR>
+<TR><TH BGCOLOR=#C0FFC0>F4キー</TH><TD BGCOLOR=#FFFFC0>物体編集モード</TD></TR>
+<TR><TH BGCOLOR=#C0FFC0>F5キー</TH><TD BGCOLOR=#FFFFC0>物体消去モード</TD></TR>
+</TABLE>
+
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#FFC0C0>
+背景＆物体パーツ選択ウィンドウ
+</TH></TR></TABLE>
+<TABLE BORDER=0 WIDTH=440>
+<TR><TH BGCOLOR=#C0FFC0 WIDTH=180>SHIFT+カーソルキー</TH><TD BGCOLOR=#FFFFC0>パーツ選択画面のスクロール</TD></TR>
+</TABLE>
+
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#FFC0C0>
+パーツ編集ウィンドウ
+</TH></TR></TABLE>
+<TABLE BORDER=0 WIDTH=440>
+<TR><TH BGCOLOR=#C0FFC0 WIDTH=180>TABキー</TH><TD BGCOLOR=#FFFFC0>次のボックスに移動</TD></TR>
+<TR><TH BGCOLOR=#C0FFC0 WIDTH=180>エンターキー</TH><TD BGCOLOR=#FFFFC0>決定</TD></TR>
+</TABLE>
+
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#FFC0C0>
+パーツ出現設定ウィンドウ
+</TH></TR></TABLE>
+<TABLE BORDER=0 WIDTH=440>
+<TR><TH BGCOLOR=#C0FFC0 WIDTH=180>SHIFT+カーソルキー</TH><TD BGCOLOR=#FFFFC0>エディットボックスのフォーカス移動</TD></TR>
+<TR><TH BGCOLOR=#C0FFC0 WIDTH=180>TABキー</TH><TD BGCOLOR=#FFFFC0>次のボックスに移動</TD></TR>
+</TABLE>
+<P>
+
+
+<A NAME="tips_set">
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#C0FFC0>
+パーツをまとめて置きたい場合
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+背景パーツを１個１個、マップに置いていくのは大変です。
+　マップ画面でマウスをクリック＆ドラッグするとパーツをまとめて設置することができます。
+</TD></TR></TABLE>
+<P>
+
+
+<A NAME="tips_rclick">
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#C0FFC0>
+右クリックの機能
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+マップに置かれている背景や物体パーツを調べたり編集したりするときは、
+いちいち編集モードを背景＆物体編集に切り換えてマップ上のパーツを左クリックするよりも、そのパーツを右クリックするほうが楽です。
+<P>
+クリックした場所に物体パーツが置かれていれば物体パーツが、それ以外の場所では、背景パーツが自動的に選択され、編集ウィンドウが開きます。
+　このとき同時に編集モードがパーツ設置モードに切り換わりますので、
+右クリックでそのパーツを選択して左クリックでマップに設置、というパターンを覚えておくと、マップへのパーツ設置作業が楽になります。
+</TD></TR></TABLE>
+<P>
+
+
+
+<BR>
+<TABLE BORDER=0 WIDTH=580 BGCOLOR=#FFC0C0><TR><TD><CENTER>
+<FONT SIZE=4><B>よくある質問</B></FONT>
+</CENTER></TD></TR></TABLE>
+<P>
+
+<A NAME="wwafaq"></A>
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#C0FFC0>
+よくある質問＆マニュアル補足事項
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+作成ツールに関してのよくある質問や細かい補足事項、各種不具合などは、<A HREF="http://www.wwajp.com/wwafaq.html">公式サイトの「よくある質問」</A>にまとめて掲載しています。
+　本マニュアルとあわせてご参照ください。
+　以下の項目は「よくある質問」に掲載しています。
+<P>
+・ホームページへの設置がうまくいかない<BR>
+・効果音や画像を編集するためのツールは？<BR>
+・複数のマップ間でアイテムなどのデータを共有するには？<BR>
+・GIF画像の読み込みに失敗する<BR>
+・ブラウザでマップを見る機能でゲームが起動しない<BR>
+</TD></TR></TABLE>
+<P>
+
+
+
+<BR>
+<TABLE BORDER=0 WIDTH=580 BGCOLOR=#FFC0C0><TR><TD><CENTER>
+<FONT SIZE=4><B>その他</B></FONT>
+</CENTER></TD></TR></TABLE>
+<P>
+
+<A NAME="faq_linkform"></A>
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#C0FFC0>
+ＷＷＡマップを作成された方へ
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+オリジナルのＷＷＡマップを作成された方は、フォームでご報告いただければ、こちらのリンクページからリンクいたします。
+　<A HREF="http://www.wwajp.com/mail/linkform.html">http://www.wwajp.com/mail/linkform.html</A>
+にリンク登録のフォームを用意しています。
+<P>
+データを圧縮ファイルにまとめてダウンロードサイトに登録するのも自由です。
+　その際「WWA.class」などの起動に必要なファイルも同梱していただいてかまいません。
+</TD></TR></TABLE>
+<P>
+
+
+<TABLE BORDER=0 WIDTH=440><TR><TH BGCOLOR=#FFC0C0>
+連絡方法
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+ゲーム内容に対する質問、不具合報告、ご意見、ご要望は、下記ページ設置のメールフォームからお願いいたします。
+<P>
+<CENTER><A HREF="http://www.wwajp.com/mail/mailform.html">連絡フォーム http://www.wwajp.com/mail/mailform.html</A></CENTER>
+</TD></TR></TABLE>
+<P>
+
+
+<TABLE BORDER=0><TR><TH BGCOLOR=#C0FFC0>
+転載、掲載、著作権などについて
+</TH></TR><TR><TD BGCOLOR=#FFFFC0>
+雑誌などへの掲載、転載は自由です。<BR>
+もちろん、ホームページへの組込みは自由です。
+<P>
+著作権は本ソフトウェアの作者が所持しています。<BR>
+規約などについては他一般のオンラインソフトに準じるものとします。
+<P>
+(C)1996-2009 NAO<BR>
+HomePage: <A HREF="http://www.wwajp.com/">http://www.wwajp.com</A>
+</TD></TR></TABLE>
+<P>
+
+
+</CENTER>
+</BODY>
+</HTML>
