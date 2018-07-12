@@ -10,7 +10,7 @@
     "build:js:webpack": "webpack --config webpack.config.js && webpack --config webpack.config.prod.js",
     "build:js:cat": "shx cat assets/wwa_license_comment.js ./lib/wwa-nolink.js assets/cryptojs/aes.js > ./lib/wwa.js",
     "build:dist": "npm run clean:dist && node ./util/make-wwawing-dist && node ./util/make-zip",
-    "deploy": "shx cp -R assets debug && shx cp lib/wwa.long.js debug",
+    "deploy": "shx cp -R assets debug && shx cp assets/debug/html/dev/*.html debug && shx cp lib/wwa.long.js debug",
     "clean": "npm run clean:dist && npm run clean:js",
     "clean:js": "shx rm -rf lib",
     "clean:dist": "shx rm -rf wwawing-dist wwawing-update wwawing-dist.zip wwawing-update.zip"

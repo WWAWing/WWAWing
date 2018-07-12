@@ -57,7 +57,7 @@ function makeDistribution(isUpdate) {
                 copy(path.join("assets", "audio", "*"), path.join("mapdata", "audio")),
                 copy(path.join("assets","*.dat"), "mapdata"),
                 copy(path.join("assets", "*.gif"), "mapdata"),
-                copy(path.join("assets", "dist_html", "*.html"), "mapdata")
+                copy(path.join("assets", "html", "dist", "*.html"), "mapdata")
             ];
         }
         Promise.all(tasks)
