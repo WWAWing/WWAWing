@@ -1,0 +1,35 @@
+language: node_js
+node_js:
+- '4.1'
+install: true
+branches:
+  only:
+  - master
+
+env:
+  global:
+  - GIT_COMMITTER_NAME="WWA Helper"
+  - GIT_COMMITTER_EMAIL="matsuyuki.eca@gmail.com"
+  - GIT_AUTHOR_NAME="WWA Helper"
+  - GIT_AUTHOR_EMAIL="matsuyuki.eca@gmail.com"
+  - secure: iTO52dX2HwHfNaLP3AI927A1+dvqCbxWxK1qO0icGOlnTzUokmuBKGjidNXPUZ6h8gkgw4wFB4/xMsnWWjQN3e//mu1wnDjg6Ga2twzitYAgSSjfluAlki8PXryCUSWseVl/FlN6feNxGfaUOqaO5CGOKudEnplIlLtnggFaiJzsaJRPjXfhG4Cpjq37UWCoxM0vNRegVK4RbLdI01zs4L8AZ9OmwR9+WHbPGsWQlyAGtlngjTDR9KVreK+KZqo72vJemUKuZyunNQAjnMoDWfFg5HcYfsw3bZrGD0Q0CJgaZ3QcxUD1IUh6iHI5F89lGF4K5NJUQEDbWfKRdrS2m9OWNqofUwL05O560uT3T/EFPrEpHPBIyKX5t3XCs2n2YU7O06o/HNxH5beDJnCu9htcZSI+aGoNGXgJPIZeNTGicLWVha5Ro6DrXT+Sgcw76MMOZQ7nstI+6xAciJvCHH9ZGHMweVPCsxYkwq7H/VgzIK92kh9QZWEMOk3a7Q95HlWCPlGxMDYmBqJR9ZQO3hSZjDoHciT5gcIvlf4gptPv/9GuARgaNE8g0JIkjhnE3ULa9K8Wl/grYdfa26lSOPXIxE51+Si/wZ+O/Em7+q1ShZaSXmR9TYku6wHKqDTeJm9HBVHSWP3DhM7deuEa1ME/56QRgxH3aVqwsReeusE=
+script:
+- git checkout -b distribute-all
+- git checkout -b distribute-update
+- git checkout master
+- pushd __DISTRIBUTE__
+- popd
+- '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_dist https://$GH_TOKEN@github.com/WWAWing/WWAWing.git
+  distribute-all --squash >& /dev/null'
+- '[ $GH_TOKEN ] && git subtree add --prefix=__DISTRIBUTE__/wwawing_update  https://$GH_TOKEN@github.com/WWAWing/WWAWing.git
+  distribute-update --squash >& /dev/null'
+- pushd __DISTRIBUTE__
+- make clean
+- make all
+- git add -A
+- popd
+- 'git commit -m "BUILD: $(date)" || echo "(nothing to commit)"'
+- '[ $GH_TOKEN ] && git subtree push --prefix=__DISTRIBUTE__/wwawing_dist https://$GH_TOKEN@github.com/WWAWing/WWAWing.git
+  distribute-all >& /dev/null'
+- '[ $GH_TOKEN ] && git subtree push --prefix=__DISTRIBUTE__/wwawing_update https://$GH_TOKEN@github.com/WWAWing/WWAWing.git
+  distribute-update >& /dev/null'

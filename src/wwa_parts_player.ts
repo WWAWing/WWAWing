@@ -54,6 +54,7 @@ module wwa_parts_player {
         protected _samePosLastExecutedMapID: number;
         protected _samePosLastExecutedObjID: number;
         protected _executedObjPartsID_onSamePosition: number;
+        protected _isMovingImage: boolean; // 将来静止中の描画パターンを増やすつもりはないので boolean で
 
         protected _partsAppeared: boolean;
 
@@ -110,6 +111,7 @@ module wwa_parts_player {
                 }
                 if (next.isJustPosition()) {
                     this._state = PlayerState.CONTROLLABLE;
+                    this.toggleMovingImage();
                     this._moves++;
                     this._isPartsEventExecuted = false;
                     this._samePosLastExecutedMapID = void 0;
@@ -171,7 +173,7 @@ module wwa_parts_player {
         }
 
 
-        // 座標posに移動できるならtrue, 移動できないならfalse       
+        // 座標posに移動できるならtrue, 移動できないならfalse
         public canMoveTo(pos: Position): boolean {
 
             if (pos === null) {
@@ -277,6 +279,18 @@ module wwa_parts_player {
 
         public getDir(): Direction {
             return this._dir;
+        }
+
+        public isMovingImage(): boolean {
+            return this._isMovingImage;
+        }
+
+        public toggleMovingImage(): void {
+            if (this._isMovingImage) {
+                this._isMovingImage = false;
+            } else {
+                this._isMovingImage = true;
+            }
         }
 
         public getEnergyMax(): number {
@@ -464,6 +478,7 @@ module wwa_parts_player {
         }
         public setStrength(s: number): number {
             this._status.strength = s;
+            this.updateStatusValueBox();
             return s;
         }
         public setDefence(d: number): number {
@@ -982,6 +997,7 @@ module wwa_parts_player {
             this.updateItemBox();
             this._energyMax = em;
             this._dir = Direction.DOWN;
+            this._isMovingImage = false;
             this._wwa = wwa;
             this._state = PlayerState.CONTROLLABLE;
             this._camera = camera;

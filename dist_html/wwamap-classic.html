@@ -9,10 +9,9 @@
     <link rel="stylesheet" href="style.css" type="text/css" />
 
     <!--  WWA requirements-->
-    <link rel="stylesheet" href="wwa.css" type="text/css" />
-    <script src="cryptojs/aes.js"></script>
+    <link rel="stylesheet" href="wwa_classic.css" type="text/css" />
     <script src="audio/audio.min.js"></script>
-    <script src="wwa.long.js"></script>
+    <script src="wwa.js"></script>
     <!-- /WWA requirements -->
 
 </head>
@@ -20,15 +19,18 @@
     <div id="wrapper">
         <!-- WWA -->
         <div id="wwa-wrapper" class="wwa-size-box"
-             data-wwa-mapdata="caves01.dat"
+             data-wwa-mapdata="wwamap.dat"
              data-wwa-loader="wwaload.js"
-             data-wwa-audio-dir="./audio/"
              data-wwa-urlgate-enable="true"
-             data-wwa-title-img="cover.gif">
+             data-wwa-classic-mode-enable="true">
         </div>
         <!-- /WWA -->
     </div>
     <footer id="copyright">
+      <p>このページのCSSには wwa.css ではなく、wwa_classic.css が指定されています。このCSSファイルを指定すると、Java版WWAに近いメッセージウィンドウのスタイルが適用されます。</p>
+      <p>このWWAには data-wwa-title-img 属性が指定されていません。指定されていない場合には、WWA本家(Ver3.10以下)風の 「Welcome To WWA」を表示します。</p>
+      <p>このWWAには data-wwa-classic-mode-enable 属性に true が指定されています。このWWAはクラシックモードで動作しています。クラシックモードについては<a href="./manual.html">マニュアル</a>をご参照ください。</p>
+
         <p> Internet RPG &quot;<a href="http://www.wwajp.com" class="wwa-copyright">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
         <p> &quot;<a href="http://wwawing.com/" class="wwa-copyright">WWA Wing</a>&quot; &copy;2013-2017 WWA Wing Team</p>
     </footer>

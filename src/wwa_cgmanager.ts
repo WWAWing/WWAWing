@@ -141,7 +141,7 @@ module wwa_cgmanager {
             ctx.drawImage(
                 this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
                 Consts.CHIP_SIZE * width, Consts.CHIP_SIZE * height, canvasX, canvasY,
-                Consts.CHIP_SIZE * 2, Consts.CHIP_SIZE * 2
+                Consts.CHIP_SIZE * width, Consts.CHIP_SIZE * height
            );
         }
 
@@ -223,7 +223,7 @@ module wwa_cgmanager {
         public constructor(ctx: CanvasRenderingContext2D, ctxSub: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {
             this._ctx = ctx;
             this._ctxSub = ctxSub;
-            this._fileName = fileName;  
+            this._fileName = fileName;
             this._loadCompleteCallBack = loadCompleteCallBack;
             this._load();
             this._frameCoord = _frameCoord.clone();

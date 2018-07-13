@@ -1,4 +1,4 @@
-﻿/// <reference path="./wwa_input.ts" />
+/// <reference path="./wwa_input.ts" />
 /// <reference path="./wwa_cgmanager.ts" />
 /// <reference path="./wwa_data.ts" />
 /// <reference path="./wwa_util.ts" />
@@ -136,6 +136,7 @@ module wwa_main {
     export class WWA {
         private _cvs: HTMLCanvasElement;
         private _cvsSub: HTMLCanvasElement;
+        private _cvsCover: HTMLCanvasElement;
         private _cgManager: CGManager;
         private _wwaData: Data;
         private _mainCallCounter: number;
@@ -194,6 +195,7 @@ module wwa_main {
         private _temporaryInputDisable: boolean;
 
         private _isLoadedSound: boolean;
+        private _isSkippedSoundMessage: boolean; // メッセージの読み込みジャッジを飛ばすフラグ(汎用的に使えるようにプロパティに入れている)
 
         private _soundLoadSkipFlag: boolean;
 
@@ -204,9 +206,13 @@ module wwa_main {
         private _execMacroListInNextFrame: wwa_message.Macro[];
         private _clearFacesInNextFrame: boolean;
         private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
+        private _isClassicModeEnable: boolean;
 
         private _useConsole: boolean;
         private _audioDirectory: string;
+        private _hasTitleImg: boolean;
+  
+        private _isActive: boolean;
         ////////////////////////
         public debug: boolean;
         private hoge: number[][];
@@ -218,9 +224,33 @@ module wwa_main {
         private _soundDecodingFlag: boolean;
         private audioExtension: string = "";
 
-        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, loaderAudioDirectory:string = null) {
+        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
+            var ctxCover;
+          window.addEventListener("click", (e): void=> {
+            // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
+            this._isActive = false;
+          });
+          wwa_util.$id("wwa-wrapper").addEventListener("click", (e): void=> {
+            e.stopPropagation();
+            this._isActive = true;
+          });
+          this._isActive = true;
+
+            if (titleImgName === null) {
+                this._hasTitleImg = false;
+                this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
+                ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+                ctxCover.fillStyle = "rgb(0, 0, 0)";
+            } else {
+                this._hasTitleImg = true;
+            }
+
             try {
-                util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
+                if (this._hasTitleImg) {
+                    util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
+                } else {
+                    this._setLoadingMessage(ctxCover, 0);
+                }
             } catch (e) { }
             var AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
@@ -247,12 +277,17 @@ module wwa_main {
             browser.os = browser.os || (ua.match(/linux/i) ? 'Linux' : '');
 
             this._isURLGateEnable = urlgateEnabled;
+            this._isClassicModeEnable = classicModeEnabled;
             this._mainCallCounter = 0;
             this._animationCounter = 0;
             this._statusPressCounter = new wwa_data.Status(0, 0, 0, 0);
 
-            if (!loaderAudioDirectory) loaderAudioDirectory = "audio/";
 
+            if(!audioDirectory){
+              audioDirectory = "./audio/";
+            } else if( audioDirectory[ audioDirectory.length - 1 ] !== "/" ) {
+              audioDirectory += "/"; 
+            }
             var mapFileName = wwa_util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");//ファイル名取得
             var pathList = mapFileName.split("/");//ディレクトリで分割
             pathList.pop();//最後のファイルを消す
@@ -301,13 +336,16 @@ module wwa_main {
                 util.$id("cell-gotowwa").textContent = "Battle Report";
             }
             if (window["audiojs"] === void 0) {
-                alert("Audio.jsのロードに失敗しました。audioフォルダの中にaudio.min.jsは配置されていますか？");
+                this._setErrorMessage("Audio.jsのロードに失敗しました。\n" +
+                    "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
+                    "フォルダを変更される場合には data-wwa-audio-dir 属性を\n" + 
+                    "指定してください", ctxCover);
                 return;
             }
 
             this._loadHandler = (e): void => {
                 if (e.data.error !== null && e.data.error !== void 0 ) {
-                    alert("下記のエラーが発生しました。: \n" + e.data.error.message);
+                    this._setErrorMessage("下記のエラーが発生しました。: \n" + e.data.error.message, ctxCover);
                     return;
                 }
                 if (e.data.progress !== null && e.data.progress !== void 0) {
@@ -316,6 +354,18 @@ module wwa_main {
                 }
 
                 this._wwaData = e.data.wwaData;
+
+                try {
+                    if (this._hasTitleImg) {
+                        util.$id("version").textContent += (
+                                " (Map data Ver. "
+                                + Math.floor( this._wwaData.version / 10 ) + "." +
+                                + this._wwaData.version % 10 +")"
+                            );
+                    } else {
+                        this._setLoadingMessage(ctxCover, 1);
+                    }
+                } catch (e) { }
 
                 var mapFileName = wwa_util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");//ファイル名取得
                 var pathList = mapFileName.split("/");//ディレクトリで分割
@@ -326,11 +376,13 @@ module wwa_main {
 
                 this.initCSSRule();
                 this._setProgressBar(getProgress(0, 4, wwa_data.LoadStage.GAME_INIT) );
+                this._setLoadingMessage(ctxCover, 2);
                 var cgFile = new Image();
                 cgFile.src = this._wwaData.mapCGName;
                 cgFile.addEventListener("error", (): void => {
-                    alert("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
-                        "管理者の方へ: データがアップロードされているか、パーミッションを確かめてください。");
+                    this._setErrorMessage("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
+                        "管理者の方へ: データがアップロードされているか、\n" + 
+                        "パーミッションを確かめてください。", ctxCover);
                 });
                 this._restartData = JSON.parse(JSON.stringify(this._wwaData));
 
@@ -366,6 +418,7 @@ module wwa_main {
                 iconNode_gold.style.backgroundImage = "url(" + escapedFilename + ")";
 
                 this._setProgressBar(getProgress(1, 4, wwa_data.LoadStage.GAME_INIT) );
+                this._setLoadingMessage(ctxCover, 3);
                 this._replaceAllRandomObjects();
 
                 var t_end: number = new Date().getTime();
@@ -398,7 +451,9 @@ module wwa_main {
                 this._execMacroListInNextFrame = [];
                 this._passwordLoadExecInNextFrame = false;
                 this._setProgressBar(getProgress(2, 4, wwa_data.LoadStage.GAME_INIT) );
+                this._setLoadingMessage(ctxCover, 4);
                 window.addEventListener("keydown", (e): void => {
+                    if( !this._isActive ) { return; }
                     if (browser.os === "Nintendo") {
                         e.preventDefault();
                         e.stopPropagation();
@@ -407,43 +462,59 @@ module wwa_main {
                     this._keyStore.setPressInfo(e.keyCode);
                     if( e.keyCode === KeyCode.KEY_F5 ) {
                         e.preventDefault()
-                    } else if (e.keyCode === KeyCode.KEY_DOWN ||
-                        e.keyCode === KeyCode.KEY_LEFT ||
-                        e.keyCode === KeyCode.KEY_RIGHT ||
-                        e.keyCode === KeyCode.KEY_UP ||
-                        e.keyCode === KeyCode.KEY_SHIFT ||
-                        e.keyCode === KeyCode.KEY_ENTER ||
-                        e.keyCode === KeyCode.KEY_1 ||
-                        e.keyCode === KeyCode.KEY_2 ||
-                        e.keyCode === KeyCode.KEY_3 ||
-                        e.keyCode === KeyCode.KEY_A ||
-                        e.keyCode === KeyCode.KEY_C ||
-                        e.keyCode === KeyCode.KEY_D ||
-                        e.keyCode === KeyCode.KEY_E ||
-                        e.keyCode === KeyCode.KEY_M ||
-                        e.keyCode === KeyCode.KEY_N ||
-                        e.keyCode === KeyCode.KEY_Q ||
-                        e.keyCode === KeyCode.KEY_S ||
-                        e.keyCode === KeyCode.KEY_W ||
-                        e.keyCode === KeyCode.KEY_X ||
-                        e.keyCode === KeyCode.KEY_Y ||
-                        e.keyCode === KeyCode.KEY_Z ||
-                        e.keyCode === KeyCode.KEY_ESC ||
-                        e.keyCode === KeyCode.KEY_F1 ||
-                        e.keyCode === KeyCode.KEY_F3 ||
-                        e.keyCode === KeyCode.KEY_F4 ||
-                        e.keyCode === KeyCode.KEY_F6 ||
-                        e.keyCode === KeyCode.KEY_F7 ||
-                        e.keyCode === KeyCode.KEY_F8 ||
-                        e.keyCode === KeyCode.KEY_F9 ||
-                        e.keyCode === KeyCode.KEY_F12 ||
-                        e.keyCode === KeyCode.KEY_SPACE) {
-                        if (!this._player.isWaitingMessage() && !this._player.isWaitingPasswordWindow()) {
-                            e.preventDefault();
-                        }
+                        return;
+                    }
+                    if( !this._player.isWaitingMessage() ) {
+                      if ( !this._player.isWaitingPasswordWindow()) {
+                        if (e.keyCode === KeyCode.KEY_DOWN ||
+                            e.keyCode === KeyCode.KEY_LEFT ||
+                            e.keyCode === KeyCode.KEY_RIGHT ||
+                            e.keyCode === KeyCode.KEY_UP ||
+                            e.keyCode === KeyCode.KEY_SHIFT ||
+                            e.keyCode === KeyCode.KEY_ENTER ||
+                            e.keyCode === KeyCode.KEY_1 ||
+                            e.keyCode === KeyCode.KEY_2 ||
+                            e.keyCode === KeyCode.KEY_3 ||
+                            e.keyCode === KeyCode.KEY_A ||
+                            e.keyCode === KeyCode.KEY_C ||
+                            e.keyCode === KeyCode.KEY_D ||
+                            e.keyCode === KeyCode.KEY_E ||
+                            e.keyCode === KeyCode.KEY_M ||
+                            e.keyCode === KeyCode.KEY_N ||
+                            e.keyCode === KeyCode.KEY_Q ||
+                            e.keyCode === KeyCode.KEY_S ||
+                            e.keyCode === KeyCode.KEY_W ||
+                            e.keyCode === KeyCode.KEY_X ||
+                            e.keyCode === KeyCode.KEY_Y ||
+                            e.keyCode === KeyCode.KEY_Z ||
+                            e.keyCode === KeyCode.KEY_ESC ||
+                            e.keyCode === KeyCode.KEY_F1 ||
+                            e.keyCode === KeyCode.KEY_F2 ||
+                            e.keyCode === KeyCode.KEY_F3 ||
+                            e.keyCode === KeyCode.KEY_F4 ||
+                            e.keyCode === KeyCode.KEY_F6 ||
+                            e.keyCode === KeyCode.KEY_F7 ||
+                            e.keyCode === KeyCode.KEY_F8 ||
+                            e.keyCode === KeyCode.KEY_F12 ||
+                            e.keyCode === KeyCode.KEY_SPACE) {
+                              e.preventDefault();
+                            }
+                      }
+                    } else {
+                        if (e.keyCode === KeyCode.KEY_DOWN ||
+                            e.keyCode === KeyCode.KEY_LEFT ||
+                            e.keyCode === KeyCode.KEY_RIGHT ||
+                            e.keyCode === KeyCode.KEY_UP ||
+                            e.keyCode === KeyCode.KEY_SHIFT ||
+                            e.keyCode === KeyCode.KEY_ENTER ||
+                            e.keyCode === KeyCode.KEY_ESC ||
+                            e.keyCode === KeyCode.KEY_SPACE) {
+                              e.preventDefault();
+                            }
                     }
                 });
                 window.addEventListener("keyup", (e): void => {
+                    if( !this._isActive ) { return; }
                     if (browser.os === "Nintendo") {
                         e.preventDefault();
                         e.stopPropagation();
@@ -498,12 +569,15 @@ module wwa_main {
                 });
                 // IEのF1キー対策
                 window.addEventListener("help", (e): void => {
+                    if( !this._isActive ) { return; }
                     e.preventDefault();
                 });
+
+                
                 this._wwaWrapperElement = <HTMLDivElement>(wwa_util.$id("wwa-wrapper"));
                 this._mouseControllerElement = <HTMLDivElement>(wwa_util.$id("wwa-controller"));
-                
                 this._mouseControllerElement.addEventListener("mousedown", (e): void => {
+                    if( !this._isActive ) { return; }
                     if (e.which === 1) {
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
@@ -560,6 +634,7 @@ module wwa_main {
                     this._mouseStore.clear();
                 });
                 this._mouseControllerElement.addEventListener("mouseup", (e): void => {
+                    if( !this._isActive ) { return; }
                     if (e.which === 1) {
                         this._mouseStore.setReleaseInfo();
                         e.preventDefault();
@@ -578,6 +653,7 @@ module wwa_main {
                     }
 
                     this._mouseControllerElement.addEventListener("touchstart", (e: any /*←コンパイルエラー回避*/): void => {
+                      if( !this._isActive ) { return; }
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
                             return;
@@ -631,6 +707,7 @@ module wwa_main {
                     });
 
                     this._mouseControllerElement.addEventListener("touchend", (e: any): void => {
+                        if( !this._isActive ) { return; }
                         for (var i = 0; i < e.changedTouches.length; i++) {
                             if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
                                 this._mouseStore.setReleaseInfo();
@@ -642,6 +719,7 @@ module wwa_main {
 
 
                     this._mouseControllerElement.addEventListener("touchcancel", (e: any): void => {
+                        if( !this._isActive ) { return; }
                         for (var i = 0; i < e.changedTouches.length; i++) {
                             if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
                                 this._mouseStore.setReleaseInfo();
@@ -725,20 +803,26 @@ module wwa_main {
                 
 
                 this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, (): void => {
+                    this._isSkippedSoundMessage = true;
                     if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "ON") {
                         this._isLoadedSound = true;
                         this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
                             "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
+                        this._setLoadingMessage(ctxCover, wwa_data.LoadStage.AUDIO);
                         this.loadSound();
 
                         setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
                         
                         return;
-                    }  if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "OFF") {
+                    } else if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "OFF") {
                         this._isLoadedSound = false;
                         this.setMessageQueue( "ゲームを開始します。\n画面をクリックしてください。", false, true );
                         this.openGameWindow();
                         return;
+                    } // 読み込みメッセージをスキップした場合、処理はここまで
+                    this._isSkippedSoundMessage = false;
+                    if (!this._hasTitleImg) {
+                        ctxCover.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
                     }
 
                     if (this._usePassword) {
@@ -776,18 +860,21 @@ module wwa_main {
                                 self._yesNoJudge = self._yesNoJudgeInNextFrame;
                                 self._messageWindow.setInputDisable();
                                 setTimeout((): void => {
-                                    self._messageWindow.update();
-                                    setTimeout((): void => {
-                                        self._messageWindow.hide();
-                                        self._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
-                                        self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
-                                        self._isLoadedSound = true;
-                                        self.loadSound();
-                                        setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
-                                    }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
-                                }, Consts.DEFAULT_FRAME_INTERVAL);
-                            } else if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.NO) {
-                                clearInterval(timer);
+                                    self._messageWindow.hide();
+                                    self._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
+                                    self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
+                                    self._isLoadedSound = true;
+                                    this._setLoadingMessage(ctxCover, wwa_data.LoadStage.AUDIO);
+                                    self.loadSound();
+                                    setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
+                                }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
+                           }, Consts.DEFAULT_FRAME_INTERVAL);
+                        } else if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.NO) {
+                            clearInterval(timer);
+                            self._messageWindow.update();
+                            self._yesNoJudge = self._yesNoJudgeInNextFrame;
+                            self._messageWindow.setInputDisable();
+                            setTimeout((): void =>  {
                                 self._messageWindow.update();
                                 self._yesNoJudge = self._yesNoJudgeInNextFrame;
                                 self._messageWindow.setInputDisable();
@@ -827,7 +914,10 @@ module wwa_main {
                     document.getElementsByTagName("head")[0].appendChild(script);
                 } else {
                     script = <HTMLScriptElement>document.getElementById("wwaloader-ex");
-                    if (!script.src.match(/^http:\/\/wwawing\.com/) && !script.src.match(/^http:\/\/www\.wwawing\.com/)) {
+                    if (!script.src.match(/^http:\/\/wwawing\.com/) &&
+                        !script.src.match(/^http:\/\/www\.wwawing\.com/) &&
+                        !script.src.match(/^https:\/\/wwaphoenix\.github\.io/) &&
+                        !script.src.match(/^https:\/\/www\.wwaphoenix\.github\.io/)) {
                         throw new Error("SCRIPT ORIGIN ERROR");
                     }
                 }
@@ -865,6 +955,9 @@ module wwa_main {
         }
 
         private _setProgressBar(progress: wwa_data.LoaderProgress) {
+            if (!this._hasTitleImg) {
+                return;
+            }
 
             if (progress.stage <= Consts.LOAD_STAGE_MAX_EXCEPT_AUDIO) {
                 (wwa_util.$id("progress-message-container")).textContent =
@@ -890,6 +983,70 @@ module wwa_main {
             }
         }
 
+        private _setLoadingMessage(ctx: CanvasRenderingContext2D, mode: number) {
+            if (this._hasTitleImg) {
+                return;
+            } // 注意！this._hasTitleImg が false でないと動きません！
+            
+            if (mode <= 0) { // タイトル画面
+                ctx.font = wwa_data.LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
+                ctx.fillText(wwa_data.loadMessagesClassic[0], wwa_data.LoadingMessagePosition.TITLE_X, wwa_data.LoadingMessagePosition.TITLE_Y);
+                ctx.font = wwa_data.LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
+                ctx.fillText("WWA Wing Ver." + Consts.VERSION_WWAJS, wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.COPYRIGHT_Y);
+            } else if (mode <= wwa_data.loadMessagesClassic.length) { // 読み込み途中
+                ctx.font = wwa_data.LoadingMessageSize.LOADING + "px " + Consts.LOADING_FONT;
+                if (mode >= 2) {
+                    ctx.clearRect(wwa_data.LoadingMessagePosition.LOADING_X,
+                        wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 3)),
+                        Consts.SCREEN_WIDTH - wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LINE
+                        ); // 文字が太ましく見えるので一旦消去
+                    ctx.fillText(wwa_data.loadMessagesClassic[mode - 1] + " Complete!", wwa_data.LoadingMessagePosition.LOADING_X,
+                        wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 2))
+                        );
+                }
+                if (mode < wwa_data.loadMessagesClassic.length) {
+                    ctx.fillText(wwa_data.loadMessagesClassic[mode], wwa_data.LoadingMessagePosition.LOADING_X,
+                        wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (mode - 1))
+                        );
+                }
+                if (mode == 1) { // ワールド名を表示
+                    ctx.font = wwa_data.LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
+                    ctx.fillText("World Name  " + this._wwaData.worldName,
+                        wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y);
+                    ctx.fillText(" (Map data Ver. " + Math.floor( this._wwaData.version / 10 ) + "." + this._wwaData.version % 10 +")",
+                        wwa_data.LoadingMessagePosition.FOOTER_X, wwa_data.LoadingMessagePosition.WORLD_Y + wwa_data.LoadingMessagePosition.LINE);
+                }
+            } else { // 読み込み完了後、サウンドの読み込み時
+                var messageY;
+                if (this._isSkippedSoundMessage) {
+                    messageY = wwa_data.LoadingMessagePosition.LOADING_Y + (wwa_data.LoadingMessagePosition.LINE * (wwa_data.loadMessagesClassic.length - 1));
+                } else {
+                    messageY = wwa_data.LoadingMessagePosition.FOOTER_Y;
+                } // 読み込みの2択画面をスキップするかでサウンドの読み込みメッセージ位置が変わる
+                if (mode <= wwa_data.LoadStage.AUDIO) { // 音声データ読み込み中
+                    ctx.fillText("Now Sound data Loading .....", wwa_data.LoadingMessagePosition.LOADING_X, messageY);
+                } else { // 音声データ読み込み後
+                    ctx.clearRect(wwa_data.LoadingMessagePosition.LOADING_X, messageY - wwa_data.LoadingMessagePosition.LINE,
+                        Consts.SCREEN_WIDTH - wwa_data.LoadingMessagePosition.LOADING_X, wwa_data.LoadingMessagePosition.LINE);
+                    ctx.fillText("Now Sound data Loading ..... Complete!", wwa_data.LoadingMessagePosition.LOADING_X, messageY);
+                }
+            }
+        }
+
+        private _setErrorMessage(message: string, ctx: CanvasRenderingContext2D) {
+            if (this._hasTitleImg) {
+                alert(message);
+            } else {
+                ctx.clearRect(0, 0, Consts.SCREEN_WIDTH, Consts.SCREEN_HEIGHT);
+                ctx.font = wwa_data.LoadingMessageSize.ERRROR + "px " + Consts.LOADING_FONT;
+                var errorMessage = message.split('\n');
+                errorMessage.forEach(function(line, i) {
+                    ctx.fillText(line, wwa_data.LoadingMessagePosition.ERROR_X,
+                        wwa_data.LoadingMessagePosition.ERROR_Y + (wwa_data.LoadingMessagePosition.LINE * i)
+                    );
+                });
+            }
+        }
 
         public createAudioJSInstance(idx: number, isSub: boolean = false): void {
             var audioContext = this.audioContext;
@@ -962,6 +1119,9 @@ module wwa_main {
                     util.$id("wwa-audio-wrapper").appendChild(audioElementSub);
                     this._audioJSInstancesSub[idx] = audiojs.create(audioElementSub);
                 }
+			
+
+                audioElement.loop = true;
             }
         }
 
@@ -991,6 +1151,9 @@ module wwa_main {
         public checkAllSoundLoaded(): void {
             var loadedNum = 0;
             var total = 0;
+            if (!this._hasTitleImg) {
+                var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+            } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
             this._keyStore.update();
             if (this._keyStore.getKeyState(wwa_input.KeyCode.KEY_SPACE) === wwa_input.KeyState.KEYDOWN) {
                 this._soundLoadSkipFlag = true;
@@ -1028,6 +1191,7 @@ module wwa_main {
             }
 
             this._setProgressBar(getProgress(Consts.SOUND_MAX, Consts.SOUND_MAX, wwa_data.LoadStage.AUDIO));
+            this._setLoadingMessage(ctxCover, wwa_data.LoadStage.FINISH);
             this.openGameWindow();
         }
 
@@ -1112,6 +1276,7 @@ module wwa_main {
                     return;
                 }
             }
+
             if (this.audioContext) {
                 if (id !== 0 && this._webAudioJSInstances[id].buffer) {
                     if (id >= wwa_data.SystemSound.BGM_LB) {
@@ -1240,7 +1405,7 @@ module wwa_main {
                 }
             }
         }
-        public onpasswordloadcalled() {
+        public onpasswordloadcalled( ) {
             if (this._usePassword) {
                 var bg = <HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]));
                 bg.classList.add("onpress");
@@ -1389,7 +1554,9 @@ module wwa_main {
                     this.onselectitem(12);
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_I)) {
                     this.onchangespeed(wwa_data.SpeedChange.DOWN);
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_P)) {
+                } else if (
+                    this._keyStore.checkHitKey(KeyCode.KEY_P) ||
+                    this._keyStore.checkHitKey(KeyCode.KEY_F2)) {
                     this.onchangespeed(wwa_data.SpeedChange.UP);
                 } else if (
                     this._keyStore.getKeyState(KeyCode.KEY_F1) === wwa_input.KeyState.KEYDOWN ||
@@ -1595,12 +1762,13 @@ module wwa_main {
             }
 
             // draw
-
             this._drawAll();
 
             this._mainCallCounter++;
             this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
-            this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
+            if (!this._player.isWaitingMessage() || !this._isClassicModeEnable) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
+                this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
+            }
             if (this._camera.isResetting()) {
                 this._camera.advanceTransitionStepNum();
             }
@@ -1782,13 +1950,8 @@ module wwa_main {
 
             if (this._player.isLookingAround() && !this._player.isWaitingMessage()) {
                 crop = this._wwaData.playerImgPosX + dirChanger[ Math.floor(this._mainCallCounter % 64 / 8)];
-                // 基準マスから半マス以上踏み出している場合は右の画像パーツで描画
-            } else if (
-                (dir === wwa_data.Direction.LEFT || dir === wwa_data.Direction.RIGHT) &&
-                Math.abs(poso.x) > Math.floor(Consts.CHIP_SIZE / 2) ||
-                (dir === wwa_data.Direction.UP || dir === wwa_data.Direction.DOWN) &&
-                Math.abs(poso.y) > Math.floor(Consts.CHIP_SIZE / 2)
-                ) {
+                crop = this._wwaData.playerImgPosX + relpcrop + 1;
+            } else if (this._player.isMovingImage()) {
                 crop = this._wwaData.playerImgPosX + relpcrop + 1;
             } else {
                 crop = this._wwaData.playerImgPosX + relpcrop;
@@ -1830,7 +1993,7 @@ module wwa_main {
                     var imgType: boolean = (
                         this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME ||
                         this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
-                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0 
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
                     );
                     var ppxo =
                         this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
@@ -2185,7 +2348,12 @@ module wwa_main {
                 pstatus.defence < status.defence - Consts.STATUS_MINUS_BORDER ||
                 status.gold > Consts.STATUS_MINUS_BORDER &&
                 pstatus.gold < status.gold - Consts.STATUS_MINUS_BORDER) {
+
                 this._wwaData.mapObject[pos.y][pos.x] = 0;
+
+                // 前方パーツ重複実行防止
+                this._keyStore.allClear();
+                this._mouseStore.clear();
                 return;
             }
             status.energy = status.energy > Consts.STATUS_MINUS_BORDER ?
@@ -2420,7 +2588,7 @@ module wwa_main {
                                 if (this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] !== "BLANK") {
                                  this._messageQueue.push( new wwa_message.MessageInfo(
                                      this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] === "" ?
-                                     "アイテムをもっていない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
+                                     "アイテムを持っていない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
                                      true)
                                     );
                                  };
@@ -2453,11 +2621,11 @@ module wwa_main {
                                     this.appearParts(this._yesNoChoicePartsCoord, wwa_data.AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                                 } else {
                                     // アイテムをボックスがいっぱい
-                                    if (this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] !== "BLANK") {
+                                    if (this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM] !== "BLANK") {
                                         this._messageQueue.push(
                                             new wwa_message.MessageInfo(
-                                                this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM] === "" ?
-                                                    "これ以上、アイテムを持てません。" : this._wwaData.message[wwa_data.SystemMessage1.NO_ITEM],
+                                                this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM] === "" ?
+                                                    "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[wwa_data.SystemMessage2.FULL_ITEM],
                                                 true
                                             )
                                         );
@@ -2469,7 +2637,7 @@ module wwa_main {
                                     this._messageQueue.push(
                                         new wwa_message.MessageInfo(
                                         this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY] === "" ?
-                                            "所持金が足りない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY],
+                                            "所持金がたりない。" : this._wwaData.message[wwa_data.SystemMessage1.NO_MONEY],
                                             true
                                             )
                                     );
@@ -3185,6 +3353,7 @@ module wwa_main {
                     this._player.setPartsAppearedFlag();
                 }
                 this._wwaData = newData;
+                this._replaceAllRandomObjects();
                 this.updateCSSRule();
         }
 
@@ -3291,9 +3460,18 @@ module wwa_main {
                     if (
                         partsID === 0 ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] === wwa_data.MoveType.STATIC  ||
-                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE  ||
+                        this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM
                         ) {
                         continue;
+                    }
+                    // 作成ツールで空白の移動属性が指定でき、その場合に意図しない値が入ることがあるため、これらの属性でなければ静止とみなす.
+                    if (
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.CHASE_PLAYER &&
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.RUN_OUT &&
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.HANG_AROUND
+                    ) {
+                    continue;
                     }
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
                     if (moveMode !== wwa_data.MoveType.HANG_AROUND) {
@@ -3315,7 +3493,8 @@ module wwa_main {
                                 this._setObjectsInNextFrame(posc, yCand, leftX, topY, objectsInNextFrame, partsID);
                             } else {
                                 thirdCand = this._getThirdCandidate(playerIsMoving, pos, candCoord, moveMode, objectsInNextFrame);
-                                if (thirdCand !== null) {
+                                // thirdCandを用いた第三候補の作成は WWA 3.10以降のみで有効
+                                if (thirdCand !== null &&  this._wwaData.version >= 31 ) {
                                     this._setObjectsInNextFrame(posc, thirdCand, leftX, topY, objectsInNextFrame, partsID);
                                 } else {
                                     // うろうろする
@@ -3475,7 +3654,8 @@ module wwa_main {
         private _getRandomMoveCoord(playerIsMoving: boolean, currentPos: wwa_data.Position, objectsInNextFrame: number[][]): wwa_data.Coord {
             var currentCoord = currentPos.getPartsCoord();
             var resultCoord: wwa_data.Coord = currentCoord.clone();
-            for (var i = 0; i < Consts.RANDOM_MOVE_ITERATION_NUM; i++) {
+            var iterNum = this._wwaData.version < 31 ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31 : Consts.RANDOM_MOVE_ITERATION_NUM;
+            for (var i = 0; i < iterNum; i++) {
                 var rand = Math.floor(Math.random() * 8);
                 resultCoord.x = currentCoord.x + wwa_data.vx[ rand ];
                 resultCoord.y = currentCoord.y + wwa_data.vy[ rand ];
@@ -3555,7 +3735,7 @@ module wwa_main {
             var xLeft = Math.max(0, cpParts.x);
             var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1);
             var yTop = Math.max(0, cpParts.y);
-            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1;
+            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
             var monsterList: number[] = [];
             this.playSound(wwa_data.SystemSound.DECISION);
             for (var x: number = xLeft; x <= xRight; x++) {
@@ -3612,7 +3792,7 @@ module wwa_main {
             }
             if (this._player.isControllable()) {
                 this.setMessageQueue(
-                    "【ショートカットキーの一覧】\n" +
+                    "　【ショートカットキーの一覧】\n" +
                     "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
                     //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
                     "Ｆ３：復帰用パスワード入力\n" +
@@ -3625,10 +3805,14 @@ module wwa_main {
                     "Ｆ１２：このリストの表示\n" +
                     //                                "Ｌ：リンクを別のウィンドウで開く\n" +
                     "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
-                    "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
-                    " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" + 
-                    "現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS,
+                    "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
+                    "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
+                    "　　　Ｉ: 移動速度を落とす／\n" + 
+                    "Ｆ２、Ｐ: 移動速度を上げる\n" + 
+                    "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                    "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                    "　マップデータ バージョン: " +
+                    Math.floor( this._wwaData.version / 10 ) + "." + this._wwaData.version % 10,
                     false, true
                     );
             }
@@ -3881,6 +4065,7 @@ module wwa_main {
             this.updateCSSRule();
         }
         public updateCSSRule() {
+            var messageOpacity = this._isClassicModeEnable ? 1 : 0.9;
             if (this._stylePos === void 0) {
                 this._stylePos = new Array(2);
             } else {
@@ -3897,9 +4082,9 @@ module wwa_main {
             if (this._sheet.addRule !== void 0) {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(
                     "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window",
-                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);" +
-                    "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);" +
-                    "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);"
+                    "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");" +
+                    "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);" +
+                    "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);"
                     );
                 this._stylePos[wwa_data.SelectorType.SIDEBAR] = this._sheet.addRule(
                     "div#wwa-sidebar",
@@ -3909,9 +4094,9 @@ module wwa_main {
             } else {
                 this._stylePos[wwa_data.SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(
                     "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window {\n"+
-                        "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ",0.9);\n" +
-                        "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ",1);\n" +
-                       "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ",1);\n" +
+                        "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");\n" +
+                        "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);\n" +
+                       "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);\n" +
                     "}",0);
                 this._stylePos[wwa_data.SelectorType.SIDEBAR] = this._sheet.insertRule(
                     "div#wwa-sidebar {\n" +
@@ -3945,6 +4130,10 @@ module wwa_main {
             this._monsterWindow.show();
         }
 
+        public isClassicMode(): boolean {
+            return this._isClassicModeEnable;
+        }
+
         public isConsoleOutputMode(): boolean {
             return this._useConsole;
         }
@@ -3974,12 +4163,18 @@ module wwa_main {
         wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"),  titleImgName === null ? "cover.gif" : titleImgName );
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
         var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
-        var loaderAudioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio");
+
+        var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
         var urlgateEnabled = true;
         if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
             urlgateEnabled = false;
         }
-        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled,loaderAudioDirectory);
+        var classicModeAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-classic-mode-enable"); // null値の可能性もあるので一旦属性を取得する
+        var classicModeEnabled = false;
+        if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
+            classicModeEnabled = true;
+        }
+        wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, audioDirectory);
     }
 
 

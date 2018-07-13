@@ -453,7 +453,11 @@ module wwa_message {
             this._element.style.position = "absolute";
             this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "10px"
+            if (_wwa.isClassicMode()) {
+                this._element.style.borderRadius = "15px";
+            } else {
+                this._element.style.borderRadius = "10px";
+            }
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = zIndex + "";
 //            this._element.style.opacity = "0.9";
@@ -559,7 +563,15 @@ module wwa_message {
             isVisible: boolean,
             parentElement: HTMLElement
             ) {
-            super(wwa, new wwa_data.Coord(coord.x, coord.y), 340, 30, isVisible, parentElement, 202);
+            if (wwa.isClassicMode()) {
+                super(wwa, new wwa_data.Coord(wwa_data.WWAConsts.CHIP_SIZE * 2, 30), wwa_data.WWAConsts.CHIP_SIZE * 7, 40, isVisible, parentElement, 202);
+                this._element.style.borderWidth = "0";
+                this._element.style.borderRadius = "4px";
+                this._element.style.fontSize = "20px";
+                this._element.style.lineHeight = "40px";
+            } else {
+                super(wwa, new wwa_data.Coord(coord.x, coord.y), 340, 30, isVisible, parentElement, 202);
+            }
             this._element.style.textAlign = "center";
             if (this._isVisible) {
                 this._element.style.display = "block";
@@ -639,15 +651,22 @@ module wwa_message {
             this._element.style.position = "absolute";
             this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
-            this._element.style.borderRadius = "10px";
+            if (wwa.isClassicMode()) {
+                this._element.style.borderRadius = "15px";
+            } else {
+                this._element.style.borderRadius = "10px";
+            }
             this._element.classList.add("wwa-message-window");
             this._element.style.zIndex = "400";
-//            this._element.style.opacity = "0.9";
             this._msgWrapperElement = document.createElement("div");
-            this._msgWrapperElement.style.padding = "7px";
-            this._msgWrapperElement.style.margin = "0";
             this._msgWrapperElement.style.textAlign = "left";
             this._msgWrapperElement.style.wordWrap = "break-word";
+            if (wwa.isClassicMode()) {
+                this._msgWrapperElement.style.margin = "8px 0 8px 16px";
+            } else {
+                this._msgWrapperElement.style.margin = "0";
+                this._msgWrapperElement.style.padding = "7px";
+            }
             this._element.appendChild(this._msgWrapperElement);
             this._dummyElement = document.createElement("div");
             this._dummyElement.style.display = "none";
@@ -799,6 +818,9 @@ module wwa_message {
         public isVisible(): boolean {
             return this._isVisible;
         }
+        private isWideChar(char: string): boolean {
+            return (char.match(/^[^\x01-\x7E\xA1-\xDF]+$/) !== null);
+        }
         public update(): void {
             var base = this._wwa.getYesNoImgCoord();
             if (this._isYesno) {
@@ -830,12 +852,37 @@ module wwa_message {
             }
             this._msgWrapperElement.textContent = "";
             var mesArray = this._message.split("\n");
-            for (var i = 0; i < mesArray.length; i++) {
-                var sp = document.createElement("span");
-                sp.textContent = mesArray[i];
-                this._msgWrapperElement.appendChild(sp);
+            mesArray.forEach((line, i) => {
+                var lsp = document.createElement("span"); // Logical SPan
+                if (this._wwa.isClassicMode()) {
+                    var count = 0, lineStr = "";
+                    for (var j = 0; j < mesArray[i].length || count != 0; j++) { // 1文字
+                        if (this.isWideChar(mesArray[i].charAt(j))) {
+                            count += 2; // 全角の場合
+                        } else {
+                            count += 1; // 半角の場合
+                        }
+                        lineStr += mesArray[i].charAt(j);
+                        if (count + 1 > wwa_data.WWAConsts.MSG_STR_WIDTH * 2) {
+                            if (mesArray[i].charAt(j + 1) === "。" || mesArray[i].charAt(j + 1) === "、") {
+                                lineStr += mesArray[i].charAt(j + 1); // 句読点の場合は行末に入れる
+                                j++;
+                            }
+                            var vsp = document.createElement("span"); // View SPan
+                                vsp.style.display = "inline-block";
+                                vsp.style.width = "100%";
+                                vsp.textContent = lineStr;
+                            lsp.appendChild(vsp);
+                            count = 0;
+                            lineStr = "";
+                        }
+                    }
+                } else {
+                    lsp.textContent = mesArray[i];
+                }
+                this._msgWrapperElement.appendChild(lsp);
                 this._msgWrapperElement.appendChild(document.createElement("br"));
-            }
+            });
             if (this._isVisible) {
                 this._element.style.left = this._x + "px";
                 this._element.style.top = this._y + "px";
