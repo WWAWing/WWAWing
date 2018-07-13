@@ -4034,18 +4034,43 @@ var wwa_main;
                         var dist = mousePos.substract(playerPos);
                         var dx = Math.abs(dist.x);
                         var dy = Math.abs(dist.y);
-                        var dir;
-                        if (dist.y > 0 && dy > dx) {
-                            dir = wwa_data.Direction.DOWN;
+                        var sideFlag = false;
+                        if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
+                            //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
+                            switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
+                                case 0:
+                                    sideFlag = true;
+                                    dir = wwa_data.Direction.LEFT;
+                                    break;
+                                case Consts.H_PARTS_NUM_IN_WINDOW - 1:
+                                    sideFlag = true;
+                                    dir = wwa_data.Direction.RIGHT;
+                                    break;
+                            }
+                            switch ((playerPos.y / Consts.CHIP_SIZE | 0)) {
+                                case 0:
+                                    sideFlag = true;
+                                    dir = wwa_data.Direction.UP;
+                                    break;
+                                case Consts.V_PARTS_NUM_IN_WINDOW - 1:
+                                    sideFlag = true;
+                                    dir = wwa_data.Direction.DOWN;
+                                    break;
+                            }
                         }
-                        else if (dist.y < 0 && dy > dx) {
-                            dir = wwa_data.Direction.UP;
-                        }
-                        else if (dist.x > 0 && dy < dx) {
-                            dir = wwa_data.Direction.RIGHT;
-                        }
-                        else if (dist.x < 0 && dy < dx) {
-                            dir = wwa_data.Direction.LEFT;
+                        if (!sideFlag) {
+                            if (dist.y > 0 && dy > dx) {
+                                dir = wwa_data.Direction.DOWN;
+                            }
+                            else if (dist.y < 0 && dy > dx) {
+                                dir = wwa_data.Direction.UP;
+                            }
+                            else if (dist.x > 0 && dy < dx) {
+                                dir = wwa_data.Direction.RIGHT;
+                            }
+                            else if (dist.x < 0 && dy < dx) {
+                                dir = wwa_data.Direction.LEFT;
+                            }
                         }
                         _this._mouseStore.setPressInfo(dir);
                         e.preventDefault();
@@ -4082,7 +4107,7 @@ var wwa_main;
                         var dy = Math.abs(dist.y);
                         var dir;
                         var sideFlag = false;
-                        if ((dist.x < Consts.CHIP_SIZE) && (dist.y < Consts.CHIP_SIZE)) {
+                        if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
                             //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
                             switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
                                 case 0:
