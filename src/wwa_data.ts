@@ -342,8 +342,7 @@ module wwa_data {
         CALL_BY_RESTART_GAME,
         CALL_BY_GOTO_WWA,
         CALL_BY_PASSWORD_SAVE,
-        CALL_BY_PASSWORD_LOAD,
-        CALL_BY_GAME_END
+        CALL_BY_PASSWORD_LOAD
     }
 
     export enum SidebarButton {

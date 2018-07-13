@@ -163,6 +163,8 @@ module wwa_main {
         private _yesNoURL: string;
         private _waitTimeInCurrentFrame: number;
         private _usePassword: boolean;
+        private _useHelp: boolean; 
+        private _useBattleReportButton: boolean;
         private _wwaWrapperElement: HTMLDivElement;
         private _mouseControllerElement: HTMLDivElement;
         private _statusPressCounter: wwa_data.Status; // ステータス型があるので、アニメーション残りカウンタもこれで代用しまぁす。
@@ -237,6 +239,7 @@ module wwa_main {
             browser.os = ua.match(/windows/i) ? 'Windows' : '';
             browser.os = browser.os || (ua.match(/macintosh/i) ? 'Macintosh' : '');
             browser.os = browser.os || (ua.match(/iphone|ipad|ipod/i) ? 'iOS' : '');
+            browser.os = browser.os || (ua.match(/oculus/i) ? 'Oculus' : '');
             browser.os = browser.os || (ua.match(/android/i) ? 'Android' : '');
             browser.os = browser.os || (ua.match(/nintendo/i) ? 'Nintendo' : '');
             browser.os = browser.os || (ua.match(/playstation/i) ? 'PlayStation' : '');
@@ -262,9 +265,23 @@ module wwa_main {
                 }
             }
             this._usePassword = browser.os !== "Nintendo";
+            this._useBattleReportButton = true;
+            this._useHelp = true;
+            switch (browser.os) {
+                case "Android":
+                case "iOS":
+                case "Oculus":
+                case "Nintendo":
+                case "PlayStation":
+                    this._useHelp = false;
+                    break;
+            }
+
             if (!this._usePassword) {
                 util.$id("cell-load").textContent = "Quick Load";
-                util.$id("cell-gotowwa").textContent = "Game End";
+            }
+            if (this._useBattleReportButton) {
+                util.$id("cell-gotowwa").textContent = "Battle Report";
             }
             if (window["audiojs"] === void 0) {
                 alert("Audio.jsのロードに失敗しました。audioフォルダの中にaudio.min.jsは配置されていますか？");
@@ -520,14 +537,41 @@ module wwa_main {
                         var dx = Math.abs(dist.x);
                         var dy = Math.abs(dist.y);
                         var dir: wwa_data.Direction;
-                        if (dist.y > 0 && dy > dx) {
-                            dir = wwa_data.Direction.DOWN;
-                        } else if (dist.y < 0 && dy > dx) {
-                            dir = wwa_data.Direction.UP;
-                        } else if (dist.x > 0 && dy < dx) {
-                            dir = wwa_data.Direction.RIGHT;
-                        } else if (dist.x < 0 && dy < dx) {
-                            dir = wwa_data.Direction.LEFT;
+                        var sideFlag = false;
+                        if ((dist.x < Consts.CHIP_SIZE) && (dist.y < Consts.CHIP_SIZE)) {
+                            //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
+                            switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
+                                case 0:
+                                    sideFlag = true;
+                                    dir = wwa_data.Direction.LEFT;
+                                    break;
+                                case Consts.H_PARTS_NUM_IN_WINDOW - 1:
+                                    sideFlag = true;
+                                    dir = wwa_data.Direction.RIGHT;
+                                    break;
+                            }
+                            switch ((playerPos.y / Consts.CHIP_SIZE | 0)) {
+                                case 0:
+                                    sideFlag = true;
+                                    dir = wwa_data.Direction.UP;
+                                    break;
+                                case Consts.V_PARTS_NUM_IN_WINDOW - 1:
+                                    sideFlag = true;
+                                    dir = wwa_data.Direction.DOWN;
+                                    break;
+                            }
+
+                        }
+                        if (!sideFlag) {
+                            if (dist.y > 0 && dy > dx) {
+                                dir = wwa_data.Direction.DOWN;
+                            } else if (dist.y < 0 && dy > dx) {
+                                dir = wwa_data.Direction.UP;
+                            } else if (dist.x > 0 && dy < dx) {
+                                dir = wwa_data.Direction.RIGHT;
+                            } else if (dist.x < 0 && dy < dx) {
+                                dir = wwa_data.Direction.LEFT;
+                            }
                         }
                         this._mouseStore.setPressInfo(dir, e.changedTouches[0].identifier);
                         if (e.cancelable) {
@@ -1133,12 +1177,12 @@ module wwa_main {
                 this.setMessageQueue("初めからスタートしなおしますか？", true, true);
                 this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME;
             } else if (button === wwa_data.SidebarButton.GOTO_WWA) {
-                if (this._usePassword) {
+                if (this._useBattleReportButton) {
+                    this.launchBattleEstimateWindow();
+                    (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+                } else {
                     this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                     this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA;
-                } else {
-                    this.setMessageQueue("このゲームを終了しますか？", true, true);
-                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_GAME_END;
                 }
             }
         }
@@ -2399,9 +2443,6 @@ module wwa_main {
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
                         location.href = wwa_util.$escapedURI(Consts.WWA_HOME);
                         (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
-                    } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GAME_END) {
-                        window.history.back(-1);
-                        (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_LOAD) {
                          (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
                         this._player.setPasswordWindowWating();
@@ -3506,7 +3547,7 @@ module wwa_main {
         }
 
         private _displayHelp(): void {
-            if (!this._usePassword) {
+            if (!this._useHelp) {
                 //パスワードなしの場合はヘルプを開かない
                 return;
             }
