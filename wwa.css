@@ -596,3 +596,15 @@ div.item-disp {
     overflow: hidden;
     z-index: -9999;
 }
+
+#wwa-wrapper.useScaleUp #wwa-text-message-window>div:nth-child(2) {
+    height: 80px !important;
+}
+#wwa-wrapper.useScaleUp #wwa-text-message-window>div:nth-child(3) {
+    transform: scale(1.5,1.5) translate(-25px,-6px);
+    image-rendering: pixelated;
+    width: 100px !important;
+}
+#wwa-wrapper.useScaleUp #wwa-text-message-window>div:nth-child(3)>div{
+    margin: 0 5px !important;
+}

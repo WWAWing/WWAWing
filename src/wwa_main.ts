@@ -163,6 +163,7 @@ module wwa_main {
         private _yesNoURL: string;
         private _waitTimeInCurrentFrame: number;
         private _usePassword: boolean;
+        private _useScaleUp: boolean;
         private _useHelp: boolean; 
         private _useBattleReportButton: boolean;
         private _wwaWrapperElement: HTMLDivElement;
@@ -249,7 +250,15 @@ module wwa_main {
             this._mainCallCounter = 0;
             this._animationCounter = 0;
             this._statusPressCounter = new wwa_data.Status(0, 0, 0, 0);
-            if(!loaderAudioDirectory) loaderAudioDirectory = "./audio/";
+
+            if (!loaderAudioDirectory) loaderAudioDirectory = "audio/";
+
+            var mapFileName = wwa_util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");//ファイル名取得
+            var pathList = mapFileName.split("/");//ディレクトリで分割
+            pathList.pop();//最後のファイルを消す
+            pathList.push(loaderAudioDirectory);//最後に画像ファイル名を追加
+            loaderAudioDirectory = pathList.join("/");  //pathを復元
+
             this._audioDirectory = loaderAudioDirectory;
             var t_start: number = new Date().getTime();
             var isLocal = !!location.href.match(/^file/);
@@ -267,6 +276,7 @@ module wwa_main {
             this._usePassword = browser.os !== "Nintendo";
             this._useBattleReportButton = true;
             this._useHelp = true;
+            this._useScaleUp = false;
             switch (browser.os) {
                 case "Android":
                 case "iOS":
@@ -274,6 +284,13 @@ module wwa_main {
                 case "Nintendo":
                 case "PlayStation":
                     this._useHelp = false;
+                    break;
+            }
+            switch (browser.os) {
+                case "Windows":
+                case "Android":
+                case "iOS":
+                    util.$id("wwa-wrapper").classList.add("useScaleUp");
                     break;
             }
 
@@ -299,6 +316,14 @@ module wwa_main {
                 }
 
                 this._wwaData = e.data.wwaData;
+
+                var mapFileName = wwa_util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");//ファイル名取得
+                var pathList = mapFileName.split("/");//ディレクトリで分割
+                pathList.pop();//最後のファイルを消す
+                pathList.push(this._wwaData.mapCGName);//最後に画像ファイル名を追加
+                this._wwaData.mapCGName = pathList.join("/");  //pathを復元
+
+
                 this.initCSSRule();
                 this._setProgressBar(getProgress(0, 4, wwa_data.LoadStage.GAME_INIT) );
                 var cgFile = new Image();
@@ -647,7 +672,7 @@ module wwa_main {
                 });
                 util.$id("button-gotowwa").addEventListener("click", () => {
                     if (this._player.isControllable()) {
-                        this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA);
+                        this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA,true);
                     }
                 });
 
@@ -1203,9 +1228,12 @@ module wwa_main {
                 this.setMessageQueue("初めからスタートしなおしますか？", true, true);
                 this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME;
             } else if (button === wwa_data.SidebarButton.GOTO_WWA) {
-                if (this._useBattleReportButton) {
-                    this.launchBattleEstimateWindow();
+                if (!forcePassword) {
                     (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+                    this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
+                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA;
+                } else if (this._useBattleReportButton) {
+                    this.launchBattleEstimateWindow();
                 } else {
                     this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                     this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA;
@@ -3540,9 +3568,13 @@ module wwa_main {
                     }
                 }
             }
+            if (this._useBattleReportButton) {
+                (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.add("onpress");
+            }
             if (monsterList.length === 0) {
+                (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 return false;
-            } 
+            }
             this._battleEstimateWindow.update(this._player.getStatus(), monsterList);
             this._battleEstimateWindow.show();
             this._player.setEstimateWindowWating();
@@ -3552,6 +3584,7 @@ module wwa_main {
         public hideBattleEstimateWindow(): void {
             this._battleEstimateWindow.hide();
             this._player.clearEstimateWindowWaiting();
+            (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
         }
 
         public hidePasswordWindow( isCancel: boolean = false): void {

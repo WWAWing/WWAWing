@@ -635,6 +635,7 @@ module wwa_message {
             this._isYesno = isYesno;
             this._isItemMenu = isItemMenu;
             this._element = document.createElement("div");
+            this._element.id = "wwa-text-message-window";
             this._element.style.position = "absolute";
             this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
