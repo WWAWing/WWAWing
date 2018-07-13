@@ -224,17 +224,17 @@ module wwa_main {
         private _soundDecodingFlag: boolean;
         private audioExtension: string = "";
 
-        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean= false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
+        constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
             var ctxCover;
-          window.addEventListener("click", (e): void=> {
-            // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
-            this._isActive = false;
-          });
-          wwa_util.$id("wwa-wrapper").addEventListener("click", (e): void=> {
-            e.stopPropagation();
+            window.addEventListener("click", (e): void => {
+                // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
+                this._isActive = false;
+            });
+            wwa_util.$id("wwa-wrapper").addEventListener("click", (e): void => {
+                e.stopPropagation();
+                this._isActive = true;
+            });
             this._isActive = true;
-          });
-          this._isActive = true;
 
             if (titleImgName === null) {
                 this._hasTitleImg = false;
@@ -283,18 +283,13 @@ module wwa_main {
             this._statusPressCounter = new wwa_data.Status(0, 0, 0, 0);
 
 
-            if(!audioDirectory){
-              audioDirectory = "./audio/";
-            } else if( audioDirectory[ audioDirectory.length - 1 ] !== "/" ) {
-              audioDirectory += "/"; 
+            if (!audioDirectory) {
+                audioDirectory = "./audio/";
+            } else if (audioDirectory[audioDirectory.length - 1] !== "/") {
+                audioDirectory += "/";
             }
-            var mapFileName = wwa_util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");//ファイル名取得
-            var pathList = mapFileName.split("/");//ディレクトリで分割
-            pathList.pop();//最後のファイルを消す
-            pathList.push(loaderAudioDirectory);//最後に画像ファイル名を追加
-            loaderAudioDirectory = pathList.join("/");  //pathを復元
 
-            this._audioDirectory = loaderAudioDirectory;
+            this._audioDirectory = audioDirectory;
             var t_start: number = new Date().getTime();
             var isLocal = !!location.href.match(/^file/);
             if (isLocal) {
@@ -338,13 +333,13 @@ module wwa_main {
             if (window["audiojs"] === void 0) {
                 this._setErrorMessage("Audio.jsのロードに失敗しました。\n" +
                     "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
-                    "フォルダを変更される場合には data-wwa-audio-dir 属性を\n" + 
+                    "フォルダを変更される場合には data-wwa-audio-dir 属性を\n" +
                     "指定してください", ctxCover);
                 return;
             }
 
             this._loadHandler = (e): void => {
-                if (e.data.error !== null && e.data.error !== void 0 ) {
+                if (e.data.error !== null && e.data.error !== void 0) {
                     this._setErrorMessage("下記のエラーが発生しました。: \n" + e.data.error.message, ctxCover);
                     return;
                 }
@@ -358,10 +353,10 @@ module wwa_main {
                 try {
                     if (this._hasTitleImg) {
                         util.$id("version").textContent += (
-                                " (Map data Ver. "
-                                + Math.floor( this._wwaData.version / 10 ) + "." +
-                                + this._wwaData.version % 10 +")"
-                            );
+                            " (Map data Ver. "
+                            + Math.floor(this._wwaData.version / 10) + "." +
+                            + this._wwaData.version % 10 + ")"
+                        );
                     } else {
                         this._setLoadingMessage(ctxCover, 1);
                     }
@@ -375,13 +370,13 @@ module wwa_main {
 
 
                 this.initCSSRule();
-                this._setProgressBar(getProgress(0, 4, wwa_data.LoadStage.GAME_INIT) );
+                this._setProgressBar(getProgress(0, 4, wwa_data.LoadStage.GAME_INIT));
                 this._setLoadingMessage(ctxCover, 2);
                 var cgFile = new Image();
                 cgFile.src = this._wwaData.mapCGName;
                 cgFile.addEventListener("error", (): void => {
                     this._setErrorMessage("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
-                        "管理者の方へ: データがアップロードされているか、\n" + 
+                        "管理者の方へ: データがアップロードされているか、\n" +
                         "パーミッションを確かめてください。", ctxCover);
                 });
                 this._restartData = JSON.parse(JSON.stringify(this._wwaData));
@@ -417,7 +412,7 @@ module wwa_main {
                 iconNode_gold.style.backgroundPosition = "-240px -80px";
                 iconNode_gold.style.backgroundImage = "url(" + escapedFilename + ")";
 
-                this._setProgressBar(getProgress(1, 4, wwa_data.LoadStage.GAME_INIT) );
+                this._setProgressBar(getProgress(1, 4, wwa_data.LoadStage.GAME_INIT));
                 this._setLoadingMessage(ctxCover, 3);
                 this._replaceAllRandomObjects();
 
@@ -450,56 +445,56 @@ module wwa_main {
                 this._lastMessage = new wwa_message.MessageInfo("", false, false, []);
                 this._execMacroListInNextFrame = [];
                 this._passwordLoadExecInNextFrame = false;
-                this._setProgressBar(getProgress(2, 4, wwa_data.LoadStage.GAME_INIT) );
+                this._setProgressBar(getProgress(2, 4, wwa_data.LoadStage.GAME_INIT));
                 this._setLoadingMessage(ctxCover, 4);
                 window.addEventListener("keydown", (e): void => {
-                    if( !this._isActive ) { return; }
+                    if (!this._isActive) { return; }
                     if (browser.os === "Nintendo") {
                         e.preventDefault();
                         e.stopPropagation();
                         return;
                     }
                     this._keyStore.setPressInfo(e.keyCode);
-                    if( e.keyCode === KeyCode.KEY_F5 ) {
+                    if (e.keyCode === KeyCode.KEY_F5) {
                         e.preventDefault()
                         return;
                     }
-                    if( !this._player.isWaitingMessage() ) {
-                      if ( !this._player.isWaitingPasswordWindow()) {
-                        if (e.keyCode === KeyCode.KEY_DOWN ||
-                            e.keyCode === KeyCode.KEY_LEFT ||
-                            e.keyCode === KeyCode.KEY_RIGHT ||
-                            e.keyCode === KeyCode.KEY_UP ||
-                            e.keyCode === KeyCode.KEY_SHIFT ||
-                            e.keyCode === KeyCode.KEY_ENTER ||
-                            e.keyCode === KeyCode.KEY_1 ||
-                            e.keyCode === KeyCode.KEY_2 ||
-                            e.keyCode === KeyCode.KEY_3 ||
-                            e.keyCode === KeyCode.KEY_A ||
-                            e.keyCode === KeyCode.KEY_C ||
-                            e.keyCode === KeyCode.KEY_D ||
-                            e.keyCode === KeyCode.KEY_E ||
-                            e.keyCode === KeyCode.KEY_M ||
-                            e.keyCode === KeyCode.KEY_N ||
-                            e.keyCode === KeyCode.KEY_Q ||
-                            e.keyCode === KeyCode.KEY_S ||
-                            e.keyCode === KeyCode.KEY_W ||
-                            e.keyCode === KeyCode.KEY_X ||
-                            e.keyCode === KeyCode.KEY_Y ||
-                            e.keyCode === KeyCode.KEY_Z ||
-                            e.keyCode === KeyCode.KEY_ESC ||
-                            e.keyCode === KeyCode.KEY_F1 ||
-                            e.keyCode === KeyCode.KEY_F2 ||
-                            e.keyCode === KeyCode.KEY_F3 ||
-                            e.keyCode === KeyCode.KEY_F4 ||
-                            e.keyCode === KeyCode.KEY_F6 ||
-                            e.keyCode === KeyCode.KEY_F7 ||
-                            e.keyCode === KeyCode.KEY_F8 ||
-                            e.keyCode === KeyCode.KEY_F12 ||
-                            e.keyCode === KeyCode.KEY_SPACE) {
-                              e.preventDefault();
+                    if (!this._player.isWaitingMessage()) {
+                        if (!this._player.isWaitingPasswordWindow()) {
+                            if (e.keyCode === KeyCode.KEY_DOWN ||
+                                e.keyCode === KeyCode.KEY_LEFT ||
+                                e.keyCode === KeyCode.KEY_RIGHT ||
+                                e.keyCode === KeyCode.KEY_UP ||
+                                e.keyCode === KeyCode.KEY_SHIFT ||
+                                e.keyCode === KeyCode.KEY_ENTER ||
+                                e.keyCode === KeyCode.KEY_1 ||
+                                e.keyCode === KeyCode.KEY_2 ||
+                                e.keyCode === KeyCode.KEY_3 ||
+                                e.keyCode === KeyCode.KEY_A ||
+                                e.keyCode === KeyCode.KEY_C ||
+                                e.keyCode === KeyCode.KEY_D ||
+                                e.keyCode === KeyCode.KEY_E ||
+                                e.keyCode === KeyCode.KEY_M ||
+                                e.keyCode === KeyCode.KEY_N ||
+                                e.keyCode === KeyCode.KEY_Q ||
+                                e.keyCode === KeyCode.KEY_S ||
+                                e.keyCode === KeyCode.KEY_W ||
+                                e.keyCode === KeyCode.KEY_X ||
+                                e.keyCode === KeyCode.KEY_Y ||
+                                e.keyCode === KeyCode.KEY_Z ||
+                                e.keyCode === KeyCode.KEY_ESC ||
+                                e.keyCode === KeyCode.KEY_F1 ||
+                                e.keyCode === KeyCode.KEY_F2 ||
+                                e.keyCode === KeyCode.KEY_F3 ||
+                                e.keyCode === KeyCode.KEY_F4 ||
+                                e.keyCode === KeyCode.KEY_F6 ||
+                                e.keyCode === KeyCode.KEY_F7 ||
+                                e.keyCode === KeyCode.KEY_F8 ||
+                                e.keyCode === KeyCode.KEY_F12 ||
+                                e.keyCode === KeyCode.KEY_SPACE) {
+                                e.preventDefault();
                             }
-                      }
+                        }
                     } else {
                         if (e.keyCode === KeyCode.KEY_DOWN ||
                             e.keyCode === KeyCode.KEY_LEFT ||
@@ -509,19 +504,19 @@ module wwa_main {
                             e.keyCode === KeyCode.KEY_ENTER ||
                             e.keyCode === KeyCode.KEY_ESC ||
                             e.keyCode === KeyCode.KEY_SPACE) {
-                              e.preventDefault();
-                            }
+                            e.preventDefault();
+                        }
                     }
                 });
                 window.addEventListener("keyup", (e): void => {
-                    if( !this._isActive ) { return; }
+                    if (!this._isActive) { return; }
                     if (browser.os === "Nintendo") {
                         e.preventDefault();
                         e.stopPropagation();
                         return;
                     }
                     this._keyStore.setReleaseInfo(e.keyCode);
-                    if( e.keyCode === KeyCode.KEY_F5 ) {
+                    if (e.keyCode === KeyCode.KEY_F5) {
                         e.preventDefault()
                     } else if (e.keyCode === KeyCode.KEY_DOWN ||
                         e.keyCode === KeyCode.KEY_LEFT ||
@@ -569,15 +564,15 @@ module wwa_main {
                 });
                 // IEのF1キー対策
                 window.addEventListener("help", (e): void => {
-                    if( !this._isActive ) { return; }
+                    if (!this._isActive) { return; }
                     e.preventDefault();
                 });
 
-                
+
                 this._wwaWrapperElement = <HTMLDivElement>(wwa_util.$id("wwa-wrapper"));
                 this._mouseControllerElement = <HTMLDivElement>(wwa_util.$id("wwa-controller"));
                 this._mouseControllerElement.addEventListener("mousedown", (e): void => {
-                    if( !this._isActive ) { return; }
+                    if (!this._isActive) { return; }
                     if (e.which === 1) {
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
@@ -628,13 +623,13 @@ module wwa_main {
                         e.preventDefault();
                     }
                 });
-                
+
 
                 this._mouseControllerElement.addEventListener("mouseleave", (e): void => {
                     this._mouseStore.clear();
                 });
                 this._mouseControllerElement.addEventListener("mouseup", (e): void => {
-                    if( !this._isActive ) { return; }
+                    if (!this._isActive) { return; }
                     if (e.which === 1) {
                         this._mouseStore.setReleaseInfo();
                         e.preventDefault();
@@ -653,7 +648,7 @@ module wwa_main {
                     }
 
                     this._mouseControllerElement.addEventListener("touchstart", (e: any /*←コンパイルエラー回避*/): void => {
-                      if( !this._isActive ) { return; }
+                        if (!this._isActive) { return; }
                         if (this._mouseStore.getMouseState() !== wwa_input.MouseState.NONE) {
                             e.preventDefault();
                             return;
@@ -707,7 +702,7 @@ module wwa_main {
                     });
 
                     this._mouseControllerElement.addEventListener("touchend", (e: any): void => {
-                        if( !this._isActive ) { return; }
+                        if (!this._isActive) { return; }
                         for (var i = 0; i < e.changedTouches.length; i++) {
                             if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
                                 this._mouseStore.setReleaseInfo();
@@ -719,7 +714,7 @@ module wwa_main {
 
 
                     this._mouseControllerElement.addEventListener("touchcancel", (e: any): void => {
-                        if( !this._isActive ) { return; }
+                        if (!this._isActive) { return; }
                         for (var i = 0; i < e.changedTouches.length; i++) {
                             if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
                                 this._mouseStore.setReleaseInfo();
@@ -731,7 +726,7 @@ module wwa_main {
                 }
                 //////////////// タッチ関連 超β ////////////////////////////
 
-                util.$id( "button-load" ).addEventListener("click", () => {
+                util.$id("button-load").addEventListener("click", () => {
                     if (this._player.isControllable()) {
                         this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
                     }
@@ -750,7 +745,7 @@ module wwa_main {
                 });
                 util.$id("button-gotowwa").addEventListener("click", () => {
                     if (this._player.isControllable()) {
-                        this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA,true);
+                        this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA, true);
                     }
                 });
 
@@ -771,7 +766,7 @@ module wwa_main {
                     this, <HTMLDivElement>wwa_util.$id("wwa-wrapper"));
 
                 this._messageWindow = new wwa_message.MessageWindow(
-                    this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true,false, util.$id("wwa-wrapper"));
+                    this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
                 this._monsterWindow = new wwa_message.MosterWindow(
                     this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
                 this._scoreWindow = new wwa_message.ScoreWindow(
@@ -800,7 +795,7 @@ module wwa_main {
                     }
                 }
                 */
-                
+
 
                 this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, (): void => {
                     this._isSkippedSoundMessage = true;
@@ -812,11 +807,12 @@ module wwa_main {
                         this.loadSound();
 
                         setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
-                        
+
                         return;
-                    } else if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "OFF") {
+                    }
+                    else if (this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "OFF") {
                         this._isLoadedSound = false;
-                        this.setMessageQueue( "ゲームを開始します。\n画面をクリックしてください。", false, true );
+                        this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
                         this.openGameWindow();
                         return;
                     } // 読み込みメッセージをスキップした場合、処理はここまで
@@ -868,30 +864,25 @@ module wwa_main {
                                     self.loadSound();
                                     setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
                                 }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
-                           }, Consts.DEFAULT_FRAME_INTERVAL);
-                        } else if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.NO) {
-                            clearInterval(timer);
-                            self._messageWindow.update();
-                            self._yesNoJudge = self._yesNoJudgeInNextFrame;
-                            self._messageWindow.setInputDisable();
-                            setTimeout((): void =>  {
+                            }
+
+                            else if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.NO) {
+                                clearInterval(timer);
                                 self._messageWindow.update();
                                 self._yesNoJudge = self._yesNoJudgeInNextFrame;
                                 self._messageWindow.setInputDisable();
                                 setTimeout((): void => {
-                                    self._messageWindow.update();
-                                    setTimeout((): void => {
-                                        self._messageWindow.hide();
-                                        self._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
-                                        self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
-                                        self._isLoadedSound = false;
-                                        self.openGameWindow();
-                                    }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
-                                }, Consts.DEFAULT_FRAME_INTERVAL);
+                                    self._messageWindow.hide();
+                                    self._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
+                                    self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
+                                    self._isLoadedSound = false;
+                                    self.openGameWindow();
+                                }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                             }
-
                         }, Consts.DEFAULT_FRAME_INTERVAL);
+
                     } else {
+                        clearInterval(timer);
                         self._messageWindow.hide();
                         self._yesNoJudge = wwa_data.YesNoState.UNSELECTED;
                         self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
@@ -899,10 +890,9 @@ module wwa_main {
                         self.loadSound();
                         setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
                     }
-                    
                 });
             }
-            if (wwap_mode|| Worker === void 0) {
+            if (wwap_mode || Worker === void 0) {
                 var script: HTMLScriptElement;
                 if (!external_script_inject_mode) {
                     script = document.createElement("script");
@@ -922,8 +912,8 @@ module wwa_main {
                     }
                 }
                 var self1 = this;
-                postMessage_noWorker = ( e ): void => {
-                    self1._loadHandler( e );
+                postMessage_noWorker = (e): void => {
+                    self1._loadHandler(e);
                 };
 
                 // 黒魔術
@@ -4160,7 +4150,7 @@ module wwa_main {
         var titleImgName = wwap_mode ?
             Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG :
             util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
-        wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"),  titleImgName === null ? "cover.gif" : titleImgName );
+        wwa_inject_html.inject(<HTMLDivElement>util.$id("wwa-wrapper"),  titleImgName);
         var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
         var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
 
