@@ -21,13 +21,11 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jszip": "^3.1.4",
-    "@types/minimist": "^1.2.0",
     "@types/node": "^10.5.1",
     "@types/shelljs": "^0.8.0",
     "@wwawing/html-generator": "git+https://git@github.com/WWAWing/html-generator.git#include-lib",
     "glob": "^7.1.2",
     "jszip": "^3.1.5",
-    "nexe": "^2.0.0-rc.31",
     "shelljs": "^0.8.2",
     "shx": "^0.3.1",
     "typescript": "^2.9.2"

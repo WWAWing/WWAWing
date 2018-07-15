@@ -5,9 +5,11 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -p .",
+    "build": "npm-run-all build:*",
+    "build:scripts": "tsc -p .",
+    "build:exe": "shx mkdir -p bin && nexe --target=win32-x86-8.6.0 --output bin/wwa-server.exe",
     "start": "npm run build && npm run deploy && node lib debug",
-    "clean": "shx rm -rf debug lib",
+    "clean": "shx rm -rf debug lib bin",
     "deploy": "shx mkdir -p debug && npm-run-all deploy:*",
     "deploy:audio": "shx cp -R ../assets/audio debug/",
     "deploy:html": "shx cp ../assets/html/dev/*.* debug/",
