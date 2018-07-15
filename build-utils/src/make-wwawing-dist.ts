@@ -53,7 +53,8 @@ async function makeDistribution(isUpdate: boolean): Promise<void> {
             copy(path.join("assets", "mapdata", "*.dat"), "mapdata"),
             copy(path.join("assets", "images", "*.gif"), "mapdata"),
             copy(path.join("assets", "images", "wwawing-disp.png"), "mapdata"),
-            copy(path.join("assets", "html", "dist", "*.html"), "mapdata")
+            copy(path.join("assets", "html", "dist", "*.html"), "mapdata"),
+            copy(path.join("debug-server", "bin", "wwa-server.exe"), "mapdata")
         ];
     }
     await Promise.all(tasks);
