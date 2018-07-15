@@ -1,23 +1,20 @@
-/*
- * assumed call by npm scripts. 
- */
+import * as JSZip from "jszip";
+import * as fs from "fs";
+import * as path from "path";
+import * as glob from "glob";
 
-const JSZip = require("jszip");
-const fs = require("fs");
-const path = require("path");
-const glob = require("glob");
 const baseDir = ".";
 
 makeZip("wwawing-dist");
 makeZip("wwawing-update");
 
-function joinPathArray(prev, cur) {
+function joinPathArray(prev: string, cur: string): string {
     return path.join(prev, cur);
 }
 
-function makeZip(target) {
+function makeZip(target: string): void {
     const zip = new JSZip();
-    glob(baseDir + "/" + target + "/**/*.*", (error, matches) => {
+    glob(baseDir + "/" + target + "/**/*.*", (_error, matches) => {
         Promise.all(matches.map(itemPath => new Promise((resolve, reject) => {
             // Windows のエクスプローラでもzipが開けるように
             // globから出てくるパスセパレータ( / )を
