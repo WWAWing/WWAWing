@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/WWAWing/WWAWing/issues"
   },
-  "homepage": "https://github.com/WWAWing/WWAWing#readme"
+  "homepage": "https://github.com/WWAWing/WWAWing#readme",
+  "devDependencies": {
+    "lerna": "^2.11.0"
+  }
 }
