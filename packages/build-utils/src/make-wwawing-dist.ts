@@ -35,7 +35,7 @@ async function makeDistribution(isUpdate: boolean): Promise<void> {
     if (isUpdate) {
         tasks = [
             copy(path.join("engine", "LICENSE")),
-            copy("manual.html"),
+            copy(path.join("assets", "html", "manual.html")),
             copy(path.join("engine", "lib", "wwa.js"), "wwa.js"),
             copy(path.join("assets", "scripts", "wwaload.js")),
             copy(path.join("assets", "style", "*.css"))
@@ -44,7 +44,7 @@ async function makeDistribution(isUpdate: boolean): Promise<void> {
         tasks = [
             // debugger は廃止のためコピーなし
             copy(path.join("engine", "LICENSE")),
-            copy("manual.html"),
+            copy(path.join("assets", "html", "manual.html")),
             copy(path.join("engine", "lib", "wwa.js"), "mapdata"),
             copy(path.join("assets", "scripts", "wwaload.js"), "mapdata"), // npm 移行後変更予定
             copy(path.join("assets", "style", "*.css"), "mapdata"),

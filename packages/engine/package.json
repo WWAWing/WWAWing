@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run build:webpack && npm run build:cat",
     "build:webpack": "webpack --config webpack.config.js && webpack --config webpack.config.prod.js",
-    "build:cat": "shx cat ../assets/wwa_license_comment.js ./lib/wwa-nolink.js ../assets/cryptojs/aes.js > ./lib/wwa.js",
+    "build:cat": "shx cat ../assets/scripts/wwa_license_comment.js ./lib/wwa-nolink.js ../assets/scripts/aes.js > ./lib/wwa.js",
     "clean": "npm run clean:dist && npm run clean:js",
     "clean:js": "shx rm -rf lib"
   },
