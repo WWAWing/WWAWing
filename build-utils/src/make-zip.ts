@@ -3,26 +3,18 @@ import * as fs from "fs";
 import * as path from "path";
 import * as glob from "glob";
 
-const baseDir = ".";
+const baseDir = "./output";
 
 makeZip("wwawing-dist");
 makeZip("wwawing-update");
 
-function joinPathArray(prev: string, cur: string): string {
-    return path.join(prev, cur);
-}
-
 function makeZip(target: string): void {
     const zip = new JSZip();
-    glob(baseDir + "/" + target + "/**/*.*", (_error, matches) => {
+    glob(`${target}/**/*.*`, {cwd: baseDir}, (_error, matches) => {
         Promise.all(matches.map(itemPath => new Promise((resolve, reject) => {
-            // Windows のエクスプローラでもzipが開けるように
-            // globから出てくるパスセパレータ( / )を
-            // 動作環境におけるパスセパレータに変換する.
-            const itemPathArray = itemPath.split("/");
-            const itemPathFs = itemPathArray.reduce(joinPathArray, "");
-
-            fs.readFile(itemPathFs, (err, itemData) => {
+            const itemPathFs = path.normalize(itemPath);
+            const itemPathFsWithBase = path.join(baseDir, itemPathFs);
+            fs.readFile(itemPathFsWithBase, (err, itemData) => {
                 console.log(`including ${itemPath}`);
                 if (err) {
                     reject(err);
@@ -33,7 +25,7 @@ function makeZip(target: string): void {
             });
         })))
             .then(() => new Promise((resolve, reject) => {
-                const dest = `${target}.zip`;
+                const dest = path.join(baseDir, `${target}.zip`);
                 zip
                     .generateAsync({ type: "nodebuffer" })
                     .then(content => {

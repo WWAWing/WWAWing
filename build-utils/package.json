@@ -14,7 +14,7 @@
     "build:dist": "npm run clean:dist && node ./lib/make-wwawing-dist && node ./lib/make-zip",
     "clean": "npm run clean:script && npm run clean:dist",
     "clean:script": "shx rm -rf lib",
-    "clean:dist": "shx rm -rf wwawing-dist wwawing-update wwawing-dist.zip wwawing-update.zip",
+    "clean:dist": "shx rm -rf output",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "WWA Wing Team",

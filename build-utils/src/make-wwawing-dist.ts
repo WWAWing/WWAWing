@@ -6,8 +6,8 @@ const wwawingUpdateDirName = "wwawing-update";
 
 // fs.mkdir 用 パス区切りが / でない環境も考慮する
 const srcBasePath = path.join("..");
-const destBasePath = path.join(".", wwawingDistDirName);
-const destUpdateBasePath = path.join(".", wwawingUpdateDirName);
+const destBasePath = path.join(".", "output", wwawingDistDirName);
+const destUpdateBasePath = path.join(".", "output", wwawingUpdateDirName);
 
 // fatal を設定しないとshelljsの cp などが例外を吐かない
 // @see https://github.com/shelljs/shelljs#configfatal
