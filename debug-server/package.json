@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p .",
-    "start": "npm run build && npm run deploy && node lib",
+    "start": "npm run build && npm run deploy && node lib debug",
     "clean": "shx rm -rf debug lib",
     "deploy": "shx mkdir -p debug && npm-run-all deploy:*",
     "deploy:audio": "shx cp -R ../assets/audio debug/",
