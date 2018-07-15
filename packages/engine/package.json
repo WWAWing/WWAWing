@@ -1,5 +1,5 @@
 {
-  "name": "@wwawing/wwawing",
+  "name": "@wwawing/engine",
   "version": "3.1.6",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "wwa.js",
@@ -19,7 +19,7 @@
     "wwa",
     "typescript"
   ],
-  "author": "rmn_e",
+  "author": "WWA Wing Team",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/WWAWing/WWAWing/issues"
