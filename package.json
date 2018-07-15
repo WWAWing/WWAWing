@@ -2,14 +2,10 @@
   "name": "@wwawing/wwawing-all",
   "version": "0.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build:dist": "npm run clean:dist && node ./util/make-wwawing-dist && node ./util/make-zip",
-    "clean": "npm run clean clean:dist && npm run clean clean:debug",
-    "clean:dist": "shx rm -rf wwawing-dist wwawing-update wwawing-dist.zip wwawing-update.zip",
-    "clean:debug": "shx rm -rf debug",
-    "deploy:debug": "shx cp -R assets debug && shx cp assets/debug/html/dev/*.html debug && shx cp engine/lib/wwa.long.js debug"
+    "clean": "shx rm -rf debug",
+    "deploy": "shx mkdir -p debug && shx cp -R assets debug && shx cp assets/html/dev/*.html debug/assets && shx cp engine/lib/wwa.long.js debug/assets",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",

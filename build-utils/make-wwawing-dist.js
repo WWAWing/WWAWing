@@ -9,6 +9,7 @@ const wwawingDistDirName = "wwawing-dist";
 const wwawingUpdateDirName = "wwawing-update";
 
 // fs.mkdir 用 パス区切りが / でない環境も考慮する
+const srcBasePath = path.join("..");
 const destBasePath = path.join(".", wwawingDistDirName);
 const destUpdateBasePath = path.join(".", wwawingUpdateDirName);
 
@@ -72,13 +73,14 @@ function makeDistribution(isUpdate) {
 
     function copy(src, dest) {
         return new Promise((resolve, reject) => {
+            const srcFull = path.join(srcBasePath, src);
             const destFull = path.join(
                 (isUpdate ? destUpdateBasePath : destBasePath),
                 (dest ? dest : "")
             );
             console.log("copy " + src + " to " + destFull);
             try {
-                shell.cp(src, destFull);
+                shell.cp(srcFull, destFull);
                 resolve();
             } catch (e) {
                 reject(e);

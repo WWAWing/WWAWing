@@ -7,10 +7,14 @@
     "lib": "lib"
   },
   "scripts": {
-    "build": "tsc -p .",
-    "start": "npm run build && node ./lib/make-wwapage all",
-    "start:dev": "npm run build && node ./lib/make-wwapage dev",
-    "start:dist": "npm run build && node ./lib/make-wwapage dist",
+    "start": "npm run build:script && node ./lib/make-wwapage all && npm run build:dist",
+    "start:dev": "npm run build:script && node ./lib/make-wwapage dev",
+    "start:dist": "npm run build:script && node ./lib/make-wwapage dist && npm run buiild:dist",
+    "build:script": "tsc -p .",
+    "build:dist": "npm run clean:dist && node ./make-wwawing-dist && node ./make-zip",
+    "clean": "npm run clean:script && npm run clean clean:dist",
+    "clean:script": "shx rm -rf lib",
+    "clean:dist": "shx rm -rf wwawing-dist wwawing-update wwawing-dist.zip wwawing-update.zip",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "WWA Wing Team",
