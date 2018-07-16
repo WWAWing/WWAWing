@@ -3977,7 +3977,6 @@ var wwa_main;
                     break;
             }
             switch (browser.os) {
-                case "Windows":
                 case "Android":
                 case "iOS":
                     util.$id("wwa-wrapper").classList.add("useScaleUp");
@@ -4277,7 +4276,7 @@ var wwa_main;
                             }
                         }
                         _this._mouseStore.setPressInfo(dir);
-                        e.preventDefault();
+                        //e.preventDefault();//無効にするとクリック時にWWAにフォーカスされなくなる
                     }
                 });
                 _this._mouseControllerElement.addEventListener("mouseleave", function (e) {
