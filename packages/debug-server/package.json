@@ -4,12 +4,12 @@
   "description": "wwawing debug server",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run build && node lib debug",
     "build": "npm-run-all build:*",
     "build:scripts": "tsc -p .",
     "build:exe": "shx mkdir -p bin && nexe --target=win32-x86-8.6.0 --output bin/wwa-server.exe",
-    "start": "npm run build && npm run deploy && node lib debug",
-    "clean": "shx rm -rf debug lib bin"
+    "clean": "shx rm -rf debug lib bin",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
