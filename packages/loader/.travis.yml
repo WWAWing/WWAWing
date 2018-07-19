@@ -1,0 +1,34 @@
+language: node_js
+node_js:
+- 8.9.1
+install: true
+branches:
+  only:
+  - master
+  - chore/npm-package
+before_install:
+- openssl aes-256-cbc -K "$encrypted_1c695f4d2e9f_key" -iv "$encrypted_1c695f4d2e9f_iv"
+  -in travis-wwa.enc -out ~/.ssh/id_ed25519 -d
+- chmod 0600 ~/.ssh/id_ed25519
+- echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+before_deploy:
+- echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+- git remote set-url origin git@github.com:rmn31415/WWALoader.git
+- git config --local user.name "WWAWingTeam"
+- git config --local user.email "matsuyuki.eca@gmail.com"
+- npm install
+- npm run build
+- tar cvzf wwaloader.tar.gz lib
+- export RELEASE_VERSION="v$(node get_version.js)"
+- git tag $RELEASE_VERSION
+- git push origin $RELEASE_VERSION HEAD:chore/npm-package
+deploy:
+  provider: releases
+  api_key:
+    secure: djpk7LiGHrh8xfr12yrp9jLD9xZFRU7ouLiIy6s44eem+ORNlphb7JIbNwBM5w164mmJJWvC2lW2c8GG/0KnbHbQl4aVh3lsLRq9VwmZL9/KWCVE3UIQweYlbtjn46QPB54JREn+7zdot8e7JL5paVK7avrSmXpedEtPQRKQwF8657LjWRP5EiwDztRRpMB7dAxYL7VCyN0G5y/IRtE5vwGkXPaE73bNK+5APOBS62bJ7nRdfrYzBB/njBUAusdVYvkmCRgV3f8/hDhXoNMuTqebqwIigvgF7s1rVqoP9u8F6nM/5V8dsacIreek7diBLSLfhixo5ZtmXjNM0cDiqpDquN4FBj6Lrhsbe8ra1t3kFmPvxZ2bAMWhpBsy0CypC49RszvgGOPlRPAV3j/mEQX04ORDRc3BUOaRAZJAAw8BQF8Z9aN0ZpxUbJibHzjoXHvNl7u/jVaBsEYtg2svU4iKcT8GoLduTnuDu16VGD87SFhrqYXEAOy2+j+trmbsA84adUDhZrGrdfS8Qz7GtGUdmn3lVTAkmoVeYdNk2Vel4b0RULhmxDujPbGvnuf9QFiD1e/Mezo3YVHaJ3AYcv2osCL5DYZp9Lqa9rZbdQ7OnFObZp3DhaZKHd4oeW83hSF8zz7F5rqqYz7M917iZ0aTYORw/oB17CesD888II0=
+  file: wwaloader.tar.gz
+  skip_cleanup: true
+  on:
+    branch:
+    - master
+    - chore/npm-package

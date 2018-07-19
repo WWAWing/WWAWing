@@ -1,5 +1,25 @@
 {
-	"dependencies": {
+	"name": "@wwawing/build-utils",
+	"version": "0.0.0",
+	"description": "build utilies for WWA Wing",
+	"main": "lib/make-wwapage.js",
+	"directories": {
+		"lib": "lib"
+	},
+	"scripts": {
+		"start": "npm run build:script && node ./lib/make-wwapage all && npm run build:dist",
+		"start:dev": "npm run build:script && node ./lib/make-wwapage dev",
+		"start:dist": "npm run build:script && node ./lib/make-wwapage dist && npm run buiild:dist",
+		"build:script": "tsc -p .",
+		"build:dist": "npm run clean:dist && node ./lib/make-wwawing-dist && node ./lib/make-zip",
+		"clean": "npm run clean:script && npm run clean:dist",
+		"clean:script": "shx rm -rf lib",
+		"clean:dist": "shx rm -rf output",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "WWA Wing Team",
+	"license": "MIT",
+	"devDpendencies": {
 		"@types/jszip": "^3.1.4",
 		"@types/node": "^10.5.1",
 		"@types/shelljs": "^0.8.0",

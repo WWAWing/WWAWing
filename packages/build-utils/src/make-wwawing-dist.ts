@@ -36,9 +36,9 @@ async function makeDistribution(isUpdate: boolean): Promise<void> {
         tasks = [
             copy(path.join("engine", "LICENSE")),
             copy(path.join("assets", "html", "manual.html")),
-            copy(path.join("engine", "lib", "wwa.js"), "wwa.js"),
-            copy(path.join("assets", "scripts", "wwaload.js")),
-            copy(path.join("assets", "style", "*.css"))
+            copy(path.join("engine", "lib", "wwa.js")),
+            copy(path.join("loader", "lib", "wwaload.js")),
+            copy(path.join("assets", "style", "*.css")),
         ];
     } else {
         tasks = [
@@ -46,7 +46,7 @@ async function makeDistribution(isUpdate: boolean): Promise<void> {
             copy(path.join("engine", "LICENSE")),
             copy(path.join("assets", "html", "manual.html")),
             copy(path.join("engine", "lib", "wwa.js"), "mapdata"),
-            copy(path.join("assets", "scripts", "wwaload.js"), "mapdata"), // npm 移行後変更予定
+            copy(path.join("loader", "lib", "wwaload.js"), "mapdata"),
             copy(path.join("assets", "style", "*.css"), "mapdata"),
             copy(path.join("assets", "wwamk310", "WinWwamk.exe")),
             copy(path.join("assets", "audio", "*"), path.join("mapdata", "audio")),
