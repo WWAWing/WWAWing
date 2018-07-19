@@ -1,10 +1,10 @@
 {
   "name": "@wwawing/loader",
-  "version": "0.0.4",
+  "version": "0.0.0",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/wwaload.js",
   "scripts": {
-    "start": "npm run clean:debug && npm run start:deploy && http-server ./debug -o",
+    "start": "npm run clean:debug && npm run build && npm run start:deploy && http-server ./debug -o",
     "start:deploy": "shx mkdir -p debug && shx cp -R lib/*.js debug && shx cp -R resources/* debug",
     "test": "echo \"no test specified\"",
     "build": "npm run clean:lib && npm run build:worker && npm run build:noworker",

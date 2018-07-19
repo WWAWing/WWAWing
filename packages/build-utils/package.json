@@ -7,7 +7,7 @@
 		"lib": "lib"
 	},
 	"scripts": {
-		"start": "npm run build:script && node ./lib/make-wwapage all && npm run build:dist",
+		"start": "npm run clean && npm run build:script && node ./lib/make-wwapage all && npm run build:dist",
 		"start:dev": "npm run build:script && node ./lib/make-wwapage dev",
 		"start:dist": "npm run build:script && node ./lib/make-wwapage dist && npm run buiild:dist",
 		"build:script": "tsc -p .",
@@ -17,13 +17,21 @@
 		"clean:dist": "shx rm -rf output",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/WWAWing/WWAWing.git"
+	},
 	"author": "WWA Wing Team",
 	"license": "MIT",
-	"devDpendencies": {
+	"devDependencies": {
 		"@types/jszip": "^3.1.4",
 		"@types/node": "^10.5.1",
 		"@types/shelljs": "^0.8.0",
 		"@wwawing/html-generator": "git+https://git@github.com/WWAWing/html-generator.git#include-lib",
+		"@wwawing/engine": "3.1.6",
+		"@wwawing/assets": "0.0.0",
+		"@wwawing/loader": "0.0.0",
+		"@wwawing/debug-server": "0.0.0",
 		"glob": "^7.1.2",
 		"jszip": "^3.1.5",
 		"shelljs": "^0.8.2",

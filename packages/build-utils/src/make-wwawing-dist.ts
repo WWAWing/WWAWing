@@ -4,8 +4,7 @@ import * as shell from "shelljs";
 const wwawingDistDirName = "wwawing-dist";
 const wwawingUpdateDirName = "wwawing-update";
 
-// fs.mkdir 用 パス区切りが / でない環境も考慮する
-const srcBasePath = path.join("..");
+const srcBasePath = path.join(".", "node_modules", "@wwawing");
 const destBasePath = path.join(".", "output", wwawingDistDirName);
 const destUpdateBasePath = path.join(".", "output", wwawingUpdateDirName);
 
@@ -34,34 +33,33 @@ async function makeDistribution(isUpdate: boolean): Promise<void> {
 
     if (isUpdate) {
         tasks = [
-            copy(path.join("engine", "LICENSE")),
-            copy(path.join("assets", "html", "manual.html")),
-            copy(path.join("engine", "lib", "wwa.js")),
-            copy(path.join("loader", "lib", "wwaload.js")),
-            copy(path.join("assets", "style", "*.css")),
+            copy("engine", path.join("LICENSE")),
+            copy("assets", path.join("html", "manual.html")),
+            copy("engine", path.join("lib", "wwa.js")),
+            copy("loader", path.join("lib", "wwaload.js")),
+            copy("assets", path.join("style", "*.css")),
         ];
     } else {
         tasks = [
-            // debugger は廃止のためコピーなし
-            copy(path.join("engine", "LICENSE")),
-            copy(path.join("assets", "html", "manual.html")),
-            copy(path.join("engine", "lib", "wwa.js"), "mapdata"),
-            copy(path.join("loader", "lib", "wwaload.js"), "mapdata"),
-            copy(path.join("assets", "style", "*.css"), "mapdata"),
-            copy(path.join("assets", "wwamk310", "WinWwamk.exe")),
-            copy(path.join("assets", "audio", "*"), path.join("mapdata", "audio")),
-            copy(path.join("assets", "mapdata", "*.dat"), "mapdata"),
-            copy(path.join("assets", "images", "*.gif"), "mapdata"),
-            copy(path.join("assets", "images", "wwawing-disp.png"), "mapdata"),
-            copy(path.join("assets", "html", "dist", "*.html"), "mapdata"),
-            copy(path.join("debug-server", "bin", "wwa-server.exe"), "mapdata")
+            copy("engine", path.join("LICENSE")),
+            copy("assets", path.join("html", "manual.html")),
+            copy("engine", path.join("lib", "wwa.js"), "mapdata"),
+            copy("loader", path.join("lib", "wwaload.js"), "mapdata"),
+            copy("assets", path.join("style", "*.css"), "mapdata"),
+            copy("assets", path.join("wwamk310", "WinWwamk.exe")),
+            copy("assets", path.join("audio", "*"), path.join("mapdata", "audio")),
+            copy("assets", path.join("mapdata", "*.dat"), "mapdata"),
+            copy("assets", path.join("images", "*.gif"), "mapdata"),
+            copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
+            copy("assets", path.join("html", "dist", "*.html"), "mapdata"),
+            copy("debug-server", path.join("bin", "wwa-server.exe"), "mapdata")
         ];
     }
     await Promise.all(tasks);
     console.log((isUpdate ? "update" : "full") + " version done.");
 
-    async function copy(src: string, dest: string = ""): Promise<void> {
-        const srcFull = path.join(srcBasePath, src);
+    async function copy(srcPackage: string, src: string, dest: string = ""): Promise<void> {
+        const srcFull = path.join(srcBasePath, srcPackage, src);
         const destFull = path.join(
             (isUpdate ? destUpdateBasePath : destBasePath),
             dest
