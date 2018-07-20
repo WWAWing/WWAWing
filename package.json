@@ -4,7 +4,11 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "bootstrap": "lerna bootstrap"
+    "bootstrap": "lerna bootstrap",
+    "clean": "lerna clean",
+    "start": "lerna run start --stream --scope @wwawing/engine",
+    "build": "lerna run build --stream --parallel",
+    "make-dist": "npm run build && lerna run make-dist --stream"
   },
   "repository": {
     "type": "git",
@@ -13,13 +17,12 @@
   "keywords": [
     "WWA"
   ],
-  "author": "matsuyuki_a",
+  "author": "WWA Wing Team",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/WWAWing/WWAWing/issues"
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
-  "devDependencies": {
-    "lerna": "^2.11.0"
-  }
+  "lerna": "^2.11.0",
+  "npm-run-all": "^4.1.3"
 }

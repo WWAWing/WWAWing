@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npm-run-all build deploy && node ./launch-server debug",
-    "build": "npm-run-all build:*",
+    "build": "npm-run-all clean build:*",
     "build:webpack": "webpack --config webpack.config.js && webpack --config webpack.config.prod.js",
     "build:cat": "shx cat ./node_modules/@wwawing/assets/scripts/wwa_license_comment.js ./lib/wwa-nolink.js ./node_modules/@wwawing/assets/scripts/aes.js > ./lib/wwa.js",
     "deploy": "shx mkdir -p debug && npm-run-all deploy:*",
