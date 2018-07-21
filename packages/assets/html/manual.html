@@ -1,10 +1,7 @@
 ﻿<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Cache-Control" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
+    <meta charset="UTF-8">
     <title>WWA Wing - a World Wide Adventure implementation in JavaScript</title>
     <style>
         .fl {
@@ -41,7 +38,7 @@
 <body>
     <div id="wrapper">
         <section>
-            <h1>WWA Wing: 簡易マニュアル (ver. W3.15dβ2)</h1>
+            <h1>WWA Wing: 簡易マニュアル</h1>
             <p><a href="http://wwawing.com">WWA Wing</a>( WWA In the Next Generation )は、<a href="http://wwajp.com">WWA</a>のJavaScript実装です。
             煩わしい警告は出ず、一部のスマートフォンでも動作します。</p>
             
@@ -80,7 +77,8 @@
 &lt;/div&gt;</code></pre>
                     の、<code>data-wwa-mapdata</code> 属性に起動したいマップデータの名前を記入します。上の例では、caves01.datです。
                 </p>
-                <p>ローカルでテストしたい場合は、同梱の「WWA Debugger」をご利用ください。説明は、そちらのREADMEをご覧ください。</p>
+                <p>ローカルでテストしたい場合は、同梱の「wwa-server.exe」をご利用ください。<code>http://localhost:3000/</code>に続けて同じディレクトリのHTMLファイルをURLに指定するとテストプレイできます。 </p>
+                <p>例: <a href="http://localhost:3000/wwamap.html">http://localhost:3000/wwamap.html</a></p>
                 <p class="important">htmlファイルを直接クリックしても（Firefox以外では）動きません!!</p>
             </section>
 
@@ -293,12 +291,11 @@
                 <p>ただし、同梱されているマップデータファイル「caves01.dat」「caves02.dat」 「island02.dat」「wwamap.dat」、
                 ゲーム中で使用される画像の内「caves01.gif」「caves02.gif」「island02.gif」「making.gif」「mapcg.gif」および
                 WWA作成ツールに関しての著作権は原作者NAO氏が保持し、取り扱いについては<a href="http://wwawing.com">キャラバンサークル</a>
-                で定める通りとし、WWA Debuggerの実行ファイルおよびインストーラのバッチファイルに関しての著作権は、原作者Aruneko氏および
-                アイコン制作者プチ氏が保持し、取り扱いについては同梱しているWWA Debuggerの説明文書によるものとします。</p>
+                で定める通りとします。</p>
                 <p><a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja"><img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />
                 また、このマニュアルについては <a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja">クリエイティブ・コモンズ 表示 4.0 国際 ライセンスの下に提供されています。</a></p>
                 <p> Internet RPG &quot;<a href="http://www.wwajp.com">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
-                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2017 WWA Wing Team</p>
+                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2018 WWA Wing Team</p>
             </footer>
         </section>
     </div>
