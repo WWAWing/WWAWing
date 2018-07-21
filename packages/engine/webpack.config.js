@@ -1,5 +1,6 @@
 const webpack = require("webpack");
 const path = require("path");
+const package = require("./package.json");
 
 module.exports = {
     mode: "development",
@@ -20,5 +21,9 @@ module.exports = {
             }
         ]
     },
-    plugins: []
+    plugins: [
+        new webpack.DefinePlugin({
+            VERSION_WWAJS: JSON.stringify(package.version)
+        })
+    ]
 };

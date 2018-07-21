@@ -14,6 +14,7 @@ interface AudiojsTScomp {
 declare var audiojs: AudiojsTScomp;
 declare var external_script_inject_mode: boolean;
 declare var CryptoJS: any; // ゆるして
+declare var VERSION_WWAJS: string; // webpackにより注入
 declare function loader_start(e: any): void;
 var postMessage_noWorker = function (e: any): void { };
 
@@ -168,7 +169,7 @@ export class WWA {
 
         try {
             if (this._hasTitleImg) {
-                util.$id("version").textContent = "WWA Wing Ver." + Consts.VERSION_WWAJS;
+                util.$id("version").textContent = "WWA Wing Ver." + VERSION_WWAJS;
             } else {
                 this._setLoadingMessage(ctxCover, 0);
             }
@@ -749,7 +750,7 @@ export class WWA {
             ctx.font = LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
             ctx.fillText(loadMessagesClassic[0], LoadingMessagePosition.TITLE_X, LoadingMessagePosition.TITLE_Y);
             ctx.font = LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
-            ctx.fillText("WWA Wing Ver." + Consts.VERSION_WWAJS, LoadingMessagePosition.FOOTER_X, LoadingMessagePosition.COPYRIGHT_Y);
+            ctx.fillText("WWA Wing Ver." + VERSION_WWAJS, LoadingMessagePosition.FOOTER_X, LoadingMessagePosition.COPYRIGHT_Y);
         } else if (mode <= loadMessagesClassic.length) { // 読み込み途中
             ctx.font = LoadingMessageSize.LOADING + "px " + Consts.LOADING_FONT;
             if (mode >= 2) {
@@ -3342,7 +3343,7 @@ export class WWA {
                 "　　　Ｉ: 移動速度を落とす／\n" +
                 "Ｆ２、Ｐ: 移動速度を上げる\n" +
                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                 "　マップデータ バージョン: " +
                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10,
                 false, true
