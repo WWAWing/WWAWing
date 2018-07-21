@@ -21,8 +21,10 @@ script:
 - cp ./packages/build-utils/output/*.zip Releases
 - WWA_VERSION=$(./getEngineVersion.sh)
 - pushd Releases
-- mv wwawing-dist.zip wwawing-dist-$WWA_VERSION.zip
-- mv wwawing-update.zip wwawing-update-$WWA_VERSION.zip
+- mv wwawing-dist.zip wwawing-dist-latest.zip
+- mv wwawing-update.zip wwawing-update-latest.zip
+- mv wwawing-dist-latest.zip wwawing-dist-$(echo $WWA_VERSION).zip
+- mv wwawing-update-latest.zip wwawing-update-$(echo $WWA_VERSION).zip
 - git add -A
 - git commit -m "RELEASED $WWA_VERSION"
 - '[ $GH_TOKEN ] && git push https://$GH_TOKEN@github.com/WWAWing/Releases.git master >& /dev/null'
