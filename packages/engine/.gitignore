@@ -1,6 +1,5 @@
 .idea/
 lib/
-debug/
 *.tmp
 wwa.link.js
 compile.bat

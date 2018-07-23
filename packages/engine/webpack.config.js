@@ -25,5 +25,8 @@ module.exports = {
         new webpack.DefinePlugin({
             VERSION_WWAJS: JSON.stringify(package.version)
         })
-    ]
+    ],
+    watchOptions: {
+        ignored: ["node_modules", 'lib/**/*.js']
+    }
 };
