@@ -5,5 +5,3 @@ closure/COPYING
 node_modules/
 build-tmp/
 lib/
-debug/
-.node-version
