@@ -27,6 +27,7 @@ script:
 - mv wwawing-update.zip wwawing-update-latest.zip
 - cp wwawing-dist-latest.zip wwawing-dist-$(echo $WWA_VERSION).zip
 - cp wwawing-update-latest.zip wwawing-update-$(echo $WWA_VERSION).zip
+- ./generate-release-page/update.sh $WWA_VERSION
 - git add -A
 - git commit -m "RELEASED $WWA_VERSION"
 - git push origin master
