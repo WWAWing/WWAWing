@@ -628,7 +628,9 @@ module wwa_parts_player {
                 border.style.display = "block";
                 ((pos: number): void => {
                     self._itemUsingEvent[pos - 1] = () => {
-                        if (self.isControllable()) {
+                        if (self.isControllable() || (self._wwa._messageWindow.isItemMenuChoice())) {
+                            self._wwa._itemMenu.close();
+                            self._wwa._setNextMessage();
                             self._wwa.onselectitem(pos);
                         }
                     };

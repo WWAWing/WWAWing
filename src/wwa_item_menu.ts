@@ -22,7 +22,7 @@ module wwa_item_menu {
             ["#item3 .item-click-border", "#item4 .item-click-border", "#item5 .item-click-border"],
             ["#item6 .item-click-border", "#item7 .item-click-border", "#item8 .item-click-border"],
             ["#item9 .item-click-border", "#item10 .item-click-border", "#item11 .item-click-border"],
-            ["#button-load", "button-load", "#button-load"],
+            ["#button-load", "#button-load", "#button-load"],
             ["#button-save"      , "#button-save"    , "#button-save"],
             ["#button-restart"      , "#button-restart"   , "#button-restart"],
             ["#button-gotowwa"   , " #button-gotowwa", "#button-gotowwa"]
@@ -94,6 +94,12 @@ module wwa_item_menu {
             //選択中のDOMと連動したDOMをクリック
             var elm: HTMLDivElement = null;
             elm = <HTMLDivElement>(wwa_util.$qsh(ItemMenu.CLICK_DOM_QUERY_TABLE[this.row][this.col]));
+
+            if (elm.classList.contains("item-click-border")) {
+                //ITEM
+            } else {
+                this.allClear();
+            }
 
             var evt = new MouseEvent('click', {
                 view: window,

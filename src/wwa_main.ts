@@ -207,6 +207,7 @@ module wwa_main {
         private _clearFacesInNextFrame: boolean;
         private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
         private _isClassicModeEnable: boolean;
+        private _useGameEnd: boolean;
 
         private _useConsole: boolean;
         private _audioDirectory: string;
@@ -235,6 +236,7 @@ module wwa_main {
                 this._isActive = true;
             });
             this._isActive = true;
+            this._useGameEnd = false;
 
             if (titleImgName === null) {
                 this._hasTitleImg = false;
@@ -290,11 +292,14 @@ module wwa_main {
             }
 
             this._audioDirectory = audioDirectory;
+            this._useBattleReportButton = true;
             var t_start: number = new Date().getTime();
             var isLocal = !!location.href.match(/^file/);
             if (isLocal) {
                 if (browser.os === "Nintendo") {
                     Consts.BATTLE_INTERVAL_FRAME_NUM = 6;
+                    this._useGameEnd = true;
+                    this._useBattleReportButton = false;
                 } else {
                     alert(
                         "【警告】直接HTMLファイルを開いているようです。\n" +
@@ -304,7 +309,6 @@ module wwa_main {
                 }
             }
             this._usePassword = browser.os !== "Nintendo";
-            this._useBattleReportButton = true;
             this._useHelp = true;
             this._useScaleUp = false;
             switch (browser.os) {
@@ -325,6 +329,10 @@ module wwa_main {
 
             if (!this._usePassword) {
                 util.$id("cell-load").textContent = "Quick Load";
+            }
+            if (this._useGameEnd) {
+                util.$id("cell-gotowwa").textContent = "Game End";
+
             }
             if (this._useBattleReportButton) {
                 util.$id("cell-gotowwa").textContent = "Battle Report";
@@ -726,24 +734,24 @@ module wwa_main {
                 //////////////// タッチ関連 超β ////////////////////////////
 
                 util.$id("button-load").addEventListener("click", () => {
-                    if (this._player.isControllable()) {
+                    if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
                     }
                 });
 
                 util.$id("button-save").addEventListener("click", () => {
-                    if (this._player.isControllable()) {
+                    if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onselectbutton(wwa_data.SidebarButton.QUICK_SAVE);
                     }
                 });
 
                 util.$id("button-restart").addEventListener("click", () => {
-                    if (this._player.isControllable()) {
+                    if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onselectbutton(wwa_data.SidebarButton.RESTART_GAME);
                     }
                 });
                 util.$id("button-gotowwa").addEventListener("click", () => {
-                    if (this._player.isControllable()) {
+                    if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA, true);
                     }
                 });
@@ -1353,6 +1361,7 @@ module wwa_main {
         public onselectbutton(button: wwa_data.SidebarButton, forcePassword: boolean = false): void {
             var bg = <HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[button]));
             this.playSound(wwa_data.SystemSound.DECISION);
+            this._itemMenu.close();
             bg.classList.add("onpress");
             if (button === wwa_data.SidebarButton.QUICK_LOAD) {
                 if (this._quickSaveData !== void 0 && !forcePassword) {
@@ -1382,7 +1391,11 @@ module wwa_main {
                 this.setMessageQueue("初めからスタートしなおしますか？", true, true);
                 this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME;
             } else if (button === wwa_data.SidebarButton.GOTO_WWA) {
-                if (!forcePassword) {
+                if (this._useGameEnd) {
+                    (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+                    this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
+                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_END_GAME;
+                }else if (!forcePassword) {
                     (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                     this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                     this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA;
@@ -1421,7 +1434,7 @@ module wwa_main {
             this.setMessageQueue("右のメニューを選択してください。", false, true);
             this._messageWindow.setItemMenuChoice(true);
             this.playSound(wwa_data.SystemSound.DECISION);
-            this._itemMenu.init();
+            this._itemMenu.openView();
         }
 
         public onchangespeed(type: wwa_data.SpeedChange) {
@@ -1628,19 +1641,15 @@ module wwa_main {
                     //Item Menu 選択肢
                     this._itemMenu.update();
                     if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                        this._mouseStore.checkClickMouse(wwa_data.Direction.LEFT) ||
                         this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_LEFT)) {
                         this._itemMenu.cursor_left();
                     } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                        this._mouseStore.checkClickMouse(wwa_data.Direction.UP) ||
                         this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_UP)) {
                         this._itemMenu.cursor_up();
                     } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                        this._mouseStore.checkClickMouse(wwa_data.Direction.RIGHT) ||
                         this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
                         this._itemMenu.cursor_right();
                     } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                        this._mouseStore.checkClickMouse(wwa_data.Direction.DOWN) ||
                         this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_DOWN)) {
                         this._itemMenu.cursor_down();
                     }
@@ -1653,6 +1662,10 @@ module wwa_main {
                         this._messageWindow.setItemMenuChoice(false);
                         this._itemMenu.ok();
                     } else if (
+                        this._mouseStore.checkClickMouse(wwa_data.Direction.LEFT) ||
+                        this._mouseStore.checkClickMouse(wwa_data.Direction.UP) ||
+                        this._mouseStore.checkClickMouse(wwa_data.Direction.RIGHT) ||
+                        this._mouseStore.checkClickMouse(wwa_data.Direction.DOWN) ||
                         this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
                         this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
                         this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_B)
@@ -2651,6 +2664,9 @@ module wwa_main {
                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.RESTART_GAME]))).classList.remove("onpress");
                         this._stopUpdateByLoadFlag = true;
                         this._loadType = wwa_data.LoadType.RESTART_GAME;
+                    } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_END_GAME) {
+                        window.history.back(-1);
+                        (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
                         location.href = wwa_util.$escapedURI(Consts.WWA_HOME);
                         (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
@@ -2711,9 +2727,11 @@ module wwa_main {
                             (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                         }
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME) {
-                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.RESTART_GAME]))).classList.remove("onpress");
+                        (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.RESTART_GAME]))).classList.remove("onpress");
+                    } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_END_GAME) {
+                        (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                     } else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
-                        (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+                        (<HTMLDivElement>(wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                     } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_LOAD) {
                         (<HTMLDivElement> (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
                     } else if( this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
