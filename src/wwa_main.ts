@@ -50,7 +50,7 @@ module wwa_main {
     import ItemMenu = wwa_item_menu.ItemMenu;
     import util = wwa_util;
     var wwa: WWA;
-
+    var requestAnimationFrame: function = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame;
     /**
      *
      *
@@ -297,7 +297,8 @@ module wwa_main {
             var isLocal = !!location.href.match(/^file/);
             if (isLocal) {
                 if (browser.os === "Nintendo") {
-                    Consts.BATTLE_INTERVAL_FRAME_NUM = 6;
+                    wwa_data.speedList = [10, 10, 10, 10];
+                    Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
                     this._useGameEnd = true;
                     this._useBattleReportButton = false;
                 } else {
@@ -813,7 +814,7 @@ module wwa_main {
                         this._setLoadingMessage(ctxCover, wwa_data.LoadStage.AUDIO);
                         this.loadSound();
 
-                        setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
+                        requestAnimationFrame(this.soundCheckCaller);
 
                         return;
                     }
@@ -869,7 +870,7 @@ module wwa_main {
                                     self._isLoadedSound = true;
                                     this._setLoadingMessage(ctxCover, wwa_data.LoadStage.AUDIO);
                                     self.loadSound();
-                                    setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
+                                    requestAnimationFrame(this.soundCheckCaller);
                                 }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                             }
 
@@ -895,7 +896,7 @@ module wwa_main {
                         self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
                         self._isLoadedSound = true;
                         self.loadSound();
-                        setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
+                        requestAnimationFrame(this.soundCheckCaller);
                     }
                 });
             }
@@ -1183,7 +1184,7 @@ module wwa_main {
             }
             if (loadedNum < total && !this._soundLoadSkipFlag) {
                 this._setProgressBar(getProgress(loadedNum, total, wwa_data.LoadStage.AUDIO));
-                setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
+                requestAnimationFrame(this.soundCheckCaller);
                 return;
             }
 
@@ -1325,14 +1326,14 @@ module wwa_main {
 
         /**
           何でこんなことしてるの?
-           setTimeout で関数を呼んだ時, this が window になることを防ぐため!
+           requestAnimationFrame で関数を呼んだ時, this が window になることを防ぐため!
         */
-        public mainCaller( self: WWA ): void {
-            self._main();
-        }
-        public soundCheckCaller(self: WWA): void {
-            self.checkAllSoundLoaded();
-        }
+        public mainCaller: function = ((): void => {
+            this._main();
+        });
+        public soundCheckCaller: function = ((): void => {
+            this.checkAllSoundLoaded();
+        });
 
         public onselectitem(itemPos: number): void {
             if (this._player.canUseItem(itemPos)) {
@@ -1574,10 +1575,10 @@ module wwa_main {
                     this.playSound(wwa_data.SystemSound.DECISION);
                     this.onpasswordsavecalled()
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F5) ||
-                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZR)) {
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZL)) {
                     this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F6) ||
-                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZL)) {
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZR)) {
                     this.onselectbutton(wwa_data.SidebarButton.QUICK_SAVE);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F7) ||
                     this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_R)) {
@@ -1794,7 +1795,8 @@ module wwa_main {
                 this._player.decrementMoveObjectAutoExecTimer();
             }
             if (!this._stopUpdateByLoadFlag) {
-                setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
+                //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
+                requestAnimationFrame(this.mainCaller);
             } else {
                 this._fadeout((): void=> {
                     if (this._loadType === wwa_data.LoadType.QUICK_LOAD) {

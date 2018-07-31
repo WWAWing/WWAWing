@@ -1,4 +1,4 @@
-/// <reference path="./wwa_main.ts" />
+﻿/// <reference path="./wwa_main.ts" />
 
 module wwa_data {
     export class EquipmentStatus {
@@ -473,8 +473,7 @@ module wwa_data {
     export var speedList = [2, 5, 8, 10];
     export var speedNameList = ["低速", "準低速", "中速", "高速"];
     export class WWAConsts {
-        static VERSION_WWAJS: string = "W3.15dβ3";
-
+        static VERSION_WWAJS: string = "W3.15c+";
         static WWA_HOME: string = "http://wwajp.com";
 
         static ITEMBOX_SIZE: number = 12;
