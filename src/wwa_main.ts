@@ -1077,7 +1077,7 @@ module wwa_main {
                     var req = new XMLHttpRequest();
                     var error_count = 0;
                     req.responseType = 'arraybuffer';
-                    req.onreadystatechange = function () {
+                    req.onload = function () {
                         if (this.readyState === 4) {
                             if (this.status === 0 || this.status === 200) {
                                 var decodeTime = +new Date();
