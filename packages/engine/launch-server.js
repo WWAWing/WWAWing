@@ -1,0 +1,1 @@
+require("@wwawing/debug-server");
