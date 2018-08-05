@@ -5,8 +5,7 @@ install: true
 branches:
   only:
   - master
-  - feat/build-dist
-
+  - develop
 env:
   global:
   - GIT_COMMITTER_NAME="WWA Helper"
@@ -14,7 +13,7 @@ env:
   - GIT_AUTHOR_NAME="WWA Helper"
   - GIT_AUTHOR_EMAIL="matsuyuki.eca@gmail.com"
 script:
-- openssl aes-256-cbc -K $encrypted_b56949f416a5_key -iv $encrypted_b56949f416a5_iv -in wwa_helper.enc -out ~/.ssh/id_rsa -d
+- openssl aes-256-cbc -K $encrypted_b56949f416a5_key -iv $encrypted_b56949f416a5_iv -in ./keys/wwa_helper.enc -out ~/.ssh/id_rsa -d
 - chmod 0600 ~/.ssh/id_rsa
 - echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - npm config set -g production false
@@ -32,7 +31,7 @@ script:
 - git commit -m "RELEASED $WWA_VERSION"
 - git push origin master
 - popd
-- openssl aes-256-cbc -K $encrypted_260a91b79056_key -iv $encrypted_260a91b79056_iv -in id_wwawing_com_deploy.enc -out ~/.ssh/id_rsa -d
+- openssl aes-256-cbc -K $encrypted_260a91b79056_key -iv $encrypted_260a91b79056_iv -in ./keys/id_wwawing_com_deploy.enc -out ~/.ssh/id_rsa -d
 - chmod 0600 ~/.ssh/id_rsa
 - git clone git@github.com:WWAWing/wwawing.com.git
 - pushd wwawing.com
