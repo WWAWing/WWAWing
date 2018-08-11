@@ -256,6 +256,8 @@ var wwa_input;
         GamePadState[GamePadState["BUTTON_CROSS_KEY_RIGHT"] = 15] = "BUTTON_CROSS_KEY_RIGHT";
         GamePadState[GamePadState["AXES_L_HORIZONTAL_INDEX"] = 0] = "AXES_L_HORIZONTAL_INDEX";
         GamePadState[GamePadState["AXES_L_VERTICAL_INDEX"] = 1] = "AXES_L_VERTICAL_INDEX";
+        GamePadState[GamePadState["AXES_R_HORIZONTAL_INDEX"] = 2] = "AXES_R_HORIZONTAL_INDEX";
+        GamePadState[GamePadState["AXES_R_VERTICAL_INDEX"] = 3] = "AXES_R_VERTICAL_INDEX";
         GamePadState[GamePadState["AXES_CROSS_KEY"] = 9] = "AXES_CROSS_KEY";
     })(GamePadState = wwa_input.GamePadState || (wwa_input.GamePadState = {}));
     var GamePadStore = /** @class */ (function () {
@@ -356,6 +358,7 @@ var wwa_input;
                 switch (code) {
                     case GamePadState.BUTTON_CROSS_KEY_UP:
                         if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] <= -0.6 ||
+                            this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] <= -0.6 ||
                             this.stickFloor(GamePadState.AXES_CROSS_KEY) === -1 ||
                             this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
                             return true;
@@ -363,6 +366,7 @@ var wwa_input;
                         break;
                     case GamePadState.BUTTON_CROSS_KEY_DOWN:
                         if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] >= 0.7 ||
+                            this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] >= 0.7 ||
                             this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.1 ||
                             this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
                             return true;
@@ -370,6 +374,7 @@ var wwa_input;
                         break;
                     case GamePadState.BUTTON_CROSS_KEY_LEFT:
                         if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] <= -0.7 ||
+                            this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] <= -0.7 ||
                             this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.7 ||
                             this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
                             return true;
@@ -377,6 +382,7 @@ var wwa_input;
                         break;
                     case GamePadState.BUTTON_CROSS_KEY_RIGHT:
                         if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] > 0.6 ||
+                            this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] > 0.6 ||
                             this.stickFloor(GamePadState.AXES_CROSS_KEY) === -0.5 ||
                             this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
                             return true;
@@ -707,6 +713,7 @@ var wwa_data;
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_GOTO_WWA"] = 7] = "CALL_BY_GOTO_WWA";
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_PASSWORD_SAVE"] = 8] = "CALL_BY_PASSWORD_SAVE";
         ChoiceCallInfo[ChoiceCallInfo["CALL_BY_PASSWORD_LOAD"] = 9] = "CALL_BY_PASSWORD_LOAD";
+        ChoiceCallInfo[ChoiceCallInfo["CALL_BY_END_GAME"] = 10] = "CALL_BY_END_GAME";
     })(ChoiceCallInfo = wwa_data.ChoiceCallInfo || (wwa_data.ChoiceCallInfo = {}));
     var SidebarButton;
     (function (SidebarButton) {
@@ -836,7 +843,7 @@ var wwa_data;
     var WWAConsts = /** @class */ (function () {
         function WWAConsts() {
         }
-        WWAConsts.VERSION_WWAJS = "W3.15dβ3";
+        WWAConsts.VERSION_WWAJS = "W3.15c+";
         WWAConsts.WWA_HOME = "http://wwajp.com";
         WWAConsts.ITEMBOX_SIZE = 12;
         WWAConsts.MAP_ATR_MAX = 60;
@@ -1675,7 +1682,9 @@ var wwa_parts_player;
                 border.style.display = "block";
                 (function (pos) {
                     self._itemUsingEvent[pos - 1] = function () {
-                        if (self.isControllable()) {
+                        if (self.isControllable() || (self._wwa._messageWindow.isItemMenuChoice())) {
+                            self._wwa._itemMenu.close();
+                            self._wwa._setNextMessage();
                             self._wwa.onselectitem(pos);
                         }
                     };
@@ -3718,6 +3727,12 @@ var wwa_item_menu;
             //�I�𒆂�DOM�ƘA������DOM��N���b�N
             var elm = null;
             elm = (wwa_util.$qsh(ItemMenu.CLICK_DOM_QUERY_TABLE[this.row][this.col]));
+            if (elm.classList.contains("item-click-border")) {
+                //ITEM
+            }
+            else {
+                this.allClear();
+            }
             var evt = new MouseEvent('click', {
                 view: window,
                 bubbles: true,
@@ -3768,7 +3783,7 @@ var wwa_item_menu;
             ["#item3 .item-click-border", "#item4 .item-click-border", "#item5 .item-click-border"],
             ["#item6 .item-click-border", "#item7 .item-click-border", "#item8 .item-click-border"],
             ["#item9 .item-click-border", "#item10 .item-click-border", "#item11 .item-click-border"],
-            ["#button-load", "button-load", "#button-load"],
+            ["#button-load", "#button-load", "#button-load"],
             ["#button-save", "#button-save", "#button-save"],
             ["#button-restart", "#button-restart", "#button-restart"],
             ["#button-gotowwa", " #button-gotowwa", "#button-gotowwa"]
@@ -3807,6 +3822,7 @@ var wwa_main;
     var ItemMenu = wwa_item_menu.ItemMenu;
     var util = wwa_util;
     var wwa;
+    var requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame;
     /**
      *
      *
@@ -3887,6 +3903,16 @@ var wwa_main;
             if (audioDirectory === void 0) { audioDirectory = ""; }
             var _this = this;
             this.audioExtension = "";
+            /**
+              何でこんなことしてるの?
+               requestAnimationFrame で関数を呼んだ時, this が window になることを防ぐため!
+            */
+            this.mainCaller = (function () {
+                _this._main();
+            });
+            this.soundCheckCaller = (function () {
+                _this.checkAllSoundLoaded();
+            });
             var ctxCover;
             window.addEventListener("click", function (e) {
                 // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
@@ -3897,6 +3923,7 @@ var wwa_main;
                 _this._isActive = true;
             });
             this._isActive = true;
+            this._useGameEnd = false;
             if (titleImgName === null) {
                 this._hasTitleImg = false;
                 this._cvsCover = util.$id("progress-panel");
@@ -3917,10 +3944,9 @@ var wwa_main;
             catch (e) { }
             var AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
-                this.audioContext = new AudioContext();
+                this.audioContext = window.audioContext = window.audioContext || new AudioContext();
                 this.audioGain = this.audioContext.createGain();
                 this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
-                this._soundDecodingFlag = false;
             }
             var myAudio = new Audio();
             if (("no" !== myAudio.canPlayType("audio/mpeg")) && ("" !== myAudio.canPlayType("audio/mpeg"))) {
@@ -3951,11 +3977,15 @@ var wwa_main;
                 audioDirectory += "/";
             }
             this._audioDirectory = audioDirectory;
+            this._useBattleReportButton = true;
             var t_start = new Date().getTime();
             var isLocal = !!location.href.match(/^file/);
             if (isLocal) {
                 if (browser.os === "Nintendo") {
-                    Consts.BATTLE_INTERVAL_FRAME_NUM = 6;
+                    wwa_data.speedList = [10, 10, 10, 10];
+                    Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
+                    this._useGameEnd = true;
+                    this._useBattleReportButton = false;
                 }
                 else {
                     alert("【警告】直接HTMLファイルを開いているようです。\n" +
@@ -3964,7 +3994,6 @@ var wwa_main;
                 }
             }
             this._usePassword = browser.os !== "Nintendo";
-            this._useBattleReportButton = true;
             this._useHelp = true;
             this._useScaleUp = false;
             switch (browser.os) {
@@ -3984,6 +4013,9 @@ var wwa_main;
             }
             if (!this._usePassword) {
                 util.$id("cell-load").textContent = "Quick Load";
+            }
+            if (this._useGameEnd) {
+                util.$id("cell-gotowwa").textContent = "Game End";
             }
             if (this._useBattleReportButton) {
                 util.$id("cell-gotowwa").textContent = "Battle Report";
@@ -4237,6 +4269,7 @@ var wwa_main;
                         var dist = mousePos.substract(playerPos);
                         var dx = Math.abs(dist.x);
                         var dy = Math.abs(dist.y);
+                        var dir;
                         var sideFlag = false;
                         if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
                             //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
@@ -4385,22 +4418,22 @@ var wwa_main;
                 }
                 //////////////// タッチ関連 超β ////////////////////////////
                 util.$id("button-load").addEventListener("click", function () {
-                    if (_this._player.isControllable()) {
+                    if (_this._player.isControllable() || (_this._messageWindow.isItemMenuChoice())) {
                         _this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
                     }
                 });
                 util.$id("button-save").addEventListener("click", function () {
-                    if (_this._player.isControllable()) {
+                    if (_this._player.isControllable() || (_this._messageWindow.isItemMenuChoice())) {
                         _this.onselectbutton(wwa_data.SidebarButton.QUICK_SAVE);
                     }
                 });
                 util.$id("button-restart").addEventListener("click", function () {
-                    if (_this._player.isControllable()) {
+                    if (_this._player.isControllable() || (_this._messageWindow.isItemMenuChoice())) {
                         _this.onselectbutton(wwa_data.SidebarButton.RESTART_GAME);
                     }
                 });
                 util.$id("button-gotowwa").addEventListener("click", function () {
-                    if (_this._player.isControllable()) {
+                    if (_this._player.isControllable() || (_this._messageWindow.isItemMenuChoice())) {
                         _this.onselectbutton(wwa_data.SidebarButton.GOTO_WWA, true);
                     }
                 });
@@ -4446,7 +4479,7 @@ var wwa_main;
                             "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
                         _this._setLoadingMessage(ctxCover, wwa_data.LoadStage.AUDIO);
                         _this.loadSound();
-                        setTimeout(_this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, _this);
+                        requestAnimationFrame(_this.soundCheckCaller);
                         return;
                     }
                     else if (_this._wwaData.systemMessage[wwa_data.SystemMessage2.LOAD_SE] === "OFF") {
@@ -4492,7 +4525,7 @@ var wwa_main;
                                     self._isLoadedSound = true;
                                     _this._setLoadingMessage(ctxCover, wwa_data.LoadStage.AUDIO);
                                     self.loadSound();
-                                    setTimeout(_this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, _this);
+                                    requestAnimationFrame(_this.soundCheckCaller);
                                 }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                             }
                             else if (self._yesNoJudgeInNextFrame === wwa_data.YesNoState.NO) {
@@ -4517,7 +4550,7 @@ var wwa_main;
                         self._yesNoJudgeInNextFrame = wwa_data.YesNoState.UNSELECTED;
                         self._isLoadedSound = true;
                         self.loadSound();
-                        setTimeout(_this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, _this);
+                        requestAnimationFrame(_this.soundCheckCaller);
                     }
                 });
             };
@@ -4672,50 +4705,11 @@ var wwa_main;
             var file = (wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + "." + this.audioExtension : this._audioDirectory + idx + "." + this.audioExtension);
             if (audioContext) {
                 //WebAuido
-                var that = this;
                 this._webAudioJSInstances[idx] = new WWAWebAudio();
                 if (idx >= wwa_data.SystemSound.BGM_LB) {
                     this._webAudioJSInstances[idx].isBgm = true;
                 }
-                var audioLoader = function () {
-                    if (that._soundDecodingFlag) {
-                        //デコード中のため待機
-                        setTimeout(function () {
-                            audioLoader();
-                        }, 100);
-                        return;
-                    }
-                    that._soundDecodingFlag = true;
-                    var req = new XMLHttpRequest();
-                    var error_count = 0;
-                    req.responseType = 'arraybuffer';
-                    req.onreadystatechange = function () {
-                        if (this.readyState === 4) {
-                            if (this.status === 0 || this.status === 200) {
-                                var decodeTime = +new Date();
-                                audioContext.decodeAudioData(this.response, function (buffer) {
-                                    if (buffer.length === 0) {
-                                        if (error_count > 10) {
-                                            //10回エラー
-                                            console.log("error audio file!  " + file + " buffer size " + buffer.length);
-                                        }
-                                        else {
-                                            setTimeout(function () {
-                                                audioLoader();
-                                            }, 100);
-                                            return;
-                                        }
-                                    }
-                                    that._soundDecodingFlag = false;
-                                    that._webAudioJSInstances[idx].buffer = buffer;
-                                });
-                            }
-                        }
-                    };
-                    req.open('GET', file, true);
-                    req.send('');
-                };
-                audioLoader();
+                this.audioFileLoader(file, idx);
             }
             else {
                 var audioElement = new Audio(file);
@@ -4733,6 +4727,38 @@ var wwa_main;
                 }
                 audioElement.loop = true;
             }
+        };
+        WWA.prototype.audioFileLoader = function (file, idx) {
+            var audioContext = this.audioContext;
+            var req = new XMLHttpRequest();
+            var error_count = 0;
+            var that = this;
+            req.responseType = 'arraybuffer';
+            req.onload = function (e) {
+                var req = e.target;
+                if (req.readyState === 4) {
+                    if (req.status === 0 || req.status === 200) {
+                        var decodeTime = +new Date();
+                        audioContext.decodeAudioData(req.response, function (buffer) {
+                            if (buffer.length === 0) {
+                                if (error_count > 10) {
+                                    //10回エラー
+                                    console.log("error audio file!  " + file + " buffer size " + buffer.length);
+                                }
+                                else {
+                                    setTimeout(function () {
+                                        that.audioFileLoader(file, idx);
+                                    }, 100);
+                                    return;
+                                }
+                            }
+                            that._webAudioJSInstances[idx].buffer = buffer;
+                        });
+                    }
+                }
+            };
+            req.open('GET', file, true);
+            req.send('');
         };
         WWA.prototype.loadSound = function () {
             this._webAudioJSInstances = new Array(Consts.SOUND_MAX + 1);
@@ -4793,7 +4819,7 @@ var wwa_main;
             }
             if (loadedNum < total && !this._soundLoadSkipFlag) {
                 this._setProgressBar(getProgress(loadedNum, total, wwa_data.LoadStage.AUDIO));
-                setTimeout(this.soundCheckCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
+                requestAnimationFrame(this.soundCheckCaller);
                 return;
             }
             this._setProgressBar(getProgress(Consts.SOUND_MAX, Consts.SOUND_MAX, wwa_data.LoadStage.AUDIO));
@@ -4928,16 +4954,6 @@ var wwa_main;
                 self._main();
             }, Consts.SPLASH_SCREEN_DISP_MILLS);
         };
-        /**
-          何でこんなことしてるの?
-           setTimeout で関数を呼んだ時, this が window になることを防ぐため!
-        */
-        WWA.prototype.mainCaller = function (self) {
-            self._main();
-        };
-        WWA.prototype.soundCheckCaller = function (self) {
-            self.checkAllSoundLoaded();
-        };
         WWA.prototype.onselectitem = function (itemPos) {
             if (this._player.canUseItem(itemPos)) {
                 var bg = (wwa_util.$id("item" + (itemPos - 1)));
@@ -4962,6 +4978,7 @@ var wwa_main;
             if (forcePassword === void 0) { forcePassword = false; }
             var bg = (wwa_util.$id(wwa_data.sidebarButtonCellElementID[button]));
             this.playSound(wwa_data.SystemSound.DECISION);
+            this._itemMenu.close();
             bg.classList.add("onpress");
             if (button === wwa_data.SidebarButton.QUICK_LOAD) {
                 if (this._quickSaveData !== void 0 && !forcePassword) {
@@ -4998,7 +5015,12 @@ var wwa_main;
                 this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME;
             }
             else if (button === wwa_data.SidebarButton.GOTO_WWA) {
-                if (!forcePassword) {
+                if (this._useGameEnd) {
+                    (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA])).classList.remove("onpress");
+                    this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
+                    this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_END_GAME;
+                }
+                else if (!forcePassword) {
                     (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA])).classList.remove("onpress");
                     this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                     this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA;
@@ -5040,7 +5062,7 @@ var wwa_main;
             this.setMessageQueue("右のメニューを選択してください。", false, true);
             this._messageWindow.setItemMenuChoice(true);
             this.playSound(wwa_data.SystemSound.DECISION);
-            this._itemMenu.init();
+            this._itemMenu.openView();
         };
         WWA.prototype.onchangespeed = function (type) {
             var speedIndex;
@@ -5195,11 +5217,11 @@ var wwa_main;
                     this.onpasswordsavecalled();
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_F5) ||
-                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZR)) {
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZL)) {
                     this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_F6) ||
-                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZL)) {
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZR)) {
                     this.onselectbutton(wwa_data.SidebarButton.QUICK_SAVE);
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_F7) ||
@@ -5266,22 +5288,18 @@ var wwa_main;
                     //Item Menu 選択肢
                     this._itemMenu.update();
                     if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                        this._mouseStore.checkClickMouse(wwa_data.Direction.LEFT) ||
                         this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_LEFT)) {
                         this._itemMenu.cursor_left();
                     }
                     else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                        this._mouseStore.checkClickMouse(wwa_data.Direction.UP) ||
                         this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_UP)) {
                         this._itemMenu.cursor_up();
                     }
                     else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                        this._mouseStore.checkClickMouse(wwa_data.Direction.RIGHT) ||
                         this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
                         this._itemMenu.cursor_right();
                     }
                     else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                        this._mouseStore.checkClickMouse(wwa_data.Direction.DOWN) ||
                         this._gamePadStore.crossPressed(wwa_input.GamePadState.BUTTON_CROSS_KEY_DOWN)) {
                         this._itemMenu.cursor_down();
                     }
@@ -5292,7 +5310,11 @@ var wwa_main;
                         this._messageWindow.setItemMenuChoice(false);
                         this._itemMenu.ok();
                     }
-                    else if (this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
+                    else if (this._mouseStore.checkClickMouse(wwa_data.Direction.LEFT) ||
+                        this._mouseStore.checkClickMouse(wwa_data.Direction.UP) ||
+                        this._mouseStore.checkClickMouse(wwa_data.Direction.RIGHT) ||
+                        this._mouseStore.checkClickMouse(wwa_data.Direction.DOWN) ||
+                        this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
                         this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
                         this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_B)) {
                         for (var i = 0; i < wwa_data.sidebarButtonCellElementID.length; i++) {
@@ -5408,7 +5430,8 @@ var wwa_main;
                 this._player.decrementMoveObjectAutoExecTimer();
             }
             if (!this._stopUpdateByLoadFlag) {
-                setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
+                //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
+                requestAnimationFrame(this.mainCaller);
             }
             else {
                 this._fadeout(function () {
@@ -6172,6 +6195,10 @@ var wwa_main;
                         this._stopUpdateByLoadFlag = true;
                         this._loadType = wwa_data.LoadType.RESTART_GAME;
                     }
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_END_GAME) {
+                        window.history.back(-1);
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA])).classList.remove("onpress");
+                    }
                     else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
                         location.href = wwa_util.$escapedURI(Consts.WWA_HOME);
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA])).classList.remove("onpress");
@@ -6239,6 +6266,9 @@ var wwa_main;
                     }
                     else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_RESTART_GAME) {
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.RESTART_GAME])).classList.remove("onpress");
+                    }
+                    else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_END_GAME) {
+                        (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA])).classList.remove("onpress");
                     }
                     else if (this._yesNoChoiceCallInfo === wwa_data.ChoiceCallInfo.CALL_BY_GOTO_WWA) {
                         (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA])).classList.remove("onpress");
@@ -7521,7 +7551,7 @@ var wwa_main;
         wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, audioDirectory);
     }
     if (document.readyState === "complete") {
-        start();
+        setTimeout(start);
     }
     else {
         window.addEventListener("load", start);
