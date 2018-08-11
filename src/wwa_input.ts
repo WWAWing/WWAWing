@@ -266,6 +266,8 @@
         BUTTON_CROSS_KEY_RIGHT = 15,
         AXES_L_HORIZONTAL_INDEX = 0,
         AXES_L_VERTICAL_INDEX = 1,
+        AXES_R_HORIZONTAL_INDEX = 2,
+        AXES_R_VERTICAL_INDEX = 3,
         AXES_CROSS_KEY = 9
     }
 
@@ -353,6 +355,7 @@
                 switch (code) {
                     case GamePadState.BUTTON_CROSS_KEY_UP:
                         if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] <= -0.6 ||
+                            this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] <= -0.6 ||
                             this.stickFloor(GamePadState.AXES_CROSS_KEY) === -1 ||
                             this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
                             return true;
@@ -360,6 +363,7 @@
                         break;
                     case GamePadState.BUTTON_CROSS_KEY_DOWN:
                         if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] >= 0.7 ||
+                            this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] >= 0.7 ||
                             this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.1 ||
                             this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
                             return true;
@@ -367,6 +371,7 @@
                         break;
                     case GamePadState.BUTTON_CROSS_KEY_LEFT:
                         if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] <= -0.7 ||
+                            this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] <= -0.7 ||
                             this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.7 ||
                             this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
                             return true;
@@ -374,6 +379,7 @@
                         break;
                     case GamePadState.BUTTON_CROSS_KEY_RIGHT:
                         if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] > 0.6 ||
+                            this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] > 0.6 ||
                             this.stickFloor(GamePadState.AXES_CROSS_KEY) === -0.5 ||
                             this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
                             return true;

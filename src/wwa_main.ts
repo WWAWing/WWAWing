@@ -222,7 +222,6 @@ module wwa_main {
         private _loadHandler: (e) => void;
         public audioContext: any;
         public audioGain: any;
-        private _soundDecodingFlag: boolean;
         private audioExtension: string = "";
 
         constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
@@ -256,10 +255,9 @@ module wwa_main {
             } catch (e) { }
             var AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
-                this.audioContext = new AudioContext();
+                this.audioContext = window.audioContext  = window.audioContext || new AudioContext();
                 this.audioGain = this.audioContext.createGain();
                 this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
-                this._soundDecodingFlag = false;
             }
             var myAudio = new Audio();
             if (("no" !== myAudio.canPlayType("audio/mpeg")) && ("" !== myAudio.canPlayType("audio/mpeg"))) {
@@ -591,6 +589,7 @@ module wwa_main {
                         var dist = mousePos.substract(playerPos);
                         var dx = Math.abs(dist.x);
                         var dy = Math.abs(dist.y);
+                        var dir: wwa_data.Direction;
                         var sideFlag = false;
                         if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
                             //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
@@ -1060,49 +1059,11 @@ module wwa_main {
             var file = (wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + "." + this.audioExtension : this._audioDirectory + idx + "." + this.audioExtension);
             if (audioContext) {
                 //WebAuido
-                var that = this;
                 this._webAudioJSInstances[idx] = new WWAWebAudio();
                 if (idx >= wwa_data.SystemSound.BGM_LB) {
                     this._webAudioJSInstances[idx].isBgm = true;
                 }
-                var audioLoader = function () {
-                    if (that._soundDecodingFlag) {
-                        //デコード中のため待機
-                        setTimeout(function () {
-                            audioLoader();
-                        }, 100);
-                        return;
-                    }
-                    that._soundDecodingFlag = true;
-                    var req = new XMLHttpRequest();
-                    var error_count = 0;
-                    req.responseType = 'arraybuffer';
-                    req.onload = function () {
-                        if (this.readyState === 4) {
-                            if (this.status === 0 || this.status === 200) {
-                                var decodeTime = +new Date();
-                                audioContext.decodeAudioData(this.response, function (buffer) {
-                                    if (buffer.length === 0) {
-                                        if (error_count > 10) {
-                                            //10回エラー
-                                            console.log("error audio file!  " + file + " buffer size " + buffer.length);
-                                        } else {
-                                            setTimeout(function () {
-                                                audioLoader();
-                                            }, 100);
-                                            return;
-                                        }
-                                    }
-                                    that._soundDecodingFlag = false;
-                                    that._webAudioJSInstances[idx].buffer = buffer;
-                                });
-                            }
-                        }
-                    };
-                    req.open('GET', file, true);
-                    req.send('');
-                };
-                audioLoader();
+                this.audioFileLoader(file, idx);
             } else {
                 var audioElement = new Audio(file);
                 audioElement.preload = "auto";
@@ -1121,6 +1082,38 @@ module wwa_main {
 
                 audioElement.loop = true;
             }
+        }
+
+        public audioFileLoader(file: string, idx: number): void {
+            var audioContext = this.audioContext;
+            var req = new XMLHttpRequest();
+            var error_count = 0;
+            var that = this;
+            req.responseType = 'arraybuffer';
+            req.onload = function (e) {
+                var req = e.target;
+                if (req.readyState === 4) {
+                    if (req.status === 0 || req.status === 200) {
+                        var decodeTime = +new Date();
+                        audioContext.decodeAudioData(req.response, function (buffer) {
+                            if (buffer.length === 0) {
+                                if (error_count > 10) {
+                                    //10回エラー
+                                    console.log("error audio file!  " + file + " buffer size " + buffer.length);
+                                } else {
+                                    setTimeout(function () {
+                                        that.audioFileLoader(file, idx);
+                                    }, 100);
+                                    return;
+                                }
+                            }
+                            that._webAudioJSInstances[idx].buffer = buffer;
+                        });
+                    }
+                }
+            };
+            req.open('GET', file, true);
+            req.send('');
         }
 
         public loadSound(): void {
@@ -4188,7 +4181,7 @@ module wwa_main {
 
 
     if (document.readyState === "complete") {
-        start();
+        setTimeout(start);
     } else {
         window.addEventListener("load", start);
     }
