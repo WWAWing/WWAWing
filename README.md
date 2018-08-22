@@ -1,5 +1,5 @@
 # WWA Wing
-インターネット RPG 「[World Wide Adventure](http://wwajp.com/) の TypeScript / JavaScript 実装です。
+インターネット RPG 「[World Wide Adventure](http://wwajp.com/)」 の TypeScript / JavaScript 実装です。
 
 このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna により自動化されています。
 
