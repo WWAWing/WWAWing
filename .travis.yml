@@ -5,6 +5,7 @@ install: true
 branches:
   only:
   - master
+  - develop
 env:
   global:
   - GIT_COMMITTER_NAME="WWA Helper"
