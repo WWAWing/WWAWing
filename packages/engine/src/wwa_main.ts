@@ -1286,6 +1286,7 @@ export class WWA {
             if (
                 !this._player.isJumped() &&
                 !this._player.isWaitingMessage() &&
+                !this._player.isWatingEstimateWindow() &&
                 !this._player.isWaitingMoveMacro() &&
                 !this._player.isFighting()) {
 
