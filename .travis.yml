@@ -22,12 +22,10 @@ script:
 - cp ./packages/build-utils/output/*.zip Releases
 - WWA_VERSION=$(./getEngineVersion.sh)
 - pushd Releases
-- pushd docs
-- mv wwawing-dist.zip wwawing-dist-latest.zip
-- mv wwawing-update.zip wwawing-update-latest.zip
-- cp wwawing-dist-latest.zip wwawing-dist-$(echo $WWA_VERSION).zip
-- cp wwawing-update-latest.zip wwawing-update-$(echo $WWA_VERSION).zip
-- popd
+- mv wwawing-dist.zip docs/wwawing-dist-latest.zip
+- mv wwawing-update.zip docs/wwawing-update-latest.zip
+- cp docs/wwawing-dist-latest.zip docs/wwawing-dist-$(echo $WWA_VERSION).zip
+- cp docs/wwawing-update-latest.zip docs/wwawing-update-$(echo $WWA_VERSION).zip
 - ./generate-release-page/update.sh $WWA_VERSION
 - git add -A
 - git commit -m "RELEASED $WWA_VERSION"
