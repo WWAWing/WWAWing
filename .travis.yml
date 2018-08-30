@@ -17,10 +17,10 @@ script:
 - echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - npm config set -g production false
 - npm install && npm run bootstrap && npm run build && npm run generate && npm run make-dist
-- git clone git@github.com:WWAWing/Releases.git
-- cp ./packages/build-utils/output/*.zip Releases
+- git clone git@github.com:WWAWing/get.wwawing.com.git
+- cp ./packages/build-utils/output/*.zip get.wwawing.com
 - WWA_VERSION=$(./getEngineVersion.sh)
-- pushd Releases
+- pushd get.wwawing.com
 - mv wwawing-dist.zip docs/wwawing-dist-latest.zip
 - mv wwawing-update.zip docs/wwawing-update-latest.zip
 - cp docs/wwawing-dist-latest.zip docs/wwawing-dist-$(echo $WWA_VERSION).zip
