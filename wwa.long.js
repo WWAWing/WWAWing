@@ -5233,7 +5233,9 @@ var wwa_main;
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
                     this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_X)) {
-                    this.onitemmenucalled();
+                    if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
+                        this.onitemmenucalled();
+                    }
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_F12)) {
                     // コマンドのヘルプ 
@@ -7170,6 +7172,7 @@ var wwa_main;
             }
             if (monsterList.length === 0) {
                 (wwa_util.$id(wwa_data.sidebarButtonCellElementID[wwa_data.SidebarButton.GOTO_WWA])).classList.remove("onpress");
+                this.hideBattleEstimateWindow();
                 return false;
             }
             this._battleEstimateWindow.update(this._player.getStatus(), monsterList);
