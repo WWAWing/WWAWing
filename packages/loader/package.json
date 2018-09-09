@@ -1,0 +1,44 @@
+{
+  "name": "@wwawing/loader",
+  "version": "0.0.0",
+  "description": "a World Wide Adventure mapdata loader for client-side web applications",
+  "main": "./lib/wwaload.js",
+  "scripts": {
+    "start": "run-p watch:* start:deploy server",
+    "start:deploy": "shx mkdir -p lib && shx cp -R resources/* lib",
+    "test": "echo \"no test specified\"",
+    "watch:worker": "webpack -w ",
+    "watch:noworker": "webpack -w --config ./webpack.config.noworker.js",
+    "server": "http-server ./lib -o",
+    "build": "npm run clean && npm run build:worker && npm run build:noworker",
+    "build:worker": "npm run build:worker:dev && npm run build:worker:prod",
+    "build:worker:dev": "webpack",
+    "build:worker:prod": "webpack --config ./webpack.config.prod.js",
+    "build:noworker": "npm run build:noworker:dev && npm run build:noworker:prod",
+    "build:noworker:dev": "webpack --config ./webpack.config.noworker.js",
+    "build:noworker:prod": "webpack --config ./webpack.config.prod.noworker.js",
+    "clean": "shx rm -rf lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WWAWing/WWALoader.git"
+  },
+  "author": "WWA Wing Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WWAWing/WWALoader/issues"
+  },
+  "homepage": "https://github.com/WWAWing/WWALoader#readme",
+  "devDependencies": {
+    "http-server": "^0.10.0",
+    "npm-run-all": "^4.1.3",
+    "shelljs": "^0.8.1",
+    "shx": "^0.2.2",
+    "ts-loader": "^4.2.0",
+    "typescript": "^2.5.3",
+    "uglify-js": "^3.1.5",
+    "uglifyjs-webpack-plugin": "^1.2.5",
+    "webpack": "^4.6.0",
+    "webpack-cli": "^2.0.15"
+  }
+}
