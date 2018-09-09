@@ -25,6 +25,7 @@ $ cd WWAWing
 ## 依存しているライブラリをインストールします
 $ npm install
 $ npm run bootstrap ## 内部的に lerna bootstrap が呼ばれます
+$ npm run build ## 各種ソースをコンパイルします
 ## 開発用のサーバを起動します (内部的にengine ディレクトリ下での npm startが呼び出されます。)
 $ npm start
 ```
@@ -38,4 +39,5 @@ WWA Wing 本体のソースは `packages/engine/src` 下にあります。
 - リリース作業は　WWA Wing Team のメンテナ(まつゆき @matsuyuki-a)が行います。(`develop` ブランチを `master` ブランチにマージします。)
 
 ## ライセンス
-MIT (Expat) 
+- ソースコード: MIT (Expat) 
+- ドキュメント・画像・音源: CC-BY 4.0
