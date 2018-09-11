@@ -3982,7 +3982,7 @@ var wwa_main;
             var isLocal = !!location.href.match(/^file/);
             if (isLocal) {
                 if (browser.os === "Nintendo") {
-                    wwa_data.speedList = [10, 10, 10, 10];
+                    //wwa_data.speedList = [10, 10, 10, 10];
                     Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
                     this._useGameEnd = true;
                     this._useBattleReportButton = false;
@@ -5065,16 +5065,23 @@ var wwa_main;
             this._itemMenu.openView();
         };
         WWA.prototype.onchangespeed = function (type) {
-            var speedIndex;
+            var speedIndex, speedMessage;
             if (type === wwa_data.SpeedChange.UP) {
                 speedIndex = this._player.speedUp();
             }
             else {
                 speedIndex = this._player.speedDown();
             }
-            this.setMessageQueue("移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
+            speedMessage = "移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
                 (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
-                "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
+                "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "）";
+            if (this._useGameEnd) {
+                speedMessage += "速度を落とすには-ボタン, 速度を上げるには+ボタンを押してください。";
+            }
+            else {
+                speedMessage += "速度を落とすにはIキー, 速度を上げるにはPキーを押してください。";
+            }
+            this.setMessageQueue(speedMessage, false, true);
         };
         WWA.prototype._main = function () {
             var _this = this;
@@ -5194,11 +5201,13 @@ var wwa_main;
                 else if (this._keyStore.getKeyState(KeyCode.KEY_C) === wwa_input.KeyState.KEYDOWN) {
                     this.onselectitem(12);
                 }
-                else if (this._keyStore.getKeyState(KeyCode.KEY_I)) {
+                else if (this._keyStore.getKeyState(KeyCode.KEY_I) ||
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_MINUS)) {
                     this.onchangespeed(wwa_data.SpeedChange.DOWN);
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_P) ||
-                    this._keyStore.checkHitKey(KeyCode.KEY_F2)) {
+                    this._keyStore.checkHitKey(KeyCode.KEY_F2) ||
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_PLUS)) {
                     this.onchangespeed(wwa_data.SpeedChange.UP);
                 }
                 else if (this._keyStore.getKeyState(KeyCode.KEY_F1) === wwa_input.KeyState.KEYDOWN ||
@@ -5217,11 +5226,11 @@ var wwa_main;
                     this.onpasswordsavecalled();
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_F5) ||
-                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZL)) {
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZR)) {
                     this.onselectbutton(wwa_data.SidebarButton.QUICK_LOAD);
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_F6) ||
-                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZR)) {
+                    this._gamePadStore.buttonTrigger(wwa_input.GamePadState.BUTTON_INDEX_A, wwa_input.GamePadState.BUTTON_INDEX_ZL)) {
                     this.onselectbutton(wwa_data.SidebarButton.QUICK_SAVE);
                 }
                 else if (this._keyStore.checkHitKey(KeyCode.KEY_F7) ||
@@ -5373,6 +5382,7 @@ var wwa_main;
             if (this._player.getPosition().isJustPosition() && this._camera.getPosition().isScreenTopPosition()) {
                 if (!this._player.isJumped() &&
                     !this._player.isWaitingMessage() &&
+                    !this._player.isWatingEstimateWindow() &&
                     !this._player.isWaitingMoveMacro() &&
                     !this._player.isFighting()) {
                     if (this._player.isPartsAppearedTime()) {
