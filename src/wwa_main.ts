@@ -3156,42 +3156,35 @@ module wwa_main {
             var pos_id = (pos.y << wwa_data.IDTable.BITSHIFT) | pos.x;
             if (partsType === wwa_data.PartsType.MAP) {
                 before_id = this._wwaData.map[pos.y][pos.x];
-                if (id >= this._wwaData.mapPartsMax) {
-                    id = 0;
-                }
+                id = this.loadMapPartsID(id);
+                before_id = this.loadMapPartsID(before_id);
+                
                 this._wwaData.map[pos.y][pos.x] = id;
 
-                if (before_id !== 0) {
-                    no = this._wwaData.mapIDTable[before_id].indexOf(pos_id);
-                    if (no !== -1) {
-                        this._wwaData.mapIDTable[before_id].splice(no, 1);
-                    }
+                no = this._wwaData.mapIDTable[before_id].indexOf(pos_id);
+                if (no !== -1) {
+                    this._wwaData.mapIDTable[before_id].splice(no, 1);
                 }
-                if (id !== 0) {
-                    no = this._wwaData.mapIDTable[id].indexOf(pos_id);
-                    if (no === -1) {
-                        this._wwaData.mapIDTable[id].push(pos_id);
-                    }
+                no = this._wwaData.mapIDTable[id].indexOf(pos_id);
+                if (no === -1) {
+                    this._wwaData.mapIDTable[id].push(pos_id);
                 }
 
             } else {
                 before_id = this._wwaData.mapObject[pos.y][pos.x];
-                if (id >= this._wwaData.objPartsMax) {
-                    id = 0;
-                }
+                id = this.loadMapPartsObjectID(id);
+                before_id = this.loadMapPartsObjectID(before_id);
+
+
                 this._wwaData.mapObject[pos.y][pos.x] = id;
 
-                if (before_id !== 0) {
-                    no = this._wwaData.mapObjectIDTable[before_id].indexOf(pos_id);
-                    if (no !== -1) {
-                        this._wwaData.mapObjectIDTable[before_id].splice(no, 1);
-                    }
+                no = this._wwaData.mapObjectIDTable[before_id].indexOf(pos_id);
+                if (no !== -1) {
+                    this._wwaData.mapObjectIDTable[before_id].splice(no, 1);
                 }
-                if (id !== 0) {
-                    no = this._wwaData.mapObjectIDTable[id].indexOf(pos_id);
-                    if (no === -1) {
-                        this._wwaData.mapObjectIDTable[id].push(pos_id);
-                    }
+                no = this._wwaData.mapObjectIDTable[id].indexOf(pos_id);
+                if (no === -1) {
+                    this._wwaData.mapObjectIDTable[id].push(pos_id);
                 }
             }
         }
@@ -3423,29 +3416,25 @@ module wwa_main {
             var pid: number;
             this._wwaData.mapIDTable = [];
             this._wwaData.mapObjectIDTable = [];
-            for (pid = 1; pid < this._wwaData.mapPartsMax; pid++) {
+            for (pid = 0; pid < this._wwaData.mapPartsMax; pid++) {
                 this._wwaData.mapIDTable[pid] = [];
             }
-            for (pid = 1; pid < this._wwaData.objPartsMax; pid++) {
+            for (pid = 0; pid < this._wwaData.objPartsMax; pid++) {
                 this._wwaData.mapObjectIDTable[pid] = [];
             }
             for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
                 for (var yy = 0; yy < this._wwaData.mapWidth; yy++) {
                     var pos_id = (yy << wwa_data.IDTable.BITSHIFT) | xx;
                     pid = this._wwaData.map[yy][xx];
-                    if (pid !== 0) {
-                        if (!(this._wwaData.mapIDTable[pid] instanceof Array)) {
-                            this._wwaData.mapIDTable[pid] = [];
-                        }
-                        this._wwaData.mapIDTable[pid].push(pos_id);
+                    if (!(this._wwaData.mapIDTable[pid] instanceof Array)) {
+                        this._wwaData.mapIDTable[pid] = [];
                     }
+                    this._wwaData.mapIDTable[pid].push(pos_id);
                     pid = this._wwaData.mapObject[yy][xx];
-                    if (pid !== 0) {
-                        if (!(this._wwaData.mapObjectIDTable[pid] instanceof Array)) {
-                            this._wwaData.mapObjectIDTable[pid] = [];
-                        }
-                        this._wwaData.mapObjectIDTable[pid].push(pos_id);
+                    if (!(this._wwaData.mapObjectIDTable[pid] instanceof Array)) {
+                        this._wwaData.mapObjectIDTable[pid] = [];
                     }
+                    this._wwaData.mapObjectIDTable[pid].push(pos_id);
                 }
             }
         }
@@ -3977,7 +3966,20 @@ module wwa_main {
             }
 
         }
-
+        public loadMapPartsObjectID(id: number): number {
+            id = id | 0;
+            if ((id < 0) || (id >= this._wwaData.objPartsMax)) {
+                return 0;
+            }
+            return id;
+        }
+        public loadMapPartsID(id: number): number {
+            id = id | 0;
+            if ((id < 0) || (id >= this._wwaData.mapPartsMax)) {
+                return 0;
+            }
+            return id;
+        }
 
         public replaceParts(
             srcID: number,
@@ -3997,6 +3999,9 @@ module wwa_main {
             var xx: number, yy:number;
             var srcList: number[], destList: number[];
             if (partsType === wwa_data.PartsType.OBJECT) {
+                srcID = this.loadMapPartsObjectID(srcID);
+                destID = this.loadMapPartsObjectID(destID);
+
                 list = this._wwaData.mapObjectIDTable[srcID].concat();
                 srcList = this._wwaData.mapObjectIDTable[srcID];
                 srcList.length = 0;
@@ -4026,6 +4031,9 @@ module wwa_main {
                     }
                 }
             } else {
+                srcID = this.loadMapPartsID(srcID);
+                destID = this.loadMapPartsID(destID);
+
                 list = this._wwaData.mapIDTable[srcID].concat();
                 srcList = this._wwaData.mapIDTable[srcID];
                 srcList.length = 0;
