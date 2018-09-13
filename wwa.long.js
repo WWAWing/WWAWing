@@ -1064,6 +1064,12 @@ var wwa_data;
         SelectorType[SelectorType["SIDEBAR"] = 1] = "SIDEBAR";
     })(SelectorType = wwa_data.SelectorType || (wwa_data.SelectorType = {}));
     ;
+    var IDTable;
+    (function (IDTable) {
+        IDTable[IDTable["BITSHIFT"] = 16] = "BITSHIFT";
+        IDTable[IDTable["BITMASK"] = 65535] = "BITMASK";
+    })(IDTable = wwa_data.IDTable || (wwa_data.IDTable = {}));
+    ;
     var WWAData = /** @class */ (function () {
         function WWAData() {
             this.version = void 0;
@@ -1084,6 +1090,8 @@ var wwa_data;
             this.messageNum = void 0;
             this.map = void 0;
             this.mapObject = void 0;
+            this.mapIDTable = void 0;
+            this.mapObjectIDTable = void 0;
             this.mapCompressed = void 0;
             this.mapObjectCompressed = void 0;
             this.mapAttribute = void 0;
@@ -4096,6 +4104,7 @@ var wwa_main;
                 iconNode_gold.style.backgroundImage = "url(" + escapedFilename + ")";
                 _this._setProgressBar(getProgress(1, 4, wwa_data.LoadStage.GAME_INIT));
                 _this._setLoadingMessage(ctxCover, 3);
+                _this._mapIDTableCreate();
                 _this._replaceAllRandomObjects();
                 var t_end = new Date().getTime();
                 console.log("Loading Complete!" + (t_end - t_start) + "ms");
@@ -5919,7 +5928,8 @@ var wwa_main;
             var soundID = this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND];
             // プレイヤー座標と同一なら削除（踏み潰し判定）
             if (pos.x === playerPos.x && pos.y === playerPos.y && !this._wwaData.objectNoCollapseDefaultFlag) {
-                this._wwaData.mapObject[pos.y][pos.x] = 0;
+                //this._wwaData.mapObject[pos.y][pos.x] = 0;
+                this.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, pos);
             }
             // 試験的に踏み潰し判定と処理の順序を入れ替えています。不具合があるようなら戻します。 150415
             this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos);
@@ -5941,7 +5951,8 @@ var wwa_main;
                     pstatus.defence < status.defence - Consts.STATUS_MINUS_BORDER ||
                 status.gold > Consts.STATUS_MINUS_BORDER &&
                     pstatus.gold < status.gold - Consts.STATUS_MINUS_BORDER) {
-                this._wwaData.mapObject[pos.y][pos.x] = 0;
+                //this._wwaData.mapObject[pos.y][pos.x] = 0;
+                this.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, pos);
                 // 前方パーツ重複実行防止
                 this._keyStore.allClear();
                 this._mouseStore.clear();
@@ -5963,7 +5974,8 @@ var wwa_main;
                 return;
             }
             this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
-            this._wwaData.mapObject[pos.y][pos.x] = 0;
+            //this._wwaData.mapObject[pos.y][pos.x] = 0;
+            this.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, pos);
             this.appearParts(pos, wwa_data.AppearanceTriggerType.OBJECT, partsID);
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
         };
@@ -5986,7 +5998,8 @@ var wwa_main;
             var playerPos = this._player.getPosition().getPartsCoord();
             // プレイヤー座標と同一なら削除（踏み潰し判定）
             if (pos.x === playerPos.x && pos.y === playerPos.y && !this._wwaData.objectNoCollapseDefaultFlag) {
-                this._wwaData.mapObject[pos.y][pos.x] = 0;
+                //this._wwaData.mapObject[pos.y][pos.x] = 0;
+                this.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, pos);
             }
             // 試験的に(ry
             this.setMessageQueue(message, true, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
@@ -6001,7 +6014,8 @@ var wwa_main;
             var playerPos = this._player.getPosition().getPartsCoord();
             // プレイヤー座標と同一なら削除（踏み潰し判定）
             if (pos.x === playerPos.x && pos.y === playerPos.y && !this._wwaData.objectNoCollapseDefaultFlag) {
-                this._wwaData.mapObject[pos.y][pos.x] = 0;
+                //this._wwaData.mapObject[pos.y][pos.x] = 0;
+                this.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, pos);
             }
             // 試験的に(ry
             this.setMessageQueue(message, true, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
@@ -6015,7 +6029,8 @@ var wwa_main;
             var message = this._wwaData.message[messageID];
             try {
                 this._player.addItem(partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER]);
-                this._wwaData.mapObject[pos.y][pos.x] = 0;
+                //this._wwaData.mapObject[pos.y][pos.x] = 0;
+                this.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, pos);
                 if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                     // 使用型アイテム の場合は、処理は使用時です。
                 }
@@ -6044,7 +6059,8 @@ var wwa_main;
                 }
                 this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
                 this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
-                this._wwaData.mapObject[pos.y][pos.x] = 0;
+                //this._wwaData.mapObject[pos.y][pos.x] = 0;
+                this.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, pos);
                 this.appearParts(pos, wwa_data.AppearanceTriggerType.OBJECT, partsID);
                 this._paintSkipByDoorOpen = true;
             }
@@ -6055,7 +6071,8 @@ var wwa_main;
             var playerPos = this._player.getPosition().getPartsCoord();
             // プレイヤー座標と同一なら削除（踏み潰し判定）
             if (pos.x === playerPos.x && pos.y === playerPos.y && !this._wwaData.objectNoCollapseDefaultFlag) {
-                this._wwaData.mapObject[pos.y][pos.x] = 0;
+                //this._wwaData.mapObject[pos.y][pos.x] = 0;
+                this.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, pos);
             }
             // 試験(ry
             this.setMessageQueue(message, true, false, partsID, wwa_data.PartsType.OBJECT, pos.clone());
@@ -6068,7 +6085,8 @@ var wwa_main;
             var playerPos = this._player.getPosition().getPartsCoord();
             // プレイヤー座標と同一なら削除（踏み潰し判定）
             if (pos.x === playerPos.x && pos.y === playerPos.y && !this._wwaData.objectNoCollapseDefaultFlag) {
-                this._wwaData.mapObject[pos.y][pos.x] = 0;
+                //this._wwaData.mapObject[pos.y][pos.x] = 0;
+                this.setPartsOnPosition(wwa_data.PartsType.OBJECT, 0, pos);
             }
             // TODO: ジャンプ後のプレイヤーの向き 背景との処理共通化
             var jx = this._wwaData.objectAttribute[partsID][Consts.ATR_JUMP_X];
@@ -6454,13 +6472,17 @@ var wwa_main;
                         if (targetPartsID >= this._wwaData.mapPartsMax) {
                             throw new Error("背景パーツの範囲外IDが指定されました");
                         }
-                        this._wwaData.map[targetY][targetX] = targetPartsID;
+                        //this._wwaData.map[targetY][targetX] = targetPartsID;
+                        var cand = new Coord(targetX, targetY);
+                        this.setPartsOnPosition(wwa_data.PartsType.MAP, targetPartsID, cand);
                     }
                     else {
                         if (targetPartsID >= this._wwaData.objPartsMax) {
                             throw new Error("物体パーツの範囲外IDが指定されました");
                         }
-                        this._wwaData.mapObject[targetY][targetX] = targetPartsID;
+                        //this._wwaData.mapObject[targetY][targetX] = targetPartsID;
+                        var cand = new Coord(targetX, targetY);
+                        this.setPartsOnPosition(wwa_data.PartsType.OBJECT, targetPartsID, cand);
                         this._replaceRandomObject(new Coord(targetX, targetY));
                         if (targetX === this._player.getPosition().getPartsCoord().x &&
                             targetY === this._player.getPosition().getPartsCoord().y) {
@@ -6521,13 +6543,17 @@ var wwa_main;
                     if (targetPartsID >= this._wwaData.mapPartsMax) {
                         throw new Error("背景パーツの範囲外IDが指定されました");
                     }
-                    this._wwaData.map[targetY][targetX] = targetPartsID;
+                    //this._wwaData.map[targetY][targetX] = targetPartsID;
+                    var cand = new Coord(targetX, targetY);
+                    this.setPartsOnPosition(wwa_data.PartsType.MAP, targetPartsID, cand);
                 }
                 else {
                     if (targetPartsID >= this._wwaData.objPartsMax) {
                         throw new Error("物体パーツの範囲外IDが指定されました");
                     }
-                    this._wwaData.mapObject[targetY][targetX] = targetPartsID;
+                    //this._wwaData.mapObject[targetY][targetX] = targetPartsID;
+                    var cand = new Coord(targetX, targetY);
+                    this.setPartsOnPosition(wwa_data.PartsType.OBJECT, targetPartsID, cand);
                     this._replaceRandomObject(new Coord(targetX, targetY));
                     if (targetX === this._player.getPosition().getPartsCoord().x &&
                         targetY === this._player.getPosition().getPartsCoord().y) {
@@ -6559,7 +6585,8 @@ var wwa_main;
                 }
                 id = newId;
             }
-            this._wwaData.mapObject[pos.y][pos.x] = newId;
+            //this._wwaData.mapObject[pos.y][pos.x] = newId;
+            this.setPartsOnPosition(wwa_data.PartsType.OBJECT, newId, pos);
         };
         WWA.prototype._replaceRandomObjectsInScreen = function () {
             var camPos = this._camera.getPosition().getPartsCoord();
@@ -6627,17 +6654,45 @@ var wwa_main;
             }
         };
         WWA.prototype.setPartsOnPosition = function (partsType, id, pos) {
+            var before_id, no;
+            var pos_id = (pos.y << wwa_data.IDTable.BITSHIFT) | pos.x;
             if (partsType === wwa_data.PartsType.MAP) {
+                before_id = this._wwaData.map[pos.y][pos.x];
                 if (id >= this._wwaData.mapPartsMax) {
-                    this._wwaData.map[pos.y][pos.x] = 0;
+                    id = 0;
                 }
                 this._wwaData.map[pos.y][pos.x] = id;
+                if (before_id !== 0) {
+                    no = this._wwaData.mapIDTable[before_id].indexOf(pos_id);
+                    if (no !== -1) {
+                        this._wwaData.mapIDTable[before_id].splice(no, 1);
+                    }
+                }
+                if (id !== 0) {
+                    no = this._wwaData.mapIDTable[id].indexOf(pos_id);
+                    if (no === -1) {
+                        this._wwaData.mapIDTable[id].push(pos_id);
+                    }
+                }
             }
             else {
+                before_id = this._wwaData.mapObject[pos.y][pos.x];
                 if (id >= this._wwaData.objPartsMax) {
-                    this._wwaData.mapObject[pos.y][pos.x] = 0;
+                    id = 0;
                 }
                 this._wwaData.mapObject[pos.y][pos.x] = id;
+                if (before_id !== 0) {
+                    no = this._wwaData.mapObjectIDTable[before_id].indexOf(pos_id);
+                    if (no !== -1) {
+                        this._wwaData.mapObjectIDTable[before_id].splice(no, 1);
+                    }
+                }
+                if (id !== 0) {
+                    no = this._wwaData.mapObjectIDTable[id].indexOf(pos_id);
+                    if (no === -1) {
+                        this._wwaData.mapObjectIDTable[id].push(pos_id);
+                    }
+                }
             }
         };
         WWA.prototype._countSamePartsLength = function (data, startPos) {
@@ -6845,8 +6900,39 @@ var wwa_main;
                 this._player.setPartsAppearedFlag();
             }
             this._wwaData = newData;
+            this._mapIDTableCreate();
             this._replaceAllRandomObjects();
             this.updateCSSRule();
+        };
+        WWA.prototype._mapIDTableCreate = function () {
+            var pid;
+            this._wwaData.mapIDTable = [];
+            this._wwaData.mapObjectIDTable = [];
+            for (pid = 1; pid < this._wwaData.mapPartsMax; pid++) {
+                this._wwaData.mapIDTable[pid] = [];
+            }
+            for (pid = 1; pid < this._wwaData.objPartsMax; pid++) {
+                this._wwaData.mapObjectIDTable[pid] = [];
+            }
+            for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
+                for (var yy = 0; yy < this._wwaData.mapWidth; yy++) {
+                    var pos_id = (yy << wwa_data.IDTable.BITSHIFT) | xx;
+                    pid = this._wwaData.map[yy][xx];
+                    if (pid !== 0) {
+                        if (!(this._wwaData.mapIDTable[pid] instanceof Array)) {
+                            this._wwaData.mapIDTable[pid] = [];
+                        }
+                        this._wwaData.mapIDTable[pid].push(pos_id);
+                    }
+                    pid = this._wwaData.mapObject[yy][xx];
+                    if (pid !== 0) {
+                        if (!(this._wwaData.mapObjectIDTable[pid] instanceof Array)) {
+                            this._wwaData.mapObjectIDTable[pid] = [];
+                        }
+                        this._wwaData.mapObjectIDTable[pid].push(pos_id);
+                    }
+                }
+            }
         };
         WWA.prototype._restartGame = function () {
             this._quickLoad(true);
@@ -7309,18 +7395,73 @@ var wwa_main;
             var xRight = onlyThisSight ? Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1) : this._wwaData.mapWidth - 1;
             var yTop = onlyThisSight ? Math.max(0, cpParts.y) : 0;
             var yBottom = onlyThisSight ? Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1 : this._wwaData.mapWidth - 1;
-            for (var x = xLeft; x <= xRight; x++) {
-                for (var y = yTop; y <= yBottom; y++) {
-                    if (partsType === wwa_data.PartsType.OBJECT) {
-                        var pid = this._wwaData.mapObject[y][x];
-                        if (pid === srcID) {
-                            this._wwaData.mapObject[y][x] = destID;
+            onlyThisSight = (xLeft === 0) && (xRight === this._wwaData.mapWidth - 1) && (yTop === 0) && (yBottom === this._wwaData.mapWidth - 1);
+            var pos_id, len, i, list;
+            var xx, yy;
+            var srcList, destList;
+            if (partsType === wwa_data.PartsType.OBJECT) {
+                list = this._wwaData.mapObjectIDTable[srcID].concat();
+                srcList = this._wwaData.mapObjectIDTable[srcID];
+                srcList.length = 0;
+                destList = this._wwaData.mapObjectIDTable[destID];
+                len = list.length;
+                if (onlyThisSight) {
+                    //マップ全体
+                    for (i = 0; i < len; i++) {
+                        pos_id = list[i];
+                        xx = (pos_id & wwa_data.IDTable.BITMASK);
+                        yy = ((pos_id >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        this._wwaData.mapObject[yy][xx] = destID;
+                    }
+                    Array.prototype.push.apply(destList, list);
+                }
+                else {
+                    //範囲指定あり
+                    for (i = 0; i < len; i++) {
+                        pos_id = list[i];
+                        xx = (pos_id & wwa_data.IDTable.BITMASK);
+                        yy = ((pos_id >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
+                            this._wwaData.mapObject[yy][xx] = destID;
+                            destList.push(pos_id);
+                        }
+                        else {
+                            srcList.push(pos_id);
                         }
                     }
-                    else {
-                        var pid = this._wwaData.map[y][x];
-                        if (pid === srcID) {
-                            this._wwaData.map[y][x] = destID;
+                }
+            }
+            else {
+                list = this._wwaData.mapIDTable[srcID].concat();
+                srcList = this._wwaData.mapIDTable[srcID];
+                srcList.length = 0;
+                destList = this._wwaData.mapIDTable[destID];
+                len = list.length;
+                if (onlyThisSight) {
+                    //マップ全体
+                    for (i = 0; i < len; i++) {
+                        pos_id = list[i];
+                        xx = (pos_id & wwa_data.IDTable.BITMASK);
+                        yy = ((pos_id >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        this._wwaData.map[yy][xx] = destID;
+                    }
+                    Array.prototype.push.apply(destList, list);
+                }
+                else {
+                    //範囲指定あり
+                    for (i = 0; i < len; i++) {
+                        pos_id = list[i];
+                        xx = (pos_id & wwa_data.IDTable.BITMASK);
+                        yy = ((pos_id >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        if (onlyThisSight) {
+                            this._wwaData.map[yy][xx] = destID;
+                        }
+                        else if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
+                            this._wwaData.map[yy][xx] = destID;
+                            destList.push(pos_id);
+                        }
+                        else {
+                            srcList.push(pos_id);
                         }
                     }
                 }
