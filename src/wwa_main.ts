@@ -4046,9 +4046,7 @@ module wwa_main {
                         pos_id = list[i];
                         xx = (pos_id & wwa_data.IDTable.BITMASK);
                         yy = ((pos_id >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
-                        if (onlyThisSight) {
-                            this._wwaData.map[yy][xx] = destID;
-                        } else if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
+                        if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
                             this._wwaData.map[yy][xx] = destID;
                             destList.push(pos_id);
                         } else {
@@ -4325,7 +4323,9 @@ module wwa_main {
     if (document.readyState === "complete") {
         setTimeout(start);
     } else {
-        window.addEventListener("load", start);
+        window.addEventListener("load", function () {
+            setTimeout(start);
+        });
     }
 
 }
