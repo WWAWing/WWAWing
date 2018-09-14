@@ -6655,19 +6655,19 @@ var wwa_main;
         };
         WWA.prototype.setPartsOnPosition = function (partsType, id, pos) {
             var before_id, no;
-            var posID = (pos.y << wwa_data.IDTable.BITSHIFT) | pos.x;
+            var posKey = (pos.y << wwa_data.IDTable.BITSHIFT) | pos.x;
             if (partsType === wwa_data.PartsType.MAP) {
                 before_id = this._wwaData.map[pos.y][pos.x];
                 id = this.loadMapPartsID(id);
                 before_id = this.loadMapPartsID(before_id);
                 this._wwaData.map[pos.y][pos.x] = id;
-                no = this._wwaData.mapIDTable[before_id].indexOf(posID);
+                no = this._wwaData.mapIDTable[before_id].indexOf(posKey);
                 if (no !== -1) {
                     this._wwaData.mapIDTable[before_id].splice(no, 1);
                 }
-                no = this._wwaData.mapIDTable[id].indexOf(posID);
+                no = this._wwaData.mapIDTable[id].indexOf(posKey);
                 if (no === -1) {
-                    this._wwaData.mapIDTable[id].push(posID);
+                    this._wwaData.mapIDTable[id].push(posKey);
                 }
             }
             else {
@@ -6675,13 +6675,13 @@ var wwa_main;
                 id = this.loadMapPartsObjectID(id);
                 before_id = this.loadMapPartsObjectID(before_id);
                 this._wwaData.mapObject[pos.y][pos.x] = id;
-                no = this._wwaData.mapObjectIDTable[before_id].indexOf(posID);
+                no = this._wwaData.mapObjectIDTable[before_id].indexOf(posKey);
                 if (no !== -1) {
                     this._wwaData.mapObjectIDTable[before_id].splice(no, 1);
                 }
-                no = this._wwaData.mapObjectIDTable[id].indexOf(posID);
+                no = this._wwaData.mapObjectIDTable[id].indexOf(posKey);
                 if (no === -1) {
-                    this._wwaData.mapObjectIDTable[id].push(posID);
+                    this._wwaData.mapObjectIDTable[id].push(posKey);
                 }
             }
         };
@@ -6906,17 +6906,17 @@ var wwa_main;
             }
             for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
                 for (var yy = 0; yy < this._wwaData.mapWidth; yy++) {
-                    var posID = (yy << wwa_data.IDTable.BITSHIFT) | xx;
+                    var posKey = (yy << wwa_data.IDTable.BITSHIFT) | xx;
                     pid = this._wwaData.map[yy][xx];
                     if (!(this._wwaData.mapIDTable[pid] instanceof Array)) {
                         this._wwaData.mapIDTable[pid] = [];
                     }
-                    this._wwaData.mapIDTable[pid].push(posID);
+                    this._wwaData.mapIDTable[pid].push(posKey);
                     pid = this._wwaData.mapObject[yy][xx];
                     if (!(this._wwaData.mapObjectIDTable[pid] instanceof Array)) {
                         this._wwaData.mapObjectIDTable[pid] = [];
                     }
-                    this._wwaData.mapObjectIDTable[pid].push(posID);
+                    this._wwaData.mapObjectIDTable[pid].push(posKey);
                 }
             }
         };
@@ -7396,7 +7396,7 @@ var wwa_main;
             var yTop = onlyThisSight ? Math.max(0, cpParts.y) : 0;
             var yBottom = onlyThisSight ? Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1 : this._wwaData.mapWidth - 1;
             onlyThisSight = (xLeft !== 0) || (xRight !== this._wwaData.mapWidth - 1) || (yTop !== 0) || (yBottom !== this._wwaData.mapWidth - 1);
-            var posID, len, i, list;
+            var posKey, len, i, list;
             var xx, yy;
             var srcList, destList;
             if (partsType === wwa_data.PartsType.OBJECT) {
@@ -7410,24 +7410,24 @@ var wwa_main;
                 if (onlyThisSight) {
                     //範囲指定あり
                     for (i = 0; i < len; i++) {
-                        posID = list[i];
-                        xx = (posID & wwa_data.IDTable.BITMASK);
-                        yy = ((posID >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        posKey = list[i];
+                        xx = (posKey & wwa_data.IDTable.BITMASK);
+                        yy = ((posKey >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
                         if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
                             this._wwaData.mapObject[yy][xx] = destID;
-                            destList.push(posID);
+                            destList.push(posKey);
                         }
                         else {
-                            srcList.push(posID);
+                            srcList.push(posKey);
                         }
                     }
                 }
                 else {
                     //マップ全体
                     for (i = 0; i < len; i++) {
-                        posID = list[i];
-                        xx = (posID & wwa_data.IDTable.BITMASK);
-                        yy = ((posID >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        posKey = list[i];
+                        xx = (posKey & wwa_data.IDTable.BITMASK);
+                        yy = ((posKey >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
                         this._wwaData.mapObject[yy][xx] = destID;
                     }
                     Array.prototype.push.apply(destList, list);
@@ -7444,24 +7444,24 @@ var wwa_main;
                 if (onlyThisSight) {
                     //範囲指定あり
                     for (i = 0; i < len; i++) {
-                        posID = list[i];
-                        xx = (posID & wwa_data.IDTable.BITMASK);
-                        yy = ((posID >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        posKey = list[i];
+                        xx = (posKey & wwa_data.IDTable.BITMASK);
+                        yy = ((posKey >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
                         if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
                             this._wwaData.map[yy][xx] = destID;
-                            destList.push(posID);
+                            destList.push(posKey);
                         }
                         else {
-                            srcList.push(posID);
+                            srcList.push(posKey);
                         }
                     }
                 }
                 else {
                     //マップ全体
                     for (i = 0; i < len; i++) {
-                        posID = list[i];
-                        xx = (posID & wwa_data.IDTable.BITMASK);
-                        yy = ((posID >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        posKey = list[i];
+                        xx = (posKey & wwa_data.IDTable.BITMASK);
+                        yy = ((posKey >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
                         this._wwaData.map[yy][xx] = destID;
                     }
                     Array.prototype.push.apply(destList, list);
