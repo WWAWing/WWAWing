@@ -1,4 +1,4 @@
-﻿/// <reference path="./wwa_main.ts" />
+/// <reference path="./wwa_main.ts" />
 
 module wwa_data {
     export class EquipmentStatus {

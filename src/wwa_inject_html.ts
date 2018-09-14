@@ -1,4 +1,4 @@
-﻿/// <reference path="./wwa_util.ts" />
+/// <reference path="./wwa_util.ts" />
 /// <reference path="./wwa_main.ts" />
 
 // FIXME: innerHTML使う実装、あんまりよくないけど、許して。

@@ -1,4 +1,4 @@
-﻿module wwa_input {
+module wwa_input {
      export enum KeyState {
          NONE,
          KEYDOWN,

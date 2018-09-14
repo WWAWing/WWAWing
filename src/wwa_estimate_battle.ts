@@ -1,4 +1,4 @@
-﻿/// <reference path="./wwa_data.ts" />
+/// <reference path="./wwa_data.ts" />
 
 module wwa_estimate_battle {
 

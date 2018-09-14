@@ -1,4 +1,4 @@
-﻿/// <reference path="./wwa_main.ts" />
+/// <reference path="./wwa_main.ts" />
 
 module wwa_monster {
     export class Monster {
