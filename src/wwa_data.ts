@@ -695,7 +695,8 @@ module wwa_data {
 
         static KEYPRESS_MESSAGE_CHANGE_FRAME_NUM = 20;
 
-        static WWAP_SERVER = "http://wwawing.com/wwap";
+        static WWAP_SERVER_OLD = "http://wwawing.com/wwap";
+        static WWAP_SERVER = "https://wwaphoenix.github.io";
         static WWAP_SERVER_AUDIO_DIR = "audio";
         static WWAP_SERVER_TITLE_IMG = "cover_p.gif";
         static WWAP_SERVER_LOADER_NO_WORKER = "wwaload.noworker.js";

@@ -24,7 +24,7 @@ WWA( http://wwajp.com )のJavaScript実装です。
 - wwaload.js と wwaload.noworker は WWALoader( https://github.com/WWAWing/WWALoader )により生成されたものです。
 
 ## ライセンス
-- MIT License。詳しくは「LICENSE」ファイルを参照。
+- MIT License (Expat)。詳しくは「LICENSE」ファイルを参照。
 - ただし、マニュアル「manual.html」のみ CC BY 4.0。→<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a>
 
 ### 同梱物のライセンスについて

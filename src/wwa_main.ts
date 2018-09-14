@@ -207,6 +207,13 @@ module wwa_main {
                 _nowTime = new Date();
                 this._startTime = _nowTime.getTime();
                 /* WWAWing XE 拡張部分ここまで */
+                try {
+                    util.$id("version").textContent += (
+                            " (Map data Ver. "
+                            + Math.floor( this._wwaData.version / 10 ) + "." +
+                            + this._wwaData.version % 10 +")"
+                    );
+                } catch (e) { }
                 this.initCSSRule();
                 this._setProgressBar(getProgress(0, 4, wwa_data.LoadStage.GAME_INIT) );
                 var cgFile = new Image();
@@ -637,7 +644,10 @@ module wwa_main {
                     document.getElementsByTagName("head")[0].appendChild(script);
                 } else {
                     script = <HTMLScriptElement>document.getElementById("wwaloader-ex");
-                    if (!script.src.match(/^http:\/\/wwawing\.com/) && !script.src.match(/^http:\/\/www\.wwawing\.com/)) {
+                    if (!script.src.match(/^http:\/\/wwawing\.com/) &&
+                        !script.src.match(/^http:\/\/www\.wwawing\.com/) &&
+                        !script.src.match(/^https:\/\/wwaphoenix\.github\.io/) &&
+                        !script.src.match(/^https:\/\/www\.wwaphoenix\.github\.io/)) {
                         throw new Error("SCRIPT ORIGIN ERROR");
                     }
                 }
@@ -2905,11 +2915,18 @@ module wwa_main {
                     var partsID = this._wwaData.mapObject[posc.y][posc.x];
                     if (
                         partsID === 0 ||
-                        this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] === wwa_data.MoveType.STATIC  ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_LOCALGATE  ||
                         this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM
                         ) {
                         continue;
+                    }
+                    // 作成ツールで空白の移動属性が指定でき、その場合に意図しない値が入ることがあるため、これらの属性でなければ静止とみなす.
+                    if (
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.CHASE_PLAYER &&
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.RUN_OUT &&
+                      this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE] !== wwa_data.MoveType.HANG_AROUND
+                    ) {
+                    continue;
                     }
                     var moveMode = this._wwaData.objectAttribute[partsID][Consts.ATR_MOVE];
                     if (moveMode !== wwa_data.MoveType.HANG_AROUND) {
@@ -3171,7 +3188,7 @@ module wwa_main {
             var xLeft = Math.max(0, cpParts.x);
             var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1);
             var yTop = Math.max(0, cpParts.y);
-            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1;
+            var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
             var monsterList: number[] = [];
             this.playSound(wwa_data.SystemSound.DECISION);
             for (var x: number = xLeft; x <= xRight; x++) {
@@ -3236,8 +3253,10 @@ module wwa_main {
                     "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
                     " I : 移動速度を落とす／Ｐ: 移動速度を上げる\n" +
                     "現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                    "WWA Wing XE バージョン:" + Consts.VERSION_WWAJS + "\n" +
-                    "現在のプレイ時間：" + Math.floor( this._wwaData.playTime/ 1000 ) + "秒",
+                    "WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                    "現在のプレイ時間：" + Math.floor( this._wwaData.playTime/ 1000 ) + "秒\n" +
+                    "マップデータ バージョン: " +
+                    Math.floor( this._wwaData.version / 10 ) + "." + this._wwaData.version % 10,
                     false, true
                     );
             }
