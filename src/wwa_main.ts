@@ -3153,7 +3153,7 @@ module wwa_main {
 
         public setPartsOnPosition(partsType: wwa_data.PartsType, id: number, pos: wwa_data.Coord) {
             var before_id, no;
-            var pos_id = (pos.y << wwa_data.IDTable.BITSHIFT) | pos.x;
+            var posID = (pos.y << wwa_data.IDTable.BITSHIFT) | pos.x;
             if (partsType === wwa_data.PartsType.MAP) {
                 before_id = this._wwaData.map[pos.y][pos.x];
                 id = this.loadMapPartsID(id);
@@ -3161,13 +3161,13 @@ module wwa_main {
                 
                 this._wwaData.map[pos.y][pos.x] = id;
 
-                no = this._wwaData.mapIDTable[before_id].indexOf(pos_id);
+                no = this._wwaData.mapIDTable[before_id].indexOf(posID);
                 if (no !== -1) {
                     this._wwaData.mapIDTable[before_id].splice(no, 1);
                 }
-                no = this._wwaData.mapIDTable[id].indexOf(pos_id);
+                no = this._wwaData.mapIDTable[id].indexOf(posID);
                 if (no === -1) {
-                    this._wwaData.mapIDTable[id].push(pos_id);
+                    this._wwaData.mapIDTable[id].push(posID);
                 }
 
             } else {
@@ -3178,13 +3178,13 @@ module wwa_main {
 
                 this._wwaData.mapObject[pos.y][pos.x] = id;
 
-                no = this._wwaData.mapObjectIDTable[before_id].indexOf(pos_id);
+                no = this._wwaData.mapObjectIDTable[before_id].indexOf(posID);
                 if (no !== -1) {
                     this._wwaData.mapObjectIDTable[before_id].splice(no, 1);
                 }
-                no = this._wwaData.mapObjectIDTable[id].indexOf(pos_id);
+                no = this._wwaData.mapObjectIDTable[id].indexOf(posID);
                 if (no === -1) {
-                    this._wwaData.mapObjectIDTable[id].push(pos_id);
+                    this._wwaData.mapObjectIDTable[id].push(posID);
                 }
             }
         }
@@ -3424,17 +3424,17 @@ module wwa_main {
             }
             for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
                 for (var yy = 0; yy < this._wwaData.mapWidth; yy++) {
-                    var pos_id = (yy << wwa_data.IDTable.BITSHIFT) | xx;
+                    var posID = (yy << wwa_data.IDTable.BITSHIFT) | xx;
                     pid = this._wwaData.map[yy][xx];
                     if (!(this._wwaData.mapIDTable[pid] instanceof Array)) {
                         this._wwaData.mapIDTable[pid] = [];
                     }
-                    this._wwaData.mapIDTable[pid].push(pos_id);
+                    this._wwaData.mapIDTable[pid].push(posID);
                     pid = this._wwaData.mapObject[yy][xx];
                     if (!(this._wwaData.mapObjectIDTable[pid] instanceof Array)) {
                         this._wwaData.mapObjectIDTable[pid] = [];
                     }
-                    this._wwaData.mapObjectIDTable[pid].push(pos_id);
+                    this._wwaData.mapObjectIDTable[pid].push(posID);
                 }
             }
         }
@@ -3993,9 +3993,9 @@ module wwa_main {
             var xRight = onlyThisSight ? Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1) : this._wwaData.mapWidth - 1;
             var yTop = onlyThisSight ? Math.max(0, cpParts.y) : 0;
             var yBottom = onlyThisSight ? Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW) - 1 : this._wwaData.mapWidth - 1; 
-            onlyThisSight = (xLeft === 0) && (xRight === this._wwaData.mapWidth - 1) && (yTop === 0) && (yBottom === this._wwaData.mapWidth - 1);
+            onlyThisSight = (xLeft !== 0) || (xRight !== this._wwaData.mapWidth - 1) || (yTop !== 0) || (yBottom !== this._wwaData.mapWidth - 1);
 
-            var pos_id: number, len: number, i: number, list: number[];
+            var posID: number, len: number, i: number, list: number[];
             var xx: number, yy:number;
             var srcList: number[], destList: number[];
             if (partsType === wwa_data.PartsType.OBJECT) {
@@ -4008,27 +4008,27 @@ module wwa_main {
                 destList = this._wwaData.mapObjectIDTable[destID];
                 len = list.length;
                 if (onlyThisSight) {
+                    //範囲指定あり
+                    for (i = 0; i < len; i++) {
+                        posID = list[i];
+                        xx = (posID & wwa_data.IDTable.BITMASK);
+                        yy = ((posID >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
+                            this._wwaData.mapObject[yy][xx] = destID;
+                            destList.push(posID);
+                        } else {
+                            srcList.push(posID);
+                        }
+                    }
+                } else {
                     //マップ全体
                     for (i = 0; i < len; i++) {
-                        pos_id = list[i];
-                        xx = (pos_id & wwa_data.IDTable.BITMASK);
-                        yy = ((pos_id >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        posID = list[i];
+                        xx = (posID & wwa_data.IDTable.BITMASK);
+                        yy = ((posID >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
                         this._wwaData.mapObject[yy][xx] = destID;
                     }
                     Array.prototype.push.apply(destList, list);
-                } else {
-                    //範囲指定あり
-                    for (i = 0; i < len; i++) {
-                        pos_id = list[i];
-                        xx = (pos_id & wwa_data.IDTable.BITMASK);
-                        yy = ((pos_id >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
-                        if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
-                            this._wwaData.mapObject[yy][xx] = destID;
-                            destList.push(pos_id);
-                        } else {
-                            srcList.push(pos_id);
-                        }
-                    }
                 }
             } else {
                 srcID = this.loadMapPartsID(srcID);
@@ -4040,27 +4040,27 @@ module wwa_main {
                 destList = this._wwaData.mapIDTable[destID];
                 len = list.length;
                 if (onlyThisSight) {
+                    //範囲指定あり
+                    for (i = 0; i < len; i++) {
+                        posID = list[i];
+                        xx = (posID & wwa_data.IDTable.BITMASK);
+                        yy = ((posID >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
+                            this._wwaData.map[yy][xx] = destID;
+                            destList.push(posID);
+                        } else {
+                            srcList.push(posID);
+                        }
+                    }
+                } else {
                     //マップ全体
                     for (i = 0; i < len; i++) {
-                        pos_id = list[i];
-                        xx = (pos_id & wwa_data.IDTable.BITMASK);
-                        yy = ((pos_id >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
+                        posID = list[i];
+                        xx = (posID & wwa_data.IDTable.BITMASK);
+                        yy = ((posID >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
                         this._wwaData.map[yy][xx] = destID;
                     }
                     Array.prototype.push.apply(destList, list);
-                } else {
-                    //範囲指定あり
-                    for (i = 0; i < len; i++) {
-                        pos_id = list[i];
-                        xx = (pos_id & wwa_data.IDTable.BITMASK);
-                        yy = ((pos_id >>> wwa_data.IDTable.BITSHIFT) & wwa_data.IDTable.BITMASK);
-                        if ((xLeft <= xx) && (xx <= xRight) && (yTop <= yy) && (yy <= yBottom)) {
-                            this._wwaData.map[yy][xx] = destID;
-                            destList.push(pos_id);
-                        } else {
-                            srcList.push(pos_id);
-                        }
-                    }
                 }
             }
         }
