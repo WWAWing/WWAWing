@@ -78,7 +78,7 @@ module wwa_data {
             return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
         }
 
-        public constructor( e: number, s: number, d: number, g: number) {
+        public constructor(e: number, s: number, d: number, g: number) {
             super(s, d);
             this.energy = e;
             this.gold = g;

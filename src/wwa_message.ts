@@ -608,6 +608,7 @@ module wwa_message {
         private _cgFileName: string;
         private _isVisible: boolean;
         private _isYesno: boolean;
+        private _isItemMenu: boolean;
         private _isInputDisable: boolean;
 
         private _element: HTMLElement;
@@ -629,6 +630,7 @@ module wwa_message {
             cgFileName: string,
             isVisible: boolean,
             isYesno: boolean,
+            isItemMenu: boolean,
             parentElement: HTMLElement
             ) {
             var thisA = this;
@@ -643,7 +645,9 @@ module wwa_message {
             this._message = message;
             this._isVisible = isVisible;
             this._isYesno = isYesno;
+            this._isItemMenu = isItemMenu;
             this._element = document.createElement("div");
+            this._element.id = "wwa-text-message-window";
             this._element.style.position = "absolute";
             this._element.style.borderWidth = "2px";
             this._element.style.borderStyle = "solid";
@@ -787,6 +791,15 @@ module wwa_message {
         }
         public isYesNoChoice(): boolean {
             return this._isYesno;
+        }
+        public setItemMenuChoice(isItemMenu: boolean): boolean {
+            this._isInputDisable = false;
+            this._isItemMenu = isItemMenu;
+            this.update();
+            return this._isItemMenu;
+        }
+        public isItemMenuChoice(): boolean {
+            return this._isItemMenu;
         }
         public setInputDisable(): void {
             this._isInputDisable = true;
