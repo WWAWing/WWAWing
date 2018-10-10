@@ -919,6 +919,7 @@ var wwa_data;
         WWAConsts.DEFAULT_FRAME_INTERVAL = 20; // ms
         WWAConsts.GAMEOVER_FRAME_INTERVAL = 50; // ms
         WWAConsts.YESNO_PRESS_DISP_FRAME_NUM = 20; // f
+        WWAConsts.WAIT_TIME_FRAME_NUM = 6; // f
         WWAConsts.CHIP_SIZE = 40;
         WWAConsts.MAP_WINDOW_WIDTH = 440;
         WWAConsts.MAP_WINDOW_HEIGHT = 440;
@@ -5095,12 +5096,18 @@ var wwa_main;
         WWA.prototype._main = function () {
             var _this = this;
             this._temporaryInputDisable = false;
-            this._waitTimeInCurrentFrame = Consts.DEFAULT_FRAME_INTERVAL;
+            //this._waitTimeInCurrentFrame = Consts.DEFAULT_FRAME_INTERVAL;
             this._stopUpdateByLoadFlag = false;
             // キー情報のアップデート
             this._keyStore.update();
             this._mouseStore.update();
             this._gamePadStore.update();
+            if (this._waitFrame-- > 0) {
+                //待ち時間待機
+                requestAnimationFrame(this.mainCaller);
+                return;
+            }
+            this._waitFrame = 0;
             // メッセージウィンドウによる入力割り込みが発生した時
             if (this._yesNoJudgeInNextFrame !== void 0) {
                 this._yesNoJudge = this._yesNoJudgeInNextFrame;
@@ -5466,7 +5473,7 @@ var wwa_main;
                         _this._applyQuickLoad(_this._passwordSaveExtractData);
                         _this._passwordSaveExtractData = void 0;
                     }
-                    setTimeout(_this.mainCaller, _this._waitTimeInCurrentFrame, _this);
+                    setTimeout(_this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, _this);
                 });
             }
         };
@@ -5858,7 +5865,8 @@ var wwa_main;
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             var message = this._wwaData.message[messageID];
             // 待ち時間
-            this._waitTimeInCurrentFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * 100;
+            //this._waitTimeInCurrentFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * 100;
+            this._waitFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
             this._temporaryInputDisable = true;
             var messageDisplayed = this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.MAP, pos.clone());
             this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
@@ -5934,7 +5942,8 @@ var wwa_main;
             // 試験的に踏み潰し判定と処理の順序を入れ替えています。不具合があるようなら戻します。 150415
             this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos);
             // 待ち時間
-            this._waitTimeInCurrentFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * 100;
+            //this._waitTimeInCurrentFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * 100;
+            this._waitFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
             this._temporaryInputDisable = true;
             this.appearParts(pos, wwa_data.AppearanceTriggerType.OBJECT, partsID);
             this.playSound(soundID);
@@ -6620,7 +6629,8 @@ var wwa_main;
                 this._yesNoChoiceCallInfo = wwa_data.ChoiceCallInfo.NONE;
                 this._messageWindow.setYesNoChoice(false);
             }
-            this._waitTimeInCurrentFrame = Consts.GAMEOVER_FRAME_INTERVAL;
+            //this._waitTimeInCurrentFrame = Consts.GAMEOVER_FRAME_INTERVAL;
+            this._waitFrame = 0;
             this._temporaryInputDisable = true;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         };
@@ -7557,10 +7567,10 @@ var wwa_main;
         WWA.prototype.canInput = function () {
             return !this._temporaryInputDisable;
         };
-        WWA.prototype.setWaitTime = function (time) {
+        /*public setWaitTime( time: number): void {
             this._waitTimeInCurrentFrame += time;
             this._temporaryInputDisable = true;
-        };
+        }*/
         WWA.prototype.setEffect = function (waits, coords) {
             this._wwaData.effectWaits = waits;
             this._wwaData.effectCoords = coords;

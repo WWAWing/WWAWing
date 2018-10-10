@@ -564,6 +564,7 @@ module wwa_data {
         static GAMEOVER_FRAME_INTERVAL: number = 50; // ms
 
         static YESNO_PRESS_DISP_FRAME_NUM: number = 20; // f
+        static WAIT_TIME_FRAME_NUM: number = 6; // f
 
 
         static CHIP_SIZE: number = 40;

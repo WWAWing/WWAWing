@@ -162,7 +162,8 @@ module wwa_main {
         private _yesNoDispCounter: number;
         private _yesNoUseItemPos: number;
         private _yesNoURL: string;
-        private _waitTimeInCurrentFrame: number;
+        //private _waitTimeInCurrentFrame: number;
+        private _waitFrame: number;
         private _usePassword: boolean;
         private _useScaleUp: boolean;
         private _useHelp: boolean; 
@@ -1453,13 +1454,19 @@ module wwa_main {
 
         private _main(): void {
             this._temporaryInputDisable = false;
-            this._waitTimeInCurrentFrame = Consts.DEFAULT_FRAME_INTERVAL;
+            //this._waitTimeInCurrentFrame = Consts.DEFAULT_FRAME_INTERVAL;
             this._stopUpdateByLoadFlag = false;
 
             // キー情報のアップデート
             this._keyStore.update();
             this._mouseStore.update();
             this._gamePadStore.update();
+            if (this._waitFrame-- > 0) {
+                //待ち時間待機
+                requestAnimationFrame(this.mainCaller);
+                return;
+            }
+            this._waitFrame = 0;
 
             // メッセージウィンドウによる入力割り込みが発生した時
             if (this._yesNoJudgeInNextFrame !== void 0) {
@@ -1811,7 +1818,7 @@ module wwa_main {
                         this._applyQuickLoad( this._passwordSaveExtractData );
                         this._passwordSaveExtractData = void 0;
                     }
-                    setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this)
+                    setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
                 });
             }
         }
@@ -2241,7 +2248,8 @@ module wwa_main {
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             var message = this._wwaData.message[messageID];
             // 待ち時間
-            this._waitTimeInCurrentFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * 100;
+            //this._waitTimeInCurrentFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * 100;
+            this._waitFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
             this._temporaryInputDisable = true;
             var messageDisplayed = this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.MAP, pos.clone() );
             this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
@@ -2332,7 +2340,8 @@ module wwa_main {
             // 試験的に踏み潰し判定と処理の順序を入れ替えています。不具合があるようなら戻します。 150415
             this.setMessageQueue(message, false, false, partsID, wwa_data.PartsType.OBJECT, pos);
             // 待ち時間
-            this._waitTimeInCurrentFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * 100;
+            //this._waitTimeInCurrentFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * 100;
+            this._waitFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
             this._temporaryInputDisable = true;
             this.appearParts(pos, wwa_data.AppearanceTriggerType.OBJECT, partsID);
 
@@ -3111,7 +3120,8 @@ module wwa_main {
                 this._messageWindow.setYesNoChoice(false);
             }
 
-            this._waitTimeInCurrentFrame = Consts.GAMEOVER_FRAME_INTERVAL;
+            //this._waitTimeInCurrentFrame = Consts.GAMEOVER_FRAME_INTERVAL;
+            this._waitFrame = 0;
             this._temporaryInputDisable = true;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         }
@@ -4163,10 +4173,10 @@ module wwa_main {
             return !this._temporaryInputDisable;
         }
 
-        public setWaitTime( time: number): void {
+        /*public setWaitTime( time: number): void {
             this._waitTimeInCurrentFrame += time;
             this._temporaryInputDisable = true;
-        }
+        }*/
 
 
         public setEffect(waits: number, coords: wwa_data.Coord[]): void {
