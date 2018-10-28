@@ -47,23 +47,22 @@ var inject_html = "\
 ";
 */
 export function inject(parent: HTMLDivElement, titleImgName: string): void {
-var style = document.createElement("style");
-style.type = "text/css";
-style.setAttribute("id", WWAConsts.WWA_STYLE_TAG_ID);
-util.$tag("head")[0].appendChild(style);
+    var style = document.createElement("style");
+    style.type = "text/css";
+    style.setAttribute("id", WWAConsts.WWA_STYLE_TAG_ID);
+    util.$tag("head")[0].appendChild(style);
 
-if (titleImgName === null) {
-parent.innerHTML = inject_html_no_img;
-var canvas = document.createElement("canvas");
-canvas.height = WWAConsts.SCREEN_HEIGHT;
-canvas.width = WWAConsts.SCREEN_WIDTH;
-canvas.id = "progress-panel";
-util.$id("wwa-cover").appendChild(canvas);
-} else {
-parent.innerHTML = inject_html;
-var img = document.createElement("img");
-img.src = titleImgName;
-util.$id("wwa-cover").appendChild(img);
+    if (titleImgName === null) {
+        parent.innerHTML = inject_html_no_img;
+        var canvas = document.createElement("canvas");
+        canvas.height = WWAConsts.SCREEN_HEIGHT;
+        canvas.width = WWAConsts.SCREEN_WIDTH;
+        canvas.id = "progress-panel";
+        util.$id("wwa-cover").appendChild(canvas);
+    } else {
+        parent.innerHTML = inject_html;
+        var img = document.createElement("img");
+        img.src = titleImgName;
+        util.$id("wwa-cover").appendChild(img);
+    }
 }
-}
-
