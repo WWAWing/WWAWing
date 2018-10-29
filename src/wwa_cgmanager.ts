@@ -37,7 +37,8 @@ module wwa_cgmanager {
         private _frameCanvas: CacheCanvas;
         private _backCanvas: CacheCanvas;
         public mapCache: number[] = void 0;
-        public mapCacheYLimit: number = 0; 
+        public mapCacheYLimit: number = 0;
+        public cpPartsLog: Coord;
         private _frameCoord: Coord;
 
         private _load(): void {
@@ -227,6 +228,7 @@ module wwa_cgmanager {
             this._loadCompleteCallBack = loadCompleteCallBack;
             this._load();
             this._frameCoord = _frameCoord.clone();
+            this.cpPartsLog = new wwa_data.Coord(0, 0);
         } 
     }
 

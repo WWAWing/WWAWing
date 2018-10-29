@@ -1926,6 +1926,12 @@ module wwa_main {
                     this._cgManager.mapCacheYLimit = yLimit;
                     drawFlag = true;
                 }
+                if ((cpParts.x !== this._cgManager.cpPartsLog.x) || (cpParts.y !== this._cgManager.cpPartsLog.y)) {
+                    //cpParts座標が変わったため再描画
+                    this._cgManager.cpPartsLog.x = cpParts.x;
+                    this._cgManager.cpPartsLog.y = cpParts.y;
+                    drawFlag = true;
+                }
 
                 if (drawFlag) {
                     //バックキャンバスをクリア
