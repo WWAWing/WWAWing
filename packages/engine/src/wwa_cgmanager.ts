@@ -34,6 +34,7 @@ export class CGManager {
     private _backCanvas: CacheCanvas;
     public mapCache: number[] = void 0;
     public mapCacheYLimit: number = 0;
+    public cpPartsLog: Coord;
     private _frameCoord: Coord;
 
     private _load(): void {
@@ -221,6 +222,7 @@ export class CGManager {
         this._loadCompleteCallBack = loadCompleteCallBack;
         this._load();
         this._frameCoord = _frameCoord.clone();
+        this.cpPartsLog = new Coord(0, 0);
     }
 }
 
