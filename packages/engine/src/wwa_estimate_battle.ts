@@ -1,4 +1,4 @@
-﻿import { WWA } from "./wwa_main";
+import { WWA } from "./wwa_main";
 import { Coord, Status, WWAConsts } from "./wwa_data";
 
 class EstimateDisplayElements {
@@ -169,3 +169,4 @@ function calc(playerStatus: Status, enemyStatus: Status): EstimateResult {
     }
 
 }
+

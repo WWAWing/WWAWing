@@ -1,4 +1,4 @@
-﻿import { WWA } from "./wwa_main";
+import { WWA } from "./wwa_main";
 import {
     WWAConsts,
     Coord,
@@ -411,14 +411,14 @@ export class Macro {
         throw new Error("Not implemented!");
         /*
         if (this.macroArgs.length < 1) {
-            throw new Error("引数が少なすぎます");
+        throw new Error("引数が少なすぎます");
         }
         var t = parseInt(this.macroArgs[0]);
         if (isNaN(t)) {
-            throw new Error("引数が整数ではありません");
+        throw new Error("引数が整数ではありません");
         }
         if (t < 0) {
-            throw new Error("待ち時間が正ではありません");
+        throw new Error("待ち時間が正ではありません");
         }
         this._wwa.setWaitTime( t );
         */
@@ -625,6 +625,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _cgFileName: string;
     private _isVisible: boolean;
     private _isYesno: boolean;
+    private _isItemMenu: boolean;
     private _isInputDisable: boolean;
 
     private _element: HTMLElement;
@@ -646,6 +647,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         cgFileName: string,
         isVisible: boolean,
         isYesno: boolean,
+        isItemMenu: boolean,
         parentElement: HTMLElement
     ) {
         var thisA = this;
@@ -660,7 +662,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._message = message;
         this._isVisible = isVisible;
         this._isYesno = isYesno;
+        this._isItemMenu = isItemMenu;
         this._element = document.createElement("div");
+        this._element.id = "wwa-text-message-window";
         this._element.style.position = "absolute";
         this._element.style.borderWidth = "2px";
         this._element.style.borderStyle = "solid";
@@ -805,6 +809,15 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     public isYesNoChoice(): boolean {
         return this._isYesno;
     }
+    public setItemMenuChoice(isItemMenu: boolean): boolean {
+        this._isInputDisable = false;
+        this._isItemMenu = isItemMenu;
+        this.update();
+        return this._isItemMenu;
+    }
+    public isItemMenuChoice(): boolean {
+        return this._isItemMenu;
+    }
     public setInputDisable(): void {
         this._isInputDisable = true;
     }
@@ -902,5 +915,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         //            this._element.style.display = this._isVisible ? "block" : "none";
     }
 }
+
 
 
