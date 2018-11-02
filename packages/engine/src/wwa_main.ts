@@ -2595,7 +2595,7 @@ export class WWA {
         score += this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD] * playerStatus.gold;
         this._scoreWindow.update(score);
         this._scoreWindow.show();
-        this.setMessageQueue(messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID], false, false, partsID, PartsType.OBJECT, pos)
+        this.setMessageQueue(messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID], false, false, partsID, PartsType.OBJECT, pos);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
 
     }
