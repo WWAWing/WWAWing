@@ -1194,9 +1194,14 @@ export class WWA {
 
     public playSound(id: number): void {
         if (!this._isLoadedSound) {
+            // 音声データがロードされていなくても、次に音が流れる設定でゲーム開始したときにBGMを復元しなければならない。
+            if(id === SystemSound.NO_SOUND) {
+                this._wwaData.bgm = 0;
+            } else if (id >= SystemSound.BGM_LB) {
+                this._wwaData.bgm = id;
+            }
             return;
         }
-
 
         if (id < 0 || id > Consts.SOUND_MAX) {
             throw new Error("サウンド番号が範囲外です。");
