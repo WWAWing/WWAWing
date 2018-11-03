@@ -1,0 +1,19 @@
+div#wwa-wrapper {
+  position: relative;
+  margin: 0 auto;
+  text-align: center;
+}
+
+canvas.wwa-canvas {
+  display: block;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+canvas#wwa-map {
+  z-index: 100;
+}
+
+canvas#wwa-map-sub {
+  z-index: 101;
+}

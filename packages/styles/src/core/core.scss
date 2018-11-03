@@ -1,0 +1,197 @@
+@charset "UTF-8";
+
+/**
+    wwa.css
+    @author Matsuyuki(rmn.)
+    このファイルは、WWAの起動時に必要です。
+    フォントやフォントサイズは自由に変更できます。
+*/
+
+.wwa-size-box {
+    width: 560px;
+    height: 440px;
+    font-size: 16px;
+    font-family: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro', 'メイリオ','Meiryo','ＭＳ Ｐゴシック',sans-serif;
+    line-height:1.2;
+    text-indent:0px;
+    letter-spacing:0px;
+    word-spacing: 0px;
+    writing-mode:horizontal-tb;
+}
+
+#wwa-battle-estimate, #wwa-password-window {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 400px;
+    height: 400px;
+    padding: 0;
+    margin: 18px;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #000000;
+    border-radius: 10px;
+/*    background-color: rgba( 255, 255, 255, 0.9 ); */ /*システムで指定することになりました。$colorで。*/
+    cursor: pointer;
+    overflow: auto;
+}
+
+#wwa-battle-estimate {
+    z-index: 230;
+}
+#wwa-password-window {
+    z-index: 231;
+}
+#wwa-password-window > div.wwa-password-description {
+    text-align: left;
+    font-size: 12px;
+    padding: 5px;
+}
+
+#wwa-password-window > textarea {
+    font-size: 12px;
+}
+
+#wwa-battle-estimate > .est {
+    width: 100%;
+    height: 50px;
+    padding: 0;
+    margin: 0;
+
+    > .est-img-wrapper {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        margin: 5px;
+        float: left;
+    }
+    > .est-status-wrapper {
+        height: 40px;
+        padding: 0;
+        margin: 5px;
+        background-color: #FFFFFF;
+        float: left;
+        text-align: left;
+        position: relative;
+
+        > .est-energy {
+            top: 0;
+            left: 0;
+        }
+        > .est-strength {
+            top: 0;
+            left: 140px;
+        }
+        > .est-defence {
+            top: 20px;
+            left: 0;
+        }
+        > .est-damage{
+            top: 20px;
+            left: 140px;
+            color: #FF0000;
+        }
+    }
+    > .est-status-wrapper > div {
+        width: 150px;
+        overflow: hidden;
+        font-size: 16px;
+        position: absolute;
+    } 
+}
+
+#wwa-fader {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 440px;
+	height: 440px;
+	border-width: 0;
+	border-color: #808080;
+	border-style: solid;
+    display: none;
+    z-index: 250;
+}
+
+
+#wwa-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 560px;
+    height: 440px;
+    z-index: 300;
+    background-color: #FFFFFF;
+    
+    > #version {
+        position: absolute;
+        top: 392px;
+        left: 0;
+        height: 16px;
+        font-size: 12px;
+        color: #000000;
+    }
+    > #progress-message-container {
+        position: absolute;
+        top: 408px;
+        left: 0;
+        width: 560px;
+        height: 16px;
+        color: #000000;
+        font-size: 12px;
+        overflow: hidden;
+        text-align: left;
+        z-index: 305;
+    }
+    > #progress-bar-bg {
+        position: absolute;
+        top: 424px;
+        left: 0;
+        width: 560px;
+        height: 16px;
+        background-color: #808080;
+        z-index: 310;
+    }
+    > .progress-bar {
+        position: absolute;
+        top: 424px;
+        left: 0;
+        width: 0;
+        height: 16px;
+    }
+    > #progress-bar {
+        background-color: #00FF90;
+        z-index: 315;
+    }
+    > #progress-bar-audio {
+        background-color: #008aff;
+        z-index: 316;
+    }
+    > #progress-disp {
+        position: absolute;
+        top: 424px;
+        left: 440px;
+        width: 120px;
+        height: 16px;
+        background-color: #FF6A00;
+        color: #FFFFFF;
+        text-align: center;
+        font-weight: bold;
+        z-index: 320;
+        font-size: 12px;
+        overflow: hidden;
+    }
+}
+
+/* message window: z-index 400 */
+
+#wwa-audio-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: none;
+    width: 440px;
+    height: 440px;
+    overflow: hidden;
+    z-index: -9999;
+}

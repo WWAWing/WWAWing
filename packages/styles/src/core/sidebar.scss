@@ -1,0 +1,350 @@
+div#wwa-sidebar {
+  position: absolute;
+  top: 0px;
+  left: 440px;
+  width: 120px;
+  height: 440px;
+  z-index: 102;
+  background-color: #000000;
+}
+
+
+div#wwa-sidebar {
+  > div.wide-cell-row {
+    position: absolute;
+    padding: 10px 0 0 0;
+    margin: 0px;
+    border: 0px;
+    width: 120px;
+    height: 25px;
+    font-size: 14px;
+  }
+  > div.wide-cell-row.onpress/*, div#wwa-sidebar>div.wide-cell-row:hover*/ {
+    position: absolute;
+    padding: 10px 0 0 0;
+    margin: 0px;
+    border-width: 3px 0 0 3px;
+    border-style: solid;
+    border-color : #000000;
+    width: 117px;
+    height: 22px;
+  }
+   > div.item-cell  {
+    position: absolute;
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    width: 40px;
+    height:40px;
+  }
+  > div.item-cell.onpress/*, div#wwa-sidebar>div.item-cell:hover */  {
+    position: absolute;
+    padding: 0px;
+    margin: 0px;
+    border-width: 3px 0 0 3px;
+    border-color: #000000;
+    border-style: solid;
+    width: 37px;
+    height:37px;
+  }
+}
+
+#disp-energy {
+  top: 0px;
+  left: 0px;
+  z-index: 103;
+}
+
+#disp-strength {
+  top: 35px;
+  left: 0px;
+  z-index: 104;
+}
+
+#disp-defence {
+  top: 70px;
+  left: 0px;
+  z-index: 105;
+}
+
+#disp-gold {
+  top: 105px;
+  left: 0px;
+  z-index: 106;
+}
+
+#item0 {
+  top: 140px;
+  left: 0px;
+  z-index: 107;
+}
+
+#item1 {
+  top: 140px;
+  left: 40px;
+  z-index: 108;
+}
+
+#item2 {
+  top: 140px;
+  left: 80px;
+  z-index: 109;
+}
+
+#item3 {
+  top: 180px;
+  left: 0px;
+  z-index: 110;
+}
+
+#item4 {
+  top: 180px;
+  left: 40px;
+  z-index: 111;
+}
+
+#item5 {
+  top: 180px;
+  left: 80px;
+  z-index: 112;
+}
+
+#item6 {
+  top: 220px;
+  left: 0px;
+  z-index: 113;
+}
+
+#item7 {
+  top: 220px;
+  left: 40px;
+  z-index: 114;
+}
+
+#item8 {
+  top: 220px;
+  left: 80px;
+  z-index: 115;
+}
+
+#item9 {
+  top: 260px;
+  left: 0px;
+  z-index: 116;
+}
+
+#item10 {
+  top: 260px;
+  left: 40px;
+  z-index: 117;
+}
+
+#item11 {
+  top: 260px;
+  left: 80px;
+  z-index: 118;
+}
+
+#cell-load {
+  top: 300px;
+  left: 0px;
+  z-index: 119;
+}
+
+#cell-save {
+  top: 335px;
+  left: 0px;
+  z-index: 120;
+}
+
+#cell-restart {
+  top: 370px;
+  left: 0px;
+  z-index: 121;
+}
+
+#cell-gotowwa {
+  top: 405px;
+  left: 0px;
+  z-index: 122;
+}
+
+div.status-icon {
+  position: absolute;
+  top: 0px;
+  left: 6px;
+  width: 40px;
+  height: 40px;
+  padding: 0px;
+  margin: 0px;
+}
+
+div.status-value-box {
+  position: absolute;
+  top: 0px;
+  left: 46px;
+  width: 74px;
+  height: 25px;
+  padding: 10px 0px 0px 0px;
+  margin: 0px;
+  text-align: center;
+}
+
+div.item-click-border {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 40px;
+  height: 40px;
+  padding: 0px;
+  margin: 0px;
+}
+
+div.item-disp {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 40px;
+  height: 40px;
+  padding: 0px;
+  margin: 0px;
+}
+
+#disp-energy>.status-icon{
+  z-index: 140;
+}
+#disp-strength>.status-icon{
+  z-index: 141;
+}
+#disp-defence>.status-icon{
+  z-index: 142;
+}
+#disp-gold>.status-icon{
+  z-index: 143;
+}
+
+#disp-energy>.status-value-box{
+  z-index: 150;
+}
+#disp-strength>.status-value-box{
+  z-index: 151;
+}
+#disp-defence>.status-value-box{
+  z-index: 152;
+}
+#disp-gold>.status-value-box{
+  z-index: 153;
+}
+
+#item0>.item-disp {
+  z-index: 160;
+}
+#item1>.item-disp {
+  z-index: 161;
+}
+#item2>.item-disp {
+  z-index: 162;
+}
+#item3.item-disp {
+  z-index: 163;
+}
+#item4>.item-disp {
+  z-index: 164;
+}
+#item5>.item-disp {
+  z-index: 165;
+}
+#item6>.item-disp {
+  z-index: 166;
+}
+#item7>.item-disp {
+  z-index: 167;
+}
+#item8>.item-disp {
+  z-index: 168;
+}
+#item9>.item-disp {
+  z-index: 169;
+}
+#item10>.item-disp {
+  z-index: 170;
+}
+#item11>.item-disp {
+  z-index: 171;
+}
+
+#item0>.item-click-border {
+  z-index: 170;
+}
+#item1>.item-click-border {
+  z-index: 171;
+}
+#item2>.item-click-border {
+  z-index: 172;
+}
+#item3>.item-click-border {
+  z-index: 173;
+}
+#item4>.item-click-border {
+  z-index: 174;
+}
+#item5>.item-click-border {
+  z-index: 175;
+}
+#item6>.item-click-border {
+  z-index: 176;
+}
+#item7>.item-click-border {
+  z-index: 177;
+}
+#item8>.item-click-border {
+  z-index: 178;
+}
+#item9>.item-click-border {
+  z-index: 179;
+}
+#item10>.item-click-border {
+  z-index: 180;
+}
+#item11>.item-click-border {
+  z-index: 181;
+}
+
+#wwa-controller {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 440px;
+  height: 440px;
+  padding: 0;
+  margin: 0;
+  z-index: 200;
+}
+
+.wide-button {
+  position: absolute;
+  width: 120px;
+  left: 0px;
+  height: 40px;
+  cursor: pointer;
+}
+
+#button-load {
+  top: 300px;
+  z-index: 201;
+}
+
+#button-save {
+  top: 335px;
+  z-index: 202;
+}
+
+#button-restart {
+  top: 370px;
+  z-index: 203;
+}
+
+#button-gotowwa {
+  top: 405px;
+  z-index: 204;
+}
