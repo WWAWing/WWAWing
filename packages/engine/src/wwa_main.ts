@@ -3609,6 +3609,23 @@ export class WWA {
         var dy = 0;
 
 
+        if (moveType === MoveType.CHASE_PLAYER) {
+            dx =
+                currentCoord.x > playerNextCoord.x ? 1 :
+                    currentCoord.x < playerNextCoord.x ? -1 : 0;
+            dy =
+                currentCoord.y > playerNextCoord.y ? 1 :
+                    currentCoord.y < playerNextCoord.y ? -1 : 0;
+
+        } else if (moveType === MoveType.RUN_OUT) {
+            dx =
+                currentCoord.x > playerNextCoord.x ? -1 :
+                    currentCoord.x < playerNextCoord.x ? 1 : 0;
+            dy =
+                currentCoord.y > playerNextCoord.y ? -1 :
+                    currentCoord.y < playerNextCoord.y ? 1 : 0;
+        }
+        candidateCoord.x -= dx;
         candidateCoord.y -= dy;
 
         candidateCoord.x = Math.min(this._wwaData.mapWidth - 1, Math.max(0, candidateCoord.x));
