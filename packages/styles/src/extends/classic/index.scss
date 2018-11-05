@@ -1,8 +1,42 @@
 @import "../../core/index";
 
 .wwa-size-box {
-    @extend .wwa-size-box;
     font-size: 18px;
     font-family: 'ＭＳ ゴシック', 'Osaka-mono', monospace;
     text-shadow: 1px 0px 0px gray;
+}
+
+div#wwa-sidebar {
+    font-size: 16px;
+    div.wide-cell-row {
+        font-size: inherit;
+    }
+}
+
+#cell-restart {
+    font-size: 14px;
+}
+
+#wwa-battle-estimate, #wwa-password-window {
+    width: 440px;
+    height: 440px;
+    margin: 0;
+    padding: 18px;
+    box-sizing: border-box;
+    border-radius: 0;
+}
+
+#wwa-password-window {
+    > div.wwa-password-description {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
+#wwa-battle-estimate > .est {
+    > .est-status-wrapper {
+        > .est-damage {
+            text-shadow: 1px 0px 0px #FF8080;
+        }
+    }
 }
