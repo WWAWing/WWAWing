@@ -1,4 +1,3 @@
-
 canvas#wwa-map {
   z-index: 100;
 }
@@ -87,4 +86,10 @@ div#wwa-sidebar {
 /* message window: z-index 400 */
 #wwa-audio-wrapper {
   z-index: -9999;
+}
+#wwa-virtualpad-left {
+  z-index: 500;
+}
+#wwa-virtualpad-right {
+  z-index: 501;
 }

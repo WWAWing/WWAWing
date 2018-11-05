@@ -1,0 +1,100 @@
+#wwa-virtualpad-left,
+#wwa-virtualpad-right {
+    bottom: 0;
+    position: fixed;
+}
+
+#wwa-virtualpad-left {
+    left: 0;
+    .virtualpad_move button {
+        border-radius: 1rem;
+    }
+}
+
+#wwa-virtualpad-right {
+    right: 0;
+    .virtualpad_select button {
+        border-radius: 50%;
+    }
+    .virtualpad_speedcontrol button {
+        font-size: 30px;
+        height: 50px;
+        width: 90px;
+    }
+}
+
+#wwa-virtualpad-left button,
+#wwa-virtualpad-right button {
+    background-color: #c0c0c0;
+    border: 0;
+    color: #000;
+    opacity: 0.75;
+}
+
+#wwa-virtualpad-left .virtualpad_move button,
+#wwa-virtualpad-right .virtualpad_select button {
+    font-size: 50px;
+    height: 100px;
+    width: 100px;
+}
+
+#wwa-virtualpad-left .virtualpad_move,
+#wwa-virtualpad-right .virtualpad_select,
+#wwa-virtualpad-right .virtualpad_speedcontrol {
+    display: grid;
+}
+
+#wwa-virtualpad-left .virtualpad_move {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+#wwa-virtualpad-right .virtualpad_select,
+#wwa-virtualpad-right .virtualpad_speedcontrol {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+#wwa-top-button {
+    grid-column-start: 2;
+    grid-row-start: 1;
+}
+
+#wwa-left-button,
+#wwa-right-button {
+    grid-row-start: 2;
+}
+
+#wwa-left-button {
+    grid-column-start: 1;
+}
+
+#wwa-right-button {
+    grid-column-start: 3;
+}
+
+#wwa-bottom-button {
+    grid-column-start: 2;
+    grid-row-start: 3;
+}
+
+#wwa-y-button {
+    grid-column-start: 2;
+    grid-row-start: 3;
+}
+
+#wwa-n-button {
+    grid-column-start: 1;
+    grid-row-start: 4;
+}
+
+#wwa-m-button {
+    grid-column-start: 1;
+    grid-row-start: 2;
+}
+
+#wwa-i-button {
+    border-radius: 1rem 0 0 1rem;
+}
+
+#wwa-p-button {
+    border-radius: 0 1rem 1rem 0;
+}

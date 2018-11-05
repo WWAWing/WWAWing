@@ -73,3 +73,15 @@ canvas.wwa-canvas {
       overflow: hidden;
   }
 }
+
+#wwa-fader {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 440px;
+	height: 440px;
+	border-width: 0;
+	border-color: #808080;
+	border-style: solid;
+    display: none;
+}

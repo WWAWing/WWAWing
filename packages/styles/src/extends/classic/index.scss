@@ -1,0 +1,8 @@
+@import "../../core/index";
+
+.wwa-size-box {
+    @extend .wwa-size-box;
+    font-size: 18px;
+    font-family: 'ＭＳ ゴシック', 'Osaka-mono', monospace;
+    text-shadow: 1px 0px 0px gray;
+}
