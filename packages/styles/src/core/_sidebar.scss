@@ -1,3 +1,17 @@
+$status: (
+  energy: 0,
+  strength: 1,
+  defence: 2,
+  gold: 3
+);
+
+$menu_buttons: (
+  load: 0,
+  save: 1,
+  restart: 2,
+  gotowwa: 3
+);
+
 div#wwa-sidebar {
   position: absolute;
   top: 0px;
@@ -46,106 +60,6 @@ div#wwa-sidebar {
     width: 37px;
     height:37px;
   }
-}
-
-#disp-energy {
-  top: 0px;
-  left: 0px;
-}
-
-#disp-strength {
-  top: 35px;
-  left: 0px;
-}
-
-#disp-defence {
-  top: 70px;
-  left: 0px;
-}
-
-#disp-gold {
-  top: 105px;
-  left: 0px;
-}
-
-#item0 {
-  top: 140px;
-  left: 0px;
-}
-
-#item1 {
-  top: 140px;
-  left: 40px;
-}
-
-#item2 {
-  top: 140px;
-  left: 80px;
-}
-
-#item3 {
-  top: 180px;
-  left: 0px;
-}
-
-#item4 {
-  top: 180px;
-  left: 40px;
-}
-
-#item5 {
-  top: 180px;
-  left: 80px;
-}
-
-#item6 {
-  top: 220px;
-  left: 0px;
-}
-
-#item7 {
-  top: 220px;
-  left: 40px;
-}
-
-#item8 {
-  top: 220px;
-  left: 80px;
-}
-
-#item9 {
-  top: 260px;
-  left: 0px;
-}
-
-#item10 {
-  top: 260px;
-  left: 40px;
-}
-
-#item11 {
-  top: 260px;
-  left: 80px;
-}
-
-#cell-load {
-  top: 300px;
-  left: 0px;
-}
-
-#cell-save {
-  top: 335px;
-  left: 0px;
-}
-
-#cell-restart {
-  top: 370px;
-  left: 0px;
-}
-
-#cell-gotowwa {
-  top: 405px;
-  left: 0px;
 }
 
 div.status-icon {
@@ -207,18 +121,30 @@ div.item-disp {
   cursor: pointer;
 }
 
-#button-load {
-  top: 300px;
+
+@each $status_name, $row in $status {
+  #disp-#{$status_name} {
+    top: $row * 35px;
+    left: 0px;
+  }
 }
 
-#button-save {
-  top: 335px;
+@for $row from 0 to 4 {
+  @for $column from 0 to 3 {
+    #item#{$row * 3 + $column} {
+      top: 140px + ($row * 40px);
+      left: $column * 40px;
+    }
+  }
 }
 
-#button-restart {
-  top: 370px;
-}
-
-#button-gotowwa {
-  top: 405px;
+@each $button_name, $row in $menu_buttons {
+  #cell-#{$button_name} {
+    top: 300px + ($row * 35px);
+    left: 0px;
+  }
+  #button-#{$button_name} {
+    top: 300px + ($row * 35px);
+    left: 0px;
+  }
 }

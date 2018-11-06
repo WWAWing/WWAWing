@@ -1,20 +1,23 @@
 @import "../../core/index";
 
+$monospace_font: 'ＭＳ ゴシック', 'Osaka-mono', monospace;
+$sans-serif_font: 'ＭＳ Ｐゴシック', 'Osaka', sans-serif;
+
 .wwa-size-box {
     font-size: 18px;
-    font-family: 'ＭＳ ゴシック', 'Osaka-mono', monospace;
+    font-family: $monospace_font;
     text-shadow: 1px 0px 0px gray;
 }
 
 div#wwa-sidebar {
     font-size: 16px;
+    font-family: $sans-serif_font;
     div.wide-cell-row {
         font-size: inherit;
     }
-}
-
-#cell-restart {
-    font-size: 14px;
+    #cell-restart {
+        font-size: 14px;
+    }
 }
 
 #wwa-battle-estimate, #wwa-password-window {
