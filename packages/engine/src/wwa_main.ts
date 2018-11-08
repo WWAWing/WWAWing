@@ -537,6 +537,13 @@ export class WWA {
 
             });
 
+            util.$id("wwa-top-button").addEventListener("touchstart", () => {
+                this._keyStore.setPressInfo(KeyCode.KEY_UP);
+            });
+            util.$id("wwa-top-button").addEventListener("touchend", () => {
+                this._keyStore.setReleaseInfo(KeyCode.KEY_UP);
+            })
+
             this._frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
             this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);
 
