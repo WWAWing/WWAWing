@@ -53,6 +53,10 @@
     grid-template-columns: repeat(2, 1fr);
 }
 
+#wwa-virtualpad-right .virtualpad_speedcontrol {
+    margin-bottom: 16px;
+}
+
 #wwa-top-button {
     grid-column-start: 2;
     grid-row-start: 1;
