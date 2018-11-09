@@ -10,6 +10,16 @@
     writing-mode: horizontal-tb;
 }
 
+#wwa-controller {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 440px;
+    height: 440px;
+    padding: 0;
+    margin: 0;
+}
+
 #wwa-audio-wrapper {
     position: absolute;
     top: 0;

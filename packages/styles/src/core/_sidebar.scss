@@ -12,6 +12,19 @@ $menu_buttons: (
   gotowwa: 3
 );
 
+$wide_cell_width: 120px;
+$wide_cell_height: 35px;
+$item_cell_width: 40px;
+$status_icon_width: 40px;
+
+$button_cell_onpress_border_size: 3px;
+
+%button_cell_onpress_border {
+  border-width: $button_cell_onpress_border_size 0 0 $button_cell_onpress_border_size;
+  border-style: solid;
+  border-color: #000;
+}
+
 div#wwa-sidebar {
   position: absolute;
   top: 0px;
@@ -25,49 +38,36 @@ div#wwa-sidebar {
 div#wwa-sidebar {
   > div.wide-cell-row {
     position: absolute;
-    padding: 10px 0 0 0;
-    margin: 0px;
-    border: 0px;
-    width: 120px;
-    height: 25px;
+    width: $wide_cell_width;
+    height: $wide_cell_height;
+    line-height: $wide_cell_height;
     font-size: 14px;
   }
   > div.wide-cell-row.onpress/*, div#wwa-sidebar>div.wide-cell-row:hover*/ {
-    position: absolute;
-    padding: 10px 0 0 0;
-    margin: 0px;
-    border-width: 3px 0 0 3px;
-    border-style: solid;
-    border-color : #000000;
-    width: 117px;
-    height: 22px;
+    @extend div.wide-cell-row;
+    @extend %button_cell_onpress_border;
+    width: $wide_cell_width - 3px;
+    height: $wide_cell_height - 3px;
   }
    > div.item-cell  {
     position: absolute;
-    padding: 0px;
-    margin: 0px;
-    border: 0px;
-    width: 40px;
-    height:40px;
+    width: $item_cell_width;
+    height: $item_cell_width;
   }
   > div.item-cell.onpress/*, div#wwa-sidebar>div.item-cell:hover */  {
+    @extend %button_cell_onpress_border;
     position: absolute;
-    padding: 0px;
-    margin: 0px;
-    border-width: 3px 0 0 3px;
-    border-color: #000000;
-    border-style: solid;
-    width: 37px;
-    height:37px;
+    width: $item_cell_width - 3px;
+    height: $item_cell_width - 3px;;
   }
 }
 
 div.status-icon {
   position: absolute;
   top: 0px;
-  left: 6px;
-  width: 40px;
-  height: 40px;
+  left: 5px;
+  width: $status_icon_width;
+  height: $wide_cell_height;
   padding: 0px;
   margin: 0px;
 }
@@ -75,11 +75,10 @@ div.status-icon {
 div.status-value-box {
   position: absolute;
   top: 0px;
-  left: 46px;
-  width: 74px;
-  height: 25px;
-  padding: 10px 0px 0px 0px;
-  margin: 0px;
+  left: 5px + $status_icon_width;
+  width: $wide_cell_width - ($status_icon_width + 5px);
+  height: $wide_cell_height;
+  line-height: $wide_cell_height;
   text-align: center;
 }
 
@@ -87,40 +86,25 @@ div.item-click-border {
   position: absolute;
   top: 0px;
   left: 0px;
-  width: 40px;
-  height: 40px;
-  padding: 0px;
-  margin: 0px;
+  width: $item_cell_width;
+  height: $item_cell_width;
 }
 
 div.item-disp {
   position: absolute;
   top: 0px;
   left: 0px;
-  width: 40px;
-  height: 40px;
-  padding: 0px;
-  margin: 0px;
-}
-
-#wwa-controller {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 440px;
-  height: 440px;
-  padding: 0;
-  margin: 0;
+  width: $item_cell_width;
+  height: $item_cell_width;
 }
 
 .wide-button {
   position: absolute;
-  width: 120px;
+  width: $wide_cell_width;
   left: 0px;
-  height: 40px;
+  height: $wide_cell_height;
   cursor: pointer;
 }
-
 
 @each $status_name, $row in $status {
   #disp-#{$status_name} {

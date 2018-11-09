@@ -36,16 +36,20 @@ function createWWAExtendCSSFilePromises(): Promise<void>[] {
 function createWWACSSFilePromise(filePath: string, outputFilePath: string): Promise<void> {
     return new Promise((resolve, reject) => 
         sass.render({
-            file: filePath
+            file: filePath,
+            outFile: outputFilePath,
+            linefeed: "lf",
+            indentWidth: 4,
+            outputStyle: "expanded"
         }, (err, result) => {
-            if (!err) {
+            if (err) {
+                reject(err);
+            } else {
                 fs.writeFile(
                     outputFilePath,
                     result.css,
                     err => (err ? reject(err) : resolve())
                 );
-            } else {
-                reject(err);
             }
         })
     );
