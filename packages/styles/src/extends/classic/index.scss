@@ -4,7 +4,7 @@ $monospace_font: 'ＭＳ ゴシック', 'Osaka-mono', monospace;
 $sans-serif_font: 'ＭＳ Ｐゴシック', 'Osaka', sans-serif;
 
 $wwa_font_size: 18px;
-$wwa_sidebar_font_size: 17.5px;
+$wwa_sidebar_font_size: 18px;
 
 .wwa-size-box {
     font-size: $wwa_font_size;
@@ -17,7 +17,8 @@ div#wwa-sidebar {
     font-family: $sans-serif_font;
     text-shadow: 1px 1px 0 gray;
     #cell-restart {
-        font-weight: normal;
+        font-size: 16px;
+        letter-spacing: -0.3px;
     }
 }
 
