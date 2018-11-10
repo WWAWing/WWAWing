@@ -3,24 +3,24 @@
 $monospace_font: 'ＭＳ ゴシック', 'Osaka-mono', monospace;
 $sans-serif_font: 'ＭＳ Ｐゴシック', 'Osaka', sans-serif;
 
+$wwa_font_size: 18px;
+$wwa_sidebar_font_size: 16px;
+
 .wwa-size-box {
-    font-size: 18px;
+    font-size: $wwa_font_size;
     font-family: $monospace_font;
     text-shadow: 1px 0px 0px gray;
 }
 
 div#wwa-sidebar {
-    font-size: 16px;
+    font-size: $wwa_sidebar_font_size;
     font-family: $sans-serif_font;
-    div.wide-cell-row {
-        font-size: inherit;
-    }
     #cell-restart {
         font-size: 14px;
     }
 }
 
-#wwa-battle-estimate, #wwa-password-window {
+%wwa_window {
     width: 440px;
     height: 440px;
     margin: 0;
@@ -36,10 +36,12 @@ div#wwa-sidebar {
     }
 }
 
-#wwa-battle-estimate > .est {
-    > .est-status-wrapper {
-        > .est-damage {
-            text-shadow: 1px 0px 0px #FF8080;
+#wwa-battle-estimate {
+    > .est {
+        > .est-status-wrapper {
+            > .est-damage {
+                text-shadow: 1px 0px 0px #FF8080;
+            }
         }
     }
 }

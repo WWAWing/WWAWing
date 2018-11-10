@@ -1,76 +1,97 @@
-#wwa-battle-estimate, #wwa-password-window {
+$wwa_icon_width: 40px;
+
+%wwa_window {
     position: absolute;
     top: 0;
     left: 0;
     width: 400px;
     height: 400px;
-    padding: 0;
-    margin: 18px;
-    border-style: solid;
-    border-width: 2px;
-    border-color: #000000;
+    margin: 20px;
+    // background-color: rgba( 255, 255, 255, 0.9 ); // システムで指定することになりました。$colorで。
+    border: 2px solid #000;
     border-radius: 10px;
-/*    background-color: rgba( 255, 255, 255, 0.9 ); */ /*システムで指定することになりました。$colorで。*/
+    box-sizing: border-box;
     cursor: pointer;
     overflow: auto;
 }
 
 #wwa-password-window {
+    @extend %wwa_window;
+    font-size: 12px;
+
     > div.wwa-password-description {
         text-align: left;
-        font-size: 12px;
-        padding: 5px;
+        padding: 8px;
+    }
+    > textarea {
+        font-size: inherit;
+    }
+    > div.wwa-password-submit {
+        padding: 4px;
+        box-sizing: border-box;
+
+        button {
+            display: inline;
+            margin: 0 4px;
+        }
     }
 }
 
-#wwa-password-window > textarea {
-    font-size: 12px;
-}
+#wwa-battle-estimate {
+    @extend %wwa_window;
+    font-size: 16px;
 
-#wwa-battle-estimate > .est {
-    width: 100%;
-    height: 50px;
-    padding: 0;
-    margin: 0;
+    > .est {
+        width: 100%;
+        height: 50px;
+        
+        > .est-img-wrapper {
+            width: $wwa_icon_width;
+            height: $wwa_icon_width;
+            margin: 5px;
+            float: left;
+        }
+        > .est-status-wrapper {
+            $item_width: 140px;
+            $item_height: 20px;
 
-    > .est-img-wrapper {
-        width: 40px;
-        height: 40px;
-        padding: 0;
-        margin: 5px;
-        float: left;
+            height: $wwa_icon_width;
+            margin: 5px;
+            float: left;
+            text-align: left;
+            position: relative;
+    
+            > div {
+                width: $item_width;
+                height: $item_height;
+                line-height: $item_height;
+                position: absolute;
+            }
+            > .est-energy {
+                top: 0;
+                left: 0;
+            }
+            > .est-strength {
+                top: 0;
+                left: $item_width;
+            }
+            > .est-defence {
+                top: $item_height;
+                left: 0;
+            }
+            > .est-damage{
+                top: $item_height;
+                left: $item_width;
+                color: #FF0000;
+                white-space: nowrap; // ダメージは桁数が多いので横幅から出てもいいようにする
+            }
+        }
+        &:after {
+            content: '';
+            clear: left;
+            display: block;
+            height: 0;
+            visibility: hidden;
+        }
     }
-    > .est-status-wrapper {
-        height: 40px;
-        padding: 0;
-        margin: 5px;
-        background-color: #FFFFFF;
-        float: left;
-        text-align: left;
-        position: relative;
-
-        > .est-energy {
-            top: 0;
-            left: 0;
-        }
-        > .est-strength {
-            top: 0;
-            left: 140px;
-        }
-        > .est-defence {
-            top: 20px;
-            left: 0;
-        }
-        > .est-damage{
-            top: 20px;
-            left: 140px;
-            color: #FF0000;
-        }
-    }
-    > .est-status-wrapper > div {
-        width: 150px;
-        overflow: hidden;
-        font-size: 16px;
-        position: absolute;
-    } 
 }

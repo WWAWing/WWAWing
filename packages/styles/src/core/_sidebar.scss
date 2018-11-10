@@ -9,7 +9,6 @@ $wwa_icon_width: 40px;
     width: 120px;
     height: $wwa_wide_cell_height;
     line-height: $wwa_wide_cell_height;
-    font-size: $wwa_sidebar_font_size;
 }
 
 %item_cell {
@@ -31,6 +30,7 @@ div#wwa-sidebar {
     left: 440px;
     width: 120px;
     height: 440px;
+    font-size: $wwa_sidebar_font_size;
     background-color: #000000;
 
     > div.wide-cell-row {
