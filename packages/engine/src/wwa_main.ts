@@ -33,6 +33,8 @@ import {
     KeyStore,
     MouseState,
     MouseStore,
+    VirtualPadState,
+    VirtualPadStore,
 } from "./wwa_input";
 
 import * as util from "./wwa_util";
@@ -78,6 +80,7 @@ export class WWA {
     private _monster: Monster;
     private _keyStore: KeyStore;
     private _mouseStore: MouseStore;
+    private _virtualPadStore: VirtualPadStore;
     private _camera: Camera;
     private _objectMovingDataManager: ObjectMovingDataManager;
     private _messageWindow: MessageWindow;
@@ -291,6 +294,7 @@ export class WWA {
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
+            this._virtualPadStore = new VirtualPadStore();
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
@@ -542,7 +546,7 @@ export class WWA {
             });
             util.$id("wwa-top-button").addEventListener("touchend", () => {
                 this._keyStore.setReleaseInfo(KeyCode.KEY_UP);
-            })
+            });
 
             this._frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
             this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);

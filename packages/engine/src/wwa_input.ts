@@ -248,3 +248,20 @@ export class MouseStore {
     }
 
 }
+
+export enum VirtualPadState {
+    BUTTON_ENTER,
+    BUTTON_ESC,
+    BUTTON_SIDEBAR,
+    BUTTON_ESTIMATE,
+    BUTTON_FAST,
+    BUTTON_SLOW,
+    BUTTON_LEFT,
+    BUTTON_UP,
+    BUTTON_RIGHT,
+    BUTTON_DOWN
+}
+
+export class VirtualPadStore {
+
+}
