@@ -64,7 +64,7 @@ import {
     MouseState,
     MouseStore,
     VirtualPadState,
-    VirtualPadDefinitions,
+    VirtualPadButtonCode,
     VirtualPadStore
 } from "./wwa_input";
 
@@ -110,7 +110,7 @@ export class WWA {
     private _keyStore: KeyStore;
     private _mouseStore: MouseStore;
     private _virtualPadStore: VirtualPadStore;
-    private _virtualPadButtons: { [key: string]: HTMLElement };
+    private _virtualPadButtonElements: { [key: number]: HTMLButtonElement };
     private _camera: Camera;
     private _objectMovingDataManager: ObjectMovingDataManager;
     private _messageWindow: MessageWindow;
@@ -325,16 +325,16 @@ export class WWA {
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
             this._virtualPadStore = new VirtualPadStore();
-            this._virtualPadButtons = {
-                "enter": util.$id("wwa-enter-button"),
-                "esc": util.$id("wwa-esc-button"),
-                "estimate": util.$id("wwa-estimate-button"),
-                "fast": util.$id("wwa-fast-button"),
-                "slow": util.$id("wwa-slow-button"),
-                "left": util.$id("wwa-left-button"),
-                "up": util.$id("wwa-up-button"),
-                "right": util.$id("wwa-right-button"),
-                "down": util.$id("wwa-down-button")
+            this._virtualPadButtonElements = {
+                [VirtualPadButtonCode.BUTTON_ENTER]: <HTMLButtonElement>util.$id("wwa-enter-button"),
+                [VirtualPadButtonCode.BUTTON_ESC]: <HTMLButtonElement>util.$id("wwa-esc-button"),
+                [VirtualPadButtonCode.BUTTON_ESTIMATE]: <HTMLButtonElement>util.$id("wwa-estimate-button"),
+                [VirtualPadButtonCode.BUTTON_FAST]: <HTMLButtonElement>util.$id("wwa-fast-button"),
+                [VirtualPadButtonCode.BUTTON_SLOW]: <HTMLButtonElement>util.$id("wwa-slow-button"),
+                [VirtualPadButtonCode.BUTTON_LEFT]: <HTMLButtonElement>util.$id("wwa-left-button"),
+                [VirtualPadButtonCode.BUTTON_UP]: <HTMLButtonElement>util.$id("wwa-up-button"),
+                [VirtualPadButtonCode.BUTTON_RIGHT]: <HTMLButtonElement>util.$id("wwa-right-button"),
+                [VirtualPadButtonCode.BUTTON_DOWN]: <HTMLButtonElement>util.$id("wwa-down-button")
             };
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
@@ -549,6 +549,33 @@ export class WWA {
                         }
                     }
                 });
+
+                util.$id("wwa-virtualpad-left").addEventListener("touchmove", (e: TouchEvent): void => {
+                    this._virtualPadStore.allLeaveInfo();
+
+                    // FIXME: 指先が動いた先のHTML要素が取得できない
+                    for (let index = 0; index < e.changedTouches.length; index++) {
+                        const targetElement = e.changedTouches.item(index).target;
+
+                        for (let buttonType in this._virtualPadButtonElements) {
+                            if (targetElement === this._virtualPadButtonElements[buttonType]) {
+                                this._virtualPadStore.setTouchInfo(parseInt(buttonType));
+                            }
+                        }
+                    }
+                });
+
+                for (let buttonType in this._virtualPadButtonElements) { // buttonType はstring型なのでparseIntで変換してしまう。
+                    this._virtualPadButtonElements[buttonType].addEventListener("touchstart", () => {
+                        this._virtualPadStore.setTouchInfo(parseInt(buttonType));
+                    });
+                    this._virtualPadButtonElements[buttonType].addEventListener("touchend", () => {
+                        this._virtualPadStore.setReleaseInfo(parseInt(buttonType));
+                    });
+                    this._virtualPadButtonElements[buttonType].addEventListener("cancel", () => {
+                        this._virtualPadStore.allClear();
+                    });
+                }
             }
             //////////////// タッチ関連 超β ////////////////////////////
 
@@ -581,18 +608,6 @@ export class WWA {
                 });
 
             });
-
-            for (let buttonType in this._virtualPadButtons) {
-                if (VirtualPadDefinitions.indexOf(buttonType) === -1) {
-                    throw new Error(`${buttonType} の名前を持つボタンは存在しません。`);
-                }
-                this._virtualPadButtons[buttonType].addEventListener("touchstart", () => {
-                    this._virtualPadStore.setTouchInfo(buttonType);
-                });
-                this._virtualPadButtons[buttonType].addEventListener("touchend", () => {
-                    this._virtualPadStore.setReleaseInfo(buttonType);
-                });
-            }
 
             this._frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
             this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);
@@ -1182,22 +1197,22 @@ export class WWA {
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
                 this._mouseStore.checkClickMouse(Direction.LEFT) ||
-                this._virtualPadStore.checkTouchButton("left")) {
+                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_LEFT)) {
                 this._player.controll(Direction.LEFT);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
                 this._mouseStore.checkClickMouse(Direction.UP) ||
-                this._virtualPadStore.checkTouchButton("up")) {
+                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_UP)) {
                 this._player.controll(Direction.UP);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
                 this._mouseStore.checkClickMouse(Direction.RIGHT) ||
-                this._virtualPadStore.checkTouchButton("right")) {
+                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_RIGHT)) {
                 this._player.controll(Direction.RIGHT);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
                 this._mouseStore.checkClickMouse(Direction.DOWN) ||
-                this._virtualPadStore.checkTouchButton("down")) {
+                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_DOWN)) {
                 this._player.controll(Direction.DOWN);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
@@ -1242,17 +1257,17 @@ export class WWA {
                 this.onselectitem(12);
             } else if (
                 this._keyStore.getKeyState(KeyCode.KEY_I) ||
-                this._virtualPadStore.checkTouchButton("slow")) {
+                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_SLOW)) {
                 this.onchangespeed(SpeedChange.DOWN);
             } else if (
                 this._keyStore.checkHitKey(KeyCode.KEY_P) ||
                 this._keyStore.checkHitKey(KeyCode.KEY_F2) ||
-                this._virtualPadStore.checkTouchButton("fast")) {
+                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_FAST)) {
                 this.onchangespeed(SpeedChange.UP);
             } else if (
                 this._keyStore.getKeyState(KeyCode.KEY_F1) === KeyState.KEYDOWN ||
                 this._keyStore.getKeyState(KeyCode.KEY_M) === KeyState.KEYDOWN ||
-                this._virtualPadStore.checkTouchButton("estimate")) {
+                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_ESTIMATE)) {
                 // 戦闘結果予測 
                 if (this.launchBattleEstimateWindow()) {
                 }
@@ -1297,7 +1312,9 @@ export class WWA {
                 if (enter === KeyState.KEYDOWN || enter === KeyState.KEYPRESS_MESSAGECHANGE ||
                     space === KeyState.KEYDOWN || space === KeyState.KEYPRESS_MESSAGECHANGE ||
                     esc === KeyState.KEYDOWN || esc === KeyState.KEYPRESS_MESSAGECHANGE ||
-                    this._mouseStore.getMouseState() === MouseState.MOUSEDOWN) {
+                    this._mouseStore.getMouseState() === MouseState.MOUSEDOWN ||
+                    this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.PUSH ||
+                    this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.PUSH) {
                     for (var i = 0; i < sidebarButtonCellElementID.length; i++) {
                         var elm = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[i]));
                         if (elm.classList.contains("onpress")) {
@@ -1312,12 +1329,14 @@ export class WWA {
                     if (this._yesNoJudge === YesNoState.UNSELECTED) {
                         if (
                             this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                            this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN
+                            this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
+                            this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.PUSH
                         ) {
                             this._yesNoJudge = YesNoState.YES
                         } else if (
                             this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
-                            this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN
+                            this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                            this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.PUSH
                         ) {
                             this._yesNoJudge = YesNoState.NO
                         }
@@ -1337,7 +1356,9 @@ export class WWA {
             }
         } else if (this._player.isWatingEstimateWindow()) {
             if (this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
+                this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
+                this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.PUSH ||
+                this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.PUSH) {
                 this.hideBattleEstimateWindow();
             }
         } else if (this._player.isFighting()) {

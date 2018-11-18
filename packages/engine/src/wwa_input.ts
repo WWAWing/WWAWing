@@ -249,22 +249,18 @@ export class MouseStore {
 
 }
 
-/**
- * バーチャルパッドで定義されているボタンの一覧です。
- * enum ではないのは、HTML要素のシグネチャを作る際に enum がキーとして使えないためです。
- */
-export const VirtualPadDefinitions: string[] = [
-    "enter",
-    "esc",
-    "sidebar",
-    "estimate",
-    "fast",
-    "slow",
-    "left",
-    "up",
-    "right",
-    "down"
-];
+export enum VirtualPadButtonCode {
+    BUTTON_ENTER,
+    BUTTON_ESC,
+    BUTTON_SIDEBAR,
+    BUTTON_ESTIMATE,
+    BUTTON_FAST,
+    BUTTON_SLOW,
+    BUTTON_LEFT,
+    BUTTON_UP,
+    BUTTON_RIGHT,
+    BUTTON_DOWN
+}
 
 /**
  * NONE: ボタンに一切触れていません
@@ -278,25 +274,39 @@ export enum VirtualPadState {
 }
 
 export class VirtualPadStore {
-    private _currentButtonState: { [key: string]: VirtualPadState };
+    public static VIRTUALPAD_MAX_COUNT = 20;
+    private _currentButtonState: VirtualPadState[];
 
-    checkTouchButton(buttonType: string): boolean {
+    public checkTouchButton(buttonType: VirtualPadButtonCode): boolean {
         return this._currentButtonState[buttonType] === VirtualPadState.PUSH;
     }
 
-    setTouchInfo(buttonType: string) {
+    public getButtonState(buttonType: VirtualPadButtonCode): VirtualPadState {
+        return this._currentButtonState[buttonType];
+    }
+
+    public setTouchInfo(buttonType: number) {
         this._currentButtonState[buttonType] = VirtualPadState.PUSH;
     }
 
-    setReleaseInfo(buttonType: string) {
-        this._currentButtonState[buttonType] = VirtualPadState.NONE;
+    public setReleaseInfo(buttonType: number) {
+        this.allClear();
+    }
+
+    public allLeaveInfo() {
+        this._currentButtonState = this._currentButtonState.map((buttonState) => {
+            return buttonState === VirtualPadState.PUSH ? VirtualPadState.LEAVE : VirtualPadState.NONE;
+        });
+    }
+
+    public allClear(): void {
+        this._currentButtonState = this._currentButtonState.map((buttonState) => {
+            return VirtualPadState.NONE;
+        });
     }
 
     constructor() {
-        this._currentButtonState = {};
-        for (let buttonType in VirtualPadDefinitions) {
-            this._currentButtonState[buttonType] = VirtualPadState.NONE;
-        }
+        this._currentButtonState = new Array(VirtualPadStore.VIRTUALPAD_MAX_COUNT);
     }
 
     public update() {
