@@ -57,7 +57,7 @@
     margin-bottom: 16px;
 }
 
-#wwa-top-button {
+#wwa-up-button {
     grid-column-start: 2;
     grid-row-start: 1;
 }
@@ -75,30 +75,30 @@
     grid-column-start: 3;
 }
 
-#wwa-bottom-button {
+#wwa-down-button {
     grid-column-start: 2;
     grid-row-start: 3;
 }
 
-#wwa-y-button {
+#wwa-enter-button {
     grid-column-start: 2;
     grid-row-start: 3;
 }
 
-#wwa-n-button {
+#wwa-esc-button {
     grid-column-start: 1;
     grid-row-start: 4;
 }
 
-#wwa-m-button {
+#wwa-estimate-button {
     grid-column-start: 1;
     grid-row-start: 2;
 }
 
-#wwa-i-button {
+#wwa-slow-button {
     border-radius: 1rem 0 0 1rem;
 }
 
-#wwa-p-button {
+#wwa-fast-button {
     border-radius: 0 1rem 1rem 0;
 }

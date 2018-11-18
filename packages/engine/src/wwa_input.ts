@@ -249,19 +249,57 @@ export class MouseStore {
 
 }
 
+/**
+ * バーチャルパッドで定義されているボタンの一覧です。
+ * enum ではないのは、HTML要素のシグネチャを作る際に enum がキーとして使えないためです。
+ */
+export const VirtualPadDefinitions: string[] = [
+    "enter",
+    "esc",
+    "sidebar",
+    "estimate",
+    "fast",
+    "slow",
+    "left",
+    "up",
+    "right",
+    "down"
+];
+
+/**
+ * NONE: ボタンに一切触れていません
+ * PUSH: ボタンに触れています
+ * LEAVE: 画面に触れた際は触れていましたが、今は領域外のところに触れています
+ */
 export enum VirtualPadState {
-    BUTTON_ENTER,
-    BUTTON_ESC,
-    BUTTON_SIDEBAR,
-    BUTTON_ESTIMATE,
-    BUTTON_FAST,
-    BUTTON_SLOW,
-    BUTTON_LEFT,
-    BUTTON_UP,
-    BUTTON_RIGHT,
-    BUTTON_DOWN
+    NONE,
+    PUSH,
+    LEAVE
 }
 
 export class VirtualPadStore {
+    private _currentButtonState: { [key: string]: VirtualPadState };
 
+    checkTouchButton(buttonType: string): boolean {
+        return this._currentButtonState[buttonType] === VirtualPadState.PUSH;
+    }
+
+    setTouchInfo(buttonType: string) {
+        this._currentButtonState[buttonType] = VirtualPadState.PUSH;
+    }
+
+    setReleaseInfo(buttonType: string) {
+        this._currentButtonState[buttonType] = VirtualPadState.NONE;
+    }
+
+    constructor() {
+        this._currentButtonState = {};
+        for (let buttonType in VirtualPadDefinitions) {
+            this._currentButtonState[buttonType] = VirtualPadState.NONE;
+        }
+    }
+
+    public update() {
+
+    }
 }

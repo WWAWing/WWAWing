@@ -19,12 +19,42 @@ declare function loader_start(e: any): void;
 var postMessage_noWorker = function (e: any): void { };
 
 import {
-    WWAConsts as Consts, WWAData as Data, Coord, Position,
-    LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
-    SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
-    SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
-    speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType
+    AppearanceTriggerType,
+    ChangeStyleType,
+    ChoiceCallInfo,
+    Coord,
+    Direction,
+    dirToKey,
+    dirToPos,
+    EquipmentStatus,
+    Face,
+    LoaderProgress,
+    LoadingMessagePosition,
+    LoadingMessageSize,
+    loadMessages,
+    loadMessagesClassic,
+    LoadStage,
+    LoadType,
+    MacroStatusIndex,
+    MoveType,
+    PartsType,
+    Position,
+    SecondCandidateMoveType,
+    SelectorType,
+    SidebarButton,
+    sidebarButtonCellElementID,
+    SpeedChange,
+    speedNameList,
+    Status,
+    SystemMessage1,
+    SystemMessage2,
+    SystemSound,
+    vx,
+    vy,
+    WWAConsts as Consts,
+    WWAData as Data,
+    WWAData,
+    YesNoState
 } from "./wwa_data";
 
 import {
@@ -34,21 +64,20 @@ import {
     MouseState,
     MouseStore,
     VirtualPadState,
-    VirtualPadStore,
+    VirtualPadDefinitions,
+    VirtualPadStore
 } from "./wwa_input";
 
 import * as util from "./wwa_util";
-import { CGManager } from "./wwa_cgmanager";
-import { Camera } from "./wwa_camera";
-import { Player } from "./wwa_parts_player";
-import { Monster } from "./wwa_monster";
-import { ObjectMovingDataManager } from "./wwa_motion";
-import {
-    MessageWindow, MosterWindow, ScoreWindow, MessageInfo, Macro, parseMacro
-} from "./wwa_message";
-import { BattleEstimateWindow } from "./wwa_estimate_battle";
-import { PasswordWindow, Mode } from "./wwa_password_window";
-import { inject } from "./wwa_inject_html";
+import {CGManager} from "./wwa_cgmanager";
+import {Camera} from "./wwa_camera";
+import {Player} from "./wwa_parts_player";
+import {Monster} from "./wwa_monster";
+import {ObjectMovingDataManager} from "./wwa_motion";
+import {Macro, MessageInfo, MessageWindow, MosterWindow, parseMacro, ScoreWindow} from "./wwa_message";
+import {BattleEstimateWindow} from "./wwa_estimate_battle";
+import {Mode, PasswordWindow} from "./wwa_password_window";
+import {inject} from "./wwa_inject_html";
 
 var wwa: WWA;
 let wwap_mode: boolean = false;
@@ -81,6 +110,7 @@ export class WWA {
     private _keyStore: KeyStore;
     private _mouseStore: MouseStore;
     private _virtualPadStore: VirtualPadStore;
+    private _virtualPadButtons: { [key: string]: HTMLElement };
     private _camera: Camera;
     private _objectMovingDataManager: ObjectMovingDataManager;
     private _messageWindow: MessageWindow;
@@ -295,6 +325,17 @@ export class WWA {
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
             this._virtualPadStore = new VirtualPadStore();
+            this._virtualPadButtons = {
+                "enter": util.$id("wwa-enter-button"),
+                "esc": util.$id("wwa-esc-button"),
+                "estimate": util.$id("wwa-estimate-button"),
+                "fast": util.$id("wwa-fast-button"),
+                "slow": util.$id("wwa-slow-button"),
+                "left": util.$id("wwa-left-button"),
+                "up": util.$id("wwa-up-button"),
+                "right": util.$id("wwa-right-button"),
+                "down": util.$id("wwa-down-button")
+            };
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
@@ -541,12 +582,17 @@ export class WWA {
 
             });
 
-            util.$id("wwa-top-button").addEventListener("touchstart", () => {
-                this._keyStore.setPressInfo(KeyCode.KEY_UP);
-            });
-            util.$id("wwa-top-button").addEventListener("touchend", () => {
-                this._keyStore.setReleaseInfo(KeyCode.KEY_UP);
-            });
+            for (let buttonType in this._virtualPadButtons) {
+                if (VirtualPadDefinitions.indexOf(buttonType) === -1) {
+                    throw new Error(`${buttonType} の名前を持つボタンは存在しません。`);
+                }
+                this._virtualPadButtons[buttonType].addEventListener("touchstart", () => {
+                    this._virtualPadStore.setTouchInfo(buttonType);
+                });
+                this._virtualPadButtons[buttonType].addEventListener("touchend", () => {
+                    this._virtualPadStore.setReleaseInfo(buttonType);
+                });
+            }
 
             this._frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
             this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);
@@ -1083,6 +1129,7 @@ export class WWA {
         // キー情報のアップデート
         this._keyStore.update();
         this._mouseStore.update();
+        this._virtualPadStore.update();
 
         // メッセージウィンドウによる入力割り込みが発生した時
         if (this._yesNoJudgeInNextFrame !== void 0) {
@@ -1134,19 +1181,23 @@ export class WWA {
                 this._player.controll(pdir);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                this._mouseStore.checkClickMouse(Direction.LEFT)) {
+                this._mouseStore.checkClickMouse(Direction.LEFT) ||
+                this._virtualPadStore.checkTouchButton("left")) {
                 this._player.controll(Direction.LEFT);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                this._mouseStore.checkClickMouse(Direction.UP)) {
+                this._mouseStore.checkClickMouse(Direction.UP) ||
+                this._virtualPadStore.checkTouchButton("up")) {
                 this._player.controll(Direction.UP);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                this._mouseStore.checkClickMouse(Direction.RIGHT)) {
+                this._mouseStore.checkClickMouse(Direction.RIGHT) ||
+                this._virtualPadStore.checkTouchButton("right")) {
                 this._player.controll(Direction.RIGHT);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                this._mouseStore.checkClickMouse(Direction.DOWN)) {
+                this._mouseStore.checkClickMouse(Direction.DOWN) ||
+                this._virtualPadStore.checkTouchButton("down")) {
                 this._player.controll(Direction.DOWN);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
@@ -1189,15 +1240,19 @@ export class WWA {
                 this.onselectitem(11);
             } else if (this._keyStore.getKeyState(KeyCode.KEY_C) === KeyState.KEYDOWN) {
                 this.onselectitem(12);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_I)) {
+            } else if (
+                this._keyStore.getKeyState(KeyCode.KEY_I) ||
+                this._virtualPadStore.checkTouchButton("slow")) {
                 this.onchangespeed(SpeedChange.DOWN);
             } else if (
                 this._keyStore.checkHitKey(KeyCode.KEY_P) ||
-                this._keyStore.checkHitKey(KeyCode.KEY_F2)) {
+                this._keyStore.checkHitKey(KeyCode.KEY_F2) ||
+                this._virtualPadStore.checkTouchButton("fast")) {
                 this.onchangespeed(SpeedChange.UP);
             } else if (
                 this._keyStore.getKeyState(KeyCode.KEY_F1) === KeyState.KEYDOWN ||
-                this._keyStore.getKeyState(KeyCode.KEY_M) === KeyState.KEYDOWN) {
+                this._keyStore.getKeyState(KeyCode.KEY_M) === KeyState.KEYDOWN ||
+                this._virtualPadStore.checkTouchButton("estimate")) {
                 // 戦闘結果予測 
                 if (this.launchBattleEstimateWindow()) {
                 }
