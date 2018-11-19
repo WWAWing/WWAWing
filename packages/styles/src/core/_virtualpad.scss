@@ -1,3 +1,13 @@
+%virtualpad_button {
+    background-color: #c0c0c0;
+    border: 0;
+    color: #000;
+    opacity: 0.75;
+    text-align: center;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+}
+
 #wwa-virtualpad-left,
 #wwa-virtualpad-right {
     bottom: 0;
@@ -6,13 +16,31 @@
 
 #wwa-virtualpad-left {
     left: 0;
+}
+
+#wwa-virtualpad-right {
+    right: 0;
+}
+
+#wwa-virtualpad-left button,
+#wwa-virtualpad-right button {
+    @extend %virtualpad_button;
+}
+
+#wwa-virtualpad-left .virtualpad_move button,
+#wwa-virtualpad-right .virtualpad_select button {
+    font-size: 50px;
+    height: 100px;
+    width: 100px;
+}
+
+#wwa-virtualpad-left {
     .virtualpad_move button {
         border-radius: 1rem;
     }
 }
 
 #wwa-virtualpad-right {
-    right: 0;
     .virtualpad_select button {
         border-radius: 50%;
     }
@@ -21,21 +49,6 @@
         height: 50px;
         width: 90px;
     }
-}
-
-#wwa-virtualpad-left button,
-#wwa-virtualpad-right button {
-    background-color: #c0c0c0;
-    border: 0;
-    color: #000;
-    opacity: 0.75;
-}
-
-#wwa-virtualpad-left .virtualpad_move button,
-#wwa-virtualpad-right .virtualpad_select button {
-    font-size: 50px;
-    height: 100px;
-    width: 100px;
 }
 
 #wwa-virtualpad-left .virtualpad_move,
