@@ -110,6 +110,7 @@ export class WWA {
     private _keyStore: KeyStore;
     private _mouseStore: MouseStore;
     private _virtualPadStore: VirtualPadStore;
+    private _virtualPadButtonIds: { [key: number]: string };
     private _virtualPadButtonElements: { [key: number]: HTMLButtonElement };
     private _camera: Camera;
     private _objectMovingDataManager: ObjectMovingDataManager;
@@ -325,17 +326,22 @@ export class WWA {
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
             this._virtualPadStore = new VirtualPadStore();
-            this._virtualPadButtonElements = {
-                [VirtualPadButtonCode.BUTTON_ENTER]: <HTMLButtonElement>util.$id("wwa-enter-button"),
-                [VirtualPadButtonCode.BUTTON_ESC]: <HTMLButtonElement>util.$id("wwa-esc-button"),
-                [VirtualPadButtonCode.BUTTON_ESTIMATE]: <HTMLButtonElement>util.$id("wwa-estimate-button"),
-                [VirtualPadButtonCode.BUTTON_FAST]: <HTMLButtonElement>util.$id("wwa-fast-button"),
-                [VirtualPadButtonCode.BUTTON_SLOW]: <HTMLButtonElement>util.$id("wwa-slow-button"),
-                [VirtualPadButtonCode.BUTTON_LEFT]: <HTMLButtonElement>util.$id("wwa-left-button"),
-                [VirtualPadButtonCode.BUTTON_UP]: <HTMLButtonElement>util.$id("wwa-up-button"),
-                [VirtualPadButtonCode.BUTTON_RIGHT]: <HTMLButtonElement>util.$id("wwa-right-button"),
-                [VirtualPadButtonCode.BUTTON_DOWN]: <HTMLButtonElement>util.$id("wwa-down-button")
-            };
+            this._virtualPadButtonIds = {
+                [VirtualPadButtonCode.BUTTON_ENTER]: "wwa-enter-button",
+                [VirtualPadButtonCode.BUTTON_ESC]: "wwa-esc-button",
+                [VirtualPadButtonCode.BUTTON_ESTIMATE]: "wwa-estimate-button",
+                [VirtualPadButtonCode.BUTTON_FAST]: "wwa-fast-button",
+                [VirtualPadButtonCode.BUTTON_SLOW]: "wwa-slow-button",
+                [VirtualPadButtonCode.BUTTON_LEFT]: "wwa-left-button",
+                [VirtualPadButtonCode.BUTTON_UP]: "wwa-up-button",
+                [VirtualPadButtonCode.BUTTON_RIGHT]: "wwa-right-button",
+                [VirtualPadButtonCode.BUTTON_DOWN]: "wwa-down-button"
+            }
+            this._virtualPadButtonElements = {};
+            for (let buttonType in this._virtualPadButtonIds) {
+                let buttonTypeCode = parseInt(buttonType);
+                this._virtualPadButtonElements[buttonTypeCode] = <HTMLButtonElement>util.$id(this._virtualPadButtonIds[buttonTypeCode]);
+            }
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
@@ -551,28 +557,37 @@ export class WWA {
                 });
 
                 util.$id("wwa-virtualpad-left").addEventListener("touchmove", (e: TouchEvent): void => {
+                    const touch = e.targetTouches.item(0);
+                    const touchElement = <Element>touch.target;
+                    let touchElementCode: null|VirtualPadButtonCode = null;
+                    
                     this._virtualPadStore.allLeaveInfo();
-
-                    // FIXME: 指先が動いた先のHTML要素が取得できない
-                    for (let index = 0; index < e.changedTouches.length; index++) {
-                        const targetElement = e.changedTouches.item(index).target;
-
-                        for (let buttonType in this._virtualPadButtonElements) {
-                            if (targetElement === this._virtualPadButtonElements[buttonType]) {
-                                this._virtualPadStore.setTouchInfo(parseInt(buttonType));
-                            }
+                    if (!touchElement.hasAttribute("id")) {
+                        return;
+                    }
+                    for (let buttonType in this._virtualPadButtonIds) {
+                        let buttonTypeCode = parseInt(buttonType);
+                        if (this._virtualPadButtonIds[buttonTypeCode] == touchElement.id) {
+                            touchElementCode = buttonTypeCode;
                         }
                     }
+                    if (touchElementCode === null) {
+                        return;
+                    }
+                    const touchX = touch.clientX - this._virtualPadButtonElements[touchElementCode].getBoundingClientRect().left;
+                    const touchY = touch.clientY - this._virtualPadButtonElements[touchElementCode].getBoundingClientRect().top;
+                    this._virtualPadStore.setEnterInfo(touchElementCode, touchX, touchY);
                 });
 
                 for (let buttonType in this._virtualPadButtonElements) { // buttonType はstring型なのでparseIntで変換してしまう。
-                    this._virtualPadButtonElements[buttonType].addEventListener("touchstart", () => {
+                    const buttonElement = this._virtualPadButtonElements[parseInt(buttonType)];
+                    buttonElement.addEventListener("touchstart", () => {
                         this._virtualPadStore.setTouchInfo(parseInt(buttonType));
                     });
-                    this._virtualPadButtonElements[buttonType].addEventListener("touchend", () => {
+                    buttonElement.addEventListener("touchend", () => {
                         this._virtualPadStore.setReleaseInfo(parseInt(buttonType));
                     });
-                    this._virtualPadButtonElements[buttonType].addEventListener("cancel", () => {
+                    buttonElement.addEventListener("cancel", () => {
                         this._virtualPadStore.allClear();
                     });
                 }
@@ -1313,8 +1328,8 @@ export class WWA {
                     space === KeyState.KEYDOWN || space === KeyState.KEYPRESS_MESSAGECHANGE ||
                     esc === KeyState.KEYDOWN || esc === KeyState.KEYPRESS_MESSAGECHANGE ||
                     this._mouseStore.getMouseState() === MouseState.MOUSEDOWN ||
-                    this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.PUSH ||
-                    this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.PUSH) {
+                    this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH ||
+                    this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.TOUCH) {
                     for (var i = 0; i < sidebarButtonCellElementID.length; i++) {
                         var elm = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[i]));
                         if (elm.classList.contains("onpress")) {
@@ -1330,13 +1345,13 @@ export class WWA {
                         if (
                             this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                             this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
-                            this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.PUSH
+                            this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH
                         ) {
                             this._yesNoJudge = YesNoState.YES
                         } else if (
                             this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
                             this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
-                            this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.PUSH
+                            this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.TOUCH
                         ) {
                             this._yesNoJudge = YesNoState.NO
                         }
@@ -1357,8 +1372,8 @@ export class WWA {
         } else if (this._player.isWatingEstimateWindow()) {
             if (this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                 this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
-                this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.PUSH ||
-                this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.PUSH) {
+                this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH ||
+                this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.TOUCH) {
                 this.hideBattleEstimateWindow();
             }
         } else if (this._player.isFighting()) {

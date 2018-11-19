@@ -1,4 +1,4 @@
-﻿import { WWAConsts, Direction } from "./wwa_data";
+﻿import { WWAConsts, Direction, Coord } from "./wwa_data";
 
 export enum KeyState {
     NONE,
@@ -269,16 +269,18 @@ export enum VirtualPadButtonCode {
  */
 export enum VirtualPadState {
     NONE,
-    PUSH,
+    TOUCH,
     LEAVE
 }
 
 export class VirtualPadStore {
     public static VIRTUALPAD_MAX_COUNT = 20;
+
     private _currentButtonState: VirtualPadState[];
+    private _touchButtonSize: Coord;
 
     public checkTouchButton(buttonType: VirtualPadButtonCode): boolean {
-        return this._currentButtonState[buttonType] === VirtualPadState.PUSH;
+        return this._currentButtonState[buttonType] === VirtualPadState.TOUCH;
     }
 
     public getButtonState(buttonType: VirtualPadButtonCode): VirtualPadState {
@@ -286,7 +288,7 @@ export class VirtualPadStore {
     }
 
     public setTouchInfo(buttonType: number) {
-        this._currentButtonState[buttonType] = VirtualPadState.PUSH;
+        this._currentButtonState[buttonType] = VirtualPadState.TOUCH;
     }
 
     public setReleaseInfo(buttonType: number) {
@@ -295,7 +297,7 @@ export class VirtualPadStore {
 
     public allLeaveInfo() {
         this._currentButtonState = this._currentButtonState.map((buttonState) => {
-            return buttonState === VirtualPadState.PUSH ? VirtualPadState.LEAVE : VirtualPadState.NONE;
+            return buttonState === VirtualPadState.TOUCH ? VirtualPadState.LEAVE : VirtualPadState.NONE;
         });
     }
 
@@ -305,8 +307,49 @@ export class VirtualPadStore {
         });
     }
 
+    public setEnterInfo(targetButtonType: VirtualPadButtonCode, clientX: number, clientY: number) {
+        if (clientX > 0 &&
+            clientX < this._touchButtonSize.x &&
+            clientY > 0 &&
+            clientY < this._touchButtonSize.y) {
+            this.setTouchInfo(targetButtonType);
+            return;
+        }
+        const touchButtonCoords: { [key: number]: {x: number, y: number} } = {
+            [VirtualPadButtonCode.BUTTON_LEFT]: {
+                x: -1 * this._touchButtonSize.x,
+                y: 0
+            },
+            [VirtualPadButtonCode.BUTTON_UP]: {
+                x: 0,
+                y: -1 * this._touchButtonSize.y
+            },
+            [VirtualPadButtonCode.BUTTON_RIGHT]: {
+                x: this._touchButtonSize.x,
+                y: 0
+            },
+            [VirtualPadButtonCode.BUTTON_DOWN]: {
+                x: 0,
+                y: this._touchButtonSize.y
+            }
+        }
+        let touchingX = clientX + touchButtonCoords[targetButtonType].x;
+        let touchingY = clientY + touchButtonCoords[targetButtonType].y;
+        for (let buttonType in touchButtonCoords) {
+            const buttonCoord = touchButtonCoords[buttonType];
+            if (touchingX > buttonCoord.x &&
+                touchingX < buttonCoord.x + this._touchButtonSize.x &&
+                touchingY > buttonCoord.y &&
+                touchingY < buttonCoord.y + this._touchButtonSize.y) {
+                this._currentButtonState[buttonType] = VirtualPadState.TOUCH;
+                break;
+            }
+        }
+    }
+
     constructor() {
         this._currentButtonState = new Array(VirtualPadStore.VIRTUALPAD_MAX_COUNT);
+        this._touchButtonSize = new Coord(100, 100); // TODO: 自動取得できるようにする。
     }
 
     public update() {
