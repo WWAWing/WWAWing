@@ -264,7 +264,7 @@ export enum VirtualPadButtonCode {
 
 /**
  * NONE: ボタンに一切触れていません
- * PUSH: ボタンに触れています
+ * TOUCH: ボタンに触れています
  * LEAVE: 画面に触れた際は触れていましたが、今は領域外のところに触れています
  */
 export enum VirtualPadState {
@@ -287,12 +287,12 @@ export class VirtualPadStore {
         return this._currentButtonState[buttonType];
     }
 
-    public setTouchInfo(buttonType: number) {
+    /**
+     * ボタンにタッチ信号を与えます
+     * @param buttonType 
+     */
+    public setTouchInfo(buttonType: VirtualPadButtonCode) {
         this._currentButtonState[buttonType] = VirtualPadState.TOUCH;
-    }
-
-    public setReleaseInfo(buttonType: number) {
-        this.allClear();
     }
 
     public allLeaveInfo() {
@@ -307,6 +307,12 @@ export class VirtualPadStore {
         });
     }
 
+    /**
+     * 触れ始めたボタンと座標に応じて、最適なボタンにタッチ信号を与えます
+     * @param targetButtonType 
+     * @param clientX 
+     * @param clientY 
+     */
     public setEnterInfo(targetButtonType: VirtualPadButtonCode, clientX: number, clientY: number) {
         if (clientX > 0 &&
             clientX < this._touchButtonSize.x &&
@@ -341,7 +347,7 @@ export class VirtualPadStore {
                 touchingX < buttonCoord.x + this._touchButtonSize.x &&
                 touchingY > buttonCoord.y &&
                 touchingY < buttonCoord.y + this._touchButtonSize.y) {
-                this._currentButtonState[buttonType] = VirtualPadState.TOUCH;
+                this.setTouchInfo(parseInt(buttonType));
                 break;
             }
         }
@@ -353,6 +359,5 @@ export class VirtualPadStore {
     }
 
     public update() {
-
     }
 }

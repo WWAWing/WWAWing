@@ -556,36 +556,33 @@ export class WWA {
                     }
                 });
 
-                util.$id("wwa-virtualpad-left").addEventListener("touchmove", (e: TouchEvent): void => {
-                    const touch = e.targetTouches.item(0);
-                    const touchElement = <Element>touch.target;
-                    let touchElementCode: null|VirtualPadButtonCode = null;
-                    
-                    this._virtualPadStore.allLeaveInfo();
-                    if (!touchElement.hasAttribute("id")) {
-                        return;
-                    }
-                    for (let buttonType in this._virtualPadButtonIds) {
-                        let buttonTypeCode = parseInt(buttonType);
-                        if (this._virtualPadButtonIds[buttonTypeCode] == touchElement.id) {
-                            touchElementCode = buttonTypeCode;
-                        }
-                    }
-                    if (touchElementCode === null) {
-                        return;
-                    }
-                    const touchX = touch.clientX - this._virtualPadButtonElements[touchElementCode].getBoundingClientRect().left;
-                    const touchY = touch.clientY - this._virtualPadButtonElements[touchElementCode].getBoundingClientRect().top;
-                    this._virtualPadStore.setEnterInfo(touchElementCode, touchX, touchY);
-                });
+                [ // 移動ボタン
+                    VirtualPadButtonCode.BUTTON_LEFT,
+                    VirtualPadButtonCode.BUTTON_UP,
+                    VirtualPadButtonCode.BUTTON_RIGHT,
+                    VirtualPadButtonCode.BUTTON_DOWN
+                ].forEach((touchButtonCode) => {
+                    const touchButtonElemet = this._virtualPadButtonElements[touchButtonCode];
+                    touchButtonElemet.addEventListener("touchstart", () => {
+                        this._virtualPadStore.setTouchInfo(touchButtonCode);
+                    });
+                    touchButtonElemet.addEventListener("touchmove", (e: TouchEvent): void => {
+                        this._virtualPadStore.allLeaveInfo();
+
+                        const touch = e.targetTouches.item(0);
+                        const touchX = touch.clientX - touchButtonElemet.getBoundingClientRect().left;
+                        const touchY = touch.clientY - touchButtonElemet.getBoundingClientRect().top;
+                        this._virtualPadStore.setEnterInfo(touchButtonCode, touchX, touchY);
+                    });
+                }, this);
 
                 for (let buttonType in this._virtualPadButtonElements) { // buttonType はstring型なのでparseIntで変換してしまう。
                     const buttonElement = this._virtualPadButtonElements[parseInt(buttonType)];
                     buttonElement.addEventListener("touchstart", () => {
                         this._virtualPadStore.setTouchInfo(parseInt(buttonType));
-                    });
+                    })
                     buttonElement.addEventListener("touchend", () => {
-                        this._virtualPadStore.setReleaseInfo(parseInt(buttonType));
+                        this._virtualPadStore.allClear();
                     });
                     buttonElement.addEventListener("cancel", () => {
                         this._virtualPadStore.allClear();
