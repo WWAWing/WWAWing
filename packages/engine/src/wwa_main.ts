@@ -567,7 +567,7 @@ export class WWA {
                         this._virtualPadStore.setTouchInfo(touchButtonCode);
                     });
                     touchButtonElemet.addEventListener("touchmove", (e: TouchEvent): void => {
-                        this._virtualPadStore.allLeaveInfo();
+                        this._virtualPadStore.allClear();
 
                         const touch = e.targetTouches.item(0);
                         const touchX = touch.clientX - touchButtonElemet.getBoundingClientRect().left;

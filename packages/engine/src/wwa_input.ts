@@ -276,19 +276,30 @@ export enum VirtualPadState {
 }
 
 export class VirtualPadStore {
-    private _currentButtonState: VirtualPadState[];
+    private _buttonCount: number;
+    private _isTouchingButtons: {
+        prev: boolean,
+        current: boolean,
+        next: boolean
+    }[];
     private _touchButtonSize: Coord;
 
     public checkTouchButton(buttonType: VirtualPadButtonCode): boolean {
-        if (VirtualPadStore.isMoveButton(buttonType)) {
-            return this._currentButtonState[buttonType] === VirtualPadState.TOUCH ||
-                this._currentButtonState[buttonType] === VirtualPadState.TOUCHING;
-        }
-        return this._currentButtonState[buttonType] === VirtualPadState.TOUCH;
+        const state = this.getButtonState(buttonType);
+        return state === VirtualPadState.TOUCH || state === VirtualPadState.TOUCHING;
     }
 
     public getButtonState(buttonType: VirtualPadButtonCode): VirtualPadState {
-        return this._currentButtonState[buttonType];
+        const touched = this._isTouchingButtons[buttonType].prev;
+        const isTouching = this._isTouchingButtons[buttonType].current;
+        if (touched && isTouching) {
+            return VirtualPadState.TOUCHING;
+        } else if (isTouching) {
+            return VirtualPadState.TOUCH;
+        } else if (touched) {
+            return VirtualPadState.LEAVE;
+        }
+        return VirtualPadState.NONE;
     }
 
     /**
@@ -296,18 +307,13 @@ export class VirtualPadStore {
      * @param buttonType 
      */
     public setTouchInfo(buttonType: VirtualPadButtonCode) {
-        this._currentButtonState[buttonType] = VirtualPadState.TOUCH;
-    }
-
-    public allLeaveInfo() {
-        this._currentButtonState = this._currentButtonState.map((buttonState) => {
-            return buttonState === VirtualPadState.TOUCH ? VirtualPadState.LEAVE : VirtualPadState.NONE;
-        });
+        this._isTouchingButtons[buttonType].next = true;
     }
 
     public allClear(): void {
-        this._currentButtonState = this._currentButtonState.map((buttonState) => {
-            return VirtualPadState.NONE;
+        this._isTouchingButtons = this._isTouchingButtons.map((buttonState) => {
+            buttonState.next = false;
+            return buttonState;
         });
     }
 
@@ -372,10 +378,22 @@ export class VirtualPadStore {
     }
 
     constructor() {
-        this._currentButtonState = new Array(Object.entries(VirtualPadButtonCode).length);
+        this._buttonCount = Object.entries(VirtualPadButtonCode).length;
+        this._isTouchingButtons = new Array(this._buttonCount);
+        for (let count = 0; count < this._buttonCount; count++) {
+            this._isTouchingButtons[count] = {
+                prev: false,
+                current: false,
+                next: false
+            };
+        }
         this._touchButtonSize = new Coord(100, 100); // TODO: 自動取得できるようにする。
     }
 
     public update() {
+        this._isTouchingButtons.forEach((isTouchingButton) => {
+            isTouchingButton.prev = isTouchingButton.current;
+            isTouchingButton.current = isTouchingButton.next;
+        });
     }
 }
