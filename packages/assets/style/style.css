@@ -5,6 +5,10 @@ body {
     background-color: #A0A0A0;
 }
 
+body.has-virtualpad {
+    margin: 0;
+}
+
 footer#copyright {
     text-align: center;
 }
