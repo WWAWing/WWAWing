@@ -264,22 +264,26 @@ export enum VirtualPadButtonCode {
 
 /**
  * NONE: ボタンに一切触れていません
- * TOUCH: ボタンに触れています
- * LEAVE: 画面に触れた際は触れていましたが、今は領域外のところに触れています
+ * TOUCH: ボタンに触れ始めました
+ * TOUCHING: ボタンに触れています
+ * LEAVE: ボタンから離れました
  */
 export enum VirtualPadState {
     NONE,
     TOUCH,
+    TOUCHING,
     LEAVE
 }
 
 export class VirtualPadStore {
-    public static VIRTUALPAD_MAX_COUNT = 20;
-
     private _currentButtonState: VirtualPadState[];
     private _touchButtonSize: Coord;
 
     public checkTouchButton(buttonType: VirtualPadButtonCode): boolean {
+        if (VirtualPadStore.isMoveButton(buttonType)) {
+            return this._currentButtonState[buttonType] === VirtualPadState.TOUCH ||
+                this._currentButtonState[buttonType] === VirtualPadState.TOUCHING;
+        }
         return this._currentButtonState[buttonType] === VirtualPadState.TOUCH;
     }
 
@@ -353,8 +357,22 @@ export class VirtualPadStore {
         }
     }
 
+    /**
+     * 押したボタンが移動ボタンか判定します
+     * @param buttonType 
+     */
+    public static isMoveButton(buttonType: VirtualPadButtonCode): boolean {
+        if (buttonType === VirtualPadButtonCode.BUTTON_LEFT ||
+            buttonType === VirtualPadButtonCode.BUTTON_UP ||
+            buttonType === VirtualPadButtonCode.BUTTON_RIGHT ||
+            buttonType === VirtualPadButtonCode.BUTTON_DOWN) {
+            return true;
+        }
+        return false;
+    }
+
     constructor() {
-        this._currentButtonState = new Array(VirtualPadStore.VIRTUALPAD_MAX_COUNT);
+        this._currentButtonState = new Array(Object.entries(VirtualPadButtonCode).length);
         this._touchButtonSize = new Coord(100, 100); // TODO: 自動取得できるようにする。
     }
 
