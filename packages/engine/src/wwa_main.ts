@@ -110,7 +110,6 @@ export class WWA {
     private _keyStore: KeyStore;
     private _mouseStore: MouseStore;
     private _virtualPadStore: VirtualPadStore;
-    private _virtualPadButtonIds: { [key: number]: string };
     private _virtualPadButtonElements: { [key: number]: HTMLButtonElement };
     private _camera: Camera;
     private _objectMovingDataManager: ObjectMovingDataManager;
@@ -326,22 +325,17 @@ export class WWA {
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
             this._virtualPadStore = new VirtualPadStore();
-            this._virtualPadButtonIds = {
-                [VirtualPadButtonCode.BUTTON_ENTER]: "wwa-enter-button",
-                [VirtualPadButtonCode.BUTTON_ESC]: "wwa-esc-button",
-                [VirtualPadButtonCode.BUTTON_ESTIMATE]: "wwa-estimate-button",
-                [VirtualPadButtonCode.BUTTON_FAST]: "wwa-fast-button",
-                [VirtualPadButtonCode.BUTTON_SLOW]: "wwa-slow-button",
-                [VirtualPadButtonCode.BUTTON_LEFT]: "wwa-left-button",
-                [VirtualPadButtonCode.BUTTON_UP]: "wwa-up-button",
-                [VirtualPadButtonCode.BUTTON_RIGHT]: "wwa-right-button",
-                [VirtualPadButtonCode.BUTTON_DOWN]: "wwa-down-button"
-            }
-            this._virtualPadButtonElements = {};
-            for (let buttonType in this._virtualPadButtonIds) {
-                let buttonTypeCode = parseInt(buttonType);
-                this._virtualPadButtonElements[buttonTypeCode] = <HTMLButtonElement>util.$id(this._virtualPadButtonIds[buttonTypeCode]);
-            }
+            this._virtualPadButtonElements = {
+                [VirtualPadButtonCode.BUTTON_ENTER]: <HTMLButtonElement>util.$id("wwa-enter-button"),
+                [VirtualPadButtonCode.BUTTON_ESC]: <HTMLButtonElement>util.$id("wwa-esc-button"),
+                [VirtualPadButtonCode.BUTTON_ESTIMATE]: <HTMLButtonElement>util.$id("wwa-estimate-button"),
+                [VirtualPadButtonCode.BUTTON_FAST]: <HTMLButtonElement>util.$id("wwa-fast-button"),
+                [VirtualPadButtonCode.BUTTON_SLOW]: <HTMLButtonElement>util.$id("wwa-slow-button"),
+                [VirtualPadButtonCode.BUTTON_LEFT]: <HTMLButtonElement>util.$id("wwa-left-button"),
+                [VirtualPadButtonCode.BUTTON_UP]: <HTMLButtonElement>util.$id("wwa-up-button"),
+                [VirtualPadButtonCode.BUTTON_RIGHT]: <HTMLButtonElement>util.$id("wwa-right-button"),
+                [VirtualPadButtonCode.BUTTON_DOWN]: <HTMLButtonElement>util.$id("wwa-down-button")
+            };
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
@@ -451,10 +445,12 @@ export class WWA {
             window.addEventListener("blur", (e): void => {
                 this._keyStore.allClear();
                 this._mouseStore.clear();
+                this._virtualPadStore.allClear();
             });
             window.addEventListener("contextmenu", (e): void => {
                 this._keyStore.allClear();
                 this._mouseStore.clear();
+                this._virtualPadStore.allClear();
             });
             // IEのF1キー対策
             window.addEventListener("help", (e): void => {
@@ -556,6 +552,22 @@ export class WWA {
                     }
                 });
 
+                for (let buttonType in this._virtualPadButtonElements) {
+                    const buttonTypeCode = parseInt(buttonType); // buttonType はstring型なのでparseIntで変換してしまう。
+                    const buttonElement = this._virtualPadButtonElements[buttonTypeCode];
+
+                    // TODO: Chromeだと長押ししないと反応しない不具合を直す
+                    buttonElement.addEventListener("touchstart", () => {
+                        this._virtualPadStore.setTouchInfo(buttonTypeCode);
+                    });
+                    buttonElement.addEventListener("touchend", () => {
+                        this._virtualPadStore.allClear();
+                    });
+                    buttonElement.addEventListener("cancel", () => {
+                        this._virtualPadStore.allClear();
+                    });
+                }
+
                 [ // 移動ボタン
                     VirtualPadButtonCode.BUTTON_LEFT,
                     VirtualPadButtonCode.BUTTON_UP,
@@ -563,10 +575,8 @@ export class WWA {
                     VirtualPadButtonCode.BUTTON_DOWN
                 ].forEach((touchButtonCode) => {
                     const touchButtonElemet = this._virtualPadButtonElements[touchButtonCode];
-                    touchButtonElemet.addEventListener("touchstart", () => {
-                        this._virtualPadStore.setTouchInfo(touchButtonCode);
-                    });
                     touchButtonElemet.addEventListener("touchmove", (e: TouchEvent): void => {
+                        e.preventDefault();
                         this._virtualPadStore.allClear();
 
                         const touch = e.targetTouches.item(0);
@@ -575,19 +585,6 @@ export class WWA {
                         this._virtualPadStore.setEnterInfo(touchButtonCode, touchX, touchY);
                     });
                 }, this);
-
-                for (let buttonType in this._virtualPadButtonElements) { // buttonType はstring型なのでparseIntで変換してしまう。
-                    const buttonElement = this._virtualPadButtonElements[parseInt(buttonType)];
-                    buttonElement.addEventListener("touchstart", () => {
-                        this._virtualPadStore.setTouchInfo(parseInt(buttonType));
-                    })
-                    buttonElement.addEventListener("touchend", () => {
-                        this._virtualPadStore.allClear();
-                    });
-                    buttonElement.addEventListener("cancel", () => {
-                        this._virtualPadStore.allClear();
-                    });
-                }
             }
             //////////////// タッチ関連 超β ////////////////////////////
 
@@ -695,16 +692,19 @@ export class WWA {
                 this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                 var timer = setInterval((): void => {
                     self._keyStore.update();
+                    self._virtualPadStore.update();
 
                     if (self._yesNoJudgeInNextFrame === YesNoState.UNSELECTED) {
                         if (
                             self._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                            self._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN
+                            self._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
+                            self._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH
                         ) {
                             self._yesNoJudgeInNextFrame = YesNoState.YES
                         } else if (
                             self._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
-                            self._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN
+                            self._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                            self._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.TOUCH
                         ) {
                             self._yesNoJudgeInNextFrame = YesNoState.NO
                         }

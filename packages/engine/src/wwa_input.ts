@@ -377,6 +377,13 @@ export class VirtualPadStore {
         return false;
     }
 
+    public update() {
+        this._isTouchingButtons.forEach((isTouchingButton) => {
+            isTouchingButton.prev = isTouchingButton.current;
+            isTouchingButton.current = isTouchingButton.next;
+        });
+    }
+
     constructor() {
         this._buttonCount = Object.entries(VirtualPadButtonCode).length;
         this._isTouchingButtons = new Array(this._buttonCount);
@@ -388,12 +395,5 @@ export class VirtualPadStore {
             };
         }
         this._touchButtonSize = new Coord(100, 100); // TODO: 自動取得できるようにする。
-    }
-
-    public update() {
-        this._isTouchingButtons.forEach((isTouchingButton) => {
-            isTouchingButton.prev = isTouchingButton.current;
-            isTouchingButton.current = isTouchingButton.next;
-        });
     }
 }
