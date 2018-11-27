@@ -1,4 +1,4 @@
-﻿import { WWA } from "./wwa_main";
+import { WWA } from "./wwa_main";
 import {
     Position,
     Direction,
@@ -591,27 +591,27 @@ export class Player extends PartsObject {
             this._forceSetItemBox(insertPos, objID);
         }
         /*
-                itemType = this._wwa.getObjectAttributeById(objID, Consts.ATR_MODE);
-                if (objID !== 0 && itemType !== ItemMode.NORMAL) {
-                    var mes = this._wwa.getSystemMessageById(SystemMessage2.CLICKABLE_ITEM);
-                    if (!this._isClickableItemGot) {
-                        if (mes !== "BLANK") {
-                            this._wwa.setMessageQueue(mes === "" ?
-                                "このアイテムは右のボックスをクリックすることで使用できます。\n" +
-                                "使用できるアイテムは色枠で囲まれます。" : mes, false, true
-                                );
-                        }
-                        this._isClickableItemGot = true;
-                    }
-                    border = wwa_util.$qsh("#item" + (insertPos - 1) + ">.item-click-border")
-                    border.style.display = "block";
-                    this._itemUsingEvent[insertPos - 1] = () => {
-                        if (this.isControllable()) {
-                            this._wwa.onselectitem(insertPos);
-                        }
-                    };
-                    border.addEventListener("click", this._itemUsingEvent[insertPos - 1]);
-                } 
+        itemType = this._wwa.getObjectAttributeById(objID, Consts.ATR_MODE);
+        if (objID !== 0 && itemType !== ItemMode.NORMAL) {
+        var mes = this._wwa.getSystemMessageById(SystemMessage2.CLICKABLE_ITEM);
+        if (!this._isClickableItemGot) {
+        if (mes !== "BLANK") {
+        this._wwa.setMessageQueue(mes === "" ?
+        "このアイテムは右のボックスをクリックすることで使用できます。\n" +
+        "使用できるアイテムは色枠で囲まれます。" : mes, false, true
+        );
+        }
+        this._isClickableItemGot = true;
+        }
+        border = wwa_util.$qsh("#item" + (insertPos - 1) + ">.item-click-border")
+        border.style.display = "block";
+        this._itemUsingEvent[insertPos - 1] = () => {
+        if (this.isControllable()) {
+        this._wwa.onselectitem(insertPos);
+        }
+        };
+        border.addEventListener("click", this._itemUsingEvent[insertPos - 1]);
+        } 
         */
         this._updateEquipmentStatus();
         this.updateItemBox();
@@ -637,7 +637,9 @@ export class Player extends PartsObject {
             border.style.display = "block";
             ((pos: number): void => {
                 self._itemUsingEvent[pos - 1] = () => {
-                    if (self.isControllable()) {
+                    if (self.isControllable() || (self._wwa._messageWindow.isItemMenuChoice())) {
+                        self._wwa._itemMenu.close();
+                        self._wwa._setNextMessage();
                         self._wwa.onselectitem(pos);
                     }
                 };
@@ -1029,3 +1031,4 @@ export class Player extends PartsObject {
     }
 
 }
+
