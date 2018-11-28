@@ -556,9 +556,15 @@ export class WWA {
                     const buttonTypeCode = parseInt(buttonType); // buttonType はstring型なのでparseIntで変換してしまう。
                     const buttonElement = this._virtualPadButtonElements[buttonTypeCode];
 
-                    // TODO: Chromeだと長押ししないと反応しない不具合を直す
-                    buttonElement.addEventListener("touchstart", () => {
+                    buttonElement.addEventListener("touchstart", (event: TouchEvent) => {
+                        if (this._mouseStore.getMouseState() !== MouseState.NONE) {
+                            event.preventDefault();
+                            return;
+                        }
                         this._virtualPadStore.setTouchInfo(buttonTypeCode);
+                        if (event.cancelable) {
+                            event.preventDefault();
+                        }
                     });
                     buttonElement.addEventListener("touchend", () => {
                         this._virtualPadStore.allClear();
