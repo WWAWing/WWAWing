@@ -282,7 +282,6 @@ export class VirtualPadStore {
         current: boolean,
         next: boolean
     }[];
-    private _touchButtonSize: Coord;
 
     public checkTouchButton(buttonType: VirtualPadButtonCode): boolean {
         const state = this.getButtonState(buttonType);
@@ -310,57 +309,14 @@ export class VirtualPadStore {
         this._isTouchingButtons[buttonType].next = true;
     }
 
+    /**
+     * すべてのボタンのタッチ信号をキャンセルします
+     */
     public allClear(): void {
         this._isTouchingButtons = this._isTouchingButtons.map((buttonState) => {
             buttonState.next = false;
             return buttonState;
         });
-    }
-
-    /**
-     * 触れ始めたボタンと座標に応じて、最適なボタンにタッチ信号を与えます
-     * @param targetButtonType 
-     * @param clientX 
-     * @param clientY 
-     */
-    public setEnterInfo(targetButtonType: VirtualPadButtonCode, clientX: number, clientY: number) {
-        if (clientX > 0 &&
-            clientX < this._touchButtonSize.x &&
-            clientY > 0 &&
-            clientY < this._touchButtonSize.y) {
-            this.setTouchInfo(targetButtonType);
-            return;
-        }
-        const touchButtonCoords: { [key: number]: {x: number, y: number} } = {
-            [VirtualPadButtonCode.BUTTON_LEFT]: {
-                x: -1 * this._touchButtonSize.x,
-                y: 0
-            },
-            [VirtualPadButtonCode.BUTTON_UP]: {
-                x: 0,
-                y: -1 * this._touchButtonSize.y
-            },
-            [VirtualPadButtonCode.BUTTON_RIGHT]: {
-                x: this._touchButtonSize.x,
-                y: 0
-            },
-            [VirtualPadButtonCode.BUTTON_DOWN]: {
-                x: 0,
-                y: this._touchButtonSize.y
-            }
-        }
-        let touchingX = clientX + touchButtonCoords[targetButtonType].x;
-        let touchingY = clientY + touchButtonCoords[targetButtonType].y;
-        for (let buttonType in touchButtonCoords) {
-            const buttonCoord = touchButtonCoords[buttonType];
-            if (touchingX > buttonCoord.x &&
-                touchingX < buttonCoord.x + this._touchButtonSize.x &&
-                touchingY > buttonCoord.y &&
-                touchingY < buttonCoord.y + this._touchButtonSize.y) {
-                this.setTouchInfo(parseInt(buttonType));
-                break;
-            }
-        }
     }
 
     /**
@@ -394,6 +350,5 @@ export class VirtualPadStore {
                 next: false
             };
         }
-        this._touchButtonSize = new Coord(100, 100); // TODO: 自動取得できるようにする。
     }
 }

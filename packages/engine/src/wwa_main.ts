@@ -556,6 +556,7 @@ export class WWA {
                     const buttonTypeCode = parseInt(buttonType); // buttonType はstring型なのでparseIntで変換してしまう。
                     const buttonElement = this._virtualPadButtonElements[buttonTypeCode];
 
+                    buttonElement.setAttribute("type", buttonType);
                     buttonElement.addEventListener("touchstart", (event: TouchEvent) => {
                         if (this._mouseStore.getMouseState() !== MouseState.NONE) {
                             event.preventDefault();
@@ -579,16 +580,24 @@ export class WWA {
                     VirtualPadButtonCode.BUTTON_UP,
                     VirtualPadButtonCode.BUTTON_RIGHT,
                     VirtualPadButtonCode.BUTTON_DOWN
-                ].forEach((touchButtonCode) => {
-                    const touchButtonElemet = this._virtualPadButtonElements[touchButtonCode];
-                    touchButtonElemet.addEventListener("touchmove", (e: TouchEvent): void => {
-                        e.preventDefault();
+                ].forEach((targetButtonCode) => {
+                    const targetButtonElement = this._virtualPadButtonElements[targetButtonCode];
+                    
+                    targetButtonElement.addEventListener("touchmove", (event: TouchEvent): void => {
+                        event.preventDefault();
                         this._virtualPadStore.allClear();
 
-                        const touch = e.targetTouches.item(0);
-                        const touchX = touch.clientX - touchButtonElemet.getBoundingClientRect().left;
-                        const touchY = touch.clientY - touchButtonElemet.getBoundingClientRect().top;
-                        this._virtualPadStore.setEnterInfo(touchButtonCode, touchX, touchY);
+                        const touch = event.targetTouches.item(0);
+                        const element = document.elementFromPoint(touch.pageX, touch.pageY);
+                        if (element === null) {
+                            return;
+                        }
+
+                        const touchButtonType = element.getAttribute("type");
+                        const touchButtonCode = parseInt(touchButtonType);
+                        if (VirtualPadStore.isMoveButton(touchButtonCode)) {
+                            this._virtualPadStore.setTouchInfo(touchButtonCode);
+                        }
                     });
                 }, this);
             }
