@@ -2,8 +2,11 @@
     background-color: #c0c0c0;
     border: 0;
     color: #000;
+    font-weight: 700;
     opacity: 0.75;
     text-align: center;
+    -moz-appearance: none;
+    -webkit-appearance: none;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
 }
@@ -29,7 +32,7 @@
 
 #wwa-virtualpad-left .virtualpad_move button,
 #wwa-virtualpad-right .virtualpad_select button {
-    font-size: 50px;
+    font-size: 35px;
     height: 100px;
     width: 100px;
 }
@@ -45,9 +48,16 @@
         border-radius: 50%;
     }
     .virtualpad_speedcontrol button {
-        font-size: 30px;
+        font-size: 25px;
         height: 50px;
+        margin: 0 5px;
         width: 90px;
+    }
+    #wwa-slow-button {
+        border-radius: 1rem 0 0 1rem;
+    }
+    #wwa-fast-button {
+        border-radius: 0 1rem 1rem 0;
     }
 }
 
@@ -106,12 +116,4 @@
 #wwa-estimate-button {
     grid-column-start: 1;
     grid-row-start: 2;
-}
-
-#wwa-slow-button {
-    border-radius: 1rem 0 0 1rem;
-}
-
-#wwa-fast-button {
-    border-radius: 0 1rem 1rem 0;
 }
