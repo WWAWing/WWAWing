@@ -552,6 +552,15 @@ export class WWA {
                     }
                 });
 
+                // バーチャルパッド
+                const cancelBrowserTouchEvent = (event: TouchEvent) => {
+                    if (event.cancelable) {
+                        event.preventDefault();
+                    }
+                };
+                util.$id("wwa-virtualpad-left").addEventListener("touchstart", cancelBrowserTouchEvent);
+                util.$id("wwa-virtualpad-right").addEventListener("touchstart", cancelBrowserTouchEvent);
+
                 for (let buttonType in this._virtualPadButtonElements) {
                     const buttonTypeCode = parseInt(buttonType); // buttonType はstring型なのでparseIntで変換してしまう。
                     const buttonElement = this._virtualPadButtonElements[buttonTypeCode];
@@ -563,9 +572,7 @@ export class WWA {
                             return;
                         }
                         this._virtualPadStore.setTouchInfo(buttonTypeCode);
-                        if (event.cancelable) {
-                            event.preventDefault();
-                        }
+                        cancelBrowserTouchEvent(event);
                     });
                     buttonElement.addEventListener("touchend", () => {
                         this._virtualPadStore.allClear();
