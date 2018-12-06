@@ -19,10 +19,12 @@
 
 #wwa-virtualpad-left {
     left: 0;
+    padding-left: env(safe-area-inset-left);
 }
 
 #wwa-virtualpad-right {
     right: 0;
+    padding-right: env(safe-area-inset-right);
 }
 
 #wwa-virtualpad-left button,
