@@ -49,7 +49,6 @@ function createConfig(mapdata: string, isDevMode: boolean): WWAPageConfig {
                     mapdata,
                     wwaJs: isDevMode ? "wwa.long.js" : "wwa.js",
                     titleImg: "cover.gif",
-                    cryptoJsInDevMode: "cryptojs/aes.js"
                 },
                 urlgateEnable: true
             },

@@ -14,7 +14,6 @@ interface AudiojsTScomp {
 
 declare var audiojs: AudiojsTScomp;
 declare var external_script_inject_mode: boolean;
-declare var CryptoJS: any; // ゆるして
 declare var VERSION_WWAJS: string; // webpackにより注入
 declare function loader_start(e: any): void;
 var postMessage_noWorker = function (e: any): void { };
@@ -37,7 +36,7 @@ import {
     GamePadState,
     GamePadStore
 } from "./wwa_input";
-
+import * as CryptoJS from "crypto-js";
 import * as util from "./wwa_util";
 import { CGManager } from "./wwa_cgmanager";
 import { Camera } from "./wwa_camera";
