@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "bootstrap": "lerna bootstrap",
     "clean": "lerna clean",
-    "start": "lerna run start --stream --scope @wwawing/engine",
+    "start": "lerna run start --stream --scope {@wwawing/styles,@wwawing/engine}",
     "build": "lerna run build --stream --parallel",
     "generate": "lerna exec --scope @wwawing/debug-server -- npm run generate",
     "make-dist": "npm run build && lerna run make-dist --stream"
