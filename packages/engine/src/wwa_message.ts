@@ -9,7 +9,9 @@ import {
     macrotable,
     YesNoState,
     Position,
-    Direction
+    Direction,
+    USER_DEVICE,
+    DEVICE_TYPE
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -753,6 +755,18 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._saveDataList = [];
         for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
             this._saveDataList[i] = new WWASaveData();
+        }
+        switch (wwa.device_data.device) {
+            case DEVICE_TYPE.SP:
+            case DEVICE_TYPE.VR:
+                //スマートフォン用に拡大
+                this._dummyElement.style.height = "70px";
+                this._ynWrapperElement.style.transform = "scale(1.5,1.5) translate(-25px,-6px)";
+                this._ynWrapperElement.style["imageRendering"] = "pixelated";
+                this._ynWrapperElement.style.width = "100px";
+                this._divYesElement.style.margin = "0px 5px";
+                this._divNoElement.style.margin = "0px 5px";
+                break;
         }
         this.update();
     }

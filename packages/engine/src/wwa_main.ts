@@ -25,7 +25,7 @@ import {
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, USER_DEVICE, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE
 } from "./wwa_data";
 
 import {
@@ -173,7 +173,6 @@ export class WWA {
     // private _waitTimeInCurrentFrame: number;
     private _waitFrame: number;
     private _usePassword: boolean;
-    private _useScaleUp: boolean;
     private _useHelp: boolean;
     private _useBattleReportButton: boolean;
     private _wwaWrapperElement: HTMLDivElement;
@@ -232,6 +231,7 @@ export class WWA {
     public audioContext: any;
     public audioGain: any;
     private audioExtension: string = "";
+    public device_data:USER_DEVICE;
 
     constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
         var ctxCover;
@@ -274,16 +274,7 @@ export class WWA {
         } else {
             this.audioExtension = "m4a";
         }
-        var ua: string = window.navigator.userAgent;
-        var browser = { os: '', browser: '' };
-        browser.os = ua.match(/windows/i) ? 'Windows' : '';
-        browser.os = browser.os || (ua.match(/macintosh/i) ? 'Macintosh' : '');
-        browser.os = browser.os || (ua.match(/iphone|ipad|ipod/i) ? 'iOS' : '');
-        browser.os = browser.os || (ua.match(/oculus/i) ? 'Oculus' : '');
-        browser.os = browser.os || (ua.match(/android/i) ? 'Android' : '');
-        browser.os = browser.os || (ua.match(/nintendo/i) ? 'Nintendo' : '');
-        browser.os = browser.os || (ua.match(/playstation/i) ? 'PlayStation' : '');
-        browser.os = browser.os || (ua.match(/linux/i) ? 'Linux' : '');
+        this.device_data = new USER_DEVICE();
 
         this._isURLGateEnable = urlgateEnabled;
         this._isClassicModeEnable = classicModeEnabled;
@@ -300,35 +291,42 @@ export class WWA {
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
         if (isLocal) {
-            if (browser.os === "Nintendo") {
-                //speedList = [10, 10, 10, 10];
-                Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
-                this._useGameEnd = true;
-                this._useBattleReportButton = false;
-            } else {
-                alert(
-                    "【警告】直接HTMLファイルを開いているようです。\n" +
-                    "このプログラムは正常に動作しない可能性があります。\n" +
-                    "マップデータの確認を行う場合には同梱の「WWA Debugger」をご利用ください。"
-                );
+            switch (this.device_data.device) {
+                case DEVICE_TYPE.GAME:
+                    switch (this.device_data.os) {
+                        case OS_TYPE.NINTENDO:
+                            Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
+                            return;
+                    }
+                    this._useGameEnd = true;
+                    this._useBattleReportButton = false;
+                    break;
+                default:
+                    alert(
+                        "【警告】直接HTMLファイルを開いているようです。\n" +
+                        "このプログラムは正常に動作しない可能性があります。\n" +
+                        "マップデータの確認を行う場合には同梱の「WWA Debugger」をご利用ください。"
+                    );
+                    break;
             }
         }
-        this._usePassword = browser.os !== "Nintendo";
-        this._useHelp = true;
-        this._useScaleUp = false;
-        switch (browser.os) {
-            case "Android":
-            case "iOS":
-            case "Oculus":
-            case "Nintendo":
-            case "PlayStation":
-                this._useHelp = false;
+        switch (this.device_data.device) {
+            case DEVICE_TYPE.VR:
+            case DEVICE_TYPE.GAME:
+                this._usePassword = false;
+                break;
+            default:
+                this._usePassword = true;
                 break;
         }
-        switch (browser.os) {
-            case "Android":
-            case "iOS":
-                util.$id("wwa-wrapper").classList.add("useScaleUp");
+        switch (this.device_data.device) {
+            case DEVICE_TYPE.SP:
+            case DEVICE_TYPE.VR:
+            case DEVICE_TYPE.GAME:
+                this._useHelp = false;
+                break;
+            default:
+                this._useHelp = true;
                 break;
         }
 
@@ -461,10 +459,11 @@ export class WWA {
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
                 if (!this._isActive) { return; }
-                if (browser.os === "Nintendo") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
+                switch (this.device_data.os) {
+                    case OS_TYPE.NINTENDO:
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
                 }
                 this._keyStore.setPressInfo(e.keyCode);
                 if (e.keyCode === KeyCode.KEY_F5) {
@@ -522,10 +521,11 @@ export class WWA {
             });
             window.addEventListener("keyup", (e): void => {
                 if (!this._isActive) { return; }
-                if (browser.os === "Nintendo") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
+                switch (this.device_data.os) {
+                    case OS_TYPE.NINTENDO:
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
                 }
                 this._keyStore.setReleaseInfo(e.keyCode);
                 if (e.keyCode === KeyCode.KEY_F5) {
