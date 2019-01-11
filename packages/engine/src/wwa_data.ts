@@ -346,6 +346,110 @@ export enum PartsType {
     OBJECT = 0
 }
 
+export class USER_DEVICE {
+    public os: number;
+    public browser: number;
+    public device: number;
+    public constructor() {
+        var ua: string = window.navigator.userAgent;
+        this.os = this.getOS(ua);
+        this.browser = this.getBrowser(ua);
+        this.device = this.getDevice();
+    }
+    private getOS(ua): number{
+        if (ua.match(/xbox/i)) {
+            return OS_TYPE.XBOX;
+        }
+        if (ua.match(/windows/i)) {
+            return OS_TYPE.WINDOWS;
+        }
+        if (ua.match(/macintosh/i)) {
+            return OS_TYPE.MACINTOSH;
+        }
+        if (ua.match(/iphone|ipad|ipod/i)) {
+            return OS_TYPE.IOS;
+        }
+        if (ua.match(/oculus/i)) {
+            return OS_TYPE.OCULUS;
+        }
+        if (ua.match(/android/i)) {
+            return OS_TYPE.ANDROID;
+        }
+        if (ua.match(/nintendo/i)) {
+            return OS_TYPE.NINTENDO;
+        }
+        if (ua.match(/playstation/i)) {
+            return OS_TYPE.PLAY_STATION;
+        }
+        if (ua.match(/linux/i)) {
+            return OS_TYPE.LINUX;
+        }
+        return OS_TYPE.OTHERS;
+    }
+    private getBrowser(ua): number{
+        if (ua.match(/chrome/i)) {
+            return BROWSER_TYPE.CHROME;
+        }
+        if (ua.match(/edge/i)) {
+            return BROWSER_TYPE.EDGE;
+        }
+        if (ua.match(/firefox/i)) {
+            return BROWSER_TYPE.FIREFOX;
+        }
+        if (ua.match(/safari/i)) {
+            return BROWSER_TYPE.SAFARI;
+        }
+        return BROWSER_TYPE.OTHERS;
+    }
+    private getDevice(): number {
+        switch (this.os) {
+            case OS_TYPE.WINDOWS:
+            case OS_TYPE.MACINTOSH:
+            case OS_TYPE.LINUX:
+                return DEVICE_TYPE.PC;
+            case OS_TYPE.IOS:
+            case OS_TYPE.ANDROID:
+                return DEVICE_TYPE.SP;
+            case OS_TYPE.OCULUS:
+                return DEVICE_TYPE.VR;
+            case OS_TYPE.NINTENDO:
+            case OS_TYPE.PLAY_STATION:
+            case OS_TYPE.XBOX:
+                return DEVICE_TYPE.GAME;
+        }
+        return DEVICE_TYPE.OTHERS;
+    }
+}
+
+export enum OS_TYPE {
+    WINDOWS = 1,
+    MACINTOSH = 2,
+    LINUX = 3,
+    ANDROID = 4,
+    IOS = 5,
+    NINTENDO = 6,
+    PLAY_STATION = 7,
+    OCULUS = 8,
+    XBOX = 9,
+    OTHERS = 9999
+}
+
+export enum DEVICE_TYPE {
+    PC = 1,
+    SP = 2,
+    VR = 3,
+    GAME = 4,
+    OTHERS = 9999
+}
+
+export enum BROWSER_TYPE {
+    CHROME = 1,
+    FIREFOX = 2,
+    SAFARI = 3,
+    EDGE = 4,
+    OTHERS = 9999
+}
+
 export enum ChoiceCallInfo {
     NONE,
     CALL_BY_MAP_PARTS,
