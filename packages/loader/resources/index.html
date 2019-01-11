@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>WWALoader Test Page</title>
+    <style>
+        #dump {
+            font-family: monospace;
+        }
+        .number {
+            text-align: right;
+        }
+    </style>
+    <script charset="UTF-8" src="./test.js"></script>
+</head>
+<body>
+    <article>
+        <h1>WWALoader Test Page</h1>
+        <section>
+            <h1>概要</h1>
+            <p>WWALoaderを用いて、同じディレクトリにあるマップデータを吸い出します。</p>
+            <p>WWALoaderは、wwa.jsから呼び出すことによってマップデータをJavaScriptのオブジェクトとして得ることができます。</p>
+            <p>このサンプルでは、吸い出すマップデータの指定は「test.js」で指定しています。</p>
+        </section>
+        <fieldset>
+            <legend>吸いだしたパラメータと吸い出しにかかった時間</legend>
+            <label>World Name:</label>
+            <input id="worldName">
+            <label>画像ファイル名:</label>
+            <input id="mapCGName"><br>
+
+            <label>初期X座標:</label>
+            <input id="playerX" size="4" class="number">
+            <label>初期Y座標:</label>
+            <input id="playerY" size="4" class="number"><br>
+            <label>ゲームオーバーX座標:</label>
+            <input id="gameoverX" size="4" class="number">
+            <label>ゲームオーバーY座標:</label>
+            <input id="gameoverY" size="4" class="number"><br>
+            <label>背景パーツ総数(0を含む):</label>
+            <input id="mapPartsMax" size="5" class="number">
+            <label>物体パーツ総数(0を含む):</label>
+            <input id="objPartsMax" size="5" class="number"><br>
+
+
+            <label>生命力上限:</label>
+            <input id="statusEnergyMax" size="6" class="number">
+            <label>初期生命力:</label>
+            <input id="statusEnergy" size="6" class="number"><br>
+            <label>初期攻撃力:</label>
+            <input id="statusStrength" size="6" class="number">
+            <label>初期防御力:</label>
+            <input id="statusDefence" size="6" class="number"><br>
+            <label>初期所持金:</label>
+            <input id="statusGold" size="6" class="number"><br>
+
+            <label>マップサイズ:</label>
+            <input id="mapWidth" size="4" class="number"><sup>2</sup>
+            <label>メッセージ最大数:</label>
+            <input id="messageNum" size="5" class="number">
+
+            <label>ロードにかかった時間:</label>
+            <input id="loadTime" size="6" class="number">ms<br>
+
+            <label>Progress:</label>
+            <input id="progressCurrent" /> / 
+            <input id="progressTotal" />
+            ( Stage:<input id="progressStage" />)
+
+        </fieldset>
+        <footer>
+            (C) 2015-2018 WWA Wing Team / MIT License.
+        </footer>
+    </article>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "@wwawing/assets",
+  "version": "0.0.0",
+  "description": "WWA Wing asset files",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "WWA Wing Team",
+  "license": "CC-BY-4.0"
+}
