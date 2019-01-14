@@ -2002,7 +2002,12 @@ export class WWA {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         var message = this._wwaData.message[messageID];
         try {
-            this._player.addItem(partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER]);
+            var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
+            var screenXPixel = ( pos.x - screenTopCoord.x ) * Consts.CHIP_SIZE;
+            var screenYPixel = ( pos.y - screenTopCoord.y ) * Consts.CHIP_SIZE;
+            this._player.addItem(partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false, {
+                screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+            });
             this._wwaData.mapObject[pos.y][pos.x] = 0;
             if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 // 使用型アイテム の場合は、処理は使用時です。

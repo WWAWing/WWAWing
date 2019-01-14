@@ -522,15 +522,40 @@ export class Player extends PartsObject {
         this._goldValueElement.textContent = g + "";
     }
 
-    public updateItemBox(): void {
+    public updateItemBox(animationOption?: { insertPos: number/*1-12*/, itemScreenPixelCoord: Coord, itemBoxScreenPixelCoord: Coord }): void {
         var cx: number, cy: number;
         for (var i = 0; i < this._itemBoxElement.length; i++) {
             if (this._itemBox[i] === 0) {
                 this._itemBoxElement[i].style.backgroundPosition = "-40px 0px";
+                this._itemBoxElement[i].style.transitionDuration = "0s";
+                this._itemBoxElement[i].style.transitionProperty = "";
+                this._itemBoxElement[i].style.left = "0";
+                this._itemBoxElement[i].style.top = "0";
             } else {
                 cx = this._wwa.getObjectCropXById(this._itemBox[i]);
                 cy = this._wwa.getObjectCropYById(this._itemBox[i]);
-                this._itemBoxElement[i].style.backgroundPosition = "-" + cx + "px -" + cy + "px";
+                if (animationOption && i === animationOption.insertPos - 1) {
+                    let target = this._itemBoxElement[i];
+                    target.style.left =(animationOption.itemScreenPixelCoord.x - animationOption.itemBoxScreenPixelCoord.x) + "px"
+                    target.style.top = (animationOption.itemScreenPixelCoord.y - animationOption.itemBoxScreenPixelCoord.y) + "px"
+                    window.requestAnimationFrame(() => {
+                        target.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
+                        target.style.transitionDuration = "250ms";
+                        target.style.transitionProperty = "left,top";
+                        target.style.left = "0";
+                        target.style.top = "0";
+                        window.setTimeout(() => {
+                            target.style.transitionProperty = "";
+                            target.style.transitionDuration = "0s";
+                        }, 250);
+                    });
+            } else {
+                    this._itemBoxElement[i].style.transitionDuration = "0s";
+                    this._itemBoxElement[i].style.backgroundPosition = "-" + cx + "px -" + cy + "px";
+                    this._itemBoxElement[i].style.transitionProperty = "";
+                    this._itemBoxElement[i].style.left = "0";
+                    this._itemBoxElement[i].style.top = "0";
+                }
             }
         }
 
@@ -540,7 +565,7 @@ export class Player extends PartsObject {
         return this._status.energy <= 0;
     }
 
-    public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false): void {
+    public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false, animationOption?: { screenPixelCoord: Coord }): void {
         var insertPos: number;
         var oldInsertPos: number;
         var oldObjID: number;
@@ -614,7 +639,14 @@ export class Player extends PartsObject {
                 } 
         */
         this._updateEquipmentStatus();
-        this.updateItemBox();
+        this.updateItemBox(animationOption ? {
+             insertPos,
+             itemScreenPixelCoord: animationOption.screenPixelCoord,
+             // TODO コミットするまでにマジックナンバーけす
+             itemBoxScreenPixelCoord: new Coord(
+                 440 + (insertPos - 1) % 3 * 40,
+                 140 + Math.floor((insertPos - 1) / 3) * 40)
+        } : undefined);
     }
 
     private _forceSetItemBox(pos: number, id: number): void {
