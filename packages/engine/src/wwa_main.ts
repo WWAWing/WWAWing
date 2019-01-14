@@ -214,6 +214,7 @@ export class WWA {
             }
 
             this._wwaData = e.data.wwaData;
+            this._wwaData.isItemEffectEnabled = true;
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -2005,9 +2006,12 @@ export class WWA {
             var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
             var screenXPixel = ( pos.x - screenTopCoord.x ) * Consts.CHIP_SIZE;
             var screenYPixel = ( pos.y - screenTopCoord.y ) * Consts.CHIP_SIZE;
-            this._player.addItem(partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false, {
-                screenPixelCoord: new Coord(screenXPixel, screenYPixel)
-            });
+            this._player.addItem(
+                partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false,
+                this._wwaData.isItemEffectEnabled ? {
+                    screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                } : undefined
+            );
             this._wwaData.mapObject[pos.y][pos.x] = 0;
             if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 // 使用型アイテム の場合は、処理は使用時です。
@@ -3599,6 +3603,9 @@ export class WWA {
         this._faces = [];
     }
 
+    public updateItemEffectEnabled(isEnabled: boolean): void {
+        this._wwaData.isItemEffectEnabled = isEnabled;
+    }
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;
