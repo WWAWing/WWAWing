@@ -820,6 +820,7 @@ export class WWAData {
     checkString: string = void 0;
 
     // loader からくるデータには含まれていないので注意
+    // data-wwa-item-effect-enable="false" の場合は初期値無効
     isItemEffectEnabled?: boolean = void 0; 
 
     constructor() { }

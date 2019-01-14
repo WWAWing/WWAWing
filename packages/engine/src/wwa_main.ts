@@ -146,7 +146,7 @@ export class WWA {
 
     private _loadHandler: (e) => void;
 
-    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
+    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName: string, classicModeEnabled: boolean, itemEffectEnabled: boolean, audioDirectory: string = "") {
         var ctxCover;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
@@ -214,7 +214,7 @@ export class WWA {
             }
 
             this._wwaData = e.data.wwaData;
-            this._wwaData.isItemEffectEnabled = true;
+            this._wwaData.isItemEffectEnabled = itemEffectEnabled;
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -3722,7 +3722,12 @@ function start() {
     if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
         classicModeEnabled = true;
     }
-    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, audioDirectory);
+    var itemEffectEnabled = true;
+    var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
+    if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
+        itemEffectEnabled = false;
+    }
+    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, itemEffectEnabled, audioDirectory);
 }
 
 
