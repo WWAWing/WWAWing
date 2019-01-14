@@ -523,7 +523,6 @@ export class Player extends PartsObject {
     }
 
     public updateItemBox(animationOption?: { insertPos: number/*1-12*/, itemScreenPixelCoord: Coord, itemBoxScreenPixelCoord: Coord }): void {
-        var cx: number, cy: number;
         for (var i = 0; i < this._itemBoxElement.length; i++) {
             if (this._itemBox[i] === 0) {
                 this._itemBoxElement[i].style.backgroundPosition = "-40px 0px";
@@ -532,24 +531,27 @@ export class Player extends PartsObject {
                 this._itemBoxElement[i].style.left = "0";
                 this._itemBoxElement[i].style.top = "0";
             } else {
-                cx = this._wwa.getObjectCropXById(this._itemBox[i]);
-                cy = this._wwa.getObjectCropYById(this._itemBox[i]);
+                const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
+                const cy = this._wwa.getObjectCropYById(this._itemBox[i]);
                 if (animationOption && i === animationOption.insertPos - 1) {
                     let target = this._itemBoxElement[i];
-                    target.style.left =(animationOption.itemScreenPixelCoord.x - animationOption.itemBoxScreenPixelCoord.x) + "px"
-                    target.style.top = (animationOption.itemScreenPixelCoord.y - animationOption.itemBoxScreenPixelCoord.y) + "px"
-                    window.requestAnimationFrame(() => {
+                    let dx = animationOption.itemScreenPixelCoord.x - animationOption.itemBoxScreenPixelCoord.x;
+                    let dy = animationOption.itemScreenPixelCoord.y - animationOption.itemBoxScreenPixelCoord.y;
+                    let durationMs = (-dx) * Consts.DEFAULT_FRAME_INTERVAL / Consts.ITEM_EFFECT_SPEED_PIXEL_PER_FRAME;
+                    target.style.left = dx + "px";
+                    target.style.top = dy + "px";
+                    window.setTimeout(() => {
                         target.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-                        target.style.transitionDuration = "250ms";
+                        target.style.transitionDuration = durationMs + "ms";
                         target.style.transitionProperty = "left,top";
                         target.style.left = "0";
                         target.style.top = "0";
-                        window.setTimeout(() => {
+                        target.addEventListener("transitionend", () => {
                             target.style.transitionProperty = "";
                             target.style.transitionDuration = "0s";
-                        }, 250);
-                    });
-            } else {
+                        }, { once: true });
+                    }, Consts.DEFAULT_FRAME_INTERVAL);
+                } else {
                     this._itemBoxElement[i].style.transitionDuration = "0s";
                     this._itemBoxElement[i].style.backgroundPosition = "-" + cx + "px -" + cy + "px";
                     this._itemBoxElement[i].style.transitionProperty = "";
@@ -642,10 +644,9 @@ export class Player extends PartsObject {
         this.updateItemBox(animationOption ? {
              insertPos,
              itemScreenPixelCoord: animationOption.screenPixelCoord,
-             // TODO コミットするまでにマジックナンバーけす
              itemBoxScreenPixelCoord: new Coord(
-                 440 + (insertPos - 1) % 3 * 40,
-                 140 + Math.floor((insertPos - 1) / 3) * 40)
+                 Consts.MAP_WINDOW_WIDTH + (insertPos - 1) % 3 * Consts.CHIP_SIZE,
+                 Consts.ITEMBOX_TOP_Y + Math.floor((insertPos - 1) / 3) * Consts.CHIP_SIZE)
         } : undefined);
     }
 

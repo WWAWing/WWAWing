@@ -647,6 +647,10 @@ export class WWAConsts {
     static LOADING_FONT = "Times New Roman";
 
     static MSG_STR_WIDTH = 16;
+
+    static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
+
+    static ITEMBOX_TOP_Y = 140;
 }
 
 export class LoaderResponse {
