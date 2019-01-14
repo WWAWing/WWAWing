@@ -544,6 +544,7 @@ export class Player extends PartsObject {
                         target.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
                         target.style.transitionDuration = durationMs + "ms";
                         target.style.transitionProperty = "left,top";
+                        target.style.transitionTimingFunction = "linear";
                         target.style.left = "0";
                         target.style.top = "0";
                         target.addEventListener("transitionend", () => {
