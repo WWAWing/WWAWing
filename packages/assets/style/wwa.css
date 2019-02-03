@@ -253,6 +253,10 @@ div.item-disp {
     margin: 0px;
 }
 
+.item-transitioning {
+    z-index: 240 !important;
+}
+
 #disp-energy>.status-icon{
     z-index: 140;
 }

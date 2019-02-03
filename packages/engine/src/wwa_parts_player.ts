@@ -523,6 +523,7 @@ export class Player extends PartsObject {
     }
 
     public updateItemBox(animationOption?: { insertPos: number/*1-12*/, itemScreenPixelCoord: Coord, itemBoxScreenPixelCoord: Coord }): void {
+        let itemTransitioningClassName = "item-transitioning";
         for (var i = 0; i < this._itemBoxElement.length; i++) {
             if (this._itemBox[i] === 0) {
                 this._itemBoxElement[i].style.backgroundPosition = "-40px 0px";
@@ -533,6 +534,7 @@ export class Player extends PartsObject {
             } else {
                 const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
                 const cy = this._wwa.getObjectCropYById(this._itemBox[i]);
+                let parent = util.$qs("#item" + i);
                 if (animationOption && i === animationOption.insertPos - 1) {
                     let target = this._itemBoxElement[i];
                     let dx = animationOption.itemScreenPixelCoord.x - animationOption.itemBoxScreenPixelCoord.x;
@@ -542,12 +544,18 @@ export class Player extends PartsObject {
                     target.style.top = dy + "px";
                     window.setTimeout(() => {
                         target.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-                        target.style.transitionDuration = durationMs + "ms";
+                        target.style.transitionDuration = (durationMs) + "ms";
                         target.style.transitionProperty = "left,top";
                         target.style.transitionTimingFunction = "linear";
                         target.style.left = "0";
                         target.style.top = "0";
+                        if (parent) {
+                            parent.classList.add(itemTransitioningClassName);
+                        }
                         target.addEventListener("transitionend", () => {
+                            if (parent && parent.classList.contains(itemTransitioningClassName)) {
+                                parent.classList.remove(itemTransitioningClassName);
+                            }
                             target.style.transitionProperty = "";
                             target.style.transitionDuration = "0s";
                         }, { once: true });
@@ -558,6 +566,9 @@ export class Player extends PartsObject {
                     this._itemBoxElement[i].style.transitionProperty = "";
                     this._itemBoxElement[i].style.left = "0";
                     this._itemBoxElement[i].style.top = "0";
+                    if (parent && parent.classList.contains(itemTransitioningClassName)) {
+                        parent.classList.remove(itemTransitioningClassName);
+                    }
                 }
             }
         }
