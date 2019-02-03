@@ -2161,8 +2161,15 @@ export class WWA {
                         if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
                             if (this._player.canHaveMoreItems() || this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
                                 if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] !== 0) {
+                                    var pos = this._yesNoChoicePartsCoord;
+                                    var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
+                                    var screenXPixel = (pos.x - screenTopCoord.x) * Consts.CHIP_SIZE;
+                                    var screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
                                     this._player.addItem(
-                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
+                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM], 0, false, this._wwaData.isItemEffectEnabled ? {
+                                            screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                                        } : undefined
+                                    );
                                 }
                                 var status = new Status(
                                     this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY],
