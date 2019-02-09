@@ -523,18 +523,26 @@ export class Player extends PartsObject {
     }
 
     /**
-     * アイテムボックスのDOMの更新を行います。
+     * 全アイテムボックスのDOMの更新を行います。
      * アイテムボックスの内部状態の変更後に呼ぶことでアイテムボックスの見た目が更新されます。
      * 
      * ## animationOption
      * - insertPos: アニメーションが走るアイテムボックスを指定します。 1以上12以下です。
      * - itemScreenPixelCoord: アニメーションの起点になる画面座標(フィールド上のアイテム地点)です。
      * - itemBoxScreenPixelCoord: アニメーションの終点になる画面座標(アイテムボックス)です。
+     * - overwrittenObjectId: 上書きされる物体パーツのIDを指定すると、上書き演出になります。
      * 
      * @param animationOption オブジェクトがあるとアニメーションが走ります。
      */
-    public updateItemBox(animationOption?: { insertPos: number/*1-12*/, itemScreenPixelCoord: Coord, itemBoxScreenPixelCoord: Coord }): void {
+    public updateItemBox(animationOption?: {
+        insertPos: number/*1-12*/,
+        itemScreenPixelCoord: Coord,
+        itemBoxScreenPixelCoord: Coord,
+        overwrittenObjectId?: number
+    }): void {
         let itemTransitioningClassName = "item-transitioning";
+        const overwittenItemClassName = "item-overwritten";
+        const overwittenItemSelector = `.${overwittenItemClassName}`;
         for (var i = 0; i < this._itemBoxElement.length; i++) {
             if (this._itemBox[i] === 0) {
                 this._itemBoxElement[i].style.backgroundPosition = "-40px 0px";
@@ -545,7 +553,7 @@ export class Player extends PartsObject {
             } else {
                 const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
                 const cy = this._wwa.getObjectCropYById(this._itemBox[i]);
-                let parent = util.$qs("#item" + i);
+                let parent = util.$qs("#item" + i) as (HTMLDivElement | undefined);
                 if (animationOption && i === animationOption.insertPos - 1) {
                     let target = this._itemBoxElement[i];
                     let dx = animationOption.itemScreenPixelCoord.x - animationOption.itemBoxScreenPixelCoord.x;
@@ -554,8 +562,22 @@ export class Player extends PartsObject {
                     target.style.left = dx + "px";
                     target.style.top = dy + "px";
                     window.setTimeout(() => {
+                        const useBlank = animationOption.overwrittenObjectId === 0 || animationOption.overwrittenObjectId === undefined;
+                        const overwrittenCx = useBlank ? 40 : this._wwa.getObjectCropXById(animationOption.overwrittenObjectId);
+                        const overwrittenCy = useBlank ? 80 : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
+                        if (parent) {
+                            const prevOverwrittenItemElement = parent.querySelector(overwittenItemSelector);
+                            if (prevOverwrittenItemElement) {
+                                parent.removeChild(prevOverwrittenItemElement)
+                            }
+                            const overwrittenItemElement = document.createElement("div");
+                            overwrittenItemElement.classList.add(overwittenItemClassName);
+                            overwrittenItemElement.style.backgroundPosition = "-" + overwrittenCx + "px -" + overwrittenCy + "px";
+                            overwrittenItemElement.style.backgroundImage = parent.style.backgroundImage;
+                            parent.appendChild(overwrittenItemElement);
+                        }
                         target.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-                        target.style.transitionDuration = (durationMs) + "ms";
+                        target.style.transitionDuration = durationMs + "ms";
                         target.style.transitionProperty = "left,top";
                         target.style.transitionTimingFunction = "linear";
                         target.style.left = "0";
@@ -569,6 +591,12 @@ export class Player extends PartsObject {
                             }
                             target.style.transitionProperty = "";
                             target.style.transitionDuration = "0s";
+                            if (parent) {
+                                const overwrittenItemElement = parent.querySelector(overwittenItemSelector);
+                                if(overwrittenItemElement) {
+                                    parent.removeChild(overwrittenItemElement)
+                                }
+                            }
                         }, { once: true });
                     }, Consts.DEFAULT_FRAME_INTERVAL);
                 } else {
@@ -580,7 +608,13 @@ export class Player extends PartsObject {
                     if (parent && parent.classList.contains(itemTransitioningClassName)) {
                         parent.classList.remove(itemTransitioningClassName);
                     }
-                }
+                    if (parent) {
+                        const overwrittenItemElement = parent.querySelector(overwittenItemSelector);
+                        if (overwrittenItemElement) {
+                            parent.removeChild(overwrittenItemElement)
+                        }
+                    }
+               }
             }
         }
 
@@ -614,6 +648,7 @@ export class Player extends PartsObject {
         var oldInsertPos: number;
         var oldObjID: number;
         var itemPos_partsData = this._wwa.getObjectAttributeById(objID, Consts.ATR_NUMBER);
+        var overwrittenObjectId: number = 0;
         if (itemPos === 0 && itemPos_partsData !== 0) {
             itemPos = itemPos_partsData;
         }
@@ -630,7 +665,7 @@ export class Player extends PartsObject {
             if (insertPos === Consts.ITEMBOX_IS_FULL) {
                 throw new Error("これ以上、アイテムを持てません。");
             }
-
+            overwrittenObjectId = this._itemBox[insertPos - 1];
             this._forceSetItemBox(insertPos, objID);
 
             // 特定位置挿入 (上書きしない: 取得しているアイテムはずらす)
@@ -647,11 +682,13 @@ export class Player extends PartsObject {
                     throw new Error("これ以上、アイテムを持てません。");
                 }
             } else {
+                overwrittenObjectId = this._itemBox[insertPos - 1];
                 this._forceSetItemBox(insertPos, objID);
             }
             // 特定位置挿入（上書きする）
         } else {
             insertPos = itemPos;
+            overwrittenObjectId = this._itemBox[insertPos - 1];
             this._forceSetItemBox(insertPos, objID);
         }
         this._updateEquipmentStatus();
@@ -660,7 +697,8 @@ export class Player extends PartsObject {
              itemScreenPixelCoord: animationOption.screenPixelCoord,
              itemBoxScreenPixelCoord: new Coord(
                  Consts.MAP_WINDOW_WIDTH + (insertPos - 1) % 3 * Consts.CHIP_SIZE,
-                 Consts.ITEMBOX_TOP_Y + Math.floor((insertPos - 1) / 3) * Consts.CHIP_SIZE)
+                 Consts.ITEMBOX_TOP_Y + Math.floor((insertPos - 1) / 3) * Consts.CHIP_SIZE),
+                 overwrittenObjectId
         } : undefined);
     }
 
