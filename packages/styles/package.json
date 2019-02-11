@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "run-p build",
     "build": "npm-run-all clean build:*",
     "build:script": "npm run clean:script && tsc",
     "build:sass": "npm run clean:dist && node ./lib/make-css",
