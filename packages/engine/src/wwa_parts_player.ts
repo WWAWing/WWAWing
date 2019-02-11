@@ -551,7 +551,7 @@ export class Player extends PartsObject {
             // 該当位置がアイテムなしの場合
             if (this._itemBox[i] === 0) {
                 targetItemBoxElement.style.backgroundPosition = "-40px 0px";
-                this.disposeItemTransition(this._itemBoxElement[i], parentElement);
+                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
                 continue;
             }
             const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
@@ -560,7 +560,7 @@ export class Player extends PartsObject {
             // 該当位置がアニメーション対象アイテムでない場合
             if (!animationOption || i !== animationOption.insertPos - 1) {
                 targetItemBoxElement.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-                this.disposeItemTransition(this._itemBoxElement[i], parentElement);
+                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
                 continue;
             }
 
@@ -573,21 +573,26 @@ export class Player extends PartsObject {
             const overwrittenCy = useBlank ? 80 : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
             targetItemBoxElement.style.left = dx + "px";
             targetItemBoxElement.style.top = dy + "px";
-            window.setTimeout(() => {
-                this.initializeItemTransition(
-                    targetItemBoxElement,
-                    parentElement,
-                    {
-                        target: { x: cx, y: cy },
-                        overwritten: { x: overwrittenCx, y: overwrittenCy },
-                    },
-                    durationMs
-                );
-            }, Consts.DEFAULT_FRAME_INTERVAL);
+            window.setTimeout(() => this.startItemEffect(
+                targetItemBoxElement,
+                parentElement,
+                {
+                    target: { x: cx, y: cy },
+                    overwritten: { x: overwrittenCx, y: overwrittenCy },
+                },
+                durationMs
+            ), Consts.DEFAULT_FRAME_INTERVAL);
         }
     }
 
-    private initializeItemTransition(
+    /**
+     * アイテムエフェクトを開始します。
+     * @param targetItemBoxElement 動かすアイテムのdiv要素
+     * @param parentElement 動かすアイテムの親のdiv要素
+     * @param crops target: 動かすアイテムの画像上のxy座標, overwritten: 上書きされるアイテムの画像上のxy座標
+     * @param durationMs エフェクトにかかる時間
+     */
+    private startItemEffect(
         targetItemBoxElement: HTMLDivElement,
         parentElement: HTMLDivElement,
         crops: {
@@ -613,25 +618,28 @@ export class Player extends PartsObject {
         targetItemBoxElement.style.top = "0";
         parentElement.classList.add(this.itemTransitioningClassName);
         targetItemBoxElement.addEventListener("transitionend", () => {
-            this.disposeItemTransition(targetItemBoxElement, parentElement);
+            this.disposeItemEffect(targetItemBoxElement, parentElement);
         }, { once: true });
     }
  
-    private disposeItemTransition(itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
+    /**
+     * アイテムエフェクトを破棄します。アイテムエフェクトが動いていない時は何も起きません。
+     * @param itemBoxElement 破棄するエフェクトの対象のアイテムのdiv要素
+     * @param parentElement 破棄するエフェクト対象アイテムの親のdiv要素
+     */
+    private disposeItemEffect(itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
         itemBoxElement.style.transitionDuration = "0s";
         itemBoxElement.style.transitionProperty = "";
         itemBoxElement.style.left = "0";
         itemBoxElement.style.top = "0";
-        if (parentElement && parentElement.classList.contains(this.itemTransitioningClassName)) {
+        if (parentElement.classList.contains(this.itemTransitioningClassName)) {
             parentElement.classList.remove(this.itemTransitioningClassName);
         }
-        if (parentElement) {
-            const overwrittenItemElement = parentElement.querySelector(this.overwittenItemSelector);
-            if (overwrittenItemElement) {
-                parentElement.removeChild(overwrittenItemElement)
-            }
+        const overwrittenItemElement = parentElement.querySelector(this.overwittenItemSelector);
+        if (overwrittenItemElement) {
+            parentElement.removeChild(overwrittenItemElement)
         }
-   }
+    }
 
     public isDead(): boolean {
         return this._status.energy <= 0;
@@ -706,12 +714,12 @@ export class Player extends PartsObject {
         }
         this._updateEquipmentStatus();
         this.updateItemBox(animationOption ? {
-             insertPos,
-             itemScreenPixelCoord: animationOption.screenPixelCoord,
-             itemBoxScreenPixelCoord: new Coord(
-                 Consts.MAP_WINDOW_WIDTH + (insertPos - 1) % 3 * Consts.CHIP_SIZE,
-                 Consts.ITEMBOX_TOP_Y + Math.floor((insertPos - 1) / 3) * Consts.CHIP_SIZE),
-                 overwrittenObjectId
+            insertPos,
+            itemScreenPixelCoord: animationOption.screenPixelCoord,
+            itemBoxScreenPixelCoord: new Coord(
+                Consts.MAP_WINDOW_WIDTH + (insertPos - 1) % 3 * Consts.CHIP_SIZE,
+                Consts.ITEMBOX_TOP_Y + Math.floor((insertPos - 1) / 3) * Consts.CHIP_SIZE),
+            overwrittenObjectId
         } : undefined);
     }
 
