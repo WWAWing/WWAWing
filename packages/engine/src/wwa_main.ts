@@ -146,7 +146,7 @@ export class WWA {
 
     private _loadHandler: (e) => void;
 
-    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
+    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName: string, classicModeEnabled: boolean, itemEffectEnabled: boolean, audioDirectory: string = "") {
         var ctxCover;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
@@ -214,6 +214,7 @@ export class WWA {
             }
 
             this._wwaData = e.data.wwaData;
+            this._wwaData.isItemEffectEnabled = itemEffectEnabled;
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -2002,7 +2003,15 @@ export class WWA {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         var message = this._wwaData.message[messageID];
         try {
-            this._player.addItem(partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER]);
+            var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
+            var screenXPixel = ( pos.x - screenTopCoord.x ) * Consts.CHIP_SIZE;
+            var screenYPixel = ( pos.y - screenTopCoord.y ) * Consts.CHIP_SIZE;
+            this._player.addItem(
+                partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false,
+                this._wwaData.isItemEffectEnabled ? {
+                    screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                } : undefined
+            );
             this._wwaData.mapObject[pos.y][pos.x] = 0;
             if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 // 使用型アイテム の場合は、処理は使用時です。
@@ -2152,8 +2161,15 @@ export class WWA {
                         if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
                             if (this._player.canHaveMoreItems() || this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
                                 if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] !== 0) {
+                                    var pos = this._yesNoChoicePartsCoord;
+                                    var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
+                                    var screenXPixel = (pos.x - screenTopCoord.x) * Consts.CHIP_SIZE;
+                                    var screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
                                     this._player.addItem(
-                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
+                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM], 0, false, this._wwaData.isItemEffectEnabled ? {
+                                            screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                                        } : undefined
+                                    );
                                 }
                                 var status = new Status(
                                     this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY],
@@ -3594,6 +3610,9 @@ export class WWA {
         this._faces = [];
     }
 
+    public updateItemEffectEnabled(isEnabled: boolean): void {
+        this._wwaData.isItemEffectEnabled = isEnabled;
+    }
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;
@@ -3710,7 +3729,12 @@ function start() {
     if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
         classicModeEnabled = true;
     }
-    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, audioDirectory);
+    var itemEffectEnabled = true;
+    var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
+    if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
+        itemEffectEnabled = false;
+    }
+    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, itemEffectEnabled, audioDirectory);
 }
 
 

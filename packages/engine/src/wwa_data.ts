@@ -647,6 +647,10 @@ export class WWAConsts {
     static LOADING_FONT = "Times New Roman";
 
     static MSG_STR_WIDTH = 16;
+
+    static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
+
+    static ITEMBOX_TOP_Y = 140;
 }
 
 export class LoaderResponse {
@@ -814,6 +818,10 @@ export class WWAData {
 
     checkOriginalMapString: string = void 0;
     checkString: string = void 0;
+
+    // loader からくるデータには含まれていないので注意
+    // data-wwa-item-effect-enable="false" の場合は初期値無効
+    isItemEffectEnabled?: boolean = void 0; 
 
     constructor() { }
 }
