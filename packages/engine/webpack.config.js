@@ -1,19 +1,14 @@
 const webpack = require("webpack");
 const path = require("path");
-const fs = require("fs");
 const package = require("./package.json");
 
-const mitLicenseDelimiter = "Permission is hereby granted";
-const cryptoJsLicenseComment = fs
-    .readFileSync("./node_modules/crypto-js/LICENSE")
-    .toString()
-    .split(mitLicenseDelimiter)[0]
-    .trimRight();
-const wwaWingEngineLicenseComment = fs
-    .readFileSync("./LICENSE")
-    .toString()
-    .split(mitLicenseDelimiter)[0]
-    .trim();
+const cryptoJsLicenseComment = `crypto-js\
+ (c) Jeff Mott / Evan Vosberg /\
+ MIT License https://github.com/brix/crypto-js/blob/develop/LICENSE`;
+
+const wwaWingEngineLicenseComment = `WWA Wing Engine\
+ (c) NAO / WWA Wing Team /\
+ MIT License https://github.com/WWAWing/WWAWing/blob/develop/packages/engine/LICENSE`;
 
 module.exports = {
     mode: "development",
@@ -39,10 +34,10 @@ module.exports = {
             VERSION_WWAJS: JSON.stringify(package.version)
         }),
         new webpack.BannerPlugin({
-            banner: `WWA Wing\n${wwaWingEngineLicenseComment}\n\ncrypro-js\n${cryptoJsLicenseComment}`
+            banner: `@license ${wwaWingEngineLicenseComment}\n@license ${cryptoJsLicenseComment}`
         })
     ],
     watchOptions: {
         ignored: ["node_modules", 'lib/**/*.js']
-    }
+    },
 };
