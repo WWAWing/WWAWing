@@ -1,8 +1,12 @@
+$wwa_font_size: 16px;
+
 .wwa-size-box {
+    $font: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro', 'メイリオ', 'Meiryo', 'ＭＳ Ｐゴシック', sans-serif;
+
     width: 560px;
     height: 440px;
-    font-size: 16px;
-    font-family: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro', 'メイリオ','Meiryo','ＭＳ Ｐゴシック',sans-serif;
+    font-size: $wwa_font_size;
+    font-family: $font;
     line-height: 1.2;
     text-indent: 0px;
     letter-spacing: 0px;
@@ -10,12 +14,26 @@
     writing-mode: horizontal-tb;
 }
 
-#wwa-audio-wrapper {
+div#wwa-wrapper {
+    position: relative;
+    margin: 0 auto;
+    text-align: center;
+}
+
+%wwa_canvas {
     position: absolute;
     top: 0;
     left: 0;
-    display: none;
     width: 440px;
     height: 440px;
+}
+
+#wwa-controller {
+    @extend %wwa_canvas;
+}
+
+#wwa-audio-wrapper {
+    @extend %wwa_canvas;
+    display: none;
     overflow: hidden;
 }
