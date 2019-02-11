@@ -73,7 +73,7 @@ export class Player extends PartsObject {
     protected _goldValueElement: HTMLElement;
 
     protected _itemBox: number[];
-    protected _itemBoxElement: HTMLElement[];
+    protected _itemBoxElement: HTMLDivElement[];
     protected _itemUsingEvent: EventListener[];
     protected _readyToUseItemPos: number;
     protected _isReadyToUseItem: boolean;
@@ -522,6 +522,10 @@ export class Player extends PartsObject {
         this._goldValueElement.textContent = g + "";
     }
 
+    readonly itemTransitioningClassName = "item-transitioning";
+    readonly overwittenItemClassName = "item-overwritten";
+    readonly overwittenItemSelector = `.${this.overwittenItemClassName}`;
+
     /**
      * 全アイテムボックスのDOMの更新を行います。
      * アイテムボックスの内部状態の変更後に呼ぶことでアイテムボックスの見た目が更新されます。
@@ -540,85 +544,94 @@ export class Player extends PartsObject {
         itemBoxScreenPixelCoord: Coord,
         overwrittenObjectId?: number
     }): void {
-        let itemTransitioningClassName = "item-transitioning";
-        const overwittenItemClassName = "item-overwritten";
-        const overwittenItemSelector = `.${overwittenItemClassName}`;
-        for (var i = 0; i < this._itemBoxElement.length; i++) {
+        for (let i = 0; i < this._itemBoxElement.length; i++) {
+            const targetItemBoxElement = this._itemBoxElement[i];
+            const parentElement = util.$qs("#item" + i) as HTMLDivElement;
+
+            // 該当位置がアイテムなしの場合
             if (this._itemBox[i] === 0) {
-                this._itemBoxElement[i].style.backgroundPosition = "-40px 0px";
-                this._itemBoxElement[i].style.transitionDuration = "0s";
-                this._itemBoxElement[i].style.transitionProperty = "";
-                this._itemBoxElement[i].style.left = "0";
-                this._itemBoxElement[i].style.top = "0";
-            } else {
-                const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
-                const cy = this._wwa.getObjectCropYById(this._itemBox[i]);
-                let parent = util.$qs("#item" + i) as (HTMLDivElement | undefined);
-                if (animationOption && i === animationOption.insertPos - 1) {
-                    let target = this._itemBoxElement[i];
-                    let dx = animationOption.itemScreenPixelCoord.x - animationOption.itemBoxScreenPixelCoord.x;
-                    let dy = animationOption.itemScreenPixelCoord.y - animationOption.itemBoxScreenPixelCoord.y;
-                    let durationMs = (-dx) * Consts.DEFAULT_FRAME_INTERVAL / Consts.ITEM_EFFECT_SPEED_PIXEL_PER_FRAME;
-                    target.style.left = dx + "px";
-                    target.style.top = dy + "px";
-                    window.setTimeout(() => {
-                        const useBlank = animationOption.overwrittenObjectId === 0 || animationOption.overwrittenObjectId === undefined;
-                        const overwrittenCx = useBlank ? 40 : this._wwa.getObjectCropXById(animationOption.overwrittenObjectId);
-                        const overwrittenCy = useBlank ? 80 : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
-                        if (parent) {
-                            const prevOverwrittenItemElement = parent.querySelector(overwittenItemSelector);
-                            if (prevOverwrittenItemElement) {
-                                parent.removeChild(prevOverwrittenItemElement)
-                            }
-                            const overwrittenItemElement = document.createElement("div");
-                            overwrittenItemElement.classList.add(overwittenItemClassName);
-                            overwrittenItemElement.style.backgroundPosition = "-" + overwrittenCx + "px -" + overwrittenCy + "px";
-                            overwrittenItemElement.style.backgroundImage = parent.style.backgroundImage;
-                            parent.appendChild(overwrittenItemElement);
-                        }
-                        target.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-                        target.style.transitionDuration = durationMs + "ms";
-                        target.style.transitionProperty = "left,top";
-                        target.style.transitionTimingFunction = "linear";
-                        target.style.left = "0";
-                        target.style.top = "0";
-                        if (parent) {
-                            parent.classList.add(itemTransitioningClassName);
-                        }
-                        target.addEventListener("transitionend", () => {
-                            if (parent && parent.classList.contains(itemTransitioningClassName)) {
-                                parent.classList.remove(itemTransitioningClassName);
-                            }
-                            target.style.transitionProperty = "";
-                            target.style.transitionDuration = "0s";
-                            if (parent) {
-                                const overwrittenItemElement = parent.querySelector(overwittenItemSelector);
-                                if(overwrittenItemElement) {
-                                    parent.removeChild(overwrittenItemElement)
-                                }
-                            }
-                        }, { once: true });
-                    }, Consts.DEFAULT_FRAME_INTERVAL);
-                } else {
-                    this._itemBoxElement[i].style.transitionDuration = "0s";
-                    this._itemBoxElement[i].style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-                    this._itemBoxElement[i].style.transitionProperty = "";
-                    this._itemBoxElement[i].style.left = "0";
-                    this._itemBoxElement[i].style.top = "0";
-                    if (parent && parent.classList.contains(itemTransitioningClassName)) {
-                        parent.classList.remove(itemTransitioningClassName);
-                    }
-                    if (parent) {
-                        const overwrittenItemElement = parent.querySelector(overwittenItemSelector);
-                        if (overwrittenItemElement) {
-                            parent.removeChild(overwrittenItemElement)
-                        }
-                    }
-               }
+                targetItemBoxElement.style.backgroundPosition = "-40px 0px";
+                this.disposeItemTransition(this._itemBoxElement[i], parentElement);
+                continue;
+            }
+            const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
+            const cy = this._wwa.getObjectCropYById(this._itemBox[i]);
+
+            // 該当位置がアニメーション対象アイテムでない場合
+            if (!animationOption || i !== animationOption.insertPos - 1) {
+                targetItemBoxElement.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
+                this.disposeItemTransition(this._itemBoxElement[i], parentElement);
+                continue;
+            }
+
+            // 該当位置がアニメーション対象アイテムの場合
+            const dx = animationOption.itemScreenPixelCoord.x - animationOption.itemBoxScreenPixelCoord.x;
+            const dy = animationOption.itemScreenPixelCoord.y - animationOption.itemBoxScreenPixelCoord.y;
+            const durationMs = (-dx) * Consts.DEFAULT_FRAME_INTERVAL / Consts.ITEM_EFFECT_SPEED_PIXEL_PER_FRAME;
+            const useBlank = animationOption.overwrittenObjectId === 0 || animationOption.overwrittenObjectId === undefined;
+            const overwrittenCx = useBlank ? 40 : this._wwa.getObjectCropXById(animationOption.overwrittenObjectId);
+            const overwrittenCy = useBlank ? 80 : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
+            targetItemBoxElement.style.left = dx + "px";
+            targetItemBoxElement.style.top = dy + "px";
+            window.setTimeout(() => {
+                this.initializeItemTransition(
+                    targetItemBoxElement,
+                    parentElement,
+                    {
+                        target: { x: cx, y: cy },
+                        overwritten: { x: overwrittenCx, y: overwrittenCy },
+                    },
+                    durationMs
+                );
+            }, Consts.DEFAULT_FRAME_INTERVAL);
+        }
+    }
+
+    private initializeItemTransition(
+        targetItemBoxElement: HTMLDivElement,
+        parentElement: HTMLDivElement,
+        crops: {
+            target: { x:number, y: number },
+            overwritten: { x: number, y: number },
+        },
+        durationMs: number
+    ) {
+        const prevOverwrittenItemElement = parentElement.querySelector(this.overwittenItemSelector);
+        if (prevOverwrittenItemElement) {
+            parentElement.removeChild(prevOverwrittenItemElement)
+        }
+        const overwrittenItemElement = document.createElement("div");
+        overwrittenItemElement.classList.add(this.overwittenItemClassName);
+        overwrittenItemElement.style.backgroundPosition = "-" + crops.overwritten.x + "px -" + crops.overwritten.y + "px";
+        overwrittenItemElement.style.backgroundImage = parentElement.style.backgroundImage;
+        parentElement.appendChild(overwrittenItemElement);
+        targetItemBoxElement.style.backgroundPosition = "-" + crops.target.x + "px -" + crops.target.y + "px";
+        targetItemBoxElement.style.transitionDuration = durationMs + "ms";
+        targetItemBoxElement.style.transitionProperty = "left,top";
+        targetItemBoxElement.style.transitionTimingFunction = "linear";
+        targetItemBoxElement.style.left = "0";
+        targetItemBoxElement.style.top = "0";
+        parentElement.classList.add(this.itemTransitioningClassName);
+        targetItemBoxElement.addEventListener("transitionend", () => {
+            this.disposeItemTransition(targetItemBoxElement, parentElement);
+        }, { once: true });
+    }
+ 
+    private disposeItemTransition(itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
+        itemBoxElement.style.transitionDuration = "0s";
+        itemBoxElement.style.transitionProperty = "";
+        itemBoxElement.style.left = "0";
+        itemBoxElement.style.top = "0";
+        if (parentElement && parentElement.classList.contains(this.itemTransitioningClassName)) {
+            parentElement.classList.remove(this.itemTransitioningClassName);
+        }
+        if (parentElement) {
+            const overwrittenItemElement = parentElement.querySelector(this.overwittenItemSelector);
+            if (overwrittenItemElement) {
+                parentElement.removeChild(overwrittenItemElement)
             }
         }
-
-    }
+   }
 
     public isDead(): boolean {
         return this._status.energy <= 0;
@@ -1086,7 +1099,7 @@ export class Player extends PartsObject {
 
         for (var i = 0; i < this._itemBox.length; i++) {
             this._itemBox[i] = 0;
-            this._itemBoxElement[i] = util.$qsh("#item" + i + ">.item-disp");
+            this._itemBoxElement[i] = util.$qsh("#item" + i + ">.item-disp") as HTMLDivElement;
         }
         this.updateItemBox();
         this._energyMax = em;
