@@ -14,8 +14,8 @@ export function generateWWAPageFromConfig(inputConfig: WWAPageConfig, overwriteD
   return generateWWAPageByConfigForRendering(pageConfig);
 }
 
-export function generateWWAPageFromMapdataName(mapDataName: string, isDevMode = false, overwriteDefaultCopyrights = false): string {
-  return generateWWAPageFromConfig({ page: { wwa: { resources: { mapdata: mapDataName } }, isDevMode } }, overwriteDefaultCopyrights);
+export function generateWWAPageFromMapdataName(mapDataName: string, overwriteDefaultCopyrights = false): string {
+  return generateWWAPageFromConfig({ page: { wwa: { resources: { mapdata: mapDataName } } } }, overwriteDefaultCopyrights);
 }
 
 function generateWWAPageByConfigForRendering(pageConfig: WWAPageConfigForRendering): string {

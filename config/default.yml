@@ -7,10 +7,6 @@ page:
   # 無指定はデフォルトのタイトルが指定されます
   title: "World Wide Adventure Wing"
 
-  # 生成するHTMLがWWA開発用のモードかどうかを指定します
-  # 無指定は false と同じ扱いになります
-  isDevMode: false
-
   # (wwa.cssでなくページに関して)追加のCSSファイルがある場合は並べて指定します
   additionalCssFiles:
     - "style.css"
@@ -41,9 +37,6 @@ page:
 
       # タイトル画像を指定します
       titleImg: "cover.gif"
-
-      # 開発モードの場合はcrypro.js の場所を指定します
-      cryptoJsInDevMode: "cryptojs/aes.js"
 
   # ページ下部の著作権情報
   # 無指定の場合は生成されません。

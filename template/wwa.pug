@@ -3,19 +3,12 @@ mixin additionalCss(additionalCssFiles)
         each cssFileName in additionalCssFiles
             link(rel="stylesheet" href=cssFileName)
 
-mixin wwaRequirements(resources, concatDirAndFile, isDevMode)
+mixin wwaRequirements(resources, concatDirAndFile)
     // wwa requirements
     link(rel="stylesheet" href=resources.wwaCss)
     - const audioJsFile = concatDirAndFile(resources.audio.dir, resources.audio.js)
-    
-    case isDevMode
-        when false
-            script(src=audioJsFile)
-            script(src=resources.wwaJs)
-        when true
-            script(src=resources.cryptoJsInDevMode)
-            script(src=audioJsFile)
-            script(src=resources.wwaJs)
+    script(src=audioJsFile)
+    script(src=resources.wwaJs)
     // /wwa requirements
 
 mixin copyrightWithRange(config, range)
@@ -40,7 +33,7 @@ html(lang="ja")
         meta(charset="UTF-8")
         title #{page.title}
         +additionalCss(page.additionalCssFiles)
-        +wwaRequirements(page.wwa.resources, utils.concatDirAndFile, page.isDevMode)
+        +wwaRequirements(page.wwa.resources, utils.concatDirAndFile)
 
     body
         #wrapper
