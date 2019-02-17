@@ -416,7 +416,38 @@ export enum MacroType {
     EFFITEM = 20,
     COLOR = 21,
     WAIT = 22,
-    SOUND = 23
+    SOUND = 23,
+    JUMPGATE = 24,
+    RECPOSITION = 25,
+    JUMPRECPOSITION = 26,
+    CONSOLE_LOG = 27,
+    COPY_HP_TO = 28,
+    SET_HP = 29,
+    COPY_HPMAX_TO = 30,
+    SET_HPMAX = 31,
+    COPY_AT_TO = 32,
+    SET_AT = 33,
+    COPY_DF_TO = 34,
+    SET_DF = 35,
+    COPY_MONEY_TO = 36,
+    SET_MOENEY = 37,
+    COPY_STEP_COUNT_TO = 38,
+    VAR_SET_VAL = 39,
+    VAR_SET = 40,
+    VAR_ADD = 41,
+    VAR_SUB = 42,
+    VAR_MUL = 43,
+    VAR_DIV = 44,
+    VAR_SET_RAND = 45,
+    SHOW_STR = 46,
+    GAME_SPEED = 47,
+    AUTO_SAVE = 48,
+    PASS_SAVE = 49,
+    IF = 50,
+    SET_SPEED = 51,
+    COPY_TIME_TO = 52,
+    HIDE_STATUS = 53,
+    VAR_MAP = 54
 }
 
 export var macrotable = {
@@ -443,7 +474,38 @@ export var macrotable = {
     "$effitem": 20,
     "$color": 21,
     "$wait": 22,
-    "$sound": 23
+    "$sound": 23,
+    "$jumpgate": 24,
+    "$rec_pos": 25,
+    "$jump_rec_pos": 26,
+    "$console_log": 27,
+    "$copy_hp_to": 28,
+    "$set_hp": 29,
+    "$copy_hpmax_to": 30,
+    "$set_hpmax": 31,
+    "$copy_at_to": 32,
+    "$set_at": 33,
+    "$copy_df_to": 34,
+    "$set_df": 35,
+    "$copy_money_to": 36,
+    "$set_money": 37,
+    "$copy_step_count_to": 38,
+    "$var_set_val": 39,
+    "$var_set": 40,
+    "$var_add": 41,
+    "$var_sub": 42,
+    "$var_mul": 43,
+    "$var_div": 44,
+    "$var_set_rand": 45,
+    "$show_str": 46,
+    "$game_speed": 47,
+    "$auto_save": 48,
+    "$pass_save": 49,
+    "$if": 50,
+    "$set_speed": 51,
+    "$copy_time_to": 52,
+    "$hide_status": 53,
+    "$var_map": 54
 }
 
 export enum MacroStatusIndex {
@@ -471,11 +533,10 @@ export enum SystemSound {
     NO_SOUND = 99
 }
 
-export var speedList = [2, 5, 8, 10];
-export var speedNameList = ["低速", "準低速", "中速", "高速"];
+export var speedList = [1, 2, 5, 8, 10, 20];
+export var speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
 export class WWAConsts {
-    static VERSION_WWAJS: string = "W3.15dβ3";
-
+    static VERSION_WWAJS: string = "HW3.19.0";
     static WWA_HOME: string = "http://wwajp.com";
 
     static ITEMBOX_SIZE: number = 12;
@@ -575,7 +636,7 @@ export class WWAConsts {
     static H_PARTS_NUM_IN_WINDOW: number = WWAConsts.MAP_WINDOW_WIDTH / WWAConsts.CHIP_SIZE;
     static V_PARTS_NUM_IN_WINDOW: number = WWAConsts.MAP_WINDOW_HEIGHT / WWAConsts.CHIP_SIZE;
 
-    static DEFAULT_SPEED_INDEX = 2;
+    static DEFAULT_SPEED_INDEX = 3;
     static MIN_SPEED_INDEX = 0;
     static MAX_SPEED_INDEX = speedList.length - 1;
 
@@ -653,6 +714,8 @@ export class WWAConsts {
     static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
 
     static ITEMBOX_TOP_Y = 140;
+
+    static USER_VAR_NUM = 256;
 }
 
 export class LoaderResponse {
@@ -798,6 +861,7 @@ export class WWAData {
     clickableItemSignImgPosY: number = void 0; // undefined時, 標準枠 注) 面倒なことがわかったので未実装
 
     disableSaveFlag: boolean = void 0;
+    disablePassSaveFlag: boolean = void 0;
     compatibleForOldMapFlag: boolean = void 0;
     objectNoCollapseDefaultFlag: boolean = void 0;
 
@@ -833,6 +897,11 @@ export class WWAData {
     // data-wwa-item-effect-enable="false" の場合は初期値無効
     isItemEffectEnabled?: boolean = void 0; 
 
+    // XE拡張:ここから
+    userVar: number[] = void 0;
+    permitGameSpeed: boolean = void 0;
+    gameSpeed: number = void 0;
+    playTime: number = void 0;
+
     constructor() { }
 }
-
