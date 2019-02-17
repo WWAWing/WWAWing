@@ -772,9 +772,6 @@ export class WWAData {
     map: number[][] = void 0;
     mapObject: number[][] = void 0;
 
-    mapIDTable: number[][] = void 0;
-    mapObjectIDTable: number[][] = void 0;
-
     mapCompressed: number[][][] = void 0;
     mapObjectCompressed: number[][][] = void 0;
 
