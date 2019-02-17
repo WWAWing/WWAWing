@@ -43,7 +43,6 @@ function createConfig(mapdata: string, isDevMode: boolean): WWAPageConfig {
     return {
         page: {
             additionalCssFiles: ["style.css"],
-            isDevMode,
             wwa: {
                 resources: {
                     mapdata,
