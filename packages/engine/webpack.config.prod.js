@@ -12,6 +12,6 @@ config.plugins.push(new UglifyJsPlugin({
     },
     extractComments: false
 }));
-config.output.filename = "wwa-nolink.js";
+config.output.filename = "wwa.js";
 
 module.exports = config;
