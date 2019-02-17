@@ -16,7 +16,6 @@ interface WWAConfigWithDefaults {
         wwaJs: string;
         wwaCss: string;
         titleImg?: string;
-        cryptoJsInDevMode?: string;
     };
 }
 
@@ -42,7 +41,6 @@ interface WWAPageConfigWithDefaults {
     page: {
         template: string;
         title: string;
-        isDevMode: boolean;
         additionalCssFiles?: string[];
         wwa: WWAConfigWithDefaults;
         copyrights?: CopyrightWithDefaults[];
@@ -67,7 +65,6 @@ export interface WWAConfig {
         wwaJs?: string;
         wwaCss?: string;
         titleImg?: string;
-        cryptoJsInDevMode?: string;
     };
 }
 
@@ -88,7 +85,6 @@ export interface WWAPageConfig {
     page: {
         template?: string;
         title?: string;
-        isDevMode?: boolean;
         additionalCssFiles?: string[];
         wwa: WWAConfig;
         copyrights?: Copyright[]
@@ -115,7 +111,6 @@ const schema = {
                                 wwaJs: { type: "string" },
                                 wwaCss: { type: "string" },
                                 titleImg: { type: "string" },
-                                cryptoJsInDevMode: { type: "string" }
                             },
                             required: ["mapdata"]
                         }
@@ -164,7 +159,6 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
         page: {
             template: "../template/wwa.pug",
             title: "World Wide Adventure Wing",
-            isDevMode: false,
             additionalCssFiles: [
                 "style.css"
             ],
@@ -179,7 +173,6 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
                     },
                     wwaJs: "wwa.js",
                     wwaCss: "wwa.css",
-                    cryptoJsInDevMode: "cryptojs/aes.js"
                 }
             }
         }
