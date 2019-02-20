@@ -233,11 +233,14 @@ export class WWA {
      * WWADataのmap を変更（背景パーツを配置/削除したり、QuickLoadを実施したり）した場合、
      * 必ずこの配列を更新する必要があります。
      * 
+     * 物体パーツに対して同様なものは `_mapObjectIDTable` です。
+     * @see _mapObjectIDTable
+     * 
      * ### 例
      * 例えば、背景パーツ番号 4 が(X,Y) = (2, 3), (10, 7) に配置されている場合、
      * 配列 `this._mapIDTable[4]` は、  配列`[196610, 458762]`を参照します。 (要素の順番は保証されません)
      * - 注1) 3 << 16 | 2  => 196610,
-     * -  注2) 7 << 16 | 10 =>　458762
+     * - 注2) 7 << 16 | 10 =>　458762
      */
     private _mapIDTable: number[][];
 
@@ -245,6 +248,7 @@ export class WWA {
      * 物体パーツ番号として添字を与えると
      * パーツが配置されている(X,Y)座標をビットパターンに変換したものの配列を見ることができます。
      * 利用方法は背景パーツ版の _mapIDTable を参照してください。
+     * @see _mapIDTable
      */
     private _mapObjectIDTable: number[][];
 
