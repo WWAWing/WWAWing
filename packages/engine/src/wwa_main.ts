@@ -222,6 +222,36 @@ export class WWA {
     private _hasTitleImg: boolean;
 
     private _isActive: boolean;
+
+    /**
+     * 背景パーツ番号として添字を与えると
+     * パーツが配置されている(X,Y)座標をビットパターンに変換したものの配列を見ることができます。
+     * ビットパターンの計算方法は、Y << 16 | X です。
+     * (変数の下から32ビットを使用し、上位16ビットがY座標, 下位16ビットがX座標を表します)
+     * 
+     * このメンバ変数は、`$parts`マクロで、背景パーツの一斉置換を行う時に利用されます。
+     * WWADataのmap を変更（背景パーツを配置/削除したり、QuickLoadを実施したり）した場合、
+     * 必ずこの配列を更新する必要があります。
+     * 
+     * 物体パーツに対して同様なものは `_mapObjectIDTable` です。
+     * @see _mapObjectIDTable
+     * 
+     * ### 例
+     * 例えば、背景パーツ番号 4 が(X,Y) = (2, 3), (10, 7) に配置されている場合、
+     * 配列 `this._mapIDTable[4]` は、  配列`[196610, 458762]`を参照します。 (要素の順番は保証されません)
+     * - 注1) 3 << 16 | 2  => 196610,
+     * - 注2) 7 << 16 | 10 =>　458762
+     */
+    private _mapIDTable: number[][];
+
+    /**
+     * 物体パーツ番号として添字を与えると
+     * パーツが配置されている(X,Y)座標をビットパターンに変換したものの配列を見ることができます。
+     * 利用方法は背景パーツ版の _mapIDTable を参照してください。
+     * @see _mapIDTable
+     */
+    private _mapObjectIDTable: number[][];
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -3178,13 +3208,13 @@ export class WWA {
 
             this._wwaData.map[pos.y][pos.x] = id;
 
-            no = this._wwaData.mapIDTable[before_id].indexOf(posKey);
+            no = this._mapIDTable[before_id].indexOf(posKey);
             if (no !== -1) {
-                this._wwaData.mapIDTable[before_id].splice(no, 1);
+                this._mapIDTable[before_id].splice(no, 1);
             }
-            no = this._wwaData.mapIDTable[id].indexOf(posKey);
+            no = this._mapIDTable[id].indexOf(posKey);
             if (no === -1) {
-                this._wwaData.mapIDTable[id].push(posKey);
+                this._mapIDTable[id].push(posKey);
             }
 
         } else {
@@ -3192,16 +3222,15 @@ export class WWA {
             id = this.loadMapPartsObjectID(id);
             before_id = this.loadMapPartsObjectID(before_id);
 
-
             this._wwaData.mapObject[pos.y][pos.x] = id;
 
-            no = this._wwaData.mapObjectIDTable[before_id].indexOf(posKey);
+            no = this._mapObjectIDTable[before_id].indexOf(posKey);
             if (no !== -1) {
-                this._wwaData.mapObjectIDTable[before_id].splice(no, 1);
+                this._mapObjectIDTable[before_id].splice(no, 1);
             }
-            no = this._wwaData.mapObjectIDTable[id].indexOf(posKey);
+            no = this._mapObjectIDTable[id].indexOf(posKey);
             if (no === -1) {
-                this._wwaData.mapObjectIDTable[id].push(posKey);
+                this._mapObjectIDTable[id].push(posKey);
             }
         }
     }
@@ -3431,27 +3460,27 @@ export class WWA {
     }
     private _mapIDTableCreate(): void {
         var pid: number;
-        this._wwaData.mapIDTable = [];
-        this._wwaData.mapObjectIDTable = [];
+        this._mapIDTable = [];
+        this._mapObjectIDTable = [];
         for (pid = 0; pid < this._wwaData.mapPartsMax; pid++) {
-            this._wwaData.mapIDTable[pid] = [];
+            this._mapIDTable[pid] = [];
         }
         for (pid = 0; pid < this._wwaData.objPartsMax; pid++) {
-            this._wwaData.mapObjectIDTable[pid] = [];
+            this._mapObjectIDTable[pid] = [];
         }
         for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
             for (var yy = 0; yy < this._wwaData.mapWidth; yy++) {
                 var posKey = (yy << IDTable.BITSHIFT) | xx;
                 pid = this._wwaData.map[yy][xx];
-                if (!(this._wwaData.mapIDTable[pid] instanceof Array)) {
-                    this._wwaData.mapIDTable[pid] = [];
+                if (!(this._mapIDTable[pid] instanceof Array)) {
+                    this._mapIDTable[pid] = [];
                 }
-                this._wwaData.mapIDTable[pid].push(posKey);
+                this._mapIDTable[pid].push(posKey);
                 pid = this._wwaData.mapObject[yy][xx];
-                if (!(this._wwaData.mapObjectIDTable[pid] instanceof Array)) {
-                    this._wwaData.mapObjectIDTable[pid] = [];
+                if (!(this._mapObjectIDTable[pid] instanceof Array)) {
+                    this._mapObjectIDTable[pid] = [];
                 }
-                this._wwaData.mapObjectIDTable[pid].push(posKey);
+                this._mapObjectIDTable[pid].push(posKey);
             }
         }
     }
@@ -4014,10 +4043,10 @@ export class WWA {
             srcID = this.loadMapPartsObjectID(srcID);
             destID = this.loadMapPartsObjectID(destID);
 
-            list = this._wwaData.mapObjectIDTable[srcID].concat();
-            srcList = this._wwaData.mapObjectIDTable[srcID];
+            list = this._mapObjectIDTable[srcID].concat();
+            srcList = this._mapObjectIDTable[srcID];
             srcList.length = 0;
-            destList = this._wwaData.mapObjectIDTable[destID];
+            destList = this._mapObjectIDTable[destID];
             len = list.length;
             if (onlyThisSight) {
                 //範囲指定あり
@@ -4046,10 +4075,10 @@ export class WWA {
             srcID = this.loadMapPartsID(srcID);
             destID = this.loadMapPartsID(destID);
 
-            list = this._wwaData.mapIDTable[srcID].concat();
-            srcList = this._wwaData.mapIDTable[srcID];
+            list = this._mapIDTable[srcID].concat();
+            srcList = this._mapIDTable[srcID];
             srcList.length = 0;
-            destList = this._wwaData.mapIDTable[destID];
+            destList = this._mapIDTable[destID];
             len = list.length;
             if (onlyThisSight) {
                 //範囲指定あり
