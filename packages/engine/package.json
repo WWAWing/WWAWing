@@ -50,6 +50,7 @@
     "@wwawing/loader": "0.0.0",
     "@wwawing/assets": "0.0.0",
     "@wwawing/styles": "0.0.0",
-    "@wwawing/debug-server": "0.0.0"
+    "@wwawing/debug-server": "0.0.0",
+    "@wwawing/virtual-pad": "0.0.0"
   }
 }

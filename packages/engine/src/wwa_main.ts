@@ -62,11 +62,14 @@ import {
     KeyState,
     KeyStore,
     MouseState,
-    MouseStore,
+    MouseStore
+} from "./wwa_input";
+
+import {
     VirtualPadState,
     VirtualPadButtonCode,
     VirtualPadStore
-} from "./wwa_input";
+} from "@wwawing/virtual-pad";
 
 import * as util from "./wwa_util";
 import {CGManager} from "./wwa_cgmanager";
