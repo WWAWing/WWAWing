@@ -2112,18 +2112,38 @@ export class WWA {
         this._yesNoURL = this._wwaData.message[messageID].split(/\s/g)[0];
     }
 
+    /**
+     * 物体パーツ「スコア表示」のイベントを実行します
+     * 
+     * 動作仕様
+     * 
+     *  - メッセージが空の場合は「スコアを表示します。」というメッセージとともにスコア表示がされる
+     *  - メッセージがマクロのみの場合はマクロのみが実行され、スコアが表示されない
+     *  - メッセージがある場合はそのメッセージとともにスコアが表示される
+     * 
+     * メッセージがマクロのみの場合の挙動は、Java版(v3.10)に準拠するためのものであり、将来変更される可能性があります。
+     *
+     * @param pos パーツの座標
+     * @param partsID パーツの物体番号
+     * @param mapAttr パーツの ATR_TYPE の値
+     */
     private _execObjectScoreEvent(pos: Coord, partsID: number, mapAttr: number): void {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         var playerPos = this._player.getPosition().getPartsCoord();
         var playerStatus = this._player.getStatus();
-        var score = 0;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY] * playerStatus.energy;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH] * playerStatus.strength;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE] * playerStatus.defence;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD] * playerStatus.gold;
-        this._scoreWindow.update(score);
-        this._scoreWindow.show();
-        this.setMessageQueue( messageID === 0 ? "スコアを表示します。" : this._wwaData.message[ messageID ], false, false, partsID, PartsType.OBJECT, pos);
+        const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
+        const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
+        const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !!messageInfo.message, false);
+        if (existsMessage) {
+            var score = 0;
+            score += this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY] * playerStatus.energy;
+            score += this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH] * playerStatus.strength;
+            score += this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE] * playerStatus.defence;
+            score += this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD] * playerStatus.gold;
+            this._scoreWindow.update(score);
+            this._scoreWindow.show();
+        }
+        this.setMessageQueue(rawMessage, false, false, partsID, PartsType.OBJECT, pos);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
 
     }
@@ -3406,6 +3426,7 @@ export class WWA {
                     this._camera.getPosition()
                 );
                 this._messageWindow.show();
+                this._player.setMessageWaiting();
             } else {
                 if (this._messageQueue.length === 0) {
                     this._hideMessageWindow();
