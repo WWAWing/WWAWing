@@ -36,4 +36,7 @@ function loader_start( e: MessageEvent ): void {
 
 if (conf.is_worker) {
     addEventListener("message", loader_start);
+} else {
+    // @ts-ignore
+    window.loader_start = loader_start;
 }

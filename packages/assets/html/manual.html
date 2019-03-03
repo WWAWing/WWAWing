@@ -101,6 +101,9 @@
                     <dt><code>data-wwa-classic-mode-enable</code>属性</dt>
                     <dd><code>true</code>を指定すると、本家と類似した挙動で動作します(詳細は後述)。
                     指定しなかった場合は<code>false</code>になります。</dd>
+                    <dt><code>data-wwa-item-effect-enable</code>属性</dt>
+                    <dd><code>false</code>を指定すると、アイテム取得時のエフェクトが無効になります。（マクロ文 <code>$effitem=0</code>を最初に実行することと等価）
+                    指定しなかった場合は<code>true</code>になります。</dd>
                 </dl>
             </section>
 
@@ -135,27 +138,27 @@
                         <li>効果音読み込みなしでパスワードセーブした後、効果音読み込みありで起動した場合にBGMが復元されない不具合を修正</li>
                         <li>戦闘予測表示中にパーツのイベントが実行される不具合を修正</li>
                         <li>BGM <code>71.mp3</code>の音源が途中で途切れないように修正</li>
-                        <li>HTMLファイルの改行コードに統一, メモ帳で開いても改行が出るようにした</li>
+                        <li>HTMLファイルの改行コードをCRLFに統一, メモ帳で開いても改行が出るようにした</li>
                     </ul>
                     <h3>W3.15cからW3.15dβ2への変更点</h3>
                     <ul>
-
-                    <li>β版とは異なる内容でW3.15cがリリースされたため、変更差分を取り込む。リリース予定のバージョンをW3.15dに変更(W3.15dβ2)</li>
-                    <li>WWA PhoenixのWelcome To表示がクラシックになっていない問題を修正(W3.15cβ2)</li>
-                    <li>wwa_classic.cssを追加 (W3.15cβ1)</li>
-                    <li>マップデータバージョンが3.0以下の場合 (作成ツールが3.02c以下で作成した場合)、追尾/逃げる属性の挙動を当時のWWAに合わせる (W3.15cβ1)</li>
-                    <li>一部のシステムメッセージを本家準拠に変更(W3.15cβ1)</li>
-                    <li>Classic Modeを実装(W3.15cβ1)</li>
-                    <li>カバー画像未指定時に本家同様のWelcome To WWA! を表示するように変更(W3.15cβ1)</li>
-                    <li>攻撃力をマクロ<code>$status</code>で変更した時にステータス欄に反映されない不具合を修正(W3.15c+)</li>
+                        <li>β版とは異なる内容でW3.15cがリリースされたため、変更差分を取り込む。リリース予定のバージョンをW3.15dに変更(W3.15dβ2)</li>
+                        <li>WWA PhoenixのWelcome To表示がクラシックになっていない問題を修正(W3.15cβ2)</li>
+                        <li>wwa_classic.cssを追加 (W3.15cβ1)</li>
+                        <li>マップデータバージョンが3.0以下の場合 (作成ツールが3.02c以下で作成した場合)、追尾/逃げる属性の挙動を当時のWWAに合わせる (W3.15cβ1)</li>
+                        <li>一部のシステムメッセージを本家準拠に変更(W3.15cβ1)</li>
+                        <li>Classic Modeを実装(W3.15cβ1)</li>
+                        <li>カバー画像未指定時に本家同様のWelcome To WWA! を表示するように変更(W3.15cβ1)</li>
+                        <li>プレイヤーが1歩歩いた際、グラフィックの切り替わりを2回分から1回分に変更(W3.15cβ1)</li>
+                        <li>攻撃力をマクロ<code>$status</code>で変更した時にステータス欄に反映されない不具合を修正(W3.15c+)</li>
                     </ul>
                     <h3>W3.15bからW3.15cへの変更点</h3>
                     <ul>
-                    <li>動作属性が空白の場合に物体が静止するように対応(W3.15c)</li>
-                    <li>マップデータ最下端にいるモンスターの戦闘結果予測ができない不具合を修正(W3.15b+++)</li>
-                    <li>WWA PhoenixのHTTPS対応(W3.15b++)</li>
-                    <li>ライセンスファイルの著作権表記微修正(W3.15b+)</li>
-                    <li>WWA V2.9でのマップデータ読み込み開始位置の修正(W3.15b+)</li>
+                        <li>動作属性が空白の場合に物体が静止するように対応(W3.15c)</li>
+                        <li>マップデータ最下端にいるモンスターの戦闘結果予測ができない不具合を修正(W3.15b+++)</li>
+                        <li>WWA PhoenixのHTTPS対応(W3.15b++)</li>
+                        <li>ライセンスファイルの著作権表記微修正(W3.15b+)</li>
+                        <li>WWA V2.9でのマップデータ読み込み開始位置の修正(W3.15b+)</li>
                     </ul>
                 </section>
                 <section>
@@ -168,8 +171,8 @@
                 <section>
                     <h3>W3.15からW3.15aへの変更点</h3>
                     <ul>
-                    <li><code>$face</code> マクロが正常に動作しない不具合を修正</li>
-                    <li>(開発者向け) TypeScript 1.8 に対応</li>
+                        <li><code>$face</code> マクロが正常に動作しない不具合を修正</li>
+                        <li>(開発者向け) TypeScript 1.8 に対応</li>
                     </ul>
                 </section>
                 <section>
@@ -305,7 +308,7 @@
                 <p><a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja"><img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />
                 また、このマニュアルについては <a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja">クリエイティブ・コモンズ 表示 4.0 国際 ライセンスの下に提供されています。</a></p>
                 <p> Internet RPG &quot;<a href="http://www.wwajp.com">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
-                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2018 WWA Wing Team</p>
+                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2019 WWA Wing Team</p>
             </footer>
         </section>
     </div>
