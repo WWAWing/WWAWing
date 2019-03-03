@@ -75,6 +75,16 @@ div.item-disp {
     left: 0;
 }
 
+.item-overwritten {
+    width: 40px;
+    height: 40px;
+    z-index: 0!important;
+}
+
+.item-transitioning {
+    z-index: 240!important;
+}
+
 .wide-button {
     @extend %wide_cell;
     cursor: pointer;
