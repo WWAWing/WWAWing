@@ -95,6 +95,8 @@ export class Macro {
                 this._executeImgClickMacro();
             } else if (this.macroType === MacroType.STATUS) {
                 this._executeStatusMacro();
+            } else if(this.macroType === MacroType.EFFITEM) {
+                this._executeEffItemMacro();
             } else if (this.macroType === MacroType.COLOR) {
                 this._executeColorMacro();
             } else if (this.macroType === MacroType.WAIT) {
@@ -381,6 +383,14 @@ export class Macro {
             throw new Error("引数が0以上の整数ではありません");
         }
         this._wwa.setImgClick(new Coord(x, y));
+    }
+
+    private _executeEffItemMacro(): void {
+        if (this.macroArgs.length < 1) {
+            throw new Error("引数が少なすぎます");
+        }
+        var mode = this._parseInt(0);
+        this._wwa.updateItemEffectEnabled(!!mode);
     }
 
     private _executeStatusMacro(): void {

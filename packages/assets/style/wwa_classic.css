@@ -266,6 +266,16 @@ div.item-disp {
     margin: 0px;
 }
 
+.item-overwritten {
+    width: 40px;
+    height: 40px;
+    z-index: 0 !important;
+}
+
+.item-transitioning {
+    z-index: 240 !important;
+}
+
 #disp-energy>.status-icon{
     z-index: 140;
 }

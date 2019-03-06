@@ -754,6 +754,10 @@ export class WWAConsts {
 
     static MSG_STR_WIDTH = 16;
 
+    static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
+
+    static ITEMBOX_TOP_Y = 140;
+
     static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数
     static QUICK_SAVE_THUMNAIL_WIDTH: number = 99;//セーブデータサムネイル横幅
     static QUICK_SAVE_THUMNAIL_HEIGHT: number = 99;//セーブデータサムネイル縦幅
@@ -877,9 +881,6 @@ export class WWAData {
     map: number[][] = void 0;
     mapObject: number[][] = void 0;
 
-    mapIDTable: number[][] = void 0;
-    mapObjectIDTable: number[][] = void 0;
-
     mapCompressed: number[][][] = void 0;
     mapObjectCompressed: number[][][] = void 0;
 
@@ -933,6 +934,10 @@ export class WWAData {
 
     checkOriginalMapString: string = void 0;
     checkString: string = void 0;
+
+    // loader からくるデータには含まれていないので注意
+    // data-wwa-item-effect-enable="false" の場合は初期値無効
+    isItemEffectEnabled?: boolean = void 0; 
 
     constructor() { }
 };

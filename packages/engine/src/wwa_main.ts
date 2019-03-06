@@ -14,7 +14,6 @@ interface AudiojsTScomp {
 
 declare var audiojs: AudiojsTScomp;
 declare var external_script_inject_mode: boolean;
-declare var CryptoJS: any; // ゆるして
 declare var VERSION_WWAJS: string; // webpackにより注入
 declare function loader_start(e: any): void;
 var postMessage_noWorker = function (e: any): void { };
@@ -37,7 +36,7 @@ import {
     GamePadState,
     GamePadStore
 } from "./wwa_input";
-
+import * as CryptoJS from "crypto-js";
 import * as util from "./wwa_util";
 import { CGManager } from "./wwa_cgmanager";
 import { Camera } from "./wwa_camera";
@@ -221,6 +220,36 @@ export class WWA {
     private _hasTitleImg: boolean;
 
     private _isActive: boolean;
+
+    /**
+     * 背景パーツ番号として添字を与えると
+     * パーツが配置されている(X,Y)座標をビットパターンに変換したものの配列を見ることができます。
+     * ビットパターンの計算方法は、Y << 16 | X です。
+     * (変数の下から32ビットを使用し、上位16ビットがY座標, 下位16ビットがX座標を表します)
+     * 
+     * このメンバ変数は、`$parts`マクロで、背景パーツの一斉置換を行う時に利用されます。
+     * WWADataのmap を変更（背景パーツを配置/削除したり、QuickLoadを実施したり）した場合、
+     * 必ずこの配列を更新する必要があります。
+     * 
+     * 物体パーツに対して同様なものは `_mapObjectIDTable` です。
+     * @see _mapObjectIDTable
+     * 
+     * ### 例
+     * 例えば、背景パーツ番号 4 が(X,Y) = (2, 3), (10, 7) に配置されている場合、
+     * 配列 `this._mapIDTable[4]` は、  配列`[196610, 458762]`を参照します。 (要素の順番は保証されません)
+     * - 注1) 3 << 16 | 2  => 196610,
+     * - 注2) 7 << 16 | 10 =>　458762
+     */
+    private _mapIDTable: number[][];
+
+    /**
+     * 物体パーツ番号として添字を与えると
+     * パーツが配置されている(X,Y)座標をビットパターンに変換したものの配列を見ることができます。
+     * 利用方法は背景パーツ版の _mapIDTable を参照してください。
+     * @see _mapIDTable
+     */
+    private _mapObjectIDTable: number[][];
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -232,7 +261,7 @@ export class WWA {
     private audioExtension: string = "";
     public device_data:USER_DEVICE;
 
-    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
+    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName: string, classicModeEnabled: boolean, itemEffectEnabled: boolean, audioDirectory: string = "") {
         var ctxCover;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
@@ -353,6 +382,7 @@ export class WWA {
             }
 
             this._wwaData = e.data.wwaData;
+            this._wwaData.isItemEffectEnabled = itemEffectEnabled;
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -862,6 +892,7 @@ export class WWA {
                             self._yesNoJudge = self._yesNoJudgeInNextFrame;
                             self._messageWindow.setInputDisable();
                             setTimeout((): void => {
+                                self._player.setDelayFrame();
                                 self._messageWindow.hide();
                                 self._yesNoJudge = YesNoState.UNSELECTED;
                                 self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
@@ -878,6 +909,7 @@ export class WWA {
                             self._yesNoJudge = self._yesNoJudgeInNextFrame;
                             self._messageWindow.setInputDisable();
                             setTimeout((): void => {
+                                self._player.setDelayFrame();
                                 self._messageWindow.hide();
                                 self._yesNoJudge = YesNoState.UNSELECTED;
                                 self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
@@ -889,6 +921,7 @@ export class WWA {
 
                 } else {
                     clearInterval(timer);
+                    self._player.setDelayFrame();
                     self._messageWindow.hide();
                     self._yesNoJudge = YesNoState.UNSELECTED;
                     self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
@@ -1506,109 +1539,118 @@ export class WWA {
 
         if (this._player.isControllable()) {
 
-            if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ||
-                this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
-                this._player.controll(Direction.LEFT);
-                this._objectMovingDataManager.update();
-            } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_UP) === KeyState.KEYDOWN ||
-                this._mouseStore.getMouseStateForControllPlayer(Direction.UP) === MouseState.MOUSEDOWN) {
-                this._player.controll(Direction.UP);
-                this._objectMovingDataManager.update();
-            } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN ||
-                this._mouseStore.getMouseStateForControllPlayer(Direction.RIGHT) === MouseState.MOUSEDOWN) {
-                this._player.controll(Direction.RIGHT);
-                this._objectMovingDataManager.update();
-            } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_DOWN) === KeyState.KEYDOWN ||
-                this._mouseStore.getMouseStateForControllPlayer(Direction.DOWN) === MouseState.MOUSEDOWN) {
-                this._player.controll(Direction.DOWN);
-                this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(dirToKey[pdir])) {
-                this._player.controll(pdir);
-                this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                this._mouseStore.checkClickMouse(Direction.LEFT) ||
-                this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
-                this._player.controll(Direction.LEFT);
-                this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                this._mouseStore.checkClickMouse(Direction.UP) ||
-                this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
-                this._player.controll(Direction.UP);
-                this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                this._mouseStore.checkClickMouse(Direction.RIGHT) ||
-                this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
-                this._player.controll(Direction.RIGHT);
-                this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                this._mouseStore.checkClickMouse(Direction.DOWN) ||
-                this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
-                this._player.controll(Direction.DOWN);
-                this._objectMovingDataManager.update();
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_1) === KeyState.KEYDOWN) {
-                this.onselectitem(1);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_2) === KeyState.KEYDOWN) {
-                this.onselectitem(2);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_3) === KeyState.KEYDOWN) {
-                this.onselectitem(3);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_Q) === KeyState.KEYDOWN) {
-                this.onselectitem(4);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_W) === KeyState.KEYDOWN) {
-                this.onselectitem(5);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_E) === KeyState.KEYDOWN) {
-                this.onselectitem(6);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_A) === KeyState.KEYDOWN) {
-                this.onselectitem(7);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_S) === KeyState.KEYDOWN) {
-                this.onselectitem(8);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_D) === KeyState.KEYDOWN) {
-                this.onselectitem(9);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_Z) === KeyState.KEYDOWN) {
-                this.onselectitem(10);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_X) === KeyState.KEYDOWN) {
-                this.onselectitem(11);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_C) === KeyState.KEYDOWN) {
-                this.onselectitem(12);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_I) ||
-                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_MINUS)) {
-                this.onchangespeed(SpeedChange.DOWN);
-            } else if (
-                this._keyStore.checkHitKey(KeyCode.KEY_P) ||
-                this._keyStore.checkHitKey(KeyCode.KEY_F2) ||
-                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_PLUS)) {
-                this.onchangespeed(SpeedChange.UP);
-            } else if (
-                this._keyStore.getKeyState(KeyCode.KEY_F1) === KeyState.KEYDOWN ||
-                this._keyStore.getKeyState(KeyCode.KEY_M) === KeyState.KEYDOWN ||
-                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)) {
-                // 戦闘結果予測 
-                if (this.launchBattleEstimateWindow()) {
+            if (this._player.isDelayFrame()) {
+                /*
+                 * メッセージ表示直後、何も操作しないフレームを用意する。
+                 * ショップで1フレーム待機しないと効果音付きのアイテムが入手されないため、
+                 * ゲームパッド使用時に購入アイテムが入手されないケースがあることの対処
+                 */
+                this._player.updateDelayFrame();
+            } else {
+                if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ||
+                    this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
+                    this._player.controll(Direction.LEFT);
+                    this._objectMovingDataManager.update();
+                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_UP) === KeyState.KEYDOWN ||
+                    this._mouseStore.getMouseStateForControllPlayer(Direction.UP) === MouseState.MOUSEDOWN) {
+                    this._player.controll(Direction.UP);
+                    this._objectMovingDataManager.update();
+                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN ||
+                    this._mouseStore.getMouseStateForControllPlayer(Direction.RIGHT) === MouseState.MOUSEDOWN) {
+                    this._player.controll(Direction.RIGHT);
+                    this._objectMovingDataManager.update();
+                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_DOWN) === KeyState.KEYDOWN ||
+                    this._mouseStore.getMouseStateForControllPlayer(Direction.DOWN) === MouseState.MOUSEDOWN) {
+                    this._player.controll(Direction.DOWN);
+                    this._objectMovingDataManager.update();
+                } else if (this._keyStore.checkHitKey(dirToKey[pdir])) {
+                    this._player.controll(pdir);
+                    this._objectMovingDataManager.update();
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
+                    this._mouseStore.checkClickMouse(Direction.LEFT) ||
+                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
+                    this._player.controll(Direction.LEFT);
+                    this._objectMovingDataManager.update();
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
+                    this._mouseStore.checkClickMouse(Direction.UP) ||
+                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
+                    this._player.controll(Direction.UP);
+                    this._objectMovingDataManager.update();
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
+                    this._mouseStore.checkClickMouse(Direction.RIGHT) ||
+                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
+                    this._player.controll(Direction.RIGHT);
+                    this._objectMovingDataManager.update();
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
+                    this._mouseStore.checkClickMouse(Direction.DOWN) ||
+                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
+                    this._player.controll(Direction.DOWN);
+                    this._objectMovingDataManager.update();
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_1) === KeyState.KEYDOWN) {
+                    this.onselectitem(1);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_2) === KeyState.KEYDOWN) {
+                    this.onselectitem(2);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_3) === KeyState.KEYDOWN) {
+                    this.onselectitem(3);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_Q) === KeyState.KEYDOWN) {
+                    this.onselectitem(4);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_W) === KeyState.KEYDOWN) {
+                    this.onselectitem(5);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_E) === KeyState.KEYDOWN) {
+                    this.onselectitem(6);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_A) === KeyState.KEYDOWN) {
+                    this.onselectitem(7);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_S) === KeyState.KEYDOWN) {
+                    this.onselectitem(8);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_D) === KeyState.KEYDOWN) {
+                    this.onselectitem(9);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_Z) === KeyState.KEYDOWN) {
+                    this.onselectitem(10);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_X) === KeyState.KEYDOWN) {
+                    this.onselectitem(11);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_C) === KeyState.KEYDOWN) {
+                    this.onselectitem(12);
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_I) ||
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_MINUS)) {
+                    this.onchangespeed(SpeedChange.DOWN);
+                } else if (
+                    this._keyStore.checkHitKey(KeyCode.KEY_P) ||
+                    this._keyStore.checkHitKey(KeyCode.KEY_F2) ||
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_PLUS)) {
+                    this.onchangespeed(SpeedChange.UP);
+                } else if (
+                    this._keyStore.getKeyState(KeyCode.KEY_F1) === KeyState.KEYDOWN ||
+                    this._keyStore.getKeyState(KeyCode.KEY_M) === KeyState.KEYDOWN ||
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)) {
+                    // 戦闘結果予測 
+                    if (this.launchBattleEstimateWindow()) {
+                    }
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {
+                    this.playSound(SystemSound.DECISION);
+                    this.onselectbutton(SidebarButton.QUICK_LOAD, true);
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
+                    this.playSound(SystemSound.DECISION);
+                    this.onpasswordsavecalled()
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F5) ||
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_ZR)) {
+                    this.onselectbutton(SidebarButton.QUICK_LOAD);
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F6) ||
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_ZL)) {
+                    this.onselectbutton(SidebarButton.QUICK_SAVE);
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F7) ||
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_R)) {
+                    this.onselectbutton(SidebarButton.RESTART_GAME);
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
+                    this.onselectbutton(SidebarButton.GOTO_WWA);
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X)) {
+                    if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
+                        this.onitemmenucalled();
+                    }
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12)) {
+                    // コマンドのヘルプ 
+                    this._displayHelp();
                 }
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {
-                this.playSound(SystemSound.DECISION);
-                this.onselectbutton(SidebarButton.QUICK_LOAD, true);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
-                this.playSound(SystemSound.DECISION);
-                this.onpasswordsavecalled()
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F5) ||
-                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_ZR)) {
-                this.onselectbutton(SidebarButton.QUICK_LOAD);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F6) ||
-                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_ZL)) {
-                this.onselectbutton(SidebarButton.QUICK_SAVE);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F7) ||
-                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_R)) {
-                this.onselectbutton(SidebarButton.RESTART_GAME);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
-                this.onselectbutton(SidebarButton.GOTO_WWA);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
-                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X)) {
-                if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
-                    this.onitemmenucalled();
-                }
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12)) {
-                // コマンドのヘルプ 
-                this._displayHelp()
             }
 
             this._keyStore.memorizeKeyStateOnControllableFrame();
@@ -1852,6 +1894,9 @@ export class WWA {
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
+    }
+    public vibration(isStrong: boolean) {
+        this._gamePadStore.vibration(isStrong);
     }
 
     private _drawAll() {
@@ -2506,8 +2551,15 @@ export class WWA {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         var message = this._wwaData.message[messageID];
         try {
-            this._player.addItem(partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER]);
-            //this._wwaData.mapObject[pos.y][pos.x] = 0;
+            var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
+            var screenXPixel = ( pos.x - screenTopCoord.x ) * Consts.CHIP_SIZE;
+            var screenYPixel = ( pos.y - screenTopCoord.y ) * Consts.CHIP_SIZE;
+            this._player.addItem(
+                partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false,
+                this._wwaData.isItemEffectEnabled ? {
+                    screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                } : undefined
+            );
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
             if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 // 使用型アイテム の場合は、処理は使用時です。
@@ -2660,8 +2712,15 @@ export class WWA {
                         if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
                             if (this._player.canHaveMoreItems() || this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
                                 if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] !== 0) {
+                                    var pos = this._yesNoChoicePartsCoord;
+                                    var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
+                                    var screenXPixel = (pos.x - screenTopCoord.x) * Consts.CHIP_SIZE;
+                                    var screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
                                     this._player.addItem(
-                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
+                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM], 0, false, this._wwaData.isItemEffectEnabled ? {
+                                            screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                                        } : undefined
+                                    );
                                 }
                                 var status = new Status(
                                     this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY],
@@ -3140,6 +3199,7 @@ export class WWA {
         if (this._messageWindow.isVisible()) {
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._messageQueue = []; // force clear!!
+            this._player.setDelayFrame();
             this._messageWindow.hide();
             this._yesNoChoicePartsCoord = void 0;
             this._yesNoChoicePartsID = void 0;
@@ -3198,13 +3258,13 @@ export class WWA {
 
             this._wwaData.map[pos.y][pos.x] = id;
 
-            no = this._wwaData.mapIDTable[before_id].indexOf(posKey);
+            no = this._mapIDTable[before_id].indexOf(posKey);
             if (no !== -1) {
-                this._wwaData.mapIDTable[before_id].splice(no, 1);
+                this._mapIDTable[before_id].splice(no, 1);
             }
-            no = this._wwaData.mapIDTable[id].indexOf(posKey);
+            no = this._mapIDTable[id].indexOf(posKey);
             if (no === -1) {
-                this._wwaData.mapIDTable[id].push(posKey);
+                this._mapIDTable[id].push(posKey);
             }
 
         } else {
@@ -3212,16 +3272,15 @@ export class WWA {
             id = this.loadMapPartsObjectID(id);
             before_id = this.loadMapPartsObjectID(before_id);
 
-
             this._wwaData.mapObject[pos.y][pos.x] = id;
 
-            no = this._wwaData.mapObjectIDTable[before_id].indexOf(posKey);
+            no = this._mapObjectIDTable[before_id].indexOf(posKey);
             if (no !== -1) {
-                this._wwaData.mapObjectIDTable[before_id].splice(no, 1);
+                this._mapObjectIDTable[before_id].splice(no, 1);
             }
-            no = this._wwaData.mapObjectIDTable[id].indexOf(posKey);
+            no = this._mapObjectIDTable[id].indexOf(posKey);
             if (no === -1) {
-                this._wwaData.mapObjectIDTable[id].push(posKey);
+                this._mapObjectIDTable[id].push(posKey);
             }
         }
     }
@@ -3453,27 +3512,27 @@ export class WWA {
     }
     private _mapIDTableCreate(): void {
         var pid: number;
-        this._wwaData.mapIDTable = [];
-        this._wwaData.mapObjectIDTable = [];
+        this._mapIDTable = [];
+        this._mapObjectIDTable = [];
         for (pid = 0; pid < this._wwaData.mapPartsMax; pid++) {
-            this._wwaData.mapIDTable[pid] = [];
+            this._mapIDTable[pid] = [];
         }
         for (pid = 0; pid < this._wwaData.objPartsMax; pid++) {
-            this._wwaData.mapObjectIDTable[pid] = [];
+            this._mapObjectIDTable[pid] = [];
         }
         for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
             for (var yy = 0; yy < this._wwaData.mapWidth; yy++) {
                 var posKey = (yy << IDTable.BITSHIFT) | xx;
                 pid = this._wwaData.map[yy][xx];
-                if (!(this._wwaData.mapIDTable[pid] instanceof Array)) {
-                    this._wwaData.mapIDTable[pid] = [];
+                if (!(this._mapIDTable[pid] instanceof Array)) {
+                    this._mapIDTable[pid] = [];
                 }
-                this._wwaData.mapIDTable[pid].push(posKey);
+                this._mapIDTable[pid].push(posKey);
                 pid = this._wwaData.mapObject[yy][xx];
-                if (!(this._wwaData.mapObjectIDTable[pid] instanceof Array)) {
-                    this._wwaData.mapObjectIDTable[pid] = [];
+                if (!(this._mapObjectIDTable[pid] instanceof Array)) {
+                    this._mapObjectIDTable[pid] = [];
                 }
-                this._wwaData.mapObjectIDTable[pid].push(posKey);
+                this._mapObjectIDTable[pid].push(posKey);
             }
         }
     }
@@ -3958,6 +4017,7 @@ export class WWA {
 
             // empty->hide
             if (message !== "") {
+                this._player.setDelayFrame();
                 this._messageWindow.hide();
                 this._messageWindow.setMessage(message);
                 this._messageWindow.setPositionByPlayerPosition(
@@ -3987,6 +4047,7 @@ export class WWA {
         this.clearFaces();
         if (mesID === 0) {
             if (messageDisplayed) {
+                this._player.setDelayFrame();
                 this._messageWindow.hide();
                 this._keyStore.allClear();
                 this._mouseStore.clear();
@@ -4036,10 +4097,10 @@ export class WWA {
             srcID = this.loadMapPartsObjectID(srcID);
             destID = this.loadMapPartsObjectID(destID);
 
-            list = this._wwaData.mapObjectIDTable[srcID].concat();
-            srcList = this._wwaData.mapObjectIDTable[srcID];
+            list = this._mapObjectIDTable[srcID].concat();
+            srcList = this._mapObjectIDTable[srcID];
             srcList.length = 0;
-            destList = this._wwaData.mapObjectIDTable[destID];
+            destList = this._mapObjectIDTable[destID];
             len = list.length;
             if (onlyThisSight) {
                 //範囲指定あり
@@ -4068,10 +4129,10 @@ export class WWA {
             srcID = this.loadMapPartsID(srcID);
             destID = this.loadMapPartsID(destID);
 
-            list = this._wwaData.mapIDTable[srcID].concat();
-            srcList = this._wwaData.mapIDTable[srcID];
+            list = this._mapIDTable[srcID].concat();
+            srcList = this._mapIDTable[srcID];
             srcList.length = 0;
-            destList = this._wwaData.mapIDTable[destID];
+            destList = this._mapIDTable[destID];
             len = list.length;
             if (onlyThisSight) {
                 //範囲指定あり
@@ -4239,6 +4300,9 @@ export class WWA {
         this._faces = [];
     }
 
+    public updateItemEffectEnabled(isEnabled: boolean): void {
+        this._wwaData.isItemEffectEnabled = isEnabled;
+    }
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;
@@ -4358,7 +4422,12 @@ function start() {
     if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
         classicModeEnabled = true;
     }
-    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, audioDirectory);
+    var itemEffectEnabled = true;
+    var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
+    if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
+        itemEffectEnabled = false;
+    }
+    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, itemEffectEnabled, audioDirectory);
 }
 
 
