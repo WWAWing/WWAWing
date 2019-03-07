@@ -520,7 +520,8 @@ export enum MacroType {
     EFFITEM = 20,
     COLOR = 21,
     WAIT = 22,
-    SOUND = 23
+    SOUND = 23,
+    GAMEPAD_BUTTON = 100
 }
 
 export var macrotable = {
@@ -547,7 +548,8 @@ export var macrotable = {
     "$effitem": 20,
     "$color": 21,
     "$wait": 22,
-    "$sound": 23
+    "$sound": 23,
+    "$gamepad_button" : 100
 }
 
 export enum MacroStatusIndex {
@@ -938,6 +940,8 @@ export class WWAData {
     // loader からくるデータには含まれていないので注意
     // data-wwa-item-effect-enable="false" の場合は初期値無効
     isItemEffectEnabled?: boolean = void 0; 
+
+    gamePadButtonItemTable: number[] = void 0;
 
     constructor() { }
 };
