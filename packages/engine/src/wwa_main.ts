@@ -4511,9 +4511,16 @@ export class WWA {
 
     public setGamePadButtonItemTable(buttonID: number, itemNo: number): boolean {
         if (!this._wwaData.gamePadButtonItemTable) {
-            this._wwaData.gamePadButtonItemTable = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+            var currentButtonID, currentButtonKey: string;
+            this._wwaData.gamePadButtonItemTable = [];
+            for (currentButtonKey in GamePadState) {
+                currentButtonID = GamePadState[currentButtonKey];
+                this._wwaData.gamePadButtonItemTable[currentButtonID] = 0;
+            }
         }
-        this._wwaData.gamePadButtonItemTable[buttonID] = itemNo;
+        if (this._wwaData.gamePadButtonItemTable.length > buttonID) {
+            this._wwaData.gamePadButtonItemTable[buttonID] = itemNo;
+        }
         return true;
     }
 };
