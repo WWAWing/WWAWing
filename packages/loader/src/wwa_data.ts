@@ -150,6 +150,8 @@ export function createDefaultWWAData(): WWAData {
         messageNum: undefined,
         map: undefined,
         mapObject: undefined,
+        mapCompressed: undefined,
+        mapObjectCompressed: undefined,
         mapAttribute: undefined,
         objectAttribute: undefined,
         worldPassword: undefined,
@@ -187,5 +189,8 @@ export function createDefaultWWAData(): WWAData {
         statusColorR: undefined,
         statusColorG: undefined,
         statusColorB: undefined,
+        checkOriginalMapString: undefined,
+        checkString: undefined,
+        isItemEffectEnabled: undefined
     };
 }

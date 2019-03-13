@@ -3,6 +3,8 @@ export interface Coord {
     y: number;
 }
 
+// TODO: LoaderとEngineで必要なやつが違うのでわける
+// @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
 export interface WWAData {
     version: number;
 
@@ -31,6 +33,9 @@ export interface WWAData {
     map: number[][];
     mapObject: number[][];
 
+    mapCompressed: number[][][];
+    mapObjectCompressed: number[][][];
+
     mapAttribute: number[][];
     objectAttribute: number[][];
 
@@ -47,13 +52,15 @@ export interface WWAData {
     yesnoImgPosY: number;
     playerImgPosX: number;
     playerImgPosY: number;
-    clickableItemSignImgPosX: number; // 0の時, 標準枠
-    clickableItemSignImgPosY: number; // undefined時, 標準枠
+    clickableItemSignImgPosX: number; // 0の時, 標準枠 注) 面倒なことがわかったので未実装
+    clickableItemSignImgPosY: number; // undefined時, 標準枠 注) 面倒なことがわかったので未実装
 
     disableSaveFlag: boolean;
     compatibleForOldMapFlag: boolean;
     objectNoCollapseDefaultFlag: boolean;
+
     delPlayerFlag: boolean;
+
     bgm: number;
     effectCoords: Coord[];
     effectWaits: number;
@@ -76,4 +83,8 @@ export interface WWAData {
     statusColorR: number;
     statusColorG: number;
     statusColorB: number;
+    checkOriginalMapString: string;
+    checkString: string;
+
+    isItemEffectEnabled: boolean; 
 }

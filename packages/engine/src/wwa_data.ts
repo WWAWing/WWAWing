@@ -1,6 +1,8 @@
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import { KeyCode } from "./wwa_input";
+import { WWAData } from "@wwawing/common-interface";
+export { WWAData };
 
 export class EquipmentStatus {
     public strength: number;
@@ -742,94 +744,3 @@ export enum IDTable {
     BITSHIFT = 16,
     BITMASK = 0xFFFF
 };
-
-
-export class WWAData {
-    version: number = void 0;
-
-    gameoverX: number = void 0;
-    gameoverY: number = void 0;
-
-    playerX: number = void 0;
-    playerY: number = void 0;
-
-    mapPartsMax: number = void 0;
-    objPartsMax: number = void 0;
-
-    isOldMap: boolean = void 0;
-
-    statusEnergyMax: number = void 0;
-    statusEnergy: number = void 0;
-    statusStrength: number = void 0;
-    statusDefence: number = void 0;
-    statusGold: number = void 0;
-
-    itemBox: number[] = void 0;
-
-    mapWidth: number = void 0;
-    messageNum: number = void 0;
-
-    map: number[][] = void 0;
-    mapObject: number[][] = void 0;
-
-    mapCompressed: number[][][] = void 0;
-    mapObjectCompressed: number[][][] = void 0;
-
-    mapAttribute: number[][] = void 0;
-    objectAttribute: number[][] = void 0;
-
-    worldPassword: string = void 0;
-    message: string[] = void 0;
-    worldName: string = void 0;
-    worldPassNumber: number = void 0;
-    charCGName: string = void 0;
-    mapCGName: string = void 0;
-    systemMessage: string[] = void 0;
-    moves: number = void 0;
-
-    yesnoImgPosX: number = void 0;
-    yesnoImgPosY: number = void 0;
-    playerImgPosX: number = void 0;
-    playerImgPosY: number = void 0;
-    clickableItemSignImgPosX: number = void 0; // 0の時, 標準枠  注) 面倒なことがわかったので未実装
-    clickableItemSignImgPosY: number = void 0; // undefined時, 標準枠 注) 面倒なことがわかったので未実装
-
-    disableSaveFlag: boolean = void 0;
-    compatibleForOldMapFlag: boolean = void 0;
-    objectNoCollapseDefaultFlag: boolean = void 0;
-
-    delPlayerFlag: boolean = void 0;
-
-    bgm: number = void 0;
-    effectCoords: Coord[];
-    effectWaits: number;
-
-    imgClickX: number = void 0;
-    imgClickY: number = void 0;
-
-    frameColorR: number = void 0;
-    frameColorG: number = void 0;
-    frameColorB: number = void 0;
-
-    frameOutColorR: number = void 0;
-    frameOutColorG: number = void 0;
-    frameOutColorB: number = void 0;
-
-    fontColorR: number = void 0;
-    fontColorG: number = void 0;
-    fontColorB: number = void 0;
-
-    statusColorR: number = void 0;
-    statusColorG: number = void 0;
-    statusColorB: number = void 0;
-
-    checkOriginalMapString: string = void 0;
-    checkString: string = void 0;
-
-    // loader からくるデータには含まれていないので注意
-    // data-wwa-item-effect-enable="false" の場合は初期値無効
-    isItemEffectEnabled?: boolean = void 0; 
-
-    constructor() { }
-}
-
