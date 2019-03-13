@@ -5,6 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "bootstrap": "lerna bootstrap",
+    "bootstrap-hoist": "lerna bootstrap --hoist",
     "clean": "lerna clean",
     "start": "lerna run start --stream --scope @wwawing/engine",
     "build": "lerna run build --stream --parallel",
