@@ -1,4 +1,6 @@
-﻿export class WWAConsts {
+﻿import { WWAData } from "@wwawing/common-interface";
+
+export class WWAConsts {
     static ITEMBOX_SIZE: number = 12;
     static MAP_ATR_MAX: number = 60;
     static OBJ_ATR_MAX: number = 60;
@@ -124,79 +126,66 @@ export class Coord {
     }
 }
 
-export class WWAData {
-    version: number = void 0;
-
-    gameoverX: number = void 0;
-    gameoverY: number = void 0;
-
-    playerX: number = void 0;
-    playerY: number = void 0;
-
-    mapPartsMax: number = void 0;
-    objPartsMax: number = void 0;
-
-    isOldMap: boolean = void 0;
-
-    statusEnergyMax: number = void 0;
-    statusEnergy: number = void 0;
-    statusStrength: number = void 0;
-    statusDefence: number = void 0;
-    statusGold: number = void 0;
-
-    itemBox: number[] = void 0;
-
-    mapWidth: number = void 0;
-    messageNum: number = void 0;
-
-    map: number[][] = void 0;
-    mapObject: number[][] = void 0;
-
-    mapAttribute: number[][] = void 0;
-    objectAttribute: number[][] = void 0;
-
-    worldPassword: string = void 0;
-    message: string[] = void 0;
-    worldName: string = void 0;
-    worldPassNumber: number = void 0;
-    charCGName: string = void 0;
-    mapCGName: string = void 0;
-    systemMessage: string[] = void 0;
-    moves: number = 0;
-
-    yesnoImgPosX: number = void 0;
-    yesnoImgPosY: number = void 0;
-    playerImgPosX: number = void 0;
-    playerImgPosY: number = void 0;
-    clickableItemSignImgPosX: number = void 0; // 0の時, 標準枠
-    clickableItemSignImgPosY: number = void 0; // undefined時, 標準枠
-
-    disableSaveFlag: boolean = void 0;
-    compatibleForOldMapFlag: boolean = void 0;
-    objectNoCollapseDefaultFlag: boolean = void 0;
-    delPlayerFlag: boolean = void 0;
-    bgm: number = void 0;
-    effectCoords: Coord[];
-    effectWaits: number;
-
-    imgClickX: number = void 0;
-    imgClickY: number = void 0;
-
-    frameColorR: number = void 0;
-    frameColorG: number = void 0;
-    frameColorB: number = void 0;
-
-    frameOutColorR: number = void 0;
-    frameOutColorG: number = void 0;
-    frameOutColorB: number = void 0;
-
-    fontColorR: number = void 0;
-    fontColorG: number = void 0;
-    fontColorB: number = void 0;
-
-    statusColorR: number = void 0;
-    statusColorG: number = void 0;
-    statusColorB: number = void 0;
-
-    constructor() {}
+/**
+ * すべてundefinedのWWADataをつくる
+ * TODO: strict:trueになったらバリデーションを導入するのでこの処理は不要になる
+ */
+export function createDefaultWWAData(): WWAData {
+    return {
+        version: undefined,
+        gameoverX: undefined,
+        gameoverY: undefined,
+        playerX: undefined,
+        playerY: undefined,
+        mapPartsMax: undefined,
+        objPartsMax: undefined,
+        isOldMap: undefined,
+        statusEnergyMax: undefined,
+        statusEnergy: undefined,
+        statusStrength: undefined,
+        statusDefence: undefined,
+        statusGold: undefined,
+        itemBox: undefined,
+        mapWidth: undefined,
+        messageNum: undefined,
+        map: undefined,
+        mapObject: undefined,
+        mapAttribute: undefined,
+        objectAttribute: undefined,
+        worldPassword: undefined,
+        message: undefined,
+        worldName: undefined,
+        worldPassNumber: undefined,
+        charCGName: undefined,
+        mapCGName: undefined,
+        systemMessage: undefined,
+        moves: 0, // これだけ 0 初期化
+        yesnoImgPosX: undefined,
+        yesnoImgPosY: undefined,
+        playerImgPosX: undefined,
+        playerImgPosY: undefined,
+        clickableItemSignImgPosX: undefined,
+        clickableItemSignImgPosY: undefined,
+        disableSaveFlag: undefined,
+        compatibleForOldMapFlag: undefined,
+        objectNoCollapseDefaultFlag: undefined,
+        delPlayerFlag: undefined,
+        bgm: undefined,
+        effectCoords: undefined,
+        effectWaits: undefined,
+        imgClickX: undefined,
+        imgClickY: undefined,
+        frameColorR: undefined,
+        frameColorG: undefined,
+        frameColorB: undefined,
+        frameOutColorR: undefined,
+        frameOutColorG: undefined,
+        frameOutColorB: undefined,
+        fontColorR: undefined,
+        fontColorG: undefined,
+        fontColorB: undefined,
+        statusColorR: undefined,
+        statusColorG: undefined,
+        statusColorB: undefined,
+    };
 }

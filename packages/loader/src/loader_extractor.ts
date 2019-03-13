@@ -1,7 +1,8 @@
 ﻿    import * as loader_wwa_data from "./wwa_data";
     import { util } from "./loader_util";
     import * as loader_core from "./loader_core";
-    import { WWAData, WWAConsts, PartsType } from "./wwa_data";
+    import { WWAData } from "@wwawing/common-interface";
+    import { WWAConsts, PartsType } from "./wwa_data";
 
     export class WWADataExtractor {
       // --- vars ---
@@ -42,7 +43,7 @@
       // --- methods and constructors
       public constructor(data: Uint8Array) {
         this._bitData = data;
-        this._wwaData = new WWAData();
+        this._wwaData = loader_wwa_data.createDefaultWWAData();
       }
 
       public extractAllData(): void {
