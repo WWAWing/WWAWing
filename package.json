@@ -9,6 +9,8 @@
     "clean": "lerna clean",
     "start": "lerna run start --stream --scope @wwawing/engine",
     "build": "lerna run build --stream --parallel",
+    "compile": "lerna run compile --stream --parallel",
+    "deploy": "lerna run deploy --scope @wwawing/engine",
     "generate": "lerna exec --scope @wwawing/debug-server -- npm run generate",
     "make-dist": "npm run build && lerna run make-dist --stream"
   },
