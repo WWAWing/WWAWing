@@ -161,7 +161,7 @@ export function createDefaultWWAData(): WWAData {
         charCGName: undefined,
         mapCGName: undefined,
         systemMessage: undefined,
-        moves: 0, // これだけ 0 初期化
+        moves: undefined,
         yesnoImgPosX: undefined,
         yesnoImgPosY: undefined,
         playerImgPosX: undefined,
