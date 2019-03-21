@@ -1,4 +1,4 @@
-﻿import { WWAData } from "@wwawing/common-interface";
+import { WWAData } from "@wwawing/common-interface";
 
 export class WWAConsts {
     static ITEMBOX_SIZE: number = 12;
@@ -128,9 +128,9 @@ export class Coord {
 
 /**
  * すべてundefinedのWWADataをつくる
- * TODO: strict:trueになったらバリデーションを導入するのでこの処理は不要になる
  */
 export function createDefaultWWAData(): WWAData {
+    // TODO: strict:trueになったらバリデーションを導入するのでこの処理は不要になる
     return {
         version: undefined,
         gameoverX: undefined,
@@ -194,3 +194,4 @@ export function createDefaultWWAData(): WWAData {
         isItemEffectEnabled: undefined
     };
 }
+
