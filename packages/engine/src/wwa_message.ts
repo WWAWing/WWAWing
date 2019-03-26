@@ -58,6 +58,7 @@ export class Macro {
     ) { }
     public execute(): void {
         try {
+
             switch (this.macroType) {
                 case MacroType.IMGPLAYER:
                     this._executeImgPlayerMacro();

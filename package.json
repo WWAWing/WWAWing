@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "bootstrap": "lerna bootstrap",
+    "bootstrap": "lerna bootstrap --hoist",
+    "bootstrap:no-hoist": "lerna bootstrap",
     "clean": "lerna clean",
     "start": "lerna run start --stream --scope @wwawing/engine",
     "build": "lerna run build --stream --parallel",

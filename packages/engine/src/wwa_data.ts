@@ -944,4 +944,4 @@ export class WWAData {
     gamePadButtonItemTable: number[] = void 0;
 
     constructor() { }
-};
+}

@@ -2057,7 +2057,6 @@ export class WWA {
 
         if (this._player.isLookingAround() && !this._player.isWaitingMessage()) {
             crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
-            crop = this._wwaData.playerImgPosX + relpcrop + 1;
         } else if (this._player.isMovingImage()) {
             crop = this._wwaData.playerImgPosX + relpcrop + 1;
         } else {

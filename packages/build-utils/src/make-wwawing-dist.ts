@@ -9,8 +9,10 @@ const srcBasePath = path.join(".", "node_modules", "@wwawing");
 const destBasePath = path.join(".", "output", wwawingDistDirName);
 const destUpdateBasePath = path.join(".", "output", wwawingUpdateDirName);
 
-// fatal を設定しないとshelljsの cp などが例外を吐かない
-// @see https://github.com/shelljs/shelljs#configfatal
+/**
+ * fatal を設定しないとshelljsの cp などが例外を吐かない
+ * @see https://github.com/shelljs/shelljs#configfatal
+ */
 shell.config.fatal = true;
 
 
