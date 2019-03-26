@@ -179,12 +179,27 @@ export class WWACompress {
     private static getCompressArray(list: number[]): number[] {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
+        var k: number, loopCount: number, n: number;
         oldValue = -1;
-        newList.length = len = list.length;
-        for (i = 0; i < len; i++) {
+        len = list.length;
+        for (k=0,i = 0; i < len; i++) {
             newValue = list[i];
-            addValue = newValue - oldValue - 1;
-            newList[i] = addValue;
+            addValue = newValue - oldValue;
+            loopCount = 0;
+            n = i;
+            while ((n < len - 1) && (list[n] + 1 === list[n + 1])) {
+                n++;
+                loopCount++;
+            }
+            if (loopCount <= 2) {
+                newList[k++] = addValue;
+            } else {
+                i = n;
+                newValue += loopCount;
+                newList[k++] = 0;
+                newList[k++] = addValue;
+                newList[k++] = loopCount - 3;
+            }
             oldValue = newValue;
         }
         return newList;
@@ -196,13 +211,23 @@ export class WWACompress {
     private static getDecompressArray(list: number[]): number[] {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
+        var lastValue:number,k:number;
         oldValue = -1;
-        newList.length = len = list.length;
-        for (i = 0; i < len; i++) {
+        len = list.length;
+        for (i = 0,k=0; i < len; i++) {
             addValue = list[i];
-            newValue = oldValue + addValue + 1;
+            if (addValue === 0) {
+                addValue = list[++i];
+                newValue = oldValue + addValue;
+                lastValue = newValue + list[++i] + 3;
+                for (; newValue <= lastValue; newValue++) {
+                    newList[k++] = newValue;
+                }
+            } else {
+                newValue = oldValue + addValue;
+                newList[k++] = newValue;
+            }
             oldValue = newValue;
-            newList[i] = newValue;
         }
         return newList;
     }
