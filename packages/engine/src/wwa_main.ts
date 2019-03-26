@@ -50,6 +50,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
+import { WWACompress } from "./wwa_psave";
 
 var wwa: WWA;
 let wwap_mode: boolean = false;
@@ -3391,6 +3392,7 @@ export class WWA {
 
     private _quickSave(isPassword: boolean = false): string {
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
+
         var pc = this._player.getPosition().getPartsCoord();
         var st = this._player.getStatusWithoutEquipments();
         qd.itemBox = this._player.getCopyOfItemBox();
