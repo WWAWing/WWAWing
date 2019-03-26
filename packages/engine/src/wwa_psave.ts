@@ -348,9 +348,9 @@ export class WWACompress {
                 return newObject;
             case SAVE_COMPRESS_ID.MESSAGE:
             case SAVE_COMPRESS_ID.SYSTEM_MESSAGE:
-                var key: string, value;
+                var key: string;
                 for (key in loadObject) {
-                    newObject[key] = value;
+                    newObject[key] = loadObject[key];
                 }
                 break;
             default:
