@@ -10,6 +10,7 @@ var SAVE_COMPRESS_ID = {
 };
 
 export class WWACompress {
+    private static MIN_LOOP_COUNT = 3;
     public static _restartData: WWAData;
     public static compress(wwaData: WWAData): object {
         var saveObject: object = {};
@@ -110,7 +111,7 @@ export class WWACompress {
 
                             //一つ前のY座標と比較し、Y座標の相対数値を抽出
                             newValue = Number(y);
-                            addValue = newValue - oldValue - 1;
+                            addValue = newValue - oldValue - 1;//変動値に0は使われないため、1で減算して無駄を削除
                             oldValue = newValue;
 
                             //X座標の配列を相対座標の配列に変換して格納
@@ -129,7 +130,7 @@ export class WWACompress {
 
                         //一つ前のX座標と比較し、X座標の相対数値を抽出
                         newValue = Number(x);
-                        addValue = newValue - oldValue - 1;
+                        addValue = newValue - oldValue - 1;//変動値に0は使われないため、1で減算して無駄を削除
                         oldValue = newValue;
                         if ((yList.length === 1)) {
                             //X座標とY座標それぞれ独立していて重複なし。
@@ -180,6 +181,8 @@ export class WWACompress {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
         var k: number, loopCount: number, n: number;
+        //0は連続値のフラグとして使用するため、初期値を-1にして
+        //0座標のaddValueを1になるようにする
         oldValue = -1;
         len = list.length;
         for (k=0,i = 0; i < len; i++) {
@@ -188,17 +191,22 @@ export class WWACompress {
             loopCount = 0;
             n = i;
             while ((n < len - 1) && (list[n] + 1 === list[n + 1])) {
+                //連続して値が1ずつ増えている数を取得
                 n++;
                 loopCount++;
             }
-            if (loopCount <= 2) {
+            if (loopCount < this.MIN_LOOP_COUNT) {
+                //連続して値が1ずつ増えている回数が最低ループ回数以下の場合、
+                //1変数で保持した方が軽いため1つづつ格納
                 newList[k++] = addValue;
             } else {
                 i = n;
                 newValue += loopCount;
+                //最初の数値をフラグ判定用に0にして、ループ回数を格納。
+                //ループ回数は3回未満にならないため、値から最低ループ回数を引く
                 newList[k++] = 0;
                 newList[k++] = addValue;
-                newList[k++] = loopCount - 3;
+                newList[k++] = loopCount - this.MIN_LOOP_COUNT;
             }
             oldValue = newValue;
         }
@@ -212,20 +220,22 @@ export class WWACompress {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
         var lastValue:number,k:number;
-        oldValue = -1;
+        oldValue = -1;//初期値を-1にすることで、0座標でも値が0にならないようにする
         len = list.length;
         for (i = 0,k=0; i < len; i++) {
             addValue = list[i];
             if (addValue === 0) {
+                //連続して1ずつ増える配列が存在
                 addValue = list[++i];
-                newValue = oldValue + addValue;
-                lastValue = newValue + list[++i] + 3;
+                newValue = oldValue + addValue;//増加数値から絶対数値を算出
+                lastValue = newValue + list[++i] + this.MIN_LOOP_COUNT;//変数から最低ループ回数を加算し、ループ回数を算出
                 for (; newValue <= lastValue; newValue++) {
                     newList[k++] = newValue;
                 }
                 oldValue = lastValue;
             } else {
-                newValue = oldValue + addValue;
+                //その数値を格納
+                newValue = oldValue + addValue;//増加数値から絶対数値を算出
                 newList[k++] = newValue;
                 oldValue = newValue;
             }
@@ -277,7 +287,7 @@ export class WWACompress {
                 //配列から物体ID・背景IDテーブルに変換
                 for (i = 0; i < len;i+=2) {
                     addValue = Number(loadArray[i]);
-                    newValue = oldValue + addValue + 1;
+                    newValue = oldValue + addValue + 1;//変動値に0は使われないため、1で加算して無駄を削除
                     oldValue = newValue;
 
                     id = newValue;
@@ -323,7 +333,7 @@ export class WWACompress {
                     for (code in idTableX) {
                         //相対数値から絶対数値のY座標に変換
                         addValue = Number(idTableX[code].y);
-                        newValue = oldValue + addValue + 1;
+                        newValue = oldValue + addValue + 1;//変動値に0は使われないため、1で加算して無駄を削除
                         oldValue = newValue;
                         xData = idTableX[code].x;
                         y = String(newValue);
@@ -349,7 +359,7 @@ export class WWACompress {
                     for (code in idTableY) {
                         //相対数値から絶対数値のX座標に変換
                         addValue = Number(idTableY[code].x);
-                        newValue = oldValue + addValue + 1;
+                        newValue = oldValue + addValue + 1;//変動値に0は使われないため、1で加算して無駄を削除
                         oldValue = newValue;
                         yData = idTableY[code].y;
                         x = String(newValue);
