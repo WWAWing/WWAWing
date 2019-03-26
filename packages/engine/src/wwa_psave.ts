@@ -180,7 +180,7 @@ export class WWACompress {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
         var k: number, loopCount: number, n: number;
-        oldValue = 0;
+        oldValue = -1;
         len = list.length;
         for (k=0,i = 0; i < len; i++) {
             newValue = list[i];
@@ -212,7 +212,7 @@ export class WWACompress {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
         var lastValue:number,k:number;
-        oldValue = 0;
+        oldValue = -1;
         len = list.length;
         for (i = 0,k=0; i < len; i++) {
             addValue = list[i];
