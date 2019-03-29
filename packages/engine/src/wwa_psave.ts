@@ -1,5 +1,6 @@
 import { WWAData } from "./wwa_data";
 import { WWASaveData, MessageWindow } from "./wwa_message";
+import { WWA } from "./wwa_main";
 
 var SAVE_COMPRESS_ID = {
     MAP: "map",
@@ -272,6 +273,7 @@ export class WWACompress {
     }
     private static decompressObject(key: string, loadObject: object, newObject: object): object {
         var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
+        var key: string;
         switch (key) {
             case SAVE_COMPRESS_ID.MAP:
             case SAVE_COMPRESS_ID.MAP_ATTERIVUTE:
@@ -385,12 +387,14 @@ export class WWACompress {
                 return newObject;
             case SAVE_COMPRESS_ID.MESSAGE:
             case SAVE_COMPRESS_ID.SYSTEM_MESSAGE:
-                var key: string;
                 for (key in loadObject) {
                     newObject[key] = loadObject[key];
                 }
                 break;
             default:
+                for (key in loadObject) {
+                    newObject[key] = loadObject[key];
+                }
                 return newObject;
         }
         return newObject;
@@ -431,6 +435,7 @@ export class WWASaveDB {
     private static INDEXEDDB_DB_NAME = "WWA_WING_DB";
     private static INDEXEDDB_TABLE_NAME = "SAVE_TABLE";
     private static indexedDB = window["indexedDB"] || window["webkitIndexedDB"] || window["mozIndexedDB"];
+    private static _checkOriginalMapString: string;
     private static IDBTransaction: object = {
         READ_ONLY: "readonly",
         READ_WRITE: "readwrite",
@@ -439,8 +444,9 @@ export class WWASaveDB {
     private static indexDBOpen() {
         return this.indexedDB.open(this.INDEXEDDB_DB_NAME, 201205201);
     }
-    public static init(_messageWindow) {
+    public static init(_messageWindow: MessageWindow, wwa: WWA) {
         this._messageWindow = _messageWindow;
+        this._checkOriginalMapString = wwa._checkOriginalMapString;
         if (this.indexedDB) {
             try {
                 if (this.indexedDB.open) {
@@ -504,6 +510,7 @@ export class WWASaveDB {
             var addData = {
                 "url": location.href,
                 "id": saveID,
+                "hash": this._checkOriginalMapString,
                 "image": gameCvs.toDataURL(),
                 "data": quickSaveData,
                 "date": date
@@ -552,6 +559,9 @@ export class WWASaveDB {
                 len = result.length;
                 for (i = 0; i < len; i++) {
                     var saveData = result[i];
+                    if (this._checkOriginalMapString !== saveData.hash) {
+                        continue;
+                    }
                     this.selectDatas[saveData.id] = saveData;
                 }
                 this._messageWindow.dbSaveDataLoad(this.selectDatas);

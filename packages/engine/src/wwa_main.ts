@@ -185,6 +185,7 @@ export class WWA {
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
+    public _checkOriginalMapString: string; 
     //private _quickSaveData: WWAData;
     private _prevFrameEventExected: boolean;
 
@@ -403,6 +404,7 @@ export class WWA {
             pathList.push(this._wwaData.mapCGName);//最後に画像ファイル名を追加
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
+            this._checkOriginalMapString = this._generateMapDataHash(this._restartData);
 
             WWACompress.setRestartData(this._restartData);
             var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
@@ -2896,6 +2898,8 @@ export class WWA {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_SUSPEND) {
+                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                 }
 
                 this._yesNoJudge = YesNoState.UNSELECTED;
@@ -3433,7 +3437,7 @@ export class WWA {
                 qd.checkString = this._generateSaveDataHash(qd);
                 break;
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
-                qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
+                qd.checkOriginalMapString = this._checkOriginalMapString;
                 qd.mapCompressed = this._compressMap(qd.map);
                 qd.mapObjectCompressed = this._compressMap(qd.mapObject);
                 qd.checkString = this._generateSaveDataHash(qd);
@@ -3495,7 +3499,7 @@ export class WWA {
     }
 
     private _decodePassword(pass: string): WWAData {
-        var ori = this._generateMapDataHash(this._restartData);
+        var ori = this._checkOriginalMapString;
         try {
             var json = CryptoJS.AES.decrypt(
                 pass,
@@ -3541,7 +3545,7 @@ export class WWA {
             if (newData.checkString !== checkString) {
                 throw new Error("データが壊れているようです。\nInvalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
             }
-            var checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            var checkOriginalMapString = this._checkOriginalMapString;
             if (newData.checkOriginalMapString !== checkOriginalMapString) {
                 throw new Error("管理者によってマップが変更されたようです。\nInvalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
             }

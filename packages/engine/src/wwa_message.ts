@@ -848,7 +848,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 break;
         }
         this.update();
-        WWASaveDB.init(this)
+        WWASaveDB.init(this,this._wwa)
     }
 
     public setPosition(x: number, y: number, width: number, height: number): void {
