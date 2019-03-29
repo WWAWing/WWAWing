@@ -1,4 +1,5 @@
 import { WWAData } from "./wwa_data";
+import { WWASaveData, MessageWindow } from "./wwa_message";
 
 var SAVE_COMPRESS_ID = {
     MAP: "map",
@@ -394,5 +395,176 @@ export class WWACompress {
         }
         return newObject;
     } 
+    
+    public static setRestartData(restartData: WWAData) {
+        this._restartData = restartData;
+    }
 
+    public static getStartWWAData(resumeSaveTextData: string) {
+        if (!resumeSaveTextData) {
+            return this._restartData;
+        }
+        try {
+            var resumeSaveData = JSON.parse(resumeSaveTextData);
+        } catch (e) {
+            return this._restartData;
+        }
+        if (resumeSaveData) {
+            var wwaData: WWAData;
+            try {
+                wwaData = this.decompress(resumeSaveData);
+                if (wwaData) {
+                    return wwaData;
+                }
+            } catch (e) {
+
+            }
+        }
+        return this._restartData;
+    }
+};
+
+export class WWASaveDB {
+    private static _messageWindow: MessageWindow;
+    private static selectDatas: object[];
+    private static selectLoad:boolean = false;
+    private static INDEXEDDB_DB_NAME = "WWA_WING_DB";
+    private static INDEXEDDB_TABLE_NAME = "SAVE_TABLE";
+    private static indexedDB = window["indexedDB"] || window["webkitIndexedDB"] || window["mozIndexedDB"];
+    private static IDBTransaction: object = {
+        READ_ONLY: "readonly",
+        READ_WRITE: "readwrite",
+        VERSION_CHANGE : "versionchangetransaction"
+    };
+    private static indexDBOpen() {
+        return this.indexedDB.open(this.INDEXEDDB_DB_NAME, 201205201);
+    }
+    public static init(_messageWindow) {
+        this._messageWindow = _messageWindow;
+        if (this.indexedDB) {
+            try {
+                if (this.indexedDB.open) {
+                } else {
+                    this.indexedDB = null;
+                }
+            } catch (e) {
+                this.indexedDB = null;
+            }
+        }
+
+        try {
+            var databaselog = this.indexedDB.open('test');
+            if (databaselog.error) {
+                this.indexedDB = null;
+            }
+        } catch (e) {
+        }
+        if (!this.indexedDB) {
+            return;
+        }
+        this.createDataBase();
+        this.selectSaveData();
+    }
+    private static createDataBase() {
+        try {
+            var reqOpen = this.indexDBOpen();
+            reqOpen.onupgradeneeded = (e) => {
+                var indexedDBSystem = reqOpen.result;
+                var oDBOptions = { keyPath: ["id", "url"]};
+                if (!indexedDBSystem.objectStoreNames.contains(this.INDEXEDDB_TABLE_NAME)) {
+                    var objectStore = indexedDBSystem.createObjectStore(this.INDEXEDDB_TABLE_NAME, oDBOptions);
+                    objectStore.createIndex("url", "url", { unique: false });
+                }
+            };
+            reqOpen.onsuccess = (e) =>{
+            };
+            reqOpen.onerror = (err) =>{
+            };
+            reqOpen.onblocked = (err) => {
+                this.indexedDB = null;
+            };
+        } catch (error) {
+        }
+    }
+    public static dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, quickSaveData: object, date: Date) {
+        if (!this.indexedDB) {
+            return;
+        }
+        var reqOpen = this.indexDBOpen();
+        reqOpen.onupgradeneeded = (e) => {
+        };
+        reqOpen.onsuccess = (e) => {
+            var indexedDBSystem = reqOpen.result;
+            try {
+                var transaction = indexedDBSystem.transaction(this.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_WRITE"]);
+                var store = transaction.objectStore(this.INDEXEDDB_TABLE_NAME);
+            } catch (error) {
+                return;
+            }
+            var addData = {
+                "url": location.href,
+                "id": saveID,
+                "image": gameCvs.toDataURL(),
+                "data": quickSaveData,
+                "date": date
+            };
+            var reqAdd = store.put(addData);
+            //reqAdd.callbackLog = callback;
+            reqAdd.onsuccess = (e) => {
+                this.selectDatas[saveID] = addData;
+            };
+            reqAdd.onerror = (e) => {
+            };
+        };
+        reqOpen.onerror = (e) => {
+        };
+        reqOpen.onblocked = (e) => {
+        };
+    }
+    private static selectSaveData() {
+        if (!this.indexedDB) {
+            return;
+        }
+        var reqOpen = this.indexDBOpen();
+        reqOpen.onupgradeneeded = function (e) {
+        };
+        reqOpen.onsuccess = (e) => {
+            var indexedDBSystem = reqOpen.result;
+            var transaction, store;
+            try {
+                transaction = indexedDBSystem.transaction(this.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_ONLY"]);
+                store = transaction.objectStore(this.INDEXEDDB_TABLE_NAME);
+            } catch (error) {
+                return;
+            }
+            //var range = IDBKeyRange.bound(10);
+            this.selectDatas = [];
+            this.selectLoad = false;
+
+            var index = store.index("url");
+            var range = IDBKeyRange.only(location.href);
+            var saveDataResult = index.getAll(range);
+
+            saveDataResult.onsuccess = (e) => {
+                var i, len, loadend, onsuccess, onerror;
+                loadend = 0;
+                var result = e.target.result;
+                len = result.length;
+                for (i = 0; i < len; i++) {
+                    var saveData = result[i];
+                    this.selectDatas[saveData.id] = saveData;
+                }
+                this._messageWindow.dbSaveDataLoad(this.selectDatas);
+                this.selectLoad = true;
+            };
+            saveDataResult.onerror = (e) => {
+                this.indexedDB = null;
+            };
+
+        };
+        reqOpen.onerror = (e) => {
+        };
+        reqOpen.onblocked = (e) => {
+        };
+    }
 }

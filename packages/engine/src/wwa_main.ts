@@ -219,6 +219,7 @@ export class WWA {
     private _useConsole: boolean;
     private _audioDirectory: string;
     private _hasTitleImg: boolean;
+    private _useSuspend: boolean = false;
 
     private _isActive: boolean;
 
@@ -401,7 +402,17 @@ export class WWA {
             pathList.pop();//最後のファイルを消す
             pathList.push(this._wwaData.mapCGName);//最後に画像ファイル名を追加
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
+            this._restartData = JSON.parse(JSON.stringify(this._wwaData));
 
+            WWACompress.setRestartData(this._restartData);
+            var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
+            if (typeof resumeSaveDataText === "string") {
+                this._useSuspend = true;//中断モード
+                if (resumeSaveDataText) {
+                    //再開
+                    this._wwaData = WWACompress.getStartWWAData(resumeSaveDataText);
+                }
+            }
 
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
@@ -413,7 +424,6 @@ export class WWA {
                     "管理者の方へ: データがアップロードされているか、\n" +
                     "パーミッションを確かめてください。", ctxCover);
             });
-            this._restartData = JSON.parse(JSON.stringify(this._wwaData));
 
             var escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
             Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
@@ -819,6 +829,7 @@ export class WWA {
             this.clearFaces();
 
             var self = this;
+            this.wwaCustomEvent('wwa_startup');
             /*
             var count = 0;
             for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
@@ -931,6 +942,8 @@ export class WWA {
                     requestAnimationFrame(this.soundCheckCaller);
                 }
             });
+
+            this.wwaCustomEvent('wwa_start');
         }
         if (wwap_mode || Worker === void 0) {
             var script: HTMLScriptElement;
@@ -1093,6 +1106,7 @@ export class WWA {
         if (audioContext) {
             //WebAuido
             this._webAudioJSInstances[idx] = new WWAWebAudio();
+            this.wwaCustomEvent('wwa_web_audio_set', { wwaWebAudio:this._webAudioJSInstances[idx]});
             if (idx >= SystemSound.BGM_LB) {
                 this._webAudioJSInstances[idx].isBgm = true;
             }
@@ -1463,7 +1477,10 @@ export class WWA {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
         bg.classList.add("onpress");
         if (!this._wwaData.disableSaveFlag) {
-            if (this._usePassword) {
+            if (this._useSuspend) {//中断モード
+                this.setMessageQueue("ゲームを中断しますか？", true, true);
+                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
+            }else if (this._usePassword) {
                 this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
             }
@@ -1895,11 +1912,14 @@ export class WWA {
             this._fadeout((): void => {
                 if (this._loadType === LoadType.QUICK_LOAD) {
                     this._quickLoad();
+                    this.wwaCustomEvent('wwa_quickload');
                 } else if (this._loadType === LoadType.RESTART_GAME) {
                     this._restartGame();
+                    this.wwaCustomEvent('wwa_restert');
                 } else if (this._loadType === LoadType.PASSWORD) {
                     this._applyQuickLoad(this._passwordSaveExtractData);
                     this._passwordSaveExtractData = void 0;
+                    this.wwaCustomEvent('wwa_passwordload');
                 }
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
@@ -2793,7 +2813,7 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
                     this._messageWindow.deleteSaveDom();
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
-                    this._quickSave();
+                    this._quickSave(ChoiceCallInfo.CALL_BY_QUICK_SAVE);
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_RESTART_GAME) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.RESTART_GAME]))).classList.remove("onpress");
                     this._stopUpdateByLoadFlag = true;
@@ -2812,8 +2832,11 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                     this._player.setPasswordWindowWating();
-                    this._passwordWindow.password = this._quickSave(true);
+                    this._passwordWindow.password = this._quickSave(ChoiceCallInfo.CALL_BY_PASSWORD_SAVE);
                     this._passwordWindow.show(Mode.SAVE);
+                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_SUSPEND) {
+                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                    this._quickSave(ChoiceCallInfo.CALL_BY_SUSPEND);
                 }
                 this._yesNoJudge = YesNoState.UNSELECTED;
                 this._setNextMessage();
@@ -3389,7 +3412,8 @@ export class WWA {
     }
     private _saveDataList = []
 
-    private _quickSave(isPassword: boolean = false): string {
+    private _quickSave(callInfo: number): string {
+        var cd;
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
 
         var pc = this._player.getPosition().getPartsCoord();
@@ -3403,15 +3427,23 @@ export class WWA {
         qd.statusDefence = st.defence;
         qd.statusGold = st.gold;
         qd.moves = this._player.getMoveCount();
-        if (isPassword) {
-            qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            qd.mapCompressed = this._compressMap(qd.map);
-            qd.mapObjectCompressed = this._compressMap(qd.mapObject);
-            qd.checkString = this._generateSaveDataHash(qd);
 
-            // map, mapObjectについてはcompressから復元
-            qd.map = void 0;
-            qd.mapObject = void 0;
+        switch (callInfo) {
+            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
+                qd.checkString = this._generateSaveDataHash(qd);
+                break;
+            case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
+                qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
+                qd.mapCompressed = this._compressMap(qd.map);
+                qd.mapObjectCompressed = this._compressMap(qd.mapObject);
+                qd.checkString = this._generateSaveDataHash(qd);
+
+                // map, mapObjectについてはcompressから復元
+                qd.map = void 0;
+                qd.mapObject = void 0;
+                break;
+            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                break;
         }
 
         // message, mapAttribute, objectAttributeについてはrestartdataから復元
@@ -3420,17 +3452,46 @@ export class WWA {
         qd.mapAttribute = void 0;
         qd.objectAttribute = void 0;
 
-        if (isPassword) {
-            var s = JSON.stringify(qd);
-            return CryptoJS.AES.encrypt(
-                CryptoJS.enc.Utf8.parse(s),
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
-            ).toString();
+        switch (callInfo) {
+            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
+                this._messageWindow.save(this._cvs, qd);
+                util.$id("cell-load").textContent = "Quick Load";
+                this.wwaCustomEvent('wwa_quicksave', {
+                    data: qd,
+                    compress: WWACompress.compress(qd)
+                });
+                return "";
+            case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
+                var s = JSON.stringify(qd);
+                this.wwaCustomEvent('wwa_passwordsave', {
+                    data: qd,
+                    compress: WWACompress.compress(qd)
+                });
+                return CryptoJS.AES.encrypt(
+                    CryptoJS.enc.Utf8.parse(s),
+                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
+                ).toString();
+            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                this.wwaCustomEvent('wwa_suspend', {
+                    data: qd,
+                    compress: WWACompress.compress(qd)
+                });
+                break;
         }
-        this._messageWindow.save(this._cvs, qd);
-        //this._quickSaveData = qd;
-        util.$id("cell-load").textContent = "Quick Load";
-        return "";
+    }
+
+    public wwaCustomEvent(event_name: string, suspendSendData: object = {}) {
+        var customEvent;
+        suspendSendData["wwa"] = this;
+        if (window["CustomEvent"]) {
+            customEvent = new CustomEvent(event_name, { detail: suspendSendData });
+        } else {
+            customEvent = document.createEvent('CustomEvent');
+            customEvent.initCustomEvent('eventName', false, false, suspendSendData);
+
+        }
+        util.$id("wwa-wrapper").dispatchEvent(customEvent); // イベントを発火させる
+
     }
 
     private _decodePassword(pass: string): WWAData {
@@ -4515,7 +4576,10 @@ export class WWA {
             var currentButtonID, currentButtonKey: string;
             this._wwaData.gamePadButtonItemTable = [];
             for (currentButtonKey in GamePadState) {
-                currentButtonID = GamePadState[currentButtonKey];
+                currentButtonID = Number(currentButtonKey);
+                if (!isFinite(currentButtonID)) {
+                    continue;
+                }
                 this._wwaData.gamePadButtonItemTable[currentButtonID] = 0;
             }
         }
