@@ -406,16 +406,6 @@ export class WWA {
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
             this._checkOriginalMapString = this._generateMapDataHash(this._restartData);
 
-            WWACompress.setRestartData(this._restartData);
-            var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
-            if (typeof resumeSaveDataText === "string") {
-                this._useSuspend = true;//中断モード
-                if (resumeSaveDataText) {
-                    //再開
-                    this._wwaData = WWACompress.getStartWWAData(resumeSaveDataText);
-                }
-            }
-
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 2);
@@ -492,6 +482,19 @@ export class WWA {
             this._lastMessage = new MessageInfo("", false, false, []);
             this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
+
+            WWACompress.setRestartData(this._restartData);
+            var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
+            if (typeof resumeSaveDataText === "string") {
+                this._useSuspend = true;//中断モード
+                if (resumeSaveDataText) {
+                    //再開
+                    var resumeData: WWAData = WWACompress.getStartWWAData(resumeSaveDataText);
+                    if (this._restartData !== resumeData) {
+                        this._applyQuickLoad(resumeData);
+                    }
+                }
+            }
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
