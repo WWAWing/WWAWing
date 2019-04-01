@@ -4,11 +4,14 @@ import { WWA } from "./wwa_main";
 
 var SAVE_COMPRESS_ID = {
     MAP: "map",
-    MAP_ATTERIVUTE: "mapAttribute",
     MAP_OBJECT: "mapObject",
-    MAP_OBJECT_ATTIBUTE:"objectAttribute",
-    MESSAGE: "message",
-    SYSTEM_MESSAGE:"systemMessage"
+    SYSTEM_MESSAGE: "systemMessage"
+};
+
+var NOT_COMPRESS_ID = {
+    "mapAttribute": true,
+    "objectAttribute": true,
+    "message": true,
 };
 
 export class WWACompress {
@@ -18,6 +21,9 @@ export class WWACompress {
         var saveObject: object = {};
         var key: string, value;
         for (key in wwaData) {
+            if (NOT_COMPRESS_ID[key]) {
+                continue;
+            }
             value = wwaData[key];
             switch (typeof value) {
                 case "number":
@@ -53,9 +59,7 @@ export class WWACompress {
         var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
         switch (key) {
             case SAVE_COMPRESS_ID.MAP:
-            case SAVE_COMPRESS_ID.MAP_ATTERIVUTE:
             case SAVE_COMPRESS_ID.MAP_OBJECT:
-            case SAVE_COMPRESS_ID.MAP_OBJECT_ATTIBUTE:
                 var newValue: number, oldValue: number, addValue: number, x: string, y: string, x_number: number, id: number, allIdTableX: object, allIdTableY: object, idTableX: number[][], idTableY: number[][], idText: string, xList: number[], yList: number[];
                 saveObject = {};
                 allIdTableY = {};
@@ -155,7 +159,6 @@ export class WWACompress {
                     saveList.push(addValue, saveObject[idText]);
                 }
                 return saveList;
-            case SAVE_COMPRESS_ID.MESSAGE:
             case SAVE_COMPRESS_ID.SYSTEM_MESSAGE:
                 saveObject = {};
                 var key: string, value;
@@ -276,9 +279,7 @@ export class WWACompress {
         var key: string;
         switch (key) {
             case SAVE_COMPRESS_ID.MAP:
-            case SAVE_COMPRESS_ID.MAP_ATTERIVUTE:
             case SAVE_COMPRESS_ID.MAP_OBJECT:
-            case SAVE_COMPRESS_ID.MAP_OBJECT_ATTIBUTE:
                 var newValue: number, oldValue: number, addValue: number, x: string, y: string, x_number: number, y_number: number, id: number, allIdTableX: object, allIdTableY: object, idText: string, xList: number[], yList: number[];
 
                 saveObject = {};
@@ -385,19 +386,25 @@ export class WWACompress {
 
 
                 return newObject;
-            case SAVE_COMPRESS_ID.MESSAGE:
             case SAVE_COMPRESS_ID.SYSTEM_MESSAGE:
-                for (key in loadObject) {
-                    newObject[key] = loadObject[key];
-                }
-                break;
             default:
+                if (newObject) {
+                } else {
+                    if (loadObject) {
+                        if (newObject instanceof Array) {
+                            newObject = [];
+                        } else {
+                            newObject = {};
+                        }
+                    } else {
+                        return undefined;
+                    }
+                }
                 for (key in loadObject) {
                     newObject[key] = loadObject[key];
                 }
                 return newObject;
         }
-        return newObject;
     } 
     
     public static setRestartData(restartData: WWAData) {
