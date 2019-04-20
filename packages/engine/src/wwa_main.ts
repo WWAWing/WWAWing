@@ -2662,8 +2662,9 @@ export class WWA {
     }
 
     public setStatusChangedEffect(additionalStatus: EquipmentStatus) {
-
-
+        if (!this._wwaData.isItemEffectEnabled) {
+            return;
+        }
         if (additionalStatus.strength !== 0) {
             util.$id("disp-strength").classList.add("onpress");
             this._statusPressCounter.strength = Consts.STATUS_CHANGED_EFFECT_FRAME_NUM;
