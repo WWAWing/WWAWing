@@ -2129,13 +2129,11 @@ export class WWA {
      */
     private _execObjectScoreEvent(pos: Coord, partsID: number, mapAttr: number): void {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
-        var playerPos = this._player.getPosition().getPartsCoord();
-        var playerStatus = this._player.getStatus();
         const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
         const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
         const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !!messageInfo.message, false);
         if (existsMessage) {
-            const score = playerStatus.calculateScore({
+            const score = this._player.getStatus().calculateScore({
                 energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
                 strength: this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
                 defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
