@@ -2135,11 +2135,12 @@ export class WWA {
         const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
         const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !!messageInfo.message, false);
         if (existsMessage) {
-            var score = 0;
-            score += this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY] * playerStatus.energy;
-            score += this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH] * playerStatus.strength;
-            score += this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE] * playerStatus.defence;
-            score += this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD] * playerStatus.gold;
+            const score = playerStatus.calculateScore({
+                energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
+                strength: this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
+                defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
+                gold: this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]
+            });
             this._scoreWindow.update(score);
             this._scoreWindow.show();
         }
