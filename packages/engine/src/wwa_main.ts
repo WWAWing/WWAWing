@@ -3644,7 +3644,6 @@ export class WWA {
         this.updateCSSRule();
     }
     public updateCSSRule() {
-        var messageOpacity = this._isClassicModeEnable ? 1 : 0.9;
         if (this._stylePos === void 0) {
             this._stylePos = new Array(2);
         } else {
@@ -3658,30 +3657,26 @@ export class WWA {
                 }
             }
         }
+        const messageWindowStyleSelector = "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window";
+        const messageWindowOpacity = this._isClassicModeEnable ? 1 : 0.9;
+        const messageWindowStyleRules = `
+background-color: rgba(${this._wwaData.frameColorR},  ${this._wwaData.frameColorG}, ${this._wwaData.frameColorB}, ${messageWindowOpacity});
+border-color: rgba(${this._wwaData.frameOutColorR}, ${this._wwaData.frameOutColorG}, ${this._wwaData.frameOutColorB }, 1);
+color: rgba(${this._wwaData.fontColorR}, ${this._wwaData.fontColorG}, ${this._wwaData.fontColorB}, 1);
+white-space: pre-wrap;
+`;
+        const sidebarStyleSelector = "div#wwa-sidebar";
+        const sidebarStyleRules = `
+color: rgba(${this._wwaData.statusColorR}, ${this._wwaData.statusColorG}, ${this._wwaData.statusColorB},1);
+font-weight: bold;
+`;
+
         if (this._sheet.addRule !== void 0) {
-            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(
-                "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window",
-                "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");" +
-                "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);" +
-                "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);"
-            );
-            this._stylePos[SelectorType.SIDEBAR] = this._sheet.addRule(
-                "div#wwa-sidebar",
-                "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);" +
-                "font-weight: bold;"
-            );
+            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(messageWindowStyleSelector,messageWindowStyleRules);
+            this._stylePos[SelectorType.SIDEBAR] = this._sheet.addRule(sidebarStyleSelector, sidebarStyleRules);
         } else {
-            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(
-                "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window {\n" +
-                "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");\n" +
-                "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);\n" +
-                "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);\n" +
-                "}", 0);
-            this._stylePos[SelectorType.SIDEBAR] = this._sheet.insertRule(
-                "div#wwa-sidebar {\n" +
-                "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);\n" +
-                "font-weight: bold;\n" +
-                "}", 1);
+            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(`${messageWindowStyleSelector} { ${messageWindowStyleRules} }`, 0);
+            this._stylePos[SelectorType.SIDEBAR] = this._sheet.insertRule(`${sidebarStyleSelector} { ${sidebarStyleRules} }`, 1);
         }
     }
     public changeStyleRule(type: ChangeStyleType, r: number, g: number, b: number) {
