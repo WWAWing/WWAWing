@@ -79,6 +79,17 @@ export class Status extends EquipmentStatus {
         return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
     }
 
+    public calculateScore(weight: {
+        energy: number;
+        strength: number;
+        defence: number;
+        gold: number;
+    }): number {
+        type Key = keyof typeof weight;
+        // TODO: this[key] など型が効いていない部分があるが、一旦目を瞑る。
+        return (Object.keys(weight) as Key[]).reduce((prev, key) =>  prev + weight[key] * this[key], 0);
+    }
+
     public constructor( e: number, s: number, d: number, g: number) {
         super(s, d);
         this.energy = e;
@@ -647,6 +658,10 @@ export class WWAConsts {
     static LOADING_FONT = "Times New Roman";
 
     static MSG_STR_WIDTH = 16;
+
+    static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
+
+    static ITEMBOX_TOP_Y = 140;
 }
 
 export class LoaderResponse {
@@ -814,6 +829,10 @@ export class WWAData {
 
     checkOriginalMapString: string = void 0;
     checkString: string = void 0;
+
+    // loader からくるデータには含まれていないので注意
+    // data-wwa-item-effect-enable="false" の場合は初期値無効
+    isItemEffectEnabled?: boolean = void 0; 
 
     constructor() { }
 }

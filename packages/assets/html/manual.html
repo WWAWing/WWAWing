@@ -101,6 +101,9 @@
                     <dt><code>data-wwa-classic-mode-enable</code>属性</dt>
                     <dd><code>true</code>を指定すると、本家と類似した挙動で動作します(詳細は後述)。
                     指定しなかった場合は<code>false</code>になります。</dd>
+                    <dt><code>data-wwa-item-effect-enable</code>属性</dt>
+                    <dd><code>false</code>を指定すると、アイテム取得時のエフェクトが無効になります。（マクロ文 <code>$effitem=0</code>を最初に実行することと等価）
+                    指定しなかった場合は<code>true</code>になります。</dd>
                 </dl>
             </section>
 
@@ -127,6 +130,13 @@
             <section>
                 <h2>更新情報</h2>
                 <section>
+                    <h3>v3.1.6からv3.1.7への変更点</h3>
+                    <ul>
+                        <li>Java版WWAに実装されていた<code>$effitem</code>マクロを復活</li>
+                        <li>メッセージがマクロのみのスコア法事パーツでメッセージが消えない問題を修正</li>
+                        <li>メッセージの先頭にある空白文字(半角スペースなど)が表示されない問題を修正</li>
+                        <li>クラシックモードかつタイトル画像が指定されている場合のプログレスバースタイル表示スタイルを修正</li>
+                    </ul>
                     <h3>W3.15dβ2からv3.1.6への変更点</h3>
                     <ul>
                         <li>新しいビルド方式に移行</li>
@@ -135,7 +145,7 @@
                         <li>効果音読み込みなしでパスワードセーブした後、効果音読み込みありで起動した場合にBGMが復元されない不具合を修正</li>
                         <li>戦闘予測表示中にパーツのイベントが実行される不具合を修正</li>
                         <li>BGM <code>71.mp3</code>の音源が途中で途切れないように修正</li>
-                        <li>HTMLファイルの改行コードに統一, メモ帳で開いても改行が出るようにした</li>
+                        <li>HTMLファイルの改行コードを統一, メモ帳で開いても改行が出るようにした</li>
                     </ul>
                     <h3>W3.15cからW3.15dβ2への変更点</h3>
                     <ul>
@@ -305,7 +315,7 @@
                 <p><a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja"><img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />
                 また、このマニュアルについては <a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja">クリエイティブ・コモンズ 表示 4.0 国際 ライセンスの下に提供されています。</a></p>
                 <p> Internet RPG &quot;<a href="http://www.wwajp.com">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
-                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2018 WWA Wing Team</p>
+                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2019 WWA Wing Team</p>
             </footer>
         </section>
     </div>

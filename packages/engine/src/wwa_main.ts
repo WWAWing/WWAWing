@@ -146,7 +146,7 @@ export class WWA {
 
     private _loadHandler: (e) => void;
 
-    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName, classicModeEnabled, audioDirectory: string = "") {
+    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName: string, classicModeEnabled: boolean, itemEffectEnabled: boolean, audioDirectory: string = "") {
         var ctxCover;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
@@ -214,6 +214,7 @@ export class WWA {
             }
 
             this._wwaData = e.data.wwaData;
+            this._wwaData.isItemEffectEnabled = itemEffectEnabled;
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -2002,7 +2003,15 @@ export class WWA {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         var message = this._wwaData.message[messageID];
         try {
-            this._player.addItem(partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER]);
+            var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
+            var screenXPixel = ( pos.x - screenTopCoord.x ) * Consts.CHIP_SIZE;
+            var screenYPixel = ( pos.y - screenTopCoord.y ) * Consts.CHIP_SIZE;
+            this._player.addItem(
+                partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false,
+                this._wwaData.isItemEffectEnabled ? {
+                    screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                } : undefined
+            );
             this._wwaData.mapObject[pos.y][pos.x] = 0;
             if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 // 使用型アイテム の場合は、処理は使用時です。
@@ -2103,18 +2112,37 @@ export class WWA {
         this._yesNoURL = this._wwaData.message[messageID].split(/\s/g)[0];
     }
 
+    /**
+     * 物体パーツ「スコア表示」のイベントを実行します
+     * 
+     * 動作仕様
+     * 
+     *  - メッセージが空の場合は「スコアを表示します。」というメッセージとともにスコア表示がされる
+     *  - メッセージがマクロのみの場合はマクロのみが実行され、スコアが表示されない
+     *  - メッセージがある場合はそのメッセージとともにスコアが表示される
+     * 
+     * メッセージがマクロのみの場合の挙動は、Java版(v3.10)に準拠するためのものであり、将来変更される可能性があります。
+     *
+     * @param pos パーツの座標
+     * @param partsID パーツの物体番号
+     * @param mapAttr パーツの ATR_TYPE の値
+     */
     private _execObjectScoreEvent(pos: Coord, partsID: number, mapAttr: number): void {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
-        var playerPos = this._player.getPosition().getPartsCoord();
-        var playerStatus = this._player.getStatus();
-        var score = 0;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY] * playerStatus.energy;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH] * playerStatus.strength;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE] * playerStatus.defence;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD] * playerStatus.gold;
-        this._scoreWindow.update(score);
-        this._scoreWindow.show();
-        this.setMessageQueue( messageID === 0 ? "スコアを表示します。" : this._wwaData.message[ messageID ], false, false, partsID, PartsType.OBJECT, pos);
+        const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
+        const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
+        const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !!messageInfo.message, false);
+        if (existsMessage) {
+            const score = this._player.getStatus().calculateScore({
+                energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
+                strength: this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
+                defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
+                gold: this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]
+            });
+            this._scoreWindow.update(score);
+            this._scoreWindow.show();
+        }
+        this.setMessageQueue(rawMessage, false, false, partsID, PartsType.OBJECT, pos);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
 
     }
@@ -2152,8 +2180,15 @@ export class WWA {
                         if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
                             if (this._player.canHaveMoreItems() || this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
                                 if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] !== 0) {
+                                    var pos = this._yesNoChoicePartsCoord;
+                                    var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
+                                    var screenXPixel = (pos.x - screenTopCoord.x) * Consts.CHIP_SIZE;
+                                    var screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
                                     this._player.addItem(
-                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM]);
+                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM], 0, false, this._wwaData.isItemEffectEnabled ? {
+                                            screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                                        } : undefined
+                                    );
                                 }
                                 var status = new Status(
                                     this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY],
@@ -2646,8 +2681,9 @@ export class WWA {
     }
 
     public setStatusChangedEffect(additionalStatus: EquipmentStatus) {
-
-
+        if (!this._wwaData.isItemEffectEnabled) {
+            return;
+        }
         if (additionalStatus.strength !== 0) {
             util.$id("disp-strength").classList.add("onpress");
             this._statusPressCounter.strength = Consts.STATUS_CHANGED_EFFECT_FRAME_NUM;
@@ -3390,6 +3426,7 @@ export class WWA {
                     this._camera.getPosition()
                 );
                 this._messageWindow.show();
+                this._player.setMessageWaiting();
             } else {
                 if (this._messageQueue.length === 0) {
                     this._hideMessageWindow();
@@ -3594,6 +3631,9 @@ export class WWA {
         this._faces = [];
     }
 
+    public updateItemEffectEnabled(isEnabled: boolean): void {
+        this._wwaData.isItemEffectEnabled = isEnabled;
+    }
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;
@@ -3604,7 +3644,6 @@ export class WWA {
         this.updateCSSRule();
     }
     public updateCSSRule() {
-        var messageOpacity = this._isClassicModeEnable ? 1 : 0.9;
         if (this._stylePos === void 0) {
             this._stylePos = new Array(2);
         } else {
@@ -3618,30 +3657,26 @@ export class WWA {
                 }
             }
         }
+        const messageWindowStyleSelector = "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window";
+        const messageWindowOpacity = this._isClassicModeEnable ? 1 : 0.9;
+        const messageWindowStyleRules = `
+background-color: rgba(${this._wwaData.frameColorR},  ${this._wwaData.frameColorG}, ${this._wwaData.frameColorB}, ${messageWindowOpacity});
+border-color: rgba(${this._wwaData.frameOutColorR}, ${this._wwaData.frameOutColorG}, ${this._wwaData.frameOutColorB }, 1);
+color: rgba(${this._wwaData.fontColorR}, ${this._wwaData.fontColorG}, ${this._wwaData.fontColorB}, 1);
+white-space: pre-wrap;
+`;
+        const sidebarStyleSelector = "div#wwa-sidebar";
+        const sidebarStyleRules = `
+color: rgba(${this._wwaData.statusColorR}, ${this._wwaData.statusColorG}, ${this._wwaData.statusColorB},1);
+font-weight: bold;
+`;
+
         if (this._sheet.addRule !== void 0) {
-            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(
-                "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window",
-                "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");" +
-                "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);" +
-                "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);"
-            );
-            this._stylePos[SelectorType.SIDEBAR] = this._sheet.addRule(
-                "div#wwa-sidebar",
-                "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);" +
-                "font-weight: bold;"
-            );
+            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(messageWindowStyleSelector,messageWindowStyleRules);
+            this._stylePos[SelectorType.SIDEBAR] = this._sheet.addRule(sidebarStyleSelector, sidebarStyleRules);
         } else {
-            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(
-                "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window {\n" +
-                "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");\n" +
-                "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);\n" +
-                "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);\n" +
-                "}", 0);
-            this._stylePos[SelectorType.SIDEBAR] = this._sheet.insertRule(
-                "div#wwa-sidebar {\n" +
-                "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);\n" +
-                "font-weight: bold;\n" +
-                "}", 1);
+            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(`${messageWindowStyleSelector} { ${messageWindowStyleRules} }`, 0);
+            this._stylePos[SelectorType.SIDEBAR] = this._sheet.insertRule(`${sidebarStyleSelector} { ${sidebarStyleRules} }`, 1);
         }
     }
     public changeStyleRule(type: ChangeStyleType, r: number, g: number, b: number) {
@@ -3710,7 +3745,12 @@ function start() {
     if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
         classicModeEnabled = true;
     }
-    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, audioDirectory);
+    var itemEffectEnabled = true;
+    var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
+    if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
+        itemEffectEnabled = false;
+    }
+    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, itemEffectEnabled, audioDirectory);
 }
 
 
