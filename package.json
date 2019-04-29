@@ -8,7 +8,7 @@
     "bootstrap:no-hoist": "lerna bootstrap",
     "clean": "lerna clean",
     "start": "lerna run start --stream --scope @wwawing/engine",
-    "build": "lerna run build --stream --parallel",
+    "build": "lerna run build --stream",
     "generate": "lerna exec --scope @wwawing/debug-server -- npm run generate",
     "make-dist": "npm run build && lerna run make-dist --stream"
   },
