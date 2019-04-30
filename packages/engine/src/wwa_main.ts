@@ -199,7 +199,7 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-
+        
         if (titleImgName === null) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
@@ -208,7 +208,7 @@ export class WWA {
         } else {
             this._hasTitleImg = true;
         }
-
+        
         try {
             if (this._hasTitleImg) {
                 util.$id("version").textContent = "WWA Wing Ver." + VERSION_WWAJS;
@@ -332,9 +332,11 @@ export class WWA {
             var pathList = mapFileName.split("/"); //ディレクトリで分割
             pathList.pop(); //最後のファイルを消す
             pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
-            this._wwaData.mapCGName = pathList.join("/"); // pathを復元
-
-
+            this._wwaData.mapCGName = pathList.join("/");  //pathを復元
+            // TODO: 下記2行は PLiCy 2019 Phase 3で使う: https://github.com/WWAWing/WWAWing/issues/201
+            // this._restartData = JSON.parse(JSON.stringify(this._wwaData)); 
+            // this._checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 2);
@@ -389,7 +391,7 @@ export class WWA {
 
             var t_end: number = new Date().getTime();
             console.log("Loading Complete!" + (t_end - t_start) + "ms");
-
+            
             this._cvs = <HTMLCanvasElement>util.$id("wwa-map");
             this._cvsSub = <HTMLCanvasElement>util.$id("wwa-map-sub");
             var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d");
@@ -783,7 +785,11 @@ export class WWA {
                 this._isSkippedSoundMessage = true;
                 if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
                     this._isLoadedSound = true;
-                    this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
+                    switch (this.userDevice.device) {
+                        case DEVICE_TYPE.PC:
+                            this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n", false, true);
+                            break;
+                    }
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound();
 
@@ -2711,7 +2717,7 @@ export class WWA {
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
                     this._messageWindow.deleteSaveDom();
-                    if (this._usePassword) {
+                    if ((this._usePassword) /*|| (this._useSuspend )  ←中断取り込み後コメントアウト解除*/) {
                         this._yesNoJudge = YesNoState.UNSELECTED;
                         this.onpasswordsavecalled();
                         return;
@@ -3245,6 +3251,14 @@ export class WWA {
         return CryptoJS.MD5(text).toString();
     }
     private _saveDataList = []
+
+    /*
+    // TODO: 圧縮取り込み後コメントアウト解除
+    // PLiCy 2019 Phase 3: https://github.com/WWAWing/WWAWing/issues/201
+    public compressSystem(): WWACompress {
+        return WWACompress;
+    }
+    */
 
     private _quickSave(isPassword: boolean = false): string {
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
