@@ -1551,12 +1551,15 @@ export class WWA {
     }
 
     private _drawEffect(): void {
-        if (this._wwaData.effectCoords.length === 0) {
+        if (this._wwaData.effectCoords.length === 0 || this._wwaData.effectWaits === 0) {
             return;
         }
         var i = Math.floor(this._mainCallCounter % (this._wwaData.effectCoords.length * this._wwaData.effectWaits) / this._wwaData.effectWaits);
         for (var y = 0; y < Consts.V_PARTS_NUM_IN_WINDOW; y++) {
             for (var x = 0; x < Consts.H_PARTS_NUM_IN_WINDOW; x++) {
+                if (!this._wwaData.effectCoords[i]) {
+                    continue;
+                }
                 this._cgManager.drawCanvas(
                     this._wwaData.effectCoords[i].x,
                     this._wwaData.effectCoords[i].y,
