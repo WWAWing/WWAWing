@@ -16,7 +16,6 @@ declare var external_script_inject_mode: boolean;
 declare var CryptoJS: any; // ゆるして
 declare var VERSION_WWAJS: string; // webpackにより注入
 declare function loader_start(e: any): void;
-var postMessage_noWorker = function (e: any): void { };
 
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position,
@@ -685,7 +684,7 @@ export class WWA {
                 }
             }
             var self1 = this;
-            postMessage_noWorker = (e): void => {
+            (window as any).postMessage_noWorker = (e): void => {
                 self1._loadHandler(e);
             };
 
