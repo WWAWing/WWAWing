@@ -96,7 +96,9 @@ async function makeDistribution(
                             (match[1] === "html" ||
                                 match[1] === "js" ||
                                 match[1] === "css" ||
-                                match[1] === "txt"))
+                                match[1] === "txt" ||
+                                match[1] === "ini"
+                            ))
                     );
                 })
                 .map(
