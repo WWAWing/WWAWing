@@ -275,7 +275,7 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-
+        
         if (titleImgName === null) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
@@ -284,7 +284,7 @@ export class WWA {
         } else {
             this._hasTitleImg = true;
         }
-
+        
         try {
             if (this._hasTitleImg) {
                 util.$id("version").textContent = "WWA Wing Ver." + VERSION_WWAJS;
@@ -326,7 +326,7 @@ export class WWA {
                     switch (this.device_data.os) {
                         case OS_TYPE.NINTENDO:
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
-                            return;
+                            break;
                     }
                     util.$id("cell-gotowwa").textContent = "Game End";
                     this._useBattleReportButton = false;
@@ -405,7 +405,7 @@ export class WWA {
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
             this._checkOriginalMapString = this._generateMapDataHash(this._restartData);
-
+            
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 2);
@@ -455,7 +455,7 @@ export class WWA {
 
             var t_end: number = new Date().getTime();
             console.log("Loading Complete!" + (t_end - t_start) + "ms");
-
+            
             this._cvs = <HTMLCanvasElement>util.$id("wwa-map");
             this._cvsSub = <HTMLCanvasElement>util.$id("wwa-map-sub");
             var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d");
@@ -855,8 +855,11 @@ export class WWA {
                 this._isSkippedSoundMessage = true;
                 if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
                     this._isLoadedSound = true;
-                    this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
-                        "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
+                    switch (this.device_data.device) {
+                        case DEVICE_TYPE.PC:
+                            this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n", false, true);
+                            break;
+                    }
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound();
 
@@ -880,7 +883,7 @@ export class WWA {
                             this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
                                 "効果音・ＢＧＭデータをロードしますか？" :
                                 this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
-                        ) + "\n※iOS, Android端末では、選択に関わらず音楽が再生されないことがあります。");
+                        ));
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
@@ -2884,7 +2887,7 @@ export class WWA {
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
                     this._messageWindow.deleteSaveDom();
-                    if (this._usePassword) {
+                    if ((this._usePassword) || (this._useSuspend)) {
                         this._yesNoJudge = YesNoState.UNSELECTED;
                         this.onpasswordsavecalled();
                         return;
@@ -3418,6 +3421,10 @@ export class WWA {
         return CryptoJS.MD5(text).toString();
     }
     private _saveDataList = []
+
+    public compressSystem(): WWACompress {
+        return WWACompress;
+    }
 
     private _quickSave(callInfo: number): string {
         var cd;
