@@ -53,7 +53,7 @@ async function makeDistribution(
             copy("engine", path.join("lib", "wwa.js"), "mapdata"),
             copy("loader", path.join("lib", "wwaload.js"), "mapdata"),
             copy("assets", path.join("style", "*.css"), "mapdata"),
-            copy("assets", path.join("wwamk310", "WinWwamk.exe")),
+            copy("assets", path.join("wwamk318", "WinWwaWingmk.exe")),
             copy("assets", path.join("audio", "*"), path.join("mapdata", "audio")),
             copy("assets", path.join("mapdata", "*.dat"), "mapdata"),
             copy("assets", path.join("images", "*.gif"), "mapdata"),
