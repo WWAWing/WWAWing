@@ -1,4 +1,4 @@
-﻿import { WWA } from "./wwa_main";
+import { WWA } from "./wwa_main";
 import {
     WWAConsts,
     Coord,
@@ -334,6 +334,7 @@ export class Macro {
         }
         if (waitTime === 0) {
             this._wwa.stopEffect();
+            return;
         }
         var coords: Coord[] = [];
         for (var i = 1; i < this.macroArgs.length; i += 2) {
