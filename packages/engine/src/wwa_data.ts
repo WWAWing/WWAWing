@@ -81,7 +81,18 @@ export class Status extends EquipmentStatus {
         return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
     }
 
-    public constructor(e: number, s: number, d: number, g: number) {
+    public calculateScore(weight: {
+        energy: number;
+        strength: number;
+        defence: number;
+        gold: number;
+    }): number {
+        type Key = keyof typeof weight;
+        // TODO: this[key] など型が効いていない部分があるが、一旦目を瞑る。
+        return (Object.keys(weight) as Key[]).reduce((prev, key) =>  prev + weight[key] * this[key], 0);
+    }
+
+    public constructor( e: number, s: number, d: number, g: number) {
         super(s, d);
         this.energy = e;
         this.gold = g;
