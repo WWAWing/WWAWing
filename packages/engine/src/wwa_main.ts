@@ -1,20 +1,6 @@
-interface AudioJSInstance {
-    play(): void;
-    pause(): void;
-    skipTo(pos: number): void;
-    element: HTMLAudioElement;
-    loadedPercent: number
-    wrapper: HTMLElement;
-    buffer: any;
-}
-
-interface AudiojsTScomp {
-    create(a, b?): AudioJSInstance;
-}
-
-declare var audiojs: AudiojsTScomp;
 declare var external_script_inject_mode: boolean;
 declare var VERSION_WWAJS: string; // webpackにより注入
+declare var audiojs: AudiojsTScomp;
 declare function loader_start(e: any): void;
 
 import {
@@ -35,6 +21,7 @@ import {
     GamePadState,
     GamePadStore
 } from "./wwa_input";
+
 import * as CryptoJS from "crypto-js";
 import * as util from "./wwa_util";
 import { CGManager } from "./wwa_cgmanager";
@@ -49,6 +36,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
+import { WWAWebAudio, AudioJSInstance, AudiojsTScomp } from "./wwa_audio";
 
 var wwa: WWA;
 let wwap_mode: boolean = false;
@@ -70,73 +58,6 @@ export function getProgress(current: number, total: number, stage: LoadStage): L
     progress.total = total;
     progress.stage = stage;
     return progress;
-}
-export class WWAWebAudio {
-    public isBgm: boolean;
-    private buffer_sources: AudioBufferSourceNode[];
-    private pos: number;
-    constructor() {
-        this.isBgm = false;
-        this.buffer_sources = [];
-        this.pos = 0;
-    }
-
-    public play(): void {
-        var audioContext = wwa.audioContext;
-        var gainNode = wwa.audioGain;
-        var buffer_source: AudioBufferSourceNode = null;
-
-
-        buffer_source = audioContext.createBufferSource();
-        this.buffer_sources.push(buffer_source);
-
-        buffer_source.buffer = this.buffer;
-        if (this.isBgm) {
-            buffer_source.loop = true;
-        }
-        buffer_source.connect(gainNode);
-
-        //gainNode.gain.setValueAtTime(1, audioContext.currentTime);
-        // TODO(rmn): buffer_source.buffer.duration ? あとで調べる
-        var duration = (buffer_source as any).duration;
-        if ((!isFinite(duration)) || (duration < 0) || (typeof duration !== "number")) {
-            duration = 0;
-        }
-        buffer_source.start(0, this.pos * duration);
-        buffer_source.onended = function () {
-            var id: number = this.buffer_sources.indexOf(buffer_source);
-            if (id !== -1) {
-                this.buffer_sources.splice(id, 1);
-            }
-            try {
-                buffer_source.stop();
-            } catch (e) {
-
-            }
-            buffer_source.onended = null;
-        }.bind(this);
-        gainNode.connect(audioContext.destination);
-    }
-    public pause(): void {
-        var len: number = this.buffer_sources.length;
-        var i: number;
-        var buffer_source: AudioBufferSourceNode = null;
-        for (i = 0; i < len; i++) {
-            buffer_source = this.buffer_sources[i];
-            try {
-                buffer_source.stop();
-            } catch (e) {
-
-            }
-            buffer_source.onended = null;
-        }
-        this.buffer_sources.length = 0;
-    }
-    public skipTo(pos: number): void {
-        this.pos = pos;
-    }
-    public loadedPercent: number;
-    public buffer: any;
 }
 
 export class WWA {
@@ -1080,26 +1001,28 @@ export class WWA {
     }
 
     public createAudioJSInstance(idx: number, isSub: boolean = false): void {
-        var audioContext = this.audioContext;
+        if (idx === 0 || idx === SystemSound.NO_SOUND) {
+            return;
+        }
+        const audioContext = this.audioContext;
         if (audioContext) {
-            if (idx === 0 || this._webAudioJSInstances[idx] !== void 0 || idx === SystemSound.NO_SOUND) {
+            if (this._webAudioJSInstances[idx] !== void 0) {
                 return;
             }
         } else {
-            if (idx === 0 || this._audioJSInstances[idx] !== void 0 || idx === SystemSound.NO_SOUND) {
+            if (this._audioJSInstances[idx] !== void 0) {
                 return;
             }
         }
-        var file = (wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + "." + this.audioExtension : this._audioDirectory + idx + "." + this.audioExtension);
+        const file = wwap_mode
+            ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + "." + this.audioExtension
+            : this._audioDirectory + idx + "." + this.audioExtension;
+        // WebAudio
         if (audioContext) {
-            //WebAuido
-            this._webAudioJSInstances[idx] = new WWAWebAudio();
-            if (idx >= SystemSound.BGM_LB) {
-                this._webAudioJSInstances[idx].isBgm = true;
-            }
+            this._webAudioJSInstances[idx] = new WWAWebAudio(idx, this.audioContext, this.audioGain);
             this.audioFileLoader(file, idx);
         } else {
-            var audioElement = new Audio(file);
+            let audioElement = new Audio(file);
             audioElement.preload = "auto";
             if (idx >= SystemSound.BGM_LB) {
                 audioElement.loop = true;
@@ -1113,39 +1036,41 @@ export class WWA {
                 this._audioJSInstancesSub[idx] = audiojs.create(audioElementSub);
             }
 
-
             audioElement.loop = true;
         }
     }
 
     public audioFileLoader(file: string, idx: number): void {
-        var audioContext = this.audioContext;
-        var req = new XMLHttpRequest();
-        var error_count = 0;
-        var that = this;
+        const audioContext = this.audioContext;
+        const that = this;
+        let error_count = 0;
+        
+        let req = new XMLHttpRequest();
         req.responseType = 'arraybuffer';
-        req.onload = function (e) {
-            var req = e.target;
-            if ((req as any).readyState === 4) {
-                if ((req as any).status === 0 || (req as any).status === 200) {
-                    var decodeTime = +new Date();
-                    audioContext.decodeAudioData((req as any).response, function (buffer) {
-                        if (buffer.length === 0) {
-                            if (error_count > 10) {
-                                //10回エラー
-                                console.log("error audio file!  " + file + " buffer size " + buffer.length);
-                            } else {
-                                setTimeout(function () {
-                                    that.audioFileLoader(file, idx);
-                                }, 100);
-                                return;
-                            }
+        req.addEventListener("load", function(event) {
+            const statusCode = req.status;
+            if (statusCode === 0 || statusCode === 200) {
+                audioContext.decodeAudioData(req.response, function (buffer) {
+                    if (buffer.length === 0) {
+                        if (error_count > 10) {
+                            // 10回エラー
+                            console.log("error audio file!  " + file + " buffer size " + buffer.length);
+                        } else {
+                            setTimeout(function () {
+                                that.audioFileLoader(file, idx);
+                            }, 100);
+                            error_count++;
+                            return;
                         }
-                        that._webAudioJSInstances[idx].buffer = buffer;
-                    });
-                }
+                    }
+                    that._webAudioJSInstances[idx].setData(buffer);
+                });
+            } else {
+                console.warn(`サウンド ${idx} 番の音声ファイルが見つかりません！ HTTPエラー番号: ${statusCode}`);
+                that._webAudioJSInstances[idx].markAsNotFound();
+                return;
             }
-        };
+        });
         req.open('GET', file, true);
         req.send('');
     }
@@ -1184,12 +1109,18 @@ export class WWA {
             this._soundLoadSkipFlag = true;
         }
         if (this.audioContext) {
+            /**
+             * WebAudio の読込状態
+             * ・読み込んでいる
+             * ・読み込めない
+             * ・読み込んだ
+             */
             for (var i = 1; i <= Consts.SOUND_MAX; i++) {
                 if (this._webAudioJSInstances[i] === void 0) {
                     continue;
                 }
                 total++;
-                if (!this._webAudioJSInstances[i].buffer) {
+                if (this._webAudioJSInstances[i].isLoading()) {
                     continue;
                 }
                 loadedNum++;
@@ -1241,7 +1172,7 @@ export class WWA {
 
         if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
             if (this.audioContext) {
-                if (this._webAudioJSInstances[this._wwaData.bgm].buffer) {
+                if (this._webAudioJSInstances[this._wwaData.bgm].hasData()) {
                     this._webAudioJSInstances[this._wwaData.bgm].pause();
                 }
             } else {
@@ -1256,12 +1187,12 @@ export class WWA {
             return;
         }
         if (this.audioContext) {
-            if (!this._webAudioJSInstances[id].buffer) {
+            if (!this._webAudioJSInstances[id].hasData()) {
                 if (id >= SystemSound.BGM_LB) {
                     var loadi = ((id: number, self: WWA): void => {
                         var timer = setInterval((): void => {
                             if (self._wwaData.bgm === id) {
-                                if (!self._webAudioJSInstances[id].buffer) {
+                                if (!self._webAudioJSInstances[id].hasData()) {
                                     this._webAudioJSInstances[id].skipTo(0);
                                     this._webAudioJSInstances[id].play();
                                     this._wwaData.bgm = id;
@@ -1308,7 +1239,7 @@ export class WWA {
         }
 
         if (this.audioContext) {
-            if (id !== 0 && this._webAudioJSInstances[id].buffer) {
+            if (id !== 0 && this._webAudioJSInstances[id].hasData()) {
                 if (id >= SystemSound.BGM_LB) {
                     this._webAudioJSInstances[id].skipTo(0);
                     this._webAudioJSInstances[id].play();
