@@ -38,11 +38,8 @@ import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { WWAWebAudio, AudioJSInstance, AudiojsTScomp } from "./wwa_audio";
 
-var wwa: WWA;
+let wwa: WWA;
 let wwap_mode: boolean = false;
-var requestAnimationFrame: (callback: FrameRequestCallback) => number = (
-    window.requestAnimationFrame || window.webkitRequestAnimationFrame || (window as any).mozRequestAnimationFrame || (window as any).msRequestAnimationFrame
-);
 
 /**
 *
