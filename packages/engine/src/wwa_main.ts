@@ -290,13 +290,6 @@ export class WWA {
         if (this._useBattleReportButton) {
             util.$id("cell-gotowwa").textContent = "Battle Report";
         }
-        if (window["audiojs"] === void 0) {
-            this._setErrorMessage("Audio.jsのロードに失敗しました。\n" +
-                "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
-                "フォルダを変更される場合には data-wwa-audio-dir 属性を\n" +
-                "指定してください", ctxCover);
-            return;
-        }
 
         this._loadHandler = (e): void => {
             if (e.data.error !== null && e.data.error !== void 0) {
