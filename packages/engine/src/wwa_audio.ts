@@ -8,6 +8,8 @@ export interface WWAAudio {
     pause(): void;
     skipTo(pos: number): void;
     isBgm(): boolean;
+    isLoading(): boolean;
+    isError(): boolean;
 };
 
 export interface AudioJSInstance {
@@ -20,17 +22,46 @@ export interface AudioJSInstance {
     buffer: any;
 }
 
-export interface AudiojsTScomp {
-    create(a, b?): AudioJSInstance;
+export class WWAAudioJS implements WWAAudio {
+    private idx: number;
+    private element: HTMLAudioElement;
+
+    constructor(idx: number, file: string, parentNode: Node) {
+        this.idx = idx;
+        this.element = new Audio(file);
+        this.element.preload = "auto";
+        this.element.loop = this.isBgm();
+
+        parentNode.appendChild(this.element);
+    }
+
+    public play(): void {
+        this.element.play();
+    }
+    public pause(): void {
+        this.element.pause();
+    }
+    public skipTo(pos: number): void {
+        this.element.currentTime = pos;
+    }
+    public isBgm(): boolean {
+        return this.idx >= SystemSound.BGM_LB;
+    }
+    public isLoading(): boolean {
+        return this.element.readyState < 2;
+    }
+    public isError(): boolean {
+        return this.element.error !== null;
+    }
 }
 
 export class WWAWebAudio implements WWAAudio {
     private idx: number;
-    private audioContext;
-    private audioGain;
-    private data: any;
+    private audioContext: AudioContext;
+    private audioGain: GainNode;
+    private data: AudioBuffer;
     private isLoaded: boolean;
-    private buffer_sources: AudioBufferSourceNode[];
+    private bufferSources: AudioBufferSourceNode[];
     private pos: number;
 
     constructor(idx: number, audioContext, audioGain) {
@@ -40,60 +71,60 @@ export class WWAWebAudio implements WWAAudio {
         this.data = null;
         this.isLoaded = false;
 
-        this.buffer_sources = [];
+        this.bufferSources = [];
         this.pos = 0;
     }
 
     public play(): void {
-        var audioContext = this.audioContext;
-        var gainNode = this.audioGain;
-        var buffer_source: AudioBufferSourceNode = null;
+        let audioContext = this.audioContext;
+        let bufferSource: AudioBufferSourceNode = null;
 
-        buffer_source = audioContext.createBufferSource();
-        this.buffer_sources.push(buffer_source);
+        bufferSource = audioContext.createBufferSource();
+        this.bufferSources.push(bufferSource);
 
-        buffer_source.buffer = this.data;
-        if (this.isBgm) {
-            buffer_source.loop = true;
+        bufferSource.buffer = this.data;
+        if (this.isBgm()) {
+            bufferSource.loop = true;
         }
-        buffer_source.connect(gainNode);
+        bufferSource.connect(this.audioGain);
 
-        //gainNode.gain.setValueAtTime(1, audioContext.currentTime);
-        // TODO(rmn): buffer_source.buffer.duration ? あとで調べる
-        var duration = (buffer_source as any).duration;
+        // gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+        // TODO(rmn): bufferSource.buffer.duration ? あとで調べる
+        let duration = (bufferSource as any).duration;
         if ((!isFinite(duration)) || (duration < 0) || (typeof duration !== "number")) {
             duration = 0;
         }
-        buffer_source.start(0, this.pos * duration);
-        buffer_source.onended = function () {
-            var id: number = this.buffer_sources.indexOf(buffer_source);
+        bufferSource.start(0, this.pos * duration);
+        bufferSource.onended = function () {
+            var id: number = this.bufferSources.indexOf(bufferSource);
             if (id !== -1) {
-                this.buffer_sources.splice(id, 1);
+                this.bufferSources.splice(id, 1);
             }
             try {
-                buffer_source.stop();
+                bufferSource.stop();
             } catch (e) {
-
+                
             }
-            buffer_source.onended = null;
+            bufferSource.onended = null;
         }.bind(this);
-        gainNode.connect(audioContext.destination);
+        this.audioGain.connect(this.audioContext.destination);
     }
 
     public pause(): void {
-        var len: number = this.buffer_sources.length;
-        var i: number;
-        var buffer_source: AudioBufferSourceNode = null;
+        const len: number = this.bufferSources.length;
+        let i: number;
+        let bufferSource: AudioBufferSourceNode = null;
+
         for (i = 0; i < len; i++) {
-            buffer_source = this.buffer_sources[i];
+            bufferSource = this.bufferSources[i];
             try {
-                buffer_source.stop();
+                bufferSource.stop();
             } catch (e) {
 
             }
-            buffer_source.onended = null;
+            bufferSource.onended = null;
         }
-        this.buffer_sources.length = 0;
+        this.bufferSources.length = 0;
     }
 
     public skipTo(pos: number): void {
@@ -113,9 +144,16 @@ export class WWAWebAudio implements WWAAudio {
     }
 
     /**
+     * WWAWebAudio では未対応です。
+     */
+    public isError(): boolean {
+        return false;
+    }
+
+    /**
      * 音声データをセットします。
      */
-    public setData(data): void {
+    public setData(data: AudioBuffer): void {
         this.data = data;
         this.isLoaded = true;
     }

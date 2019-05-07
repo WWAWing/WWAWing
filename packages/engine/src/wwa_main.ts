@@ -1,6 +1,5 @@
 declare var external_script_inject_mode: boolean;
 declare var VERSION_WWAJS: string; // webpackにより注入
-declare var audiojs: AudiojsTScomp;
 declare function loader_start(e: any): void;
 
 import {
@@ -36,7 +35,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
-import { WWAWebAudio, AudioJSInstance, AudiojsTScomp } from "./wwa_audio";
+import { WWAWebAudio, WWAAudioJS } from "./wwa_audio";
 
 let wwa: WWA;
 let wwap_mode: boolean = false;
@@ -111,8 +110,8 @@ export class WWA {
     private _battleEffectCoord: Coord;
 
     private _webAudioJSInstances: WWAWebAudio[];
-    private _audioJSInstances: AudioJSInstance[];
-    private _audioJSInstancesSub: AudioJSInstance[]; // 戦闘など、同じ音を高速に何度も鳴らす時用のサブのインスタンスの配列
+    private _audioJSInstances: WWAAudioJS[];
+    private _audioJSInstancesSub: WWAAudioJS[]; // 戦闘など、同じ音を高速に何度も鳴らす時用のサブのインスタンスの配列
     private _nextSoundIsSub: boolean;
 
     private _playSound: (s: number) => void;
@@ -208,18 +207,21 @@ export class WWA {
                 this._setLoadingMessage(ctxCover, 0);
             }
         } catch (e) { }
+
         var _AudioContext: AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
         if (_AudioContext) {
             this.audioContext = (window as any).audioContext = (window as any).audioContext || new AudioContext();
             this.audioGain = this.audioContext.createGain();
             this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
         }
+
         var myAudio = new Audio();
         if (("no" !== myAudio.canPlayType("audio/mpeg") as string) && ("" !== myAudio.canPlayType("audio/mpeg"))) {
             this.audioExtension = "mp3";
         } else {
             this.audioExtension = "m4a";
         }
+
         var ua: string = window.navigator.userAgent;
         var browser = { os: '', browser: '' };
         browser.os = ua.match(/windows/i) ? 'Windows' : '';
@@ -320,11 +322,11 @@ export class WWA {
                 }
             } catch (e) { }
 
-            var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");//ファイル名取得
-            var pathList = mapFileName.split("/");//ディレクトリで分割
-            pathList.pop();//最後のファイルを消す
-            pathList.push(this._wwaData.mapCGName);//最後に画像ファイル名を追加
-            this._wwaData.mapCGName = pathList.join("/");  //pathを復元
+            var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata"); //ファイル名取得
+            var pathList = mapFileName.split("/"); //ディレクトリで分割
+            pathList.pop(); //最後のファイルを消す
+            pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
+            this._wwaData.mapCGName = pathList.join("/"); // pathを復元
 
 
             this.initCSSRule();
@@ -1019,21 +1021,10 @@ export class WWA {
             this._webAudioJSInstances[idx] = new WWAWebAudio(idx, this.audioContext, this.audioGain);
             this.audioFileLoader(file, idx);
         } else {
-            let audioElement = new Audio(file);
-            audioElement.preload = "auto";
-            if (idx >= SystemSound.BGM_LB) {
-                audioElement.loop = true;
+            this._audioJSInstances[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
+            if (!this._audioJSInstances[idx].isBgm()) {
+                this._audioJSInstancesSub[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
             }
-            util.$id("wwa-audio-wrapper").appendChild(audioElement);
-            this._audioJSInstances[idx] = audiojs.create(audioElement);
-            if (idx < SystemSound.BGM_LB) {
-                var audioElementSub = new Audio(file);
-                audioElementSub.preload = "auto";
-                util.$id("wwa-audio-wrapper").appendChild(audioElementSub);
-                this._audioJSInstancesSub[idx] = audiojs.create(audioElementSub);
-            }
-
-            audioElement.loop = true;
         }
     }
 
@@ -1124,14 +1115,12 @@ export class WWA {
             }
         } else {
             for (var i = 1; i <= Consts.SOUND_MAX; i++) {
-                if (this._audioJSInstances[i] === void 0) {
-                    continue;
-                }
-                if (this._audioJSInstances[i].wrapper.classList.contains("error")) {
+                const instance = this._audioJSInstances[i];
+                if (instance === void 0 || instance.isError()) {
                     continue;
                 }
                 total++;
-                if (this._audioJSInstances[i].wrapper.classList.contains("loading")) {
+                if (instance.isLoading()) {
                     continue;
                 }
                 loadedNum++;
@@ -1173,7 +1162,7 @@ export class WWA {
                     this._webAudioJSInstances[this._wwaData.bgm].pause();
                 }
             } else {
-                if (!this._audioJSInstances[this._wwaData.bgm].wrapper.classList.contains("loading")) {
+                if (!this._audioJSInstances[this._wwaData.bgm].isLoading()) {
                     this._audioJSInstances[this._wwaData.bgm].pause();
                 }
             }
@@ -1209,12 +1198,12 @@ export class WWA {
                 return;
             }
         } else {
-            if (this._audioJSInstances[id].wrapper.classList.contains("loading")) {
+            if (this._audioJSInstances[id].isLoading()) {
                 if (id >= SystemSound.BGM_LB) {
                     var loadi = ((id: number, self: WWA): void => {
                         var timer = setInterval((): void => {
                             if (self._wwaData.bgm === id) {
-                                if (!self._audioJSInstances[id].wrapper.classList.contains("loading")) {
+                                if (!self._audioJSInstances[id].isLoading()) {
                                     this._audioJSInstances[id].skipTo(0);
                                     this._audioJSInstances[id].play();
                                     this._wwaData.bgm = id;
@@ -1247,7 +1236,7 @@ export class WWA {
                 }
             }
         } else {
-            if (id !== 0 && !this._audioJSInstances[id].wrapper.classList.contains("error")) {
+            if (id !== 0 && !this._audioJSInstances[id].isError()) {
                 if (id >= SystemSound.BGM_LB) {
                     this._audioJSInstances[id].skipTo(0);
                     this._audioJSInstances[id].play();
