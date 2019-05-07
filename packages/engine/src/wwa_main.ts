@@ -1018,49 +1018,13 @@ export class WWA {
             : this._audioDirectory + idx + "." + this.audioExtension;
         // WebAudio
         if (audioContext) {
-            this._webAudioJSInstances[idx] = new WWAWebAudio(idx, this.audioContext, this.audioGain);
-            this.audioFileLoader(file, idx);
+            this._webAudioJSInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
         } else {
             this._audioJSInstances[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
             if (!this._audioJSInstances[idx].isBgm()) {
                 this._audioJSInstancesSub[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
             }
         }
-    }
-
-    public audioFileLoader(file: string, idx: number): void {
-        const audioContext = this.audioContext;
-        const that = this;
-        let error_count = 0;
-        
-        let req = new XMLHttpRequest();
-        req.responseType = 'arraybuffer';
-        req.addEventListener("load", function(event) {
-            const statusCode = req.status;
-            if (statusCode === 0 || statusCode === 200) {
-                audioContext.decodeAudioData(req.response, function (buffer) {
-                    if (buffer.length === 0) {
-                        if (error_count > 10) {
-                            // 10回エラー
-                            console.log("error audio file!  " + file + " buffer size " + buffer.length);
-                        } else {
-                            setTimeout(function () {
-                                that.audioFileLoader(file, idx);
-                            }, 100);
-                            error_count++;
-                            return;
-                        }
-                    }
-                    that._webAudioJSInstances[idx].setData(buffer);
-                });
-            } else {
-                console.warn(`サウンド ${idx} 番の音声ファイルが見つかりません！ HTTPエラー番号: ${statusCode}`);
-                that._webAudioJSInstances[idx].markAsNotFound();
-                return;
-            }
-        });
-        req.open('GET', file, true);
-        req.send('');
     }
 
     public loadSound(): void {
@@ -1097,12 +1061,6 @@ export class WWA {
             this._soundLoadSkipFlag = true;
         }
         if (this.audioContext) {
-            /**
-             * WebAudio の読込状態
-             * ・読み込んでいる
-             * ・読み込めない
-             * ・読み込んだ
-             */
             for (var i = 1; i <= Consts.SOUND_MAX; i++) {
                 if (this._webAudioJSInstances[i] === void 0) {
                     continue;

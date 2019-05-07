@@ -12,16 +12,6 @@ export interface WWAAudio {
     isError(): boolean;
 };
 
-export interface AudioJSInstance {
-    play(): void;
-    pause(): void;
-    skipTo(pos: number): void;
-    element: HTMLAudioElement;
-    loadedPercent: number
-    wrapper: HTMLElement;
-    buffer: any;
-}
-
 export class WWAAudioJS implements WWAAudio {
     private idx: number;
     private element: HTMLAudioElement;
@@ -31,6 +21,9 @@ export class WWAAudioJS implements WWAAudio {
         this.element = new Audio(file);
         this.element.preload = "auto";
         this.element.loop = this.isBgm();
+        this.element.addEventListener("error", function() {
+            console.warn(`サウンド ${idx} 番の音声ファイルが見つかりません！`);
+        });
 
         parentNode.appendChild(this.element);
     }
@@ -64,7 +57,7 @@ export class WWAWebAudio implements WWAAudio {
     private bufferSources: AudioBufferSourceNode[];
     private pos: number;
 
-    constructor(idx: number, audioContext, audioGain) {
+    constructor(idx: number, file: string, audioContext: AudioContext, audioGain: GainNode) {
         this.idx = idx;
         this.audioContext = audioContext;
         this.audioGain = audioGain;
@@ -73,6 +66,43 @@ export class WWAWebAudio implements WWAAudio {
 
         this.bufferSources = [];
         this.pos = 0;
+        this._load(idx, file);
+    }
+
+    private _load(idx: number, file: string): void {
+        const audioContext = this.audioContext;
+        const that = this;
+        
+        let req = new XMLHttpRequest();
+        let errorCount = 0;
+        req.responseType = 'arraybuffer';
+
+        req.addEventListener("load", function(event) {
+            const statusCode = req.status;
+            if (statusCode === 0 || statusCode === 200) {
+                audioContext.decodeAudioData(req.response, function (buffer) {
+                    if (buffer.length === 0) {
+                        if (errorCount > 10) {
+                            // 10回エラー
+                            console.log("error audio file!  " + file + " buffer size " + buffer.length);
+                        } else {
+                            setTimeout(function () {
+                                that._load(idx, file);
+                            }, 100);
+                            errorCount++;
+                            return;
+                        }
+                    }
+                    that.setData(buffer);
+                });
+            } else {
+                console.warn(`サウンド ${idx} 番の音声ファイルが見つかりません！ HTTPエラー番号: ${statusCode}`);
+                that.markAsNotFound();
+                return;
+            }
+        });
+        req.open('GET', file, true);
+        req.send('');
     }
 
     public play(): void {
