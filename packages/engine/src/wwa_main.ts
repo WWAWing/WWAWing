@@ -35,7 +35,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
-import { WWAWebAudio, WWAAudioJS } from "./wwa_audio";
+import { WWAWebAudio, WWAAudioJS, WWAAudio } from "./wwa_audio";
 
 let wwa: WWA;
 let wwap_mode: boolean = false;
@@ -109,9 +109,8 @@ export class WWA {
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
-    private _webAudioJSInstances: WWAWebAudio[];
-    private _audioJSInstances: WWAAudioJS[];
-    private _audioJSInstancesSub: WWAAudioJS[]; // 戦闘など、同じ音を高速に何度も鳴らす時用のサブのインスタンスの配列
+    private _audioInstances: WWAAudio[];
+    private _audioInstancesSub: WWAAudioJS[]; // 戦闘など、同じ音を高速に何度も鳴らす時用のサブのインスタンスの配列
     private _nextSoundIsSub: boolean;
 
     private _playSound: (s: number) => void;
@@ -997,33 +996,26 @@ export class WWA {
             return;
         }
         const audioContext = this.audioContext;
-        if (audioContext) {
-            if (this._webAudioJSInstances[idx] !== void 0) {
-                return;
-            }
-        } else {
-            if (this._audioJSInstances[idx] !== void 0) {
-                return;
-            }
+        if (this._audioInstances[idx] !== void 0) {
+            return;
         }
         const file = wwap_mode
             ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + "." + this.audioExtension
             : this._audioDirectory + idx + "." + this.audioExtension;
         // WebAudio
         if (audioContext) {
-            this._webAudioJSInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
+            this._audioInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
         } else {
-            this._audioJSInstances[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
-            if (!this._audioJSInstances[idx].isBgm()) {
-                this._audioJSInstancesSub[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
+            this._audioInstances[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
+            if (!this._audioInstances[idx].isBgm()) {
+                this._audioInstancesSub[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
             }
         }
     }
 
     public loadSound(): void {
-        this._webAudioJSInstances = new Array(Consts.SOUND_MAX + 1);
-        this._audioJSInstances = new Array(Consts.SOUND_MAX + 1);
-        this._audioJSInstancesSub = new Array(Consts.SOUND_MAX + 1);
+        this._audioInstances = new Array(Consts.SOUND_MAX + 1);
+        this._audioInstancesSub = new Array(Consts.SOUND_MAX + 1);
 
         this.createAudioJSInstance(SystemSound.DECISION);
         this.createAudioJSInstance(SystemSound.ATTACK);
@@ -1053,29 +1045,16 @@ export class WWA {
         if (this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
             this._soundLoadSkipFlag = true;
         }
-        if (this.audioContext) {
-            for (var i = 1; i <= Consts.SOUND_MAX; i++) {
-                if (this._webAudioJSInstances[i] === void 0) {
-                    continue;
-                }
-                total++;
-                if (this._webAudioJSInstances[i].isLoading()) {
-                    continue;
-                }
-                loadedNum++;
+        for (var i = 1; i <= Consts.SOUND_MAX; i++) {
+            const instance = this._audioInstances[i];
+            if (instance === void 0 || instance.isError()) {
+                continue;
             }
-        } else {
-            for (var i = 1; i <= Consts.SOUND_MAX; i++) {
-                const instance = this._audioJSInstances[i];
-                if (instance === void 0 || instance.isError()) {
-                    continue;
-                }
-                total++;
-                if (instance.isLoading()) {
-                    continue;
-                }
-                loadedNum++;
+            total++;
+            if (!instance.hasData()) {
+                continue;
             }
+            loadedNum++;
         }
         if (loadedNum < total && !this._soundLoadSkipFlag) {
             this._setProgressBar(getProgress(loadedNum, total, LoadStage.AUDIO));
@@ -1108,14 +1087,8 @@ export class WWA {
         }
 
         if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
-            if (this.audioContext) {
-                if (this._webAudioJSInstances[this._wwaData.bgm].hasData()) {
-                    this._webAudioJSInstances[this._wwaData.bgm].pause();
-                }
-            } else {
-                if (!this._audioJSInstances[this._wwaData.bgm].isLoading()) {
-                    this._audioJSInstances[this._wwaData.bgm].pause();
-                }
+            if (this._audioInstances[this._wwaData.bgm].hasData()) {
+                this._audioInstances[this._wwaData.bgm].pause();
             }
             this._wwaData.bgm = 0;
         }
@@ -1123,82 +1096,55 @@ export class WWA {
         if (id === 0 || id === SystemSound.NO_SOUND) {
             return;
         }
-        if (this.audioContext) {
-            if (!this._webAudioJSInstances[id].hasData()) {
-                if (id >= SystemSound.BGM_LB) {
-                    var loadi = ((id: number, self: WWA): void => {
-                        var timer = setInterval((): void => {
-                            if (self._wwaData.bgm === id) {
-                                if (!self._webAudioJSInstances[id].hasData()) {
-                                    this._webAudioJSInstances[id].skipTo(0);
-                                    this._webAudioJSInstances[id].play();
-                                    this._wwaData.bgm = id;
-                                    clearInterval(timer);
-                                }
-                            } else {
+        const audioInstance = this._audioInstances[id];
+        if (!audioInstance.hasData()) {
+            if (id >= SystemSound.BGM_LB) {
+                var loadi = ((id: number, self: WWA): void => {
+                    var timer = setInterval((): void => {
+                        if (self._wwaData.bgm === id) {
+                            if (!self._audioInstances[id].hasData()) {
+                                this._audioInstances[id].play();
+                                this._wwaData.bgm = id;
                                 clearInterval(timer);
-                                if (self._wwaData.bgm !== SystemSound.NO_SOUND) {
-                                    loadi(self._wwaData.bgm, self);
-                                }
                             }
-                        }, 4);
-                    });
-                    loadi(id, this);
-                }
-                this._wwaData.bgm = id;
-                return;
-            }
-        } else {
-            if (this._audioJSInstances[id].isLoading()) {
-                if (id >= SystemSound.BGM_LB) {
-                    var loadi = ((id: number, self: WWA): void => {
-                        var timer = setInterval((): void => {
-                            if (self._wwaData.bgm === id) {
-                                if (!self._audioJSInstances[id].isLoading()) {
-                                    this._audioJSInstances[id].skipTo(0);
-                                    this._audioJSInstances[id].play();
-                                    this._wwaData.bgm = id;
-                                    clearInterval(timer);
-                                }
-                            } else {
-                                clearInterval(timer);
-                                if (self._wwaData.bgm !== SystemSound.NO_SOUND) {
-                                    loadi(self._wwaData.bgm, self);
-                                }
+                        } else {
+                            clearInterval(timer);
+                            if (self._wwaData.bgm !== SystemSound.NO_SOUND) {
+                                loadi(self._wwaData.bgm, self);
                             }
-                        }, 4);
-                    });
-                    loadi(id, this);
-                }
-                this._wwaData.bgm = id;
-                return;
+                        }
+                    }, 4);
+                });
+                loadi(id, this);
             }
+            this._wwaData.bgm = id;
+            return;
         }
 
         if (this.audioContext) {
-            if (id !== 0 && this._webAudioJSInstances[id].hasData()) {
+            if (id !== 0 && this._audioInstances[id].hasData()) {
                 if (id >= SystemSound.BGM_LB) {
-                    this._webAudioJSInstances[id].skipTo(0);
-                    this._webAudioJSInstances[id].play();
+                    this._audioInstances[id].play();
                     this._wwaData.bgm = id;
                 } else {
-                    this._webAudioJSInstances[id].skipTo(0);
-                    this._webAudioJSInstances[id].play();
+                    this._audioInstances[id].play();
                 }
             }
         } else {
-            if (id !== 0 && !this._audioJSInstances[id].isError()) {
+            /**
+             * audio 要素は1つで並列で鳴らせないため、2つインスタンスを持たせて交互に鳴らすようにしている。
+             * @todo _nextSoundIsSub を WWAAudioJS に集約する
+             * @see WWAAudioJS
+             */
+            if (id !== 0 && !this._audioInstances[id].isError()) {
                 if (id >= SystemSound.BGM_LB) {
-                    this._audioJSInstances[id].skipTo(0);
-                    this._audioJSInstances[id].play();
+                    this._audioInstances[id].play();
                     this._wwaData.bgm = id;
                 } else if (this._nextSoundIsSub) {
-                    this._audioJSInstancesSub[id].skipTo(0);
-                    this._audioJSInstancesSub[id].play();
+                    this._audioInstancesSub[id].play();
                     this._nextSoundIsSub = false;
                 } else {
-                    this._audioJSInstances[id].skipTo(0);
-                    this._audioJSInstances[id].play();
+                    this._audioInstances[id].play();
                     this._nextSoundIsSub = true;
                 }
             }

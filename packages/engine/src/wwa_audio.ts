@@ -6,9 +6,8 @@ import { SystemSound } from './wwa_data';
 export interface WWAAudio {
     play(): void;
     pause(): void;
-    skipTo(pos: number): void;
     isBgm(): boolean;
-    isLoading(): boolean;
+    hasData(): boolean;
     isError(): boolean;
 };
 
@@ -29,19 +28,17 @@ export class WWAAudioJS implements WWAAudio {
     }
 
     public play(): void {
+        this.element.currentTime = 0;
         this.element.play();
     }
     public pause(): void {
         this.element.pause();
     }
-    public skipTo(pos: number): void {
-        this.element.currentTime = pos;
-    }
     public isBgm(): boolean {
         return this.idx >= SystemSound.BGM_LB;
     }
-    public isLoading(): boolean {
-        return this.element.readyState < 2;
+    public hasData(): boolean {
+        return this.element.readyState >= 2;
     }
     public isError(): boolean {
         return this.element.error !== null;
@@ -106,6 +103,8 @@ export class WWAWebAudio implements WWAAudio {
     }
 
     public play(): void {
+        this.pos = 0;
+
         let audioContext = this.audioContext;
         let bufferSource: AudioBufferSourceNode = null;
 
@@ -157,10 +156,6 @@ export class WWAWebAudio implements WWAAudio {
         this.bufferSources.length = 0;
     }
 
-    public skipTo(pos: number): void {
-        this.pos = pos;
-    }
-
     public isBgm(): boolean {
         return this.idx >= SystemSound.BGM_LB;
     }
@@ -173,11 +168,8 @@ export class WWAWebAudio implements WWAAudio {
         return !this.isLoaded;
     }
 
-    /**
-     * WWAWebAudio では未対応です。
-     */
     public isError(): boolean {
-        return false;
+        return this.isLoaded && this.data === null;
     }
 
     /**
