@@ -1,4 +1,5 @@
 import { Coord } from "./wwa_data";
+import { UAParser } from "ua-parser-js";
 
 export var $id = (id: string): HTMLElement => {
     return document.getElementById(id);
@@ -54,4 +55,19 @@ export var arr2str4save = (x: any): string => {
     } else {
         return x + "";
     }
+}
+
+export function getEnvironment() {
+  const ua: string = window.navigator.userAgent;
+  const env = { os: "", browser: new UAParser(ua).getBrowser().name };
+  // TODO(@matsuyuki-a): OS判定もUAParserに任せるようにする
+  env.os = ua.match(/windows/i) ? "Windows" : "";
+  env.os = env.os || (ua.match(/macintosh/i) ? "Macintosh" : "");
+  env.os = env.os || (ua.match(/iphone|ipad|ipod/i) ? "iOS" : "");
+  env.os = env.os || (ua.match(/oculus/i) ? "Oculus" : "");
+  env.os = env.os || (ua.match(/android/i) ? "Android" : "");
+  env.os = env.os || (ua.match(/nintendo/i) ? "Nintendo" : "");
+  env.os = env.os || (ua.match(/playstation/i) ? "PlayStation" : "");
+  env.os = env.os || (ua.match(/linux/i) ? "Linux" : "");
+  return env;
 }

@@ -222,6 +222,8 @@ export class WWA {
 
     private _isActive: boolean;
 
+    private _environment: {os: string, browser:string};
+
     /**
      * 背景パーツ番号として添字を与えると
      * パーツが配置されている(X,Y)座標をビットパターンに変換したものの配列を見ることができます。
@@ -302,17 +304,8 @@ export class WWA {
         } else {
             this.audioExtension = "m4a";
         }
-        var ua: string = window.navigator.userAgent;
-        var browser = { os: '', browser: '' };
-        browser.os = ua.match(/windows/i) ? 'Windows' : '';
-        browser.os = browser.os || (ua.match(/macintosh/i) ? 'Macintosh' : '');
-        browser.os = browser.os || (ua.match(/iphone|ipad|ipod/i) ? 'iOS' : '');
-        browser.os = browser.os || (ua.match(/oculus/i) ? 'Oculus' : '');
-        browser.os = browser.os || (ua.match(/android/i) ? 'Android' : '');
-        browser.os = browser.os || (ua.match(/nintendo/i) ? 'Nintendo' : '');
-        browser.os = browser.os || (ua.match(/playstation/i) ? 'PlayStation' : '');
-        browser.os = browser.os || (ua.match(/linux/i) ? 'Linux' : '');
-
+        this._environment = util.getEnvironment();
+        
         this._isURLGateEnable = urlgateEnabled;
         this._isClassicModeEnable = classicModeEnabled;
         this._mainCallCounter = 0;
@@ -328,12 +321,12 @@ export class WWA {
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
         if (isLocal) {
-            if (browser.os === "Nintendo") {
+            if (this._environment.os === "Nintendo") {
                 //speedList = [10, 10, 10, 10];
                 Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
                 this._useGameEnd = true;
                 this._useBattleReportButton = false;
-            } else {
+            } else if(this._environment.browser !== "Firefox") {
                 alert(
                     "【警告】直接HTMLファイルを開いているようです。\n" +
                     "このプログラムは正常に動作しない可能性があります。\n" +
@@ -341,10 +334,10 @@ export class WWA {
                 );
             }
         }
-        this._usePassword = browser.os !== "Nintendo";
+        this._usePassword = this._environment.os !== "Nintendo";
         this._useHelp = true;
         this._useScaleUp = false;
-        switch (browser.os) {
+        switch (this._environment.os) {
             case "Android":
             case "iOS":
             case "Oculus":
@@ -353,7 +346,7 @@ export class WWA {
                 this._useHelp = false;
                 break;
         }
-        switch (browser.os) {
+        switch (this._environment.os) {
             case "Android":
             case "iOS":
                 util.$id("wwa-wrapper").classList.add("useScaleUp");
@@ -490,7 +483,7 @@ export class WWA {
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
                 if (!this._isActive) { return; }
-                if (browser.os === "Nintendo") {
+                if (this._environment.os === "Nintendo") {
                     e.preventDefault();
                     e.stopPropagation();
                     return;
@@ -551,7 +544,7 @@ export class WWA {
             });
             window.addEventListener("keyup", (e): void => {
                 if (!this._isActive) { return; }
-                if (browser.os === "Nintendo") {
+                if (this._environment.os === "Nintendo") {
                     e.preventDefault();
                     e.stopPropagation();
                     return;
