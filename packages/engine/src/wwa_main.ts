@@ -35,7 +35,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
-import { WWAWebAudio, WWAAudioJS, WWAAudio } from "./wwa_audio";
+import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 
 let wwa: WWA;
 let wwap_mode: boolean = false;
@@ -110,8 +110,6 @@ export class WWA {
     private _battleEffectCoord: Coord;
 
     private _audioInstances: WWAAudio[];
-    private _audioInstancesSub: WWAAudioJS[]; // 戦闘など、同じ音を高速に何度も鳴らす時用のサブのインスタンスの配列
-    private _nextSoundIsSub: boolean;
 
     private _playSound: (s: number) => void;
 
@@ -1006,16 +1004,12 @@ export class WWA {
         if (audioContext) {
             this._audioInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
         } else {
-            this._audioInstances[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
-            if (!this._audioInstances[idx].isBgm()) {
-                this._audioInstancesSub[idx] = new WWAAudioJS(idx, file, util.$id("wwa-audio-wrapper"));
-            }
+            this._audioInstances[idx] = new WWAAudioElement(idx, file, util.$id("wwa-audio-wrapper"));
         }
     }
 
     public loadSound(): void {
         this._audioInstances = new Array(Consts.SOUND_MAX + 1);
-        this._audioInstancesSub = new Array(Consts.SOUND_MAX + 1);
 
         this.createAudioJSInstance(SystemSound.DECISION);
         this.createAudioJSInstance(SystemSound.ATTACK);
@@ -1121,32 +1115,12 @@ export class WWA {
             return;
         }
 
-        if (this.audioContext) {
-            if (id !== 0 && this._audioInstances[id].hasData()) {
-                if (id >= SystemSound.BGM_LB) {
-                    this._audioInstances[id].play();
-                    this._wwaData.bgm = id;
-                } else {
-                    this._audioInstances[id].play();
-                }
-            }
-        } else {
-            /**
-             * audio 要素は1つで並列で鳴らせないため、2つインスタンスを持たせて交互に鳴らすようにしている。
-             * @todo _nextSoundIsSub を WWAAudioJS に集約する
-             * @see WWAAudioJS
-             */
-            if (id !== 0 && !this._audioInstances[id].isError()) {
-                if (id >= SystemSound.BGM_LB) {
-                    this._audioInstances[id].play();
-                    this._wwaData.bgm = id;
-                } else if (this._nextSoundIsSub) {
-                    this._audioInstancesSub[id].play();
-                    this._nextSoundIsSub = false;
-                } else {
-                    this._audioInstances[id].play();
-                    this._nextSoundIsSub = true;
-                }
+        if (id !== 0 && this._audioInstances[id].hasData()) {
+            if (id >= SystemSound.BGM_LB) {
+                this._audioInstances[id].play();
+                this._wwaData.bgm = id;
+            } else {
+                this._audioInstances[id].play();
             }
         }
 
