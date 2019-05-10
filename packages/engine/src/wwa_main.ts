@@ -35,7 +35,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
-import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio/";
+import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 
 let wwa: WWA;
 let wwap_mode: boolean = false;
