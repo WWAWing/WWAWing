@@ -748,7 +748,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._ynWrapperElement.appendChild(this._divYesElement);
         this._ynWrapperElement.appendChild(this._divNoElement);
         thisA._isInputDisable = false;
-        switch (wwa.device_data.device) {
+        switch (wwa.userDevice.device) {
             case DEVICE_TYPE.SP:
             case DEVICE_TYPE.VR:
                 //スマートフォン用に拡大

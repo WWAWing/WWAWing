@@ -346,7 +346,7 @@ export enum PartsType {
     OBJECT = 0
 }
 
-export class USER_DEVICE {
+export class UserDevide {
     public os: number;
     public browser: number;
     public device: number;

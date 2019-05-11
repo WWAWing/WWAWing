@@ -23,7 +23,7 @@ import {
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, USER_DEVICE, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevide, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE
 } from "./wwa_data";
 
 import {
@@ -259,7 +259,7 @@ export class WWA {
     public audioContext: any;
     public audioGain: any;
     private audioExtension: string = "";
-    public device_data:USER_DEVICE;
+    public userDevice:  UserDevide;
 
     constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName: string, classicModeEnabled: boolean, itemEffectEnabled: boolean, audioDirectory: string = "") {
         var ctxCover;
@@ -302,7 +302,7 @@ export class WWA {
         } else {
             this.audioExtension = "m4a";
         }
-        this.device_data = new USER_DEVICE();
+        this.userDevice = new UserDevide();
 
         this._isURLGateEnable = urlgateEnabled;
         this._isClassicModeEnable = classicModeEnabled;
@@ -319,9 +319,9 @@ export class WWA {
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
         if (isLocal) {
-            switch (this.device_data.device) {
+            switch (this.userDevice.device) {
                 case DEVICE_TYPE.GAME:
-                    switch (this.device_data.os) {
+                    switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
                             return;
@@ -338,7 +338,7 @@ export class WWA {
                     break;
             }
         }
-        switch (this.device_data.device) {
+        switch (this.userDevice.device) {
             case DEVICE_TYPE.VR:
             case DEVICE_TYPE.GAME:
                 this._usePassword = false;
@@ -347,7 +347,7 @@ export class WWA {
                 this._usePassword = true;
                 break;
         }
-        switch (this.device_data.device) {
+        switch (this.userDevice.device) {
             case DEVICE_TYPE.SP:
             case DEVICE_TYPE.VR:
             case DEVICE_TYPE.GAME:
@@ -488,7 +488,7 @@ export class WWA {
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
                 if (!this._isActive) { return; }
-                switch (this.device_data.os) {
+                switch (this.userDevice.os) {
                     case OS_TYPE.NINTENDO:
                         e.preventDefault();
                         e.stopPropagation();
@@ -550,7 +550,7 @@ export class WWA {
             });
             window.addEventListener("keyup", (e): void => {
                 if (!this._isActive) { return; }
-                switch (this.device_data.os) {
+                switch (this.userDevice.os) {
                     case OS_TYPE.NINTENDO:
                         e.preventDefault();
                         e.stopPropagation();
