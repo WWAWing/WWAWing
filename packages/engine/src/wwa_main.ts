@@ -798,7 +798,7 @@ export class WWA {
             });
             util.$id("button-gotowwa").addEventListener("click", () => {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
-                    this.onselectbutton(SidebarButton.GOTO_WWA, true);
+                    this.onselectbutton(SidebarButton.GOTO_WWA, false, !this._useBattleReportButton);
                 }
             });
 
@@ -1398,7 +1398,7 @@ export class WWA {
         }
     }
 
-    public onselectbutton(button: SidebarButton, forcePassword: boolean = false): void {
+    public onselectbutton(button: SidebarButton, forcePassword: boolean = false, forceGoToWWA: boolean = false): void {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[button]));
         this.playSound(SystemSound.DECISION);
         this._itemMenu.close();
@@ -1435,14 +1435,16 @@ export class WWA {
                 (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
-            } else if (this._useBattleReportButton) {
-                this.launchBattleEstimateWindow();
-            } else {
+            } else if (forceGoToWWA) {
+                // F8 で GoTo WWAを選んだ場合で、Battle Reportボタンが表示されている場合は、
+                // Battle Report ボタンを凹ませない
                 if (this._useBattleReportButton) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 }
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
+            } else if (this._useBattleReportButton) {
+                this.launchBattleEstimateWindow();
             }
         }
     }
@@ -1635,7 +1637,7 @@ export class WWA {
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_R)) {
                 this.onselectbutton(SidebarButton.RESTART_GAME);
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
-                this.onselectbutton(SidebarButton.GOTO_WWA);
+                this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X)) {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
