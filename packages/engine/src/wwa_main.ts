@@ -1435,15 +1435,12 @@ export class WWA {
                 (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
-            } else if (!forcePassword) {
-                if (this._useBattleReportButton) {
-                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
-                }
-                this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
-                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
             } else if (this._useBattleReportButton) {
                 this.launchBattleEstimateWindow();
             } else {
+                if (this._useBattleReportButton) {
+                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+                }
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
             }
