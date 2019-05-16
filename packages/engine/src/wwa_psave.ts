@@ -17,7 +17,7 @@ var NOT_COMPRESS_ID = {
 export class WWACompress {
     private static _usingByteFlag = false;
     private static MIN_LOOP_COUNT = 3;
-    private static _restartData: WWAData;
+    private static _restartData: WWAData = void 0;
     private static _mapByteLength: number = 0;
     public static compress(wwaData: WWAData): object {
         var saveObject: object = {};
@@ -193,14 +193,14 @@ export class WWACompress {
      * @param saveObject
      * @param wwaObject
      */
-    private static compressUint8Array(id, saveObject, wwaObject) {
-        var x: number, y: number, bit: number, position:number,lastPosition;
-        var mapWidth = this._restartData.mapWidth;
+    private static compressUint8Array(id: number, saveObject: object, wwaObject: object):object {
+        var x: number, y: number, bit: number, position: number, lastPosition: number;
+        var mapWidth: number = this._restartData.mapWidth;
         if (JSON.stringify(saveObject).length < this._mapByteLength) {
             return saveObject;
         }
 
-        var uint8Array = new Uint8Array(this._mapByteLength);
+        var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
         bit = 0;
         position = 0;
         lastPosition = 0;
@@ -218,6 +218,14 @@ export class WWACompress {
             }
         }
         return uint8Array.subarray(0, lastPosition + 1);
+    }
+    private static compressBase64(id: number, saveObject: object, wwaObject: object) {
+        var compressObject: object = this.compressUint8Array(id, saveObject, wwaObject);
+        if (compressObject instanceof Uint8Array) {
+            return compressObject;
+        }
+        var uint8Array: Uint8Array = <Uint8Array>compressObject;
+        return window.btoa(String.fromCharCode.apply(null, uint8Array));
     }
     /**
      * 絶対数値を示した配列を、相対数値を示した配列に変換する
@@ -469,6 +477,31 @@ export class WWACompress {
         for (position = 0; position < len; position++) {
             for (bit = 0; bit < 8; bit++) {
                 if ((uint8Array[position] & (1 << bit)) !== 0) {
+                    //設置している
+                    x = count % mapWidth;
+                    y = (count / mapWidth) | 0;
+                    newObject[y][x] = id;
+
+                }
+                count++;
+            }
+        }
+        return true;
+    }
+    private static decompressBase64(id: number, loadArray: object, newObject: object) {
+        if (typeof loadArray !== "string") {
+            return false;
+        }
+        var src = <string>loadArray;
+        var byteSrc: string = window.atob(src);
+        len = byteSrc.length;
+        var x: number, y: number, bit: number, position: number, len: number, count: number, byte: number;
+        var mapWidth = this._restartData.mapWidth;
+        count = 0;
+        for (position = 0; position < len; position++) {
+            byte = byteSrc.charCodeAt(position);
+            for (bit = 0; bit < 8; bit++) {
+                if ((byte & (1 << bit)) !== 0) {
                     //設置している
                     x = count % mapWidth;
                     y = (count / mapWidth) | 0;
