@@ -15,8 +15,10 @@ var NOT_COMPRESS_ID = {
 };
 
 export class WWACompress {
+    private static _usingByteFlag = false;
     private static MIN_LOOP_COUNT = 3;
-    public static _restartData: WWAData;
+    private static _restartData: WWAData;
+    private static _mapByteLength: number = 0;
     public static compress(wwaData: WWAData): object {
         var saveObject: object = {};
         var key: string, value;
@@ -64,6 +66,7 @@ export class WWACompress {
                 saveObject = {};
                 allIdTableY = {};
                 allIdTableX = {};
+
                 for (y in wwaObject) {
                     mapY = wwaObject[y];
                     restartMapY = restartObject[y];
@@ -156,6 +159,10 @@ export class WWACompress {
                     newValue = Number(idText);
                     addValue = newValue - oldValue - 1;
                     oldValue = newValue;
+                    if (this._usingByteFlag) {
+                        //バイナリ化
+                        saveObject[idText] = this.compressUint8Array(newValue, saveObject[idText], wwaObject);
+                    }
                     saveList.push(addValue, saveObject[idText]);
                 }
                 return saveList;
@@ -177,6 +184,40 @@ export class WWACompress {
             return undefined;
         }
         return saveObject;
+    }
+    /**
+     * JSON化したときの文字列の長さにより判定し、分岐する。
+     * bit単位でフラグ管理し、マップ全体の通行情報を格納する方式に変換。
+     * ランダムに大量に同じチップが使われている場合に切り替える。
+     * @param id
+     * @param saveObject
+     * @param wwaObject
+     */
+    private static compressUint8Array(id, saveObject, wwaObject) {
+        var x: number, y: number, bit: number, position:number,lastPosition;
+        var mapWidth = this._restartData.mapWidth;
+        if (JSON.stringify(saveObject).length < this._mapByteLength) {
+            return saveObject;
+        }
+
+        var uint8Array = new Uint8Array(this._mapByteLength);
+        bit = 0;
+        position = 0;
+        lastPosition = 0;
+        for (y = 0; y < mapWidth; y++) {
+            for (x = 0; x < mapWidth; x++) {
+                if (wwaObject[y][x] === id) {
+                    uint8Array[position] = uint8Array[position] | (1 << bit);
+                    lastPosition = position;
+                }
+                bit++;
+                if (bit === 8) {
+                    bit = 0;
+                    position++;
+                }
+            }
+        }
+        return uint8Array.subarray(0, lastPosition + 1);
     }
     /**
      * 絶対数値を示した配列を、相対数値を示した配列に変換する
@@ -303,6 +344,10 @@ export class WWACompress {
                     id = Number(idText);
 
                     loadArray = <object[]>saveObject[idText];
+                    if (this.decompressUint8Array(id, loadArray, newObject)) {
+                        //バイトデータである場合は書き込んで戻る
+                        continue;
+                    }
                     len = loadArray.length;
                     idTableX = [];
                     idTableY = [];
@@ -405,10 +450,40 @@ export class WWACompress {
                 }
                 return newObject;
         }
-    } 
+    }
+    /**
+     * Uint8Arrayに保存されているフラグ情報を展開
+     * @param id
+     * @param loadArray
+     * @param newObject
+     */
+    private static decompressUint8Array(id: number, loadArray: object, newObject: object) {
+        if (!(loadArray instanceof Uint8Array)) {
+            return false;
+        }
+        var x: number, y: number, bit: number, position: number, len: number,count:number;
+        var mapWidth = this._restartData.mapWidth;
+        var uint8Array = <Uint8Array>loadArray;
+        len = uint8Array.length;
+        count = 0;
+        for (position = 0; position < len; position++) {
+            for (bit = 0; bit < 8; bit++) {
+                if ((uint8Array[position] & (1 << bit)) !== 0) {
+                    //設置している
+                    x = count % mapWidth;
+                    y = (count / mapWidth) | 0;
+                    newObject[y][x] = id;
+
+                }
+                count++;
+            }
+        }
+        return true;
+    }
     
     public static setRestartData(restartData: WWAData) {
         this._restartData = restartData;
+        this._mapByteLength = Math.ceil(restartData.mapWidth * restartData.mapWidth / 8);
     }
 
     public static getStartWWAData(resumeSaveTextData: string) {
@@ -432,6 +507,14 @@ export class WWACompress {
             }
         }
         return this._restartData;
+    }
+    /**
+     * WWA COLLECTION向け処理。
+     * バイナリデータ保存用のUint8Arrayの保存方式を併用する。
+     * @param _usingByteFlag
+     */
+    public static usingByte(_usingByteFlag):void {
+        this._usingByteFlag = _usingByteFlag;
     }
 };
 

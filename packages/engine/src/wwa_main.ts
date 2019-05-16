@@ -325,6 +325,7 @@ export class WWA {
                 case DEVICE_TYPE.GAME:
                     switch (this.device_data.os) {
                         case OS_TYPE.NINTENDO:
+                            WWACompress.usingByte(true);
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
                             break;
                     }
