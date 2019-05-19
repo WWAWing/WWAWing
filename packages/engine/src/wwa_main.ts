@@ -23,7 +23,7 @@ import {
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevide, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE
 } from "./wwa_data";
 
 import {
@@ -259,7 +259,7 @@ export class WWA {
     public audioContext: any;
     public audioGain: any;
     private audioExtension: string = "";
-    public userDevice:  UserDevide;
+    public userDevice:  UserDevice;
 
     constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName: string, classicModeEnabled: boolean, itemEffectEnabled: boolean, audioDirectory: string = "") {
         var ctxCover;
@@ -302,7 +302,7 @@ export class WWA {
         } else {
             this.audioExtension = "m4a";
         }
-        this.userDevice = new UserDevide();
+        this.userDevice = new UserDevice();
 
         this._isURLGateEnable = urlgateEnabled;
         this._isClassicModeEnable = classicModeEnabled;
