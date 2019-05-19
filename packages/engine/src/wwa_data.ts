@@ -387,11 +387,17 @@ export class UserDevide {
         return OS_TYPE.OTHERS;
     }
     private getBrowser(ua): number{
-        if (ua.match(/chrome/i)) {
-            return BROWSER_TYPE.CHROME;
-        }
+        // FYI: EdgeのUAには「Chrome」「Safari」の文字列が含まれており、Chrome判定の前にEdge判定を実行する必要がある。
+        // https://github.com/WWAWing/WWAWing/pull/123#issuecomment-493747626
+        // https://qiita.com/tonkotsuboy_com/items/7b36bdfc3a9a0970d23b
+        // また、ChromiumバージョンのEdgeはChromeとして扱うが、ChromiumバージョンのUA(2019-05-19現在)には「Edge」は含まれていないので、
+        // ここでは特殊な処理は行わない。（代わりに「Edg」の文字列がある）
+        // https://www.ka-net.org/blog/?p=11457
         if (ua.match(/edge/i)) {
             return BROWSER_TYPE.EDGE;
+        }
+        if (ua.match(/chrome/i)) {
+            return BROWSER_TYPE.CHROME;
         }
         if (ua.match(/firefox/i)) {
             return BROWSER_TYPE.FIREFOX;
