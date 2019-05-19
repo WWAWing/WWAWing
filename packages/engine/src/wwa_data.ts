@@ -352,11 +352,11 @@ export class UserDevide {
     public device: number;
     public constructor() {
         var ua: string = window.navigator.userAgent;
-        this.os = this.getOS(ua);
+        this.os = this._getOS(ua);
         this.browser = this.getBrowser(ua);
         this.device = this.getDevice();
     }
-    private getOS(ua): number{
+    private _getOS(ua): number{
         if (ua.match(/xbox/i)) {
             return OS_TYPE.XBOX;
         }
