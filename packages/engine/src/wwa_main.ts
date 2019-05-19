@@ -330,11 +330,14 @@ export class WWA {
                     this._useBattleReportButton = false;
                     break;
                 default:
-                    alert(
-                        "【警告】直接HTMLファイルを開いているようです。\n" +
-                        "このプログラムは正常に動作しない可能性があります。\n" +
-                        "マップデータの確認を行う場合には同梱の「WWA Debugger」をご利用ください。"
-                    );
+                    if (this.userDevice.browser !== BROWSER_TYPE.FIREFOX) {
+                        alert(
+                            "【警告】直接HTMLファイルを開いているようです。\n" +
+                            "このプログラムは正常に動作しない可能性があります。\n" +
+                            "マップデータの確認を行う場合には同梱の「wwa-server.exe」をご利用ください。\n" +
+                            "また、ブラウザがFirefoxの場合には直接HTMLファイルを開いて動作確認をすることができます。"
+                        );
+                    }
                     break;
             }
         }
