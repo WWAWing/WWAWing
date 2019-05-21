@@ -591,11 +591,16 @@ export class WWA {
             //////////////// タッチ関連 超β ////////////////////////////
             if (window["TouchEvent"] /* ←コンパイルエラー回避 */) {
                 if (this.audioContext) {
-                    var audioTest = function () {
+                    /**
+                     * audioTest は WebAudio API の再生操作を行うだけのメソッドです。
+                     *     スマートフォンでは、ユーザーからの操作なしに音声を鳴らすことは出来ません。
+                     *     そのため、タッチした際にダミー音声を再生することで音声の再生を可能にしています。
+                     */
+                    let audioTest = () => {
                         this.audioContext.createBufferSource().start(0);
                         this._mouseControllerElement.removeEventListener("touchstart", audioTest);
                         audioTest = null;
-                    }.bind(this);
+                    };
                     this._mouseControllerElement.addEventListener("touchstart", audioTest);
                 }
 
