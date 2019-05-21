@@ -205,9 +205,10 @@ export class WWA {
             }
         } catch (e) { }
 
-        var _AudioContext: AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (_AudioContext) {
-            this.audioContext = (window as any).audioContext = (window as any).audioContext || new AudioContext();
+        const canUseWebAudio = () => AudioContext !== undefined;
+        if (canUseWebAudio) {
+            const AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+            this.audioContext = new AudioContext();
             this.audioGain = this.audioContext.createGain();
             this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
         }
