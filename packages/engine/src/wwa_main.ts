@@ -171,8 +171,8 @@ export class WWA {
     ////////////////////////
 
     private _loadHandler: (e) => void;
-    public audioContext: any;
-    public audioGain: any;
+    public audioContext: AudioContext;
+    public audioGain: GainNode;
     private audioExtension: string = "";
 
     constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName: string, classicModeEnabled: boolean, itemEffectEnabled: boolean, audioDirectory: string = "") {
@@ -207,8 +207,8 @@ export class WWA {
 
         const canUseWebAudio = () => AudioContext !== undefined;
         if (canUseWebAudio) {
-            const AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
-            this.audioContext = new AudioContext();
+            const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+            this.audioContext = new _AudioContext();
             this.audioGain = this.audioContext.createGain();
             this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
         }
