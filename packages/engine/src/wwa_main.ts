@@ -205,9 +205,8 @@ export class WWA {
             }
         } catch (e) { }
 
-        const canUseWebAudio = () => AudioContext !== undefined;
-        if (canUseWebAudio) {
-            const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+        const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (_AudioContext) {
             this.audioContext = new _AudioContext();
             this.audioGain = this.audioContext.createGain();
             this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
