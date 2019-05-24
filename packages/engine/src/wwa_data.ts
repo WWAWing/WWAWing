@@ -397,6 +397,9 @@ export class UserDevice {
      * @see https://www.ka-net.org/blog/?p=11457
      */
     private getBrowser(ua: string): number{
+        if (ua.match(/(msie|trident?:)/i)) {
+            return BROWSER_TYPE.INTERNET_EXPLORER;
+        }
         if (ua.match(/edge/i)) {
             return BROWSER_TYPE.EDGE;
         }
@@ -457,6 +460,7 @@ export enum BROWSER_TYPE {
     FIREFOX = 2,
     SAFARI = 3,
     EDGE = 4,
+    INTERNET_EXPLORER = 5,
     OTHERS = 9999
 }
 
