@@ -175,7 +175,16 @@ export class WWA {
     private audioExtension: string = "";
     public userDevice:  UserDevice;
 
-    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName: string, classicModeEnabled: boolean, itemEffectEnabled: boolean, audioDirectory: string = "") {
+    constructor(
+        mapFileName: string,
+        workerFileName: string,
+        urlgateEnabled: boolean = false,
+        titleImgName: string,
+        classicModeEnabled: boolean,
+        itemEffectEnabled: boolean,
+        useGoToWWA: boolean,
+        audioDirectory: string = ""
+    ) {
         var ctxCover;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
@@ -231,7 +240,8 @@ export class WWA {
             audioDirectory += "/";
         }
         this._audioDirectory = audioDirectory;
-        this._useBattleReportButton = true;
+        // Go To WWA を強制するオプションが無効なら、Battle Reportにする
+        this._useBattleReportButton = !useGoToWWA;
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
         if (isLocal) {
@@ -704,7 +714,7 @@ export class WWA {
             });
             util.$id("button-gotowwa").addEventListener("click", () => {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
-                    this.onselectbutton(SidebarButton.GOTO_WWA, true);
+                    this.onselectbutton(SidebarButton.GOTO_WWA, false, !this._useBattleReportButton);
                 }
             });
 
@@ -1182,7 +1192,7 @@ export class WWA {
         }
     }
 
-    public onselectbutton(button: SidebarButton, forcePassword: boolean = false): void {
+    public onselectbutton(button: SidebarButton, forcePassword: boolean = false, forceGoToWWA: boolean = false): void {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[button]));
         this.playSound(SystemSound.DECISION);
         this._itemMenu.close();
@@ -1219,15 +1229,16 @@ export class WWA {
                 (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
-            } else if (!forcePassword) {
-                (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+            } else if (forceGoToWWA) {
+                // F8 で GoTo WWAを選んだ場合で、Battle Reportボタンが表示されている場合は、
+                // Battle Report ボタンを凹ませない
+                if (this._useBattleReportButton) {
+                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+                }
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
             } else if (this._useBattleReportButton) {
                 this.launchBattleEstimateWindow();
-            } else {
-                this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
-                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
             }
         }
     }
@@ -1420,7 +1431,7 @@ export class WWA {
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_R)) {
                 this.onselectbutton(SidebarButton.RESTART_GAME);
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
-                this.onselectbutton(SidebarButton.GOTO_WWA);
+                this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X)) {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
@@ -4185,7 +4196,21 @@ function start() {
     if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
         itemEffectEnabled = false;
     }
-    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, itemEffectEnabled, audioDirectory);
+    let useGoToWWA = false;
+    const useGoToWWAAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-use-go-to-wwa");
+    if (useGoToWWAAttribute !== null && useGoToWWAAttribute.match(/^true$/i)) {
+        useGoToWWA = true;
+    }
+    wwa = new WWA(
+        mapFileName,
+        loaderFileName,
+        urlgateEnabled,
+        titleImgName,
+        classicModeEnabled,
+        itemEffectEnabled,
+        useGoToWWA,
+        audioDirectory
+    );
 }
 
 
