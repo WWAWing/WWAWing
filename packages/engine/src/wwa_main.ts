@@ -1006,7 +1006,7 @@ export class WWA {
         }
     }
 
-    public createAudioJSInstance(idx: number, isSub: boolean = false): void {
+    public createWWAAudioInstance(idx: number, isSub: boolean = false): void {
         if (idx === 0 || idx === SystemSound.NO_SOUND) {
             return;
         }
@@ -1028,19 +1028,19 @@ export class WWA {
     public loadSound(): void {
         this._audioInstances = new Array(Consts.SOUND_MAX + 1);
 
-        this.createAudioJSInstance(SystemSound.DECISION);
-        this.createAudioJSInstance(SystemSound.ATTACK);
+        this.createWWAAudioInstance(SystemSound.DECISION);
+        this.createWWAAudioInstance(SystemSound.ATTACK);
 
         for (var pid = 1; pid < this._wwaData.mapPartsMax; pid++) {
             var idx = this._wwaData.mapAttribute[pid][Consts.ATR_SOUND];
-            this.createAudioJSInstance(idx);
+            this.createWWAAudioInstance(idx);
         }
         for (var pid = 1; pid < this._wwaData.objPartsMax; pid++) {
             if (this._wwaData.objectAttribute[pid][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
                 continue;
             }
             var idx = this._wwaData.objectAttribute[pid][Consts.ATR_SOUND];
-            this.createAudioJSInstance(idx);
+            this.createWWAAudioInstance(idx);
         }
         this._wwaData.bgm = 0;
         this._soundLoadSkipFlag = false;
