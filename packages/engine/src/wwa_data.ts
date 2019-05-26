@@ -397,7 +397,7 @@ export class UserDevice {
      * @see https://www.ka-net.org/blog/?p=11457
      */
     private getBrowser(ua: string): number{
-        if (ua.match(/(msie|trident?:)/i)) {
+        if (ua.match(/(?:msie|trident)/i)) {
             return BROWSER_TYPE.INTERNET_EXPLORER;
         }
         if (ua.match(/edge/i)) {
