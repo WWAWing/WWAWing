@@ -605,7 +605,6 @@ export enum SystemSound {
 export var speedList = [2, 5, 8, 10];
 export var speedNameList = ["低速", "準低速", "中速", "高速"];
 export class WWAConsts {
-    static VERSION_WWAJS: string = "W3.15dβ3";
 
     static WWA_HOME: string = "http://wwajp.com";
 

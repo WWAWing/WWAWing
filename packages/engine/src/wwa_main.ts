@@ -770,8 +770,7 @@ export class WWA {
                 this._isSkippedSoundMessage = true;
                 if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
                     this._isLoadedSound = true;
-                    this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
-                        "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
+                    this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound();
 
@@ -795,7 +794,7 @@ export class WWA {
                             this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
                                 "効果音・ＢＧＭデータをロードしますか？" :
                                 this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
-                        ) + "\n※iOS, Android端末では、選択に関わらず音楽が再生されないことがあります。");
+                        ));
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
@@ -950,7 +949,7 @@ export class WWA {
             ctx.font = LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
             ctx.fillText(loadMessagesClassic[0], LoadingMessagePosition.TITLE_X, LoadingMessagePosition.TITLE_Y);
             ctx.font = LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
-            ctx.fillText("WWA Wing Ver." + Consts.VERSION_WWAJS, LoadingMessagePosition.FOOTER_X, LoadingMessagePosition.COPYRIGHT_Y);
+            ctx.fillText("WWA Wing Ver." + VERSION_WWAJS, LoadingMessagePosition.FOOTER_X, LoadingMessagePosition.COPYRIGHT_Y);
         } else if (mode <= loadMessagesClassic.length) { // 読み込み途中
             ctx.font = LoadingMessageSize.LOADING + "px " + Consts.LOADING_FONT;
             if (mode >= 2) {
@@ -3761,7 +3760,7 @@ export class WWA {
                 "　　　Ｉ: 移動速度を落とす／\n" +
                 "Ｆ２、Ｐ: 移動速度を上げる\n" +
                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                 "　マップデータ バージョン: " +
                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10,
                 false, true
