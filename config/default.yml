@@ -26,8 +26,6 @@ page:
       audio:
         # オーディオファイルを配置するディレクトリを指定します　
         dir: "./audio"
-        # オーディオファイル内のaudioJsのファイル位置を指定します
-        js: "audio.min.js"
 
       # wwa.js のファイル名を変更している場合は指定します
       wwaJs: "wwa.js"

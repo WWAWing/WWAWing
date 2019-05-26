@@ -6,8 +6,6 @@ mixin additionalCss(additionalCssFiles)
 mixin wwaRequirements(resources, concatDirAndFile)
     // wwa requirements
     link(rel="stylesheet" href=resources.wwaCss)
-    - const audioJsFile = concatDirAndFile(resources.audio.dir, resources.audio.js)
-    script(src=audioJsFile)
     script(src=resources.wwaJs)
     // /wwa requirements
 

@@ -11,7 +11,6 @@ interface WWAConfigWithDefaults {
         loader: string;
         audio: {
             dir: string;
-            js: string;
         };
         wwaJs: string;
         wwaCss: string;
@@ -60,7 +59,6 @@ export interface WWAConfig {
         loader?: string;
         audio?: {
             dir?: string;
-            js?: string;
         };
         wwaJs?: string;
         wwaCss?: string;
@@ -105,7 +103,6 @@ const schema = {
                                 audio: {
                                     properties: {
                                         dir: { type: "string" },
-                                        js: { type: "string" }
                                     }
                                 },
                                 wwaJs: { type: "string" },
@@ -169,7 +166,6 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
                     loader: "wwaload.js",
                     audio: {
                         dir: "audio/",
-                        js: "audio.min.js"
                     },
                     wwaJs: "wwa.js",
                     wwaCss: "wwa.css",
