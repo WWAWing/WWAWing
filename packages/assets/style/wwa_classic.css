@@ -7,6 +7,14 @@
     フォントやフォントサイズは自由に変更できます。
 */
 
+.wwa-message-window{
+    background-color: rgba(255, 255, 255, 0.9);
+    color: rgb(0, 0, 0);
+    border-color: rgb(96, 96, 96);
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
 
 .wwa-size-box {
     width: 560px;
@@ -419,9 +427,14 @@ div.item-disp {
     border-style: solid;
     border-width: 2px;
     border-color: #000000;
-/*    background-color: rgba( 255, 255, 255, 0.9 ); */ /*システムで指定することになりました。$colorで。*/
+    background-color: rgba( 255, 255, 255, 0.9 ); /*システムで指定することになりました。$colorで。*/
     cursor: pointer;
     overflow: auto;
+    color: rgb(0, 0, 0);
+    border-color: rgb(96, 96, 96);
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 
 #wwa-battle-estimate {
@@ -598,4 +611,16 @@ div.item-disp {
     height: 440px;
     overflow: hidden;
     z-index: -9999;
+}
+
+#wwa-wrapper.useScaleUp #wwa-text-message-window>div:nth-child(2) {
+    height: 80px !important;
+}
+#wwa-wrapper.useScaleUp #wwa-text-message-window>div:nth-child(3) {
+    transform: scale(1.5,1.5) translate(-25px,-6px);
+    image-rendering: pixelated;
+    width: 100px !important;
+}
+#wwa-wrapper.useScaleUp #wwa-text-message-window>div:nth-child(3)>div{
+    margin: 0 5px !important;
 }

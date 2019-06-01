@@ -3,6 +3,20 @@
 
 このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna により自動化されています。
 
+## サポートブラウザ
+### PC
+OSは不問です。
+
+- Microsoft Internet Explorer 11
+- Microsoft Edge (最新版)
+- Mozilla Firefox (最新版)
+- Google Chrome/Chromium (最新版)
+- Safari (最新版)
+
+### スマートフォン・タブレット
+- Android 上の Google Chrome (最新版)
+- iOS 上の Safari (最新版)
+
 ## ディレクトリ構成
 ```
 ├── .travis.yml                                 ## Travis CIによる配布物自動生成のための設定ファイル

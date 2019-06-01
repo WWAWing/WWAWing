@@ -1,4 +1,4 @@
-﻿import { WWA } from "./wwa_main";
+import { WWA } from "./wwa_main";
 import { Direction as Dir, Position, speedList, PartsType, Coord, Direction } from "./wwa_data";
 import { Player } from "./wwa_parts_player";
 
@@ -115,3 +115,4 @@ export class ObjectMovingDataManager {
     }
 
 }
+

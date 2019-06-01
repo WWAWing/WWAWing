@@ -28,14 +28,14 @@
 		"@types/node": "^10.5.1",
 		"@types/shelljs": "^0.8.0",
 		"@wwawing/html-generator": "git+https://git@github.com/WWAWing/html-generator.git#include-lib",
-		"@wwawing/engine": "3.1.9",
+		"@wwawing/engine": "3.2.0",
 		"@wwawing/assets": "0.0.0",
 		"@wwawing/loader": "0.0.0",
 		"@wwawing/debug-server": "0.0.0",
 		"glob": "^7.1.2",
 		"jszip": "^3.1.5",
 		"shelljs": "^0.8.2",
-		"shx": "^0.3.1",
+		"shx": "^0.3.2",
 		"typescript": "^2.9.2"
 	}
 }

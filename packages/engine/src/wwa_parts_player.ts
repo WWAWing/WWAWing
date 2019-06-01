@@ -1,4 +1,4 @@
-﻿import { WWA } from "./wwa_main";
+import { WWA } from "./wwa_main";
 import {
     Position,
     Direction,
@@ -743,7 +743,9 @@ export class Player extends PartsObject {
             border.style.display = "block";
             ((pos: number): void => {
                 self._itemUsingEvent[pos - 1] = () => {
-                    if (self.isControllable()) {
+                    if (self.isControllable() || (self._wwa._messageWindow.isItemMenuChoice())) {
+                        self._wwa._itemMenu.close();
+                        self._wwa._setNextMessage();
                         self._wwa.onselectitem(pos);
                     }
                 };
@@ -1135,3 +1137,4 @@ export class Player extends PartsObject {
     }
 
 }
+
