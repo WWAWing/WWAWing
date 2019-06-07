@@ -183,6 +183,10 @@ export class Player extends PartsObject {
         }
     }
 
+    public setDir(newDir: Direction): void {
+        this._dir = newDir;
+    }
+
 
     // 座標posに移動できるならtrue, 移動できないならfalse
     public canMoveTo(pos: Position): boolean {
