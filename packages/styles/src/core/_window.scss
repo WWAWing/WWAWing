@@ -2,46 +2,34 @@ $wwa_icon_width: 40px;
 $wwa_icon_width-scale_up: 100px;
 
 %wwa_window {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 400px;
-    height: 400px;
-    margin: 20px;
     background-color: rgba( 255, 255, 255, 0.9 ); // システムで指定することになりました。$colorで。
     border: 2px solid #000;
     border-radius: 10px;
     box-sizing: border-box;
-    cursor: pointer;
     overflow: auto;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
+    user-select: none;
 }
 
+%wwa_full_window {
+    @extend %wwa_window;
+    
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 20px;
+    width: 400px;
+    height: 400px;
+    cursor: pointer;
+}
+
+#wwa-text-message-window,
 .wwa-message-window {
     @extend %wwa_window;
-}
-
-#wwa-wrapper.useScaleUp #wwa-text-message-window {
-    $yes_button_no: 2;
-    $no_button_no: 3;
-
-    & > div::nth-child($yes_button_no) {
-        height: $wwa_icon_width * 2 !important;
-    }
-    & > div::nth-child($no_button_no) {
-        transform: scale(1.5, 1.5) translate(-25px, -6px);
-        image-rendering: pixelated;
-        width: $wwa_icon_width-scale_up;
-        & > div {
-            margin: 0 5px !important;
-        }
-    }
+    position: absolute;
 }
 
 #wwa-password-window {
-    @extend %wwa_window;
+    @extend %wwa_full_window;
     font-size: 12px;
 
     > div.wwa-password-description {
@@ -63,7 +51,7 @@ $wwa_icon_width-scale_up: 100px;
 }
 
 #wwa-battle-estimate {
-    @extend %wwa_window;
+    @extend %wwa_full_window;
     font-size: 16px;
 
     > .est {
@@ -117,6 +105,37 @@ $wwa_icon_width-scale_up: 100px;
             display: block;
             height: 0;
             visibility: hidden;
+        }
+    }
+}
+
+.wwa-yesno-wrapper {
+    margin: 0 0 10px 246px;
+    width: $wwa_icon_width * 2;
+    height: $wwa_icon_width;
+    cursor: pointer;
+}
+
+.wwa-yes-button,
+.wwa-no-button {
+    padding: 0;
+    margin: 0;
+    float: left;
+    width: $wwa_icon_width;
+    height: $wwa_icon_width;
+}
+
+#wwa-wrapper.useScaleUp #wwa-text-message-window {
+    overflow: hidden; // translate によるはみ出し対策
+    
+    .wwa-yesno-wrapper {
+        transform: scale(1.5, 1.5) translate(-30px, 20px);
+        image-rendering: pixelated;
+        width: $wwa_icon_width-scale_up;
+        height: $wwa_icon_width * 2 !important;
+        .wwa-yes-button,
+        .wwa-no-button {
+            margin: 0 5px !important;
         }
     }
 }

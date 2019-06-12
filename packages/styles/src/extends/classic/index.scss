@@ -23,11 +23,15 @@ div#wwa-sidebar {
 }
 
 %wwa_window {
-    width: 440px;
-    height: 440px;
-    margin: 0;
     padding: 18px;
     box-sizing: border-box;
+    border-radius: 15px;
+}
+
+%wwa_full_window {
+    margin: 0;
+    width: 440px;
+    height: 440px;
     border-radius: 0;
 }
 
