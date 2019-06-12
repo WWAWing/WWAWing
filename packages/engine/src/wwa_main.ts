@@ -1,22 +1,6 @@
-interface AudioJSInstance {
-    play(): void;
-    pause(): void;
-    skipTo(pos: number): void;
-    element: HTMLAudioElement;
-    loadedPercent: number
-    wrapper: HTMLElement;
-    buffer: any;
-}
-
-interface AudiojsTScomp {
-    create(a, b?): AudioJSInstance;
-}
-
-declare var audiojs: AudiojsTScomp;
 declare var external_script_inject_mode: boolean;
 declare var VERSION_WWAJS: string; // webpackにより注入
 declare function loader_start(e: any): void;
-var postMessage_noWorker = function (e: any): void { };
 
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position,
@@ -24,7 +8,7 @@ import {
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE
 } from "./wwa_data";
 
 import {
@@ -36,6 +20,7 @@ import {
     GamePadState,
     GamePadStore
 } from "./wwa_input";
+
 import * as CryptoJS from "crypto-js";
 import * as util from "./wwa_util";
 import { CGManager } from "./wwa_cgmanager";
@@ -50,12 +35,10 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
+import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 
-var wwa: WWA;
+let wwa: WWA;
 let wwap_mode: boolean = false;
-var requestAnimationFrame: (callback: FrameRequestCallback) => number = (
-    window.requestAnimationFrame || window.webkitRequestAnimationFrame || (window as any).mozRequestAnimationFrame || (window as any).msRequestAnimationFrame
-);
 
 /**
 *
@@ -71,73 +54,6 @@ export function getProgress(current: number, total: number, stage: LoadStage): L
     progress.total = total;
     progress.stage = stage;
     return progress;
-}
-export class WWAWebAudio {
-    public isBgm: boolean;
-    private buffer_sources: AudioBufferSourceNode[];
-    private pos: number;
-    constructor() {
-        this.isBgm = false;
-        this.buffer_sources = [];
-        this.pos = 0;
-    }
-
-    public play(): void {
-        var audioContext = wwa.audioContext;
-        var gainNode = wwa.audioGain;
-        var buffer_source: AudioBufferSourceNode = null;
-
-
-        buffer_source = audioContext.createBufferSource();
-        this.buffer_sources.push(buffer_source);
-
-        buffer_source.buffer = this.buffer;
-        if (this.isBgm) {
-            buffer_source.loop = true;
-        }
-        buffer_source.connect(gainNode);
-
-        //gainNode.gain.setValueAtTime(1, audioContext.currentTime);
-        // TODO(rmn): buffer_source.buffer.duration ? あとで調べる
-        var duration = (buffer_source as any).duration;
-        if ((!isFinite(duration)) || (duration < 0) || (typeof duration !== "number")) {
-            duration = 0;
-        }
-        buffer_source.start(0, this.pos * duration);
-        buffer_source.onended = function () {
-            var id: number = this.buffer_sources.indexOf(buffer_source);
-            if (id !== -1) {
-                this.buffer_sources.splice(id, 1);
-            }
-            try {
-                buffer_source.stop();
-            } catch (e) {
-
-            }
-            buffer_source.onended = null;
-        }.bind(this);
-        gainNode.connect(audioContext.destination);
-    }
-    public pause(): void {
-        var len: number = this.buffer_sources.length;
-        var i: number;
-        var buffer_source: AudioBufferSourceNode = null;
-        for (i = 0; i < len; i++) {
-            buffer_source = this.buffer_sources[i];
-            try {
-                buffer_source.stop();
-            } catch (e) {
-
-            }
-            buffer_source.onended = null;
-        }
-        this.buffer_sources.length = 0;
-    }
-    public skipTo(pos: number): void {
-        this.pos = pos;
-    }
-    public loadedPercent: number;
-    public buffer: any;
 }
 
 export class WWA {
@@ -172,7 +88,6 @@ export class WWA {
     // private _waitTimeInCurrentFrame: number;
     private _waitFrame: number;
     private _usePassword: boolean;
-    private _useScaleUp: boolean;
     private _useHelp: boolean;
     private _useBattleReportButton: boolean;
     private _wwaWrapperElement: HTMLDivElement;
@@ -193,10 +108,7 @@ export class WWA {
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
-    private _webAudioJSInstances: WWAWebAudio[];
-    private _audioJSInstances: AudioJSInstance[];
-    private _audioJSInstancesSub: AudioJSInstance[]; // 戦闘など、同じ音を高速に何度も鳴らす時用のサブのインスタンスの配列
-    private _nextSoundIsSub: boolean;
+    private _audioInstances: WWAAudio[];
 
     private _playSound: (s: number) => void;
 
@@ -258,11 +170,21 @@ export class WWA {
     ////////////////////////
 
     private _loadHandler: (e) => void;
-    public audioContext: any;
-    public audioGain: any;
+    public audioContext: AudioContext;
+    public audioGain: GainNode;
     private audioExtension: string = "";
+    public userDevice:  UserDevice;
 
-    constructor(mapFileName: string, workerFileName: string, urlgateEnabled: boolean = false, titleImgName: string, classicModeEnabled: boolean, itemEffectEnabled: boolean, audioDirectory: string = "") {
+    constructor(
+        mapFileName: string,
+        workerFileName: string,
+        urlgateEnabled: boolean = false,
+        titleImgName: string,
+        classicModeEnabled: boolean,
+        itemEffectEnabled: boolean,
+        useGoToWWA: boolean,
+        audioDirectory: string = ""
+    ) {
         var ctxCover;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
@@ -291,28 +213,21 @@ export class WWA {
                 this._setLoadingMessage(ctxCover, 0);
             }
         } catch (e) { }
-        var _AudioContext: AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+
+        const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
         if (_AudioContext) {
-            this.audioContext = (window as any).audioContext = (window as any).audioContext || new AudioContext();
+            this.audioContext = new _AudioContext();
             this.audioGain = this.audioContext.createGain();
             this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
         }
+
         var myAudio = new Audio();
         if (("no" !== myAudio.canPlayType("audio/mpeg") as string) && ("" !== myAudio.canPlayType("audio/mpeg"))) {
             this.audioExtension = "mp3";
         } else {
             this.audioExtension = "m4a";
         }
-        var ua: string = window.navigator.userAgent;
-        var browser = { os: '', browser: '' };
-        browser.os = ua.match(/windows/i) ? 'Windows' : '';
-        browser.os = browser.os || (ua.match(/macintosh/i) ? 'Macintosh' : '');
-        browser.os = browser.os || (ua.match(/iphone|ipad|ipod/i) ? 'iOS' : '');
-        browser.os = browser.os || (ua.match(/oculus/i) ? 'Oculus' : '');
-        browser.os = browser.os || (ua.match(/android/i) ? 'Android' : '');
-        browser.os = browser.os || (ua.match(/nintendo/i) ? 'Nintendo' : '');
-        browser.os = browser.os || (ua.match(/playstation/i) ? 'PlayStation' : '');
-        browser.os = browser.os || (ua.match(/linux/i) ? 'Linux' : '');
+        this.userDevice = new UserDevice();
 
         this._isURLGateEnable = urlgateEnabled;
         this._isClassicModeEnable = classicModeEnabled;
@@ -325,39 +240,50 @@ export class WWA {
             audioDirectory += "/";
         }
         this._audioDirectory = audioDirectory;
-        this._useBattleReportButton = true;
+        // Go To WWA を強制するオプションが無効なら、Battle Reportにする
+        this._useBattleReportButton = !useGoToWWA;
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
         if (isLocal) {
-            if (browser.os === "Nintendo") {
-                //speedList = [10, 10, 10, 10];
-                Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
-                this._useGameEnd = true;
-                this._useBattleReportButton = false;
-            } else {
-                alert(
-                    "【警告】直接HTMLファイルを開いているようです。\n" +
-                    "このプログラムは正常に動作しない可能性があります。\n" +
-                    "マップデータの確認を行う場合には同梱の「WWA Debugger」をご利用ください。"
-                );
+            switch (this.userDevice.device) {
+                case DEVICE_TYPE.GAME:
+                    switch (this.userDevice.os) {
+                        case OS_TYPE.NINTENDO:
+                            Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
+                            return;
+                    }
+                    this._useGameEnd = true;
+                    this._useBattleReportButton = false;
+                    break;
+                default:
+                    if (this.userDevice.browser !== BROWSER_TYPE.FIREFOX) {
+                        alert(
+                            "【警告】直接HTMLファイルを開いているようです。\n" +
+                            "このプログラムは正常に動作しない可能性があります。\n" +
+                            "マップデータの確認を行う場合には同梱の「wwa-server.exe」をご利用ください。\n" +
+                            "また、ブラウザがFirefoxの場合には直接HTMLファイルを開いて動作確認をすることができます。"
+                        );
+                    }
+                    break;
             }
         }
-        this._usePassword = browser.os !== "Nintendo";
-        this._useHelp = true;
-        this._useScaleUp = false;
-        switch (browser.os) {
-            case "Android":
-            case "iOS":
-            case "Oculus":
-            case "Nintendo":
-            case "PlayStation":
-                this._useHelp = false;
+        switch (this.userDevice.device) {
+            case DEVICE_TYPE.VR:
+            case DEVICE_TYPE.GAME:
+                this._usePassword = false;
+                break;
+            default:
+                this._usePassword = true;
                 break;
         }
-        switch (browser.os) {
-            case "Android":
-            case "iOS":
-                util.$id("wwa-wrapper").classList.add("useScaleUp");
+        switch (this.userDevice.device) {
+            case DEVICE_TYPE.SP:
+            case DEVICE_TYPE.VR:
+            case DEVICE_TYPE.GAME:
+                this._useHelp = false;
+                break;
+            default:
+                this._useHelp = true;
                 break;
         }
 
@@ -370,13 +296,6 @@ export class WWA {
         }
         if (this._useBattleReportButton) {
             util.$id("cell-gotowwa").textContent = "Battle Report";
-        }
-        if (window["audiojs"] === void 0) {
-            this._setErrorMessage("Audio.jsのロードに失敗しました。\n" +
-                "フォルダ" + this._audioDirectory + "の中にaudio.min.jsは配置されていますか？ \n" +
-                "フォルダを変更される場合には data-wwa-audio-dir 属性を\n" +
-                "指定してください", ctxCover);
-            return;
         }
 
         this._loadHandler = (e): void => {
@@ -403,11 +322,11 @@ export class WWA {
                 }
             } catch (e) { }
 
-            var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");//ファイル名取得
-            var pathList = mapFileName.split("/");//ディレクトリで分割
-            pathList.pop();//最後のファイルを消す
-            pathList.push(this._wwaData.mapCGName);//最後に画像ファイル名を追加
-            this._wwaData.mapCGName = pathList.join("/");  //pathを復元
+            var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata"); //ファイル名取得
+            var pathList = mapFileName.split("/"); //ディレクトリで分割
+            pathList.pop(); //最後のファイルを消す
+            pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
+            this._wwaData.mapCGName = pathList.join("/"); // pathを復元
 
 
             this.initCSSRule();
@@ -491,10 +410,11 @@ export class WWA {
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
                 if (!this._isActive) { return; }
-                if (browser.os === "Nintendo") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
+                switch (this.userDevice.os) {
+                    case OS_TYPE.NINTENDO:
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
                 }
                 this._keyStore.setPressInfo(e.keyCode);
                 if (e.keyCode === KeyCode.KEY_F5) {
@@ -552,10 +472,11 @@ export class WWA {
             });
             window.addEventListener("keyup", (e): void => {
                 if (!this._isActive) { return; }
-                if (browser.os === "Nintendo") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
+                switch (this.userDevice.os) {
+                    case OS_TYPE.NINTENDO:
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
                 }
                 this._keyStore.setReleaseInfo(e.keyCode);
                 if (e.keyCode === KeyCode.KEY_F5) {
@@ -682,11 +603,16 @@ export class WWA {
             //////////////// タッチ関連 超β ////////////////////////////
             if (window["TouchEvent"] /* ←コンパイルエラー回避 */) {
                 if (this.audioContext) {
-                    var audioTest = function () {
+                    /**
+                     * audioTest は WebAudio API の再生操作を行うだけのメソッドです。
+                     *     スマートフォンでは、ユーザーからの操作なしに音声を鳴らすことは出来ません。
+                     *     そのため、タッチした際にダミー音声を再生することで音声の再生を可能にしています。
+                     */
+                    let audioTest = () => {
                         this.audioContext.createBufferSource().start(0);
                         this._mouseControllerElement.removeEventListener("touchstart", audioTest);
                         audioTest = null;
-                    }.bind(this);
+                    };
                     this._mouseControllerElement.addEventListener("touchstart", audioTest);
                 }
 
@@ -788,7 +714,7 @@ export class WWA {
             });
             util.$id("button-gotowwa").addEventListener("click", () => {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
-                    this.onselectbutton(SidebarButton.GOTO_WWA, true);
+                    this.onselectbutton(SidebarButton.GOTO_WWA, false, !this._useBattleReportButton);
                 }
             });
 
@@ -844,8 +770,7 @@ export class WWA {
                 this._isSkippedSoundMessage = true;
                 if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
                     this._isLoadedSound = true;
-                    this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n" +
-                        "※iOS, Android端末では、音楽は再生されないことがあります。", false, true);
+                    this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound();
 
@@ -869,7 +794,7 @@ export class WWA {
                             this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
                                 "効果音・ＢＧＭデータをロードしますか？" :
                                 this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
-                        ) + "\n※iOS, Android端末では、選択に関わらず音楽が再生されないことがあります。");
+                        ));
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
@@ -954,7 +879,7 @@ export class WWA {
                 }
             }
             var self1 = this;
-            postMessage_noWorker = (e): void => {
+            (window as any).postMessage_noWorker = (e): void => {
                 self1._loadHandler(e);
             };
 
@@ -1024,7 +949,7 @@ export class WWA {
             ctx.font = LoadingMessageSize.TITLE + "px " + Consts.LOADING_FONT;
             ctx.fillText(loadMessagesClassic[0], LoadingMessagePosition.TITLE_X, LoadingMessagePosition.TITLE_Y);
             ctx.font = LoadingMessageSize.FOOTER + "px " + Consts.LOADING_FONT;
-            ctx.fillText("WWA Wing Ver." + Consts.VERSION_WWAJS, LoadingMessagePosition.FOOTER_X, LoadingMessagePosition.COPYRIGHT_Y);
+            ctx.fillText("WWA Wing Ver." + VERSION_WWAJS, LoadingMessagePosition.FOOTER_X, LoadingMessagePosition.COPYRIGHT_Y);
         } else if (mode <= loadMessagesClassic.length) { // 読み込み途中
             ctx.font = LoadingMessageSize.LOADING + "px " + Consts.LOADING_FONT;
             if (mode >= 2) {
@@ -1080,95 +1005,41 @@ export class WWA {
         }
     }
 
-    public createAudioJSInstance(idx: number, isSub: boolean = false): void {
-        var audioContext = this.audioContext;
-        if (audioContext) {
-            if (idx === 0 || this._webAudioJSInstances[idx] !== void 0 || idx === SystemSound.NO_SOUND) {
-                return;
-            }
-        } else {
-            if (idx === 0 || this._audioJSInstances[idx] !== void 0 || idx === SystemSound.NO_SOUND) {
-                return;
-            }
+    public createWWAAudioInstance(idx: number, isSub: boolean = false): void {
+        if (idx === 0 || idx === SystemSound.NO_SOUND) {
+            return;
         }
-        var file = (wwap_mode ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + "." + this.audioExtension : this._audioDirectory + idx + "." + this.audioExtension);
-        if (audioContext) {
-            //WebAuido
-            this._webAudioJSInstances[idx] = new WWAWebAudio();
-            if (idx >= SystemSound.BGM_LB) {
-                this._webAudioJSInstances[idx].isBgm = true;
-            }
-            this.audioFileLoader(file, idx);
-        } else {
-            var audioElement = new Audio(file);
-            audioElement.preload = "auto";
-            if (idx >= SystemSound.BGM_LB) {
-                audioElement.loop = true;
-            }
-            util.$id("wwa-audio-wrapper").appendChild(audioElement);
-            this._audioJSInstances[idx] = audiojs.create(audioElement);
-            if (idx < SystemSound.BGM_LB) {
-                var audioElementSub = new Audio(file);
-                audioElementSub.preload = "auto";
-                util.$id("wwa-audio-wrapper").appendChild(audioElementSub);
-                this._audioJSInstancesSub[idx] = audiojs.create(audioElementSub);
-            }
-
-
-            audioElement.loop = true;
+        const audioContext = this.audioContext;
+        if (this._audioInstances[idx] !== void 0) {
+            return;
         }
-    }
-
-    public audioFileLoader(file: string, idx: number): void {
-        var audioContext = this.audioContext;
-        var req = new XMLHttpRequest();
-        var error_count = 0;
-        var that = this;
-        req.responseType = 'arraybuffer';
-        req.onload = function (e) {
-            var req = e.target;
-            if ((req as any).readyState === 4) {
-                if ((req as any).status === 0 || (req as any).status === 200) {
-                    var decodeTime = +new Date();
-                    audioContext.decodeAudioData((req as any).response, function (buffer) {
-                        if (buffer.length === 0) {
-                            if (error_count > 10) {
-                                //10回エラー
-                                console.log("error audio file!  " + file + " buffer size " + buffer.length);
-                            } else {
-                                setTimeout(function () {
-                                    that.audioFileLoader(file, idx);
-                                }, 100);
-                                return;
-                            }
-                        }
-                        that._webAudioJSInstances[idx].buffer = buffer;
-                    });
-                }
-            }
-        };
-        req.open('GET', file, true);
-        req.send('');
+        const file = wwap_mode
+            ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + "." + this.audioExtension
+            : this._audioDirectory + idx + "." + this.audioExtension;
+        // WebAudio
+        if (audioContext) {
+            this._audioInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
+        } else {
+            this._audioInstances[idx] = new WWAAudioElement(idx, file, util.$id("wwa-audio-wrapper"));
+        }
     }
 
     public loadSound(): void {
-        this._webAudioJSInstances = new Array(Consts.SOUND_MAX + 1);
-        this._audioJSInstances = new Array(Consts.SOUND_MAX + 1);
-        this._audioJSInstancesSub = new Array(Consts.SOUND_MAX + 1);
+        this._audioInstances = new Array(Consts.SOUND_MAX + 1);
 
-        this.createAudioJSInstance(SystemSound.DECISION);
-        this.createAudioJSInstance(SystemSound.ATTACK);
+        this.createWWAAudioInstance(SystemSound.DECISION);
+        this.createWWAAudioInstance(SystemSound.ATTACK);
 
         for (var pid = 1; pid < this._wwaData.mapPartsMax; pid++) {
             var idx = this._wwaData.mapAttribute[pid][Consts.ATR_SOUND];
-            this.createAudioJSInstance(idx);
+            this.createWWAAudioInstance(idx);
         }
         for (var pid = 1; pid < this._wwaData.objPartsMax; pid++) {
             if (this._wwaData.objectAttribute[pid][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
                 continue;
             }
             var idx = this._wwaData.objectAttribute[pid][Consts.ATR_SOUND];
-            this.createAudioJSInstance(idx);
+            this.createWWAAudioInstance(idx);
         }
         this._wwaData.bgm = 0;
         this._soundLoadSkipFlag = false;
@@ -1184,31 +1055,16 @@ export class WWA {
         if (this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
             this._soundLoadSkipFlag = true;
         }
-        if (this.audioContext) {
-            for (var i = 1; i <= Consts.SOUND_MAX; i++) {
-                if (this._webAudioJSInstances[i] === void 0) {
-                    continue;
-                }
-                total++;
-                if (!this._webAudioJSInstances[i].buffer) {
-                    continue;
-                }
-                loadedNum++;
+        for (var i = 1; i <= Consts.SOUND_MAX; i++) {
+            const instance = this._audioInstances[i];
+            if (instance === void 0 || instance.isError()) {
+                continue;
             }
-        } else {
-            for (var i = 1; i <= Consts.SOUND_MAX; i++) {
-                if (this._audioJSInstances[i] === void 0) {
-                    continue;
-                }
-                if (this._audioJSInstances[i].wrapper.classList.contains("error")) {
-                    continue;
-                }
-                total++;
-                if (this._audioJSInstances[i].wrapper.classList.contains("loading")) {
-                    continue;
-                }
-                loadedNum++;
+            total++;
+            if (!instance.hasData()) {
+                continue;
             }
+            loadedNum++;
         }
         if (loadedNum < total && !this._soundLoadSkipFlag) {
             this._setProgressBar(getProgress(loadedNum, total, LoadStage.AUDIO));
@@ -1241,14 +1097,8 @@ export class WWA {
         }
 
         if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
-            if (this.audioContext) {
-                if (this._webAudioJSInstances[this._wwaData.bgm].buffer) {
-                    this._webAudioJSInstances[this._wwaData.bgm].pause();
-                }
-            } else {
-                if (!this._audioJSInstances[this._wwaData.bgm].wrapper.classList.contains("loading")) {
-                    this._audioJSInstances[this._wwaData.bgm].pause();
-                }
+            if (this._audioInstances[this._wwaData.bgm].hasData()) {
+                this._audioInstances[this._wwaData.bgm].pause();
             }
             this._wwaData.bgm = 0;
         }
@@ -1256,84 +1106,37 @@ export class WWA {
         if (id === 0 || id === SystemSound.NO_SOUND) {
             return;
         }
-        if (this.audioContext) {
-            if (!this._webAudioJSInstances[id].buffer) {
-                if (id >= SystemSound.BGM_LB) {
-                    var loadi = ((id: number, self: WWA): void => {
-                        var timer = setInterval((): void => {
-                            if (self._wwaData.bgm === id) {
-                                if (!self._webAudioJSInstances[id].buffer) {
-                                    this._webAudioJSInstances[id].skipTo(0);
-                                    this._webAudioJSInstances[id].play();
-                                    this._wwaData.bgm = id;
-                                    clearInterval(timer);
-                                }
-                            } else {
+        const audioInstance = this._audioInstances[id];
+        if (!audioInstance.hasData()) {
+            if (id >= SystemSound.BGM_LB) {
+                var loadi = ((id: number, self: WWA): void => {
+                    var timer = setInterval((): void => {
+                        if (self._wwaData.bgm === id) {
+                            if (!self._audioInstances[id].hasData()) {
+                                this._audioInstances[id].play();
+                                this._wwaData.bgm = id;
                                 clearInterval(timer);
-                                if (self._wwaData.bgm !== SystemSound.NO_SOUND) {
-                                    loadi(self._wwaData.bgm, self);
-                                }
                             }
-                        }, 4);
-                    });
-                    loadi(id, this);
-                }
-                this._wwaData.bgm = id;
-                return;
-            }
-        } else {
-            if (this._audioJSInstances[id].wrapper.classList.contains("loading")) {
-                if (id >= SystemSound.BGM_LB) {
-                    var loadi = ((id: number, self: WWA): void => {
-                        var timer = setInterval((): void => {
-                            if (self._wwaData.bgm === id) {
-                                if (!self._audioJSInstances[id].wrapper.classList.contains("loading")) {
-                                    this._audioJSInstances[id].skipTo(0);
-                                    this._audioJSInstances[id].play();
-                                    this._wwaData.bgm = id;
-                                    clearInterval(timer);
-                                }
-                            } else {
-                                clearInterval(timer);
-                                if (self._wwaData.bgm !== SystemSound.NO_SOUND) {
-                                    loadi(self._wwaData.bgm, self);
-                                }
+                        } else {
+                            clearInterval(timer);
+                            if (self._wwaData.bgm !== SystemSound.NO_SOUND) {
+                                loadi(self._wwaData.bgm, self);
                             }
-                        }, 4);
-                    });
-                    loadi(id, this);
-                }
-                this._wwaData.bgm = id;
-                return;
+                        }
+                    }, 4);
+                });
+                loadi(id, this);
             }
+            this._wwaData.bgm = id;
+            return;
         }
 
-        if (this.audioContext) {
-            if (id !== 0 && this._webAudioJSInstances[id].buffer) {
-                if (id >= SystemSound.BGM_LB) {
-                    this._webAudioJSInstances[id].skipTo(0);
-                    this._webAudioJSInstances[id].play();
-                    this._wwaData.bgm = id;
-                } else {
-                    this._webAudioJSInstances[id].skipTo(0);
-                    this._webAudioJSInstances[id].play();
-                }
-            }
-        } else {
-            if (id !== 0 && !this._audioJSInstances[id].wrapper.classList.contains("error")) {
-                if (id >= SystemSound.BGM_LB) {
-                    this._audioJSInstances[id].skipTo(0);
-                    this._audioJSInstances[id].play();
-                    this._wwaData.bgm = id;
-                } else if (this._nextSoundIsSub) {
-                    this._audioJSInstancesSub[id].skipTo(0);
-                    this._audioJSInstancesSub[id].play();
-                    this._nextSoundIsSub = false;
-                } else {
-                    this._audioJSInstances[id].skipTo(0);
-                    this._audioJSInstances[id].play();
-                    this._nextSoundIsSub = true;
-                }
+        if (id !== 0 && this._audioInstances[id].hasData()) {
+            if (id >= SystemSound.BGM_LB) {
+                this._audioInstances[id].play();
+                this._wwaData.bgm = id;
+            } else {
+                this._audioInstances[id].play();
             }
         }
 
@@ -1388,7 +1191,7 @@ export class WWA {
         }
     }
 
-    public onselectbutton(button: SidebarButton, forcePassword: boolean = false): void {
+    public onselectbutton(button: SidebarButton, forcePassword: boolean = false, forceGoToWWA: boolean = false): void {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[button]));
         this.playSound(SystemSound.DECISION);
         this._itemMenu.close();
@@ -1425,15 +1228,16 @@ export class WWA {
                 (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
-            } else if (!forcePassword) {
-                (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+            } else if (forceGoToWWA) {
+                // F8 で GoTo WWAを選んだ場合で、Battle Reportボタンが表示されている場合は、
+                // Battle Report ボタンを凹ませない
+                if (this._useBattleReportButton) {
+                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+                }
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
             } else if (this._useBattleReportButton) {
                 this.launchBattleEstimateWindow();
-            } else {
-                this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
-                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
             }
         }
     }
@@ -1626,7 +1430,7 @@ export class WWA {
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_R)) {
                 this.onselectbutton(SidebarButton.RESTART_GAME);
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
-                this.onselectbutton(SidebarButton.GOTO_WWA);
+                this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X)) {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
@@ -2070,12 +1874,15 @@ export class WWA {
     }
 
     private _drawEffect(): void {
-        if (this._wwaData.effectCoords.length === 0) {
+        if (this._wwaData.effectCoords.length === 0 || this._wwaData.effectWaits === 0) {
             return;
         }
         var i = Math.floor(this._mainCallCounter % (this._wwaData.effectCoords.length * this._wwaData.effectWaits) / this._wwaData.effectWaits);
         for (var y = 0; y < Consts.V_PARTS_NUM_IN_WINDOW; y++) {
             for (var x = 0; x < Consts.H_PARTS_NUM_IN_WINDOW; x++) {
+                if (!this._wwaData.effectCoords[i]) {
+                    continue;
+                }
                 this._cgManager.drawCanvas(
                     this._wwaData.effectCoords[i].x,
                     this._wwaData.effectCoords[i].y,
@@ -2620,18 +2427,37 @@ export class WWA {
         this._yesNoURL = this._wwaData.message[messageID].split(/\s/g)[0];
     }
 
+    /**
+     * 物体パーツ「スコア表示」のイベントを実行します
+     * 
+     * 動作仕様
+     * 
+     *  - メッセージが空の場合は「スコアを表示します。」というメッセージとともにスコア表示がされる
+     *  - メッセージがマクロのみの場合はマクロのみが実行され、スコアが表示されない
+     *  - メッセージがある場合はそのメッセージとともにスコアが表示される
+     * 
+     * メッセージがマクロのみの場合の挙動は、Java版(v3.10)に準拠するためのものであり、将来変更される可能性があります。
+     *
+     * @param pos パーツの座標
+     * @param partsID パーツの物体番号
+     * @param mapAttr パーツの ATR_TYPE の値
+     */
     private _execObjectScoreEvent(pos: Coord, partsID: number, mapAttr: number): void {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
-        var playerPos = this._player.getPosition().getPartsCoord();
-        var playerStatus = this._player.getStatus();
-        var score = 0;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY] * playerStatus.energy;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH] * playerStatus.strength;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE] * playerStatus.defence;
-        score += this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD] * playerStatus.gold;
-        this._scoreWindow.update(score);
-        this._scoreWindow.show();
-        this.setMessageQueue(messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID], false, false, partsID, PartsType.OBJECT, pos);
+        const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
+        const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
+        const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !!messageInfo.message, false);
+        if (existsMessage) {
+            const score = this._player.getStatus().calculateScore({
+                energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
+                strength: this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
+                defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
+                gold: this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]
+            });
+            this._scoreWindow.update(score);
+            this._scoreWindow.show();
+        }
+        this.setMessageQueue(rawMessage, false, false, partsID, PartsType.OBJECT, pos);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
 
     }
@@ -3174,8 +3000,9 @@ export class WWA {
     }
 
     public setStatusChangedEffect(additionalStatus: EquipmentStatus) {
-
-
+        if (!this._wwaData.isItemEffectEnabled) {
+            return;
+        }
         if (additionalStatus.strength !== 0) {
             util.$id("disp-strength").classList.add("onpress");
             this._statusPressCounter.strength = Consts.STATUS_CHANGED_EFFECT_FRAME_NUM;
@@ -3933,7 +3760,7 @@ export class WWA {
                 "　　　Ｉ: 移動速度を落とす／\n" +
                 "Ｆ２、Ｐ: 移動速度を上げる\n" +
                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                 "　マップデータ バージョン: " +
                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10,
                 false, true
@@ -3974,6 +3801,7 @@ export class WWA {
                     this._camera.getPosition()
                 );
                 this._messageWindow.show();
+                this._player.setMessageWaiting();
             } else {
                 if (this._messageQueue.length === 0) {
                     this._hideMessageWindow();
@@ -4258,7 +4086,6 @@ export class WWA {
         this.updateCSSRule();
     }
     public updateCSSRule() {
-        var messageOpacity = this._isClassicModeEnable ? 1 : 0.9;
         if (this._stylePos === void 0) {
             this._stylePos = new Array(2);
         } else {
@@ -4272,30 +4099,26 @@ export class WWA {
                 }
             }
         }
+        const messageWindowStyleSelector = "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window";
+        const messageWindowOpacity = this._isClassicModeEnable ? 1 : 0.9;
+        const messageWindowStyleRules = `
+background-color: rgba(${this._wwaData.frameColorR},  ${this._wwaData.frameColorG}, ${this._wwaData.frameColorB}, ${messageWindowOpacity});
+border-color: rgba(${this._wwaData.frameOutColorR}, ${this._wwaData.frameOutColorG}, ${this._wwaData.frameOutColorB }, 1);
+color: rgba(${this._wwaData.fontColorR}, ${this._wwaData.fontColorG}, ${this._wwaData.fontColorB}, 1);
+white-space: pre-wrap;
+`;
+        const sidebarStyleSelector = "div#wwa-sidebar";
+        const sidebarStyleRules = `
+color: rgba(${this._wwaData.statusColorR}, ${this._wwaData.statusColorG}, ${this._wwaData.statusColorB},1);
+font-weight: bold;
+`;
+
         if (this._sheet.addRule !== void 0) {
-            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(
-                "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window",
-                "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");" +
-                "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);" +
-                "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);"
-            );
-            this._stylePos[SelectorType.SIDEBAR] = this._sheet.addRule(
-                "div#wwa-sidebar",
-                "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);" +
-                "font-weight: bold;"
-            );
+            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(messageWindowStyleSelector,messageWindowStyleRules);
+            this._stylePos[SelectorType.SIDEBAR] = this._sheet.addRule(sidebarStyleSelector, sidebarStyleRules);
         } else {
-            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(
-                "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window {\n" +
-                "background-color: rgba(" + this._wwaData.frameColorR + "," + this._wwaData.frameColorG + "," + this._wwaData.frameColorB + ", " + messageOpacity + ");\n" +
-                "border-color: rgba(" + this._wwaData.frameOutColorR + "," + this._wwaData.frameOutColorG + "," + this._wwaData.frameOutColorB + ", 1);\n" +
-                "color: rgba(" + this._wwaData.fontColorR + "," + this._wwaData.fontColorG + "," + this._wwaData.fontColorB + ", 1);\n" +
-                "}", 0);
-            this._stylePos[SelectorType.SIDEBAR] = this._sheet.insertRule(
-                "div#wwa-sidebar {\n" +
-                "color: rgba(" + this._wwaData.statusColorR + "," + this._wwaData.statusColorG + "," + this._wwaData.statusColorB + ",1);\n" +
-                "font-weight: bold;\n" +
-                "}", 1);
+            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(`${messageWindowStyleSelector} { ${messageWindowStyleRules} }`, 0);
+            this._stylePos[SelectorType.SIDEBAR] = this._sheet.insertRule(`${sidebarStyleSelector} { ${sidebarStyleRules} }`, 1);
         }
     }
     public changeStyleRule(type: ChangeStyleType, r: number, g: number, b: number) {
@@ -4372,7 +4195,21 @@ function start() {
     if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
         itemEffectEnabled = false;
     }
-    wwa = new WWA(mapFileName, loaderFileName, urlgateEnabled, titleImgName, classicModeEnabled, itemEffectEnabled, audioDirectory);
+    let useGoToWWA = false;
+    const useGoToWWAAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-use-go-to-wwa");
+    if (useGoToWWAAttribute !== null && useGoToWWAAttribute.match(/^true$/i)) {
+        useGoToWWA = true;
+    }
+    wwa = new WWA(
+        mapFileName,
+        loaderFileName,
+        urlgateEnabled,
+        titleImgName,
+        classicModeEnabled,
+        itemEffectEnabled,
+        useGoToWWA,
+        audioDirectory
+    );
 }
 
 

@@ -1,4 +1,5 @@
 ﻿import * as loader_wwa_data from "./wwa_data";
+import { WWAData } from "@wwawing/common-interface";
 import { WWADataExtractor } from "./loader_extractor";
 import { WWAConsts } from "./wwa_data";
 import { sendToMain } from ".";
@@ -20,7 +21,7 @@ export class WWALoader {
 
   private _fileName: string;
   private _dataExtractor: WWADataExtractor;
-  private _dataJSObj: loader_wwa_data.WWAData;
+  private _dataJSObj: WWAData;
   private _currentPos: number;
   private _srcData: Uint8Array;
 

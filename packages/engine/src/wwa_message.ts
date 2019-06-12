@@ -8,7 +8,8 @@ import {
     MacroImgFrameIndex,
     macrotable,
     YesNoState,
-    Position
+    Position,
+    DEVICE_TYPE
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -334,6 +335,7 @@ export class Macro {
         }
         if (waitTime === 0) {
             this._wwa.stopEffect();
+            return;
         }
         var coords: Coord[] = [];
         for (var i = 1; i < this.macroArgs.length; i += 2) {
@@ -746,6 +748,18 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._ynWrapperElement.appendChild(this._divYesElement);
         this._ynWrapperElement.appendChild(this._divNoElement);
         thisA._isInputDisable = false;
+        switch (wwa.userDevice.device) {
+            case DEVICE_TYPE.SP:
+            case DEVICE_TYPE.VR:
+                //スマートフォン用に拡大
+                this._dummyElement.style.height = "70px";
+                this._ynWrapperElement.style.transform = "scale(1.5,1.5) translate(-25px,-6px)";
+                this._ynWrapperElement.style["imageRendering"] = "pixelated";
+                this._ynWrapperElement.style.width = "100px";
+                this._divYesElement.style.margin = "0px 5px";
+                this._divNoElement.style.margin = "0px 5px";
+                break;
+        }
         this.update();
     }
 

@@ -8,9 +8,13 @@
     "bootstrap:no-hoist": "lerna bootstrap",
     "clean": "lerna clean",
     "start": "lerna run start --stream --scope @wwawing/engine",
+<<<<<<< HEAD
     "build": "lerna run build --stream --parallel",
     "compile": "lerna run compile --stream --parallel",
     "deploy": "lerna run deploy --scope @wwawing/engine",
+=======
+    "build": "lerna run build --stream",
+>>>>>>> develop
     "generate": "lerna exec --scope @wwawing/debug-server -- npm run generate",
     "make-dist": "npm run build && lerna run make-dist --stream"
   },
@@ -27,10 +31,10 @@
     "url": "https://github.com/WWAWing/WWAWing/issues"
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
-  "lerna": "^2.11.0",
+  "lerna": "^3.13.1",
   "npm-run-all": "^4.1.3",
   "devDependencies": {
-    "lerna": "^2.11.0",
-    "npm-run-all": "^4.1.3"
+    "lerna": "^3.14.1",
+    "npm-run-all": "^4.1.5"
   }
 }

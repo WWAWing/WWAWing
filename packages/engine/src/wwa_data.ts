@@ -1,6 +1,8 @@
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import { KeyCode } from "./wwa_input";
+import { WWAData } from "@wwawing/common-interface";
+export { WWAData };
 
 export class EquipmentStatus {
     public strength: number;
@@ -79,7 +81,18 @@ export class Status extends EquipmentStatus {
         return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
     }
 
-    public constructor(e: number, s: number, d: number, g: number) {
+    public calculateScore(weight: {
+        energy: number;
+        strength: number;
+        defence: number;
+        gold: number;
+    }): number {
+        type Key = keyof typeof weight;
+        // TODO: this[key] など型が効いていない部分があるが、一旦目を瞑る。
+        return (Object.keys(weight) as Key[]).reduce((prev, key) =>  prev + weight[key] * this[key], 0);
+    }
+
+    public constructor( e: number, s: number, d: number, g: number) {
         super(s, d);
         this.energy = e;
         this.gold = g;
@@ -333,6 +346,124 @@ export enum PartsType {
     OBJECT = 0
 }
 
+export class UserDevice {
+    public os: number;
+    public browser: number;
+    public device: number;
+    public constructor() {
+        var ua: string = window.navigator.userAgent;
+        this.os = this._getOS(ua);
+        this.browser = this.getBrowser(ua);
+        this.device = this.getDevice();
+    }
+    private _getOS(ua: string): number{
+        if (ua.match(/xbox/i)) {
+            return OS_TYPE.XBOX;
+        }
+        if (ua.match(/windows/i)) {
+            return OS_TYPE.WINDOWS;
+        }
+        if (ua.match(/macintosh/i)) {
+            return OS_TYPE.MACINTOSH;
+        }
+        if (ua.match(/iphone|ipad|ipod/i)) {
+            return OS_TYPE.IOS;
+        }
+        if (ua.match(/oculus/i)) {
+            return OS_TYPE.OCULUS;
+        }
+        if (ua.match(/android/i)) {
+            return OS_TYPE.ANDROID;
+        }
+        if (ua.match(/nintendo/i)) {
+            return OS_TYPE.NINTENDO;
+        }
+        if (ua.match(/playstation/i)) {
+            return OS_TYPE.PLAY_STATION;
+        }
+        if (ua.match(/linux/i)) {
+            return OS_TYPE.LINUX;
+        }
+        return OS_TYPE.OTHERS;
+    }
+    /**
+     * ユーザエージェントの文字列を受け取り、該当するユーザエージェントに相当する列挙を返す。
+     * @see BROWSER_TYPE
+     * FYI: EdgeのUAには「Chrome」「Safari」の文字列が含まれており、Chrome判定の前にEdge判定を実行する必要がある。
+     * @see https://github.com/WWAWing/WWAWing/pull/123#issuecomment-493747626
+     * @see https://qiita.com/tonkotsuboy_com/items/7b36bdfc3a9a0970d23b
+     * また、ChromiumバージョンのEdgeはChromeとして扱うが、ChromiumバージョンのUA(2019-05-19現在)には「Edge」は含まれていないので、
+     * ここでは特殊な処理は行わない。（代わりに「Edg」の文字列がある）
+     * @see https://www.ka-net.org/blog/?p=11457
+     */
+    private getBrowser(ua: string): number{
+        if (ua.match(/(?:msie|trident)/i)) {
+            return BROWSER_TYPE.INTERNET_EXPLORER;
+        }
+        if (ua.match(/edge/i)) {
+            return BROWSER_TYPE.EDGE;
+        }
+        if (ua.match(/chrome/i)) {
+            return BROWSER_TYPE.CHROME;
+        }
+        if (ua.match(/firefox/i)) {
+            return BROWSER_TYPE.FIREFOX;
+        }
+        if (ua.match(/safari/i)) {
+            return BROWSER_TYPE.SAFARI;
+        }
+        return BROWSER_TYPE.OTHERS;
+    }
+    private getDevice(): number {
+        switch (this.os) {
+            case OS_TYPE.WINDOWS:
+            case OS_TYPE.MACINTOSH:
+            case OS_TYPE.LINUX:
+                return DEVICE_TYPE.PC;
+            case OS_TYPE.IOS:
+            case OS_TYPE.ANDROID:
+                return DEVICE_TYPE.SP;
+            case OS_TYPE.OCULUS:
+                return DEVICE_TYPE.VR;
+            case OS_TYPE.NINTENDO:
+            case OS_TYPE.PLAY_STATION:
+            case OS_TYPE.XBOX:
+                return DEVICE_TYPE.GAME;
+        }
+        return DEVICE_TYPE.OTHERS;
+    }
+}
+
+export enum OS_TYPE {
+    WINDOWS = 1,
+    MACINTOSH = 2,
+    LINUX = 3,
+    ANDROID = 4,
+    IOS = 5,
+    NINTENDO = 6,
+    PLAY_STATION = 7,
+    OCULUS = 8,
+    XBOX = 9,
+    OTHERS = 9999
+}
+
+export enum DEVICE_TYPE {
+    PC = 1,
+    SP = 2,
+    VR = 3,
+    GAME = 4,
+    OTHERS = 9999
+}
+
+export enum BROWSER_TYPE {
+    CHROME = 1,
+    FIREFOX = 2,
+    SAFARI = 3,
+    EDGE = 4,
+    INTERNET_EXPLORER = 5,
+    OTHERS = 9999
+}
+
 export enum ChoiceCallInfo {
     NONE,
     CALL_BY_MAP_PARTS,
@@ -474,7 +605,6 @@ export enum SystemSound {
 export var speedList = [2, 5, 8, 10];
 export var speedNameList = ["低速", "準低速", "中速", "高速"];
 export class WWAConsts {
-    static VERSION_WWAJS: string = "W3.15dβ3";
 
     static WWA_HOME: string = "http://wwajp.com";
 
@@ -742,94 +872,3 @@ export enum IDTable {
     BITSHIFT = 16,
     BITMASK = 0xFFFF
 };
-
-
-export class WWAData {
-    version: number = void 0;
-
-    gameoverX: number = void 0;
-    gameoverY: number = void 0;
-
-    playerX: number = void 0;
-    playerY: number = void 0;
-
-    mapPartsMax: number = void 0;
-    objPartsMax: number = void 0;
-
-    isOldMap: boolean = void 0;
-
-    statusEnergyMax: number = void 0;
-    statusEnergy: number = void 0;
-    statusStrength: number = void 0;
-    statusDefence: number = void 0;
-    statusGold: number = void 0;
-
-    itemBox: number[] = void 0;
-
-    mapWidth: number = void 0;
-    messageNum: number = void 0;
-
-    map: number[][] = void 0;
-    mapObject: number[][] = void 0;
-
-    mapCompressed: number[][][] = void 0;
-    mapObjectCompressed: number[][][] = void 0;
-
-    mapAttribute: number[][] = void 0;
-    objectAttribute: number[][] = void 0;
-
-    worldPassword: string = void 0;
-    message: string[] = void 0;
-    worldName: string = void 0;
-    worldPassNumber: number = void 0;
-    charCGName: string = void 0;
-    mapCGName: string = void 0;
-    systemMessage: string[] = void 0;
-    moves: number = void 0;
-
-    yesnoImgPosX: number = void 0;
-    yesnoImgPosY: number = void 0;
-    playerImgPosX: number = void 0;
-    playerImgPosY: number = void 0;
-    clickableItemSignImgPosX: number = void 0; // 0の時, 標準枠  注) 面倒なことがわかったので未実装
-    clickableItemSignImgPosY: number = void 0; // undefined時, 標準枠 注) 面倒なことがわかったので未実装
-
-    disableSaveFlag: boolean = void 0;
-    compatibleForOldMapFlag: boolean = void 0;
-    objectNoCollapseDefaultFlag: boolean = void 0;
-
-    delPlayerFlag: boolean = void 0;
-
-    bgm: number = void 0;
-    effectCoords: Coord[];
-    effectWaits: number;
-
-    imgClickX: number = void 0;
-    imgClickY: number = void 0;
-
-    frameColorR: number = void 0;
-    frameColorG: number = void 0;
-    frameColorB: number = void 0;
-
-    frameOutColorR: number = void 0;
-    frameOutColorG: number = void 0;
-    frameOutColorB: number = void 0;
-
-    fontColorR: number = void 0;
-    fontColorG: number = void 0;
-    fontColorB: number = void 0;
-
-    statusColorR: number = void 0;
-    statusColorG: number = void 0;
-    statusColorB: number = void 0;
-
-    checkOriginalMapString: string = void 0;
-    checkString: string = void 0;
-
-    // loader からくるデータには含まれていないので注意
-    // data-wwa-item-effect-enable="false" の場合は初期値無効
-    isItemEffectEnabled?: boolean = void 0; 
-
-    constructor() { }
-}
-
