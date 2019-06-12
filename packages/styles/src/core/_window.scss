@@ -1,4 +1,5 @@
 $wwa_icon_width: 40px;
+$wwa_icon_width-scale_up: 100px;
 
 %wwa_window {
     position: absolute;
@@ -7,12 +8,36 @@ $wwa_icon_width: 40px;
     width: 400px;
     height: 400px;
     margin: 20px;
-    // background-color: rgba( 255, 255, 255, 0.9 ); // システムで指定することになりました。$colorで。
+    background-color: rgba( 255, 255, 255, 0.9 ); // システムで指定することになりました。$colorで。
     border: 2px solid #000;
     border-radius: 10px;
     box-sizing: border-box;
     cursor: pointer;
     overflow: auto;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.wwa-message-window {
+    @extend %wwa_window;
+}
+
+#wwa-wrapper.useScaleUp #wwa-text-message-window {
+    $yes_button_no: 2;
+    $no_button_no: 3;
+
+    & > div::nth-child($yes_button_no) {
+        height: $wwa_icon_width * 2 !important;
+    }
+    & > div::nth-child($no_button_no) {
+        transform: scale(1.5, 1.5) translate(-25px, -6px);
+        image-rendering: pixelated;
+        width: $wwa_icon_width-scale_up;
+        & > div {
+            margin: 0 5px !important;
+        }
+    }
 }
 
 #wwa-password-window {
