@@ -895,10 +895,11 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._msgWrapperElement.textContent = "";
         var mesArray = this._message.split("\n");
         mesArray.forEach((line, i) => {
+            let lsp: HTMLSpanElement; // Logical SPan
             if (this._wwa.isClassicMode()) {
-                let lsp = this.createClassicTextElement(line);
+                lsp = this.createClassicTextElement(line);
             } else {
-                var lsp = document.createElement("span"); // Logical SPan
+                lsp = document.createElement("span");
                 lsp.textContent = mesArray[i];
             }
             this._msgWrapperElement.appendChild(lsp);
