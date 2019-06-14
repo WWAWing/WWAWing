@@ -7,9 +7,6 @@
 		"lib": "lib"
 	},
 	"scripts": {
-		"start": "npm run clean && npm run build && node ./lib/make-wwapage all && npm run make-dist",
-		"start:dev": "npm run build && node ./lib/make-wwapage dev",
-		"start:dist": "npm run build && node ./lib/make-wwapage dist && npm run buiild:dist",
 		"build": "npm run clean:script && tsc -p .",
 		"make-dist": "npm run clean:dist && node ./lib/make-wwawing-dist && node ./lib/make-zip",
 		"clean": "npm run clean:script && npm run clean:dist",
@@ -27,7 +24,6 @@
 		"@types/jszip": "^3.1.4",
 		"@types/node": "^10.5.1",
 		"@types/shelljs": "^0.8.0",
-		"@wwawing/html-generator": "git+https://git@github.com/WWAWing/html-generator.git#include-lib",
 		"@wwawing/engine": "3.2.0",
 		"@wwawing/assets": "0.0.0",
 		"@wwawing/loader": "0.0.0",
