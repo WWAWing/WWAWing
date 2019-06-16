@@ -1,6 +1,6 @@
 {
 	"name": "@wwawing/build-utils",
-	"version": "0.0.0",
+	"version": "0.0.0-test.1",
 	"description": "build utilies for WWA Wing",
 	"main": "lib/make-wwapage.js",
 	"directories": {
@@ -24,10 +24,10 @@
 		"@types/jszip": "^3.1.4",
 		"@types/node": "^10.5.1",
 		"@types/shelljs": "^0.8.0",
-		"@wwawing/engine": "3.2.0",
-		"@wwawing/assets": "0.0.0",
-		"@wwawing/loader": "0.0.0",
-		"@wwawing/debug-server": "0.0.0",
+		"@wwawing/assets": "^0.0.0-test.1",
+		"@wwawing/debug-server": "^0.0.0-test.1",
+		"@wwawing/engine": "^0.0.0-test.1",
+		"@wwawing/loader": "^0.0.0-test.1",
 		"glob": "^7.1.2",
 		"jszip": "^3.1.5",
 		"shelljs": "^0.8.2",
