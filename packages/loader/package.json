@@ -43,5 +43,8 @@
     "uglifyjs-webpack-plugin": "^1.2.5",
     "webpack": "^4.40.2",
     "webpack-cli": "^3.3.9"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
