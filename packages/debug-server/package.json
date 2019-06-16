@@ -19,5 +19,8 @@
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
     "typescript": "^3.3.3333"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
