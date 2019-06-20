@@ -152,19 +152,34 @@ export class WWACompress {
                     }
                 }
                 var saveList = [];
+                var saveListTest = [];
                 oldValue = -1;
 
                 //テーブル情報を配列情報に変換
+                var usingUint8Flag: boolean = false;
                 for (idText in saveObject) {
                     newValue = Number(idText);
                     addValue = newValue - oldValue - 1;
                     oldValue = newValue;
+                    usingUint8Flag = false;
                     if (this._usingByteFlag) {
                         //バイナリ化
                         saveObject[idText] = this.compressUint8Array(newValue, saveObject[idText], wwaObject);
+                        if (saveObject[idText] instanceof Uint8Array) {
+                            usingUint8Flag = true;
+                        }
+                    }
+                    if (!usingUint8Flag) {
+                        saveListTest.push(addValue, saveObject[idText]);
                     }
                     saveList.push(addValue, saveObject[idText]);
                 }
+                if (this._usingByteFlag) {
+                    if (JSON.stringify(saveListTest).length >= this._mapByteLength) {
+                        return this.compressMapAllObject(wwaObject, restartObject);
+                    }
+                }
+
                 return saveList;
             case SAVE_COMPRESS_ID.SYSTEM_MESSAGE:
                 saveObject = {};
@@ -184,6 +199,97 @@ export class WWACompress {
             return undefined;
         }
         return saveObject;
+    }
+    /**
+     * JSON化したときの文字列の長さにより判定し、分岐する。
+     * bit単位でフラグ管理し、マップ全体の通行情報を格納する方式に変換。
+     * 最初の0の羅列はバイナリデータから消去し、数値を格納して詰める。
+     * 使用されているパーツをindex配列に登録し、使用数順にソートする。
+     * フラグの数だけ配置するパーツのindexを配列に格納する。
+     * @param wwaObject
+     * @param restartObject
+     */
+    private static compressMapAllObject(wwaObject: object, restartObject: object): object {
+        var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
+        var x: number, y: number, bit: number, position: number, idText: string, lastPosition: number, count: number, id: number;
+        var mapWidth: number = this._restartData.mapWidth;
+        var oldID: number, idList: Array<number>, indexList: Array<number>, compressClassList: Array<WWACompressIndexTable>, indexText: string, indexTable: object, idClassTable: object, index: number, indexCount: number;
+        var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
+        var startIndex: number = 0;
+        bit = 0;
+        position = 0;
+        lastPosition = 0;
+        count = 0;
+        indexCount = 0;
+        compressClassList = [];
+        idClassTable = {};
+        idList = [];
+        indexList = [];
+        for (y = 0; y < mapWidth; y++) {
+            for (x = 0; x < mapWidth; x++) {
+                id = wwaObject[y][x];
+                if (id !== restartObject[y][x]) {
+
+                    if (startIndex === -1) {
+                        //0ではないバイト開始位置を取得
+                        startIndex = position;
+                    }
+
+                    //ビット単位で座標が存在するかを記録
+                    uint8Array[position] = uint8Array[position] | (1 << bit);
+
+                    //最後のビットとして設定
+                    lastPosition = position;
+
+                    //その座標のIDを取得
+                    if (idClassTable[id] === undefined) {
+                        idClassTable[id] = new WWACompressIndexTable(id, indexCount++);
+                    }
+
+                    //その座標のIDの利用回数を加算
+                    idClassTable[id].count++;
+                }
+                bit++;
+                if (bit === 8) {
+                    bit = 0;
+                    position++;
+                }
+            }
+        }
+        //テーブルを配列に変換
+        for (idText in idClassTable) {
+            index = idClassTable[idText].index;
+            compressClassList[index] = idClassTable[idText];
+        }
+
+        //IDごとの利用回数順に並び替え
+        compressClassList.sort(this.idSort);
+
+        indexTable = {};
+        oldID = -1;
+        //Index配列を生成する。使用回数が多い順に格納する
+        for (indexText in compressClassList) {
+            id = compressClassList[indexText].id;
+            indexTable[id] = Number(indexText);
+
+            idList[indexText] = id;
+            oldID = id;
+        }
+
+        //
+        for (y = 0; y < mapWidth; y++) {
+            for (x = 0; x < mapWidth; x++) {
+                id = wwaObject[y][x];
+                if (id !== restartObject[y][x]) {
+                    indexList[count++] = indexTable[id];
+                }
+            }
+        }
+
+        return [startIndex, uint8Array.subarray(startIndex, lastPosition + 1), idList, indexList];
+    }
+    private static idSort(a: WWACompressIndexTable, b: WWACompressIndexTable):number {
+        return b.count - a.count;
     }
     /**
      * JSON化したときの文字列の長さにより判定し、分岐する。
@@ -337,6 +443,12 @@ export class WWACompress {
                 var i, len;
                 var loadArray: object[] = <object[]>loadObject;
                 len = loadArray.length;
+                if (len === 4) {
+                    if ((typeof loadArray[0] === "number") && (loadArray[1] instanceof Uint8Array) && (loadArray[2] instanceof Array) && (loadArray[3] instanceof Array)) {
+                        this.decompressAllMapObject(loadArray, newObject);
+                        return newObject;
+                    }
+                }
                 //配列から物体ID・背景IDテーブルに変換
                 for (i = 0; i < len;i+=2) {
                     addValue = Number(loadArray[i]);
@@ -486,6 +598,45 @@ export class WWACompress {
                 count++;
             }
         }
+        return true;
+    }
+    private static decompressAllMapObject(loadArray: object, newObject: object): boolean {
+        var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
+        var x: number, y: number, id: number, bit: number, position: number, idText: string, lastPosition: number, count: number, id: number;
+        var mapWidth: number = this._restartData.mapWidth;
+        var oldID: number, indexList: Array<number>, idList: Array<number>, index: number, indexCount: number;
+        var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
+        var x: number, y: number, bit: number, position: number, len: number, count: number;
+
+        var startIndex: number = 0;
+        startIndex = loadArray[0];
+        idList = loadArray[2];
+        indexList = loadArray[3];
+        var uintCopy8Array: Uint8Array = <Uint8Array>loadArray[1];
+        uint8Array.set(uintCopy8Array, startIndex);
+
+        bit = 0;
+        position = 0;
+        lastPosition = 0;
+        count = 0;
+        indexCount = 0;
+        indexCount = 0;
+        len = uint8Array.length;
+        for (position = 0; position < len; position++) {
+            for (bit = 0; bit < 8; bit++) {
+                if ((uint8Array[position] & (1 << bit)) !== 0) {
+                    //設置している
+                    index = indexList[indexCount++];
+                    id = idList[index];
+                    x = count % mapWidth;
+                    y = (count / mapWidth) | 0;
+                    newObject[y][x] = id;
+
+                }
+                count++;
+            }
+        }
+
         return true;
     }
     private static decompressBase64(id: number, loadArray: object, newObject: object) {
@@ -699,5 +850,14 @@ export class WWASaveDB {
         };
         reqOpen.onblocked = (e) => {
         };
+    }
+}
+export class WWACompressIndexTable {
+    public id: number = 0;
+    public index: number = 0;
+    public count: number = 0;
+    public constructor(id: number, index: number) {
+        this.id = id;
+        this.index = index;
     }
 }
