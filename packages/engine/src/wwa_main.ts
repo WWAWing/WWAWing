@@ -1229,8 +1229,8 @@ export class WWA {
                 this.onpasswordloadcalled();
             }
         } else if (button === SidebarButton.QUICK_SAVE) {
-            this._messageWindow.createSaveDom();
             if (!this._wwaData.disableSaveFlag) {
+                this._messageWindow.createSaveDom();
                 if (this._usePassword) {
                     this.setMessageQueue("データの一時保存先を選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_SAVE;
