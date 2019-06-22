@@ -484,7 +484,14 @@ export class WWA {
             this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
 
+            //ロード処理の前に追加
+            this._messageWindow = new MessageWindow(
+                this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
+            this._scoreWindow = new ScoreWindow(
+                this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
+
             WWACompress.setRestartData(this._restartData);
+            this.clearFaces();
             var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
             if (typeof resumeSaveDataText === "string") {
                 this._useSuspend = true;//中断モード
@@ -826,12 +833,8 @@ export class WWA {
             this._passwordWindow = new PasswordWindow(
                 this, <HTMLDivElement>util.$id("wwa-wrapper"));
 
-            this._messageWindow = new MessageWindow(
-                this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
             this._monsterWindow = new MosterWindow(
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
-            this._scoreWindow = new ScoreWindow(
-                this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
             this._setProgressBar(getProgress(3, 4, LoadStage.GAME_INIT));
 
             this._isLoadedSound = false;
@@ -839,7 +842,6 @@ export class WWA {
             this._paintSkipByDoorOpen = false
             this._clearFacesInNextFrame = false
             this._useConsole = false;
-            this.clearFaces();
 
             var self = this;
             this.wwaCustomEvent('wwa_startup');

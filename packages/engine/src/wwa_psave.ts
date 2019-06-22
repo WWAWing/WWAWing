@@ -215,7 +215,7 @@ export class WWACompress {
         var mapWidth: number = this._restartData.mapWidth;
         var oldID: number, idList: Array<number>, indexList: Array<number>, compressClassList: Array<WWACompressIndexTable>, indexText: string, indexTable: object, idClassTable: object, index: number, indexCount: number;
         var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
-        var startIndex: number = 0;
+        var startIndex: number = -1;
         bit = 0;
         position = 0;
         lastPosition = 0;
@@ -286,9 +286,44 @@ export class WWACompress {
             }
         }
 
-        return [startIndex, uint8Array.subarray(startIndex, lastPosition + 1), idList, indexList];
+        return [startIndex, uint8Array.subarray(startIndex, lastPosition + 1), idList, this.indexListCompress(indexList, idList.length)];
     }
-    private static idSort(a: WWACompressIndexTable, b: WWACompressIndexTable):number {
+    private static indexListCompress(indexList: Array<number>, idLength:number): Array<number> {
+        var newIndexList: Array<number> = [];
+        var i: number, n: number, s: number, len: number, index: number, indexLog: number, nextIndex: number, repeatCount:number;
+        len = indexList.length;
+        indexLog = -1;
+        n = 0;
+        for (i = 0; i < len; i++) {
+            index = indexList[i];
+            repeatCount = 0;
+            for (s = i + 1; s < len; s++) {
+                nextIndex = indexList[s];
+                if (index === nextIndex) {
+                    repeatCount++;
+                    i = s;
+                } else {
+                    break;
+                }
+            }
+            switch (repeatCount) {
+                case 0:
+                    newIndexList[n++] = index;
+                    break;
+                case 1:
+                    newIndexList[n++] = index;
+                    newIndexList[n++] = index;
+                    break;
+                default:
+                    newIndexList[n++] = index;
+                    newIndexList[n++] = idLength + repeatCount;
+                    break;
+            }
+        }
+
+        return newIndexList;
+    }
+    private static idSort(a: WWACompressIndexTable, b: WWACompressIndexTable): number {
         return b.count - a.count;
     }
     /**
@@ -444,7 +479,7 @@ export class WWACompress {
                 var loadArray: object[] = <object[]>loadObject;
                 len = loadArray.length;
                 if (len === 4) {
-                    if ((typeof loadArray[0] === "number") && (loadArray[1] instanceof Uint8Array) && (loadArray[2] instanceof Array) && (loadArray[3] instanceof Array)) {
+                    if ((typeof loadArray[0] === "number") && ((loadArray[1] instanceof Uint8Array) || (loadArray[1] instanceof Array)) && (loadArray[2] instanceof Array) && (loadArray[3] instanceof Array)) {
                         this.decompressAllMapObject(loadArray, newObject);
                         return newObject;
                     }
@@ -604,22 +639,37 @@ export class WWACompress {
         var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
         var x: number, y: number, id: number, bit: number, position: number, idText: string, lastPosition: number, count: number, id: number;
         var mapWidth: number = this._restartData.mapWidth;
-        var oldID: number, indexList: Array<number>, idList: Array<number>, index: number, indexCount: number;
+        var oldID: number, loadIndexList: Array<number>, indexList: Array<number>, idList: Array<number>, index: number, indexCount: number;
         var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
         var x: number, y: number, bit: number, position: number, len: number, count: number;
 
         var startIndex: number = 0;
         startIndex = loadArray[0];
         idList = loadArray[2];
-        indexList = loadArray[3];
+        loadIndexList = loadArray[3];
         var uintCopy8Array: Uint8Array = <Uint8Array>loadArray[1];
         uint8Array.set(uintCopy8Array, startIndex);
+        indexList = [];
+        var idLength: number = idList.length;
+        var len: number, i: number, n: number, repeatCount: number, k: number, indexLog: number;
+        len = loadIndexList.length;
+        for (i = 0,n = 0; i < len; i++) {
+            index = loadIndexList[i];
+            if (index >= idLength) {
+                repeatCount = index - idLength;
+                for (k = 0; k < repeatCount; k++) {
+                    indexList[n++] = indexLog;
+                }
+            } else {
+                indexList[n++] = index;
+            }
+            indexLog = index;
+        }
 
         bit = 0;
         position = 0;
         lastPosition = 0;
         count = 0;
-        indexCount = 0;
         indexCount = 0;
         len = uint8Array.length;
         for (position = 0; position < len; position++) {
