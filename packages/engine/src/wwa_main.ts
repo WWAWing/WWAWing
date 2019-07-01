@@ -500,6 +500,7 @@ export class WWA {
                     var resumeData: WWAData = WWACompress.getStartWWAData(resumeSaveDataText);
                     if (this._restartData !== resumeData) {
                         this._applyQuickLoad(resumeData);
+                        this._quickSave(ChoiceCallInfo.CALL_BY_QUICK_SAVE);
                     }
                 }
             }
@@ -1842,25 +1843,21 @@ export class WWA {
                 if (this._messageWindow.isSaveChoice()) {
                     //セーブ領域参照
                     this._messageWindow.saveUpdate();
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
-                        this._messageWindow.saveControll(Direction.LEFT);
-                    } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
-                        this._messageWindow.saveControll(Direction.UP);
-                    } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
-                        this._messageWindow.saveControll(Direction.RIGHT);
-                    } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
-                        this._messageWindow.saveControll(Direction.DOWN);
+                    if (!this._messageWindow.isSaveClose()) {
+                        if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
+                            this._messageWindow.saveControll(Direction.LEFT);
+                        } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
+                            this._messageWindow.saveControll(Direction.UP);
+                        } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
+                            this._messageWindow.saveControll(Direction.RIGHT);
+                        } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
+                            this._messageWindow.saveControll(Direction.DOWN);
+                        }
                     }
-                    /*
-                    if (this._messageWindow.isSaveClose()) {
-                        //項目クリックによるYES選択扱い
-                        //this._yesNoJudge = YesNoState.YES;
-                    }
-                    */
                 }
                 if (!this._messageWindow.isInputDisable()) {
                     if (this._yesNoJudge === YesNoState.UNSELECTED) {
