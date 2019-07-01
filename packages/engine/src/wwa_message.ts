@@ -1072,16 +1072,25 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         }
     }
     save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
-        if (!this._saveDataList[this._save_select_id]) {
+        var saveData: WWASaveData = this._saveDataList[this._save_select_id];
+        if (!saveData) {
             return false;
         }
-        return this._saveDataList[this._save_select_id].save(gameCvs, _quickSaveData);
+        return saveData.save(gameCvs, _quickSaveData);
     }
     load(): WWAData {
-        if (!this._saveDataList[this._save_select_id]) {
+        var saveData: WWASaveData = this._saveDataList[this._save_select_id];
+        if (!saveData) {
             return null;
         }
-        return this._saveDataList[this._save_select_id].load();
+        // TODO: Phase3か4 で対応予定
+        // https://github.com/WWAWing/WWAWing/issues/201
+        /*
+        if (!saveData.compressData) {
+            return null;
+        }
+        */
+        return saveData.load();
     }
     hasSaveData(): boolean {
         for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
@@ -1105,6 +1114,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     public saveControll(moveDir: Direction): void {
         if (this._save_counter > 0) {
             //カーソルリピート待機
+            return;
+        }
+        if (this._isInputDisable) {
+            //受付しないタイミング
             return;
         }
         switch (moveDir) {
