@@ -6,14 +6,15 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "bootstrap": "lerna bootstrap --hoist",
     "bootstrap:no-hoist": "lerna bootstrap",
-    "clean": "lerna clean",
+    "clean": "lerna clean --yes",
     "start": "lerna run start --stream --scope @wwawing/engine",
     "build": "lerna run build --stream",
     "generate": "lerna exec --scope @wwawing/debug-server -- npm run generate",
     "make-dist": "npm run build && lerna run make-dist --stream",
     "make-wwa-page": "ts-node ./scripts/make-wwa-page all",
     "make-wwa-page:dev": "ts-node ./scripts/make-wwa-page dev",
-    "make-wwa-page:dist": "ts-node ./scripts/make-wwa-page dist"
+    "make-wwa-page:dist": "ts-node ./scripts/make-wwa-page dist",
+    "publish:all": "run-s clean bootstrap build && lerna publish --dist-tag wwa-test"
   },
   "repository": {
     "type": "git",
