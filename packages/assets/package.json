@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/assets",
-  "version": "0.0.0-test.3",
+  "version": "0.0.0-test.4",
   "description": "WWA Wing asset files",
   "main": "index.js",
   "scripts": {
