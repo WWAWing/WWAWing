@@ -54,9 +54,6 @@ import { WWACompress } from "./wwa_psave";
 
 var wwa: WWA;
 let wwap_mode: boolean = false;
-var requestAnimationFrame: (callback: FrameRequestCallback) => number = (
-    window.requestAnimationFrame || window.webkitRequestAnimationFrame || (window as any).mozRequestAnimationFrame || (window as any).msRequestAnimationFrame
-);
 
 /**
 *
@@ -874,7 +871,7 @@ export class WWA {
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound();
 
-                    requestAnimationFrame(this.soundCheckCaller);
+                    window.requestAnimationFrame(this.soundCheckCaller);
 
                     return;
                 } else if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "OFF") {
@@ -934,7 +931,7 @@ export class WWA {
                                 self._isLoadedSound = true;
                                 this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                                 self.loadSound();
-                                requestAnimationFrame(this.soundCheckCaller);
+                                window.requestAnimationFrame(this.soundCheckCaller);
                             }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                         }
 
@@ -962,7 +959,7 @@ export class WWA {
                     self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
                     self._isLoadedSound = true;
                     self.loadSound();
-                    requestAnimationFrame(this.soundCheckCaller);
+                    window.requestAnimationFrame(this.soundCheckCaller);
                 }
             });
 
@@ -1247,7 +1244,7 @@ export class WWA {
         }
         if (loadedNum < total && !this._soundLoadSkipFlag) {
             this._setProgressBar(getProgress(loadedNum, total, LoadStage.AUDIO));
-            requestAnimationFrame(this.soundCheckCaller);
+            window.requestAnimationFrame(this.soundCheckCaller);
             return;
         }
 
@@ -1551,11 +1548,11 @@ export class WWA {
         this._gamePadStore.update();
         if (this._waitFrame-- > 0) {
             //待ち時間待機
-            requestAnimationFrame(this.mainCaller);
+            window.requestAnimationFrame(this.mainCaller);
             return;
         }
         this._waitFrame = 0;
-
+        2.7 * 20
         // メッセージウィンドウによる入力割り込みが発生した時
         if (this._yesNoJudgeInNextFrame !== void 0) {
             this._yesNoJudge = this._yesNoJudgeInNextFrame;
@@ -2046,7 +2043,7 @@ export class WWA {
         }
         if (!this._stopUpdateByLoadFlag) {
             //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
-            requestAnimationFrame(this.mainCaller);
+            window.requestAnimationFrame(this.mainCaller);
         } else {
             this._fadeout((): void => {
                 if (this._loadType === LoadType.QUICK_LOAD) {
@@ -3628,11 +3625,11 @@ export class WWA {
     public wwaCustomEvent(event_name: string, suspendSendData: object = {}) {
         var customEvent;
         suspendSendData["wwa"] = this;
-        if (window["CustomEvent"]) {
+        try{
             customEvent = new CustomEvent(event_name, { detail: suspendSendData });
-        } else {
+        } catch(error) {
             customEvent = document.createEvent('CustomEvent');
-            customEvent.initCustomEvent('eventName', false, false, suspendSendData);
+            customEvent.initCustomEvent(event_name, false, false, suspendSendData);
 
         }
         util.$id("wwa-wrapper").dispatchEvent(customEvent); // イベントを発火させる

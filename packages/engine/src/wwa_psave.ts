@@ -1,4 +1,4 @@
-import { WWAData } from "./wwa_data";
+import { WWAData, BROWSER_TYPE } from "./wwa_data";
 import { WWASaveData, MessageWindow } from "./wwa_message";
 import { WWA } from "./wwa_main";
 
@@ -765,7 +765,47 @@ export class WWASaveDB {
         READ_WRITE: "readwrite",
         VERSION_CHANGE : "versionchangetransaction"
     };
+    /**
+     * IE/EDGEでgetAll関数が存在しなく、ロード失敗するため挙動をエミュレートする
+     */
+    private static getAlEmulate() {
+        var getAll = function (query) {
+            var queryResult = this.openCursor(query);
+            var dataList = [];
+            var callBackResult = { onsuccess: null, onerror:null};
+
+            queryResult.onsuccess = (e) => {
+                var cursor = e.target.result;
+                if (cursor === null) {
+                    var callBackEvent = {
+                        target: {
+                            result: dataList
+                        }
+                    };
+                    if (typeof callBackResult.onsuccess === "function") {
+                        callBackResult.onsuccess(callBackEvent);
+                    }
+                } else {
+                    dataList.push(e.target.result.value);
+                    cursor.continue();
+                }
+            };
+            queryResult.onerror = (e) =>{
+                if (typeof callBackResult.onerror === "function") {
+                    callBackResult.onerror(e);
+                }
+            };
+            return callBackResult;
+        };
+        if (window["IDBIndex"].prototype.getAll === undefined) {
+            window["IDBIndex"].prototype.getAll = getAll;
+        }
+        if (window["IDBObjectStore"].prototype.getAll === undefined) {
+            window["IDBObjectStore"].prototype.getAll = getAll;
+        }
+    }
     private static indexDBOpen() {
+        this.getAlEmulate();
         return this.indexedDB.open(this.INDEXEDDB_DB_NAME, 201205201);
     }
     public static init(_messageWindow: MessageWindow, wwa: WWA) {
@@ -831,6 +871,7 @@ export class WWASaveDB {
             } catch (error) {
                 return;
             }
+
             var addData = {
                 "url": location.href,
                 "id": saveID,
@@ -839,10 +880,11 @@ export class WWASaveDB {
                 "data": quickSaveData,
                 "date": date
             };
+            this.selectDatas[saveID] = addData;
+
             var reqAdd = store.put(addData);
             //reqAdd.callbackLog = callback;
             reqAdd.onsuccess = (e) => {
-                this.selectDatas[saveID] = addData;
             };
             reqAdd.onerror = (e) => {
             };
