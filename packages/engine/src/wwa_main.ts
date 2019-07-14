@@ -265,7 +265,7 @@ export class WWA {
                                 ""
                         )
                     );
-                break;
+                    break;
             }
         }
         switch (this.userDevice.device) {
