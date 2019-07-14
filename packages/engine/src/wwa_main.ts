@@ -256,15 +256,16 @@ export class WWA {
                     this._useBattleReportButton = false;
                     break;
                 default:
-                    if (this.userDevice.browser !== BROWSER_TYPE.FIREFOX) {
-                        alert(
-                            "【警告】直接HTMLファイルを開いているようです。\n" +
-                            "このプログラムは正常に動作しない可能性があります。\n" +
-                            "マップデータの確認を行う場合には同梱の「wwa-server.exe」をご利用ください。\n" +
-                            "また、ブラウザがFirefoxの場合には直接HTMLファイルを開いて動作確認をすることができます。"
-                        );
-                    }
-                    break;
+                    alert(
+                        "【警告】直接HTMLファイルを開いているようです。\n" +
+                        "このプログラムは正常に動作しない可能性があります。\n" +
+                        "マップデータの確認を行う場合には同梱の「wwa-server.exe」をご利用ください。\n" + (
+                            this.userDevice.browser === BROWSER_TYPE.FIREFOX ?
+                                "Firefoxの場合も、バージョン68以降はローカルのHTMLファイルを直接開いた場合、通常起動できないことを確認しております。" :
+                                ""
+                        )
+                    );
+                break;
             }
         }
         switch (this.userDevice.device) {
