@@ -1262,9 +1262,9 @@ export class WWASaveData {
     public dbSaveDataLoad(dbSaveData) {
         var quickSaveData = WWACompress.decompress(dbSaveData.data);
         try {
-            this.compressData = JSON.parse(dbSaveData.data);
+            this.compressData = dbSaveData.data;
             this._statusEnergy = quickSaveData.statusEnergy;
-            this.date = new Date(dbSaveData.date);
+            this.date = dbSaveData.date;
             this.flag = true;
             var img = document.createElement("img");
             img.src = dbSaveData.image;

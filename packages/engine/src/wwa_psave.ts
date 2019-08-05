@@ -919,12 +919,23 @@ export class WWASaveDB {
             var saveDataResult = index.getAll(range);
 
             saveDataResult.onsuccess = (e) => {
-                var i, len, loadend, onsuccess, onerror;
+                var i, len, loadend, onsuccess, onerror, saveData;
                 loadend = 0;
                 var result = e.target.result;
                 len = result.length;
                 for (i = 0; i < len; i++) {
-                    var saveData = result[i];
+                    var resultData = result[i];
+                    try {
+                        saveData = {
+                            id: resultData.id,
+                            hash: resultData.hash,
+                            data: JSON.parse(resultData.data),
+                            date: new Date(resultData.date),
+                            image: resultData.image
+                        };
+                    } catch (error) {
+                        continue;
+                    }
                     if (this._checkOriginalMapString !== saveData.hash) {
                         continue;
                     }
