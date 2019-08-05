@@ -1261,15 +1261,20 @@ export class WWASaveData {
     }
     public dbSaveDataLoad(dbSaveData) {
         var quickSaveData = WWACompress.decompress(dbSaveData.data);
-        this.compressData = dbSaveData.data;
-        this._statusEnergy = quickSaveData.statusEnergy;
-        this.date = dbSaveData.date;
-        this.flag = true;
-        var img = document.createElement("img");
-        img.src = dbSaveData.image;
-        img.addEventListener("load", () => {
+        try {
+            this.compressData = JSON.parse(dbSaveData.data);
+            this._statusEnergy = quickSaveData.statusEnergy;
+            this.date = new Date(dbSaveData.date);
             this.flag = true;
-            this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.cvs.width, this.cvs.height);
-        });
+            var img = document.createElement("img");
+            img.src = dbSaveData.image;
+            img.addEventListener("load", () => {
+                this.flag = true;
+                this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.cvs.width, this.cvs.height);
+            });
+
+        } catch (error) {
+
+        }
     }
 }
