@@ -926,11 +926,18 @@ export class WWASaveDB {
                 for (i = 0; i < len; i++) {
                     var resultData = result[i];
                     try {
-                        saveData = {
+                        /*saveData = {
                             id: resultData.id,
                             hash: resultData.hash,
                             data: JSON.parse(resultData.data),
                             date: new Date(resultData.date),
+                            image: resultData.image
+                        };*/
+                        saveData = {
+                            id: resultData.id,
+                            hash: resultData.hash,
+                            data: resultData.data,
+                            date: resultData.date,
                             image: resultData.image
                         };
                     } catch (error) {
