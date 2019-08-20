@@ -313,7 +313,6 @@ export class WWA {
 
             this._wwaData = e.data.wwaData;
             this._wwaData.isItemEffectEnabled = itemEffectEnabled;
-            this._wwaData.frameCount = 0;//プレイ時間
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -1399,6 +1398,7 @@ export class WWA {
         /////// 本番では必ず消すこと /////////////////////////////
         //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
         //////////////////////////////////////////////////////////
+        this._player.mainFrameCount();//プレイ時間を計測加算
         var prevPosition = this._player.getPosition();
 
         var pdir = this._player.getDir();
@@ -1868,7 +1868,6 @@ export class WWA {
         if (this._player.isWaitingMoveMacro()) {
             this._player.decrementMoveObjectAutoExecTimer();
         }
-        this._wwaData.frameCount++;//フレームカウントを増やす
         if (!this._stopUpdateByLoadFlag) {
             //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
 
@@ -3428,6 +3427,7 @@ export class WWA {
         qd.statusDefence = st.defence;
         qd.statusGold = st.gold;
         qd.moves = this._player.getMoveCount();
+        qd.frameCount = this._player.getFrameCount();
 
 
         switch (callInfo) {
@@ -3564,6 +3564,7 @@ export class WWA {
         this._player.setDefence(newData.statusDefence);
         this._player.setGold(newData.statusGold);
         this._player.setMoveCount(newData.moves);
+        this._player.setFrameCount(newData.frameCount);
         this._player.clearItemBox();
         for (var i = 0; i < newData.itemBox.length; i++) {
             this._player.addItem(newData.itemBox[i], i + 1, true);
@@ -3580,10 +3581,6 @@ export class WWA {
             this._player.setPartsAppearedFlag();
         }
         this._wwaData = newData;
-        if (this._wwaData.frameCount === undefined) {
-            //プレイ時間が無い場合は追加
-            this._wwaData.frameCount = 0;
-        }
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
         this.updateCSSRule();
@@ -4060,7 +4057,8 @@ export class WWA {
                                 "ＺＲ：一時保存データの読み込み\n" +
                                 "＋: 移動速度を上げる\n" +
                                 "－: 移動速度を落とす\n" +
-                                "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                //"　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                //"　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
                                 "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
@@ -4077,6 +4075,7 @@ export class WWA {
                                 "OPTIONS: 移動速度を上げる\n" +
                                 "SHARE: 移動速度を落とす\n" +
                                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                "　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
                                 "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
@@ -4093,10 +4092,13 @@ export class WWA {
                                 "MENU: 移動速度を上げる\n" +
                                 "WINDOW: 移動速度を落とす\n" +
                                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                "　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
                                 "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                             break;
+		                default:
+		                    return;
                     }
                     break;
                 case DEVICE_TYPE.SP:
@@ -4122,12 +4124,16 @@ export class WWA {
                         "　　　Ｉ: 移動速度を落とす／\n" +
                         "Ｆ２、Ｐ: 移動速度を上げる\n" +
                         "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                        "　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
                         "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                         "　マップデータ バージョン: " +
                         Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                     break;
                 default:
                     return;
+            }
+            if(helpMessage){
+                this.setMessageQueue(helpMessage, false, true);
             }
 
         }
