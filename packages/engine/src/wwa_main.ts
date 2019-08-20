@@ -117,6 +117,7 @@ export class WWA {
     private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
+    private _useGameEnd: boolean;
 
     private _useConsole: boolean;
     private _audioDirectory: string;
@@ -298,6 +299,7 @@ export class WWA {
                 x: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_X,
                 y: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_Y
             };
+            this._wwaData.frameCount = 0;//プレイ時間
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -1090,7 +1092,6 @@ export class WWA {
             this._wwaData.bgm = id;
             return;
         }
-
         if (id !== 0 && this._audioInstances[id].hasData()) {
             if (id >= SystemSound.BGM_LB) {
                 this._audioInstances[id].play();
@@ -1785,6 +1786,7 @@ export class WWA {
         if (this._player.isWaitingMoveMacro()) {
             this._player.decrementMoveObjectAutoExecTimer();
         }
+        this._wwaData.frameCount++;//フレームカウントを増やす
         if (!this._stopUpdateByLoadFlag) {
             //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
             window.requestAnimationFrame(this.mainCaller);
@@ -3444,6 +3446,10 @@ export class WWA {
             this._player.setPartsAppearedFlag();
         }
         this._wwaData = newData;
+        if (this._wwaData.frameCount === undefined) {
+            //プレイ時間が無い場合は追加
+            this._wwaData.frameCount = 0;
+        }
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
         this.updateCSSRule();
