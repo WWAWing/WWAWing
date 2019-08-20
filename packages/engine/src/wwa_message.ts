@@ -8,6 +8,7 @@ import {
     MacroImgFrameIndex,
     macrotable,
     YesNoState,
+
     Position,
     Direction,
     USER_DEVICE,
@@ -377,6 +378,7 @@ export class Macro {
         }
         if (waitTime === 0) {
             this._wwa.stopEffect();
+            return;
         }
         var coords: Coord[] = [];
         for (var i = 1; i < this.macroArgs.length; i += 2) {
@@ -715,7 +717,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _isInputDisable: boolean;
 
     private _element: HTMLElement;
-    public _msgWrapperElement: HTMLElement;
+
     private _dummyElement: HTMLElement;
     private _saveElement: HTMLElement;
     private _ynWrapperElement: HTMLElement;
@@ -1222,6 +1224,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     }
     protected get window_name(): string {
         return "MessageWindow";
+    }
+    public getMsgWrapperElement():HTMLElement{
+        return this._msgWrapperElement;
     }
 }
 
