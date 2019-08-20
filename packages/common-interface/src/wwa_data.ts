@@ -87,7 +87,4 @@ export interface WWAData {
     checkString: string;
 
     isItemEffectEnabled: boolean; 
-
-    playFrameCount: number;//プレイ時間
-    gamePadButtonItemTable: number[];//ゲームパッド用マクロ
 }
