@@ -191,7 +191,9 @@ export function createDefaultWWAData(): WWAData {
         statusColorB: undefined,
         checkOriginalMapString: undefined,
         checkString: undefined,
-        isItemEffectEnabled: undefined
+        isItemEffectEnabled: undefined,
+        frameCount: undefined,
+        gamePadButtonItemTable: undefined
     };
 }
 
