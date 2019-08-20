@@ -1,4 +1,3 @@
-import { SystemSound } from '../wwa_data';
 import WWAAudio from './WWAAudio';
 
 /**
@@ -6,22 +5,21 @@ import WWAAudio from './WWAAudio';
  * Web Audio API が利用できる環境であれば、原則こちらを利用します。
  * (ただし、スマートフォンのブラウザでは特性上、考慮が必要な箇所があるかもしれません。)
  */
-export default class WWAWebAudio implements WWAAudio {
+export default class WWAWebAudio extends WWAAudio {
     private audioContext: AudioContext;
     private audioGain: GainNode;
     private audioBuffer: AudioBuffer;
     private bufferSources: AudioBufferSourceNode[];
-    private idx: number;
     private isLoaded: boolean;
     private pos: number;
 
-    constructor(idx: number, file: string, audioContext: AudioContext, audioGain: GainNode) {
+    public constructor(idx: number, file: string, audioContext: AudioContext, audioGain: GainNode) {
+        super(idx);
         this.audioContext = audioContext;
         this.audioGain = audioGain;
         this.audioBuffer = null;
         this.bufferSources = [];
 
-        this.idx = idx;
         this.isLoaded = false;
         this.pos = 0;
         this._load(idx, file);
@@ -118,10 +116,6 @@ export default class WWAWebAudio implements WWAAudio {
             bufferSource.onended = null;
         });
         this.bufferSources.length = 0;
-    }
-
-    public isBgm(): boolean {
-        return this.idx >= SystemSound.BGM_LB;
     }
 
     public hasData(): boolean {
