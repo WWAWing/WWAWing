@@ -11,7 +11,6 @@ import {
 
     Position,
     Direction,
-    USER_DEVICE,
     DEVICE_TYPE,
     BROWSER_TYPE,
     OS_TYPE
@@ -717,6 +716,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _isInputDisable: boolean;
 
     private _element: HTMLElement;
+    private _msgWrapperElement: HTMLElement;
 
     private _dummyElement: HTMLElement;
     private _saveElement: HTMLElement;
@@ -837,7 +837,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
             this._saveDataList[i] = new WWASaveData(i);
         }
-        switch (wwa.device_data.device) {
+        switch (wwa.userDevice.device) {
             case DEVICE_TYPE.SP:
             case DEVICE_TYPE.VR:
                 //スマートフォン用に拡大
@@ -1097,7 +1097,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._save_close = false;
     } 
     createAbortDom(): void {
-        switch (this._wwa.device_data.os) {
+        switch (this._wwa.userDevice.os) {
             case OS_TYPE.NINTENDO:
             default:
                 var YbuttonTextDom, YbuttonHeightDom;
@@ -1117,7 +1117,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         }
     }
     selectGameAbort(wwaData: WWAData): void {
-        switch (this._wwa.device_data.os) {
+        switch (this._wwa.userDevice.os) {
             case OS_TYPE.NINTENDO:
             default:
                 this.deleteSaveDom();
@@ -1224,9 +1224,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     }
     protected get window_name(): string {
         return "MessageWindow";
-    }
-    public getMsgWrapperElement():HTMLElement{
-        return this._msgWrapperElement;
     }
 }
 

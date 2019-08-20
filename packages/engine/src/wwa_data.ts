@@ -882,4 +882,3 @@ export enum IDTable {
     BITSHIFT = 16,
     BITMASK = 0xFFFF
 };
-    gamePadButtonItemTable: number[] = void 0;

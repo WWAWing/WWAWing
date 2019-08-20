@@ -129,6 +129,7 @@ export class WWA {
     private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
+    private _useGameEnd: boolean;
 
     private _useConsole: boolean;
     private _audioDirectory: string;
@@ -232,7 +233,6 @@ export class WWA {
         } else {
             this.audioExtension = "m4a";
         }
-        browser.os = browser.os || (ua.match(/linux/i) ? 'Linux' : '');
         this.userDevice = new UserDevice();
 
         this._isURLGateEnable = urlgateEnabled;
@@ -313,6 +313,7 @@ export class WWA {
 
             this._wwaData = e.data.wwaData;
             this._wwaData.isItemEffectEnabled = itemEffectEnabled;
+            this._wwaData.frameCount = 0;//プレイ時間
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -1167,8 +1168,6 @@ export class WWA {
                                 this._wwaData.bgm = id;
                                 clearInterval(timer);
                             }
-
-                            }
                         }
                     }, 4);
                 });
@@ -1177,8 +1176,7 @@ export class WWA {
             this._wwaData.bgm = id;
             return;
         }
-
-                }
+    
         if (id !== 0 && this._audioInstances[id].hasData()) {
             if (id >= SystemSound.BGM_LB) {
                 this._audioInstances[id].play();
@@ -1350,7 +1348,7 @@ export class WWA {
             (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
             "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "）";
         // TODO(rmn): 適切な分岐に直したい
-        switch (this.device_data.os) {
+        switch (this.userDevice.os) {
             case OS_TYPE.NINTENDO:
                 speedMessage += "速度を落とすには-ボタン, 速度を上げるには+ボタンを押してください。";
                 break;
@@ -1408,7 +1406,6 @@ export class WWA {
 
         if (this._player.isControllable()) {
 
-                if (this.launchBattleEstimateWindow()) {
             if (this._player.isDelayFrame()) {
                 /*
                  * メッセージ表示直後、何も操作しないフレームを用意する。
@@ -1871,6 +1868,7 @@ export class WWA {
         if (this._player.isWaitingMoveMacro()) {
             this._player.decrementMoveObjectAutoExecTimer();
         }
+        this._wwaData.frameCount++;//フレームカウントを増やす
         if (!this._stopUpdateByLoadFlag) {
             //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
 
@@ -3582,6 +3580,10 @@ export class WWA {
             this._player.setPartsAppearedFlag();
         }
         this._wwaData = newData;
+        if (this._wwaData.frameCount === undefined) {
+            //プレイ時間が無い場合は追加
+            this._wwaData.frameCount = 0;
+        }
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
         this.updateCSSRule();
@@ -4044,9 +4046,9 @@ export class WWA {
         }
         if (this._player.isControllable()) {
             var helpMessage:string = "";
-            switch (this.device_data.device) {
+            switch (this.userDevice.device) {
                 case DEVICE_TYPE.GAME:
-                    switch (this.device_data.os) {
+                    switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
                             helpMessage = "　【操作方法】\n" +
                                 "Ａ：Ｙｅｓ,戦闘結果予測の表示\n" +
@@ -4059,7 +4061,7 @@ export class WWA {
                                 "＋: 移動速度を上げる\n" +
                                 "－: 移動速度を落とす\n" +
                                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                                "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                             break;
@@ -4075,7 +4077,7 @@ export class WWA {
                                 "OPTIONS: 移動速度を上げる\n" +
                                 "SHARE: 移動速度を落とす\n" +
                                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                                "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                             break;
@@ -4091,7 +4093,7 @@ export class WWA {
                                 "MENU: 移動速度を上げる\n" +
                                 "WINDOW: 移動速度を落とす\n" +
                                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                                "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                             break;
@@ -4120,7 +4122,7 @@ export class WWA {
                         "　　　Ｉ: 移動速度を落とす／\n" +
                         "Ｆ２、Ｐ: 移動速度を上げる\n" +
                         "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                        "　WWA Wing バージョン:" + Consts.VERSION_WWAJS + "\n" +
+                        "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                         "　マップデータ バージョン: " +
                         Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                     break;
