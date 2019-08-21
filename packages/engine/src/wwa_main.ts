@@ -1108,7 +1108,7 @@ export class WWA {
             if (instance === void 0 || instance.isError()) {
                 continue;
             }
-                loadedNum++;
+
             total++;
             if (!instance.hasData()) {
                 continue;
