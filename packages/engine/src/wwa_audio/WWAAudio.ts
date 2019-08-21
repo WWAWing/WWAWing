@@ -2,7 +2,7 @@ import { SystemSound } from '../wwa_data';
 /**
  * WWAの音声ファイルの管理を行うインターフェイスです。
  */
-export class WWAAudio {
+export default class WWAAudio {
     /**
      * 音声ファイルのIDです
      */

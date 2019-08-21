@@ -1,4 +1,4 @@
-import { WWAAudio } from './WWAAudio';
+import WWAAudio from './WWAAudio';
 
 /**
  * WWAAudioElement は、 audio 要素を内部で配置して、再生の際に再生する方式です。

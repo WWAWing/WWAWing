@@ -1,4 +1,4 @@
-import { WWAAudio } from './WWAAudio';
+import WWAAudio from './WWAAudio';
 
 /**
  * WWAWebAudio は Web Audio API を利用した方式です。
