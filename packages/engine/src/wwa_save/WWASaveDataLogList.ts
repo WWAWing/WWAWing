@@ -9,10 +9,10 @@ import { Player } from "../wwa_parts_player";
 export default class WWASaveDataLogList extends WWASaveDataList {
     private _saveNo: number = 0;
     private _lastAutoSaveMove: number = 0;
-    private _useAutoSave: boolean;
+    private _autoInterval: number;
     public constructor() {
         super();
-        this._useAutoSave = true;
+        this._autoInterval = WWASaveConsts.SAVE_INTERVAL_MOVE;
         Object.setPrototypeOf(this, Object.create(WWASaveDataLogList.prototype));
         for (var i = 0; i < WWASaveConsts.QUICK_SAVE_MAX; i++) {
             this[i] = new WWASaveDataLog(i, this);
@@ -27,7 +27,7 @@ export default class WWASaveDataLogList extends WWASaveDataList {
         this._lastAutoSaveMove = player.getMoveCount();
     }
     public isAutoSaveFrame(player: Player): boolean {
-        if (!this._useAutoSave) {
+        if (this._autoInterval === 0) {
             //オートセーブなし
             return false;
         }
@@ -36,7 +36,7 @@ export default class WWASaveDataLogList extends WWASaveDataList {
             //既に保存したフレーム
             return false;
         }
-        if (moves % WWASaveConsts.SAVE_INTERVAL_MOVE !== 0) {
+        if (moves % this._autoInterval !== 0) {
             //セーブしない
             return false;
         }
@@ -48,7 +48,10 @@ export default class WWASaveDataLogList extends WWASaveDataList {
         this._saveNo++;
         this._saveNo = this._saveNo % WWASaveConsts.QUICK_SAVE_MAX;
     }
-    public  setAutoSaveFlag(useAutoSave: boolean): void {
-        this._useAutoSave = useAutoSave;
+    public setAutoSaveInterval(autoInterval: number): void {
+        if (autoInterval <= 0) {
+            return;
+        }
+        this._autoInterval = autoInterval | 0;
     } 
 }

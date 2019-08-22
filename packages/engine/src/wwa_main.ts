@@ -136,6 +136,7 @@ export class WWA {
     private _audioDirectory: string;
     private _hasTitleImg: boolean;
     private _useSuspend: boolean = false;
+    private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
 
     private _isActive: boolean;
 
@@ -434,10 +435,13 @@ export class WWA {
                     }
                 }
             }
-            var autosaveString = util.$id("wwa-wrapper").getAttribute("data-wwa-autosave");
-            if ((autosaveString)&&(autosaveString.match(/^false$/i))) {
-                this._wwaSave.setAutoSaveFlag(false);
+            var autosaveString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-autosave");
+            if (autosaveString !== null) {
+                this._wwaSave.setAutoSaveInterval(Number(autosaveString) | 0);
             }
+            var liikingAroundString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
+            this._useLookingAround = !((liikingAroundString) && (liikingAroundString.match(/false/i)));
+
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
@@ -2071,7 +2075,7 @@ export class WWA {
         var crop: number;
         var dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
 
-        if (this._player.isLookingAround() && !this._player.isWaitingMessage()) {
+        if (this._useLookingAround && this._player.isLookingAround() && !this._player.isWaitingMessage()) {
             crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
         } else if (this._player.isMovingImage()) {
             crop = this._wwaData.playerImgPosX + relpcrop + 1;

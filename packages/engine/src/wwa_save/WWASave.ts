@@ -63,8 +63,8 @@ export default class WWASave {
     hasSaveData(): boolean {
         return this.list.hasSaveData();
     }
-    setAutoSaveFlag(useAutoSave: boolean): void {
-        return this._wwaLogSaveList.setAutoSaveFlag(useAutoSave);
+    setAutoSaveInterval(autoInterval: number): void {
+        return this._wwaLogSaveList.setAutoSaveInterval(autoInterval);
     } 
 
 
