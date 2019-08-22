@@ -660,7 +660,7 @@ export class WWA {
                     }
                     var changedTouches = e.changedTouches;
                     var touchLength: number = changedTouches.length;
-                    var touchID = 0;
+                    var touchID:number = 0;
                     var changedTouche: Touch;
                     for (touchID = 0; touchID < touchLength; touchID++) {
                         changedTouche = changedTouches[touchID];
@@ -670,7 +670,7 @@ export class WWA {
                         var dx = Math.abs(dist.x);
                         var dy = Math.abs(dist.y);
                         var dir: Direction;
-                        var sideFlag = false;
+                        var sideFlag:boolean = false;
                         if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
                             //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
                             switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
@@ -694,6 +694,17 @@ export class WWA {
                                     break;
                             }
 
+                        }
+                        if (!sideFlag) {
+                            if (dist.y > 0 && dy > dx) {
+                                dir = Direction.DOWN;
+                            } else if (dist.y < 0 && dy > dx) {
+                                dir = Direction.UP;
+                            } else if (dist.x > 0 && dy < dx) {
+                                dir = Direction.RIGHT;
+                            } else if (dist.x < 0 && dy < dx) {
+                                dir = Direction.LEFT;
+                            }
                         }
                     }
 

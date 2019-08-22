@@ -43,7 +43,7 @@ export default class WWASave {
     public selectLogSaveDataList() {
         this.list = this._wwaLogSaveList;
     }
-    save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, id): boolean {
+    save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, id: number): boolean {
         var saveData: WWASaveData = this.list[id];
         if (!saveData) {
             return false;

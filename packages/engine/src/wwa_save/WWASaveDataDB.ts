@@ -7,7 +7,7 @@ import WWASaveData from "./WWASaveData";
 import WWASaveDataDBList from "./WWASaveDataDBList";
 
 export default class WWASaveDataDB extends WWASaveData {
-    public saveDataDecompress(dbSaveData) {
+    public saveDataDecompress(dbSaveData):void {
         var quickSaveData = WWACompress.decompress(dbSaveData.data);
         this.saveDataSet(dbSaveData.image, dbSaveData.data, quickSaveData.statusEnergy, dbSaveData.date);
     }

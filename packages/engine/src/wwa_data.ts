@@ -799,6 +799,8 @@ export class WWASaveConsts {
     static QUICK_SAVE_THUMNAIL_WIDTH: number = 99;//セーブデータサムネイル横幅
     static QUICK_SAVE_THUMNAIL_HEIGHT: number = 99;//セーブデータサムネイル縦幅
     static SAVE_INTERVAL_MOVE: number = 200;//この歩数ごとにオートセーブ
+    static INDEXEDDB_DB_NAME: string = "WWA_WING_DB";   //IndexedDBに保存するDBの名称
+    static INDEXEDDB_TABLE_NAME: string = "SAVE_TABLE"; //IndexedDBに保存するテーブルの名称
 
 }
 

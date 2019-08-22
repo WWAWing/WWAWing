@@ -16,7 +16,7 @@ export default class WWASaveData {
     protected quickSaveData: WWAData = void 0;
     public _statusEnergy: number;
     public compressData: object;
-    public constructor(id, parent) {
+    public constructor(id: number, parent: WWASaveDataList) {
         this._id = id;
         this._parent = parent;
         this.cvs = document.createElement("canvas");
