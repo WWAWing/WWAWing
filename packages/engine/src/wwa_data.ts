@@ -2,6 +2,7 @@ import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import { KeyCode } from "./wwa_input";
 import { WWAData } from "@wwawing/common-interface";
+import { echo } from "shelljs";
 export { WWAData };
 
 export class EquipmentStatus {
@@ -476,7 +477,9 @@ export enum ChoiceCallInfo {
     CALL_BY_PASSWORD_SAVE,
     CALL_BY_PASSWORD_LOAD,
     CALL_BY_END_GAME,
-    CALL_BY_SUSPEND
+    CALL_BY_SUSPEND,
+    CALL_BY_LOG_QUICK_SAVE,
+    CALL_BY_LOG_QUICK_LOAD
 }
 
 export enum SidebarButton {
@@ -788,12 +791,17 @@ export class WWAConsts {
     static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
 
     static ITEMBOX_TOP_Y = 140;
+    static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
 
+}
+export class WWASaveConsts {
     static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数
     static QUICK_SAVE_THUMNAIL_WIDTH: number = 99;//セーブデータサムネイル横幅
     static QUICK_SAVE_THUMNAIL_HEIGHT: number = 99;//セーブデータサムネイル縦幅
-    static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
+    static SAVE_INTERVAL_MOVE: number = 200;//この歩数ごとにオートセーブ
+
 }
+
 
 export class LoaderResponse {
     error: LoaderError;
