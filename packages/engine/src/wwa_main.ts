@@ -421,7 +421,7 @@ export class WWA {
             this._wwaSave = new WWASave(wwa);
             this._messageWindow.setWWASave(this._wwaSave);
 
-            WWACompress.setRestartData(this._restartData);
+            WWACompress.setRestartData(this._restartData, this._wwaData);
             this.clearFaces();
             var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
             if (typeof resumeSaveDataText === "string") {

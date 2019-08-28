@@ -14,11 +14,17 @@ var NOT_COMPRESS_ID = {
     "message": true,
 };
 
+export class FirstChangedMapUint8Table {
+    public map: Uint8Array;
+    public mapObject: Uint8Array;
+}
+
 export default class WWACompress {
     private static _usingByteFlag = false;
     private static MIN_LOOP_COUNT = 3;
     private static _restartData: WWAData = void 0;
     private static _mapByteLength: number = 0;
+    private static _firstRandomMapObjectUtf8Table: FirstChangedMapUint8Table = new FirstChangedMapUint8Table();
     public static compress(wwaData: WWAData): object {
         var saveObject: object = {};
         var key: string, value;
@@ -161,7 +167,7 @@ export default class WWACompress {
                     newValue = Number(idText);
                     addValue = newValue - oldValue - 1;
                     oldValue = newValue;
-                    usingUint8Flag = false;
+                    /*usingUint8Flag = false;
                     if (this._usingByteFlag) {
                         //バイナリ化
                         saveObject[idText] = this.compressUint8Array(newValue, saveObject[idText], wwaObject);
@@ -171,12 +177,12 @@ export default class WWACompress {
                     }
                     if (!usingUint8Flag) {
                         saveListTest.push(addValue, saveObject[idText]);
-                    }
+                    }*/
                     saveList.push(addValue, saveObject[idText]);
                 }
                 if (this._usingByteFlag) {
-                    if (JSON.stringify(saveListTest).length >= this._mapByteLength) {
-                        return this.compressMapAllObject(wwaObject, restartObject);
+                    if (JSON.stringify(saveList).length >= this._mapByteLength) {
+                        return this.compressMapAllObject(wwaObject, restartObject, this._firstRandomMapObjectUtf8Table[key]);
                     }
                 }
 
@@ -209,13 +215,14 @@ export default class WWACompress {
      * @param wwaObject
      * @param restartObject
      */
-    private static compressMapAllObject(wwaObject: object, restartObject: object): object {
+    private static compressMapAllObject(wwaObject: object, restartObject: object, firstRandomMapObjectUtf8Array: Uint8Array): object {
         var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
         var x: number, y: number, bit: number, position: number, idText: string, lastPosition: number, count: number, id: number;
         var mapWidth: number = this._restartData.mapWidth;
         var oldID: number, idList: Array<number>, indexList: Array<number>, compressClassList: Array<WWACompressIndexTable>, indexText: string, indexTable: object, idClassTable: object, index: number, indexCount: number;
         var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
         var startIndex: number = -1;
+        var len: number;
         bit = 0;
         position = 0;
         lastPosition = 0;
@@ -285,6 +292,27 @@ export default class WWACompress {
                 }
             }
         }
+        if (firstRandomMapObjectUtf8Array) {
+            len = uint8Array.length;
+            startIndex = -1;
+            lastPosition = 0;
+            for (position = 0; position < len; position++) {
+                uint8Array[position] = uint8Array[position] & (~firstRandomMapObjectUtf8Array[position]);
+                if (uint8Array[position] !== 0) {
+                    if (startIndex === -1) {
+                        //0ではないバイト開始位置を取得
+                        startIndex = position;
+                    }
+                    //最後のビットとして設定
+                    lastPosition = position;
+                }
+            }
+            if (startIndex === -1) {
+                //データなし
+                startIndex = 0;
+                lastPosition = 0;
+            }
+        }
 
         return [startIndex, uint8Array.subarray(startIndex, lastPosition + 1), idList, this.indexListCompress(indexList, idList.length)];
     }
@@ -325,48 +353,6 @@ export default class WWACompress {
     }
     private static idSort(a: WWACompressIndexTable, b: WWACompressIndexTable): number {
         return b.count - a.count;
-    }
-    /**
-     * JSON化したときの文字列の長さにより判定し、分岐する。
-     * bit単位でフラグ管理し、マップ全体の通行情報を格納する方式に変換。
-     * ランダムに大量に同じチップが使われている場合に切り替える。
-     * @param id
-     * @param saveObject
-     * @param wwaObject
-     */
-    private static compressUint8Array(id: number, saveObject: object, wwaObject: object): object {
-        var x: number, y: number, bit: number, position: number, lastPosition: number;
-        var mapWidth: number = this._restartData.mapWidth;
-        if (JSON.stringify(saveObject).length < this._mapByteLength) {
-            return saveObject;
-        }
-
-        var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
-        bit = 0;
-        position = 0;
-        lastPosition = 0;
-        for (y = 0; y < mapWidth; y++) {
-            for (x = 0; x < mapWidth; x++) {
-                if (wwaObject[y][x] === id) {
-                    uint8Array[position] = uint8Array[position] | (1 << bit);
-                    lastPosition = position;
-                }
-                bit++;
-                if (bit === 8) {
-                    bit = 0;
-                    position++;
-                }
-            }
-        }
-        return uint8Array.subarray(0, lastPosition + 1);
-    }
-    private static compressBase64(id: number, saveObject: object, wwaObject: object) {
-        var compressObject: object = this.compressUint8Array(id, saveObject, wwaObject);
-        if (compressObject instanceof Uint8Array) {
-            return compressObject;
-        }
-        var uint8Array: Uint8Array = <Uint8Array>compressObject;
-        return window.btoa(String.fromCharCode.apply(null, uint8Array));
     }
     /**
      * 絶対数値を示した配列を、相対数値を示した配列に変換する
@@ -480,7 +466,7 @@ export default class WWACompress {
                 len = loadArray.length;
                 if (len === 4) {
                     if ((typeof loadArray[0] === "number") && ((loadArray[1] instanceof Uint8Array) || (loadArray[1] instanceof Array)) && (loadArray[2] instanceof Array) && (loadArray[3] instanceof Array)) {
-                        this.decompressAllMapObject(loadArray, newObject);
+                        this.decompressAllMapObject(loadArray, newObject, this._firstRandomMapObjectUtf8Table[key]);
                         return newObject;
                     }
                 }
@@ -499,10 +485,10 @@ export default class WWACompress {
                     id = Number(idText);
 
                     loadArray = <object[]>saveObject[idText];
-                    if (this.decompressUint8Array(id, loadArray, newObject)) {
+                    /*if (this.decompressUint8Array(id, loadArray, newObject)) {
                         //バイトデータである場合は書き込んで戻る
                         continue;
-                    }
+                    }*/
                     len = loadArray.length;
                     idTableX = [];
                     idTableY = [];
@@ -606,36 +592,7 @@ export default class WWACompress {
                 return newObject;
         }
     }
-    /**
-     * Uint8Arrayに保存されているフラグ情報を展開
-     * @param id
-     * @param loadArray
-     * @param newObject
-     */
-    private static decompressUint8Array(id: number, loadArray: object, newObject: object) {
-        if (!(loadArray instanceof Uint8Array)) {
-            return false;
-        }
-        var x: number, y: number, bit: number, position: number, len: number, count: number;
-        var mapWidth = this._restartData.mapWidth;
-        var uint8Array = <Uint8Array>loadArray;
-        len = uint8Array.length;
-        count = 0;
-        for (position = 0; position < len; position++) {
-            for (bit = 0; bit < 8; bit++) {
-                if ((uint8Array[position] & (1 << bit)) !== 0) {
-                    //設置している
-                    x = count % mapWidth;
-                    y = (count / mapWidth) | 0;
-                    newObject[y][x] = id;
-
-                }
-                count++;
-            }
-        }
-        return true;
-    }
-    private static decompressAllMapObject(loadArray: object, newObject: object): boolean {
+    private static decompressAllMapObject(loadArray: object, newObject: object,firstRandomMapObjectUtf8Array: Uint8Array): boolean {
         var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
         var x: number, y: number, id: number, bit: number, position: number, idText: string, lastPosition: number, count: number, id: number;
         var mapWidth: number = this._restartData.mapWidth;
@@ -649,6 +606,12 @@ export default class WWACompress {
         loadIndexList = loadArray[3];
         var uintCopy8Array: Uint8Array = <Uint8Array>loadArray[1];
         uint8Array.set(uintCopy8Array, startIndex);
+        if (firstRandomMapObjectUtf8Array) {
+            len = uint8Array.length;
+            for (position = 0; position < len; position++) {
+                uint8Array[position] = uint8Array[position] | firstRandomMapObjectUtf8Array[position];
+            }
+        }
         indexList = [];
         var idLength: number = idList.length;
         var len: number, i: number, n: number, repeatCount: number, k: number, indexLog: number;
@@ -677,6 +640,9 @@ export default class WWACompress {
                 if ((uint8Array[position] & (1 << bit)) !== 0) {
                     //設置している
                     index = indexList[indexCount++];
+                    if (index === undefined) {
+                        return false;
+                    }
                     id = idList[index];
                     x = count % mapWidth;
                     y = (count / mapWidth) | 0;
@@ -689,35 +655,48 @@ export default class WWACompress {
 
         return true;
     }
-    private static decompressBase64(id: number, loadArray: object, newObject: object) {
-        if (typeof loadArray !== "string") {
-            return false;
-        }
-        var src = <string>loadArray;
-        var byteSrc: string = window.atob(src);
-        len = byteSrc.length;
-        var x: number, y: number, bit: number, position: number, len: number, count: number, byte: number;
-        var mapWidth = this._restartData.mapWidth;
-        count = 0;
-        for (position = 0; position < len; position++) {
-            byte = byteSrc.charCodeAt(position);
-            for (bit = 0; bit < 8; bit++) {
-                if ((byte & (1 << bit)) !== 0) {
-                    //設置している
-                    x = count % mapWidth;
-                    y = (count / mapWidth) | 0;
-                    newObject[y][x] = id;
 
-                }
-                count++;
-            }
-        }
-        return true;
-    }
-
-    public static setRestartData(restartData: WWAData) {
+    public static setRestartData(restartData: WWAData, firstFrameData: WWAData) {
         this._restartData = restartData;
         this._mapByteLength = Math.ceil(restartData.mapWidth * restartData.mapWidth / 8);
+        this._firstRandomMapObjectUtf8Table[SAVE_COMPRESS_ID.MAP_OBJECT] = this.getChangedUint8Array(firstFrameData[SAVE_COMPRESS_ID.MAP_OBJECT], restartData[SAVE_COMPRESS_ID.MAP_OBJECT]);
+    }
+
+    private static getChangedUint8Array(wwaObject: object, restartObject: object): Uint8Array {
+        var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
+        var x: number, y: number, bit: number, position: number, lastPosition: number, count: number, id: number;
+        var mapWidth: number = this._restartData.mapWidth;
+        var indexCount: number;
+        var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
+        var startIndex: number = -1;
+        bit = 0;
+        position = 0;
+        lastPosition = 0;
+        count = 0;
+        indexCount = 0;
+        for (y = 0; y < mapWidth; y++) {
+            for (x = 0; x < mapWidth; x++) {
+                if (wwaObject[y][x] !== restartObject[y][x]) {
+
+                    if (startIndex === -1) {
+                        //0ではないバイト開始位置を取得
+                        startIndex = position;
+                    }
+
+                    //ビット単位で座標が存在するかを記録
+                    uint8Array[position] = uint8Array[position] | (1 << bit);
+
+                    //最後のビットとして設定
+                    lastPosition = position;
+                }
+                bit++;
+                if (bit === 8) {
+                    bit = 0;
+                    position++;
+                }
+            }
+        }
+        return uint8Array;
     }
 
     public static getStartWWAData(resumeSaveTextData: string) {
