@@ -90,7 +90,6 @@ export class WWA {
     // private _waitTimeInCurrentFrame: number;
     private _waitFrame: number;
     private _usePassword: boolean;
-    private _useHelp: boolean;
     private _useBattleReportButton: boolean;
     private _wwaWrapperElement: HTMLDivElement;
     private _mouseControllerElement: HTMLDivElement;
@@ -285,17 +284,6 @@ export class WWA {
             default:
                 this._usePassword = true;
                 break;
-        }
-        switch (this.userDevice.device) {
-            case DEVICE_TYPE.SP:
-            case DEVICE_TYPE.VR:
-            case DEVICE_TYPE.GAME:
-                this._useHelp = false;
-                break;
-            default:
-                this._useHelp = true;
-                break;
-        }
 
         if (!this._usePassword) {
             util.$id("cell-load").textContent = "Quick Load";
@@ -4113,10 +4101,6 @@ export class WWA {
     }
 
     private _displayHelp(): void {
-        if (!this._useHelp) {
-            //パスワードなしの場合はヘルプを開かない
-            return;
-        }
         if (this._player.isControllable()) {
             var helpMessage:string = "";
             switch (this.userDevice.device) {
