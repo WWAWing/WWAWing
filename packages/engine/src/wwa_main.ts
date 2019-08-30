@@ -284,6 +284,7 @@ export class WWA {
             default:
                 this._usePassword = true;
                 break;
+        }
 
         if (!this._usePassword) {
             util.$id("cell-load").textContent = "Quick Load";
