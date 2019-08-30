@@ -280,6 +280,7 @@ export class WWA {
             default:
                 this._usePassword = true;
                 break;
+        }
 
         util.$id("cell-save").textContent = WWAButtonTexts.QUICK_SAVE;
         if (!this._usePassword) {
