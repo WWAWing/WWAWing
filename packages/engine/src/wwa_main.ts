@@ -259,7 +259,7 @@ export class WWA {
                     switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
-                            return;
+                            break;
                     }
                     this._useGameEnd = true;
                     this._useBattleReportButton = false;
