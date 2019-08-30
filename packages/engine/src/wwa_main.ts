@@ -88,7 +88,6 @@ export class WWA {
     private _waitFrame: number;
     private _usePassword: boolean;
     private _bottomButtonType: number;
-    private _useHelp: boolean;
     private _wwaWrapperElement: HTMLDivElement;
     private _mouseControllerElement: HTMLDivElement;
     private _statusPressCounter: Status; // ステータス型があるので、アニメーション残りカウンタもこれで代用しまぁす。
@@ -281,17 +280,6 @@ export class WWA {
             default:
                 this._usePassword = true;
                 break;
-        }
-        switch (this.userDevice.device) {
-            case DEVICE_TYPE.SP:
-            case DEVICE_TYPE.VR:
-            case DEVICE_TYPE.GAME:
-                this._useHelp = false;
-                break;
-            default:
-                this._useHelp = true;
-                break;
-        }
 
         util.$id("cell-save").textContent = WWAButtonTexts.QUICK_SAVE;
         if (!this._usePassword) {
@@ -3836,10 +3824,6 @@ export class WWA {
     }
 
     private _displayHelp(): void {
-        if (!this._useHelp) {
-            //パスワードなしの場合はヘルプを開かない
-            return;
-        }
         if (this._player.isControllable()) {
             var helpMessage:string = "";
             switch (this.userDevice.device) {
