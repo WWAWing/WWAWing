@@ -255,7 +255,7 @@ export class WWA {
                     switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
-                            return;
+                            break;
                     }
                     util.$id("cell-gotowwa").textContent = "Game End";
                     this._bottomButtonType = Bottom_WWA_Button.GAME_END;
