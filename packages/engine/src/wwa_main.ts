@@ -262,7 +262,7 @@ export class WWA {
                             break;
                     }
                     this._useGameEnd = true;
-                    this._useBattleReportButton = false;
+                    this._useBattleReportButton = true;
                     break;
                 default:
                     alert(
