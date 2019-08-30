@@ -2891,6 +2891,7 @@ export class WWA {
                     switch (this._yesNoChoiceCallInfo) {
                         case ChoiceCallInfo.NONE:
                             (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+                            break;
                         case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
                             this._yesNoJudge = YesNoState.UNSELECTED;
                             this.onpasswordloadcalled();
