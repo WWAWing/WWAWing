@@ -8,7 +8,7 @@ import {
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, WWAConsts
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, WWAConsts, Bottom_WWA_Button
 } from "./wwa_data";
 
 import {
@@ -90,7 +90,7 @@ export class WWA {
     // private _waitTimeInCurrentFrame: number;
     private _waitFrame: number;
     private _usePassword: boolean;
-    private _useBattleReportButton: boolean;
+    private _bottomButtonType: number;
     private _wwaWrapperElement: HTMLDivElement;
     private _mouseControllerElement: HTMLDivElement;
     private _statusPressCounter: Status; // ステータス型があるので、アニメーション残りカウンタもこれで代用しまぁす。
@@ -129,7 +129,6 @@ export class WWA {
     private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
-    private _useGameEnd: boolean;
 
     private _useConsole: boolean;
     private _audioDirectory: string;
@@ -200,7 +199,6 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-        this._useGameEnd = false;
         
         if (titleImgName === null) {
             this._hasTitleImg = false;
@@ -222,8 +220,7 @@ export class WWA {
 
         const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
         if (_AudioContext) {
-
-            this.audioContext = new _AudioContext();
+            this.audioContext = (window as any).audioContext || new _AudioContext();
             this.audioGain = this.audioContext.createGain();
             this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
         }
@@ -249,7 +246,9 @@ export class WWA {
         this._audioDirectory = audioDirectory;
 
         // Go To WWA を強制するオプションが無効なら、Battle Reportにする
-        this._useBattleReportButton = !useGoToWWA;
+        if (!useGoToWWA) {
+            this._bottomButtonType = Bottom_WWA_Button.BATTLE_REPORT;
+        }
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
         if (isLocal) {
@@ -260,8 +259,7 @@ export class WWA {
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
                             break;
                     }
-                    this._useGameEnd = true;
-                    this._useBattleReportButton = true;
+                    this._bottomButtonType = Bottom_WWA_Button.GAME_END;
                     break;
                 default:
                     alert(
@@ -289,8 +287,16 @@ export class WWA {
         if (!this._usePassword) {
             util.$id("cell-load").textContent = "Quick Load";
         }
-        if (this._useBattleReportButton) {
-            util.$id("cell-gotowwa").textContent = "Battle Report";
+        switch (this._bottomButtonType) {
+            case Bottom_WWA_Button.GOTO_WWA:
+                util.$id("cell-gotowwa").textContent = "Goto WWA";
+                break;
+            case Bottom_WWA_Button.BATTLE_REPORT:
+                util.$id("cell-gotowwa").textContent = "Battle Report";
+                break;
+            case Bottom_WWA_Button.GAME_END:
+                util.$id("cell-gotowwa").textContent = "Game End";
+                break;
         }
         this._loadHandler = (e): void => {
             if (e.data.error !== null && e.data.error !== void 0) {
@@ -748,7 +754,7 @@ export class WWA {
             util.$id("button-gotowwa").addEventListener("click", () => {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
 
-                    this.onselectbutton(SidebarButton.GOTO_WWA, false, !this._useBattleReportButton);
+                    this.onselectbutton(SidebarButton.GOTO_WWA, false, false);
                 }
             });
 
@@ -1316,21 +1322,28 @@ export class WWA {
             this.setMessageQueue("初めからスタートしなおしますか？", true, true);
             this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_RESTART_GAME;
         } else if (button === SidebarButton.GOTO_WWA) {
-
-            if (this._useGameEnd) {
-                (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
-                this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
-                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
-            } else if (forceGoToWWA) {
-                // F8 で GoTo WWAを選んだ場合で、Battle Reportボタンが表示されている場合は、
+            if (forceGoToWWA) {
+                // F8 で Goto WWAを選んだ場合で、Goto WWAボタンが表示されていない場合は、
                 // Battle Report ボタンを凹ませない
-                if (this._useBattleReportButton) {
+                if (this._bottomButtonType !== Bottom_WWA_Button.GOTO_WWA) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 }
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
-            } else if (this._useBattleReportButton) {
-                this.launchBattleEstimateWindow();
+            } else {
+                switch (this._bottomButtonType) {
+                    case Bottom_WWA_Button.GOTO_WWA:
+                        this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
+                        this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
+                        break;
+                    case Bottom_WWA_Button.GAME_END:
+                        this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
+                        this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
+                        break;
+                    case Bottom_WWA_Button.BATTLE_REPORT:
+                        this.launchBattleEstimateWindow();
+                        break;
+                }
             }
         }
     }
@@ -4064,7 +4077,7 @@ export class WWA {
                 }
             }
         }
-        if (this._useBattleReportButton) {
+        if (this._bottomButtonType === Bottom_WWA_Button.BATTLE_REPORT) {
             (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.add("onpress");
         }
         if (monsterList.length === 0) {

@@ -302,6 +302,12 @@ export class Face {
     }
 }
 
+export enum Bottom_WWA_Button {
+    GOTO_WWA = 0,
+    BATTLE_REPORT = 1,
+    GAME_END = 2
+};
+
 export enum Direction {
     LEFT = 0,
     RIGHT = 1,
