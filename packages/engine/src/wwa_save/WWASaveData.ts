@@ -15,7 +15,6 @@ export default class WWASaveData {
     public ctx: CanvasRenderingContext2D = void 0;
     protected quickSaveData: WWAData = void 0;
     public _statusEnergy: number;
-    public compressData: object;
     public constructor(id: number, parent: WWASaveDataList) {
         this._id = id;
         this._parent = parent;
@@ -29,7 +28,6 @@ export default class WWASaveData {
     }
     public save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
         this._statusEnergy = _quickSaveData.statusEnergy;
-        this.compressData = WWACompress.compress(_quickSaveData);
         this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
         this.ctx.drawImage(gameCvs, 0, 0, gameCvs.width, gameCvs.height, 0, 0, this.cvs.width, this.cvs.height);
         this.quickSaveData = _quickSaveData;
@@ -42,12 +40,12 @@ export default class WWASaveData {
         return this.flag ? this._statusEnergy : -1;
     }
     public load(): WWAData {
-        return WWACompress.decompress(this.compressData);
+        return this.quickSaveData;
     }
-    public saveDataSet(src: string, compressData: object, statusEnergy: number, date: Date): void {
+    public saveDataSet(src: string, quickSaveData: WWAData, date:Date): void {
         try {
-            this.compressData = compressData;
-            this._statusEnergy = statusEnergy;
+            this.quickSaveData = quickSaveData;
+            this._statusEnergy = quickSaveData.statusEnergy;
             this.date = date;
             this.flag = true;
             var img: HTMLImageElement = document.createElement("img");

@@ -111,7 +111,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
         } catch (error) {
         }
     }
-    public dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, quickSaveData: object, date: Date): void {
+    public dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, date: Date): void {
         if (!this.indexedDB) {
             return;
         }
@@ -126,13 +126,14 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             } catch (error) {
                 return;
             }
+            var compressData: object = WWACompress.compress(_quickSaveData);
 
             var addData = {
                 "url": location.href,
                 "id": saveID,
                 "hash": WWASave.checkOriginalMapString,
                 "image": gameCvs.toDataURL(),
-                "data": quickSaveData,
+                "data": compressData,
                 "date": date
             };
             this.selectDatas[saveID] = addData;
@@ -194,7 +195,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     if (WWASave.checkOriginalMapString !== saveData.hash) {
                         continue;
                     }
-                    (this[i] as WWASaveDataDB).saveDataDecompress(saveData);
+                    var quickSaveData = WWACompress.decompress(saveData.data);
+                    this[i].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
                 this.selectLoad = true;
             };

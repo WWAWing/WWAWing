@@ -50,12 +50,9 @@ export default class WWASave {
         }
         return saveData.save(gameCvs, _quickSaveData);
     }
-    load(id): WWAData {
+    load(id:number): WWAData {
         var saveData: WWASaveData = this.list[id];
         if (!saveData) {
-            return null;
-        }
-        if (!saveData.compressData) {
             return null;
         }
         return saveData.load();

@@ -285,7 +285,7 @@ export class WWA {
         }
 
         if (!this._usePassword) {
-            util.$id("cell-load").textContent = "Quick Load";
+            util.$id("cell-load").textContent = "";
         }
         switch (this._bottomButtonType) {
             case Bottom_WWA_Button.GOTO_WWA:
@@ -3528,7 +3528,6 @@ export class WWA {
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
                 this._messageWindow.save(this._cvs, qd);
-                util.$id("cell-load").textContent = "Quick Load";
                 this.wwaCustomEvent('wwa_quicksave', {
                     data: qd,
                     compress: WWACompress.compress(qd)
