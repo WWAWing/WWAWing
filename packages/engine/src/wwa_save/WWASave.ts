@@ -1,9 +1,11 @@
 import {
     WWAConsts,
+    WWAButtonTexts,
     WWAData,
     ChoiceCallInfo,
     BROWSER_TYPE
 } from "../wwa_data";
+import * as util from "../wwa_util";
 import { MessageWindow } from "../wwa_message";
 import { WWA } from "../wwa_main";
 import { Player } from "../wwa_parts_player"; 
@@ -34,38 +36,35 @@ export default class WWASave {
     public autoSave(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData) {
         this._wwaLogSaveList.autoSave(gameCvs, _quickSaveData);
     }
-    public setPlayer(player: Player) {
-        this._wwaLogSaveList.setPlayer(player);
-    }
     public selectDBSaveDataList() {
         this.list = this._wwaDBSaveList;
     }
     public selectLogSaveDataList() {
         this.list = this._wwaLogSaveList;
     }
-    save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, id: number): boolean {
+    public save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, id: number): boolean {
         var saveData: WWASaveData = this.list[id];
         if (!saveData) {
             return false;
         }
         return saveData.save(gameCvs, _quickSaveData);
     }
-    load(id:number): WWAData {
+    public load(id:number): WWAData {
         var saveData: WWASaveData = this.list[id];
         if (!saveData) {
             return null;
         }
         return saveData.load();
     }
-    hasSaveData(): boolean {
+    public hasSaveData(): boolean {
         return this.list.hasSaveData();
     }
-    setAutoSaveInterval(autoInterval: number): void {
+    public setAutoSaveInterval(autoInterval: number): void {
         return this._wwaLogSaveList.setAutoSaveInterval(autoInterval);
     } 
 
 
-    getFirstSaveChoiceCallInfo(forcePassword: boolean, usePassword: boolean): ChoiceCallInfo {
+    public getFirstSaveChoiceCallInfo(forcePassword: boolean, usePassword: boolean): ChoiceCallInfo {
         if (forcePassword) {
             return ChoiceCallInfo.CALL_BY_PASSWORD_LOAD;
         }
@@ -77,7 +76,7 @@ export default class WWASave {
         }
         return ChoiceCallInfo.CALL_BY_PASSWORD_LOAD;
     }
-    getSecondSaveChoiceCallInfo(usePassword: boolean): ChoiceCallInfo {
+    public getSecondSaveChoiceCallInfo(usePassword: boolean): ChoiceCallInfo {
         if (this.list === this._wwaDBSaveList) {
             //DBクイックセーブを参照中
             if (this._wwaLogSaveList.hasSaveData()) {
@@ -89,5 +88,19 @@ export default class WWASave {
             return ChoiceCallInfo.CALL_BY_PASSWORD_LOAD;
         }
         return ChoiceCallInfo.NONE;
+    }
+
+    public gameStart(wwaData: WWAData, player: Player) {
+        this._wwaLogSaveList.setPlayer(player);
+        this.quickSaveButtonUpdate(wwaData);
+    }
+    public quickSaveButtonUpdate(wwaData: WWAData):void{
+        if (!wwaData.disableSaveFlag) {
+            //セーブ可能
+            util.$id("cell-save").textContent = WWAButtonTexts.QUICK_SAVE;
+        } else {
+            //セーブ不可
+            util.$id("cell-save").textContent = WWAButtonTexts.EMPTY_SAVE;
+        }
     }
 }

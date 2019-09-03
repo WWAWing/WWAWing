@@ -3,7 +3,7 @@ declare var VERSION_WWAJS: string; // webpackにより注入
 declare function loader_start(e: any): void;
 
 import {
-    WWAConsts as Consts, WWAData as Data, Coord, Position,
+    WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
@@ -284,18 +284,21 @@ export class WWA {
                 break;
         }
 
+        util.$id("cell-save").textContent = WWAButtonTexts.QUICK_SAVE;
         if (!this._usePassword) {
-            util.$id("cell-load").textContent = "";
+            util.$id("cell-load").textContent = WWAButtonTexts.EMPTY_LOAD;
+        } else {
+            util.$id("cell-load").textContent = WWAButtonTexts.PASSWORD;
         }
         switch (this._bottomButtonType) {
             case Bottom_WWA_Button.GOTO_WWA:
-                util.$id("cell-gotowwa").textContent = "Goto WWA";
+                util.$id("cell-gotowwa").textContent = WWAButtonTexts.GOTO_WWA;
                 break;
             case Bottom_WWA_Button.BATTLE_REPORT:
-                util.$id("cell-gotowwa").textContent = "Battle Report";
+                util.$id("cell-gotowwa").textContent = WWAButtonTexts.BATTLE_REPORT;
                 break;
             case Bottom_WWA_Button.GAME_END:
-                util.$id("cell-gotowwa").textContent = "Game End";
+                util.$id("cell-gotowwa").textContent = WWAButtonTexts.GAME_END;
                 break;
         }
         this._loadHandler = (e): void => {
@@ -3661,7 +3664,7 @@ export class WWA {
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
         this.updateCSSRule();
-        this._wwaSave.setPlayer(this._player);
+        this._wwaSave.gameStart(this._wwaData,this._player);
     }
     private _mapIDTableCreate(): void {
         var pid: number;
@@ -4414,7 +4417,9 @@ export class WWA {
     }
 
     public disableSave(flag: boolean): boolean {
-        return this._wwaData.disableSaveFlag = flag;
+        this._wwaData.disableSaveFlag = flag;
+        this._wwaSave.quickSaveButtonUpdate(this._wwaData);
+        return flag;
     }
 
     public isOldMap(): boolean {

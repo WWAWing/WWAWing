@@ -1,5 +1,6 @@
 import {
     WWASaveConsts,
+    WWAButtonTexts,
     WWAData
 } from "../wwa_data";
 import * as util from "../wwa_util";
@@ -24,7 +25,7 @@ export default class WWASaveData {
         this.ctx = this.cvs.getContext("2d");
     }
     public showQickLoad() {
-        util.$id("cell-load").textContent = "Quick Load";
+        util.$id("cell-load").textContent = WWAButtonTexts.QUICK_LOAD;
     }
     public save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
         this._statusEnergy = _quickSaveData.statusEnergy;

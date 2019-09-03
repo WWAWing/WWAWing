@@ -807,7 +807,19 @@ export class WWASaveConsts {
     static SAVE_INTERVAL_MOVE: number = 200;//この歩数ごとにオートセーブ
     static INDEXEDDB_DB_NAME: string = "WWA_WING_DB";   //IndexedDBに保存するDBの名称
     static INDEXEDDB_TABLE_NAME: string = "SAVE_TABLE"; //IndexedDBに保存するテーブルの名称
+    static DATE_TEXT_TYPE: string = "ja-JP"; //クイックロードで時刻表示する際の表記方法
+}
 
+export class WWAButtonTexts {
+    static EMPTY_LOAD: string = "";
+    static EMPTY_SAVE: string = "";
+    static PASSWORD: string         = "Password";
+    static QUICK_SAVE: string       = "Quick Save";
+    static QUICK_LOAD: string       = "Quick Load";
+    static BATTLE_REPORT: string    = "Battle Report";
+    static GAME_END: string         = "Game End";
+    static GOTO_WWA: string         = "Goto WWA";
+    static RESTART_GAME: string     = "Restart Game";
 }
 
 

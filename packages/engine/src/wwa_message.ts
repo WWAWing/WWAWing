@@ -1074,7 +1074,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 ss_div.appendChild(loadWWAData.cvs);
 
                 span = document.createElement("span");
-                span.innerText = loadWWAData.date.toLocaleString();
+                span.innerText = loadWWAData.date.toLocaleString(WWASaveConsts.DATE_TEXT_TYPE);//日本時刻の表示
                 ss_div.appendChild(span);
 
                 energy_icon_div = document.createElement("div");
