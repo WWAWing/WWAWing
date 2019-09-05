@@ -384,9 +384,7 @@ export class WWA {
             console.log("Loading Complete!" + (t_end - t_start) + "ms");
             
             this._cvs = <HTMLCanvasElement>util.$id("wwa-map");
-            this._cvsSub = <HTMLCanvasElement>util.$id("wwa-map-sub");
-            var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d");
-            var ctxSub = <CanvasRenderingContext2D>this._cvsSub.getContext("2d");
+            var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d", {alpha:false});
             ctx.fillStyle = "rgba( 255, 255, 255, 0.5)";
             ctx.fillRect(0, 0, 440, 440);
             var playerPosition = new Position(this, this._wwaData.playerX, this._wwaData.playerY);
@@ -792,7 +790,7 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, (): void => {
+            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, (): void => {
                 this._isSkippedSoundMessage = true;
                 if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
                     this._isLoadedSound = true;
@@ -1364,14 +1362,18 @@ export class WWA {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
         bg.classList.add("onpress");
         if (!this._wwaData.disableSaveFlag) {
-
-            if (this._useSuspend) {//中断モード
-                this.setMessageQueue("ゲームを中断しますか？", true, true);
-                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
-            }else if (this._usePassword) {
-                this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
-                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
-            }
+            this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
+            this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
+        } else {
+            this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
+        }
+    }
+    public onpasssuspendsavecalled() {
+        var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
+        bg.classList.add("onpress");
+        if (!this._wwaData.disableSaveFlag) {
+            this.setMessageQueue("ゲームを中断しますか？", true, true);
+            this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
         } else {
             this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
         }
@@ -1671,7 +1673,11 @@ export class WWA {
                     this.onselectbutton(SidebarButton.QUICK_LOAD, true);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
                     this.playSound(SystemSound.DECISION);
-                    this.onpasswordsavecalled()
+                    if (this._useSuspend) {//中断モード
+                        this.onpasssuspendsavecalled();
+                    } else if (this._usePassword) {
+                        this.onpasswordsavecalled();
+                    }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F5) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_ZR)) {
                     this.onselectbutton(SidebarButton.QUICK_LOAD);
@@ -1999,8 +2005,8 @@ export class WWA {
             this._cgManager.drawCanvas(
                 this._battleEffectCoord.x, this._battleEffectCoord.y,
                 Consts.CHIP_SIZE * (targetX - cpParts.x) - cpOffset.x,
-                Consts.CHIP_SIZE * (targetY - cpParts.y) - cpOffset.y,
-                false);
+                Consts.CHIP_SIZE * (targetY - cpParts.y) - cpOffset.y
+            );
         }
         this._drawEffect();
         this._drawFaces();
@@ -2172,7 +2178,7 @@ export class WWA {
                     this._wwaData.effectCoords[i].x,
                     this._wwaData.effectCoords[i].y,
                     x * Consts.CHIP_SIZE,
-                    y * Consts.CHIP_SIZE, false);
+                    y * Consts.CHIP_SIZE);
             }
         }
     }
@@ -2182,8 +2188,7 @@ export class WWA {
             this._cgManager.drawCanvasWithSize(
                 this._faces[i].srcPos.x, this._faces[i].srcPos.y,
                 this._faces[i].srcSize.x, this._faces[i].srcSize.y,
-                this._faces[i].destPos.x, this._faces[i].destPos.y,
-                false
+                this._faces[i].destPos.x, this._faces[i].destPos.y
             );
         }
     }
@@ -2945,7 +2950,11 @@ export class WWA {
                     this._messageWindow.deleteSaveDom();
                     if ((this._usePassword) || (this._useSuspend)) {
                         this._yesNoJudge = YesNoState.UNSELECTED;
-                        this.onpasswordsavecalled();
+                        if (this._useSuspend) {//中断モード
+                            this.onpasssuspendsavecalled();
+                        } else if (this._usePassword) {
+                            this.onpasswordsavecalled();
+                        }
                         return;
                     } else {
                         (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
@@ -2961,7 +2970,13 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_SUSPEND) {
-                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                    if (this._usePassword) {
+                        this._yesNoJudge = YesNoState.UNSELECTED;
+                        this.onpasswordsavecalled();
+                        return;
+                    } else {
+                        (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                    }
                 }
 
                 this._yesNoJudge = YesNoState.UNSELECTED;
@@ -3503,21 +3518,20 @@ export class WWA {
 
 
         switch (callInfo) {
-            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
-                qd.checkString = this._generateSaveDataHash(qd);
+            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
+            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                //qd.checkString = this._generateSaveDataHash(qd);
                 break;
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
                 qd.checkOriginalMapString = this.checkOriginalMapString;
-                qd.mapCompressed = this._compressMap(qd.map);
-                qd.mapObjectCompressed = this._compressMap(qd.mapObject);
+                //qd.mapCompressed = this._compressMap(qd.map);
+                //qd.mapObjectCompressed = this._compressMap(qd.mapObject);
                 qd.checkString = this._generateSaveDataHash(qd);
 
                 // map, mapObjectについてはcompressから復元
-                qd.map = void 0;
-                qd.mapObject = void 0;
-                break;
-            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                //qd.map = void 0;
+                //qd.mapObject = void 0;
                 break;
         }
 
@@ -3531,15 +3545,16 @@ export class WWA {
             case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
                 this._messageWindow.save(this._cvs, qd);
                 this.wwaCustomEvent('wwa_quicksave', {
-                    data: qd,
-                    compress: WWACompress.compress(qd)
+                    data: qd
                 });
                 return "";
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
-                var s = JSON.stringify(qd);
+                var compressQD:any = WWACompress.compress(qd);
+                compressQD.isCompress = 1;
+                var s = JSON.stringify(compressQD);
                 this.wwaCustomEvent('wwa_passwordsave', {
                     data: qd,
-                    compress: WWACompress.compress(qd)
+                    compress: compressQD
                 });
                 return CryptoJS.AES.encrypt(
                     CryptoJS.enc.Utf8.parse(s),
@@ -3553,8 +3568,7 @@ export class WWA {
                 break;
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
                 this.wwaCustomEvent('wwa_autosave', {
-                    data: qd,
-                    compress: WWACompress.compress(qd)
+                    data: qd
                 });
                 this._wwaSave.autoSave(this._cvs, qd);
                 break;
@@ -3585,13 +3599,21 @@ export class WWA {
         } catch (e) {
             throw new Error("データが破損しています。\n" + e.message)
         }
-        var obj: WWAData;
+        var obj: any;
+        var decodeWWAData: WWAData;
         try {
             obj = JSON.parse(json);
         } catch (e) {
             throw new Error("マップデータ以外のものが暗号化されたか、マップデータに何かが不足しているようです。\nJSON PARSE FAILED");
         }
-        return obj;
+        if (obj.isCompress) {
+            delete obj.isCompress;
+            decodeWWAData = WWACompress.decompress(obj);
+        } else {
+            decodeWWAData = <WWAData>obj;
+        }
+        
+        return decodeWWAData;
     }
 
     private _quickLoad(restart: boolean = false, password: string = null, apply: boolean = true): WWAData {
@@ -3610,12 +3632,12 @@ export class WWA {
         newData.objectAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.objectAttribute));
         if (newData.map === void 0) {
             newData.map = this._decompressMap(newData.mapCompressed);
-            newData.mapCompressed = void 0;
         }
+        newData.mapCompressed = void 0;
         if (newData.mapObject === void 0) {
             newData.mapObject = this._decompressMap(newData.mapObjectCompressed);
-            newData.mapObjectCompressed = void 0;
         }
+        newData.mapObjectCompressed = void 0;
 
         if (password !== null) {
             var checkString = this._generateSaveDataHash(newData);

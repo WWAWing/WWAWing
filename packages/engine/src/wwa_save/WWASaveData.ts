@@ -22,7 +22,7 @@ export default class WWASaveData {
         this.cvs = document.createElement("canvas");
         this.cvs.width = WWASaveConsts.QUICK_SAVE_THUMNAIL_WIDTH;
         this.cvs.height = WWASaveConsts.QUICK_SAVE_THUMNAIL_HEIGHT;
-        this.ctx = this.cvs.getContext("2d");
+        this.ctx = this.cvs.getContext("2d", { alpha: false });
     }
     public showQickLoad() {
         util.$id("cell-load").textContent = WWAButtonTexts.QUICK_LOAD;
