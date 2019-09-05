@@ -424,23 +424,18 @@ export class WWA {
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
             this.clearFaces();
-            const liikingAroundString = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
-            this._useLookingAround = !((liikingAroundString) && (liikingAroundString.match(/false/i)));
 
             WWACompress.setRestartData(this._restartData);
-            this.clearFaces();
-            var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
-            if (typeof resumeSaveDataText === "string") {
-                this._useSuspend = true; // 中断モード
-                if (resumeSaveDataText) {
-                    // 再開
-                    const resumeData = WWACompress.getStartWWAData(resumeSaveDataText);
-                    if (this._restartData !== resumeData) {
-                        this._applyQuickLoad(resumeData);
-                        this._quickSave(ChoiceCallInfo.CALL_BY_QUICK_SAVE);
-                    }
-                }
+            // TODO オートセーブ実装後にコメントアウト解除
+            /*
+            var autosaveString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-autosave");
+            if (autosaveString !== null) {
+                this._wwaSave.setAutoSaveInterval(Number(autosaveString) | 0);
             }
+            */
+            const liikingAroundString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
+            this._useLookingAround = !((liikingAroundString) && (liikingAroundString.match(/false/i)));
+
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
@@ -772,8 +767,7 @@ export class WWA {
             this._paintSkipByDoorOpen = false
             this._clearFacesInNextFrame = false
             this._useConsole = false;
-
-            var self = this;
+            
             this.wwaCustomEvent('wwa_startup');
             /*
             var count = 0;
@@ -831,66 +825,66 @@ export class WWA {
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
-                        self._keyStore.update();
-                        self._gamePadStore.update();
+                        this._keyStore.update();
+                        this._gamePadStore.update();
 
-                        if (self._yesNoJudgeInNextFrame === YesNoState.UNSELECTED) {
+                        if (this._yesNoJudgeInNextFrame === YesNoState.UNSELECTED) {
                             if (
-                                self._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                                self._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
-                                self._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)
+                                this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
+                                this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
+                                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)
                             ) {
-                                self._yesNoJudgeInNextFrame = YesNoState.YES
+                                this._yesNoJudgeInNextFrame = YesNoState.YES
                             } else if (
-                                self._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
-                                self._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
-                                self._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B)
+                                this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
+                                this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B)
                             ) {
-                                self._yesNoJudgeInNextFrame = YesNoState.NO
+                                this._yesNoJudgeInNextFrame = YesNoState.NO
                             }
                         }
 
-                        if (self._yesNoJudgeInNextFrame === YesNoState.YES) {
+                        if (this._yesNoJudgeInNextFrame === YesNoState.YES) {
                             clearInterval(timer);
-                            self._messageWindow.update();
-                            self._yesNoJudge = self._yesNoJudgeInNextFrame;
-                            self._messageWindow.setInputDisable();
+                            this._messageWindow.update();
+                            this._yesNoJudge = this._yesNoJudgeInNextFrame;
+                            this._messageWindow.setInputDisable();
                             setTimeout((): void => {
-                                self._player.setDelayFrame();
-                                self._messageWindow.hide();
-                                self._yesNoJudge = YesNoState.UNSELECTED;
-                                self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
-                                self._isLoadedSound = true;
+                                this._player.setDelayFrame();
+                                this._messageWindow.hide();
+                                this._yesNoJudge = YesNoState.UNSELECTED;
+                                this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
+                                this._isLoadedSound = true;
                                 this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
-                                self.loadSound();
+                                this.loadSound();
                                 window.requestAnimationFrame(this.soundCheckCaller);
                             }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                         }
 
-                        else if (self._yesNoJudgeInNextFrame === YesNoState.NO) {
+                        else if (this._yesNoJudgeInNextFrame === YesNoState.NO) {
                             clearInterval(timer);
-                            self._messageWindow.update();
-                            self._yesNoJudge = self._yesNoJudgeInNextFrame;
-                            self._messageWindow.setInputDisable();
+                            this._messageWindow.update();
+                            this._yesNoJudge = this._yesNoJudgeInNextFrame;
+                            this._messageWindow.setInputDisable();
                             setTimeout((): void => {
-                                self._player.setDelayFrame();
-                                self._messageWindow.hide();
-                                self._yesNoJudge = YesNoState.UNSELECTED;
-                                self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
-                                self._isLoadedSound = false;
-                                self.openGameWindow();
+                                this._player.setDelayFrame();
+                                this._messageWindow.hide();
+                                this._yesNoJudge = YesNoState.UNSELECTED;
+                                this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
+                                this._isLoadedSound = false;
+                                this.openGameWindow();
                             }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                         }
                     }, Consts.DEFAULT_FRAME_INTERVAL);
 
                 } else {
                     clearInterval(timer);
-                    self._player.setDelayFrame();
-                    self._messageWindow.hide();
-                    self._yesNoJudge = YesNoState.UNSELECTED;
-                    self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
-                    self._isLoadedSound = true;
-                    self.loadSound();
+                    this._player.setDelayFrame();
+                    this._messageWindow.hide();
+                    this._yesNoJudge = YesNoState.UNSELECTED;
+                    this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
+                    this._isLoadedSound = true;
+                    this.loadSound();
                     window.requestAnimationFrame(this.soundCheckCaller);
                 }
             });
@@ -1161,18 +1155,33 @@ export class WWA {
     }
 
     public openGameWindow(): void {
-        var self = this;
         var ppos = this._player.getPosition();
         util.$id("wwa-cover").style.opacity = "0";
         if (this.getObjectIdByPosition(ppos) !== 0) {
             this._player.setPartsAppearedFlag();
         }
 
-        setTimeout(function () {
+        //ゲーム開始直後に中断データ再開 TODO: 中断実装次第コメントアウト解除
+        /*
+        var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
+        if (typeof resumeSaveDataText === "string") {
+            this._useSuspend = true;//中断モード
+            if (resumeSaveDataText) {
+                //再開
+                var resumeData: WWAData = WWACompress.getStartWWAData(resumeSaveDataText);
+                if (this._restartData !== resumeData) {
+                    this._applyQuickLoad(resumeData);
+                    this._wwaSave.resumeStart();
+                }
+            }
+        }
+        */
+
+        setTimeout( () => {
             util.$id("wwa-wrapper").removeChild(util.$id("wwa-cover"));
             // TODO: これが表示終わるまでプレイヤーをcontrollableにしない
-            //                setTimeout(self.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, self);
-            self._main();
+            //                setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
+            this._main();
         }, Consts.SPLASH_SCREEN_DISP_MILLS);
 
     }
