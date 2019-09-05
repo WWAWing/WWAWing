@@ -60,4 +60,10 @@ export default class WWASaveData {
 
         }
     }
+    /**
+     * ç≈å„Ç…ï€ë∂ÇµÇΩÉfÅ[É^Ç≈Ç†ÇÈÇ©Çï‘Ç∑
+     */
+    public isLastSaveData(): boolean{
+        return (this === this._parent.getLastSaveData());
+    }
 }
