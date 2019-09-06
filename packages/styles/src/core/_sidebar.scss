@@ -45,7 +45,6 @@ div#wwa-sidebar {
             @extend %button_cell_onpress;
         }
     }
-    overflow: hidden; // %button_cell_onpress のはみ出し対策
 }
 
 div.status-icon {
