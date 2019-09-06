@@ -195,8 +195,11 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     if (WWASave.checkOriginalMapString !== saveData.hash) {
                         continue;
                     }
+                    if (!this[saveData.id]) {
+                        continue;
+                    }
                     var quickSaveData = WWACompress.decompress(saveData.data);
-                    this[i].saveDataSet(saveData.image, quickSaveData, saveData.date);
+                    this[saveData.id].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
                 this.selectLoad = true;
             };

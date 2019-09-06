@@ -302,6 +302,19 @@ export class Face {
     }
 }
 
+export class Draw_Parts_Data {
+    public partsIDObj: number;
+    public x: number;
+    public y: number;
+    public isStatic: boolean;
+    constructor(partsIDObj: number, x: number, y: number, isStatic: boolean) {
+        this.partsIDObj = partsIDObj;
+        this.x = x;
+        this.y = y;
+        this.isStatic = isStatic;
+    }
+}
+
 export enum Bottom_WWA_Button {
     GOTO_WWA = 0,
     BATTLE_REPORT = 1,
