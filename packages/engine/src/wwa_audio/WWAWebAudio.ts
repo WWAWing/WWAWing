@@ -97,6 +97,7 @@ export default class WWAWebAudio extends WWAAudio {
             }
             try {
                 bufferSource.stop();
+                bufferSource.disconnect(this.audioGain);
             } catch (e) {
                 
             }
@@ -110,6 +111,7 @@ export default class WWAWebAudio extends WWAAudio {
         this.bufferSources.forEach(bufferSource => {
             try {
                 bufferSource.stop();
+                bufferSource.disconnect(this.audioGain);
             } catch (e) {
 
             }
