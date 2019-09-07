@@ -138,8 +138,13 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             };
             this.selectDatas[saveID] = addData;
 
-            var reqAdd = store.put(addData);
-            //reqAdd.callbackLog = callback;
+            try {
+                var reqAdd = store.put(addData);
+                //reqAdd.callbackLog = callback;
+            } catch (error) {
+                //EDGE‚ÅƒGƒ‰[H
+                return;
+            }
             reqAdd.onsuccess = (e) => {
             };
             reqAdd.onerror = (e) => {
