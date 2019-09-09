@@ -307,11 +307,13 @@ export class Draw_Parts_Data {
     public x: number;
     public y: number;
     public isStatic: boolean;
-    constructor(partsIDObj: number, x: number, y: number, isStatic: boolean) {
+    public isFighting: boolean;
+    constructor(partsIDObj: number, x: number, y: number, isStatic: boolean, isFighting: boolean) {
         this.partsIDObj = partsIDObj;
         this.x = x;
         this.y = y;
         this.isStatic = isStatic;
+        this.isFighting = isFighting;
     }
 }
 

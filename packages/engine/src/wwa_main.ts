@@ -2125,13 +2125,14 @@ export class WWA {
         var animationType: boolean = this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
         var imgType: boolean, ppxo: number, ppyo: number, canvasX: number, canvasY: number, type: number, num: number, result: Coord;
         var x: number, y: number, partsIDObj: number, savePartsIDObj: number, n: number;
+        var useBattleArea: boolean = this._player.isFighting() &&
+            this._player.isTurn() &&
+            this._player.getPosition().getPartsCoord().equals(this._monster.position);
         if (isPrevCamera) {
             // 画面内物体描画
             for (x = xLeft; x <= xRight; x++) {
                 for (y = yTop; y <= yBottom; y++) {
-                    if (this._player.isFighting() &&
-                        this._player.isTurn() &&
-                        this._player.getPosition().getPartsCoord().equals(this._monster.position) &&
+                    if ((useBattleArea) &&
                         new Coord(x, y).equals(this._monster.position)) {
                         continue;
                     }
@@ -2166,7 +2167,7 @@ export class WWA {
             var drawPartsList: Draw_Parts_Data[] = [];
             var drawStaticPartsList: Draw_Parts_Data[] = [];
             var drawPartsData: Draw_Parts_Data;
-            var isStatic: boolean;
+            var isStatic: boolean, isFighting: boolean;
             for (x = xLeft; x <= xRight; x++) {
                 for (y = yTop; y <= yBottom; y++) {
                     savePartsIDObj = partsIDObj = this._wwaData.mapObject[y][x];
@@ -2178,16 +2179,20 @@ export class WWA {
                     isStatic = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_MOVE] === MoveType.STATIC;
                     if (savePartsIDObj !== 0) {
                         //描画対象に追加
-                        if (isStatic) {
-                            drawStaticPartsList.push(new Draw_Parts_Data(partsIDObj, x, y, isStatic));
+                        if ((useBattleArea) &&
+                            new Coord(x, y).equals(this._monster.position)) {
+                            isFighting = true;
                         } else {
-                            drawPartsList.push(new Draw_Parts_Data(partsIDObj, x, y, isStatic));
+                            isFighting = false;
+                        }
+                        
+                        if (isStatic) {
+                            drawStaticPartsList.push(new Draw_Parts_Data(partsIDObj, x, y, isStatic, isFighting));
+                        } else {
+                            drawPartsList.push(new Draw_Parts_Data(partsIDObj, x, y, isStatic, isFighting));
                             savePartsIDObj = 0;//移動系は表示しないものとみなす
                         }
-                        if (this._player.isFighting() &&
-                            this._player.isTurn() &&
-                            this._player.getPosition().getPartsCoord().equals(this._monster.position) &&
-                            new Coord(x, y).equals(this._monster.position)) {
+                        if (isFighting) {
                             savePartsIDObj = 0;//戦闘中に一時的に描画をOFFにする
                         }
                     }
@@ -2212,9 +2217,14 @@ export class WWA {
                 y = drawPartsData.y;
                 partsIDObj = drawPartsData.partsIDObj;
                 isStatic = drawPartsData.isStatic;
+                isFighting = drawPartsData.isFighting;
                 canvasX = Consts.CHIP_SIZE * (x - cpParts.x) - cpOffset.x;
                 canvasY = Consts.CHIP_SIZE * (y - cpParts.y) - cpOffset.y;
                 if (isStatic) {
+                    if (isFighting) {
+                        //戦闘中に一時的に描画をOFFにする
+                        continue;
+                    }
                     //移動しないもの
                     //キャッシュキャンバスに移動しない物体を描画
                     for (n = 0; n < 2; n++) {
