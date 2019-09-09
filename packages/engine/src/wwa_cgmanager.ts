@@ -4,11 +4,13 @@ import { WWAConsts as Consts, Coord } from "./wwa_data";
 export class CacheCanvas {
     public cvs: HTMLCanvasElement;
     public ctx: CanvasRenderingContext2D;
+    private _alpha: boolean;
     public constructor(width: number, height: number, alpha: boolean) {
         this.cvs = document.createElement("canvas");
         this.cvs.width = width;
         this.cvs.height = height;
         this.ctx = this.cvs.getContext("2d", { alpha: alpha });
+        this._alpha = alpha;
         //document.body.appendChild(this.cvs);
     }
     public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number): void {
@@ -20,6 +22,10 @@ export class CacheCanvas {
     }
     public clear() {
         this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
+        if (!this._alpha) {
+            this.ctx.fillStyle = "#000";
+            this.ctx.fillRect(0, 0, this.cvs.width, this.cvs.height);
+        }
     }
 }
 
