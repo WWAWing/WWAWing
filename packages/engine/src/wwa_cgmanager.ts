@@ -21,10 +21,11 @@ export class CacheCanvas {
         );
     }
     public clear() {
-        this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
         if (!this._alpha) {
-            this.ctx.fillStyle = "#000";
+            this.ctx.fillStyle = "#9E9E9E";
             this.ctx.fillRect(0, 0, this.cvs.width, this.cvs.height);
+        } else {
+            this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
         }
     }
 }
