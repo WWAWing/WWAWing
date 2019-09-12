@@ -822,7 +822,6 @@ export class WWASaveConsts {
     static SAVE_INTERVAL_MOVE: number = 200;//この歩数ごとにオートセーブ
     static INDEXEDDB_DB_NAME: string = "WWA_WING_DB";   //IndexedDBに保存するDBの名称
     static INDEXEDDB_TABLE_NAME: string = "SAVE_TABLE"; //IndexedDBに保存するテーブルの名称
-    static DATE_TEXT_TYPE: string = "ja-JP"; //クイックロードで時刻表示する際の表記方法
     static DATE_LAST_SAVE_TEXT_COLOR: string = "rgba(255,255,0,1)";
 }
 

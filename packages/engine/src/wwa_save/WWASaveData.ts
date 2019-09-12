@@ -60,6 +60,26 @@ export default class WWASaveData {
 
         }
     }
+    public getDateText(): string{
+        var y, m, d, ho, mi, se, date;
+        if (!this.date) {
+            return '';
+        }
+        y = this.date.getFullYear();
+        m = this.date.getMonth() + 1;
+        d = this.date.getDate();
+        ho = this.date.getHours();
+        mi = this.date.getMinutes();
+        se = this.date.getSeconds();
+        y = ('000' + y).slice(-4);
+        m = ('0' + m).slice(-2);
+        d = ('0' + d).slice(-2);
+        ho = ('0' + ho).slice(-2);
+        mi = ('0' + mi).slice(-2);
+        se = ('0' + se).slice(-2);
+
+        return y + "/" + m + "/" + d + " " + ho + ":" + mi + ":" + se;
+    }
     /**
      * ç≈å„Ç…ï€ë∂ÇµÇΩÉfÅ[É^Ç≈Ç†ÇÈÇ©Çï‘Ç∑
      */
