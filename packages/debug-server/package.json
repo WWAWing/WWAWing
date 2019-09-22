@@ -18,6 +18,6 @@
     "nexe": "^3.0.0-beta.15",
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.6.3"
   }
 }

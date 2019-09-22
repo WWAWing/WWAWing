@@ -1,6 +1,6 @@
-const webpack = require("webpack");
-const path = require("path");
-const package = require("./package.json");
+import * as webpack from "webpack";
+import * as path from "path";
+import * as packageJson from "./package.json";
 
 const cryptoJsLicenseComment = `crypto-js\
  (c) Jeff Mott / Evan Vosberg /\
@@ -10,7 +10,7 @@ const wwaWingEngineLicenseComment = `WWA Wing Engine\
  (c) NAO / WWA Wing Team /\
  MIT License https://github.com/WWAWing/WWAWing/blob/develop/packages/engine/LICENSE`;
 
-module.exports = {
+const config: webpack.Configuration = {
     mode: "development",
     entry: "./src/wwa_main.ts",
     output: {
@@ -31,7 +31,7 @@ module.exports = {
     },
     plugins: [
         new webpack.DefinePlugin({
-            VERSION_WWAJS: JSON.stringify(package.version)
+            VERSION_WWAJS: JSON.stringify(packageJson.version)
         }),
         new webpack.BannerPlugin({
             banner: `@license ${wwaWingEngineLicenseComment}\n@license ${cryptoJsLicenseComment}`
@@ -41,3 +41,5 @@ module.exports = {
         ignored: ["node_modules", 'lib/**/*.js']
     }
 };
+
+export default config;
