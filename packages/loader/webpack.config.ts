@@ -1,7 +1,7 @@
-const webpack = require("webpack");
-const path = require("path");
+import * as webpack from "webpack";
+import * as path from "path";
 
-module.exports = {
+const config: webpack.Configuration =  {
     mode: "development",
     entry: "./src/index.ts",
     output: {
@@ -26,3 +26,5 @@ module.exports = {
         })
     ]
 };
+
+export default config;

@@ -10,7 +10,7 @@
     "version_up:minor": "npm version minor && npm run build",
     "version_up:major": "npm version major && npm run build",
     "build": "npm-run-all clean build:*",
-    "build:webpack": "webpack --config webpack.config.js && webpack --config webpack.config.prod.js",
+    "build:webpack": "webpack --config webpack.config.ts && webpack --config webpack.config.prod.ts",
     "build:webpack:dev": "webpack -w",
     "deploy": "shx mkdir -p lib && npm-run-all deploy:*",
     "deploy:audio": "shx cp -R ./node_modules/@wwawing/assets/audio lib/",
@@ -38,6 +38,8 @@
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
     "@types/crypto-js": "^3.1.43",
+    "@types/uglifyjs-webpack-plugin": "^1.1.0",
+    "@types/webpack": "^4.39.1",
     "@wwawing/assets": "0.0.0",
     "@wwawing/common-interface": "0.0.0",
     "@wwawing/debug-server": "0.0.0",
@@ -47,10 +49,11 @@
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
     "ts-loader": "^4.3.0",
-    "typescript": "^2.9.2",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.6.3",
     "uglify-js": "^3.3.27",
     "uglifyjs-webpack-plugin": "^1.2.5",
-    "webpack": "^4.20.2",
-    "webpack-cli": "^3.1.1"
+    "webpack": "^4.40.2",
+    "webpack-cli": "^3.3.9"
   }
 }
