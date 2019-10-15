@@ -1,0 +1,106 @@
+/*
+ * z-index.css はIDで指定されている要素に対してのみ z-index を指定するSASSファイルです。
+ * アイテムボックスのエフェクトなど、一定条件で発生する、クラス指定の要素は別のSASSファイルをご利用ください。
+ */
+
+.wwa-yesno-wrapper {
+  z-index: 10;
+}
+
+canvas#wwa-map {
+  z-index: 100;
+}
+canvas#wwa-map-sub {
+  z-index: 101;
+}
+
+div#wwa-sidebar {
+  z-index: 102;
+}
+
+@each $status, $number in (
+  energy: 0,
+  strength: 1,
+  defence: 2,
+  gold: 3
+  ) {
+  #disp-#{$status} {
+    z-index: 103 + $number;
+    > .status-icon {
+      z-index: 140 + $number;
+    }
+    > .status-value-box {
+      z-index: 150 + $number;
+    }
+  }
+}
+
+@for $number from 0 to 12 {
+  #item#{$number} {
+    z-index: 107 + $number;
+    > .item-disp {
+      z-index: 160 + $number;
+    }
+    > .item-click-border {
+      z-index: 172 + $number;
+    }
+  }
+}
+
+@each $button, $number in (
+  load: 0,
+  save: 1,
+  restart: 2,
+  gotowwa: 3
+) {
+  #cell-#{$button} {
+    z-index: 119 + $number;
+  }
+  #button-#{$button} {
+    z-index: 201 + $number;
+  }
+}
+
+#wwa-controller {
+  z-index: 200;
+}
+
+#wwa-battle-estimate {
+  z-index: 230;
+}
+#wwa-password-window {
+  z-index: 231;
+}
+#wwa-fader {
+  z-index: 250;
+}
+#wwa-cover {
+  z-index: 300;
+  > #progress-message-container {
+    z-index: 305;
+  }
+  > #progress-bar-bg {
+    z-index: 310;
+  }
+  > #progress-bar {
+    z-index: 315;
+  }
+  > #progress-bar-audio {
+    z-index: 316;
+  }
+  > #progress-disp {
+    z-index: 320;
+  }
+}
+#wwa-text-message-window {
+  z-index: 400;
+}
+#wwa-audio-wrapper {
+  z-index: -9999;
+}
+#wwa-virtualpad-left {
+  z-index: 500;
+}
+#wwa-virtualpad-right {
+  z-index: 501;
+}

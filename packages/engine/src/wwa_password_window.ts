@@ -48,6 +48,7 @@ export class PasswordWindow {
         });
 
         this._buttonWrapperElement = document.createElement("div");
+        this._buttonWrapperElement.classList.add("wwa-password-submit");
 
         this._okButtonElement = document.createElement("button");
         this._okButtonElement.textContent = "OK";

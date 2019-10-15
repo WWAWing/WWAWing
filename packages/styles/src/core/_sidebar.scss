@@ -1,0 +1,126 @@
+$wwa_sidebar_font_size: 14px;
+$wwa_wide_cell_height: 35px;
+$wwa_status_x_offset: 6px;
+$wwa_icon_width: 40px;
+
+
+%wide_cell {
+    position: absolute;
+    width: 120px;
+    height: $wwa_wide_cell_height;
+    line-height: $wwa_wide_cell_height;
+}
+
+%item_cell {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+}
+
+%button_cell_onpress {
+    $border_size: 3px;
+
+    margin: $border_size 0 0 $border_size;
+}
+
+
+div#wwa-sidebar {
+    position: absolute;
+    top: 0px;
+    left: 440px;
+    width: 120px;
+    height: 440px;
+    font-size: $wwa_sidebar_font_size;
+    background-color: #000000;
+
+    > div.wide-cell-row {
+        @extend %wide_cell;
+        &.onpress /*, div#wwa-sidebar>div.wide-cell-row:hover*/ {
+            @extend %button_cell_onpress;
+        }
+    }
+    > div.item-cell {
+        @extend %item_cell;
+        &.onpress /*, div#wwa-sidebar>div.item-cell:hover */ {
+            @extend %button_cell_onpress;
+        }
+    }
+}
+
+div.status-icon {
+    width: $wwa_icon_width;
+    height: $wwa_wide_cell_height;
+    margin-left: $wwa_status_x_offset;
+}
+
+div.status-value-box {
+    @extend %wide_cell;
+    top: 0;
+    left: 0;
+    padding-left: $wwa_status_x_offset + $wwa_icon_width;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+div.item-click-border {
+    @extend %item_cell;
+    top: 0;
+    left: 0;
+}
+
+div.item-disp {
+    @extend %item_cell;
+    top: 0;
+    left: 0;
+}
+
+.item-overwritten {
+    width: 40px;
+    height: 40px;
+    z-index: 0!important;
+}
+
+.item-transitioning {
+    z-index: 240!important;
+}
+
+.wide-button {
+    @extend %wide_cell;
+    cursor: pointer;
+}
+
+
+// ここより位置設定 //
+$status: energy, strength, defence, gold;
+$menu_buttons: load, save, restart, gotowwa;
+
+$_y: 0;
+@each $status_name in $status {
+    #disp-#{$status_name} {
+        top: $_y;
+        left: 0px;
+    }
+    $_y: $_y + $wwa_wide_cell_height;
+}
+
+@for $row from 0 to 4 {
+    @for $column from 0 to 3 {
+        #item#{($row * 3) + $column} {
+            top: $_y;
+            left: $column * $wwa_icon_width;
+        }
+    }
+    $_y: $_y + $wwa_icon_width;
+}
+
+@each $button_name in $menu_buttons {
+    #cell-#{$button_name} {
+        top: $_y;
+        left: 0px;
+    }
+    #button-#{$button_name} {
+        top: $_y;
+        left: 0px;
+    }
+    $_y: $_y + $wwa_wide_cell_height;
+}
