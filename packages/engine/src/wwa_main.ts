@@ -136,6 +136,13 @@ export class WWA {
     private _isActive: boolean;
 
     /**
+     *   $imgframe で変更可能なアイテムボックスの画像位置（チップ単位）
+     *   TODO: 将来はセーブデータに含まれるようになるので、 WWADataに移す。
+     *   @see https://github.com/WWAWing/WWAWing/issues/156
+     */
+    private _itemboxBackgroundPos : {x: number, y: number};
+
+    /**
      * 背景パーツ番号として添字を与えると
      * パーツが配置されている(X,Y)座標をビットパターンに変換したものの配列を見ることができます。
      * ビットパターンの計算方法は、Y << 16 | X です。
@@ -311,6 +318,7 @@ export class WWA {
 
             this._wwaData = e.data.wwaData;
             this._wwaData.isItemEffectEnabled = itemEffectEnabled;
+            this._itemboxBackgroundPos = {x:  Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_X, y: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_Y };
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -344,7 +352,11 @@ export class WWA {
 
             var escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
             Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
-                node.style.backgroundPosition = "-40px -80px";
+                node.style.backgroundPosition = `-${
+                    this._itemboxBackgroundPos.x * Consts.CHIP_SIZE
+                }px -${
+                    this._itemboxBackgroundPos.y * Consts.CHIP_SIZE
+                }px`;
                 node.style.backgroundImage = "url(" + escapedFilename + ")";
             });
             Array.prototype.forEach.call(util.$qsAll("div.wide-cell-row"), (node: HTMLElement) => {
@@ -2322,7 +2334,11 @@ export class WWA {
             this._player.addItem(
                 partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false,
                 this._wwaData.isItemEffectEnabled ? {
-                    screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                    screenPixelCoord: new Coord(screenXPixel, screenYPixel),
+                    itemBoxBackgroundImageCoord: new Coord(
+                        this._itemboxBackgroundPos.x * Consts.CHIP_SIZE,
+                        this._itemboxBackgroundPos.y * Consts.CHIP_SIZE
+                    )
                 } : undefined
             );
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
@@ -2502,7 +2518,11 @@ export class WWA {
                                     var screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
                                     this._player.addItem(
                                         this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM], 0, false, this._wwaData.isItemEffectEnabled ? {
-                                            screenPixelCoord: new Coord(screenXPixel, screenYPixel)
+                                            screenPixelCoord: new Coord(screenXPixel, screenYPixel),
+                                            itemBoxBackgroundImageCoord: new Coord(
+                                                this._itemboxBackgroundPos.x * Consts.CHIP_SIZE,
+                                                this._itemboxBackgroundPos.y * Consts.CHIP_SIZE
+                                            )
                                         } : undefined
                                     );
                                 }
@@ -4153,6 +4173,13 @@ font-weight: bold;
 
     public isConsoleOutputMode(): boolean {
         return this._useConsole;
+    }
+
+    public setItemboxBackgroundPosition(pos: { x: number, y: number}): void {
+        this._itemboxBackgroundPos = pos;
+        Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
+            node.style.backgroundPosition = `-${pos.x * Consts.CHIP_SIZE}px -${pos.y * Consts.CHIP_SIZE}px`;
+        });
     }
 };
 
