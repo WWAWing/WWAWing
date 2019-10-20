@@ -1,4 +1,4 @@
 [build]
   base = "/"
   publish = "packages/engine/lib"
-  command = "./deploy-to-netlify.sh"
+  command = "npm install && npm run deploy"
