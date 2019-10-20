@@ -1,4 +1,4 @@
 [build]
   base = "/"
   publish = "/packages/engine/lib"
-  command = "npm install && npm run bootstrap && npm run build && npm run deploy"
+  command = "npm run deploy"
