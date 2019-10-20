@@ -13,7 +13,6 @@
     "build:webpack": "webpack --config webpack.config.ts && webpack --config webpack.config.prod.ts",
     "build:webpack:dev": "webpack -w",
     "deploy": "shx mkdir -p lib && npm-run-all deploy:*",
-    "deploy:netlify": "run-p build:webpack",
     "deploy:audio": "shx cp -R ./node_modules/@wwawing/assets/audio lib/",
     "deploy:html": "shx cp ./node_modules/@wwawing/assets/html/dev/*.* lib/",
     "deploy:images": "shx cp ./node_modules/@wwawing/assets/images/*.* lib/",
