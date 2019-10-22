@@ -664,7 +664,7 @@ export class Player extends PartsObject {
      * @param objID 持たせる物体パーツの番号
      * @param itemPos アイテムボックス格納位置 
      * @param isOverwrite itemPosが0でない場合に使用される上書き設定。詳しくはdoc本文を参照
-     * @param animationOption オブジェクトが与えられる場合は 画面座標 screenPixelCoord からアイテムボックスまでのアニメーションが発生します。また、itemboxBackgroundImageCoord をアイテムボックス背景画像のゲーム使用画像内座標[px]として利用します。
+     * @param animationOption オブジェクトが与えられる場合は 画面座標 screenPixelCoord からアイテムボックスまでのアニメーションが発生します。また、itemBoxBackgroundImageCoord をアイテムボックス背景画像のゲーム使用画像内座標[px]として利用します。
      */
     public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false, animationOption?: {
             screenPixelCoord: Coord,
