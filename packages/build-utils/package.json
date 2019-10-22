@@ -28,7 +28,7 @@
 		"@types/node": "^10.5.1",
 		"@types/shelljs": "^0.8.0",
 		"@wwawing/html-generator": "git+https://git@github.com/WWAWing/html-generator.git#include-lib",
-		"@wwawing/engine": "3.2.1",
+		"@wwawing/engine": "3.2.2",
 		"@wwawing/assets": "0.0.0",
 		"@wwawing/loader": "0.0.0",
 		"@wwawing/debug-server": "0.0.0",
