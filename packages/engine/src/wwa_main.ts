@@ -318,7 +318,10 @@ export class WWA {
 
             this._wwaData = e.data.wwaData;
             this._wwaData.isItemEffectEnabled = itemEffectEnabled;
-            this._itemboxBackgroundPos = {x:  Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_X, y: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_Y };
+            this._itemboxBackgroundPos = {
+                x: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_X,
+                y: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_Y
+            };
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -4175,6 +4178,11 @@ font-weight: bold;
         return this._useConsole;
     }
 
+    /**
+     * アイテムボックスの背景画像を置き換えます。
+     * 単位は、利用している画像の左上のチップを(x, y)=(0, 0)とするチップ単位です。
+     * @param pos 置き換えるアイテムボックスの背景の画像の、WWAで利用している画像内における位置
+     */
     public setItemboxBackgroundPosition(pos: { x: number, y: number}): void {
         this._itemboxBackgroundPos = pos;
         Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
