@@ -534,6 +534,7 @@ export class Player extends PartsObject {
      * - insertPos: アニメーションが走るアイテムボックスを指定します。 1以上12以下です。
      * - itemScreenPixelCoord: アニメーションの起点になる画面座標(フィールド上のアイテム地点)です。
      * - itemBoxScreenPixelCoord: アニメーションの終点になる画面座標(アイテムボックス)です。
+     * - itemBoxBackgroundImageCoord: アイテムボックスの背景画像の画像内座標(px単位)です。
      * - overwrittenObjectId: 上書きされる物体パーツのIDを指定すると、上書き演出になります。
      * 
      * @param animationOption オブジェクトがあるとアニメーションが走ります。
@@ -542,6 +543,7 @@ export class Player extends PartsObject {
         insertPos: number/*1-12*/,
         itemScreenPixelCoord: Coord,
         itemBoxScreenPixelCoord: Coord,
+        itemBoxBackgroundImageCoord: Coord,
         overwrittenObjectId?: number
     }): void {
         for (let i = 0; i < this._itemBoxElement.length; i++) {
@@ -569,8 +571,8 @@ export class Player extends PartsObject {
             const dy = animationOption.itemScreenPixelCoord.y - animationOption.itemBoxScreenPixelCoord.y;
             const durationMs = (-dx) * Consts.DEFAULT_FRAME_INTERVAL / Consts.ITEM_EFFECT_SPEED_PIXEL_PER_FRAME;
             const useBlank = animationOption.overwrittenObjectId === 0 || animationOption.overwrittenObjectId === undefined;
-            const overwrittenCx = useBlank ? 40 : this._wwa.getObjectCropXById(animationOption.overwrittenObjectId);
-            const overwrittenCy = useBlank ? 80 : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
+            const overwrittenCx = useBlank ? animationOption.itemBoxBackgroundImageCoord.x : this._wwa.getObjectCropXById(animationOption.overwrittenObjectId);
+            const overwrittenCy = useBlank ? animationOption.itemBoxBackgroundImageCoord.y : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
             targetItemBoxElement.style.left = dx + "px";
             targetItemBoxElement.style.top = dy + "px";
             window.setTimeout(() => this.startItemEffect(
@@ -662,9 +664,12 @@ export class Player extends PartsObject {
      * @param objID 持たせる物体パーツの番号
      * @param itemPos アイテムボックス格納位置 
      * @param isOverwrite itemPosが0でない場合に使用される上書き設定。詳しくはdoc本文を参照
-     * @param animationOption オブジェクトが与えられる場合は 画面座標 screenPixelCoord からアイテムボックスまでのアニメーションが発生します。
+     * @param animationOption オブジェクトが与えられる場合は 画面座標 screenPixelCoord からアイテムボックスまでのアニメーションが発生します。また、itemBoxBackgroundImageCoord をアイテムボックス背景画像のゲーム使用画像内座標[px]として利用します。
      */
-    public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false, animationOption?: { screenPixelCoord: Coord }): void {
+    public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false, animationOption?: {
+            screenPixelCoord: Coord,
+            itemBoxBackgroundImageCoord: Coord
+        }): void {
         var insertPos: number;
         var oldInsertPos: number;
         var oldObjID: number;
@@ -716,6 +721,7 @@ export class Player extends PartsObject {
         this.updateItemBox(animationOption ? {
             insertPos,
             itemScreenPixelCoord: animationOption.screenPixelCoord,
+            itemBoxBackgroundImageCoord: animationOption.itemBoxBackgroundImageCoord,
             itemBoxScreenPixelCoord: new Coord(
                 Consts.MAP_WINDOW_WIDTH + (insertPos - 1) % 3 * Consts.CHIP_SIZE,
                 Consts.ITEMBOX_TOP_Y + Math.floor((insertPos - 1) / 3) * Consts.CHIP_SIZE),
