@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "npm run bootstrap",
     "bootstrap": "lerna bootstrap --hoist",
     "bootstrap:no-hoist": "lerna bootstrap",
     "clean": "lerna clean",
