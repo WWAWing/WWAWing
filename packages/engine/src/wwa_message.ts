@@ -277,9 +277,8 @@ export class Macro {
                 node.style.backgroundPosition = "-" + x + "px -" + y + "px";
             });
         } else if (type === MacroImgFrameIndex.ITEM_BG) {
-            Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
-                node.style.backgroundPosition = "-" + x + "px -" + y + "px";
-            });
+            this._wwa.setItemboxBackgroundPosition({x: posX, y: posY});
+
         } else if (type === MacroImgFrameIndex.MAIN_FRAME) {
             this._wwa.setFrameCoord(new Coord(posX, posY));
         } else {
