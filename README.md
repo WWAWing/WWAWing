@@ -37,8 +37,7 @@ $ git clone git@github.com:WWAWing/WWAWing.git
 ## クローンしたリポジトリのディレクトリに入ります
 $ cd WWAWing
 ## 依存しているライブラリをインストールします
-$ npm install
-$ npm run bootstrap ## 内部的に lerna bootstrap が呼ばれます
+$ npm install ## install後, 自動で lerna bootstrap が呼ばれます
 $ npm run build ## 各種ソースをコンパイルします
 ## 開発用のサーバを起動します (内部的にengine ディレクトリ下での npm startが呼び出されます。)
 $ npm start
