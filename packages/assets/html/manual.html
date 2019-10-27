@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -40,7 +40,7 @@
         <section>
             <h1>WWA Wing: 簡易マニュアル</h1>
             <p><a href="http://wwawing.com">WWA Wing</a>( WWA In the Next Generation )は、<a href="http://wwajp.com">WWA</a>のJavaScript実装です。
-            煩わしい警告は出ず、一部のスマートフォンでも動作します。</p>
+            煩わしい警告は出ず、スマートフォンでも動作します。</p>
             
             <section>
                 <h2>サーバにアップロードするファイルについて</h2>
@@ -51,8 +51,6 @@
       |  |
       |  +-- 1...69.mp3 - 効果音です。1.mp3と3.mp3はシステムで使用するので必ずアップロードしてください。
       |  +-- 70...98.mp3 - BGMです。アップロードは任意です。
-      |  +-- audio.min.js - 音楽を鳴らすのに必要なファイルです。
-      |  +-- audiojs.swf - ブラウザの機能で音源が再生できない場合にこのFlashで音声の再生をします。必ずアップロードしてください。
       |  +-- player-graphics.gif - audio.jsで使用するファイルです。無くても差し支えないですが、念のためアップロードを推奨します。
       |
       +-- wwa.js - wwa本体です。本家のWWA.classに相当します。名前はHTML中のscript要素で変更できます。
@@ -79,7 +77,7 @@
                 </p>
                 <p>ローカルでテストしたい場合は、同梱の「wwa-server.exe」をご利用ください。<code>http://localhost:3000/</code>に続けて同じディレクトリのHTMLファイルをURLに指定するとテストプレイできます。 </p>
                 <p>例: <a href="http://localhost:3000/wwamap.html">http://localhost:3000/wwamap.html</a></p>
-                <p class="important">htmlファイルを直接クリックしても（Firefox以外では）動きません!!</p>
+                <p class="important">htmlファイルを直接クリックしても動きません!!</p>
             </section>
 
             <section>
@@ -101,32 +99,80 @@
                     <dt><code>data-wwa-classic-mode-enable</code>属性</dt>
                     <dd><code>true</code>を指定すると、本家と類似した挙動で動作します(詳細は後述)。
                     指定しなかった場合は<code>false</code>になります。</dd>
+                    <dt><code>data-wwa-item-effect-enable</code>属性</dt>
+                    <dd><code>false</code>を指定すると、アイテム取得時のエフェクトが無効になります。（マクロ文 <code>$effitem=0</code>を最初に実行することと等価）
+                    指定しなかった場合は<code>true</code>になります。</dd>
+                    <dt><code>data-wwa-use-go-to-wwa</code>属性</dt>
+                    <dd><code>true</code>を指定すると、現在戦闘予測ボタン「Battle Report」が WWA公式サイトへの移動ボタン「GoTo WWA」（v3.1系以下やJava版WWAでのボタン）でに変更できます。
+                    指定しなかった場合は<code>false</code>になります。</dd>
                 </dl>
             </section>
 
             <section>
                 <h2>注意</h2>
                 <p class="important">HTMLファイル, CSSファイルの文字コードはUTF-8(BOMなし)としてください。</p>
-                <p class="important">スマートフォンでもプレイできる場合がありますが、効果音/BGMは鳴りません。</p>
-                <p>下記機能については、本家WWAには実装されていますが、WWA Wingには実装されていません。</p>
-                <ul>
-                    <li>アイテムエフェクト, マクロ<code>$effitem</code></li>
-                </ul>
                 <p>下記の機能は本家とは異なる挙動をすることがあります。</p>
                 <ul>
                     <li>物体ジャンプゲートから物体ジャンプゲートにジャンプしたときのパーツメッセージ表示優先順位</li>
                     <li>ランダム選択パーツ</li>
+                    <li>マクロが実行されるタイミング</li>
                 </ul>
                 <p>下記は<code>data-wwa-classic-mode-enable</code>を<code>false</code>した場合に、異なる挙動をします。</p>
                 <ul>
                     <li>メッセージ表示中の物体パーツのアニメーション</li>
                 </ul>
                 <p>WWA作成ツールは作者NAO氏の許可を得て再配布しております。</p>
+                <p>
+                    wwa.jsを更新したにも関わらず、古いバージョンの挙動をする場合には、wwa.jsの名前をバージョンごとに変更し、script要素で読み込むwwa.jsのファイル名を変更すると解決できるかもしれません、
+                    将来的には、ブラウザにWWA Wingのエンジン本体をキャッシュさせない機構も検討したいと考えています。
+                </p>
             </section>
             
             <section>
                 <h2>更新情報</h2>
                 <section>
+                    <h3>v3.2.1からv3.2.2への変更点</h3>
+                    <ul>
+                        <li><code>$imgframe</code>でアイテムボックスの背景を変更した後、アイテムを取得すると背景が一瞬デフォルトになる問題を修正</li>
+                    </ul>
+                    <h3>v3.2.0からv3.2.1への変更点</h3>
+                    <ul>
+                        <li>Firefox68以降、HTMLファイルをローカルで直接開いての起動ができなくなったことに伴う対応</li>
+                    </ul>
+                    <h3>v3.1.9からv3.2.0への変更点</h3>
+                    <p class="important">本バージョンより、多くの環境で60FPSで動作すると思われます。60FPSの場合、ゲームの進行速度や歩行アニメーションの速度がこれまでの約1.2倍になるので注意してください。</p>
+                    <p class="important">WWA Phoenixのサポートは、v3.1.xをもって廃止されました。本バージョン以降、WWA Phoenixの提供はありませんのでご了承願います。</p>
+                    <ul>
+                        <li>iOS, Androidなどのスマートフォン系OSでも音が鳴るように変更 (利用できる場合は音源再生にWebAudioを使用するように)</li>
+                        <li>音声ファイルが存在しない場合もゲームが開始するように変更（不足がある場合、開発者ツールを開くことで不足しているサウンド番号を調べることができます)</li>
+                        <li>AudioJSの設置が不要に</li>
+                        <li>ゲームパッドに対応(各種ゲーム機のコントローラをUSBやBluetoothでPCに接続すると使えることがあります)</li>
+                        <li>描画の高速化</li>
+                        <li>スマートフォン向けにYes/Noボタンの拡大</li>
+                        <li><code>$parts</code>マクロの高速化</li>
+                        <li>Go To WWAボタンを先頭予測が可能な「Battle Report」ボタンに変更 (<code>data-wwa-use-go-to-wwa</code>属性を<code>true</code>に設定することでGo To WWAに戻せます)</li>
+                        <li>50FPSからrequestAnimationFrameによるフレーム呼び出しに変更。</li>
+                        <li>待ち時間の処理をフレーム単位の指定に変更</li>
+                        <li>FirefoxによるローカルでのHTMLオープン時に警告(alert)ダイアログが出ないように変更</li>
+                        <li>サポートブラウザを明記</li>
+                        <li>その他、開発上複雑になったコードの整理を実施。</li>
+                    </ul>
+                    <h3>v3.1.8からv3.1.9への変更点</h3>
+                    <ul>
+                        <li>WWA Wingの作成ツールをv3.1.7以前のものに変更(エンジンファイルの変更はありません)</li>
+                    </ul>
+                    <h3>v3.1.7からv3.1.8への変更点</h3>
+                    <ul>
+                        <li><code>$effect</code>マクロの最初の数字が<code>0</code>のとき(エフェクト終了)にフリーズする可能性がある不具合を修正</li>
+                        <li>WWA Wingの新しい作成ツールを同梱</li>
+                    </ul>
+                    <h3>v3.1.6からv3.1.7への変更点</h3>
+                    <ul>
+                        <li>Java版WWAに実装されていた<code>$effitem</code>マクロを復活</li>
+                        <li>メッセージがマクロのみのスコア表示パーツでメッセージが消えない問題を修正</li>
+                        <li>メッセージの先頭にある空白文字(半角スペースなど)が表示されない問題を修正</li>
+                        <li>クラシックモードかつタイトル画像が指定されている場合のプログレスバースタイル表示スタイルを修正</li>
+                    </ul>
                     <h3>W3.15dβ2からv3.1.6への変更点</h3>
                     <ul>
                         <li>新しいビルド方式に移行</li>
@@ -135,7 +181,7 @@
                         <li>効果音読み込みなしでパスワードセーブした後、効果音読み込みありで起動した場合にBGMが復元されない不具合を修正</li>
                         <li>戦闘予測表示中にパーツのイベントが実行される不具合を修正</li>
                         <li>BGM <code>71.mp3</code>の音源が途中で途切れないように修正</li>
-                        <li>HTMLファイルの改行コードに統一, メモ帳で開いても改行が出るようにした</li>
+                        <li>HTMLファイルの改行コードを統一, メモ帳で開いても改行が出るようにした</li>
                     </ul>
                     <h3>W3.15cからW3.15dβ2への変更点</h3>
                     <ul>
@@ -278,6 +324,24 @@
                     </ul>
                 </section>
             </section>
+
+            <section>
+                <h2>サポートブラウザ</h2>
+                <h3>PC</h3>
+                OSは不問です。
+                <ul>
+                    <li>Microsoft Internet Explorer 11</li>
+                    <li>Microsoft Edge (最新版)</li>
+                    <li>Mozilla Firefox (最新版)</li>
+                    <li>Google Chrome/Chromium (最新版)</li>
+                    <li>Safari (最新版)</li>
+                </ul>
+                <h3>スマートフォン・タブレット</h3>
+                <ul>
+                    <li>Android 上の Google Chrome (最新版)</li>
+                    <li>iOS 上の Safari (最新版)</li>
+                </ul>
+            </section>
             
             <section>
                 <h2>次回予定</h2>
@@ -305,7 +369,7 @@
                 <p><a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja"><img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />
                 また、このマニュアルについては <a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja">クリエイティブ・コモンズ 表示 4.0 国際 ライセンスの下に提供されています。</a></p>
                 <p> Internet RPG &quot;<a href="http://www.wwajp.com">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
-                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2018 WWA Wing Team</p>
+                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2019 WWA Wing Team</p>
             </footer>
         </section>
     </div>
