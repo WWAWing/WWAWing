@@ -24,7 +24,8 @@ import {
 import {
     VirtualPadState,
     VirtualPadButtonCode,
-    VirtualPadStore
+    VirtualPadStore,
+    VirtualPadButtons
 } from "@wwawing/virtual-pad";
 
 import * as CryptoJS from "crypto-js";
@@ -75,7 +76,7 @@ export class WWA {
     private _keyStore: KeyStore;
     private _mouseStore: MouseStore;
     private _virtualPadStore: VirtualPadStore;
-    private _virtualPadButtonElements: { [key: number]: HTMLButtonElement };
+    private _virtualPadButtonElements: VirtualPadButtons;
     private _gamePadStore: GamePadStore;
     private _camera: Camera;
     public _itemMenu: ItemMenu;  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
@@ -421,18 +422,18 @@ export class WWA {
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
-            this._virtualPadStore = new VirtualPadStore();
             this._virtualPadButtonElements = {
-                [VirtualPadButtonCode.BUTTON_ENTER]: <HTMLButtonElement>util.$id("wwa-enter-button"),
-                [VirtualPadButtonCode.BUTTON_ESC]: <HTMLButtonElement>util.$id("wwa-esc-button"),
+                [VirtualPadButtonCode.BUTTON_ENTER]:    <HTMLButtonElement>util.$id("wwa-enter-button"),
+                [VirtualPadButtonCode.BUTTON_ESC]:      <HTMLButtonElement>util.$id("wwa-esc-button"),
                 [VirtualPadButtonCode.BUTTON_ESTIMATE]: <HTMLButtonElement>util.$id("wwa-estimate-button"),
-                [VirtualPadButtonCode.BUTTON_FAST]: <HTMLButtonElement>util.$id("wwa-fast-button"),
-                [VirtualPadButtonCode.BUTTON_SLOW]: <HTMLButtonElement>util.$id("wwa-slow-button"),
-                [VirtualPadButtonCode.BUTTON_LEFT]: <HTMLButtonElement>util.$id("wwa-left-button"),
-                [VirtualPadButtonCode.BUTTON_UP]: <HTMLButtonElement>util.$id("wwa-up-button"),
-                [VirtualPadButtonCode.BUTTON_RIGHT]: <HTMLButtonElement>util.$id("wwa-right-button"),
-                [VirtualPadButtonCode.BUTTON_DOWN]: <HTMLButtonElement>util.$id("wwa-down-button")
+                [VirtualPadButtonCode.BUTTON_FAST]:     <HTMLButtonElement>util.$id("wwa-fast-button"),
+                [VirtualPadButtonCode.BUTTON_SLOW]:     <HTMLButtonElement>util.$id("wwa-slow-button"),
+                [VirtualPadButtonCode.BUTTON_LEFT]:     <HTMLButtonElement>util.$id("wwa-left-button"),
+                [VirtualPadButtonCode.BUTTON_UP]:       <HTMLButtonElement>util.$id("wwa-up-button"),
+                [VirtualPadButtonCode.BUTTON_RIGHT]:    <HTMLButtonElement>util.$id("wwa-right-button"),
+                [VirtualPadButtonCode.BUTTON_DOWN]:     <HTMLButtonElement>util.$id("wwa-down-button")
             };
+            this._virtualPadStore = new VirtualPadStore(this._virtualPadButtonElements);
             this._gamePadStore = new GamePadStore();
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
@@ -740,52 +741,6 @@ export class WWA {
                 util.$id("wwa-virtualpad-left").addEventListener("touchstart", cancelBrowserTouchEvent);
                 util.$id("wwa-virtualpad-right").addEventListener("touchstart", cancelBrowserTouchEvent);
 
-                for (let buttonType in this._virtualPadButtonElements) {
-                    const buttonTypeCode = parseInt(buttonType); // buttonType はstring型なのでparseIntで変換してしまう。
-                    const buttonElement = this._virtualPadButtonElements[buttonTypeCode];
-
-                    buttonElement.setAttribute("type", buttonType);
-                    buttonElement.addEventListener("touchstart", (event: TouchEvent) => {
-                        if (this._mouseStore.getMouseState() !== MouseState.NONE) {
-                            event.preventDefault();
-                            return;
-                        }
-                        this._virtualPadStore.setTouchInfo(buttonTypeCode);
-                        cancelBrowserTouchEvent(event);
-                    });
-                    buttonElement.addEventListener("touchend", () => {
-                        this._virtualPadStore.allClear();
-                    });
-                    buttonElement.addEventListener("cancel", () => {
-                        this._virtualPadStore.allClear();
-                    });
-                }
-
-                [ // 移動ボタン
-                    VirtualPadButtonCode.BUTTON_LEFT,
-                    VirtualPadButtonCode.BUTTON_UP,
-                    VirtualPadButtonCode.BUTTON_RIGHT,
-                    VirtualPadButtonCode.BUTTON_DOWN
-                ].forEach((targetButtonCode) => {
-                    const targetButtonElement = this._virtualPadButtonElements[targetButtonCode];
-                    
-                    targetButtonElement.addEventListener("touchmove", (event: TouchEvent): void => {
-                        event.preventDefault();
-                        this._virtualPadStore.allClear();
-
-                        const touch = event.targetTouches.item(0);
-                        const element = document.elementFromPoint(touch.pageX, touch.pageY);
-                        if (element === null) {
-                            return;
-                        }
-
-                        const touchButtonType = element.getAttribute("type");
-                        const touchButtonCode = parseInt(touchButtonType);
-                        if (VirtualPadStore.isMoveButton(touchButtonCode)) {
-                            this._virtualPadStore.setTouchInfo(touchButtonCode);
-                        }
-                    });
-                }, this);
             }
             //////////////// タッチ関連 超β ////////////////////////////
 

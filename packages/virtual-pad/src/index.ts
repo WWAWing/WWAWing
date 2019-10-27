@@ -1,7 +1,8 @@
-import VirtualPadStore, { VirtualPadState, VirtualPadButtonCode } from './VirtualPad';
+import VirtualPadStore, { VirtualPadState, VirtualPadButtonCode, VirtualPadButtons } from './VirtualPad';
 
 export {
   VirtualPadStore,
   VirtualPadState,
-  VirtualPadButtonCode
+  VirtualPadButtonCode,
+  VirtualPadButtons
 }
