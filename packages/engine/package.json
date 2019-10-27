@@ -17,7 +17,7 @@
     "deploy:html": "shx cp ./node_modules/@wwawing/assets/html/dev/*.* lib/",
     "deploy:images": "shx cp ./node_modules/@wwawing/assets/images/*.* lib/",
     "deploy:mapdata": "shx cp ./node_modules/@wwawing/assets/mapdata/*.* lib/",
-    "deploy:scripts": "shx cp ../assets/scripts/*.* lib/ && shx cp ./node_modules/@wwawing/loader/lib/wwaload*.js lib/",
+    "deploy:scripts": "shx cp ./node_modules/@wwawing/loader/lib/wwaload*.js lib/",
     "deploy:style": "shx cp ./node_modules/@wwawing/assets/style/*.* lib/ && shx cp ./node_modules/@wwawing/styles/output/*.* lib/",
     "clean": "shx rm -rf lib",
     "server": "node ./launch-server lib"

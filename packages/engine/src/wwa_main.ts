@@ -25,7 +25,9 @@ import {
     VirtualPadState,
     VirtualPadButtonCode,
     VirtualPadStore,
-    VirtualPadButtons
+    VirtualPadButtons,
+    autoRotate,
+    initializeRotate
 } from "@wwawing/virtual-pad";
 
 import * as CryptoJS from "crypto-js";
@@ -4284,6 +4286,11 @@ function start() {
     const useGoToWWAAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-use-go-to-wwa");
     if (useGoToWWAAttribute !== null && useGoToWWAAttribute.match(/^true$/i)) {
         useGoToWWA = true;
+    }
+    const useAutoRotateAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-auto-rotate-enable");
+    if (useAutoRotateAttribute === null || useAutoRotateAttribute.match(/^true$/i)) {
+        initializeRotate();
+        window.addEventListener("resize", autoRotate);
     }
     wwa = new WWA(
         mapFileName,
