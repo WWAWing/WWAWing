@@ -12,7 +12,7 @@ export function initializeRotate() {
 
 /**
  * 回転の自動制御メソッドです。 "resize" イベントと併せてご利用ください。
- * @example window.addEventListener("resize", AutoRotate);
+ * @example window.addEventListener("resize", autoRotate);
  */
 export default function autoRotate() {
     const WWA_WIDTH = 560;
@@ -29,5 +29,5 @@ export default function autoRotate() {
     } else if (browserWidth <= browserHeight) {
         viewportValue = `width=${WWA_WIDTH}`;
     }
-    viewportElement.setAttribute("content", `${viewportValue}, viewport-fit=cover`);
+    viewportElement.setAttribute("content", `${viewportValue}`);
 }
