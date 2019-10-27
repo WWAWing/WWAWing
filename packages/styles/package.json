@@ -5,10 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "run-p build",
-    "build": "npm-run-all clean build:*",
-    "build:script": "npm run clean:script && tsc",
-    "build:sass": "npm run clean:dist && node ./lib/make-css",
+    "build": "npm run clean:script && tsc",
+    "compile": "npm run clean:dist && node ./lib/make-css",
     "clean": "npm run clean:script && npm run clean:dist",
     "clean:script": "shx rm -rf lib && shx mkdir -p lib",
     "clean:dist": "shx rm -rf output && shx mkdir -p output"
@@ -19,6 +17,6 @@
     "@types/node-sass": "^3.10.32",
     "node-sass": "^4.10.0",
     "shx": "^0.3.2",
-    "typescript": "^3.1.6"
+    "typescript": "^3.3.3333"
   }
 }

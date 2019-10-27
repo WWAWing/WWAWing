@@ -1,4 +1,4 @@
-﻿import { WWAConsts, Direction, Coord } from "./wwa_data";
+import { WWAConsts, Direction } from "./wwa_data";
 
 export enum KeyState {
     NONE,
@@ -41,6 +41,7 @@ export enum KeyCode {
     KEY_F6 = 117,
     KEY_F7 = 118,
     KEY_F8 = 119,
+    KEY_F9 = 120,
     KEY_F12 = 123
 }
 
@@ -246,109 +247,163 @@ export class MouseStore {
         this._mouseState = false;
         this._nextMouseState = false;
     }
-
 }
 
-export enum VirtualPadButtonCode {
-    BUTTON_ENTER,
-    BUTTON_ESC,
-    BUTTON_SIDEBAR,
-    BUTTON_ESTIMATE,
-    BUTTON_FAST,
-    BUTTON_SLOW,
-    BUTTON_LEFT,
-    BUTTON_UP,
-    BUTTON_RIGHT,
-    BUTTON_DOWN
+export enum GamePadState {
+    BUTTON_INDEX_B = 0,
+    BUTTON_INDEX_A = 1,
+    BUTTON_INDEX_Y = 2,
+    BUTTON_INDEX_X = 3,
+    BUTTON_INDEX_L = 4,
+    BUTTON_INDEX_R = 5,
+    BUTTON_INDEX_ZL = 6,
+    BUTTON_INDEX_ZR = 7,
+    BUTTON_INDEX_MINUS = 8,
+    BUTTON_INDEX_PLUS = 9,
+    BUTTON_CROSS_KEY_UP = 12,
+    BUTTON_CROSS_KEY_DOWN = 13,
+    BUTTON_CROSS_KEY_LEFT = 14,
+    BUTTON_CROSS_KEY_RIGHT = 15,
+    AXES_L_HORIZONTAL_INDEX = 0,
+    AXES_L_VERTICAL_INDEX = 1,
+    AXES_R_HORIZONTAL_INDEX = 2,
+    AXES_R_VERTICAL_INDEX = 3,
+    AXES_CROSS_KEY = 9
 }
 
-/**
- * NONE: ボタンに一切触れていません
- * TOUCH: ボタンに触れ始めました
- * TOUCHING: ボタンに触れています
- * LEAVE: ボタンから離れました
- */
-export enum VirtualPadState {
-    NONE,
-    TOUCH,
-    TOUCHING,
-    LEAVE
-}
-
-export class VirtualPadStore {
-    private _buttonCount: number;
-    private _isTouchingButtons: {
-        prev: boolean,
-        current: boolean,
-        next: boolean
-    }[];
-
-    public checkTouchButton(buttonType: VirtualPadButtonCode): boolean {
-        const state = this.getButtonState(buttonType);
-        return state === VirtualPadState.TOUCH || state === VirtualPadState.TOUCHING;
-    }
-
-    public getButtonState(buttonType: VirtualPadButtonCode): VirtualPadState {
-        const touched = this._isTouchingButtons[buttonType].prev;
-        const isTouching = this._isTouchingButtons[buttonType].current;
-        if (touched && isTouching) {
-            return VirtualPadState.TOUCHING;
-        } else if (isTouching) {
-            return VirtualPadState.TOUCH;
-        } else if (touched) {
-            return VirtualPadState.LEAVE;
+export class GamePadStore {
+    private gamepad: any;
+    private triggers: Array<boolean>;
+    constructor() {
+        this.gamepad = null;
+        this.triggers = [];
+        var i: number;
+        for (i = 0; i < 16; i++) {
+            this.triggers[i] = false;
         }
-        return VirtualPadState.NONE;
     }
-
-    /**
-     * ボタンにタッチ信号を与えます
-     * @param buttonType 
-     */
-    public setTouchInfo(buttonType: VirtualPadButtonCode) {
-        this._isTouchingButtons[buttonType].next = true;
+    public update(): void {
+        this.gamepad = null;
+        var gamepads = navigator.getGamepads ? navigator.getGamepads() : ((navigator as any).webkitGetGamepads ? (navigator as any).webkitGetGamepads : []);
+        if (gamepads && gamepads.length > 0 && gamepads[0]) {
+            var gamepad = gamepads[0];
+            this.gamepad = gamepad;
+        }
     }
-
-    /**
-     * すべてのボタンのタッチ信号をキャンセルします
-     */
-    public allClear(): void {
-        this._isTouchingButtons = this._isTouchingButtons.map((buttonState) => {
-            buttonState.next = false;
-            return buttonState;
-        });
+    public buttonTrigger(...codes): boolean {
+        if (!this.gamepad) {
+            return false;
+        }
+        var i: number, len: number, code: number, buttonFlag: boolean, triggerLog: boolean;
+        len = codes.length;
+        for (i = 0; i < len; i++) {
+            code = codes[i];
+            var buttonData = this.gamepad.buttons[code];
+            if (!buttonData) {
+                return false;
+            }
+            if (typeof (buttonData) === "object") {
+                buttonFlag = buttonData.pressed === true;
+            } else if (buttonData === 1) {
+                buttonFlag = true;
+            } else {
+                buttonFlag = false;
+            }
+            triggerLog = this.triggers[code];
+            this.triggers[code] = buttonFlag;
+            if (buttonFlag) {
+                if (!triggerLog) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
-
-    /**
-     * 押したボタンが移動ボタンか判定します
-     * @param buttonType 
-     */
-    public static isMoveButton(buttonType: VirtualPadButtonCode): boolean {
-        if (buttonType === VirtualPadButtonCode.BUTTON_LEFT ||
-            buttonType === VirtualPadButtonCode.BUTTON_UP ||
-            buttonType === VirtualPadButtonCode.BUTTON_RIGHT ||
-            buttonType === VirtualPadButtonCode.BUTTON_DOWN) {
-            return true;
+    public buttonPressed(...codes): boolean {
+        if (!this.gamepad) {
+            return false;
+        }
+        var i: number, len: number, code: number, buttonFlag: boolean;
+        len = codes.length;
+        for (i = 0; i < len; i++) {
+            code = codes[i];
+            var buttonData = this.gamepad.buttons[code];
+            if (!buttonData) {
+                return false;
+            }
+            if (typeof (buttonData) === "object") {
+                buttonFlag = buttonData.pressed === true;
+            } else if (buttonData === 1) {
+                buttonFlag = true;
+            } else {
+                buttonFlag = false;
+            }
+            if (buttonFlag) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public crossPressed(...codes): boolean {
+        if (!this.gamepad) {
+            return false;
+        }
+        var i: number, len: number, code: number;
+        len = codes.length;
+        for (i = 0; i < len; i++) {
+            code = codes[i];
+            switch (code) {
+                case GamePadState.BUTTON_CROSS_KEY_UP:
+                    if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] <= -0.6 ||
+                        this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] <= -0.6 ||
+                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === -1 ||
+                        this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
+                        return true;
+                    }
+                    break;
+                case GamePadState.BUTTON_CROSS_KEY_DOWN:
+                    if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] >= 0.7 ||
+                        this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] >= 0.7 ||
+                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.1 ||
+                        this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
+                        return true;
+                    }
+                    break;
+                case GamePadState.BUTTON_CROSS_KEY_LEFT:
+                    if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] <= -0.7 ||
+                        this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] <= -0.7 ||
+                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.7 ||
+                        this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
+                        return true;
+                    }
+                    break;
+                case GamePadState.BUTTON_CROSS_KEY_RIGHT:
+                    if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] > 0.6 ||
+                        this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] > 0.6 ||
+                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === -0.5 ||
+                        this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
+                        return true;
+                    }
+                    break;
+            }
         }
         return false;
     }
 
-    public update() {
-        this._isTouchingButtons.forEach((isTouchingButton) => {
-            isTouchingButton.prev = isTouchingButton.current;
-            isTouchingButton.current = isTouchingButton.next;
-        });
-    }
-
-    constructor() {
-        this._buttonCount = Object.entries(VirtualPadButtonCode).length;
-        this._isTouchingButtons = new Array(this._buttonCount);
-        for (let count = 0; count < this._buttonCount; count++) {
-            this._isTouchingButtons[count] = {
-                prev: false,
-                current: false,
-                next: false
-            };
+    private stickFloor(...codes): number {
+        if (!this.gamepad) {
+            return 0;
         }
+        var i: number, len: number, code: number, buttonFlag: boolean;
+        len = codes.length;
+        for (i = 0; i < len; i++) {
+            code = codes[i];
+            var value = this.gamepad.axes[code];
+            if (typeof value !== "number") {
+                return 0;
+            }
+            return Math.floor(value * 10) / 10;
+        }
+        return 0;
     }
 }

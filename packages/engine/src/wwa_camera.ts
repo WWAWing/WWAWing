@@ -1,4 +1,4 @@
-﻿
+
 import { WWAConsts, Position, Direction, speedList } from "./wwa_data";
 import { Player } from "./wwa_parts_player";
 
@@ -8,10 +8,10 @@ export class Camera {
     private _positionPrev: Position;
     private _transitionStep: number;
     private _isResetting: boolean;
-    
+
     /**
-         現在のプレイヤー座標が含まれるカメラ位置(表示画面左上)を含むカメラを作ります.
-        @param position: Position 現在のプレイヤー座標
+    現在のプレイヤー座標が含まれるカメラ位置(表示画面左上)を含むカメラを作ります.
+    @param position: Position 現在のプレイヤー座標
     */
     constructor(position: Position) {
         this._position = null;
@@ -73,3 +73,4 @@ export class Camera {
         this._isResetting = true;
     }
 }
+

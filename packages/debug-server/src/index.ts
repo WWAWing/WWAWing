@@ -1,4 +1,4 @@
-import * as express from "express";
+import express from "express";
 
 const baseDir = process.argv.length < 3 ? "." : process.argv[2];
 

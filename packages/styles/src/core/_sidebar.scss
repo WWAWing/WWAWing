@@ -45,7 +45,6 @@ div#wwa-sidebar {
             @extend %button_cell_onpress;
         }
     }
-    overflow: hidden; // %button_cell_onpress のはみ出し対策
 }
 
 div.status-icon {
@@ -73,6 +72,16 @@ div.item-disp {
     @extend %item_cell;
     top: 0;
     left: 0;
+}
+
+.item-overwritten {
+    width: 40px;
+    height: 40px;
+    z-index: 0!important;
+}
+
+.item-transitioning {
+    z-index: 240!important;
 }
 
 .wide-button {

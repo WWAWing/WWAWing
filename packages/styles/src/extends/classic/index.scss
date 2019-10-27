@@ -16,18 +16,24 @@ div#wwa-sidebar {
     font-size: $wwa_sidebar_font_size;
     font-family: $sans-serif_font;
     text-shadow: 1px 1px 0 gray;
-    #cell-restart {
+    #cell-restart,
+    #cell-gotowwa {
         font-size: 16px;
         letter-spacing: -0.3px;
     }
 }
 
 %wwa_window {
-    width: 440px;
-    height: 440px;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    border-radius: 15px;
+}
+
+%wwa_full_window {
     margin: 0;
     padding: 18px;
-    box-sizing: border-box;
+    width: 440px;
+    height: 440px;
     border-radius: 0;
 }
 

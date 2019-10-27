@@ -3,7 +3,7 @@ declare function postMessage_noWorker(message: any): void;
 
 import { util } from "./loader_util";
 import * as loader_wwa_data from "./wwa_data";
-import { WWAConsts, WWAData } from "./wwa_data";
+import { WWAConsts } from "./wwa_data";
 import { WWADataExtractor } from "./loader_extractor";
 import { WWALoader } from "./loader_core";
 import { conf } from "./loader_config";
@@ -36,4 +36,7 @@ function loader_start( e: MessageEvent ): void {
 
 if (conf.is_worker) {
     addEventListener("message", loader_start);
+} else {
+    // @ts-ignore
+    window.loader_start = loader_start;
 }

@@ -1,3 +1,12 @@
+/*
+ * z-index.css はIDで指定されている要素に対してのみ z-index を指定するSASSファイルです。
+ * アイテムボックスのエフェクトなど、一定条件で発生する、クラス指定の要素は別のSASSファイルをご利用ください。
+ */
+
+.wwa-yesno-wrapper {
+  z-index: 10;
+}
+
 canvas#wwa-map {
   z-index: 100;
 }
@@ -83,7 +92,9 @@ div#wwa-sidebar {
     z-index: 320;
   }
 }
-/* message window: z-index 400 */
+#wwa-text-message-window {
+  z-index: 400;
+}
 #wwa-audio-wrapper {
   z-index: -9999;
 }

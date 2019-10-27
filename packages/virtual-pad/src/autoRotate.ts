@@ -1,4 +1,20 @@
-function wwa_auto_rotate() {
+/**
+ * 自動回転制御の初期化を行うメソッドです。
+ */
+export function initializeRotate() {
+    const headElement = document.getElementsByTagName('head')[0];
+    let viewportElement = document.createElement('meta');
+
+    viewportElement.setAttribute('name', 'viewport');
+    headElement.appendChild(viewportElement);
+    autoRotate();
+}
+
+/**
+ * 回転の自動制御メソッドです。 "resize" イベントと併せてご利用ください。
+ * @example window.addEventListener("resize", AutoRotate);
+ */
+export default function autoRotate() {
     const WWA_WIDTH = 560;
     const WWA_HEIGHT = 440;
 
@@ -15,15 +31,3 @@ function wwa_auto_rotate() {
     }
     viewportElement.setAttribute("content", `${viewportValue}, viewport-fit=cover`);
 }
-
-function wwa_create_viewport() {
-    const headElement = document.getElementsByTagName('head')[0];
-    let viewportElement = document.createElement('meta');
-
-    viewportElement.setAttribute('name', 'viewport');
-    headElement.appendChild(viewportElement);
-    wwa_auto_rotate();
-}
-
-window.addEventListener("load", wwa_create_viewport);
-window.addEventListener("resize", wwa_auto_rotate);

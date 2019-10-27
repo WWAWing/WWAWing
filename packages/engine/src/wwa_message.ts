@@ -1,4 +1,4 @@
-﻿import { WWA } from "./wwa_main";
+import { WWA } from "./wwa_main";
 import {
     WWAConsts,
     Coord,
@@ -8,7 +8,8 @@ import {
     MacroImgFrameIndex,
     macrotable,
     YesNoState,
-    Position
+    Position,
+    DEVICE_TYPE
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -89,6 +90,8 @@ export class Macro {
                 this._executeImgClickMacro();
             } else if (this.macroType === MacroType.STATUS) {
                 this._executeStatusMacro();
+            } else if(this.macroType === MacroType.EFFITEM) {
+                this._executeEffItemMacro();
             } else if (this.macroType === MacroType.COLOR) {
                 this._executeColorMacro();
             } else if (this.macroType === MacroType.WAIT) {
@@ -274,9 +277,8 @@ export class Macro {
                 node.style.backgroundPosition = "-" + x + "px -" + y + "px";
             });
         } else if (type === MacroImgFrameIndex.ITEM_BG) {
-            Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
-                node.style.backgroundPosition = "-" + x + "px -" + y + "px";
-            });
+            this._wwa.setItemboxBackgroundPosition({x: posX, y: posY});
+
         } else if (type === MacroImgFrameIndex.MAIN_FRAME) {
             this._wwa.setFrameCoord(new Coord(posX, posY));
         } else {
@@ -332,6 +334,7 @@ export class Macro {
         }
         if (waitTime === 0) {
             this._wwa.stopEffect();
+            return;
         }
         var coords: Coord[] = [];
         for (var i = 1; i < this.macroArgs.length; i += 2) {
@@ -377,6 +380,14 @@ export class Macro {
         this._wwa.setImgClick(new Coord(x, y));
     }
 
+    private _executeEffItemMacro(): void {
+        if (this.macroArgs.length < 1) {
+            throw new Error("引数が少なすぎます");
+        }
+        var mode = this._parseInt(0);
+        this._wwa.updateItemEffectEnabled(!!mode);
+    }
+
     private _executeStatusMacro(): void {
         this._concatEmptyArgs(2);
         var type = this._parseInt(0);
@@ -411,14 +422,14 @@ export class Macro {
         throw new Error("Not implemented!");
         /*
         if (this.macroArgs.length < 1) {
-            throw new Error("引数が少なすぎます");
+        throw new Error("引数が少なすぎます");
         }
         var t = parseInt(this.macroArgs[0]);
         if (isNaN(t)) {
-            throw new Error("引数が整数ではありません");
+        throw new Error("引数が整数ではありません");
         }
         if (t < 0) {
-            throw new Error("待ち時間が正ではありません");
+        throw new Error("待ち時間が正ではありません");
         }
         this._wwa.setWaitTime( t );
         */
@@ -625,11 +636,11 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _cgFileName: string;
     private _isVisible: boolean;
     private _isYesno: boolean;
+    private _isItemMenu: boolean;
     private _isInputDisable: boolean;
 
     private _element: HTMLElement;
     private _msgWrapperElement: HTMLElement;
-    private _dummyElement: HTMLElement;
     private _ynWrapperElement: HTMLElement;
 
     private _divYesElement: HTMLElement;
@@ -646,6 +657,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         cgFileName: string,
         isVisible: boolean,
         isYesno: boolean,
+        isItemMenu: boolean,
         parentElement: HTMLElement
     ) {
         var thisA = this;
@@ -660,51 +672,31 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._message = message;
         this._isVisible = isVisible;
         this._isYesno = isYesno;
+        this._isItemMenu = isItemMenu;
+
         this._element = document.createElement("div");
-        this._element.style.position = "absolute";
-        this._element.style.borderWidth = "2px";
-        this._element.style.borderStyle = "solid";
-        if (wwa.isClassicMode()) {
-            this._element.style.borderRadius = "15px";
-        } else {
-            this._element.style.borderRadius = "10px";
-        }
+        this._element.id = "wwa-text-message-window";
         this._element.classList.add("wwa-message-window");
-        this._element.style.zIndex = "400";
+
         this._msgWrapperElement = document.createElement("div");
         this._msgWrapperElement.style.textAlign = "left";
         this._msgWrapperElement.style.wordWrap = "break-word";
-        if (wwa.isClassicMode()) {
-            this._msgWrapperElement.style.margin = "8px 0 8px 16px";
-        } else {
-            this._msgWrapperElement.style.margin = "0";
-            this._msgWrapperElement.style.padding = "7px";
-        }
+        this._msgWrapperElement.style.margin = wwa.isClassicMode() ? "8px 0 8px 16px" : "0";
+        this._msgWrapperElement.style.padding = wwa.isClassicMode() ? "0" : "7px";
         this._element.appendChild(this._msgWrapperElement);
-        this._dummyElement = document.createElement("div");
-        this._dummyElement.style.display = "none";
-        this._dummyElement.style.padding = "0";
-        this._dummyElement.style.margin = "0";
-        this._dummyElement.style.height = "55px";
-        this._element.appendChild(this._dummyElement);
+
         this._ynWrapperElement = document.createElement("div");
-        this._ynWrapperElement.style.padding = "0";
-        this._ynWrapperElement.style.margin = "0";
-        this._ynWrapperElement.style.position = "absolute";
-        this._ynWrapperElement.style.left = "246px";
-        this._ynWrapperElement.style.bottom = "10px";
-        this._ynWrapperElement.style.width = "80px";
-        this._ynWrapperElement.style.height = "40px";
-        this._ynWrapperElement.style.zIndex = "10";
+        this._ynWrapperElement.classList.add("wwa-yesno-wrapper");
         this._element.appendChild(this._ynWrapperElement);
+
         this._parentElement = parentElement;
         this._parentElement.appendChild(this._element);
+
+        /**
+         * @todo YesNo ボタンは可能であればCSSに収めたい
+         */
         this._divYesElement = document.createElement("div");
-        this._divYesElement.style.padding = "0";
-        this._divYesElement.style.margin = "0";
-        this._divYesElement.style.cssFloat = "left";
-        this._divYesElement.style.width = "40px";
-        this._divYesElement.style.height = "40px";
+        this._divYesElement.classList.add("wwa-yes-button");
         this._divYesElement.style.background =
             "url(" + escapedFilename + ")";
         this._divYesElement.onclick = function () {
@@ -715,11 +707,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         };
         this._divYesElement.style.cursor = "pointer";
         this._divNoElement = document.createElement("div");
-        this._divNoElement.style.padding = "0";
-        this._divNoElement.style.margin = "0";
-        this._divNoElement.style.cssFloat = "left";
-        this._divNoElement.style.width = "40px";
-        this._divNoElement.style.height = "40px";
+        this._divNoElement.classList.add("wwa-no-button");
         this._divNoElement.style.background =
             "url(" + escapedFilename + ")";
         this._divNoElement.onclick = function () {
@@ -728,10 +716,17 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 thisA.update();
             }
         };
-        this._divNoElement.style.cursor = "pointer";
         this._ynWrapperElement.appendChild(this._divYesElement);
         this._ynWrapperElement.appendChild(this._divNoElement);
+
         thisA._isInputDisable = false;
+        switch (wwa.userDevice.device) {
+            case DEVICE_TYPE.SP:
+            case DEVICE_TYPE.VR:
+                //スマートフォン用に拡大
+                this._parentElement.classList.add("useScaleUp");
+                break;
+        }
         this.update();
     }
 
@@ -805,6 +800,15 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     public isYesNoChoice(): boolean {
         return this._isYesno;
     }
+    public setItemMenuChoice(isItemMenu: boolean): boolean {
+        this._isInputDisable = false;
+        this._isItemMenu = isItemMenu;
+        this.update();
+        return this._isItemMenu;
+    }
+    public isItemMenuChoice(): boolean {
+        return this._isItemMenu;
+    }
     public setInputDisable(): void {
         this._isInputDisable = true;
     }
@@ -824,6 +828,39 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     }
     private isWideChar(char: string): boolean {
         return (char.match(/^[^\x01-\x7E\xA1-\xDF]+$/) !== null);
+    }
+    /**
+     * クラシックモード用: 1行分のテキストを表示する要素を構築します。
+     * @param message 挿入したいメッセージ
+     * @returns {HTMLSpanElement} 1行分のテキストが含まれている span 要素
+     */
+    private createClassicTextElement(message: string): HTMLSpanElement {
+        var lsp = document.createElement("span");
+        let count = 0;
+        let lineStr = "";
+
+        for (let j = 0; j < message.length || count != 0; j++) { // 1文字
+            if (this.isWideChar(message.charAt(j))) {
+                count += 2; // 全角の場合
+            } else {
+                count += 1; // 半角の場合
+            }
+            lineStr += message.charAt(j);
+            if (count + 1 > WWAConsts.MSG_STR_WIDTH * 2) {
+                if (message.charAt(j + 1) === "。" || message.charAt(j + 1) === "、") {
+                    lineStr += message.charAt(j + 1); // 句読点の場合は行末に入れる
+                    j++;
+                }
+                var vsp = document.createElement("span"); // View SPan
+                vsp.style.display = "inline-block";
+                vsp.style.width = "100%";
+                vsp.textContent = lineStr;
+                lsp.appendChild(vsp);
+                count = 0;
+                lineStr = "";
+            }
+        }
+        return lsp;
     }
     public update(): void {
         var base = this._wwa.getYesNoImgCoord();
@@ -857,36 +894,17 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._msgWrapperElement.textContent = "";
         var mesArray = this._message.split("\n");
         mesArray.forEach((line, i) => {
-            var lsp = document.createElement("span"); // Logical SPan
+            let lsp: HTMLSpanElement; // Logical SPan
             if (this._wwa.isClassicMode()) {
-                var count = 0, lineStr = "";
-                for (var j = 0; j < mesArray[i].length || count != 0; j++) { // 1文字
-                    if (this.isWideChar(mesArray[i].charAt(j))) {
-                        count += 2; // 全角の場合
-                    } else {
-                        count += 1; // 半角の場合
-                    }
-                    lineStr += mesArray[i].charAt(j);
-                    if (count + 1 > WWAConsts.MSG_STR_WIDTH * 2) {
-                        if (mesArray[i].charAt(j + 1) === "。" || mesArray[i].charAt(j + 1) === "、") {
-                            lineStr += mesArray[i].charAt(j + 1); // 句読点の場合は行末に入れる
-                            j++;
-                        }
-                        var vsp = document.createElement("span"); // View SPan
-                        vsp.style.display = "inline-block";
-                        vsp.style.width = "100%";
-                        vsp.textContent = lineStr;
-                        lsp.appendChild(vsp);
-                        count = 0;
-                        lineStr = "";
-                    }
-                }
+                lsp = this.createClassicTextElement(line);
             } else {
+                lsp = document.createElement("span");
                 lsp.textContent = mesArray[i];
             }
             this._msgWrapperElement.appendChild(lsp);
             this._msgWrapperElement.appendChild(document.createElement("br"));
         });
+
         if (this._isVisible) {
             this._element.style.left = this._x + "px";
             this._element.style.top = this._y + "px";
@@ -898,9 +916,8 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         }
         this._element.style.width = this._width + "px";
         this._element.style.minHeight = this._height + "px"; // minなのでoverflowしても安心!!!
-        this._dummyElement.style.display = this._isYesno ? "block" : "none";
-        //            this._element.style.display = this._isVisible ? "block" : "none";
     }
 }
+
 
 

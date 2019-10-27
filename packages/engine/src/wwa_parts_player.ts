@@ -1,4 +1,4 @@
-﻿import { WWA } from "./wwa_main";
+import { WWA } from "./wwa_main";
 import {
     Position,
     Direction,
@@ -73,7 +73,7 @@ export class Player extends PartsObject {
     protected _goldValueElement: HTMLElement;
 
     protected _itemBox: number[];
-    protected _itemBoxElement: HTMLElement[];
+    protected _itemBoxElement: HTMLDivElement[];
     protected _itemUsingEvent: EventListener[];
     protected _readyToUseItemPos: number;
     protected _isReadyToUseItem: boolean;
@@ -522,31 +522,159 @@ export class Player extends PartsObject {
         this._goldValueElement.textContent = g + "";
     }
 
-    public updateItemBox(): void {
-        var cx: number, cy: number;
-        for (var i = 0; i < this._itemBoxElement.length; i++) {
-            if (this._itemBox[i] === 0) {
-                this._itemBoxElement[i].style.backgroundPosition = "-40px 0px";
-            } else {
-                cx = this._wwa.getObjectCropXById(this._itemBox[i]);
-                cy = this._wwa.getObjectCropYById(this._itemBox[i]);
-                this._itemBoxElement[i].style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-            }
-        }
+    readonly itemTransitioningClassName = "item-transitioning";
+    readonly overwittenItemClassName = "item-overwritten";
+    readonly overwittenItemSelector = `.${this.overwittenItemClassName}`;
 
+    /**
+     * 全アイテムボックスのDOMの更新を行います。
+     * アイテムボックスの内部状態の変更後に呼ぶことでアイテムボックスの見た目が更新されます。
+     * 
+     * ## animationOption
+     * - insertPos: アニメーションが走るアイテムボックスを指定します。 1以上12以下です。
+     * - itemScreenPixelCoord: アニメーションの起点になる画面座標(フィールド上のアイテム地点)です。
+     * - itemBoxScreenPixelCoord: アニメーションの終点になる画面座標(アイテムボックス)です。
+     * - itemBoxBackgroundImageCoord: アイテムボックスの背景画像の画像内座標(px単位)です。
+     * - overwrittenObjectId: 上書きされる物体パーツのIDを指定すると、上書き演出になります。
+     * 
+     * @param animationOption オブジェクトがあるとアニメーションが走ります。
+     */
+    public updateItemBox(animationOption?: {
+        insertPos: number/*1-12*/,
+        itemScreenPixelCoord: Coord,
+        itemBoxScreenPixelCoord: Coord,
+        itemBoxBackgroundImageCoord: Coord,
+        overwrittenObjectId?: number
+    }): void {
+        for (let i = 0; i < this._itemBoxElement.length; i++) {
+            const targetItemBoxElement = this._itemBoxElement[i];
+            const parentElement = util.$qs("#item" + i) as HTMLDivElement;
+
+            // 該当位置がアイテムなしの場合
+            if (this._itemBox[i] === 0) {
+                targetItemBoxElement.style.backgroundPosition = "-40px 0px";
+                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
+                continue;
+            }
+            const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
+            const cy = this._wwa.getObjectCropYById(this._itemBox[i]);
+
+            // 該当位置がアニメーション対象アイテムでない場合
+            if (!animationOption || i !== animationOption.insertPos - 1) {
+                targetItemBoxElement.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
+                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
+                continue;
+            }
+
+            // 該当位置がアニメーション対象アイテムの場合
+            const dx = animationOption.itemScreenPixelCoord.x - animationOption.itemBoxScreenPixelCoord.x;
+            const dy = animationOption.itemScreenPixelCoord.y - animationOption.itemBoxScreenPixelCoord.y;
+            const durationMs = (-dx) * Consts.DEFAULT_FRAME_INTERVAL / Consts.ITEM_EFFECT_SPEED_PIXEL_PER_FRAME;
+            const useBlank = animationOption.overwrittenObjectId === 0 || animationOption.overwrittenObjectId === undefined;
+            const overwrittenCx = useBlank ? animationOption.itemBoxBackgroundImageCoord.x : this._wwa.getObjectCropXById(animationOption.overwrittenObjectId);
+            const overwrittenCy = useBlank ? animationOption.itemBoxBackgroundImageCoord.y : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
+            targetItemBoxElement.style.left = dx + "px";
+            targetItemBoxElement.style.top = dy + "px";
+            window.setTimeout(() => this.startItemEffect(
+                targetItemBoxElement,
+                parentElement,
+                {
+                    target: { x: cx, y: cy },
+                    overwritten: { x: overwrittenCx, y: overwrittenCy },
+                },
+                durationMs
+            ), Consts.DEFAULT_FRAME_INTERVAL);
+        }
+    }
+
+    /**
+     * アイテムエフェクトを開始します。
+     * @param targetItemBoxElement 動かすアイテムのdiv要素
+     * @param parentElement 動かすアイテムの親のdiv要素
+     * @param crops target: 動かすアイテムの画像上のxy座標, overwritten: 上書きされるアイテムの画像上のxy座標
+     * @param durationMs エフェクトにかかる時間
+     */
+    private startItemEffect(
+        targetItemBoxElement: HTMLDivElement,
+        parentElement: HTMLDivElement,
+        crops: {
+            target: { x:number, y: number },
+            overwritten: { x: number, y: number },
+        },
+        durationMs: number
+    ) {
+        const prevOverwrittenItemElement = parentElement.querySelector(this.overwittenItemSelector);
+        if (prevOverwrittenItemElement) {
+            parentElement.removeChild(prevOverwrittenItemElement)
+        }
+        const overwrittenItemElement = document.createElement("div");
+        overwrittenItemElement.classList.add(this.overwittenItemClassName);
+        overwrittenItemElement.style.backgroundPosition = "-" + crops.overwritten.x + "px -" + crops.overwritten.y + "px";
+        overwrittenItemElement.style.backgroundImage = parentElement.style.backgroundImage;
+        parentElement.appendChild(overwrittenItemElement);
+        targetItemBoxElement.style.backgroundPosition = "-" + crops.target.x + "px -" + crops.target.y + "px";
+        targetItemBoxElement.style.transitionDuration = durationMs + "ms";
+        targetItemBoxElement.style.transitionProperty = "left,top";
+        targetItemBoxElement.style.transitionTimingFunction = "linear";
+        targetItemBoxElement.style.left = "0";
+        targetItemBoxElement.style.top = "0";
+        parentElement.classList.add(this.itemTransitioningClassName);
+        targetItemBoxElement.addEventListener("transitionend", () => {
+            this.disposeItemEffect(targetItemBoxElement, parentElement);
+        }, { once: true });
+    }
+ 
+    /**
+     * アイテムエフェクトを破棄します。アイテムエフェクトが動いていない時は何も起きません。
+     * @param itemBoxElement 破棄するエフェクトの対象のアイテムのdiv要素
+     * @param parentElement 破棄するエフェクト対象アイテムの親のdiv要素
+     */
+    private disposeItemEffect(itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
+        itemBoxElement.style.transitionDuration = "0s";
+        itemBoxElement.style.transitionProperty = "";
+        itemBoxElement.style.left = "0";
+        itemBoxElement.style.top = "0";
+        if (parentElement.classList.contains(this.itemTransitioningClassName)) {
+            parentElement.classList.remove(this.itemTransitioningClassName);
+        }
+        const overwrittenItemElement = parentElement.querySelector(this.overwittenItemSelector);
+        if (overwrittenItemElement) {
+            parentElement.removeChild(overwrittenItemElement)
+        }
     }
 
     public isDead(): boolean {
         return this._status.energy <= 0;
     }
 
-    public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false): void {
+    /**
+     * プレイヤーに新たにアイテムを持たせます
+     * 
+     * ## 引数 itemPos が 0
+     *  小さい順で一番小さい空きの場所に格納されます。
+     * 
+     * ## itemPos が 非0, isOverwriteが true
+     *  指定位置が埋まっている場合に上書きされます。
+     * 
+     * ## itemPos が 非0, isOverwriteが false
+     *  既に指定位置にあるパーツの格納位置設定が、追加するアイテムと同じなら上書きされます。
+     *  違う場合は既に格納位置にあるパーツが、小さい順で一番小さい空きの場所に移動した上で、
+     *  新たに追加しようとするパーツが itemPos 番目に格納されます。
+     * 
+     * @param objID 持たせる物体パーツの番号
+     * @param itemPos アイテムボックス格納位置 
+     * @param isOverwrite itemPosが0でない場合に使用される上書き設定。詳しくはdoc本文を参照
+     * @param animationOption オブジェクトが与えられる場合は 画面座標 screenPixelCoord からアイテムボックスまでのアニメーションが発生します。また、itemBoxBackgroundImageCoord をアイテムボックス背景画像のゲーム使用画像内座標[px]として利用します。
+     */
+    public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false, animationOption?: {
+            screenPixelCoord: Coord,
+            itemBoxBackgroundImageCoord: Coord
+        }): void {
         var insertPos: number;
         var oldInsertPos: number;
         var oldObjID: number;
-        var itemType: number;
-        var border: HTMLElement;
         var itemPos_partsData = this._wwa.getObjectAttributeById(objID, Consts.ATR_NUMBER);
+        var overwrittenObjectId: number = 0;
         if (itemPos === 0 && itemPos_partsData !== 0) {
             itemPos = itemPos_partsData;
         }
@@ -563,8 +691,7 @@ export class Player extends PartsObject {
             if (insertPos === Consts.ITEMBOX_IS_FULL) {
                 throw new Error("これ以上、アイテムを持てません。");
             }
-
-            //                this._itemBox[insertPos - 1] = objID;
+            overwrittenObjectId = this._itemBox[insertPos - 1];
             this._forceSetItemBox(insertPos, objID);
 
             // 特定位置挿入 (上書きしない: 取得しているアイテムはずらす)
@@ -575,46 +702,31 @@ export class Player extends PartsObject {
                 this._wwa.getObjectAttributeById(objID, Consts.ATR_NUMBER)) {
                 oldInsertPos = this._getBlankItemPos();
                 if (oldInsertPos !== Consts.ITEMBOX_IS_FULL) {
-                    //                        this._itemBox[oldInsertPos - 1] = oldObjID;
                     this._forceSetItemBox(oldInsertPos, oldObjID);
                     this._forceSetItemBox(insertPos, objID);
                 } else {
                     throw new Error("これ以上、アイテムを持てません。");
                 }
             } else {
+                overwrittenObjectId = this._itemBox[insertPos - 1];
                 this._forceSetItemBox(insertPos, objID);
             }
             // 特定位置挿入（上書きする）
         } else {
             insertPos = itemPos;
-            //                this._itemBox[itemPos - 1] = objID;
+            overwrittenObjectId = this._itemBox[insertPos - 1];
             this._forceSetItemBox(insertPos, objID);
         }
-        /*
-                itemType = this._wwa.getObjectAttributeById(objID, Consts.ATR_MODE);
-                if (objID !== 0 && itemType !== ItemMode.NORMAL) {
-                    var mes = this._wwa.getSystemMessageById(SystemMessage2.CLICKABLE_ITEM);
-                    if (!this._isClickableItemGot) {
-                        if (mes !== "BLANK") {
-                            this._wwa.setMessageQueue(mes === "" ?
-                                "このアイテムは右のボックスをクリックすることで使用できます。\n" +
-                                "使用できるアイテムは色枠で囲まれます。" : mes, false, true
-                                );
-                        }
-                        this._isClickableItemGot = true;
-                    }
-                    border = wwa_util.$qsh("#item" + (insertPos - 1) + ">.item-click-border")
-                    border.style.display = "block";
-                    this._itemUsingEvent[insertPos - 1] = () => {
-                        if (this.isControllable()) {
-                            this._wwa.onselectitem(insertPos);
-                        }
-                    };
-                    border.addEventListener("click", this._itemUsingEvent[insertPos - 1]);
-                } 
-        */
         this._updateEquipmentStatus();
-        this.updateItemBox();
+        this.updateItemBox(animationOption ? {
+            insertPos,
+            itemScreenPixelCoord: animationOption.screenPixelCoord,
+            itemBoxBackgroundImageCoord: animationOption.itemBoxBackgroundImageCoord,
+            itemBoxScreenPixelCoord: new Coord(
+                Consts.MAP_WINDOW_WIDTH + (insertPos - 1) % 3 * Consts.CHIP_SIZE,
+                Consts.ITEMBOX_TOP_Y + Math.floor((insertPos - 1) / 3) * Consts.CHIP_SIZE),
+            overwrittenObjectId
+        } : undefined);
     }
 
     private _forceSetItemBox(pos: number, id: number): void {
@@ -637,7 +749,9 @@ export class Player extends PartsObject {
             border.style.display = "block";
             ((pos: number): void => {
                 self._itemUsingEvent[pos - 1] = () => {
-                    if (self.isControllable()) {
+                    if (self.isControllable() || (self._wwa._messageWindow.isItemMenuChoice())) {
+                        self._wwa._itemMenu.close();
+                        self._wwa._setNextMessage();
                         self._wwa.onselectitem(pos);
                     }
                 };
@@ -1001,7 +1115,7 @@ export class Player extends PartsObject {
 
         for (var i = 0; i < this._itemBox.length; i++) {
             this._itemBox[i] = 0;
-            this._itemBoxElement[i] = util.$qsh("#item" + i + ">.item-disp");
+            this._itemBoxElement[i] = util.$qsh("#item" + i + ">.item-disp") as HTMLDivElement;
         }
         this.updateItemBox();
         this._energyMax = em;
@@ -1029,3 +1143,4 @@ export class Player extends PartsObject {
     }
 
 }
+

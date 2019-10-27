@@ -9,8 +9,10 @@ const srcBasePath = path.join(".", "node_modules", "@wwawing");
 const destBasePath = path.join(".", "output", wwawingDistDirName);
 const destUpdateBasePath = path.join(".", "output", wwawingUpdateDirName);
 
-// fatal を設定しないとshelljsの cp などが例外を吐かない
-// @see https://github.com/shelljs/shelljs#configfatal
+/**
+ * fatal を設定しないとshelljsの cp などが例外を吐かない
+ * @see https://github.com/shelljs/shelljs#configfatal
+ */
 shell.config.fatal = true;
 
 
@@ -52,8 +54,9 @@ async function makeDistribution(
             copy("loader", path.join("lib", "wwaload.js"), "mapdata"),
             copy("assets", path.join("style", "*.css"), "mapdata"),
             copy("assets", path.join("wwamk310", "WinWwamk.exe")),
+            copy("assets", path.join("wwamk310", "wwamk_manual.html")),
             copy("assets", path.join("audio", "*"), path.join("mapdata", "audio")),
-            copy("assets", path.join("mapdata", "*.dat"), "mapdata"),
+            copy("assets", path.join("mapdata", "{caves01,caves02,island02,wwamap}.dat"), "mapdata"),
             copy("assets", path.join("images", "*.gif"), "mapdata"),
             copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
             copy("assets", path.join("html", "dist", "*.html"), "mapdata"),
@@ -92,7 +95,9 @@ async function makeDistribution(
                             (match[1] === "html" ||
                                 match[1] === "js" ||
                                 match[1] === "css" ||
-                                match[1] === "txt"))
+                                match[1] === "txt" ||
+                                match[1] === "ini"
+                            ))
                     );
                 })
                 .map(

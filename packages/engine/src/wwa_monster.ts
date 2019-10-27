@@ -1,4 +1,4 @@
-﻿import { Coord, Status } from "./wwa_data";
+import { Coord, Status } from "./wwa_data";
 export class Monster {
 
     constructor(
@@ -29,3 +29,4 @@ export class Monster {
     }
 
 }
+
