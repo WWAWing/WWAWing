@@ -43,6 +43,18 @@ export default class VirtualPadStore {
         next: boolean
     }[];
 
+    constructor() {
+        this._buttonCount = VIRTUAL_PAD_BUTTON_COUNT;
+        this._isTouchingButtons = new Array(this._buttonCount);
+        for (let count = 0; count < this._buttonCount; count++) {
+            this._isTouchingButtons[count] = {
+                prev: false,
+                current: false,
+                next: false
+            };
+        }
+    }
+
     public checkTouchButton(buttonType: VirtualPadButtonCode): boolean {
         const state = this.getButtonState(buttonType);
         return state === VirtualPadState.TOUCH || state === VirtualPadState.TOUCHING;
@@ -98,17 +110,5 @@ export default class VirtualPadStore {
             isTouchingButton.prev = isTouchingButton.current;
             isTouchingButton.current = isTouchingButton.next;
         });
-    }
-
-    constructor() {
-        this._buttonCount = VIRTUAL_PAD_BUTTON_COUNT;
-        this._isTouchingButtons = new Array(this._buttonCount);
-        for (let count = 0; count < this._buttonCount; count++) {
-            this._isTouchingButtons[count] = {
-                prev: false,
-                current: false,
-                next: false
-            };
-        }
     }
 }
