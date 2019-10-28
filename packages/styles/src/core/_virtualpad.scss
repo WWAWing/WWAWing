@@ -1,3 +1,9 @@
+$virtual-buttons-size: 14vw;
+
+// @media screen and (orientation: portrait) {
+    
+// }
+
 %virtualpad_button {
     background-color: #c0c0c0;
     border: 0;
@@ -11,20 +17,39 @@
     -webkit-user-select: none;
 }
 
+.virtualpad_wrapper {
+    display: flex;
+    bottom: 8vw;
+    position: fixed;
+    flex-flow: row nowrap;
+    justify-content: space-around;
+    align-items: flex-end;
+    width: 100vw;
+}
+
 #wwa-virtualpad-left,
 #wwa-virtualpad-right {
-    bottom: 0;
-    position: fixed;
+    flex: 0 0;
 }
 
 #wwa-virtualpad-left {
-    left: 0;
-    padding-left: env(safe-area-inset-left);
+    display: grid;
+    grid-template:
+        ".     up  .    "
+        "left .    right"
+        ".    down .    "
 }
 
 #wwa-virtualpad-right {
-    right: 0;
-    padding-right: env(safe-area-inset-right);
+    display: grid;
+    grid-template:
+        "  slow   fast "
+        "   .       .  " 20px
+        "estimate   .  "
+        "estimate   .  "
+        "   .     enter"
+        "  esc    enter"
+        "  esc      .  ";
 }
 
 #wwa-virtualpad-left button,
@@ -32,90 +57,73 @@
     @extend %virtualpad_button;
 }
 
-#wwa-virtualpad-left .virtualpad_move button,
-#wwa-virtualpad-right .virtualpad_select button {
+#wwa-up-button,
+#wwa-right-button,
+#wwa-down-button,
+#wwa-left-button,
+#wwa-enter-button,
+#wwa-esc-button,
+#wwa-estimate-button {
     font-size: 35px;
-    height: 100px;
-    width: 100px;
+    height: $virtual-buttons-size;
+    width: $virtual-buttons-size;
 }
 
-#wwa-virtualpad-left {
-    .virtualpad_move button {
-        border-radius: 1rem;
-    }
-}
-
-#wwa-virtualpad-right {
-    .virtualpad_select button {
-        border-radius: 50%;
-    }
-    .virtualpad_speedcontrol button {
-        font-size: 25px;
-        height: 50px;
-        margin: 0 5px;
-        width: 90px;
-    }
-    #wwa-slow-button {
-        border-radius: 1rem 0 0 1rem;
-    }
-    #wwa-fast-button {
-        border-radius: 0 1rem 1rem 0;
-    }
-}
-
-#wwa-virtualpad-left .virtualpad_move,
-#wwa-virtualpad-right .virtualpad_select,
-#wwa-virtualpad-right .virtualpad_speedcontrol {
-    display: grid;
-}
-
-#wwa-virtualpad-left .virtualpad_move {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-#wwa-virtualpad-right .virtualpad_select,
-#wwa-virtualpad-right .virtualpad_speedcontrol {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-#wwa-virtualpad-right .virtualpad_speedcontrol {
-    margin-bottom: 16px;
+#wwa-up-button,
+#wwa-right-button,
+#wwa-down-button,
+#wwa-left-button {
+    border-radius: 1rem;
 }
 
 #wwa-up-button {
-    grid-column-start: 2;
-    grid-row-start: 1;
-}
-
-#wwa-left-button,
-#wwa-right-button {
-    grid-row-start: 2;
-}
-
-#wwa-left-button {
-    grid-column-start: 1;
+    grid-area: up;
 }
 
 #wwa-right-button {
-    grid-column-start: 3;
+    grid-area: right;
 }
 
 #wwa-down-button {
-    grid-column-start: 2;
-    grid-row-start: 3;
+    grid-area: down;
+}
+
+#wwa-left-button {
+    grid-area: left;
+}
+
+#wwa-enter-button,
+#wwa-esc-button,
+#wwa-estimate-button {
+    border-radius: 50%;
 }
 
 #wwa-enter-button {
-    grid-column-start: 2;
-    grid-row-start: 3;
+    grid-area: enter;
 }
 
 #wwa-esc-button {
-    grid-column-start: 1;
-    grid-row-start: 4;
+    grid-area: esc;
 }
 
 #wwa-estimate-button {
-    grid-column-start: 1;
-    grid-row-start: 2;
+    grid-area: estimate;
+}
+
+#wwa-slow-button,
+#wwa-fast-button {
+    font-size: 25px;
+    height: 50px;
+    margin: 0 5px;
+    width: $virtual-buttons-size;
+}
+
+#wwa-slow-button {
+    grid-area: slow;
+    border-radius: 1rem 0 0 1rem;
+}
+
+#wwa-fast-button {
+    grid-area: fast;
+    border-radius: 0 1rem 1rem 0;
 }
