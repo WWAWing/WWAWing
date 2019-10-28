@@ -1,22 +1,21 @@
 {
-    "name": "@wwawing/all",
-    "version": "0.0.0-test.5",
-    "description": "World Wide Adventure: an RPG Engine.",
-    "author": "WWA Wing Team",
-    "license": "MIT",
-    "bugs": {
-      "url": "https://github.com/WWAWing/WWAWing/issues"
-    },
-    "homepage": "https://github.com/WWAWing/WWAWing#readme",
-    "dependencies": {
-      "@wwawing/assets": "^0.0.0-test.5",
-      "@wwawing/common-interface": "^0.0.0-test.5",
-      "@wwawing/debug-server": "^0.0.0-test.5",
-      "@wwawing/loader": "^0.0.0-test.5",
-      "@wwawing/styles": "^0.0.0-test.5"
-    },
-    "publishConfig": {
-      "access": "public"
-    }
+  "name": "@wwawing/all",
+  "version": "0.0.0-test.6",
+  "description": "World Wide Adventure: an RPG Engine.",
+  "author": "WWA Wing Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WWAWing/WWAWing/issues"
+  },
+  "homepage": "https://github.com/WWAWing/WWAWing#readme",
+  "dependencies": {
+    "@wwawing/assets": "^0.0.0-test.6",
+    "@wwawing/common-interface": "^0.0.0-test.6",
+    "@wwawing/debug-server": "^0.0.0-test.6",
+    "@wwawing/loader": "^0.0.0-test.6",
+    "@wwawing/styles": "^0.0.0-test.6"
+  },
+  "publishConfig": {
+    "access": "public"
   }
-  
+}
