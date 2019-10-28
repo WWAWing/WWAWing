@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/all",
-  "version": "0.0.0-test.9",
+  "version": "0.0.0-test.10",
   "description": "World Wide Adventure: an RPG Engine.",
   "author": "WWA Wing Team",
   "license": "MIT",
@@ -12,9 +12,9 @@
     "@wwawing/assets": "^0.0.0-test.9",
     "@wwawing/common-interface": "^0.0.0-test.9",
     "@wwawing/debug-server": "^0.0.0-test.9",
+    "@wwawing/engine": "0.0.0-test.9",
     "@wwawing/loader": "^0.0.0-test.9",
-    "@wwawing/styles": "^0.0.0-test.9",
-    "@wwawing/engine": "0.0.0-test.9"
+    "@wwawing/styles": "^0.0.0-test.9"
   },
   "publishConfig": {
     "access": "public"
