@@ -1,4 +1,5 @@
-$virtual-buttons-size: 14vw;
+$virtual-buttons-size: 14vmin;
+$virtualpad-spacing: 8vmin;
 
 // @media screen and (orientation: portrait) {
     
@@ -19,10 +20,10 @@ $virtual-buttons-size: 14vw;
 
 .virtualpad_wrapper {
     display: flex;
-    bottom: 8vw;
+    bottom: $virtualpad-spacing;
     position: fixed;
     flex-flow: row nowrap;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: flex-end;
     width: 100vw;
 }
@@ -37,7 +38,8 @@ $virtual-buttons-size: 14vw;
     grid-template:
         ".     up  .    "
         "left .    right"
-        ".    down .    "
+        ".    down .    ";
+    margin-left: $virtualpad-spacing;
 }
 
 #wwa-virtualpad-right {
@@ -49,7 +51,9 @@ $virtual-buttons-size: 14vw;
         "estimate   .  "
         "   .     enter"
         "  esc    enter"
-        "  esc      .  ";
+        "  esc      .  "
+        "   .       .  " $virtualpad-spacing;
+    margin-right: $virtualpad-spacing;
 }
 
 #wwa-virtualpad-left button,
