@@ -18,22 +18,14 @@ $virtualpad-spacing: 8vmin;
     -webkit-user-select: none;
 }
 
-.virtualpad_wrapper {
-    display: flex;
-    bottom: $virtualpad-spacing;
-    position: fixed;
-    flex-flow: row nowrap;
-    justify-content: space-between;
-    align-items: flex-end;
-    width: 100vw;
-}
-
 #wwa-virtualpad-left,
 #wwa-virtualpad-right {
-    flex: 0 0;
+    bottom: $virtualpad-spacing;
+    position: fixed;
 }
 
 #wwa-virtualpad-left {
+    left: 0;
     display: grid;
     grid-template:
         ".     up  .    "
@@ -43,6 +35,7 @@ $virtualpad-spacing: 8vmin;
 }
 
 #wwa-virtualpad-right {
+    right: 0;
     display: grid;
     grid-template:
         "  slow   fast "
