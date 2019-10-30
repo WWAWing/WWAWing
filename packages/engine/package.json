@@ -20,7 +20,8 @@
     "deploy:scripts": "shx cp ./node_modules/@wwawing/loader/lib/wwaload*.js lib/",
     "deploy:style": "shx cp ./node_modules/@wwawing/styles/output/*.* lib/ && shx cp ./node_modules/@wwawing/assets/style/*.* lib/",
     "clean": "shx rm -rf lib",
-    "server": "node ./launch-server lib"
+    "server": "node ./launch-server lib",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
