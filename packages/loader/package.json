@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/loader",
-  "version": "3.2.3-pre.0",
+  "version": "3.2.3-pre.2",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/wwaload.js",
   "scripts": {
@@ -32,7 +32,7 @@
   "homepage": "https://github.com/WWAWing/WWALoader#readme",
   "devDependencies": {
     "@types/uglifyjs-webpack-plugin": "^1.1.0",
-    "@wwawing/common-interface": "^3.2.3-pre.0",
+    "@wwawing/common-interface": "^3.2.3-pre.2",
     "http-server": "^0.10.0",
     "npm-run-all": "^4.1.5",
     "shelljs": "^0.8.2",
