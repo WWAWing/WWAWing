@@ -17,7 +17,8 @@
     "build:noworker": "npm run build:noworker:dev && npm run build:noworker:prod",
     "build:noworker:dev": "webpack --config ./webpack.config.noworker.ts",
     "build:noworker:prod": "webpack --config ./webpack.config.prod.noworker.ts",
-    "clean": "shx rm -rf lib"
+    "clean": "shx rm -rf lib",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",

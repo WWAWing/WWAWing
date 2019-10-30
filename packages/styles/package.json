@@ -9,7 +9,8 @@
     "compile": "npm run clean:dist && node ./lib/make-css",
     "clean": "npm run clean:script && npm run clean:dist",
     "clean:script": "shx rm -rf lib && shx mkdir -p lib",
-    "clean:dist": "shx rm -rf output && shx mkdir -p output"
+    "clean:dist": "shx rm -rf output && shx mkdir -p output",
+    "prepare": "npm run build"
   },
   "author": "WWA Wing Team",
   "license": "MIT",

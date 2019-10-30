@@ -2,7 +2,7 @@
   "name": "@wwawing/engine",
   "version": "3.2.3-pre.1",
   "description": "World Wide Adventure: an RPG Engine.",
-  "main": "wwa.js",
+  "main": "./lib/wwa.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "run-p build:webpack:dev deploy server",
@@ -21,7 +21,7 @@
     "deploy:style": "shx cp ./node_modules/@wwawing/styles/output/*.* lib/ && shx cp ./node_modules/@wwawing/assets/style/*.* lib/",
     "clean": "shx rm -rf lib",
     "server": "node ./launch-server lib",
-    "prepublish": "npm run build"
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
