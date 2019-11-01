@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/loader",
-  "version": "0.0.0",
+  "version": "3.2.3",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/wwaload.js",
   "scripts": {
@@ -13,11 +13,12 @@
     "build": "npm run clean && npm run build:worker && npm run build:noworker",
     "build:worker": "npm run build:worker:dev && npm run build:worker:prod",
     "build:worker:dev": "webpack",
-    "build:worker:prod": "webpack --config ./webpack.config.prod.js",
+    "build:worker:prod": "webpack --config ./webpack.config.prod.ts",
     "build:noworker": "npm run build:noworker:dev && npm run build:noworker:prod",
-    "build:noworker:dev": "webpack --config ./webpack.config.noworker.js",
-    "build:noworker:prod": "webpack --config ./webpack.config.prod.noworker.js",
-    "clean": "shx rm -rf lib"
+    "build:noworker:dev": "webpack --config ./webpack.config.noworker.ts",
+    "build:noworker:prod": "webpack --config ./webpack.config.prod.noworker.ts",
+    "clean": "shx rm -rf lib",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -30,16 +31,21 @@
   },
   "homepage": "https://github.com/WWAWing/WWALoader#readme",
   "devDependencies": {
-    "@wwawing/common-interface": "0.0.0",
+    "@types/uglifyjs-webpack-plugin": "^1.1.0",
+    "@wwawing/common-interface": "^3.2.3",
     "http-server": "^0.10.0",
     "npm-run-all": "^4.1.5",
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
     "ts-loader": "^4.3.0",
-    "typescript": "^2.9.2",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.6.3",
     "uglify-js": "^3.3.27",
     "uglifyjs-webpack-plugin": "^1.2.5",
-    "webpack": "^4.20.2",
-    "webpack-cli": "^3.1.1"
+    "webpack": "^4.40.2",
+    "webpack-cli": "^3.3.9"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

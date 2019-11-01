@@ -1,0 +1,22 @@
+{
+  "name": "@wwawing/all",
+  "version": "3.2.3",
+  "description": "World Wide Adventure: an RPG Engine.",
+  "author": "WWA Wing Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WWAWing/WWAWing/issues"
+  },
+  "homepage": "https://github.com/WWAWing/WWAWing#readme",
+  "dependencies": {
+    "@wwawing/assets": "^3.2.3",
+    "@wwawing/common-interface": "^3.2.3",
+    "@wwawing/debug-server": "^3.2.3",
+    "@wwawing/engine": "^3.2.3",
+    "@wwawing/loader": "^3.2.3",
+    "@wwawing/styles": "^3.2.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
