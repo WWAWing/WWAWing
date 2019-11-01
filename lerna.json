@@ -4,5 +4,5 @@
   "packages": [
     "packages/*"
   ],
-  "version": "independent"
+  "version": "3.2.3-pre.2"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/debug-server",
-  "version": "0.0.0",
+  "version": "3.2.3-pre.2",
   "description": "wwawing debug server",
   "main": "lib/index.js",
   "scripts": {
@@ -8,7 +8,8 @@
     "build": "tsc -p .",
     "generate": "mkdir -p bin && nexe --target=win32-x86-8.6.0 --cwd . --output bin/wwa-server.exe",
     "clean": "shx rm -rf debug lib bin",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "npm run build && npm run generate"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
@@ -19,5 +20,8 @@
     "shelljs": "^0.8.2",
     "shx": "^0.3.2",
     "typescript": "^3.6.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

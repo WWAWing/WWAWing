@@ -33,8 +33,8 @@ function createHTMLFilePromises(mapNames: string[], isDevMode = false): Promise<
         }))
         .map(params => createWriteFilePromise(
             isDevMode ?
-                path.join(__dirname, "..", "..", "assets", "html", "dev", `${params.mapName}.html`) :
-                path.join(__dirname, "..", "..", "assets", "html", "dist", `${params.mapName}.html`),
+                path.join(__dirname, "..", "packages", "assets", "html", "dev", `${params.mapName}.html`) :
+                path.join(__dirname, "..", "packages", "assets", "html", "dist", `${params.mapName}.html`),
             params.html
         ));
 }
