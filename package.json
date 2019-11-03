@@ -16,7 +16,7 @@
     "make-wwa-page": "ts-node ./scripts/make-wwa-page all",
     "make-wwa-page:dev": "ts-node ./scripts/make-wwa-page dev",
     "make-wwa-page:dist": "ts-node ./scripts/make-wwa-page dist",
-    "publish:all": "run-s clean bootstrap && lerna publish --dist-tag wwa-test"
+    "publish:all": "lerna publish --dist-tag wwa-test"
   },
   "repository": {
     "type": "git",
