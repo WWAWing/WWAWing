@@ -3,6 +3,9 @@
   "version": "3.2.3",
   "description": "WWA Wing stylesheet files",
   "main": "index.js",
+  "files": [
+    "output"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run clean:script && tsc",
