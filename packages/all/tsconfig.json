@@ -1,13 +1,12 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./lib",
+    "rootDir": "./scripts",
     "module": "commonjs",
     "esModuleInterop": true,
   },
   "include": [
-    "src/**/*.ts"
+    "scripts/**/*.ts"
   ],
   "exclude": [
     "node_modules"

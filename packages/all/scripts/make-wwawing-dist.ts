@@ -15,18 +15,7 @@ const destUpdateBasePath = path.join(".", "dist", wwawingUpdateDirName);
  */
 shell.config.fatal = true;
 
-
-Promise.all([
-    // 完全版配布物を生成
-    makeDistribution(false, true),
-    // 更新版配布物を生成
-    makeDistribution(true, true)
-]).catch(e => {
-    console.error(e);
-    process.exit(1);
-});
-
-async function makeDistribution(
+export default async function makeDistribution(
     isUpdate: boolean,
     isConvertLfToCrlf: boolean = false
 ): Promise<void> {

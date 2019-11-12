@@ -5,7 +5,7 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node ."
+    "start": "ts-node ./scripts"
   },
   "prepare": "npm start",
   "bugs": {
@@ -13,6 +13,7 @@
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
+    "@types/jszip": "^3.1.6",
     "@types/shelljs": "^0.8.6",
     "@wwawing/assets": "^3.2.3",
     "@wwawing/common-interface": "^3.2.3",
@@ -20,6 +21,7 @@
     "@wwawing/engine": "^3.2.4",
     "@wwawing/loader": "^3.2.3",
     "@wwawing/styles": "^3.2.4",
+    "jszip": "^3.2.2",
     "shelljs": "^0.8.3",
     "shx": "^0.3.2",
     "ts-node": "^8.5.0",
