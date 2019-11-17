@@ -6,12 +6,12 @@
   "license": "MIT",
   "scripts": {
     "make-zip": "npm run clean && ts-node ./scripts",
-    "clean": "shx rm -rf dist"
+    "clean": "shx rm -rf dist",
+    "prepare": "npm run make-zip"
   },
   "files": [
     "dist"
   ],
-  "prepare": "npm run make-zip",
   "bugs": {
     "url": "https://github.com/WWAWing/WWAWing/issues"
   },
