@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/html-generator",
-  "version": "0.0.0",
+  "version": "3.2.4",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -9,19 +9,11 @@
     "build": "tsc",
     "start": "npm run build && shx mkdir -p output && node debug/debug.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/WWAWing/html-generator.git"
-  },
   "keywords": [
     "WWA"
   ],
   "author": "WWA Wing Team",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/WWAWing/html-generator/issues"
-  },
-  "homepage": "https://github.com/WWAWing/html-generator#readme",
   "devDependencies": {
     "@types/js-yaml": "^3.11.1",
     "@types/jsonschema": "^1.1.1",
