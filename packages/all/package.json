@@ -5,12 +5,13 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node ./scripts"
+    "make-zip": "npm run clean && ts-node ./scripts",
+    "clean": "shx rm -rf dist"
   },
   "files": [
     "dist"
   ],
-  "prepare": "npm start",
+  "prepare": "npm run make-zip",
   "bugs": {
     "url": "https://github.com/WWAWing/WWAWing/issues"
   },
