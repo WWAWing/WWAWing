@@ -7,6 +7,9 @@
   "scripts": {
     "start": "ts-node ./scripts"
   },
+  "files": [
+    "dist"
+  ],
   "prepare": "npm start",
   "bugs": {
     "url": "https://github.com/WWAWing/WWAWing/issues"
