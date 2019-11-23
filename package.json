@@ -35,7 +35,6 @@
   "npm-run-all": "^4.1.3",
   "devDependencies": {
     "@types/node": "^12.0.8",
-    "@wwawing/html-generator": "git+https://git@github.com/WWAWing/html-generator.git#include-lib",
     "lerna": "^3.18.2",
     "npm-run-all": "^4.1.5",
     "ts-node": "^8.2.0",
