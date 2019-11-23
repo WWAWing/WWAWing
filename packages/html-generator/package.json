@@ -9,6 +9,11 @@
     "build": "tsc",
     "start": "npm run build && shx mkdir -p output && node debug/debug.js"
   },
+  "files":[
+    "lib",
+    "template",
+    "config"
+  ],
   "keywords": [
     "WWA"
   ],
