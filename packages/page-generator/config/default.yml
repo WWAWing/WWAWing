@@ -1,0 +1,64 @@
+page:
+  # テンプレートファイルの場所を指定します
+  # プログラムを実行しているディレクトリが基準の相対パスです
+  template: "../template/wwa.pug"
+
+  # タイトルです
+  # 無指定はデフォルトのタイトルが指定されます
+  title: "World Wide Adventure Wing"
+
+  # (wwa.cssでなくページに関して)追加のCSSファイルがある場合は並べて指定します
+  additionalCssFiles:
+    - "style.css"
+    # - "andmore.css"
+
+  # WWA に関する設定です
+  # 各項目無指定はデフォルトになります
+  # ただし、マップデータは必須です
+  wwa:
+    # URLゲートを有効にする場合は true, しない場合はfalseを指定します
+    urlgateEnable: true
+    
+    resources:
+      # マップデータの場所を指定します
+      mapdata: "mapdata.dat"
+
+      audio:
+        # オーディオファイルを配置するディレクトリを指定します　
+        dir: "./audio"
+
+      # wwa.js のファイル名を変更している場合は指定します
+      wwaJs: "wwa.js"
+
+      # wwa.css のファイル名を変更している場合は指定します
+      wwaCss: "wwa.css"
+
+      # タイトル画像を指定します
+      titleImg: "cover.gif"
+
+  # ページ下部の著作権情報
+  # 無指定の場合は生成されません。
+  copyrights:
+    # WWA本家の著作権情報をページに記述する場合はもろもろ指定します
+    -
+      range:
+        firstYear: 1996
+        lastYear: 2016
+      credit: NAO
+      product: 
+        name: "World Wide Adventure"
+        href: "http://wwajp.com/"
+      genre: "Internet RPG"
+
+    # WWAWingの著作権情報をページに記述する場合はもろもろ指定します
+    -
+      range:
+        firstYear: 2013
+        # lastYear に present を指定すると今年の値が入力されます
+        lastYear: "present"
+      credit: "WWA Wing Team"
+      product: 
+        name: "WWA Wing"
+        href: "https://wwawing.com/"
+
+    # その他著作権表記を追加したい場合はコピペしてください
