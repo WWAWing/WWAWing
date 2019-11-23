@@ -10,6 +10,7 @@ interface IndexPageOption {
             fileName: string;
             title: string;
         }[];
+        thisYear: number;
     }
 }
 
@@ -19,7 +20,7 @@ const outputDirectory = path.join(__dirname, "..", "lib");
 
 Promise.all([
     ...createHTMLFilePromises(maps.map(map => map.fileName)),
-    createIndexPage({ page: { maps } })
+    createIndexPage({ page: { maps, thisYear: new Date().getFullYear() } })
 ])
     .catch(error => {
         console.error("error", error);
