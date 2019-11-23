@@ -1,5 +1,5 @@
 {
-  "name": "@wwawing/html-generator",
+  "name": "@wwawing/page-generator",
   "version": "3.2.4",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "start": "npm run build && shx mkdir -p output && node debug/debug.js"
+    "start": "npm run build && shx mkdir -p output && node debug/debug.js",
+    "prepare": "npm run build"
   },
   "files":[
     "lib",
@@ -35,5 +36,8 @@
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.13",
     "pug": "^2.0.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

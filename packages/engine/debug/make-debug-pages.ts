@@ -1,4 +1,4 @@
-import { generateWWAPageFromConfig, WWAPageConfig, getDefaultCopyrights } from "@wwawing/html-generator";
+import { generateWWAPageFromConfig, WWAPageConfig, getDefaultCopyrights } from "@wwawing/page-generator";
 import * as fs from "fs";
 import * as pug from "pug";
 import * as path from "path";

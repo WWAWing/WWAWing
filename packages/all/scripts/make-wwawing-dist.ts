@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as shell from "shelljs";
-import { generateWWAPageFromConfig, WWAPageConfig, getDefaultCopyrights } from "@wwawing/html-generator";
+import { generateWWAPageFromConfig, WWAPageConfig, getDefaultCopyrights } from "@wwawing/page-generator";
 
 const wwawingDistDirName = "wwawing-dist";
 const wwawingUpdateDirName = "wwawing-update";
