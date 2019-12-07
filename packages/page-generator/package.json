@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/page-generator",
-  "version": "3.2.4",
+  "version": "3.2.9",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -10,7 +10,7 @@
     "start": "npm run build && shx mkdir -p output && node debug/debug.js",
     "prepare": "npm run build"
   },
-  "files":[
+  "files": [
     "lib",
     "template",
     "config"
