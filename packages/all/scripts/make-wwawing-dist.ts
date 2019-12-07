@@ -48,6 +48,7 @@ export default async function makeDistribution(
             copy("assets", path.join("wwamk310", "WinWwamk.exe")),
             copy("assets", path.join("wwamk310", "wwamk_manual.html")),
             copy("assets", path.join("audio", "*"), path.join("mapdata", "audio")),
+            copy("assets", path.join("mapdata", "{caves01,caves02,island02,wwamap}.dat"), "mapdata"),
             copy("assets", path.join("images", "*.gif"), "mapdata"),
             copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
             copy("debug-server", path.join("bin", "wwa-server.exe"), "mapdata"),
