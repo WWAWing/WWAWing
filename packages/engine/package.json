@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/engine",
-  "version": "3.2.9",
+  "version": "3.2.10",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "./lib/wwa.js",
   "scripts": {
@@ -42,7 +42,7 @@
     "@types/pug": "^2.0.4",
     "@types/uglifyjs-webpack-plugin": "^1.1.0",
     "@types/webpack": "^4.39.1",
-    "@wwawing/assets": "^3.2.9",
+    "@wwawing/assets": "^3.2.10",
     "@wwawing/common-interface": "^3.2.3",
     "@wwawing/debug-server": "^3.2.3",
     "@wwawing/loader": "^3.2.3",
