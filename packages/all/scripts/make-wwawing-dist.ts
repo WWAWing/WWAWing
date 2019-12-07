@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as shell from "shelljs";
+import { generateWWAPageFromConfig, WWAPageConfig, getDefaultCopyrights } from "@wwawing/page-generator";
 
 const wwawingDistDirName = "wwawing-dist";
 const wwawingUpdateDirName = "wwawing-update";
@@ -38,6 +39,7 @@ export default async function makeDistribution(
         ];
     } else {
         tasks = [
+            ...createHTMLFilePromises(["caves01", "caves02", "island02", "wwamap"]),
             copy("engine", path.join("LICENSE")),
             copy("assets", path.join("html", "manual.html")),
             copy("engine", path.join("lib", "wwa.js"), "mapdata"),
@@ -46,10 +48,8 @@ export default async function makeDistribution(
             copy("assets", path.join("wwamk310", "WinWwamk.exe")),
             copy("assets", path.join("wwamk310", "wwamk_manual.html")),
             copy("assets", path.join("audio", "*"), path.join("mapdata", "audio")),
-            copy("assets", path.join("mapdata", "{caves01,caves02,island02,wwamap}.dat"), "mapdata"),
             copy("assets", path.join("images", "*.gif"), "mapdata"),
             copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
-            copy("assets", path.join("html", "dist", "*.html"), "mapdata"),
             copy("debug-server", path.join("bin", "wwa-server.exe"), "mapdata"),
             copy("styles", path.join("output","*.css"), "mapdata")
         ];
@@ -124,6 +124,46 @@ export default async function makeDistribution(
         );
 
     }
+
+    function createHTMLFilePromises(mapNames: string[]): Promise<void>[] {
+        return mapNames
+            .map(mapName => ({
+                mapName,
+                html: generateWWAPageFromConfig(createConfig(`${mapName}.dat`))
+            }))
+            .map(params => createWriteFilePromise(
+                path.join(__dirname, "..", "dist", "wwawing-dist", "mapdata", `${params.mapName}.html`),
+                params.html
+            ));
+    }
+    
+    function createConfig(mapdata: string): WWAPageConfig {
+        return {
+            page: {
+                additionalCssFiles: ["style.css"],
+                wwa: {
+                    resources: {
+                        mapdata,
+                        wwaJs: "wwa.js",
+                        titleImg: "cover.gif",
+                    },
+                    urlgateEnable: true
+                },
+                copyrights: getDefaultCopyrights()
+            }
+        };
+    }
+    
+    function createWriteFilePromise(filePath: string, content: string): Promise<void> {
+        return new Promise((resolve, reject) =>
+            fs.writeFile(
+                filePath,
+                content,
+                err => (err ? reject(err) : resolve())
+            )
+        );
+    }
+
     /**
      * 文字列中の改行コードをLF(\n)からCRLF(\r\n)に変換する。
      * 文字列中に1つでもCRLFがある場合は変換を行わない。
