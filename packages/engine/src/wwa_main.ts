@@ -29,7 +29,7 @@ import { Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MosterWindow, ScoreWindow, MessageInfo, Macro, parseMacro
+    MessageWindow, MosterWindow, WWASaveData,  ScoreWindow, MessageInfo, Macro, parseMacro
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -100,7 +100,7 @@ export class WWA {
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
-    private _quickSaveData: WWAData;
+    //private _quickSaveData: WWAData;
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
@@ -1213,24 +1213,26 @@ export class WWA {
         this._itemMenu.close();
         bg.classList.add("onpress");
         if (button === SidebarButton.QUICK_LOAD) {
-            if (this._quickSaveData !== void 0 && !forcePassword) {
+            if (this._messageWindow.hasSaveData() && !forcePassword) {
+                this._messageWindow.createSaveDom();
                 if (this._usePassword) {
-                    this.setMessageQueue("データを読み込みますか？\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
+                    this.setMessageQueue("読み込むデータを選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_LOAD;
                 } else {
-                    this.setMessageQueue("データを読み込みますか？", true, true);
+                    this.setMessageQueue("読み込むデータを選んでください。", true, true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_LOAD;
                 }
             } else {
                 this.onpasswordloadcalled();
             }
         } else if (button === SidebarButton.QUICK_SAVE) {
+            this._messageWindow.createSaveDom();
             if (!this._wwaData.disableSaveFlag) {
                 if (this._usePassword) {
-                    this.setMessageQueue("データの一時保存をします。\nよろしいですか？\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
+                    this.setMessageQueue("データの一時保存先を選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 } else {
-                    this.setMessageQueue("データの一時保存をします。\nよろしいですか？", true, true);
+                    this.setMessageQueue("データの一時保存を選んでください。", true, true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 }
             } else {
@@ -1474,6 +1476,29 @@ export class WWA {
 
             if (this._messageWindow.isYesNoChoice()) {
                 //Yes No 選択肢
+                if (this._messageWindow.isSaveChoice()) {
+                    //セーブ領域参照
+                    this._messageWindow.saveUpdate();
+                    if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
+                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
+                        this._messageWindow.saveControll(Direction.LEFT);
+                    } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
+                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
+                        this._messageWindow.saveControll(Direction.UP);
+                    } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
+                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
+                        this._messageWindow.saveControll(Direction.RIGHT);
+                    } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
+                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
+                        this._messageWindow.saveControll(Direction.DOWN);
+                    }
+                    /*
+                    if (this._messageWindow.isSaveClose()) {
+                        //項目クリックによるYES選択扱い
+                        //this._yesNoJudge = YesNoState.YES;
+                    }
+                    */
+                }
                 if (!this._messageWindow.isInputDisable()) {
                     if (this._yesNoJudge === YesNoState.UNSELECTED) {
                         if (
@@ -1507,16 +1532,16 @@ export class WWA {
                 this._itemMenu.update();
                 if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
                     this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
-                    this._itemMenu.cursor_left();
+                    this._itemMenu.controll(Direction.LEFT);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
                     this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
-                    this._itemMenu.cursor_up();
+                    this._itemMenu.controll(Direction.UP);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
                     this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
-                    this._itemMenu.cursor_right();
+                    this._itemMenu.controll(Direction.RIGHT);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
                     this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
-                    this._itemMenu.cursor_down();
+                    this._itemMenu.controll(Direction.DOWN);
                 }
                 if (
                     this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
@@ -2581,10 +2606,15 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_ITEM_USE) {
                     this._player.readyToUseItem(this._yesNoUseItemPos);
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) {
+                    this._messageWindow.deleteSaveDom();
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
-                    this._stopUpdateByLoadFlag = true;
-                    this._loadType = LoadType.QUICK_LOAD;
+                    if (this._messageWindow.load()) {
+                        //ロード可能
+                        this._stopUpdateByLoadFlag = true;
+                        this._loadType = LoadType.QUICK_LOAD;
+                    }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
+                    this._messageWindow.deleteSaveDom();
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                     this._quickSave();
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_RESTART_GAME) {
@@ -2639,6 +2669,7 @@ export class WWA {
                     var bg = <HTMLDivElement>(util.$id("item" + (this._yesNoUseItemPos - 1)));
                     bg.classList.remove("onpress");
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) {
+                    this._messageWindow.deleteSaveDom();
                     if (this._usePassword) {
                         this._yesNoJudge = YesNoState.UNSELECTED;
                         this.onpasswordloadcalled();
@@ -2647,6 +2678,7 @@ export class WWA {
                         (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
+                    this._messageWindow.deleteSaveDom();
                     if (this._usePassword) {
                         this._yesNoJudge = YesNoState.UNSELECTED;
                         this.onpasswordsavecalled();
@@ -3178,6 +3210,7 @@ export class WWA {
 
         return CryptoJS.MD5(text).toString();
     }
+    private _saveDataList = []
 
     private _quickSave(isPassword: boolean = false): string {
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
@@ -3216,7 +3249,8 @@ export class WWA {
                 "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
             ).toString();
         }
-        this._quickSaveData = qd;
+        this._messageWindow.save(this._cvs, qd);
+        //this._quickSaveData = qd;
         util.$id("cell-load").textContent = "Quick Load";
         return "";
     }
@@ -3241,14 +3275,14 @@ export class WWA {
     }
 
     private _quickLoad(restart: boolean = false, password: string = null, apply: boolean = true): WWAData {
-        if (!restart && this._quickSaveData === void 0 && password === null) {
+        if (!restart && this._messageWindow.hasSaveData() === void 0 && password === null) {
             throw new Error("セーブデータがありません。");
         }
         var newData: WWAData;
         if (password !== null) {
             newData = this._decodePassword(password);
         } else {
-            newData = <WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._quickSaveData));
+            newData = <WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._messageWindow.load()));
         }
         // TODO: WWAEvalの属性変更対策, もう少しスマートなディープコピー方法考える
         newData.message = <string[]>JSON.parse(JSON.stringify(this._restartData.message));

@@ -1,7 +1,10 @@
 import * as Util from "./wwa_util";
+import {
+    WWAConsts,
+    Direction
+} from "./wwa_data";
 
 export class ItemMenu {
-    public static KEY_BUFFER_MAX = 256;
     private static ROW_MAX: number = 8;
     private static COL_MAX: number = 3;
     private static DOM_ID_TABLE: Array<Array<string>> = [
@@ -33,57 +36,47 @@ export class ItemMenu {
         }
     }
     private cursor_wait() {
-        this.counter = 6;
+        this.counter = WWAConsts.CONTROLL_WAIT_FRAME;
     }
     public allClear() {
         this.col = 0;
         this.row = 0;
         this.counter = 0;
     }
-    public cursor_up() {
+    public controll(moveDir: Direction) {
         if (this.counter > 0) {
             //カーソルリピート待機
             return;
         }
-        if (this.row > 0) {
-            this.row--;
-            this.openView();
-            this.cursor_wait();
-        }
-
-    }
-    public cursor_down() {
-        if (this.counter > 0) {
-            //カーソルリピート待機
-            return;
-        }
-        if (this.row < ItemMenu.ROW_MAX - 1) {
-            this.row++;
-            this.openView();
-            this.cursor_wait();
-        }
-    }
-    public cursor_left() {
-        if (this.counter > 0) {
-            //カーソルリピート待機
-            return;
-        }
-        if (this.col > 0) {
-            this.col--;
-            this.openView();
-            this.cursor_wait();
-        }
-
-    }
-    public cursor_right() {
-        if (this.counter > 0) {
-            //カーソルリピート待機
-            return;
-        }
-        if (this.col < ItemMenu.COL_MAX - 1) {
-            this.col++;
-            this.openView();
-            this.cursor_wait();
+        switch (moveDir) {
+            case Direction.DOWN:
+                if (this.row < ItemMenu.ROW_MAX - 1) {
+                    this.row++;
+                    this.openView();
+                    this.cursor_wait();
+                }
+                break;
+            case Direction.UP:
+                if (this.row > 0) {
+                    this.row--;
+                    this.openView();
+                    this.cursor_wait();
+                }
+                break;
+            case Direction.LEFT:
+                if (this.col > 0) {
+                    this.col--;
+                    this.openView();
+                    this.cursor_wait();
+                }
+                break;
+            case Direction.RIGHT:
+                if (this.col < ItemMenu.COL_MAX - 1) {
+                    this.col++;
+                    this.openView();
+                    this.cursor_wait();
+                }
+                break;
         }
     }
     public ok() {

@@ -786,6 +786,10 @@ export class WWAConsts {
     static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
 
     static ITEMBOX_TOP_Y = 140;
+    static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数
+    static QUICK_SAVE_THUMNAIL_WIDTH: number = 99;//セーブデータサムネイル横幅
+    static QUICK_SAVE_THUMNAIL_HEIGHT: number = 99;//セーブデータサムネイル縦幅
+    static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
 }
 
 export class LoaderResponse {
