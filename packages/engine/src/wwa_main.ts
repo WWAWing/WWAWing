@@ -4265,7 +4265,6 @@ font-weight: bold;
     private _setVirtualPadTouch(buttonCode: VirtualPadButtonCode) {
         const button = this._getVirtualPadButton(buttonCode);
         button.classList.add("wwa-virtualpad__button--pressed");
-        window.navigator.vibrate(Consts.VIRTUALPAD_TOUCH_VIBRATE_MS);
     }
     
     /**
