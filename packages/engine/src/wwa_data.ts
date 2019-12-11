@@ -786,6 +786,8 @@ export class WWAConsts {
     static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
 
     static ITEMBOX_TOP_Y = 140;
+
+    static VIRTUALPAD_TOUCH_VIBRATE_MS: 200;
 }
 
 export class LoaderResponse {

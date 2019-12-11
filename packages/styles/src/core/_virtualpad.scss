@@ -1,5 +1,6 @@
-$virtual-buttons-size: 14vmin;
-$virtualpad-spacing: 8vmin;
+$virtual-buttons-size: 16vmin;
+$virtualpad-margin: 6vmin;
+$virtualpad-spacing: 1vmin;
 
 // @media screen and (orientation: portrait) {
     
@@ -20,7 +21,7 @@ $virtualpad-spacing: 8vmin;
 
 #wwa-virtualpad-left,
 #wwa-virtualpad-right {
-    bottom: $virtualpad-spacing;
+    bottom: $virtualpad-margin;
     position: fixed;
 }
 
@@ -31,22 +32,24 @@ $virtualpad-spacing: 8vmin;
         ".     up  .    "
         "left .    right"
         ".    down .    ";
-    margin-left: $virtualpad-spacing;
+    margin-left: $virtualpad-margin;
 }
 
 #wwa-virtualpad-right {
     right: 0;
     display: grid;
     grid-template:
-        "  slow   fast "
-        "   .       .  " 20px
-        "estimate   .  "
-        "estimate   .  "
-        "   .     enter"
-        "  esc    enter"
-        "  esc      .  "
-        "   .       .  " $virtualpad-spacing;
-    margin-right: $virtualpad-spacing;
+        " .    fast  "
+        " .    slow  "
+        " .      .   " 20px
+        " .  estimate"
+        " .  estimate"
+        " .    enter "
+        "esc   enter "
+        "esc     .   "
+        " .      .   " $virtualpad-margin;
+    gap: $virtualpad-spacing;
+    margin-right: $virtualpad-margin;
 }
 
 .wwa-virtualpad__button {
@@ -112,16 +115,15 @@ $virtualpad-spacing: 8vmin;
     height: 50px;
     margin: 0 5px;
     width: $virtual-buttons-size;
+    border-radius: 1rem;
 }
 
 #wwa-slow-button {
     grid-area: slow;
-    border-radius: 1rem 0 0 1rem;
 }
 
 #wwa-fast-button {
     grid-area: fast;
-    border-radius: 0 1rem 1rem 0;
 }
 
 .wwa-virtualpad__button--pressed {

@@ -437,8 +437,8 @@ export class WWA {
             };
             this._virtualPadStore = new VirtualPadStore(
                 this._virtualPadButtonElements,
-                buttonCode => this._virtualPadButtonElements[buttonCode].classList.add("wwa-virtualpad__button--pressed"),
-                buttonCode => this._virtualPadButtonElements[buttonCode].classList.remove("wwa-virtualpad__button--pressed")
+                this._setVirtualPadTouch.bind(this),
+                this._setVirtualPadLeave.bind(this)
             );
             this._gamePadStore = new GamePadStore();
             this._messageQueue = [];
@@ -4243,6 +4243,40 @@ font-weight: bold;
         Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
             node.style.backgroundPosition = `-${pos.x * Consts.CHIP_SIZE}px -${pos.y * Consts.CHIP_SIZE}px`;
         });
+    }
+
+    /**
+     * 仮想パッドの要素を取得します。存在しない仮想パッドが指定された場合は ReferenceError が発生します。
+     * @param buttonCode 仮想パッドのボタンの種類
+     * @returns 仮想パッドのHTML要素
+     */
+    private _getVirtualPadButton(buttonCode: VirtualPadButtonCode): HTMLButtonElement {
+        if (!(buttonCode in VirtualPadButtonCode)) {
+            throw new ReferenceError(`WWAの仮想パッド ${buttonCode} は存在しません。`);
+        }
+        return this._virtualPadButtonElements[buttonCode];
+    }
+    
+    /**
+     * 仮想パッドの状態を押下状態に変化させます。
+     *     主に VirtualPadState のコンストラクタに指定する onTouchStart や onTouchEnd で指定します。
+     * @param buttonCode 
+     */
+    private _setVirtualPadTouch(buttonCode: VirtualPadButtonCode) {
+        const button = this._getVirtualPadButton(buttonCode);
+        button.classList.add("wwa-virtualpad__button--pressed");
+        window.navigator.vibrate(Consts.VIRTUALPAD_TOUCH_VIBRATE_MS);
+    }
+    
+    /**
+     * 仮想パッドの状態を通常状態に戻します。
+     *     基本的な扱い方は setVirtualPadLeave をご参照ください。
+     * @see WWA._setVirtualPadTouch
+     * @param buttonCode 
+     */
+    private _setVirtualPadLeave(buttonCode: VirtualPadButtonCode) {
+        const button = this._getVirtualPadButton(buttonCode);
+        button.classList.remove("wwa-virtualpad__button--pressed");
     }
 };
 
