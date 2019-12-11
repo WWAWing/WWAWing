@@ -743,17 +743,6 @@ export class WWA {
                     }
                 });
 
-                // バーチャルパッド
-                if (util.$id("wwa-virtualpad-left") !== null && util.$id("wwa-virtualpad-right") !== null) {
-                    const cancelBrowserTouchEvent = (event: TouchEvent) => {
-                        if (event.cancelable) {
-                            event.preventDefault();
-                        }
-                    };
-                    util.$id("wwa-virtualpad-left").addEventListener("touchstart", cancelBrowserTouchEvent);
-                    util.$id("wwa-virtualpad-right").addEventListener("touchstart", cancelBrowserTouchEvent);
-                }
-
             }
             //////////////// タッチ関連 超β ////////////////////////////
 

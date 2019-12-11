@@ -23,6 +23,7 @@ $virtualpad-spacing: 1vmin;
 #wwa-virtualpad-right {
     bottom: $virtualpad-margin;
     position: fixed;
+    pointer-events: none;
 }
 
 #wwa-virtualpad-left {
@@ -54,6 +55,7 @@ $virtualpad-spacing: 1vmin;
 
 .wwa-virtualpad__button {
     @extend %virtualpad_button;
+    pointer-events: auto;
 }
 
 #wwa-up-button,
