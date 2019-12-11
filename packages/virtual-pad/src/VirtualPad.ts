@@ -49,6 +49,10 @@ type VirtualPadButtonTouching = {
  */
 export default class VirtualPadStore {
 
+    /**
+     * 仮想パッドが有効か
+     * @property
+     */
     private _enabled: boolean;
 
     /**
@@ -69,6 +73,11 @@ export default class VirtualPadStore {
         this._isTouchingButtons = {};
 
         for (let buttonTypeString in buttons) {
+            /**
+             * for in ... で渡される buttonTypeScript は必ず文字列型になります。
+             *     このまま buttons の配列のキーに渡すと、正しく要素が受け取れません。
+             *     このため、一度 parseInt で数字に変換した上で渡しています。
+             */
             let buttonCode = parseInt(buttonTypeString);
             let button: HTMLButtonElement = buttons[buttonCode];
             this._availableButtons.push(buttonCode);
@@ -118,30 +127,62 @@ export default class VirtualPadStore {
         ].forEach((targetButtonCode) => {
             const targetButtonElement = buttons[targetButtonCode];
             
-            targetButtonElement.addEventListener("touchmove", (event: TouchEvent): void => {
-                event.preventDefault();
-                this.allClear();
-
-                const touch = event.targetTouches.item(0);
-                const element = document.elementFromPoint(touch.pageX, touch.pageY);
-                if (element === null) {
-                    return;
-                }
-
-                const touchButtonType = element.getAttribute("type");
-                const touchButtonCode = parseInt(touchButtonType);
-                if (VirtualPadStore.isMoveButton(touchButtonCode)) {
-                    this.setTouchInfo(touchButtonCode);
-                }
-            });
+            targetButtonElement.addEventListener("touchmove", this._detectMovedButton.bind(this));
         });
     }
 
+    /**
+     * TouchMove した要素から触れた先の要素に、触れたことを呼び出します。
+     * @param event 
+     */
+    private _detectMovedButton(event: TouchEvent) {
+        event.preventDefault();
+        this.allClear();
+
+        /**
+         * targetTouches で触れている座標を検出し、その場所から要素を取得します。
+         * @see https://developer.mozilla.org/ja/docs/Web/API/DocumentOrShadowRoot/elementFromPoint
+         */
+        const touch = event.targetTouches.item(0);
+        const element = document.elementFromPoint(touch.pageX, touch.pageY);
+        if (element === null) {
+            return;
+        }
+
+        /**
+         * 触れた先の要素が見つかった場合は、その要素の種類を取得し、その要素に対して触れたことを呼び出します。
+         */
+        const touchButtonType = element.getAttribute("type");
+        const touchButtonCode = parseInt(touchButtonType);
+        if (VirtualPadStore.isMoveButton(touchButtonCode)) {
+            this.setTouchInfo(touchButtonCode);
+        }
+    }
+
+    /**
+     * 指定したボタンが押されたかを判別します。
+     *     戦闘予測ボタンといった、1回しか押さないボタンの判定に使用します。
+     * @param buttonType 
+     */
     public checkTouchButton(buttonType: VirtualPadButtonCode): boolean {
+        const state = this.getButtonState(buttonType);
+        return state === VirtualPadState.TOUCH;
+    }
+
+    /**
+     * 指定したボタンが押されているかを判別します。
+     *     移動ボタンといった、長時間押すボタンの判定に使用します。
+     * @param buttonType 
+     */
+    public checkTouchingButton(buttonType: VirtualPadButtonCode): boolean {
         const state = this.getButtonState(buttonType);
         return state === VirtualPadState.TOUCH || state === VirtualPadState.TOUCHING;
     }
 
+    /**
+     * 今の仮想パッドのボタンの状態を出力します
+     * @param buttonType 
+     */
     public getButtonState(buttonType: VirtualPadButtonCode): VirtualPadState {
         const touched = this._isTouchingButtons[buttonType].prev;
         const isTouching = this._isTouchingButtons[buttonType].current;

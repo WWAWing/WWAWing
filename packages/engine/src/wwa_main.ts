@@ -1410,25 +1410,25 @@ export class WWA {
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
                 this._mouseStore.checkClickMouse(Direction.LEFT) ||
                 this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT) ||
-                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_LEFT)) {
+                this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_LEFT)) {
                 this._player.controll(Direction.LEFT);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
                 this._mouseStore.checkClickMouse(Direction.UP) ||
                 this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP) ||
-                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_UP)) {
+                this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_UP)) {
                 this._player.controll(Direction.UP);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
                 this._mouseStore.checkClickMouse(Direction.RIGHT) ||
                 this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT) ||
-                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_RIGHT)) {
+                this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_RIGHT)) {
                 this._player.controll(Direction.RIGHT);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
                 this._mouseStore.checkClickMouse(Direction.DOWN) ||
                 this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN) ||
-                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_DOWN)) {
+                this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_DOWN)) {
                 this._player.controll(Direction.DOWN);
                 this._objectMovingDataManager.update();
             } else if (this._keyStore.getKeyState(KeyCode.KEY_1) === KeyState.KEYDOWN) {
