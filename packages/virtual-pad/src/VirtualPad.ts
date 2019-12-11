@@ -43,10 +43,12 @@ type VirtualPadButtonTouching = {
     next: boolean
 };
 
-type VirtualPadActionFunction = (buttonCode: VirtualPadButtonCode) => void;
+type VirtualPadEventFunction = (buttonCode: VirtualPadButtonCode) => void;
 
 /**
  * 仮想パッドの状態管理を行うクラスです。
+ * @todo PCといった、タッチデバイスでないデバイスでは、このクラスのインスタンスを生成しないようにする。
+ *     (this._enabled で判別しているけど、いちいち判定処理書くのつらい...)
  */
 export default class VirtualPadStore {
 
@@ -56,8 +58,8 @@ export default class VirtualPadStore {
      */
     private _enabled: boolean;
 
-    private _onTouchStart: VirtualPadActionFunction;
-    private _onTouchEnd: VirtualPadActionFunction;
+    private _onTouchStart: VirtualPadEventFunction | null;
+    private _onTouchEnd: VirtualPadEventFunction | null;
 
     /**
      * 有効なボタンが格納されている配列です。各ボタンを繰り返し処理する場合に使用します。
@@ -70,11 +72,17 @@ export default class VirtualPadStore {
 
     /**
      * @param buttons 仮想パッドの各要素
+     * @param onTouchStart 仮想パッドを押下した場合に発生するコールバック関数
+     * @param onTouchEnd 仮想パッドを話した場合に発生するコールバック関数
      */
-    constructor(buttons: VirtualPadButtons, onTouchStart: VirtualPadActionFunction, onTouchEnd: VirtualPadActionFunction) {
-        this._enabled = true;
-        this._onTouchStart = onTouchStart;
-        this._onTouchEnd = onTouchEnd;
+    constructor(
+        buttons: VirtualPadButtons | {},
+        onTouchStart: VirtualPadEventFunction = null,
+        onTouchEnd: VirtualPadEventFunction = null
+    ) {
+        this._enabled = Object.keys(buttons).length > 0;
+        this._onTouchStart = onTouchStart || null;
+        this._onTouchEnd = onTouchEnd || null;
         this._availableButtons = [];
         this._isTouchingButtons = {};
 
@@ -108,10 +116,6 @@ export default class VirtualPadStore {
             };
 
             button.addEventListener('touchstart', (event: TouchEvent) => {
-                if (!this._enabled) {
-                    event.preventDefault();
-                    return;
-                }
                 this.setTouchInfo(buttonCode);
                 cancelBrowserTouchEvent(event);
             });
@@ -123,18 +127,13 @@ export default class VirtualPadStore {
                 this.allClear();
             });
 
+            /**
+             * 移動ボタンに関しては、指先を移動しながら操作することがあるため、 touchmove イベントにも対応します。
+             */
+            if (VirtualPadStore.isMoveButton(buttonCode)) {
+                button.addEventListener("touchmove", this._detectMovedButton.bind(this));
+            }
         }
-
-        [ // 移動ボタン
-            VirtualPadButtonCode.BUTTON_LEFT,
-            VirtualPadButtonCode.BUTTON_UP,
-            VirtualPadButtonCode.BUTTON_RIGHT,
-            VirtualPadButtonCode.BUTTON_DOWN
-        ].forEach((targetButtonCode) => {
-            const targetButtonElement = buttons[targetButtonCode];
-            
-            targetButtonElement.addEventListener("touchmove", this._detectMovedButton.bind(this));
-        });
     }
 
     /**
@@ -171,6 +170,9 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public checkTouchButton(buttonType: VirtualPadButtonCode): boolean {
+        if (!this._enabled) {
+            return false;
+        }
         const state = this.getButtonState(buttonType);
         return state === VirtualPadState.TOUCH;
     }
@@ -181,6 +183,9 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public checkTouchingButton(buttonType: VirtualPadButtonCode): boolean {
+        if (!this._enabled) {
+            return false;
+        }
         const state = this.getButtonState(buttonType);
         return state === VirtualPadState.TOUCH || state === VirtualPadState.TOUCHING;
     }
@@ -190,6 +195,10 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public getButtonState(buttonType: VirtualPadButtonCode): VirtualPadState {
+        if (!this._enabled) {
+            return VirtualPadState.NONE;
+        }
+
         const touched = this._isTouchingButtons[buttonType].prev;
         const isTouching = this._isTouchingButtons[buttonType].current;
         if (touched && isTouching) {
@@ -207,6 +216,10 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public setTouchInfo(buttonType: VirtualPadButtonCode) {
+        if (!this._enabled) {
+            return;
+        }
+
         this._isTouchingButtons[buttonType].next = true;
     }
 

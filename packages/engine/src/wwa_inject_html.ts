@@ -1,5 +1,6 @@
 import { WWAConsts } from "./wwa_data";
 import * as util from "./wwa_util";
+import { makeInject as makeInjectVirtualPad } from "@wwawing/virtual-pad";
 
 // FIXME: innerHTML使う実装、あんまりよくないけど、許して。
 // 入力値を扱う時はセキュリティに気をつける!!
@@ -17,6 +18,8 @@ function makeInjectHtml(hasTitleImg: boolean): string {
         <div id="wwa-cover">
             <canvas id="progress-panel" width="${WWAConsts.SCREEN_WIDTH}" height="${WWAConsts.SCREEN_HEIGHT}"></canvas>
         </div>`;
+
+    const virtualPadHtml = checkTouchDevice() ? makeInjectVirtualPad() : "";
 
     return `
         <canvas id="wwa-map" class="wwa-canvas" width="440" height="440">
@@ -48,7 +51,17 @@ function makeInjectHtml(hasTitleImg: boolean): string {
         <div id="wwa-controller"></div>
         <div id="wwa-fader"></div>
 ${coverHtml}
-        <div id="wwa-audio-wrapper"></div>`;
+        <div id="wwa-audio-wrapper"></div>
+${virtualPadHtml}
+`;
+}
+
+/**
+ * タッチできるデバイスかどうかを判別します。
+ * @returns {boolean}
+ */
+export function checkTouchDevice(): boolean {
+    return ("ontouchstart" in window) && ("ontouchend" in window) && ("ontouchmove" in window);
 }
 
 export function inject(parent: HTMLDivElement, titleImgName: string): void {

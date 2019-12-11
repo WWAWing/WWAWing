@@ -42,7 +42,7 @@ import {
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
-import { inject } from "./wwa_inject_html";
+import { inject, checkTouchDevice } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 
@@ -78,7 +78,7 @@ export class WWA {
     private _keyStore: KeyStore;
     private _mouseStore: MouseStore;
     private _virtualPadStore: VirtualPadStore;
-    private _virtualPadButtonElements: VirtualPadButtons;
+    private _virtualPadButtonElements: VirtualPadButtons | {};
     private _gamePadStore: GamePadStore;
     private _camera: Camera;
     public _itemMenu: ItemMenu;  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
@@ -424,22 +424,27 @@ export class WWA {
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
-            this._virtualPadButtonElements = {
-                [VirtualPadButtonCode.BUTTON_ENTER]:    <HTMLButtonElement>util.$id("wwa-enter-button"),
-                [VirtualPadButtonCode.BUTTON_ESC]:      <HTMLButtonElement>util.$id("wwa-esc-button"),
-                [VirtualPadButtonCode.BUTTON_ESTIMATE]: <HTMLButtonElement>util.$id("wwa-estimate-button"),
-                [VirtualPadButtonCode.BUTTON_FAST]:     <HTMLButtonElement>util.$id("wwa-fast-button"),
-                [VirtualPadButtonCode.BUTTON_SLOW]:     <HTMLButtonElement>util.$id("wwa-slow-button"),
-                [VirtualPadButtonCode.BUTTON_LEFT]:     <HTMLButtonElement>util.$id("wwa-left-button"),
-                [VirtualPadButtonCode.BUTTON_UP]:       <HTMLButtonElement>util.$id("wwa-up-button"),
-                [VirtualPadButtonCode.BUTTON_RIGHT]:    <HTMLButtonElement>util.$id("wwa-right-button"),
-                [VirtualPadButtonCode.BUTTON_DOWN]:     <HTMLButtonElement>util.$id("wwa-down-button")
-            };
-            this._virtualPadStore = new VirtualPadStore(
-                this._virtualPadButtonElements,
-                this._setVirtualPadTouch.bind(this),
-                this._setVirtualPadLeave.bind(this)
-            );
+            if (checkTouchDevice()) {
+                this._virtualPadButtonElements = {
+                    [VirtualPadButtonCode.BUTTON_ENTER]:    <HTMLButtonElement>util.$id("wwa-enter-button"),
+                    [VirtualPadButtonCode.BUTTON_ESC]:      <HTMLButtonElement>util.$id("wwa-esc-button"),
+                    [VirtualPadButtonCode.BUTTON_ESTIMATE]: <HTMLButtonElement>util.$id("wwa-estimate-button"),
+                    [VirtualPadButtonCode.BUTTON_FAST]:     <HTMLButtonElement>util.$id("wwa-fast-button"),
+                    [VirtualPadButtonCode.BUTTON_SLOW]:     <HTMLButtonElement>util.$id("wwa-slow-button"),
+                    [VirtualPadButtonCode.BUTTON_LEFT]:     <HTMLButtonElement>util.$id("wwa-left-button"),
+                    [VirtualPadButtonCode.BUTTON_UP]:       <HTMLButtonElement>util.$id("wwa-up-button"),
+                    [VirtualPadButtonCode.BUTTON_RIGHT]:    <HTMLButtonElement>util.$id("wwa-right-button"),
+                    [VirtualPadButtonCode.BUTTON_DOWN]:     <HTMLButtonElement>util.$id("wwa-down-button")
+                };
+                this._virtualPadStore = new VirtualPadStore(
+                    this._virtualPadButtonElements,
+                    this._setVirtualPadTouch.bind(this),
+                    this._setVirtualPadLeave.bind(this)
+                );
+            } else {
+                this._virtualPadButtonElements = {};
+                this._virtualPadStore = new VirtualPadStore({});
+            }
             this._gamePadStore = new GamePadStore();
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
@@ -739,13 +744,15 @@ export class WWA {
                 });
 
                 // バーチャルパッド
-                const cancelBrowserTouchEvent = (event: TouchEvent) => {
-                    if (event.cancelable) {
-                        event.preventDefault();
-                    }
-                };
-                util.$id("wwa-virtualpad-left").addEventListener("touchstart", cancelBrowserTouchEvent);
-                util.$id("wwa-virtualpad-right").addEventListener("touchstart", cancelBrowserTouchEvent);
+                if (util.$id("wwa-virtualpad-left") !== null && util.$id("wwa-virtualpad-right") !== null) {
+                    const cancelBrowserTouchEvent = (event: TouchEvent) => {
+                        if (event.cancelable) {
+                            event.preventDefault();
+                        }
+                    };
+                    util.$id("wwa-virtualpad-left").addEventListener("touchstart", cancelBrowserTouchEvent);
+                    util.$id("wwa-virtualpad-right").addEventListener("touchstart", cancelBrowserTouchEvent);
+                }
 
             }
             //////////////// タッチ関連 超β ////////////////////////////
@@ -804,7 +811,6 @@ export class WWA {
             this._useConsole = false;
             this.clearFaces();
 
-            var self = this;
             /*
             var count = 0;
             for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
@@ -821,7 +827,7 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, (): void => {
+            this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, () => {
                 this._isSkippedSoundMessage = true;
                 if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
                     this._isLoadedSound = true;
@@ -853,63 +859,66 @@ export class WWA {
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
-                        self._keyStore.update();
-                        self._gamePadStore.update();
+                        this._keyStore.update();
+                        this._gamePadStore.update();
+                        this._virtualPadStore.update();
 
-                        if (self._yesNoJudgeInNextFrame === YesNoState.UNSELECTED) {
+                        if (this._yesNoJudgeInNextFrame === YesNoState.UNSELECTED) {
                             if (
-                                self._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                                self._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
-                                self._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)
+                                this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
+                                this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
+                                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A) ||
+                                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_ENTER)
                             ) {
-                                self._yesNoJudgeInNextFrame = YesNoState.YES
+                                this._yesNoJudgeInNextFrame = YesNoState.YES
                             } else if (
-                                self._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
-                                self._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
-                                self._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B)
+                                this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
+                                this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B) ||
+                                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_ESC)
                             ) {
-                                self._yesNoJudgeInNextFrame = YesNoState.NO
+                                this._yesNoJudgeInNextFrame = YesNoState.NO
                             }
                         }
 
-                        if (self._yesNoJudgeInNextFrame === YesNoState.YES) {
+                        if (this._yesNoJudgeInNextFrame === YesNoState.YES) {
                             clearInterval(timer);
-                            self._messageWindow.update();
-                            self._yesNoJudge = self._yesNoJudgeInNextFrame;
-                            self._messageWindow.setInputDisable();
+                            this._messageWindow.update();
+                            this._yesNoJudge = this._yesNoJudgeInNextFrame;
+                            this._messageWindow.setInputDisable();
                             setTimeout((): void => {
-                                self._messageWindow.hide();
-                                self._yesNoJudge = YesNoState.UNSELECTED;
-                                self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
-                                self._isLoadedSound = true;
+                                this._messageWindow.hide();
+                                this._yesNoJudge = YesNoState.UNSELECTED;
+                                this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
+                                this._isLoadedSound = true;
                                 this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
-                                self.loadSound();
+                                this.loadSound();
                                 requestAnimationFrame(this.soundCheckCaller);
                             }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                         }
 
-                        else if (self._yesNoJudgeInNextFrame === YesNoState.NO) {
+                        else if (this._yesNoJudgeInNextFrame === YesNoState.NO) {
                             clearInterval(timer);
-                            self._messageWindow.update();
-                            self._yesNoJudge = self._yesNoJudgeInNextFrame;
-                            self._messageWindow.setInputDisable();
+                            this._messageWindow.update();
+                            this._yesNoJudge = this._yesNoJudgeInNextFrame;
+                            this._messageWindow.setInputDisable();
                             setTimeout((): void => {
-                                self._messageWindow.hide();
-                                self._yesNoJudge = YesNoState.UNSELECTED;
-                                self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
-                                self._isLoadedSound = false;
-                                self.openGameWindow();
+                                this._messageWindow.hide();
+                                this._yesNoJudge = YesNoState.UNSELECTED;
+                                this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
+                                this._isLoadedSound = false;
+                                this.openGameWindow();
                             }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                         }
                     }, Consts.DEFAULT_FRAME_INTERVAL);
 
                 } else {
                     clearInterval(timer);
-                    self._messageWindow.hide();
-                    self._yesNoJudge = YesNoState.UNSELECTED;
-                    self._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
-                    self._isLoadedSound = true;
-                    self.loadSound();
+                    this._messageWindow.hide();
+                    this._yesNoJudge = YesNoState.UNSELECTED;
+                    this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
+                    this._isLoadedSound = true;
+                    this.loadSound();
                     requestAnimationFrame(this.soundCheckCaller);
                 }
             });
