@@ -49,8 +49,7 @@ $virtualpad-spacing: 8vmin;
     margin-right: $virtualpad-spacing;
 }
 
-#wwa-virtualpad-left button,
-#wwa-virtualpad-right button {
+.wwa-virtualpad__button {
     @extend %virtualpad_button;
 }
 
@@ -123,4 +122,8 @@ $virtualpad-spacing: 8vmin;
 #wwa-fast-button {
     grid-area: fast;
     border-radius: 0 1rem 1rem 0;
+}
+
+.wwa-virtualpad__button--pressed {
+    background-color: #808080;
 }

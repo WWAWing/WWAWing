@@ -435,7 +435,11 @@ export class WWA {
                 [VirtualPadButtonCode.BUTTON_RIGHT]:    <HTMLButtonElement>util.$id("wwa-right-button"),
                 [VirtualPadButtonCode.BUTTON_DOWN]:     <HTMLButtonElement>util.$id("wwa-down-button")
             };
-            this._virtualPadStore = new VirtualPadStore(this._virtualPadButtonElements);
+            this._virtualPadStore = new VirtualPadStore(
+                this._virtualPadButtonElements,
+                buttonCode => this._virtualPadButtonElements[buttonCode].classList.add("wwa-virtualpad__button--pressed"),
+                buttonCode => this._virtualPadButtonElements[buttonCode].classList.remove("wwa-virtualpad__button--pressed")
+            );
             this._gamePadStore = new GamePadStore();
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;

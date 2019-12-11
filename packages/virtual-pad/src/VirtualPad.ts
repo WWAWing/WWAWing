@@ -1,4 +1,3 @@
-
 export enum VirtualPadButtonCode {
     BUTTON_ENTER,
     BUTTON_ESC,
@@ -44,6 +43,8 @@ type VirtualPadButtonTouching = {
     next: boolean
 };
 
+type VirtualPadActionFunction = (buttonCode: VirtualPadButtonCode) => void;
+
 /**
  * 仮想パッドの状態管理を行うクラスです。
  */
@@ -54,6 +55,9 @@ export default class VirtualPadStore {
      * @property
      */
     private _enabled: boolean;
+
+    private _onTouchStart: VirtualPadActionFunction;
+    private _onTouchEnd: VirtualPadActionFunction;
 
     /**
      * 有効なボタンが格納されている配列です。各ボタンを繰り返し処理する場合に使用します。
@@ -67,8 +71,10 @@ export default class VirtualPadStore {
     /**
      * @param buttons 仮想パッドの各要素
      */
-    constructor(buttons: VirtualPadButtons) {
+    constructor(buttons: VirtualPadButtons, onTouchStart: VirtualPadActionFunction, onTouchEnd: VirtualPadActionFunction) {
         this._enabled = true;
+        this._onTouchStart = onTouchStart;
+        this._onTouchEnd = onTouchEnd;
         this._availableButtons = [];
         this._isTouchingButtons = {};
 
@@ -235,6 +241,18 @@ export default class VirtualPadStore {
             let currentButtonTouching = this._isTouchingButtons[buttonCode];
             this._isTouchingButtons[buttonCode].prev = currentButtonTouching.current;
             this._isTouchingButtons[buttonCode].current = currentButtonTouching.next;
+
+            /**
+             * ボタンの状態に応じて、コールバック関数を実行
+             */
+            switch (this.getButtonState(buttonCode)) {
+                case VirtualPadState.TOUCH:
+                    this._onTouchStart(buttonCode);
+                    break;
+                case VirtualPadState.LEAVE:
+                    this._onTouchEnd(buttonCode);
+                    break;
+            }
         })
     }
 }
