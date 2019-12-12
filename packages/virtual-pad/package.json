@@ -1,12 +1,15 @@
 {
   "name": "@wwawing/virtual-pad",
   "version": "3.2.10",
-  "description": "WWA Wing Virtual Pad for smaprtphone",
+  "description": "WWA Wing Virtual Pad for mobile phone",
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p ."
   },
   "author": "WWA Wing Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.5.2"
+  }
 }

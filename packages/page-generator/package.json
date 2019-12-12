@@ -32,6 +32,7 @@
     "typescript": "^3.5.2"
   },
   "dependencies": {
+    "@types/node": "^12.12.17",
     "js-yaml": "^3.13.1",
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.13",
