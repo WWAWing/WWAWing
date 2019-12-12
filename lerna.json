@@ -4,5 +4,10 @@
   "packages": [
     "packages/*"
   ],
-  "version": "independent"
+  "command": {
+    "publish": {
+      "graphType": "all"
+    }
+  },
+  "version": "3.2.10"
 }

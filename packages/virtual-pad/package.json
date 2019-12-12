@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/virtual-pad",
-  "version": "0.0.0",
+  "version": "3.2.10",
   "description": "WWA Wing Virtual Pad for smaprtphone",
   "main": "lib/index.js",
   "scripts": {

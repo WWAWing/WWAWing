@@ -1,0 +1,38 @@
+{
+  "name": "@wwawing/all",
+  "version": "3.2.10",
+  "description": "World Wide Adventure: an RPG Engine.",
+  "author": "WWA Wing Team",
+  "license": "MIT",
+  "scripts": {
+    "make-zip": "npm run clean && ts-node ./scripts",
+    "clean": "shx rm -rf dist",
+    "prepare": "npm run make-zip"
+  },
+  "files": [
+    "dist"
+  ],
+  "bugs": {
+    "url": "https://github.com/WWAWing/WWAWing/issues"
+  },
+  "homepage": "https://github.com/WWAWing/WWAWing#readme",
+  "devDependencies": {
+    "@types/jszip": "^3.1.6",
+    "@types/shelljs": "^0.8.6",
+    "@wwawing/assets": "^3.2.10",
+    "@wwawing/common-interface": "3.2.3",
+    "@wwawing/debug-server": "3.2.3",
+    "@wwawing/engine": "^3.2.10",
+    "@wwawing/loader": "3.2.3",
+    "@wwawing/page-generator": "^3.2.9",
+    "@wwawing/styles": "^3.2.9",
+    "jszip": "^3.2.2",
+    "shelljs": "^0.8.3",
+    "shx": "^0.3.2",
+    "ts-node": "^8.5.0",
+    "typescript": "^3.7.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

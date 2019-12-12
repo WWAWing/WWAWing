@@ -1,6 +1,8 @@
 .idea
 .vscode
+.DS_Store
 
+lib/
 node_modules/
 wwa.long.js
 wwa.long.js.map
