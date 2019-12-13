@@ -25,7 +25,7 @@ export default function autoRotate() {
      * autoRotate を有効化すると、誤動作を防ぐため、拡大操作が無効になります。
      *     Webページの中に設置する場合は、特にご注意ください。
      */
-    let viewportValue = "inital-scale=1.0,user-scalable=no";
+    let viewportValue = "user-scalable=no";
 
     if (browserWidth > browserHeight) {
         const width = (browserWidth / browserHeight) * WWA_HEIGHT;
