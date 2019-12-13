@@ -26,6 +26,7 @@
     "@wwawing/loader": "3.2.3",
     "@wwawing/page-generator": "^3.2.9",
     "@wwawing/styles": "^3.2.9",
+    "@wwawing/virtual-pad": "^3.2.10",
     "jszip": "^3.2.2",
     "shelljs": "^0.8.3",
     "shx": "^0.3.2",
