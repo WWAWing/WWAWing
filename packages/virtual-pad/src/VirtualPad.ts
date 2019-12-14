@@ -146,12 +146,25 @@ export default class VirtualPadStore {
 
         /**
          * targetTouches で触れている座標を検出し、その場所から要素を取得します。
+         *     Q: どうして touch.target を使用しないの？
+         *     A: touchmove イベントの touch.target はタッチし始めた要素が取得され、動いた先を取得することはできないため。
          * @see https://developer.mozilla.org/ja/docs/Web/API/DocumentOrShadowRoot/elementFromPoint
          */
         const touch = event.targetTouches.item(0);
-        const element = document.elementFromPoint(touch.pageX, touch.pageY);
+        let element = document.elementFromPoint(touch.pageX, touch.pageY);
+        
+        /**
+         * ここからは、ボタンそのものを得るために属性チェックします。押している要素がボタンの中のテキスト要素かもしれないためです。
+         *     - 親要素に type 属性があった場合は、その親要素を取り出します。
+         *     - 親要素でも type 属性がない場合は、押している要素が違うとみなし終了します。
+         */
         if (element === null) {
             return;
+        } else if (!element.hasAttribute("type")) {
+            element = element.parentElement;
+            if (element === null || !element.hasAttribute("type")) {
+                return;
+            }
         }
 
         /**

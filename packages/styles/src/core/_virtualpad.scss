@@ -1,4 +1,5 @@
 $virtual-buttons-size: 16vmin;
+$virtual-buttons-move-size: 20vmin;
 $virtualpad-margin: 6vmin;
 $virtualpad-spacing: 1vmin;
 
@@ -30,9 +31,10 @@ $virtualpad-spacing: 1vmin;
     left: 0;
     display: grid;
     grid-template:
-        ".     up  .    "
-        "left .    right"
-        ".    down .    ";
+        " up  right"
+        "left down ";
+    transform: rotate(45deg);
+    gap: 4px;
     margin-left: $virtualpad-margin;
 }
 
@@ -58,6 +60,11 @@ $virtualpad-spacing: 1vmin;
     pointer-events: auto;
 }
 
+.wwa-virtualpad__button-text {
+    transform: rotate(-45deg);
+    touch-action: none;
+}
+
 #wwa-up-button,
 #wwa-right-button,
 #wwa-down-button,
@@ -66,31 +73,41 @@ $virtualpad-spacing: 1vmin;
 #wwa-esc-button,
 #wwa-estimate-button {
     font-size: 35px;
-    height: $virtual-buttons-size;
-    width: $virtual-buttons-size;
 }
 
 #wwa-up-button,
 #wwa-right-button,
 #wwa-down-button,
 #wwa-left-button {
-    border-radius: 1rem;
+    height: $virtual-buttons-move-size;
+    width: $virtual-buttons-move-size;
+}
+
+#wwa-enter-button,
+#wwa-esc-button,
+#wwa-estimate-button {
+    height: $virtual-buttons-size;
+    width: $virtual-buttons-size;
 }
 
 #wwa-up-button {
     grid-area: up;
+    border-radius: 100% 0 20% 0;
 }
 
 #wwa-right-button {
     grid-area: right;
+    border-radius: 0 100% 0 20%;
 }
 
 #wwa-down-button {
     grid-area: down;
+    border-radius: 20% 0 100% 0;
 }
 
 #wwa-left-button {
     grid-area: left;
+    border-radius: 0 20% 0 100%;
 }
 
 #wwa-enter-button,
