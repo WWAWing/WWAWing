@@ -1,18 +1,11 @@
 export default function makeInject() {
   return `
     <div id="wwa-virtualpad-left">
-      <button class="wwa-virtualpad__button" id="wwa-up-button">
-        <div class="wwa-virtualpad__button-text">△</div>
-      </button>
-      <button class="wwa-virtualpad__button" id="wwa-left-button">
-        <div class="wwa-virtualpad__button-text">◁</div>
-      </button>
-      <button class="wwa-virtualpad__button" id="wwa-right-button">
-        <div class="wwa-virtualpad__button-text">▷</div>
-      </button>
-      <button class="wwa-virtualpad__button" id="wwa-down-button">
-        <div class="wwa-virtualpad__button-text">▽</div>
-      </button>
+      <button class="wwa-virtualpad__button" id="wwa-up-button"></button>
+      <button class="wwa-virtualpad__button" id="wwa-left-button"></button>
+      <button class="wwa-virtualpad__button" id="wwa-right-button"></button>
+      <button class="wwa-virtualpad__button" id="wwa-down-button"></button>
+      <div class="wwa-virtualpad__hole"></div>
     </div>
     <div id="wwa-virtualpad-right">
       <button class="wwa-virtualpad__button" id="wwa-slow-button">I</button>

@@ -1,5 +1,6 @@
 $virtualpad-margin: 8vmin;
 $virtualpad-spacing: 1vmin;
+$virtualpad-hole-size: 15vmin;
 $virtual-buttons-size: 16vmin;
 $virtual-buttons-size-small: 10vmin;
 $virtual-buttons-move-size: 20vmin;
@@ -48,14 +49,23 @@ $virtual-buttons-font-size-small: 25px;
 }
 
 #wwa-virtualpad-left {
+    $hole-size-half: $virtualpad-hole-size / 2;
     left: 0;
     display: grid;
-    grid-template:
-        " up  right"
-        "left down ";
+    grid-template-columns: 1fr $hole-size-half $hole-size-half 1fr;
+    grid-template-rows:    1fr $hole-size-half $hole-size-half 1fr;
+    width: $virtual-buttons-move-size * 2;
+    height: $virtual-buttons-move-size * 2;
     transform: rotate(45deg);
     gap: 4px;
     margin-left: $virtualpad-margin;
+
+    .wwa-virtualpad__hole {
+        grid-column: 2 / 4;
+        grid-row: 2 / 4;
+        background-color: #808080;
+        border-radius: 50%;
+    }
 }
 
 #wwa-virtualpad-right {
@@ -82,11 +92,6 @@ $virtual-buttons-font-size-small: 25px;
     &--pressed {
         background-color: #808080;
     }
-
-    .wwa-virtualpad__button-text {
-        transform: rotate(-45deg);
-        touch-action: none;
-    }
 }
 
 #wwa-enter-button,
@@ -105,26 +110,47 @@ $virtual-buttons-font-size-small: 25px;
 #wwa-down-button,
 #wwa-left-button {
     @extend %virtualpad_button-move;
+
+    &::before {
+        transform: rotate(-45deg);
+        display: block;
+    }
 }
 
 #wwa-up-button {
-    grid-area: up;
-    border-radius: 100% 0 20% 0;
+    grid-column: 1 / 3;
+    grid-row: 1 / 3;
+    border-radius: 100% 0 0 0;
+    &::before {
+        content: "△";
+    }
 }
 
 #wwa-right-button {
-    grid-area: right;
-    border-radius: 0 100% 0 20%;
+    grid-column: 3 / 5;
+    grid-row: 1 / 3;
+    border-radius: 0 100% 0 0;
+    &::before {
+        content: "▷";
+    }
 }
 
 #wwa-down-button {
-    grid-area: down;
-    border-radius: 20% 0 100% 0;
+    grid-column: 3 / 5;
+    grid-row: 3 / 5;
+    border-radius: 0 0 100% 0;
+    &::before {
+        content: "▽";
+    }
 }
 
 #wwa-left-button {
-    grid-area: left;
-    border-radius: 0 20% 0 100%;
+    grid-column: 1 / 3;
+    grid-row: 3 / 5;
+    border-radius: 0 0 0 100%;
+    &::before {
+        content: "◁";
+    }
 }
 
 #wwa-enter-button {

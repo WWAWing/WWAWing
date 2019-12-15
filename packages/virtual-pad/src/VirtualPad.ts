@@ -72,11 +72,13 @@ export default class VirtualPadStore {
 
     /**
      * @param buttons 仮想パッドの各要素
+     * @param moveButtons 仮想パッドの移動ボタンの要素
      * @param onTouchStart 仮想パッドを押下した場合に発生するコールバック関数
      * @param onTouchEnd 仮想パッドを話した場合に発生するコールバック関数
      */
     constructor(
         buttons: VirtualPadButtons | {},
+        moveButtons: HTMLElement = null,
         onTouchStart: VirtualPadEventFunction = null,
         onTouchEnd: VirtualPadEventFunction = null
     ) {
@@ -134,6 +136,9 @@ export default class VirtualPadStore {
                 button.addEventListener("touchmove", this._detectMovedButton.bind(this));
             }
         }
+        if (moveButtons !== null) {
+            moveButtons.addEventListener("touchmove", this._detectMovedButton.bind(this));
+        }
     }
 
     /**
@@ -152,19 +157,8 @@ export default class VirtualPadStore {
          */
         const touch = event.targetTouches.item(0);
         let element = document.elementFromPoint(touch.pageX, touch.pageY);
-        
-        /**
-         * ここからは、ボタンそのものを得るために属性チェックします。押している要素がボタンの中のテキスト要素かもしれないためです。
-         *     - 親要素に type 属性があった場合は、その親要素を取り出します。
-         *     - 親要素でも type 属性がない場合は、押している要素が違うとみなし終了します。
-         */
-        if (element === null) {
+        if (element === null || !element.hasAttribute("type")) {
             return;
-        } else if (!element.hasAttribute("type")) {
-            element = element.parentElement;
-            if (element === null || !element.hasAttribute("type")) {
-                return;
-            }
         }
 
         /**
