@@ -1,4 +1,5 @@
-$virtualpad-margin: 8vmin;
+$virtualpad-margin-x: 6vmin;
+$virtualpad-margin-y: 20vmin;
 $virtualpad-spacing: 1vmin;
 $virtualpad-hole-size: 15vmin;
 $virtual-buttons-size: 16vmin;
@@ -43,7 +44,7 @@ $virtual-buttons-font-size-small: 25px;
 
 #wwa-virtualpad-left,
 #wwa-virtualpad-right {
-    bottom: $virtualpad-margin;
+    bottom: $virtualpad-margin-y;
     position: fixed;
     pointer-events: none;
 }
@@ -58,7 +59,7 @@ $virtual-buttons-font-size-small: 25px;
     height: $virtual-buttons-move-size * 2;
     transform: rotate(45deg);
     gap: 4px;
-    margin-left: $virtualpad-margin;
+    margin-left: $virtualpad-margin-x;
 
     .wwa-virtualpad__hole {
         grid-column: 2 / 4;
@@ -80,9 +81,9 @@ $virtual-buttons-font-size-small: 25px;
         " .    enter "
         "esc   enter "
         "esc     .   "
-        " .      .   " $virtualpad-margin;
+        " .      .   " $virtualpad-spacing;
     gap: $virtualpad-spacing;
-    margin-right: $virtualpad-margin;
+    margin-right: $virtualpad-margin-x;
 }
 
 .wwa-virtualpad__button {
