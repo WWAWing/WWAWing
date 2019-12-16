@@ -27,6 +27,15 @@ export default class WWAInputManager {
     }
 
     /**
+     * 入力状態を送信します。
+     * @param inputStore 入力したコントローラーに対応したストア
+     * @param inputType 入力したボタンの種類
+     */
+    public sendInput(inputStore: any, inputType: any) {
+
+    }
+
+    /**
      * 手持ちの WWAInputStore すべてに update の操作を行います。
      * @todo 実装する
      */

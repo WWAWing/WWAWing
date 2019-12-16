@@ -10,6 +10,10 @@ export default interface WWAInputStore {
      * 入力状態を確認し、それぞれのInputStoreに対応したStateを出力します。
      */
     checkButtonState(): WWAInputState;
+    /**
+     * 指定したボタンに入力状態をセットします。
+     */
+    setButtonInput(): void;
 }
 
 export enum WWAInputState {
