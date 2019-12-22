@@ -3009,6 +3009,7 @@ export class WWA {
 
         this._waitFrame = 0;
         this._temporaryInputDisable = true;
+        this._execMacroListInNextFrame = [];
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
     }
 
