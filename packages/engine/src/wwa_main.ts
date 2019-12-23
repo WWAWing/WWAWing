@@ -4124,7 +4124,7 @@ export class WWA {
                 }
             }
         }
-        const messageWindowStyleSelector = "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window";
+        const messageWindowStyleSelector = "div.wwa-message-window, div#wwa-text-message-window, div#wwa-battle-estimate, div#wwa-password-window";
         const messageWindowOpacity = this._isClassicModeEnable ? 1 : 0.9;
         const messageWindowStyleRules = `
 background-color: rgba(${this._wwaData.frameColorR},  ${this._wwaData.frameColorG}, ${this._wwaData.frameColorB}, ${messageWindowOpacity});
