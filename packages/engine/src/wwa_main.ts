@@ -180,7 +180,7 @@ export class WWA {
     public audioContext: AudioContext;
     public audioGain: GainNode;
     private audioExtension: string = "";
-    public userDevice:  UserDevice;
+    public userDevice: UserDevice;
 
     constructor(
         mapFileName: string,
