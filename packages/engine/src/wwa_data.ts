@@ -301,6 +301,12 @@ export class Face {
     }
 }
 
+export enum Bottom_WWA_Button {
+    GOTO_WWA = 0,
+    BATTLE_REPORT = 1,
+    GAME_END = 2
+};
+
 export enum Direction {
     LEFT = 0,
     RIGHT = 1,
@@ -790,6 +796,18 @@ export class WWAConsts {
     static QUICK_SAVE_THUMNAIL_WIDTH: number = 99;//セーブデータサムネイル横幅
     static QUICK_SAVE_THUMNAIL_HEIGHT: number = 99;//セーブデータサムネイル縦幅
     static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
+}
+
+export class WWAButtonTexts {
+    static EMPTY_LOAD: string = "";
+    static EMPTY_SAVE: string = "";
+    static PASSWORD: string         = "Password";
+    static QUICK_SAVE: string       = "Quick Save";
+    static QUICK_LOAD: string       = "Quick Load";
+    static BATTLE_REPORT: string    = "Battle Report";
+    static GAME_END: string         = "Game End";
+    static GOTO_WWA: string         = "Goto WWA";
+    static RESTART_GAME: string     = "Restart Game";
 }
 
 export class LoaderResponse {
