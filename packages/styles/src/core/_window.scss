@@ -139,3 +139,48 @@ $wwa_icon_width-scale_up: 100px;
         }
     }
 }
+
+div.savedata {
+    display: inline-block;
+    text-align: center;
+    padding: 2px 17px;
+    vertical-align: middle;
+    font-size: 0;
+    border-width: 3px;
+    border-style: dotted;
+    border-color: transparent;
+    border-radius:7px;
+
+    &.select {
+        border-color: #FF0000;
+    }
+    > div.wide-cell-row {
+        position: relative;
+        pointer-events: none;
+    }
+    > div.ss {
+        display: inline-block;
+        padding: 0;
+        margin: 0px 4px 3px 4px;
+        position: relative;
+        pointer-events: none;
+        &:empty {
+            background-color: rgba(0, 0, 0, 0.2);
+            width: 99px;
+            height: 99px;
+        }
+        > canvas {
+            display: inline-block;
+        }
+        > span {
+            display: inline-block;
+            font-size: 7px;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: rgba(255, 255, 255, 1);
+            padding: 3px 7px; 
+        }
+    }
+}
