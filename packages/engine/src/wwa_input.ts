@@ -390,6 +390,29 @@ export class GamePadStore {
         }
         return false;
     }
+    public vibration(isStrong: boolean) {
+        if (!this.gamepad) {
+            return false;
+        }
+        if (!this.gamepad.vibrationActuator) {
+            return false;
+        }
+        if (isStrong) {
+            this.gamepad.vibrationActuator.playEffect("dual-rumble", {
+                startDelay: 0,
+                duration: 100,
+                weakMagnitude: 1,
+                strongMagnitude: 0.5
+            });
+        } else {
+            this.gamepad.vibrationActuator.playEffect("dual-rumble", {
+                startDelay: 0,
+                duration: 100,
+                weakMagnitude: 0.5,
+                strongMagnitude: 1
+            });
+        }
+    }
 
     private stickFloor(...codes): number {
         if (!this.gamepad) {
