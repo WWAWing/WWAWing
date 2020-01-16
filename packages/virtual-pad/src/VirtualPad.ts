@@ -71,6 +71,12 @@ export default class VirtualPadStore {
     };
 
     /**
+     * 移動ボタンの要素自体です。主に移動ボタンで指を動かす際に使用します。
+     * @property
+     */
+    private _moveButtonsElement: HTMLElement;
+
+    /**
      * @param buttons 仮想パッドの各要素
      * @param moveButtons 仮想パッドの移動ボタンの要素
      * @param onTouchStart 仮想パッドを押下した場合に発生するコールバック関数
@@ -87,6 +93,7 @@ export default class VirtualPadStore {
         this._onTouchEnd = onTouchEnd || null;
         this._availableButtons = [];
         this._isTouchingButtons = {};
+        this._moveButtonsElement = moveButtons;
 
         for (let buttonTypeString in buttons) {
             /**
@@ -148,26 +155,31 @@ export default class VirtualPadStore {
     private _detectMovedButton(event: TouchEvent) {
         event.preventDefault();
         this.allClear();
+        
+        // 中央のポジションを取得
+        const moveButtonRect = this._moveButtonsElement.getBoundingClientRect();
+        const centerPositionX = moveButtonRect.left + (moveButtonRect.width / 2);
+        const centerPositionY = moveButtonRect.top + (moveButtonRect.height / 2);
 
-        /**
-         * targetTouches で触れている座標を検出し、その場所から要素を取得します。
-         *     Q: どうして touch.target を使用しないの？
-         *     A: touchmove イベントの touch.target はタッチし始めた要素が取得され、動いた先を取得することはできないため。
-         * @see https://developer.mozilla.org/ja/docs/Web/API/DocumentOrShadowRoot/elementFromPoint
-         */
         const touch = event.targetTouches.item(0);
-        let element = document.elementFromPoint(touch.pageX, touch.pageY);
-        if (element === null || !element.hasAttribute("type")) {
-            return;
-        }
+        const touchX = touch.pageX - centerPositionX;
+        const touchY = touch.pageY - centerPositionY;
 
-        /**
-         * 触れた先の要素が見つかった場合は、その要素の種類を取得し、その要素に対して触れたことを呼び出します。
-         */
-        const touchButtonType = element.getAttribute("type");
-        const touchButtonCode = parseInt(touchButtonType);
-        if (VirtualPadStore.isMoveButton(touchButtonCode)) {
-            this.setTouchInfo(touchButtonCode);
+        if (touchX >= touchY) { // 上と右
+            /**
+             * touchY をマイナスにして、グラフの空間上で擬似的に表現します。
+             */
+            if (touchX <= -touchY) { // 上
+                this.setTouchInfo(VirtualPadButtonCode.BUTTON_UP);
+            } else { // 右
+                this.setTouchInfo(VirtualPadButtonCode.BUTTON_RIGHT);
+            }
+        } else { // 左と下
+            if (touchX >= -touchY) { // 下
+                this.setTouchInfo(VirtualPadButtonCode.BUTTON_DOWN);
+            } else { // 左
+                this.setTouchInfo(VirtualPadButtonCode.BUTTON_LEFT);
+            }
         }
     }
 
