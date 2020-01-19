@@ -3063,6 +3063,7 @@ export class WWA {
 
         this._waitFrame = 0;
         this._temporaryInputDisable = true;
+        this._execMacroListInNextFrame = [];
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
     }
 
@@ -4177,7 +4178,7 @@ export class WWA {
                 }
             }
         }
-        const messageWindowStyleSelector = "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window";
+        const messageWindowStyleSelector = "div.wwa-message-window, div#wwa-text-message-window, div#wwa-battle-estimate, div#wwa-password-window";
         const messageWindowOpacity = this._isClassicModeEnable ? 1 : 0.9;
         const messageWindowStyleRules = `
 background-color: rgba(${this._wwaData.frameColorR},  ${this._wwaData.frameColorG}, ${this._wwaData.frameColorB}, ${messageWindowOpacity});
