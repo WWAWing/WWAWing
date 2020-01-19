@@ -28,7 +28,7 @@ export default class WWAInputManager {
      * @param inputType 確認したいボタンの種類
      * @param inputStores inputStore のフィルタリング(空欄の場合はすべての inputStore を確認)
      * @example manager.checkHit(WWAInputType.UP)
-     * @example manager.checkHit(WWAInputType.ITEM_1, WWAInputStoreType.MOUSE)
+     * @example manager.checkHit(WWAInputType.ITEM_1, [WWAInputStoreType.MOUSE])
      */
     public checkHit(inputType: WWAInputType, inputStores: Array<WWAInputStoreType> = []): boolean {
         if (inputStores.length <= 0) {
