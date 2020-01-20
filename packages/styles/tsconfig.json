@@ -1,29 +1,13 @@
 {
-    "compilerOptions": {
-        "rootDir": "./src",
-        "outDir": "./lib",
-        "target": "es5",
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "lib": [
-            "es2017",
-            "es2016",
-            "es2015",
-            "es5",
-            "dom"
-        ],
-        "strict": true,
-        "noLib": false,
-        "declaration": true,
-        "removeComments": true,
-        "experimentalDecorators": true,
-        "noUnusedParameters": false,
-        "noUnusedLocals": true
-    },
-    "include": [
-        "src/*.ts"
-    ],
-    "exclude": [
-        "src/*.scss"
-    ]
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./scripts",
+    "module": "commonjs",
+  },
+  "include": [
+      "scripts/*.ts"
+  ],
+  "exclude": [
+      "src/*.scss"
+  ]
 }
