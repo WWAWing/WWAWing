@@ -19,6 +19,11 @@ export interface WWAInputStore {
      * @param inputType セットしたいボタンの種類
      */
     setButtonInput(inputType: WWAInputType): void;
+    /**
+     * 指定したボタンに入力状態解除をセットします。
+     * @param inputType 解除したいボタンの種類
+     */
+    setButtonRelease(inputType: WWAInputType): void;
 }
 
 export enum WWAInputState {
@@ -42,6 +47,7 @@ export enum WWAInputType {
     LEFT,
     YES,
     NO,
+    MESSAGE, // メッセージ送り
     ITEM_1,
     ITEM_2,
     ITEM_3,
@@ -54,6 +60,9 @@ export enum WWAInputType {
     ITEM_10,
     ITEM_11,
     ITEM_12,
+    ESTIMATE_REPORT, // 戦闘結果予測
+    SPEED_UP,
+    SPEED_DOWN,
     HOWOTO_CONTROL, // ショートカットキーの一覧
     CONTROL_PANEL_SELECT,
     QUICK_LOAD,
