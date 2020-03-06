@@ -1,6 +1,26 @@
 import { WWAInputStore, WWAInputState, WWAInputType, WWAInputStoreType } from "@wwawing/common-interface";
 
 /**
+ * 複数用意した WWAInputState を1つの WWAInputState にまとめます。
+ *     PRESS→DOWN/UP→NONE の優先順位で確認します。
+ *     DOWN と UP が複数確認された場合は PRESS とみなされます。
+ *     例えばキーボードの指定したキーが UP で、ゲームパッドの指定したボタンが DOWN とした場合は、 PRESS が出てきます。
+ * @param states 
+ */
+function unionState(states: WWAInputState[]): WWAInputState {
+    if (states.includes(WWAInputState.PRESS) ||
+    (states.includes(WWAInputState.DOWN) && states.includes(WWAInputState.UP))
+    ) {
+        return WWAInputState.PRESS;
+    } else if (states.includes(WWAInputState.DOWN)) {
+        return WWAInputState.DOWN;
+    } else if (states.includes(WWAInputState.UP)) {
+        return WWAInputState.DOWN;
+    }
+    return WWAInputState.NONE;
+}
+
+/**
  * WWAの入力状態を一括して管理できるマネージャークラスです。
  */
 export default class WWAInputManager {
@@ -33,46 +53,22 @@ export default class WWAInputManager {
     public checkHit(inputType: WWAInputType, inputStores: Array<WWAInputStoreType> = []): boolean {
         if (inputStores.length <= 0) {
             return this._inputStores.some(storeObject =>
-                storeObject.store.checkButtonState(inputType) === WWAInputState.PRESS
+                unionState(storeObject.store.checkButtonState(inputType)) === WWAInputState.PRESS
             );
         }
 
         return this._getInputStoresByTypes(inputStores).some(inputStore => 
-            inputStore.checkButtonState(inputType) === WWAInputState.PRESS
+            unionState(inputStore.checkButtonState(inputType)) === WWAInputState.PRESS
         );
     }
 
     /**
-     * 現在の入力状態を確認します。複数のコントローラーから入力状態が確認できる場合は PRESS→DOWN/UP→NONE の優先順位で確認します。
-     *     DOWN と UP が複数確認された場合は PRESS とみなされます。
-     *     例えばキーボードの指定したキーが UP で、ゲームパッドの指定したボタンが DOWN とした場合は、 PRESS が出てきます。
+     * 現在の入力状態を確認します。
      * @todo PRESS_MESSAGECHANGE も考慮するようにする
      */
     public getState(inputType: WWAInputType) {
-        const inputStates = this._inputStores.map(storeObject => storeObject.store.checkButtonState(inputType));
-        if (inputStates.includes(WWAInputState.PRESS) ||
-            (inputStates.includes(WWAInputState.DOWN) && inputStates.includes(WWAInputState.UP))
-        ) {
-            return WWAInputState.PRESS;
-        } else if (inputStates.includes(WWAInputState.DOWN)) {
-            return WWAInputState.DOWN;
-        } else if (inputStates.includes(WWAInputState.UP)) {
-            return WWAInputState.DOWN;
-        }
-        return WWAInputState.NONE;
-    }
-
-    /**
-     * 入力状態を送信します。対応した InputStore が存在しない場合は実行しません。
-     * @param inputStore 入力したコントローラーに対応したストア
-     * @param inputType 入力したボタンの種類
-     */
-    public sendInput(inputStoreType: WWAInputStoreType, inputType: WWAInputType) {
-        const targetInputStore = this._getInputStoreByType(inputStoreType);
-        if (targetInputStore === null) {
-            return;
-        }
-        targetInputStore.setButtonInput(inputType);
+        const inputStates: WWAInputState[] = [].concat(...this._inputStores.map(storeObject => storeObject.store.checkButtonState(inputType)));
+        return unionState(inputStates);
     }
 
     /**
