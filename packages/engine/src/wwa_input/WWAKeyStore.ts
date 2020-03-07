@@ -9,84 +9,37 @@ export enum KeyState {
     KEYPRESS_MESSAGECHANGE // TODO: 必要なのか調べる
 }
 
-/**
- * キーの名前と対応しているコードを記したオブジェクトです。
- */
-export const KeyCode: {[key: string]: number} = {
-    KEY_ENTER: 13,
-    KEY_SHIFT: 16,
-    KEY_ESC: 27,
-    KEY_SPACE: 32,
-    KEY_LEFT: 37,
-    KEY_UP: 38,
-    KEY_RIGHT: 39,
-    KEY_DOWN: 40,
-    KEY_1: 49,
-    KEY_2: 50,
-    KEY_3: 51,
-    KEY_A: 65,
-    KEY_C: 67,
-    KEY_D: 68,
-    KEY_E: 69,
-    KEY_I: 73,
-    KEY_M: 77,
-    KEY_N: 78,
-    KEY_P: 80,
-    KEY_Q: 81,
-    KEY_S: 83,
-    KEY_W: 87,
-    KEY_X: 88,
-    KEY_Y: 89,
-    KEY_Z: 90,
-    KEY_F1: 112,
-    KEY_F2: 113,
-    KEY_F3: 114,
-    KEY_F4: 115,
-    KEY_F5: 116,
-    KEY_F6: 117,
-    KEY_F7: 118,
-    KEY_F8: 119,
-    KEY_F9: 120,
-    KEY_F12: 123
-}
-
-/**
- * @todo KeyCode の値にしか対応出来ないようにしたいが、可能か？ 調べる
- * @see KeyCode
- */
-export type KeyCodeValue = number;
-
-const InputKeyTable: {[key in WWAInputType]: Array<KeyCodeValue>} = {
-    UP: [KeyCode.KEY_UP],
-    RIGHT: [KeyCode.KEY_RIGHT],
-    DOWN: [KeyCode.KEY_DOWN],
-    LEFT: [KeyCode.KEY_LEFT],
-    YES: [KeyCode.KEY_Y],
-    NO: [KeyCode.KEY_N],
-    MESSAGE: [KeyCode.KEY_SPACE], // メッセージ送り
-    ITEM_1: [KeyCode.KEY_1],
-    ITEM_2: [KeyCode.KEY_2],
-    ITEM_3: [KeyCode.KEY_3],
-    ITEM_4: [KeyCode.KEY_Q],
-    ITEM_5: [KeyCode.KEY_W],
-    ITEM_6: [KeyCode.KEY_E],
-    ITEM_7: [KeyCode.KEY_A],
-    ITEM_8: [KeyCode.KEY_S],
-    ITEM_9: [KeyCode.KEY_D],
-    ITEM_10: [KeyCode.KEY_Z],
-    ITEM_11: [KeyCode.KEY_X],
-    ITEM_12: [KeyCode.KEY_C],
-    ESTIMATE_REPORT: [KeyCode.KEY_M, KeyCode.KEY_F1], // 戦闘結果予測
-    SPEED_UP: [KeyCode.KEY_P, KeyCode.KEY_F2],
-    SPEED_DOWN: [KeyCode.KEY_I],
-    HOWOTO_CONTROL: [KeyCode.KEY_F12], // ショートカットキーの一覧
+const InputKeyTable: {[key in WWAInputType]: Array<string>} = {
+    UP: ['ArrowUp'],
+    RIGHT: ['ArrowRight'],
+    DOWN: ['ArrowDown'],
+    LEFT: ['ArrowLeft'],
+    YES: ['y'],
+    NO: ['n'],
+    MESSAGE: [' '], // メッセージ送り
+    ITEM_1: ['1'],
+    ITEM_2: ['2'],
+    ITEM_3: ['3'],
+    ITEM_4: ['q'],
+    ITEM_5: ['w'],
+    ITEM_6: ['e'],
+    ITEM_7: ['a'],
+    ITEM_8: ['s'],
+    ITEM_9: ['d'],
+    ITEM_10: ['z'],
+    ITEM_11: ['x'],
+    ITEM_12: ['c'],
+    ESTIMATE_REPORT: ['m', 'F1'], // 戦闘結果予測
+    SPEED_UP: ['p', 'F2'],
+    SPEED_DOWN: ['i'],
+    HOWOTO_CONTROL: ['F12'], // ショートカットキーの一覧
     CONTROL_PANEL_SELECT: [],
-    QUICK_LOAD: [KeyCode.KEY_F5],
-    PASSOWRD_LOAD: [KeyCode.KEY_F3],
-    QUICK_SAVE: [KeyCode.KEY_F6],
-    PASSWORD_SAVE: [KeyCode.KEY_F4],
-    RESTART_GAME: [KeyCode.KEY_F7],
-    GOTO_WWA: [KeyCode.KEY_F8]
+    QUICK_LOAD: ['F5'],
+    PASSOWRD_LOAD: ['F3'],
+    QUICK_SAVE: ['F6'],
+    PASSWORD_SAVE: ['F4'],
+    RESTART_GAME: ['F7'],
+    GOTO_WWA: ['F8']
 }
 
 /**
@@ -95,44 +48,48 @@ const InputKeyTable: {[key in WWAInputType]: Array<KeyCodeValue>} = {
  */
 export default class WWAKeyStore implements WWAInputStore {
     /**
-     * 許容できる同士対応キー数
+     * 次入力されることが確定されたキー情報
      */
-    public static KEY_BUFFER_MAX = 256;
+    private _nextKeyState: Set<string>;
     /**
-     * 次入力されることが確定されたか？ の種類ごとの配列
+     * 現在入力されているキー情報
      */
-    private _nextKeyState: Array<boolean>;
+    private _keyState: Set<string>;
     /**
-     * 現在入力されているか？ の種類ごとの配列
+     * 前回入力されていたキー情報
      */
-    private _keyState: Array<boolean>;
-    /**
-     * 前回入力されていたか？ の種類ごとの配列
-     */
-    private _prevKeyState: Array<boolean>;
+    private _prevKeyState: Set<string>;
 
     /**
      * @todo 調べる
      */
-    private _prevKeyStateOnControllable: Array<boolean>;
+    private _prevKeyStateOnControllable: Set<string>;
 
     /**
      * @todo 調べる
      */
-    private _keyInputContinueFrameNum: Array<number>;
+    private _keyInputContinueFrameNum: Map<string, number>;
+
+    constructor() {
+        this._nextKeyState = new Set();
+        this._keyState = new Set();
+        this._prevKeyState = new Set();
+        this._prevKeyStateOnControllable = new Set();
+        this._keyInputContinueFrameNum = new Map();
+    }
 
     /**
      * @see WWAInputStore.checkButtonState
      */
     public checkButtonState(inputType: WWAInputType): Array<WWAInputState> {
-        return InputKeyTable[inputType].map(keyCode => {
-            if (this._prevKeyState[keyCode]) {
-                if (this._keyState[keyCode]) {
+        return InputKeyTable[inputType].map(key => {
+            if (this._prevKeyState.has(key)) {
+                if (this._keyState.has(key)) {
                     return WWAInputState.PRESS;
                 }
                 return WWAInputState.UP;
             } else {
-                if (this._keyState[keyCode]) {
+                if (this._keyState.has(key)) {
                     return WWAInputState.DOWN;
                 }
                 return WWAInputState.NONE;
@@ -143,14 +100,14 @@ export default class WWAKeyStore implements WWAInputStore {
     /**
      * @todo 調べる
      */
-    public getKeyStateForControllPlayer(keyCode: KeyCodeValue): KeyState {
-        if (this._prevKeyStateOnControllable[keyCode]) {
-            if (this._keyState[keyCode]) {
+    public getKeyStateForControllPlayer(key: string): KeyState {
+        if (this._prevKeyStateOnControllable.has(key)) {
+            if (this._keyState.has(key)) {
                 return KeyState.KEYPRESS;
             }
             return KeyState.KEYUP;
         } else {
-            if (this._keyState[keyCode]) {
+            if (this._keyState.has(key)) {
                 return KeyState.KEYDOWN;
             }
             return KeyState.NONE;
@@ -160,73 +117,51 @@ export default class WWAKeyStore implements WWAInputStore {
     /**
      * @todo 調べる
      */
-    public getKeyStateForMessageCheck(keyCode: KeyCodeValue): KeyState {
-        if (this._prevKeyState[keyCode]) {
-            if (this._keyState[keyCode]) {
+    public getKeyStateForMessageCheck(key: string): KeyState {
+        if (this._prevKeyState.has(key)) {
+            if (this._keyState.has(key)) {
                 return (
-                    this._keyInputContinueFrameNum[keyCode] >=
+                    this._keyInputContinueFrameNum.get(key) >=
                         WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM ?
                         KeyState.KEYPRESS_MESSAGECHANGE : KeyState.KEYPRESS
                 );
             }
             return KeyState.KEYUP;
         } else {
-            if (this._keyState[keyCode]) {
+            if (this._keyState.has(key)) {
                 return KeyState.KEYDOWN;
             }
             return KeyState.NONE;
         }
     }
 
-    public setPressInfo(keyCode: KeyCodeValue): void {
-        this._nextKeyState[keyCode] = true;
-        this._keyInputContinueFrameNum[keyCode] = -1;
+    public setPressInfo(key: string): void {
+        this._nextKeyState.add(key);
+        this._keyInputContinueFrameNum.set(key, -1);
     }
 
-    public setReleaseInfo(keyCode: KeyCodeValue): void {
-        this._nextKeyState[keyCode] = false;
-        this._keyInputContinueFrameNum[keyCode] = -1;
+    public setReleaseInfo(key: string): void {
+        this._nextKeyState.delete(key);
+        this._keyInputContinueFrameNum.delete(key);
     }
 
     /**
      * @see WWAInputStore.update
      */
     public update(): void {
-        var i: number;
-        this._prevKeyState = this._keyState.slice();
-        this._keyState = this._nextKeyState.slice();
-        for (i = 0; i < WWAKeyStore.KEY_BUFFER_MAX; i++) {
-            if (this._keyState[i]) {
-                this._keyInputContinueFrameNum[i]++;
-            }
-        }
+        this._prevKeyState = new Set(this._keyState);
+        this._keyState = new Set(this._nextKeyState);
+        this._keyState.forEach(key => {
+            const keyFrameValue = this._keyInputContinueFrameNum.get(key);
+            this._keyInputContinueFrameNum.set(key, keyFrameValue + 1);
+        });
     }
 
     public memorizeKeyStateOnControllableFrame(): void {
-        this._prevKeyStateOnControllable = this._keyState.slice();
+        this._prevKeyStateOnControllable = new Set(this._keyState);
     }
 
     public allClear(): void {
-        var i: number;
-        this._nextKeyState = new Array(WWAKeyStore.KEY_BUFFER_MAX);
-        for (i = 0; i < WWAKeyStore.KEY_BUFFER_MAX; i++) {
-            this._nextKeyState[i] = false;
-        }
-    }
-
-    constructor() {
-        var i: number;
-        this._nextKeyState = new Array(WWAKeyStore.KEY_BUFFER_MAX);
-        this._keyState = new Array(WWAKeyStore.KEY_BUFFER_MAX);
-        this._prevKeyState = new Array(WWAKeyStore.KEY_BUFFER_MAX);
-        this._prevKeyStateOnControllable = new Array(WWAKeyStore.KEY_BUFFER_MAX);
-        this._keyInputContinueFrameNum = new Array(WWAKeyStore.KEY_BUFFER_MAX);
-        for (i = 0; i < WWAKeyStore.KEY_BUFFER_MAX; i++) {
-            this._nextKeyState[i] = false;
-            this._keyState[i] = false;
-            this._prevKeyState[i] = false;
-            this._prevKeyStateOnControllable[i] = false;
-            this._keyInputContinueFrameNum[i] = 0;
-        }
+        this._nextKeyState.clear();
     }
 }
