@@ -22,6 +22,7 @@ function unionState(states: WWAInputState[]): WWAInputState {
 
 /**
  * WWAの入力状態を一括して管理できるマネージャークラスです。
+ * @todo プレイヤーが操作可能かどうかを判定できるようにしたい
  */
 export default class WWAInputManager {
     /**
@@ -35,12 +36,16 @@ export default class WWAInputManager {
      * WWAInputStore を追加します。
      * @param inputStore WWAInputStore のインスタンス
      * @param inputStoreType そのインスタンスの種類
+     * @param callbackFn 追加後に実行したいコールバック関数
      */
-    public addStore(inputStore: WWAInputStore, inputStoreType: WWAInputStoreType) {
+    public addStore(inputStore: WWAInputStore, inputStoreType: WWAInputStoreType, callbackFn?: (store: WWAInputStore) => void) {
         this._inputStores.push({
             store: inputStore,
             type: inputStoreType
         });
+        if (callbackFn) {
+            callbackFn(inputStore);
+        }
     }
 
     /**
@@ -78,6 +83,18 @@ export default class WWAInputManager {
         this._inputStores.forEach((storeObject) => {
             storeObject.store.update();
         });
+    }
+
+    /**
+     * 指定した InputStore の種類から InputStore のインスタンスを取得し、そのインスタンスを利用してコールバック関数を実行させます。
+     * @param inputStoreType 
+     * @param callbackFn 
+     */
+    public getInputStore(inputStoreType: WWAInputStoreType, callbackFn: (store: WWAInputStore) => void) {
+        const targetStore = this._getInputStoreByType(inputStoreType);
+        if (targetStore !== null) {
+            callbackFn(targetStore);
+        }
     }
 
     /**

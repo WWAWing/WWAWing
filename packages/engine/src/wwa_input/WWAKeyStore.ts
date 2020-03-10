@@ -50,20 +50,20 @@ export default class WWAKeyStore implements WWAInputStore {
     /**
      * 次入力されることが確定されたキー情報
      */
-    private _nextKeyState: Set<string>;
+    private _nextKeyState: Array<string>;
     /**
      * 現在入力されているキー情報
      */
-    private _keyState: Set<string>;
+    private _keyState: Array<string>;
     /**
      * 前回入力されていたキー情報
      */
-    private _prevKeyState: Set<string>;
+    private _prevKeyState: Array<string>;
 
     /**
      * @todo 調べる
      */
-    private _prevKeyStateOnControllable: Set<string>;
+    private _prevKeyStateOnControllable: Array<string>;
 
     /**
      * @todo 調べる
@@ -71,10 +71,10 @@ export default class WWAKeyStore implements WWAInputStore {
     private _keyInputContinueFrameNum: Map<string, number>;
 
     constructor() {
-        this._nextKeyState = new Set();
-        this._keyState = new Set();
-        this._prevKeyState = new Set();
-        this._prevKeyStateOnControllable = new Set();
+        this._nextKeyState = [];
+        this._keyState = [];
+        this._prevKeyState = [];
+        this._prevKeyStateOnControllable = [];
         this._keyInputContinueFrameNum = new Map();
     }
 
@@ -83,13 +83,13 @@ export default class WWAKeyStore implements WWAInputStore {
      */
     public checkButtonState(inputType: WWAInputType): Array<WWAInputState> {
         return InputKeyTable[inputType].map(key => {
-            if (this._prevKeyState.has(key)) {
-                if (this._keyState.has(key)) {
+            if (this._prevKeyState.includes(key)) {
+                if (this._keyState.includes(key)) {
                     return WWAInputState.PRESS;
                 }
                 return WWAInputState.UP;
             } else {
-                if (this._keyState.has(key)) {
+                if (this._keyState.includes(key)) {
                     return WWAInputState.DOWN;
                 }
                 return WWAInputState.NONE;
@@ -101,13 +101,13 @@ export default class WWAKeyStore implements WWAInputStore {
      * @todo 調べる
      */
     public getKeyStateForControllPlayer(key: string): KeyState {
-        if (this._prevKeyStateOnControllable.has(key)) {
-            if (this._keyState.has(key)) {
+        if (this._prevKeyStateOnControllable.includes(key)) {
+            if (this._keyState.includes(key)) {
                 return KeyState.KEYPRESS;
             }
             return KeyState.KEYUP;
         } else {
-            if (this._keyState.has(key)) {
+            if (this._keyState.includes(key)) {
                 return KeyState.KEYDOWN;
             }
             return KeyState.NONE;
@@ -118,8 +118,8 @@ export default class WWAKeyStore implements WWAInputStore {
      * @todo 調べる
      */
     public getKeyStateForMessageCheck(key: string): KeyState {
-        if (this._prevKeyState.has(key)) {
-            if (this._keyState.has(key)) {
+        if (this._prevKeyState.includes(key)) {
+            if (this._keyState.includes(key)) {
                 return (
                     this._keyInputContinueFrameNum.get(key) >=
                         WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM ?
@@ -128,7 +128,7 @@ export default class WWAKeyStore implements WWAInputStore {
             }
             return KeyState.KEYUP;
         } else {
-            if (this._keyState.has(key)) {
+            if (this._keyState.includes(key)) {
                 return KeyState.KEYDOWN;
             }
             return KeyState.NONE;
@@ -136,12 +136,16 @@ export default class WWAKeyStore implements WWAInputStore {
     }
 
     public setPressInfo(key: string): void {
-        this._nextKeyState.add(key);
+        if (!this._nextKeyState.includes(key)) {
+            this._nextKeyState.push(key);
+        }
         this._keyInputContinueFrameNum.set(key, -1);
     }
 
     public setReleaseInfo(key: string): void {
-        this._nextKeyState.delete(key);
+        if (this._nextKeyState.includes(key)) {
+            this._nextKeyState.splice(this._nextKeyState.indexOf(key), 1);
+        }
         this._keyInputContinueFrameNum.delete(key);
     }
 
@@ -149,8 +153,8 @@ export default class WWAKeyStore implements WWAInputStore {
      * @see WWAInputStore.update
      */
     public update(): void {
-        this._prevKeyState = new Set(this._keyState);
-        this._keyState = new Set(this._nextKeyState);
+        this._prevKeyState = this._keyState.slice();
+        this._keyState = this._nextKeyState.slice();
         this._keyState.forEach(key => {
             const keyFrameValue = this._keyInputContinueFrameNum.get(key);
             this._keyInputContinueFrameNum.set(key, keyFrameValue + 1);
@@ -158,10 +162,10 @@ export default class WWAKeyStore implements WWAInputStore {
     }
 
     public memorizeKeyStateOnControllableFrame(): void {
-        this._prevKeyStateOnControllable = new Set(this._keyState);
+        this._prevKeyStateOnControllable = this._keyState.slice();
     }
 
     public allClear(): void {
-        this._nextKeyState.clear();
+        this._nextKeyState = [];
     }
 }
