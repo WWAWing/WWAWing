@@ -1,5 +1,4 @@
 import { WWAInputStore, WWAInputType, WWAInputState } from "@wwawing/common-interface";
-import { WWAConsts } from "../wwa_data";
 
 export enum KeyState {
     NONE,
@@ -14,9 +13,9 @@ const InputKeyTable: {[key in WWAInputType]: Array<string>} = {
     RIGHT: ['ArrowRight'],
     DOWN: ['ArrowDown'],
     LEFT: ['ArrowLeft'],
-    YES: ['y'],
-    NO: ['n'],
-    MESSAGE: [' '], // メッセージ送り
+    YES: ['y', 'Enter'],
+    NO: ['n', 'Escape'],
+    MESSAGE: [' ', 'Enter', 'Escape'],
     ITEM_1: ['1'],
     ITEM_2: ['2'],
     ITEM_3: ['3'],
@@ -29,17 +28,18 @@ const InputKeyTable: {[key in WWAInputType]: Array<string>} = {
     ITEM_10: ['z'],
     ITEM_11: ['x'],
     ITEM_12: ['c'],
-    ESTIMATE_REPORT: ['m', 'F1'], // 戦闘結果予測
+    ESTIMATE_REPORT: ['m', 'F1'],
     SPEED_UP: ['p', 'F2'],
     SPEED_DOWN: ['i'],
-    HOWOTO_CONTROL: ['F12'], // ショートカットキーの一覧
-    CONTROL_PANEL_SELECT: [],
+    HOWOTO_CONTROL: ['F12'],
+    CONTROL_PANEL_SELECT: ['F9'],
     QUICK_LOAD: ['F5'],
     PASSOWRD_LOAD: ['F3'],
     QUICK_SAVE: ['F6'],
     PASSWORD_SAVE: ['F4'],
     RESTART_GAME: ['F7'],
-    GOTO_WWA: ['F8']
+    GOTO_WWA: ['F8'],
+    SOUNDLOAD_STOP: [' ']
 }
 
 /**
@@ -115,26 +115,31 @@ export default class WWAKeyStore implements WWAInputStore {
     }
 
     /**
-     * @todo 調べる
+     * @see WWAInputStore.getInputContinueFrameNum
      */
-    public getKeyStateForMessageCheck(key: string): KeyState {
-        if (this._prevKeyState.includes(key)) {
-            if (this._keyState.includes(key)) {
-                return (
-                    this._keyInputContinueFrameNum.get(key) >=
-                        WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM ?
-                        KeyState.KEYPRESS_MESSAGECHANGE : KeyState.KEYPRESS
-                );
+    public getInputContinueFrameNum(inputType: WWAInputType): number {
+        const keyNames = InputKeyTable[inputType];
+        const keyFrames = keyNames.map(keyName => {
+            if (this._keyInputContinueFrameNum.has(keyName)) {
+                return this._keyInputContinueFrameNum.get(keyName);
             }
-            return KeyState.KEYUP;
-        } else {
-            if (this._keyState.includes(key)) {
-                return KeyState.KEYDOWN;
-            }
-            return KeyState.NONE;
-        }
+            return 0;
+        });
+        /**
+         * 入力した各キーのフレーム数を計算し、最大値を求めています。
+         *     普通に最大値を出力するのであれば、 Math.max とスプレッド構文で済むのですが、
+         *     スプレッド構文は ES5 に無いので、reduce メソッドで代用しています。
+         * @see https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Operators/Spread_syntax
+         */
+        return keyFrames.reduce((maxValue, currentValue) => {
+            return maxValue > currentValue ? maxValue : currentValue;
+        });
     }
 
+    /**
+     * 指定したキーに入力情報を与えます
+     * @param key 押したいキー (KeyboardEvent.key)
+     */
     public setPressInfo(key: string): void {
         if (!this._nextKeyState.includes(key)) {
             this._nextKeyState.push(key);
@@ -142,6 +147,10 @@ export default class WWAKeyStore implements WWAInputStore {
         this._keyInputContinueFrameNum.set(key, -1);
     }
 
+    /**
+     * 指定したキーの入力情報を解除します
+     * @param key 離したいキー (KeyboardEvent.key)
+     */
     public setReleaseInfo(key: string): void {
         if (this._nextKeyState.includes(key)) {
             this._nextKeyState.splice(this._nextKeyState.indexOf(key), 1);
@@ -165,7 +174,7 @@ export default class WWAKeyStore implements WWAInputStore {
         this._prevKeyStateOnControllable = this._keyState.slice();
     }
 
-    public allClear(): void {
+    public clear(): void {
         this._nextKeyState = [];
     }
 }

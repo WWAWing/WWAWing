@@ -1,4 +1,5 @@
 import { WWAInputStore, WWAInputState, WWAInputType, WWAInputStoreType } from "@wwawing/common-interface";
+import { WWAConsts } from "../wwa_data";
 
 /**
  * 複数用意した WWAInputState を1つの WWAInputState にまとめます。
@@ -31,6 +32,10 @@ export default class WWAInputManager {
      * @property
      */
     private _inputStores: Array<InputStoreObject>;
+
+    constructor() {
+        this._inputStores = [];
+    }
 
     /**
      * WWAInputStore を追加します。
@@ -68,6 +73,27 @@ export default class WWAInputManager {
     }
 
     /**
+     * checkHit の DOWN 検知版です。押しっぱなしでは反応しません。
+     * @param inputType 
+     * @param inputStores 
+     */
+    public checkTrigger(inputType: WWAInputType, inputStores: Array<WWAInputStoreType> = []): boolean {
+        const isInputStateDown = (inputStore: WWAInputStore) => {
+            return inputStore.checkButtonState(inputType).some(inputState =>
+                inputState === WWAInputState.DOWN
+            );
+        }
+
+        if (inputStores.length <= 0) {
+            return this._inputStores.some(storeObject =>
+                isInputStateDown(storeObject.store)
+            );
+        }
+
+        return this._getInputStoresByTypes(inputStores).some(isInputStateDown);
+    }
+
+    /**
      * 現在の入力状態を確認します。
      * @todo PRESS_MESSAGECHANGE も考慮するようにする
      */
@@ -77,12 +103,37 @@ export default class WWAInputManager {
     }
 
     /**
+     * 現在入力している状態でメッセージ送りが可能か判別します。
+     *     条件は 指定した操作に対応したボタンが DOWN または 押してから 20フレーム秒以上 になります。
+     */
+    public canMessageChange(inputType: WWAInputType): boolean {
+        return this._inputStores.some(storeObject => {
+            const store = storeObject.store;
+            if (unionState(store.checkButtonState(inputType)) === WWAInputState.DOWN) {
+                return true;
+            }
+
+            const frameNum = store.getInputContinueFrameNum(inputType);
+            return frameNum !== null && frameNum >= WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM;
+        });
+    }
+
+    /**
      * 手持ちの WWAInputStore すべてに update の操作を行います。
      */
     public update() {
-        this._inputStores.forEach((storeObject) => {
-            storeObject.store.update();
-        });
+        this._eachInputStores(store => store.update());
+    }
+
+    /**
+     * すべての WWAInputStore の入力状態をクリアします。
+     */
+    public allClear() {
+        this._eachInputStores(store => store.clear());
+    }
+
+    public memorizeKeyStateOnControllableFrame() {
+        
     }
 
     /**
@@ -95,6 +146,16 @@ export default class WWAInputManager {
         if (targetStore !== null) {
             callbackFn(targetStore);
         }
+    }
+
+    /**
+     * 手持ちの InputStore それぞれに指定した処理を実行させます。
+     * @param callbackFn それぞれの InputStore に実行される関数
+     */
+    private _eachInputStores(callbackFn: (store: WWAInputStore, storeType: WWAInputStoreType) => void) {
+        this._inputStores.forEach(storeObject => {
+            callbackFn(storeObject.store, storeObject.type);
+        });
     }
 
     /**

@@ -14,6 +14,19 @@ export interface WWAInputStore {
      * @param inputType 確認したいボタンの種類
      */
     checkButtonState(inputType: WWAInputType): Array<WWAInputState>;
+    /**
+     * 入力状態をクリアします。
+     */
+    clear(): void;
+    /**
+     * 現在のキーの状態をプレイヤーに移します。
+     */
+    memorizeKeyStateOnControllableFrame(): void;
+    /**
+     * 指定した入力状態がどのくらい続いているか調べます。
+     *     対応していない場合は null になります。
+     */
+    getInputContinueFrameNum(inputType: WWAInputType): number | null;
 }
 
 export enum WWAInputState {
@@ -59,7 +72,8 @@ export type WWAInputType =
     'QUICK_SAVE' |
     'PASSWORD_SAVE' |
     'RESTART_GAME' |
-    'GOTO_WWA';
+    'GOTO_WWA' |
+    'SOUNDLOAD_STOP'; // サウンド読み込みの中止
 
 /**
  * WWAInputStore を種別化するための enum です。

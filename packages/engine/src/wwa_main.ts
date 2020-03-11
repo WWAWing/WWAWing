@@ -45,6 +45,9 @@ import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject, checkTouchDevice } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
+import WWAKeyStore from "./wwa_input/WWAKeyStore";
+import WWAInputManager from "./wwa_input/WWAInputManager";
+import { WWAInputStoreType, WWAInputState } from "@wwawing/common-interface";
 
 let wwa: WWA;
 let wwap_mode: boolean = false;
@@ -75,7 +78,8 @@ export class WWA {
     private _animationCounter: number;
     private _player: Player;
     private _monster: Monster;
-    private _keyStore: KeyStore;
+    private _inputManager: WWAInputManager;
+    private _keyStore: WWAKeyStore;
     private _mouseStore: MouseStore;
     private _virtualPadStore: VirtualPadStore;
     private _virtualPadButtonElements: VirtualPadButtons | {};
@@ -422,8 +426,10 @@ export class WWA {
             this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax);
             this._objectMovingDataManager = new ObjectMovingDataManager(this, this._player);
             this._camera.setPlayer(this._player);
-            this._keyStore = new KeyStore();
+            this._inputManager = new WWAInputManager();
+            this._keyStore = new WWAKeyStore();
             this._mouseStore = new MouseStore();
+            this._inputManager.addStore(this._keyStore, WWAInputStoreType.KEYBOARD);
             if (checkTouchDevice()) {
                 this._virtualPadButtonElements = {
                     [VirtualPadButtonCode.BUTTON_ENTER]:    <HTMLButtonElement>util.$id("wwa-enter-button"),
@@ -465,7 +471,7 @@ export class WWA {
                         e.stopPropagation();
                         return;
                 }
-                this._keyStore.setPressInfo(e.keyCode);
+                this._keyStore.setPressInfo(e.key);
                 if (e.keyCode === KeyCode.KEY_F5) {
                     e.preventDefault()
                     return;
@@ -527,7 +533,7 @@ export class WWA {
                         e.stopPropagation();
                         return;
                 }
-                this._keyStore.setReleaseInfo(e.keyCode);
+                this._keyStore.setReleaseInfo(e.key);
                 if (e.keyCode === KeyCode.KEY_F5) {
                     e.preventDefault()
                 } else if (e.keyCode === KeyCode.KEY_DOWN ||
@@ -567,12 +573,12 @@ export class WWA {
                 }
             });
             window.addEventListener("blur", (e): void => {
-                this._keyStore.allClear();
+                this._inputManager.allClear();
                 this._mouseStore.clear();
                 this._virtualPadStore.allClear();
             });
             window.addEventListener("contextmenu", (e): void => {
-                this._keyStore.allClear();
+                this._inputManager.allClear();
                 this._mouseStore.clear();
                 this._virtualPadStore.allClear();
             });
@@ -855,15 +861,13 @@ export class WWA {
 
                         if (this._yesNoJudgeInNextFrame === YesNoState.UNSELECTED) {
                             if (
-                                this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                                this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
+                                this._inputManager.checkHit('YES') ||
                                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A) ||
                                 this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_ENTER)
                             ) {
                                 this._yesNoJudgeInNextFrame = YesNoState.YES
                             } else if (
-                                this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
-                                this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                                this._inputManager.checkHit('NO') ||
                                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B) ||
                                 this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_ESC)
                             ) {
@@ -1106,7 +1110,7 @@ export class WWA {
             var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
         } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
         this._keyStore.update();
-        if (this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
+        if (this._inputManager.getState('SOUNDLOAD_STOP') === WWAInputState.DOWN) {
             this._soundLoadSkipFlag = true;
         }
         for (var i = 1; i <= Consts.SOUND_MAX; i++) {
@@ -1391,115 +1395,109 @@ export class WWA {
 
         if (this._player.isControllable()) {
 
-            if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ||
-                this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
+            if (this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
                 this._player.controll(Direction.LEFT);
                 this._objectMovingDataManager.update();
-            } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_UP) === KeyState.KEYDOWN ||
-                this._mouseStore.getMouseStateForControllPlayer(Direction.UP) === MouseState.MOUSEDOWN) {
+            } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.UP) === MouseState.MOUSEDOWN) {
                 this._player.controll(Direction.UP);
                 this._objectMovingDataManager.update();
-            } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN ||
-                this._mouseStore.getMouseStateForControllPlayer(Direction.RIGHT) === MouseState.MOUSEDOWN) {
+            } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.RIGHT) === MouseState.MOUSEDOWN) {
                 this._player.controll(Direction.RIGHT);
                 this._objectMovingDataManager.update();
-            } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_DOWN) === KeyState.KEYDOWN ||
-                this._mouseStore.getMouseStateForControllPlayer(Direction.DOWN) === MouseState.MOUSEDOWN) {
+            } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.DOWN) === MouseState.MOUSEDOWN) {
                 this._player.controll(Direction.DOWN);
                 this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(dirToKey[pdir])) {
+            } else if (this._inputManager.checkHit(dirToKey[pdir])) {
                 this._player.controll(pdir);
                 this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
+            } else if (this._inputManager.checkHit('LEFT') ||
                 this._mouseStore.checkClickMouse(Direction.LEFT) ||
                 this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT) ||
                 this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_LEFT)) {
                 this._player.controll(Direction.LEFT);
                 this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
+            } else if (this._inputManager.checkHit('UP') ||
                 this._mouseStore.checkClickMouse(Direction.UP) ||
                 this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP) ||
                 this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_UP)) {
                 this._player.controll(Direction.UP);
                 this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
+            } else if (this._inputManager.checkHit('RIGHT') ||
                 this._mouseStore.checkClickMouse(Direction.RIGHT) ||
                 this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT) ||
                 this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_RIGHT)) {
                 this._player.controll(Direction.RIGHT);
                 this._objectMovingDataManager.update();
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
+            } else if (this._inputManager.checkHit('DOWN') ||
                 this._mouseStore.checkClickMouse(Direction.DOWN) ||
                 this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN) ||
                 this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_DOWN)) {
                 this._player.controll(Direction.DOWN);
                 this._objectMovingDataManager.update();
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_1) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_1')) {
                 this.onselectitem(1);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_2) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_2')) {
                 this.onselectitem(2);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_3) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_3')) {
                 this.onselectitem(3);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_Q) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_4')) {
                 this.onselectitem(4);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_W) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_5')) {
                 this.onselectitem(5);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_E) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_6')) {
                 this.onselectitem(6);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_A) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_7')) {
                 this.onselectitem(7);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_S) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_8')) {
                 this.onselectitem(8);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_D) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_9')) {
                 this.onselectitem(9);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_Z) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_10')) {
                 this.onselectitem(10);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_X) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_11')) {
                 this.onselectitem(11);
-            } else if (this._keyStore.getKeyState(KeyCode.KEY_C) === KeyState.KEYDOWN) {
+            } else if (this._inputManager.checkTrigger('ITEM_12')) {
                 this.onselectitem(12);
             } else if (
-                this._keyStore.getKeyState(KeyCode.KEY_I) ||
+                this._inputManager.checkTrigger('SPEED_DOWN') ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_MINUS) ||
                 this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_SLOW)) {
                 this.onchangespeed(SpeedChange.DOWN);
             } else if (
-                this._keyStore.checkHitKey(KeyCode.KEY_P) ||
-                this._keyStore.checkHitKey(KeyCode.KEY_F2) ||
+                this._inputManager.checkTrigger('SPEED_UP') ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_PLUS) ||
                 this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_FAST)) {
                 this.onchangespeed(SpeedChange.UP);
             } else if (
-                this._keyStore.getKeyState(KeyCode.KEY_F1) === KeyState.KEYDOWN ||
-                this._keyStore.getKeyState(KeyCode.KEY_M) === KeyState.KEYDOWN ||
+                this._inputManager.checkTrigger('ESTIMATE_REPORT') ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A) ||
                 this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_ESTIMATE)) {
                 // 戦闘結果予測 
                 if (this.launchBattleEstimateWindow()) {
                 }
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {
+            } else if (this._inputManager.checkTrigger('PASSOWRD_LOAD')) {
                 this.playSound(SystemSound.DECISION);
                 this.onselectbutton(SidebarButton.QUICK_LOAD, true);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
+            } else if (this._inputManager.checkTrigger('PASSWORD_SAVE')) {
                 this.playSound(SystemSound.DECISION);
                 this.onpasswordsavecalled()
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F5) ||
+            } else if (this._inputManager.checkTrigger('QUICK_LOAD') ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_ZR)) {
                 this.onselectbutton(SidebarButton.QUICK_LOAD);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F6) ||
+            } else if (this._inputManager.checkTrigger('QUICK_SAVE') ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_ZL)) {
                 this.onselectbutton(SidebarButton.QUICK_SAVE);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F7) ||
+            } else if (this._inputManager.checkTrigger('RESTART_GAME') ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_R)) {
                 this.onselectbutton(SidebarButton.RESTART_GAME);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
+            } else if (this._inputManager.checkTrigger('GOTO_WWA')) {
                 this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
+            } else if (this._inputManager.checkTrigger('CONTROL_PANEL_SELECT') ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X)) {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                     this.onitemmenucalled();
                 }
-            } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12)) {
+            } else if (this._inputManager.checkTrigger('HOWOTO_CONTROL')) {
                 // コマンドのヘルプ 
                 this._displayHelp()
             }
@@ -1524,15 +1522,13 @@ export class WWA {
                 if (!this._messageWindow.isInputDisable()) {
                     if (this._yesNoJudge === YesNoState.UNSELECTED) {
                         if (
-                            this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                            this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
+                            this._inputManager.checkTrigger('YES') ||
                             this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A) ||
                             this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH
                         ) {
                             this._yesNoJudge = YesNoState.YES
                         } else if (
-                            this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
-                            this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                            this._inputManager.checkTrigger('NO') ||
                             this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B) ||
                             this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.TOUCH
                         ) {
@@ -1554,22 +1550,21 @@ export class WWA {
             } else if (this._messageWindow.isItemMenuChoice()) {
                 //Item Menu 選択肢
                 this._itemMenu.update();
-                if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
+                if (this._inputManager.checkHit('LEFT') ||
                     this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
                     this._itemMenu.cursor_left();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
+                } else if (this._inputManager.checkHit('UP') ||
                     this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
                     this._itemMenu.cursor_up();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
+                } else if (this._inputManager.checkHit('RIGHT') ||
                     this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
                     this._itemMenu.cursor_right();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
+                } else if (this._inputManager.checkHit('DOWN') ||
                     this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
                     this._itemMenu.cursor_down();
                 }
                 if (
-                    this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                    this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
+                    this._inputManager.checkTrigger('YES') ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)
                 ) {
                     this._setNextMessage();
@@ -1580,8 +1575,7 @@ export class WWA {
                     this._mouseStore.checkClickMouse(Direction.UP) ||
                     this._mouseStore.checkClickMouse(Direction.RIGHT) ||
                     this._mouseStore.checkClickMouse(Direction.DOWN) ||
-                    this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
-                    this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                    this._inputManager.checkTrigger('NO') ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B)
                 ) {
                     for (var i = 0; i < sidebarButtonCellElementID.length; i++) {
@@ -1597,12 +1591,7 @@ export class WWA {
                 }
             } else {
                 //通常メッセージ
-                var enter = this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_ENTER);
-                var space = this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_SPACE);
-                var esc = this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_ESC);
-                if (enter === KeyState.KEYDOWN || enter === KeyState.KEYPRESS_MESSAGECHANGE ||
-                    space === KeyState.KEYDOWN || space === KeyState.KEYPRESS_MESSAGECHANGE ||
-                    esc === KeyState.KEYDOWN || esc === KeyState.KEYPRESS_MESSAGECHANGE ||
+                if (this._inputManager.canMessageChange('MESSAGE') ||
                     this._mouseStore.getMouseState() === MouseState.MOUSEDOWN ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B) ||
                     this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH ||
@@ -1619,8 +1608,7 @@ export class WWA {
                 
             }
         } else if (this._player.isWatingEstimateWindow()) {
-            if (this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
+            if (this._inputManager.checkTrigger('MESSAGE') ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B) ||
                 this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH ||
                 this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.TOUCH) {
@@ -2287,7 +2275,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
 
             // 前方パーツ重複実行防止
-            this._keyStore.allClear();
+            this._inputManager.allClear();
             this._mouseStore.clear();
             return;
         }
@@ -3900,7 +3888,7 @@ export class WWA {
         if (mesID === 0) {
             if (messageDisplayed) {
                 this._messageWindow.hide();
-                this._keyStore.allClear();
+                this._inputManager.allClear();
                 this._mouseStore.clear();
             }
             this._player.clearMessageWaiting();

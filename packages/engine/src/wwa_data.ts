@@ -1,7 +1,6 @@
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
-import { KeyCode } from "./wwa_input";
-import { WWAData } from "@wwawing/common-interface";
+import { WWAData, WWAInputType } from "@wwawing/common-interface";
 export { WWAData };
 
 export class EquipmentStatus {
@@ -318,7 +317,7 @@ export enum Direction {
 export var vx = [-1, 1, 0, 0, -1, -1, 1, 1, 0];
 export var vy = [0, 0, 1, -1, 1, -1, 1, -1, 0];
 export var dirToPos = [4, 6, 2, 0]; // 仮
-export var dirToKey = [KeyCode.KEY_LEFT, KeyCode.KEY_RIGHT, KeyCode.KEY_DOWN, KeyCode.KEY_UP];
+export var dirToKey: WWAInputType[] = ['LEFT', 'RIGHT', 'DOWN', 'UP'];
 
 
 export enum YesNoState {
