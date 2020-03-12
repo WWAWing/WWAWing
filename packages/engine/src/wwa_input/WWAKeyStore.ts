@@ -81,9 +81,11 @@ export default class WWAKeyStore implements WWAInputStore {
     /**
      * @see WWAInputStore.checkButtonState
      */
-    public checkButtonState(inputType: WWAInputType): Array<WWAInputState> {
+    public checkButtonState(inputType: WWAInputType, forControllPlayer: boolean = false): Array<WWAInputState> {
         return InputKeyTable[inputType].map(key => {
-            if (this._prevKeyState.includes(key)) {
+            const targetPrevKeyState = forControllPlayer ? this._prevKeyStateOnControllable : this._prevKeyState;
+
+            if (targetPrevKeyState.includes(key)) {
                 if (this._keyState.includes(key)) {
                     return WWAInputState.PRESS;
                 }
@@ -95,23 +97,6 @@ export default class WWAKeyStore implements WWAInputStore {
                 return WWAInputState.NONE;
             }
         });
-    }
-
-    /**
-     * @todo 調べる
-     */
-    public getKeyStateForControllPlayer(key: string): KeyState {
-        if (this._prevKeyStateOnControllable.includes(key)) {
-            if (this._keyState.includes(key)) {
-                return KeyState.KEYPRESS;
-            }
-            return KeyState.KEYUP;
-        } else {
-            if (this._keyState.includes(key)) {
-                return KeyState.KEYDOWN;
-            }
-            return KeyState.NONE;
-        }
     }
 
     /**

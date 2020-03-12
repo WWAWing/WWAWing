@@ -12,14 +12,15 @@ export interface WWAInputStore {
      * 入力状態を確認し、それぞれのInputStoreに対応したStateを出力します。
      *     MキーとF1キーのように、1つの操作に対して複数の操作方法が存在する場合があるかもしれないので、配列で出力します。
      * @param inputType 確認したいボタンの種類
+     * @param forControllPlayer プレイヤー操作用の入力状態を使用するか
      */
-    checkButtonState(inputType: WWAInputType): Array<WWAInputState>;
+    checkButtonState(inputType: WWAInputType, forControllPlayer?: boolean): Array<WWAInputState>;
     /**
      * 入力状態をクリアします。
      */
     clear(): void;
     /**
-     * 現在のキーの状態をプレイヤーに移します。
+     * 現在の入力の状態をプレイヤー操作用の状態に移します。
      */
     memorizeKeyStateOnControllableFrame(): void;
     /**

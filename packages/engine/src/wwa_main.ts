@@ -855,7 +855,7 @@ export class WWA {
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
-                        this._keyStore.update();
+                        this._inputManager.update();
                         this._gamePadStore.update();
                         this._virtualPadStore.update();
 
@@ -1109,7 +1109,7 @@ export class WWA {
         if (!this._hasTitleImg) {
             var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
         } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
-        this._keyStore.update();
+        this._inputManager.update();
         if (this._inputManager.getState('SOUNDLOAD_STOP') === WWAInputState.DOWN) {
             this._soundLoadSkipFlag = true;
         }
@@ -1354,7 +1354,7 @@ export class WWA {
         this._stopUpdateByLoadFlag = false;
 
         // キー情報のアップデート
-        this._keyStore.update();
+        this._inputManager.update();
         this._mouseStore.update();
         this._virtualPadStore.update();
         this._gamePadStore.update();
@@ -1395,16 +1395,20 @@ export class WWA {
 
         if (this._player.isControllable()) {
 
-            if (this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
+            if (this._inputManager.checkTriggerForControllPlayer('LEFT') ||
+                this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
                 this._player.controll(Direction.LEFT);
                 this._objectMovingDataManager.update();
-            } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.UP) === MouseState.MOUSEDOWN) {
+            } else if (this._inputManager.checkTriggerForControllPlayer('UP') ||
+                this._mouseStore.getMouseStateForControllPlayer(Direction.UP) === MouseState.MOUSEDOWN) {
                 this._player.controll(Direction.UP);
                 this._objectMovingDataManager.update();
-            } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.RIGHT) === MouseState.MOUSEDOWN) {
+            } else if (this._inputManager.checkTriggerForControllPlayer('RIGHT') ||
+                this._mouseStore.getMouseStateForControllPlayer(Direction.RIGHT) === MouseState.MOUSEDOWN) {
                 this._player.controll(Direction.RIGHT);
                 this._objectMovingDataManager.update();
-            } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.DOWN) === MouseState.MOUSEDOWN) {
+            } else if (this._inputManager.checkTriggerForControllPlayer('DOWN') ||
+                this._mouseStore.getMouseStateForControllPlayer(Direction.DOWN) === MouseState.MOUSEDOWN) {
                 this._player.controll(Direction.DOWN);
                 this._objectMovingDataManager.update();
             } else if (this._inputManager.checkHit(dirToKey[pdir])) {
@@ -1502,7 +1506,7 @@ export class WWA {
                 this._displayHelp()
             }
 
-            this._keyStore.memorizeKeyStateOnControllableFrame();
+            this._inputManager.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
         } else if (this._player.isJumped()) {
             if (!this._camera.isResetting()) {

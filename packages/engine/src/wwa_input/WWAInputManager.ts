@@ -94,8 +94,19 @@ export default class WWAInputManager {
     }
 
     /**
+     * プレイヤー操作用の入力状態を使用して入力状態を確認します。
+     * @param inputType 
+     */
+    public checkTriggerForControllPlayer(inputType: WWAInputType): boolean {
+        return this._inputStores.some(storeObject =>
+            storeObject.store.checkButtonState(inputType, true).some(inputState =>
+                inputState === WWAInputState.DOWN
+            )
+        );
+    }
+
+    /**
      * 現在の入力状態を確認します。
-     * @todo PRESS_MESSAGECHANGE も考慮するようにする
      */
     public getState(inputType: WWAInputType) {
         const inputStates: WWAInputState[] = [].concat(...this._inputStores.map(storeObject => storeObject.store.checkButtonState(inputType)));
@@ -132,8 +143,11 @@ export default class WWAInputManager {
         this._eachInputStores(store => store.clear());
     }
 
+    /**
+     * すべての WWAInputStore のプレイヤー操作用の入力状態を現在の入力状態と同じにします。
+     */
     public memorizeKeyStateOnControllableFrame() {
-        
+        this._eachInputStores(store => store.memorizeKeyStateOnControllableFrame());
     }
 
     /**
