@@ -39,15 +39,22 @@ export enum WWAInputState {
 }
 
 /**
+ * WWADirectionType は入力した方向を種別化するためのタイプです。
+ *     プレイヤーの操作関係で4方向のみ対応できるようにするために、後述の WWAInputType と別にしています。
+ */
+export type WWADirectionType =
+    'UP' |
+    'RIGHT' |
+    'DOWN' |
+    'LEFT';
+
+/**
  * WWAInputType はWWAで入力した内容を種別化するためのタイプです。
  *     Enter と Yes のように複数のボタンに対応したとしても、この WWAInputType では YES と同じ扱いとなります。
  *     この後 WWA のアップデートで新しい操作が追加された場合は、この type に文字列を書き加えてください。
  */
 export type WWAInputType =
-    'UP' |
-    'RIGHT' |
-    'DOWN' |
-    'LEFT' |
+    WWADirectionType |
     'YES' |
     'NO' |
     'MESSAGE' | // メッセージ送り

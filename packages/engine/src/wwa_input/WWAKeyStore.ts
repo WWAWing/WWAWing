@@ -44,7 +44,6 @@ const InputKeyTable: {[key in WWAInputType]: Array<string>} = {
 
 /**
  * キーボードの入力状態を管理するクラスです。
- * @todo wwa_input/KeyStore の移行を完了させる
  */
 export default class WWAKeyStore implements WWAInputStore {
     /**

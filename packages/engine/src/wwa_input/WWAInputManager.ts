@@ -16,14 +16,21 @@ function unionState(states: WWAInputState[]): WWAInputState {
     } else if (states.includes(WWAInputState.DOWN)) {
         return WWAInputState.DOWN;
     } else if (states.includes(WWAInputState.UP)) {
-        return WWAInputState.DOWN;
+        return WWAInputState.UP;
     }
     return WWAInputState.NONE;
 }
 
 /**
+ * 入力状態が押下状態か判別するメソッドです。主に WWAInputManager の比較用に使用します。
+ * @param inputState 
+ */
+function isInputStateDown(inputState: WWAInputState) {
+    return inputState === WWAInputState.DOWN;
+}
+
+/**
  * WWAの入力状態を一括して管理できるマネージャークラスです。
- * @todo プレイヤーが操作可能かどうかを判定できるようにしたい
  */
 export default class WWAInputManager {
     /**
@@ -67,7 +74,7 @@ export default class WWAInputManager {
             );
         }
 
-        return this._getInputStoresByTypes(inputStores).some(inputStore => 
+        return this._getInputStoresByTypes(inputStores).some(inputStore =>
             unionState(inputStore.checkButtonState(inputType)) === WWAInputState.PRESS
         );
     }
@@ -78,19 +85,17 @@ export default class WWAInputManager {
      * @param inputStores 
      */
     public checkTrigger(inputType: WWAInputType, inputStores: Array<WWAInputStoreType> = []): boolean {
-        const isInputStateDown = (inputStore: WWAInputStore) => {
-            return inputStore.checkButtonState(inputType).some(inputState =>
-                inputState === WWAInputState.DOWN
-            );
+        const isInputStatesDown = (inputStore: WWAInputStore) => {
+            return inputStore.checkButtonState(inputType).some(isInputStateDown);
         }
 
         if (inputStores.length <= 0) {
             return this._inputStores.some(storeObject =>
-                isInputStateDown(storeObject.store)
+                isInputStatesDown(storeObject.store)
             );
         }
 
-        return this._getInputStoresByTypes(inputStores).some(isInputStateDown);
+        return this._getInputStoresByTypes(inputStores).some(isInputStatesDown);
     }
 
     /**
@@ -99,9 +104,7 @@ export default class WWAInputManager {
      */
     public checkTriggerForControllPlayer(inputType: WWAInputType): boolean {
         return this._inputStores.some(storeObject =>
-            storeObject.store.checkButtonState(inputType, true).some(inputState =>
-                inputState === WWAInputState.DOWN
-            )
+            storeObject.store.checkButtonState(inputType, true).some(isInputStateDown)
         );
     }
 
