@@ -105,7 +105,6 @@ export class WWA {
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
     private _lastMessage: MessageInfo;
-    private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
     private _audioInstances: WWAAudio[];
@@ -741,7 +740,7 @@ export class WWA {
 
             });
 
-            this._frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
+            const frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
             this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);
 
             this._battleEstimateWindow = new BattleEstimateWindow(
@@ -782,7 +781,7 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, (): void => {
+            this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, frameCoord, (): void => {
                 this._isSkippedSoundMessage = true;
                 if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
                     this._isLoadedSound = true;
@@ -4045,7 +4044,9 @@ export class WWA {
     }
 
     public setFrameCoord(coord: Coord): Coord {
-        return this._frameCoord = coord.clone();
+        this._cgManager.setFrameImage(coord);
+        this._drawAll();
+        return coord.clone();
     }
 
     public setBattleEffectCoord(coord: Coord): Coord {
