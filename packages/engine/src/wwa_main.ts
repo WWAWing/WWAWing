@@ -43,7 +43,7 @@ import WWAKeyStore from "./wwa_input/WWAKeyStore";
 import WWAMouseStore from "./wwa_input/WWAMouseStore";
 import WWAInputManager from "./wwa_input/WWAInputManager";
 import { WWAInputStoreType, WWAInputState } from "@wwawing/common-interface";
-import { WWAGamePadStore } from "./wwa_input/WWAGamePadStore";
+import { WWAGamePadStore, WWAWebkitGamepadStore } from "./wwa_input/WWAGamePadStore";
 
 let wwa: WWA;
 let wwap_mode: boolean = false;
@@ -421,12 +421,15 @@ export class WWA {
             this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax);
             this._objectMovingDataManager = new ObjectMovingDataManager(this, this._player);
             this._camera.setPlayer(this._player);
+
             this._inputManager = new WWAInputManager();
             this._keyStore = new WWAKeyStore();
-            this._mouseStore = new WWAMouseStore();
             this._inputManager.addStore(this._keyStore, WWAInputStoreType.KEYBOARD);
+            this._mouseStore = new WWAMouseStore();
             this._inputManager.addStore(this._mouseStore, WWAInputStoreType.MOUSE);
-            if (navigator.getGamepads) {
+            if ((navigator as any).webkitGetGamepads) {
+                this._inputManager.addStore(new WWAWebkitGamepadStore(), WWAInputStoreType.GAMEPAD);
+            } else if (navigator.getGamepads) {
                 this._inputManager.addStore(new WWAGamePadStore(), WWAInputStoreType.GAMEPAD);
             }
             if (checkTouchDevice()) {
@@ -451,6 +454,7 @@ export class WWA {
                 this._virtualPadButtonElements = {};
                 this._virtualPadStore = new VirtualPadStore({});
             }
+
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;

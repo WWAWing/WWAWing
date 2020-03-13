@@ -165,16 +165,31 @@ const GamePadInputTable: { [type in WWAInputType]: GamePadAvailableInput } = {
  * @todo Webkit 向けの挙動については一旦無視して、 Chrome/Firefox 向けの実装が終わったら WWAWebkitGamepadStore の実装に移る
  */
 export class WWAGamePadStore implements WWAInputStore {
-    private gamepad: Gamepad;
+    /**
+     * 対応可能なゲームパッドのボタン数
+     */
+    public static GAMEPAD_BUTTON_COUNT = 16;
+    /**
+     * ゲームパッドのインターフェイス
+     */
+    protected gamepad: Gamepad;
+    /**
+     * ゲームパッドの各ボタンの押下情報
+     */
     private triggers: Array<boolean>;
+    
     constructor() {
         this._setGamePad();
         this.triggers = [];
         var i: number;
-        for (i = 0; i < 16; i++) {
+        for (i = 0; i < WWAGamePadStore.GAMEPAD_BUTTON_COUNT; i++) {
             this.triggers[i] = false;
         }
     }
+
+    /**
+     * @see WWAInputStore.update
+     */
     public update(): void {
         this._setGamePad();
     }
@@ -192,11 +207,10 @@ export class WWAGamePadStore implements WWAInputStore {
         const inputAxes = inputCodes.axes || [];
 
         const buttonStates: WWAInputState[] = inputButtons.map(code => {
-            const buttonData = this.gamepad.buttons[code];
-            if (!buttonData) {
+            const isPressed = this._buttonIsPressed(code);
+            if (isPressed === null) {
                 return WWAInputState.NONE;
             }
-            const isPressed = buttonData.pressed;
             const isTrigger = this.triggers[code];
             this.triggers[code] = isPressed;
             if (isPressed) {
@@ -240,13 +254,31 @@ export class WWAGamePadStore implements WWAInputStore {
     public memorizeKeyStateOnControllableFrame(): void {
     }
 
-    private _setGamePad() {
+    /**
+     * ゲームパッドが使用可能か探し、可能であればゲームパッドのインターフェイスを設定します。
+     */
+    protected _setGamePad() {
         this.gamepad = null;
         const gamepads = navigator.getGamepads();
         if (gamepads && gamepads.length > 0 && gamepads[0]) {
             const gamepad = gamepads[0];
             this.gamepad = gamepad;
         }
+    }
+
+    /**
+     * ボタンが押下されているか確認します。
+     *     ゲームパッドのボタンが押下されているかの情報はブラウザによって違うため、取り出す処理は別のメソッドとして分けています。
+     * @see https://developer.mozilla.org/ja/docs/Web/API/GamepadButton
+     * @param buttonCode 確認したいボタンのコード番号
+     * @returns ボタンが押下されているか？ (そもそもボタン情報がない場合は null)
+     */
+    protected _buttonIsPressed(buttonCode: GamePadButtonCode): boolean | null {
+        const buttonData = this.gamepad.buttons[buttonCode];
+        if (!buttonData) {
+            return null;
+        }
+        return buttonData.pressed;
     }
 
     /**
@@ -258,6 +290,33 @@ export class WWAGamePadStore implements WWAInputStore {
         const actuationPoint = axe.actuation;
         return (actuationPoint > 0 && axesValue >= actuationPoint) ||
                (actuationPoint < 0 && axesValue <= actuationPoint);
+    }
+
+}
+
+/**
+ * Safari とかの Webkit のブラウザで使用されるゲームパッドの Store クラスです。
+ */
+export class WWAWebkitGamepadStore extends WWAGamePadStore implements WWAInputStore {
+    protected gamepad: any;
+
+    protected _setGamePad() {
+        this.gamepad = null;
+        const gamepads = (navigator as any).webkitGetGamepads();
+        if (gamepads && gamepads.length > 0 && gamepads[0]) {
+            const gamepad = gamepads[0];
+            this.gamepad = gamepad;
+        }
+    }
+
+    protected _buttonIsPressed(buttonCode: GamePadButtonCode): boolean | null {
+        const buttonData = this.gamepad.buttons[buttonCode];
+        if (!buttonData) {
+            return null;
+        }
+        // HACK: WebkitのGamePadには型定義が存在しないので、数字ではあるものの unknown を経由する形でダウンキャストしている
+        const buttonPressValue = buttonData as number;
+        return buttonPressValue == 1;
     }
 
 }

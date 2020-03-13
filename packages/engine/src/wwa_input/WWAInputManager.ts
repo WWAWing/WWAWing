@@ -9,13 +9,13 @@ import { WWAConsts } from "../wwa_data";
  * @param states 
  */
 function unionState(states: WWAInputState[]): WWAInputState {
-    if (states.includes(WWAInputState.PRESS) ||
-    (states.includes(WWAInputState.DOWN) && states.includes(WWAInputState.UP))
+    if (states.indexOf(WWAInputState.PRESS) !== -1 ||
+    (states.indexOf(WWAInputState.DOWN) !== -1 && states.indexOf(WWAInputState.UP) !== -1)
     ) {
         return WWAInputState.PRESS;
-    } else if (states.includes(WWAInputState.DOWN)) {
+    } else if (states.indexOf(WWAInputState.DOWN) !== -1) {
         return WWAInputState.DOWN;
-    } else if (states.includes(WWAInputState.UP)) {
+    } else if (states.indexOf(WWAInputState.UP) !== -1) {
         return WWAInputState.UP;
     }
     return WWAInputState.NONE;
@@ -112,7 +112,9 @@ export default class WWAInputManager {
      * 現在の入力状態を確認します。
      */
     public getState(inputType: WWAInputType) {
-        const inputStates: WWAInputState[] = [].concat(...this._inputStores.map(storeObject => storeObject.store.checkButtonState(inputType)));
+        const inputStates: WWAInputState[] = this._inputStores.reduce((currentStates, storeObject) => {
+            return currentStates.concat(storeObject.store.checkButtonState(inputType));
+        }, []);
         return unionState(inputStates);
     }
 

@@ -9,13 +9,13 @@ export enum KeyState {
 }
 
 const InputKeyTable: {[key in WWAInputType]: Array<string>} = {
-    UP: ['ArrowUp'],
-    RIGHT: ['ArrowRight'],
-    DOWN: ['ArrowDown'],
-    LEFT: ['ArrowLeft'],
+    UP: ['ArrowUp', 'Up'],
+    RIGHT: ['ArrowRight', 'Right'],
+    DOWN: ['ArrowDown', 'Down'],
+    LEFT: ['ArrowLeft', 'Left'],
     YES: ['y', 'Enter'],
-    NO: ['n', 'Escape'],
-    MESSAGE: [' ', 'Enter', 'Escape'],
+    NO: ['n', 'Escape', 'Esc'],
+    MESSAGE: [' ', 'Spacebar', 'Enter', 'Escape', 'Esc'],
     ITEM_1: ['1'],
     ITEM_2: ['2'],
     ITEM_3: ['3'],
@@ -39,7 +39,7 @@ const InputKeyTable: {[key in WWAInputType]: Array<string>} = {
     PASSWORD_SAVE: ['F4'],
     RESTART_GAME: ['F7'],
     GOTO_WWA: ['F8'],
-    SOUNDLOAD_STOP: [' ']
+    SOUNDLOAD_STOP: [' ', 'Spacebar']
 }
 
 /**
@@ -84,13 +84,13 @@ export default class WWAKeyStore implements WWAInputStore {
         return InputKeyTable[inputType].map(key => {
             const targetPrevKeyState = forControllPlayer ? this._prevKeyStateOnControllable : this._prevKeyState;
 
-            if (targetPrevKeyState.includes(key)) {
-                if (this._keyState.includes(key)) {
+            if (targetPrevKeyState.indexOf(key) !== -1) {
+                if (this._keyState.indexOf(key) !== -1) {
                     return WWAInputState.PRESS;
                 }
                 return WWAInputState.UP;
             } else {
-                if (this._keyState.includes(key)) {
+                if (this._keyState.indexOf(key) !== -1) {
                     return WWAInputState.DOWN;
                 }
                 return WWAInputState.NONE;
@@ -125,7 +125,7 @@ export default class WWAKeyStore implements WWAInputStore {
      * @param key 押したいキー (KeyboardEvent.key)
      */
     public setPressInfo(key: string): void {
-        if (!this._nextKeyState.includes(key)) {
+        if (this._nextKeyState.indexOf(key) === -1) {
             this._nextKeyState.push(key);
         }
         this._keyInputContinueFrameNum.set(key, -1);
@@ -136,8 +136,9 @@ export default class WWAKeyStore implements WWAInputStore {
      * @param key 離したいキー (KeyboardEvent.key)
      */
     public setReleaseInfo(key: string): void {
-        if (this._nextKeyState.includes(key)) {
-            this._nextKeyState.splice(this._nextKeyState.indexOf(key), 1);
+        const targetKeyIndex = this._nextKeyState.indexOf(key);
+        if (targetKeyIndex !== -1) {
+            this._nextKeyState.splice(targetKeyIndex, 1);
         }
         this._keyInputContinueFrameNum.delete(key);
     }
