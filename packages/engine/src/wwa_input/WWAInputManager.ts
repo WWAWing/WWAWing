@@ -186,7 +186,7 @@ export default class WWAInputManager {
         if (targetStoreObjects.length <= 0) {
             return null;
         }
-        return targetStoreObjects[1].store;
+        return targetStoreObjects[0].store;
     }
 
     /**
