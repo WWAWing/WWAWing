@@ -185,6 +185,23 @@ export class WWALoader {
     this._dataJSObj.bgm = 0;
     this._dataJSObj.effectCoords = [];
     this._dataJSObj.effectWaits = 0;
+
+    this._dataJSObj.imgStatusEnergyX = WWAConsts.IMGPOS_DEFAULT_STATUS_X + WWAConsts.IMGRELPOS_ENERGY_ICON_X;
+    this._dataJSObj.imgStatusEnergyY = WWAConsts.IMGPOS_DEFAULT_STATUS_Y;
+    this._dataJSObj.imgStatusStrengthX = WWAConsts.IMGPOS_DEFAULT_STATUS_X + WWAConsts.IMGRELPOS_STRENGTH_ICON_X;
+    this._dataJSObj.imgStatusStrengthY = WWAConsts.IMGPOS_DEFAULT_STATUS_Y;
+    this._dataJSObj.imgStatusDefenceX = WWAConsts.IMGPOS_DEFAULT_STATUS_X + WWAConsts.IMGRELPOS_DEFENCE_ICON_X;
+    this._dataJSObj.imgStatusDefenceY = WWAConsts.IMGPOS_DEFAULT_STATUS_Y;
+    this._dataJSObj.imgStatusGoldX = WWAConsts.IMGPOS_DEFAULT_STATUS_X + WWAConsts.IMGRELPOS_GOLD_ICON_X;
+    this._dataJSObj.imgStatusGoldY = WWAConsts.IMGPOS_DEFAULT_STATUS_Y;
+    this._dataJSObj.imgWideCellX = WWAConsts.IMGPOS_DEFAULT_WIDE_CELL_X;
+    this._dataJSObj.imgWideCellY = WWAConsts.IMGPOS_DEFAULT_WIDE_CELL_Y;
+    this._dataJSObj.imgItemboxX = WWAConsts.IMGPOS_DEFAULT_ITEMBOX_X;
+    this._dataJSObj.imgItemboxY = WWAConsts.IMGPOS_DEFAULT_ITEMBOX_Y;
+    this._dataJSObj.imgFrameX = WWAConsts.IMGPOS_DEFAULT_FRAME_X;
+    this._dataJSObj.imgFrameY = WWAConsts.IMGPOS_DEFAULT_FRAME_Y;
+    this._dataJSObj.imgBattleEffectX = WWAConsts.IMGPOS_DEFAULT_BATTLE_EFFECT_X;
+    this._dataJSObj.imgBattleEffectY = WWAConsts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y;
     this._dataJSObj.imgClickX = 0;
     this._dataJSObj.imgClickY = 0;
 

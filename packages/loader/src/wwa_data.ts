@@ -31,6 +31,25 @@ export class WWAConsts {
 
     static IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_X: number = 0;
     static IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_Y: number = 0;
+    
+    // TODO: common-interface と共通化できないか考える
+    static IMGPOS_DEFAULT_STATUS_X: number = 3;
+    static IMGPOS_DEFAULT_STATUS_Y: number = 2;
+    static IMGRELPOS_ENERGY_ICON_X: number = 0;
+    static IMGRELPOS_STRENGTH_ICON_X: number = 1;
+    static IMGRELPOS_DEFENCE_ICON_X: number = 2;
+    static IMGRELPOS_GOLD_ICON_X: number = 3;
+
+    static IMGPOS_DEFAULT_WIDE_CELL_X: number = 4;
+    static IMGPOS_DEFAULT_WIDE_CELL_Y: number = 3;
+    static IMGPOS_DEFAULT_ITEMBOX_X: number = 1;
+    static IMGPOS_DEFAULT_ITEMBOX_Y: number = 2;
+
+    static IMGPOS_DEFAULT_FRAME_X: number = 0;
+    static IMGPOS_DEFAULT_FRAME_Y: number = 1;
+
+    static IMGPOS_DEFAULT_BATTLE_EFFECT_X: number = 3;
+    static IMGPOS_DEFAULT_BATTLE_EFFECT_Y: number = 3;
 
     static DEFAULT_DISABLE_SAVE: boolean = false;
     static DEFAULT_OLDMAP: boolean = false;
@@ -175,6 +194,22 @@ export function createDefaultWWAData(): WWAData {
         bgm: undefined,
         effectCoords: undefined,
         effectWaits: undefined,
+        imgStatusEnergyX: undefined,
+        imgStatusEnergyY: undefined,
+        imgStatusStrengthX: undefined,
+        imgStatusStrengthY: undefined,
+        imgStatusDefenceX: undefined,
+        imgStatusDefenceY: undefined,
+        imgStatusGoldX: undefined,
+        imgStatusGoldY: undefined,
+        imgWideCellX: undefined,
+        imgWideCellY: undefined,
+        imgItemboxX: undefined,
+        imgItemboxY: undefined,
+        imgFrameX: undefined,
+        imgFrameY: undefined,
+        imgBattleEffectX: undefined,
+        imgBattleEffectY: undefined,
         imgClickX: undefined,
         imgClickY: undefined,
         frameColorR: undefined,
