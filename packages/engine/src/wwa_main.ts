@@ -1190,8 +1190,12 @@ export class WWA {
     */
     public mainCaller = (() => this._main());
     public soundCheckCaller = (() => this.checkAllSoundLoaded());
-
-    public onselectitem(itemPos: number): void {
+    /**
+     * アイテムを使用。
+     * @param itemPos アイテムのID
+     * @returns {boolean} 使用できる場合
+     */
+    public onselectitem(itemPos: number): boolean {
         if (this._player.canUseItem(itemPos)) {
             var bg = <HTMLDivElement>(util.$id("item" + (itemPos - 1)));
             bg.classList.add("onpress");
@@ -1212,7 +1216,9 @@ export class WWA {
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_ITEM_USE;
                 this._yesNoUseItemPos = itemPos;
             }
+            return true;
         }
+        return false;
     }
 
     public onselectbutton(button: SidebarButton, forcePassword: boolean = false, forceGoToWWA: boolean = false): void {
@@ -1481,7 +1487,8 @@ export class WWA {
                     if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onitemmenucalled();
                     }
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12)) {
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_Y)) {
                     // コマンドのヘルプ 
                     this._displayHelp();
                 }
@@ -3832,28 +3839,92 @@ export class WWA {
             return;
         }
         if (this._player.isControllable()) {
+            var helpMessage:string = "";
+            switch (this.userDevice.device) {
+                case DEVICE_TYPE.GAME:
+                    switch (this.userDevice.os) {
+                        case OS_TYPE.NINTENDO:
+                            helpMessage = "　【操作方法】\n" +
+                                "Ａ：Ｙｅｓ,戦闘結果予測の表示\n" +
+                                "Ｂ：Ｎｏ\n" +
+                                "Ｘ：メニュー\n" +
+                                "Ｙ：このリストの表示\n" +
+                                "Ｒ：初めからスタート\n" +
+                                "ＺＬ：データの一時保存\n" +
+                                "ＺＲ：一時保存データの読み込み\n" +
+                                "＋: 移動速度を上げる\n" +
+                                "－: 移動速度を落とす\n" +
+                                "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
+                                "　マップデータ バージョン: " +
+                                Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
+                            break;
+                        case OS_TYPE.PLAY_STATION:
+                            helpMessage = "　【操作方法】\n" +
+                                "〇：Ｙｅｓ,戦闘結果予測の表示\n" +
+                                "×：Ｎｏ\n" +
+                                "△：メニュー\n" +
+                                "□：このリストの表示\n" +
+                                "Ｒ１：初めからスタート\n" +
+                                "Ｌ２：データの一時保存\n" +
+                                "Ｒ２：一時保存データの読み込み\n" +
+                                "OPTIONS: 移動速度を上げる\n" +
+                                "SHARE: 移動速度を落とす\n" +
+                                "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
+                                "　マップデータ バージョン: " +
+                                Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
+                            break;
+                        case OS_TYPE.XBOX:
+                            helpMessage = "　【操作方法】\n" +
+                                "Ｂ：Ｙｅｓ,戦闘結果予測の表示\n" +
+                                "Ａ：Ｎｏ\n" +
+                                "Ｙ：メニュー\n" +
+                                "Ｘ：このリストの表示\n" +
+                                "ＲＢ：初めからスタート\n" +
+                                "ＬＴ：データの一時保存\n" +
+                                "ＲＴ：一時保存データの読み込み\n" +
+                                "MENU: 移動速度を上げる\n" +
+                                "WINDOW: 移動速度を落とす\n" +
+                                "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
+                                "　マップデータ バージョン: " +
+                                Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
+                            break;
+                    }
+                    break;
+                case DEVICE_TYPE.SP:
+                    return;
+                case DEVICE_TYPE.VR:
+                    return;
+                case DEVICE_TYPE.PC:
+                    helpMessage = "　【ショートカットキーの一覧】\n" +
+                        "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
+                        //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
+                        "Ｆ３：復帰用パスワード入力\n" +
+                        "Ｆ４：復帰用パスワード表示\n" +
+                        "Ｆ５：一時保存データの読み込み\n" +
+                        "Ｆ６：データの一時保存\n" +
+                        "Ｆ７：初めからスタート\n" +
+                        "Ｆ８：ＷＷＡ公式ページにリンク\n" +
+                        //                               "Ｆ９、Ｇ：描画モードの切り換え\n" +
+                        "Ｆ１２：このリストの表示\n" +
+                        //                                "Ｌ：リンクを別のウィンドウで開く\n" +
+                        "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
+                        "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
+                        "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
+                        "　　　Ｉ: 移動速度を落とす／\n" +
+                        "Ｆ２、Ｐ: 移動速度を上げる\n" +
+                        "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                        "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
+                        "　マップデータ バージョン: " +
+                        Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
+                    break;
+                default:
+                    return;
+            }
             this.setMessageQueue(
-                "　【ショートカットキーの一覧】\n" +
-                "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
-                //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
-                "Ｆ３：復帰用パスワード入力\n" +
-                "Ｆ４：復帰用パスワード表示\n" +
-                "Ｆ５：一時保存データの読み込み\n" +
-                "Ｆ６：データの一時保存\n" +
-                "Ｆ７：初めからスタート\n" +
-                "Ｆ８：ＷＷＡ公式ページにリンク\n" +
-                //                               "Ｆ９、Ｇ：描画モードの切り換え\n" +
-                "Ｆ１２：このリストの表示\n" +
-                //                                "Ｌ：リンクを別のウィンドウで開く\n" +
-                "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
-                "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
-                "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
-                "　　　Ｉ: 移動速度を落とす／\n" +
-                "Ｆ２、Ｐ: 移動速度を上げる\n" +
-                "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
-                "　マップデータ バージョン: " +
-                Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10,
+                helpMessage,
                 false, true
             );
         }
