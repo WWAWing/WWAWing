@@ -261,10 +261,15 @@ export enum GamePadState {
     BUTTON_INDEX_ZR = 7,
     BUTTON_INDEX_MINUS = 8,
     BUTTON_INDEX_PLUS = 9,
+    BUTTON_INDEX_LEFT_STICK = 10,
+    BUTTON_INDEX_RIGHT_STICK = 11,
     BUTTON_CROSS_KEY_UP = 12,
     BUTTON_CROSS_KEY_DOWN = 13,
     BUTTON_CROSS_KEY_LEFT = 14,
-    BUTTON_CROSS_KEY_RIGHT = 15,
+    BUTTON_CROSS_KEY_RIGHT = 15
+}
+
+export enum GamePadStateAxes {
     AXES_L_HORIZONTAL_INDEX = 0,
     AXES_L_VERTICAL_INDEX = 1,
     AXES_R_HORIZONTAL_INDEX = 2,
@@ -355,33 +360,33 @@ export class GamePadStore {
             code = codes[i];
             switch (code) {
                 case GamePadState.BUTTON_CROSS_KEY_UP:
-                    if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] <= -0.6 ||
-                        this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] <= -0.6 ||
-                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === -1 ||
+                    if (this.gamepad.axes[GamePadStateAxes.AXES_L_VERTICAL_INDEX] <= -0.6 ||
+                        this.gamepad.axes[GamePadStateAxes.AXES_R_VERTICAL_INDEX] <= -0.6 ||
+                        this.stickFloor(GamePadStateAxes.AXES_CROSS_KEY) === -1 ||
                         this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
                         return true;
                     }
                     break;
                 case GamePadState.BUTTON_CROSS_KEY_DOWN:
-                    if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] >= 0.7 ||
-                        this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] >= 0.7 ||
-                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.1 ||
+                    if (this.gamepad.axes[GamePadStateAxes.AXES_L_VERTICAL_INDEX] >= 0.7 ||
+                        this.gamepad.axes[GamePadStateAxes.AXES_R_VERTICAL_INDEX] >= 0.7 ||
+                        this.stickFloor(GamePadStateAxes.AXES_CROSS_KEY) === 0.1 ||
                         this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
                         return true;
                     }
                     break;
                 case GamePadState.BUTTON_CROSS_KEY_LEFT:
-                    if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] <= -0.7 ||
-                        this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] <= -0.7 ||
-                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.7 ||
+                    if (this.gamepad.axes[GamePadStateAxes.AXES_L_HORIZONTAL_INDEX] <= -0.7 ||
+                        this.gamepad.axes[GamePadStateAxes.AXES_R_HORIZONTAL_INDEX] <= -0.7 ||
+                        this.stickFloor(GamePadStateAxes.AXES_CROSS_KEY) === 0.7 ||
                         this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
                         return true;
                     }
                     break;
                 case GamePadState.BUTTON_CROSS_KEY_RIGHT:
-                    if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] > 0.6 ||
-                        this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] > 0.6 ||
-                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === -0.5 ||
+                    if (this.gamepad.axes[GamePadStateAxes.AXES_L_HORIZONTAL_INDEX] > 0.6 ||
+                        this.gamepad.axes[GamePadStateAxes.AXES_R_HORIZONTAL_INDEX] > 0.6 ||
+                        this.stickFloor(GamePadStateAxes.AXES_CROSS_KEY) === -0.5 ||
                         this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
                         return true;
                     }

@@ -1387,7 +1387,9 @@ export class WWA {
                  */
                 this._player.updateDelayFrame();
             } else {
-                if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ||
+                if (this.actionGamePadButtonItemMacro()) {
+                    //マクロ用処理割込
+                }else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ||
                     this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
                     this._player.controll(Direction.LEFT);
                     this._objectMovingDataManager.update();
@@ -4328,6 +4330,71 @@ font-weight: bold;
         Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
             node.style.backgroundPosition = `-${pos.x * Consts.CHIP_SIZE}px -${pos.y * Consts.CHIP_SIZE}px`;
         });
+    }
+
+    private actionGamePadButtonItemMacro(): boolean{
+        if(!this._wwaData.gamePadButtonItemTable) {
+            return false;
+        }
+        var len: number, buttonID: number, itemNo: number, inputButtonFlag: boolean;
+        len = this._wwaData.gamePadButtonItemTable.length;
+        for (buttonID = 0; buttonID < len; buttonID++) {
+            itemNo = this._wwaData.gamePadButtonItemTable[buttonID];
+            if (!itemNo) {
+                //使用するアイテム番号が存在しない
+                continue;
+            }
+            inputButtonFlag = false;
+            switch (buttonID) {
+                case GamePadState.BUTTON_CROSS_KEY_LEFT:
+                    if (this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
+                        inputButtonFlag = true;
+                    }
+                    break;
+                case GamePadState.BUTTON_CROSS_KEY_RIGHT:
+                    if (this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
+                        inputButtonFlag = true;
+                    }
+                    break;
+                case GamePadState.BUTTON_CROSS_KEY_UP:
+                    if (this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
+                        inputButtonFlag = true;
+                    }
+                    break;
+                case GamePadState.BUTTON_CROSS_KEY_DOWN:
+                    if (this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
+                        inputButtonFlag = true;
+                    }
+                    break;
+            }
+            if (this._gamePadStore.buttonTrigger(buttonID)) {
+                inputButtonFlag = true;
+            }
+            if (inputButtonFlag) {
+                //ゲームパッドのボタンIDが押されている
+                if (this.onselectitem(itemNo)) {
+                    //アイテムを実行
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
+    public setGamePadButtonItemTable(buttonID: number, itemNo: number): boolean {
+        if (!this._wwaData.gamePadButtonItemTable) {
+            var currentButtonID: string, currentButtonKey: string;
+            this._wwaData.gamePadButtonItemTable = [];
+            for (currentButtonKey in GamePadState) {
+                currentButtonID = GamePadState[currentButtonKey];
+                this._wwaData.gamePadButtonItemTable[currentButtonID] = 0;
+            }
+        }
+        if (this._wwaData.gamePadButtonItemTable.length > buttonID) {
+            this._wwaData.gamePadButtonItemTable[buttonID] = itemNo;
+        }
+        return true;
     }
 };
 

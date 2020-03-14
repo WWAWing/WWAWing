@@ -22,6 +22,7 @@ import * as util from "./wwa_util";
 import {
     WWAData
 } from "./wwa_data";
+import { ItemMenu } from "./wwa_item_menu";
 
 export class MessageInfo {
     constructor(
@@ -56,54 +57,83 @@ export class Macro {
     ) { }
     public execute(): void {
         try {
-            if (this.macroType === MacroType.IMGPLAYER) {
-                this._executeImgPlayerMacro();
-            } else if (this.macroType === MacroType.IMGYESNO) {
-                this._executeImgYesNoMacro();
-            } else if (this.macroType === MacroType.HPMAX) {
-                this._executeHPMaxMacro();
-            } else if (this.macroType === MacroType.SAVE) {
-                this._executeSaveMacro();
-            } else if (this.macroType === MacroType.ITEM) {
-                this._executeItemMacro();
-            } else if (this.macroType === MacroType.DEFAULT) {
-                this._executeDefaultMacro();
-            } else if (this.macroType === MacroType.OLDMAP) {
-                this._executeOldMapMacro();
-            } else if (this.macroType === MacroType.PARTS) {
-                this._executePartsMacro();
-            } else if (this.macroType === MacroType.MOVE) {
-                this._executeMoveMacro();
-            } else if (this.macroType === MacroType.MAP) {
-                this._executeMapMacro();
-            } else if (this.macroType === MacroType.DIRMAP) {
-                this._executeDirMapMacro();
-            } else if (this.macroType === MacroType.IMGFRAME) {
-                this._executeImgFrameMacro();
-            } else if (this.macroType === MacroType.IMGBOM) {
-                this._executeImgBomMacro();
-            } else if (this.macroType === MacroType.DELPLAYER) {
-                this._executeDelPlayerMacro();
-            } else if (this.macroType === MacroType.FACE) {
-                this._executeFaceMacro();
-            } else if (this.macroType === MacroType.EFFECT) {
-                this._executeEffectMacro();
-            } else if (this.macroType === MacroType.GAMEOVER) {
-                this._executeGameOverMacro();
-            } else if (this.macroType === MacroType.IMGCLICK) {
-                this._executeImgClickMacro();
-            } else if (this.macroType === MacroType.STATUS) {
-                this._executeStatusMacro();
-            } else if(this.macroType === MacroType.EFFITEM) {
-                this._executeEffItemMacro();
-            } else if (this.macroType === MacroType.COLOR) {
-                this._executeColorMacro();
-            } else if (this.macroType === MacroType.WAIT) {
-                this._executeWaitMacro();
-            } else if (this.macroType === MacroType.SOUND) {
-                this._executeSoundMacro();
+            switch (this.macroType) {
+                case MacroType.IMGPLAYER:
+                    this._executeImgPlayerMacro();
+                    break;
+                case MacroType.IMGYESNO:
+                    this._executeImgYesNoMacro();
+                    break;
+                case MacroType.HPMAX:
+                    this._executeHPMaxMacro();
+                    break;
+                case MacroType.SAVE:
+                    this._executeSaveMacro();
+                    break;
+                case MacroType.ITEM:
+                    this._executeItemMacro();
+                    break;
+                case MacroType.DEFAULT:
+                    this._executeDefaultMacro();
+                    break;
+                case MacroType.OLDMAP:
+                    this._executeOldMapMacro();
+                    break;
+                case MacroType.PARTS:
+                    this._executePartsMacro();
+                    break;
+                case MacroType.MOVE:
+                    this._executeMoveMacro();
+                    break;
+                case MacroType.MAP:
+                    this._executeMapMacro();
+                    break;
+                case MacroType.DIRMAP:
+                    this._executeDirMapMacro();
+                    break;
+                case MacroType.IMGFRAME:
+                    this._executeImgFrameMacro();
+                    break;
+                case MacroType.IMGBOM:
+                    this._executeImgBomMacro();
+                    break;
+                case MacroType.DELPLAYER:
+                    this._executeDelPlayerMacro();
+                    break;
+                case MacroType.FACE:
+                    this._executeFaceMacro();
+                    break;
+                case MacroType.EFFECT:
+                    this._executeEffectMacro();
+                    break;
+                case MacroType.GAMEOVER:
+                    this._executeGameOverMacro();
+                    break;
+                case MacroType.IMGCLICK:
+                    this._executeImgClickMacro();
+                    break;
+                case MacroType.STATUS:
+                    this._executeStatusMacro();
+                    break;
+                case MacroType.EFFITEM:
+                    this._executeEffItemMacro();
+                    break;
+                case MacroType.COLOR:
+                    this._executeColorMacro();
+                    break;
+                case MacroType.WAIT:
+                    this._executeWaitMacro();
+                    break;
+                case MacroType.SOUND:
+                    this._executeSoundMacro();
+                    break;
+                case MacroType.GAMEPAD_BUTTON:
+                    this._executeGamePadButtonMacro();
+                    break;
+                default:
+                    console.log("不明なマクロIDが実行されました:" + this.macroType);
+                    break;
             }
-
         } catch (e) {
             // デベロッパーモードならエラーを吐くとかしたいね
         }
@@ -443,6 +473,20 @@ export class Macro {
         this._concatEmptyArgs(1);
         var id = parseInt(this.macroArgs[0]);
         this._wwa.playSound(id);
+    }
+    private _executeGamePadButtonMacro(): void {
+        this._concatEmptyArgs(2);
+        var buttonID:number = this._parseInt(0);
+        var itemNo: number = this._parseInt(1);
+
+        if (buttonID < 0 || itemNo < 0) {
+            throw new Error("各引数は0以上の整数でなければなりません。");
+        }
+
+        if (itemNo > WWAConsts.ITEMBOX_SIZE) {
+            throw new Error("アイテムボックス上限を超えた数値が指定されました。");
+        }
+        this._wwa.setGamePadButtonItemTable(buttonID, itemNo);
     }
 }
 

@@ -86,5 +86,8 @@ export interface WWAData {
     checkOriginalMapString: string;
     checkString: string;
 
-    isItemEffectEnabled: boolean; 
+    isItemEffectEnabled: boolean;
+
+    // NOTE: この配列は $gamepad_button が一度でも使用されなければ、配列ではなくundefinedが入っていることに注意せよ
+    gamePadButtonItemTable: number[];
 }
