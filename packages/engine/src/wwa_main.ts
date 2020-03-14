@@ -4331,7 +4331,7 @@ font-weight: bold;
             node.style.backgroundPosition = `-${pos.x * Consts.CHIP_SIZE}px -${pos.y * Consts.CHIP_SIZE}px`;
         });
     }
-    
+
     private actionGamePadButtonItemMacro(): boolean{
         if(!this._wwaData.gamePadButtonItemTable) {
             return false;
@@ -4384,7 +4384,7 @@ font-weight: bold;
 
     public setGamePadButtonItemTable(buttonID: number, itemNo: number): boolean {
         if (!this._wwaData.gamePadButtonItemTable) {
-            var currentButtonID, currentButtonKey: string;
+            var currentButtonID: string, currentButtonKey: string;
             this._wwaData.gamePadButtonItemTable = [];
             for (currentButtonKey in GamePadState) {
                 currentButtonID = GamePadState[currentButtonKey];
