@@ -553,7 +553,8 @@ export enum MacroType {
     EFFITEM = 20,
     COLOR = 21,
     WAIT = 22,
-    SOUND = 23
+    SOUND = 23,
+    GAMEPAD_BUTTON = 100
 }
 
 export var macrotable = {
@@ -580,7 +581,8 @@ export var macrotable = {
     "$effitem": 20,
     "$color": 21,
     "$wait": 22,
-    "$sound": 23
+    "$sound": 23,
+    "$gamepad_button" : 100
 }
 
 export enum MacroStatusIndex {

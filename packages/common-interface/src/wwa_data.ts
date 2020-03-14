@@ -86,5 +86,7 @@ export interface WWAData {
     checkOriginalMapString: string;
     checkString: string;
 
-    isItemEffectEnabled: boolean; 
+    isItemEffectEnabled: boolean;
+
+    gamePadButtonItemTable: number[];
 }
