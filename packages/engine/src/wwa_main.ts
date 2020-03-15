@@ -88,7 +88,6 @@ export class WWA {
     private _waitFrame: number;
     private _usePassword: boolean;
     private _bottomButtonType: number;
-    private _useHelp: boolean;
     private _wwaWrapperElement: HTMLDivElement;
     private _mouseControllerElement: HTMLDivElement;
     private _statusPressCounter: Status; // ステータス型があるので、アニメーション残りカウンタもこれで代用しまぁす。
@@ -255,7 +254,7 @@ export class WWA {
                     switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
-                            return;
+                            break;
                     }
                     util.$id("cell-gotowwa").textContent = "Game End";
                     this._bottomButtonType = Bottom_WWA_Button.GAME_END;
@@ -280,16 +279,6 @@ export class WWA {
                 break;
             default:
                 this._usePassword = true;
-                break;
-        }
-        switch (this.userDevice.device) {
-            case DEVICE_TYPE.SP:
-            case DEVICE_TYPE.VR:
-            case DEVICE_TYPE.GAME:
-                this._useHelp = false;
-                break;
-            default:
-                this._useHelp = true;
                 break;
         }
 
@@ -3836,10 +3825,6 @@ export class WWA {
     }
 
     private _displayHelp(): void {
-        if (!this._useHelp) {
-            //パスワードなしの場合はヘルプを開かない
-            return;
-        }
         if (this._player.isControllable()) {
             var helpMessage:string = "";
             switch (this.userDevice.device) {
