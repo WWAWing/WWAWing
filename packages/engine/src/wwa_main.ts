@@ -416,6 +416,14 @@ export class WWA {
             this._lastMessage = new MessageInfo("", false, false, []);
             this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
+
+            //ロード処理の前に追加
+            this._messageWindow = new MessageWindow(
+                this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
+            this._scoreWindow = new ScoreWindow(
+                this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
+
+            this.clearFaces();
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
@@ -744,12 +752,8 @@ export class WWA {
             this._passwordWindow = new PasswordWindow(
                 this, <HTMLDivElement>util.$id("wwa-wrapper"));
 
-            this._messageWindow = new MessageWindow(
-                this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
             this._monsterWindow = new MosterWindow(
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
-            this._scoreWindow = new ScoreWindow(
-                this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
             this._setProgressBar(getProgress(3, 4, LoadStage.GAME_INIT));
 
             this._isLoadedSound = false;
@@ -757,7 +761,6 @@ export class WWA {
             this._paintSkipByDoorOpen = false
             this._clearFacesInNextFrame = false
             this._useConsole = false;
-            this.clearFaces();
 
             var self = this;
             /*
