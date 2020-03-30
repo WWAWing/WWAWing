@@ -395,6 +395,13 @@ export class GamePadStore {
         }
         return false;
     }
+    
+    /**
+     * ゲームパッドをバイブレーションします。
+     * バイブレーションは chromium 系のブラウザ のみで動作します。
+     * @param isStrong バイブレーションの大きさ (true でより大きく)
+     * @returns ゲームパッドやバイブレーションをサポートしていない場合に false を出力
+     */
     public vibration(isStrong: boolean) {
         if (!this.gamepad) {
             return false;
