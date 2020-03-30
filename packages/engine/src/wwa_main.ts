@@ -4370,13 +4370,13 @@ font-weight: bold;
         return false;
     }
 
-/**
-    ゲームパッドのボタン割当設定を追加します。
-    @param buttonID ボタンのID ( GamePad で割り当てているボタンに従う )
-    @param itemNo 割り当てるアイテムボックスの番号 (アイテムの物体パーツ番号ではない)
-    @returns 正しく設定できたか
-**/
-    public setGamePadButtonItemTable(buttonID: number, itemNo: number): boolean {
+    /**
+      ゲームパッドのボタン割当設定を追加します。
+      @param buttonID ボタンのID ( GamePad で割り当てているボタンに従う )
+      @param itemBoxNo 割り当てるアイテムボックスの番号 (アイテムの物体パーツ番号ではない)
+    **/
+    public setGamePadButtonItemTable(buttonID: number, itemBoxNo: number): void {
+        // TODO: this._wwaData.gamePadButtonItemTable は起動時に初期化したい
         if (!this._wwaData.gamePadButtonItemTable) {
             var currentButtonID: string, currentButtonKey: string;
             this._wwaData.gamePadButtonItemTable = [];
@@ -4386,9 +4386,8 @@ font-weight: bold;
             }
         }
         if (this._wwaData.gamePadButtonItemTable.length > buttonID) {
-            this._wwaData.gamePadButtonItemTable[buttonID] = itemNo;
+            this._wwaData.gamePadButtonItemTable[buttonID] = itemBoxNo;
         }
-        return true;
     }
 };
 
