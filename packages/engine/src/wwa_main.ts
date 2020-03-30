@@ -1379,7 +1379,7 @@ export class WWA {
                  */
                 this._player.updateDelayFrame();
             } else {
-                if (this.actionGamePadButtonItemMacro()) {
+                if (this._actionGamePadButtonItemMacro()) {
                     //マクロ用処理割込
                 }else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ||
                     this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
@@ -4320,7 +4320,7 @@ font-weight: bold;
         });
     }
 
-    private actionGamePadButtonItemMacro(): boolean{
+    private _actionGamePadButtonItemMacro(): boolean{
         if(!this._wwaData.gamePadButtonItemTable) {
             return false;
         }
