@@ -301,7 +301,7 @@ export class Face {
     }
 }
 
-export enum Bottom_WWA_Button {
+export enum ControlPanelBottomButton {
     GOTO_WWA = 0,
     BATTLE_REPORT = 1,
     GAME_END = 2

@@ -8,7 +8,7 @@ import {
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, Bottom_WWA_Button, WWAButtonTexts
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, WWAButtonTexts
 } from "./wwa_data";
 
 import {
@@ -244,7 +244,7 @@ export class WWA {
         }
         this._audioDirectory = audioDirectory;
         // Go To WWA を強制するオプションが無効なら、Battle Reportにする
-        this._bottomButtonType = useGoToWWA ? Bottom_WWA_Button.GOTO_WWA : Bottom_WWA_Button.BATTLE_REPORT;
+        this._bottomButtonType = useGoToWWA ? ControlPanelBottomButton.GOTO_WWA : ControlPanelBottomButton.BATTLE_REPORT;
 
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
@@ -257,7 +257,7 @@ export class WWA {
                             break;
                     }
                     util.$id("cell-gotowwa").textContent = "Game End";
-                    this._bottomButtonType = Bottom_WWA_Button.GAME_END;
+                    this._bottomButtonType = ControlPanelBottomButton.GAME_END;
                     break;
                 default:
                     alert(
@@ -289,13 +289,13 @@ export class WWA {
             util.$id("cell-load").textContent = WWAButtonTexts.PASSWORD;
         }
         switch (this._bottomButtonType) {
-            case Bottom_WWA_Button.GOTO_WWA:
+            case ControlPanelBottomButton.GOTO_WWA:
                 util.$id("cell-gotowwa").textContent = WWAButtonTexts.GOTO_WWA;
                 break;
-            case Bottom_WWA_Button.BATTLE_REPORT:
+            case ControlPanelBottomButton.BATTLE_REPORT:
                 util.$id("cell-gotowwa").textContent = WWAButtonTexts.BATTLE_REPORT;
                 break;
-            case Bottom_WWA_Button.GAME_END:
+            case ControlPanelBottomButton.GAME_END:
                 util.$id("cell-gotowwa").textContent = WWAButtonTexts.GAME_END;
                 break;
         }
@@ -1251,22 +1251,22 @@ export class WWA {
             if (forceGoToWWA) {
                 // F8 で Goto WWAを選んだ場合で、Goto WWAボタンが表示されていない場合は、
                 // Battle Report ボタンを凹ませない
-                if (this._bottomButtonType !== Bottom_WWA_Button.GOTO_WWA) {
+                if (this._bottomButtonType !== ControlPanelBottomButton.GOTO_WWA) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 }
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
             } else {
                 switch (this._bottomButtonType) {
-                    case Bottom_WWA_Button.GOTO_WWA:
+                    case ControlPanelBottomButton.GOTO_WWA:
                         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
                         this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                         break;
-                    case Bottom_WWA_Button.GAME_END:
+                    case ControlPanelBottomButton.GAME_END:
                         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
                         this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
                         break;
-                    case Bottom_WWA_Button.BATTLE_REPORT:
+                    case ControlPanelBottomButton.BATTLE_REPORT:
                         this.launchBattleEstimateWindow();
                         break;
                 }
@@ -3789,7 +3789,7 @@ export class WWA {
                 }
             }
         }
-        if (this._bottomButtonType === Bottom_WWA_Button.BATTLE_REPORT) {
+        if (this._bottomButtonType === ControlPanelBottomButton.BATTLE_REPORT) {
             (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.add("onpress");
         }
         if (monsterList.length === 0) {
@@ -4324,12 +4324,12 @@ font-weight: bold;
         if(!this._wwaData.gamePadButtonItemTable) {
             return false;
         }
-        var len: number, buttonID: number, itemNo: number, inputButtonFlag: boolean;
+        var len: number, buttonID: number, itemBoxNo: number, inputButtonFlag: boolean;
         len = this._wwaData.gamePadButtonItemTable.length;
         for (buttonID = 0; buttonID < len; buttonID++) {
-            itemNo = this._wwaData.gamePadButtonItemTable[buttonID];
-            if (!itemNo) {
-                //使用するアイテム番号が存在しない
+            itemBoxNo = this._wwaData.gamePadButtonItemTable[buttonID];
+            if (!itemBoxNo) {
+                //使用するアイテムボックス番号が存在しない
                 continue;
             }
             inputButtonFlag = false;
@@ -4360,7 +4360,7 @@ font-weight: bold;
             }
             if (inputButtonFlag) {
                 //ゲームパッドのボタンIDが押されている
-                if (this.onselectitem(itemNo)) {
+                if (this.onselectitem(itemBoxNo)) {
                     //アイテムを実行
                     return true;
                 }
