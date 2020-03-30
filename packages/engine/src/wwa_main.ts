@@ -4370,6 +4370,12 @@ font-weight: bold;
         return false;
     }
 
+/**
+    ゲームパッドのボタン割当設定を追加します。
+    @param buttonID ボタンのID ( GamePad で割り当てているボタンに従う )
+    @param itemNo 割り当てるアイテムボックスの番号 (アイテムの物体パーツ番号ではない)
+    @returns 正しく設定できたか
+**/
     public setGamePadButtonItemTable(buttonID: number, itemNo: number): boolean {
         if (!this._wwaData.gamePadButtonItemTable) {
             var currentButtonID: string, currentButtonKey: string;
