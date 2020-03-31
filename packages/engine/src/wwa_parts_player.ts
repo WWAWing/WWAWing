@@ -97,6 +97,8 @@ export class Player extends PartsObject {
 
     protected _speedIndex: number;
 
+    protected _messageDelayFrameCount: number;
+
     public move(): void {
         if (this.isControllable()) {
             this.controll(this._dir);
@@ -318,6 +320,16 @@ export class Player extends PartsObject {
         return this._state === PlayerState.MESSAGE_WAITING;
     }
 
+    public isDelayFrame(): boolean {
+        return this._messageDelayFrameCount > 0;
+    }
+    public updateDelayFrame(): void {
+        this._messageDelayFrameCount--;
+    }
+
+    public setDelayFrame(): void {
+        this._messageDelayFrameCount = 1;
+    }
 
     public clearMessageWaiting(): void {
         if (this._state === PlayerState.MESSAGE_WAITING) {
@@ -942,11 +954,13 @@ export class Player extends PartsObject {
         if (this._speedIndex === Consts.MAX_SPEED_INDEX || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
             if (this._battleTurnNum === 1) {
                 this._wwa.playSound(SystemSound.ATTACK);
+                this._wwa.vibration(false);
             }
             this._battleFrameCounter = 1;
         } else {
             this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
             this._wwa.playSound(SystemSound.ATTACK);
+            this._wwa.vibration(true);
         }
 
         var playerStatus = this.getStatus();
@@ -1140,6 +1154,7 @@ export class Player extends PartsObject {
         this._isPreparedForLookingAround = true;
         this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         this._speedIndex = Consts.DEFAULT_SPEED_INDEX;
+        this._messageDelayFrameCount = 0;
     }
 
 }

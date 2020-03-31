@@ -139,3 +139,69 @@ $wwa_icon_width-scale_up: 100px;
         }
     }
 }
+
+div.savedata {
+    display: inline-block;
+    text-align: center;
+    padding: 2px 17px;
+    vertical-align: middle;
+    font-size: 0;
+    border-width: 3px;
+    border-style: dotted;
+    border-color: transparent;
+    border-radius:7px;
+
+    &.select {
+        border-color: #FF0000;
+    }
+    > div.wide-cell-row {
+        // TODO: _sidebar にいる %wide-cell と共通化できる部分を共通化したい
+        padding: 10px 0 0 0;
+        margin: 0px;
+        border: 0px;
+        width: 120px;
+        height: 25px;
+        font-size: 14px;
+        position: relative;
+        pointer-events: none;
+        > div.status-icon {
+            // TODO: _sidebar にいる %item_cell をどこからでも使える場所において、それを使うようにする。
+            // @extend %item_cell; // ここから
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            // ここまで
+
+            top: 0;
+            left: 6px; // $wwa_status_x_offset
+
+            padding: 0;
+            margin: 0;
+        }
+    }
+    > div.ss {
+        display: inline-block;
+        padding: 0;
+        margin: 0px 4px 3px 4px;
+        position: relative;
+        pointer-events: none;
+        &:empty {
+            background-color: rgba(0, 0, 0, 0.2);
+            width: 99px;
+            height: 99px;
+        }
+        > canvas {
+            display: inline-block;
+        }
+        > span {
+            display: inline-block;
+            font-size: 7px;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: rgba(255, 255, 255, 1);
+            padding: 3px 7px; 
+        }
+    }
+}
