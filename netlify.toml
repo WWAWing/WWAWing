@@ -1,4 +1,5 @@
 [build]
   base = "/"
   publish = "packages/engine/lib"
-  command = "npm install && npm run build && npm run deploy"
+  command = "npm install && npm run deploy"
+  ignore = "git diff --quiet HEAD^ HEAD packages/engine/"

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "3.2.11",
+  "version": "3.3.0",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
@@ -11,7 +11,7 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^3.3.3333"
+    "typescript": "^3.7.2"
   },
   "publishConfig": {
     "access": "public"
