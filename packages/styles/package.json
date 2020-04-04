@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/styles",
-  "version": "3.2.11",
+  "version": "3.3.0",
   "description": "WWA Wing stylesheet files",
   "main": "index.js",
   "files": [
@@ -18,7 +18,7 @@
     "@types/node-sass": "^3.10.32",
     "node-sass": "^4.10.0",
     "shx": "^0.3.2",
-    "typescript": "^3.7.2",
-    "ts-node": "^8.6.2"
+    "ts-node": "^8.6.2",
+    "typescript": "^3.7.2"
   }
 }
