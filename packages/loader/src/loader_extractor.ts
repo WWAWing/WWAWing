@@ -1,7 +1,7 @@
 import { util } from "./loader_util";
-import * as LoaderCore from "./loader_core";
 import { WWAData } from "@wwawing/common-interface";
 import { WWAConsts, PartsType, LoadStage, createDefaultWWAData } from "./wwa_data";
+import { CustomEventEmitter } from "@wwawing/event-emitter";
 
 export class WWADataExtractor {
   // --- vars ---
@@ -40,7 +40,7 @@ export class WWADataExtractor {
   private _currentPosition: number;
 
   // --- methods and constructors
-  public constructor(data: Uint8Array) {
+  public constructor(data: Uint8Array, private eventEmitter: CustomEventEmitter) {
     this._bitData = data;
     this._wwaData = createDefaultWWAData();
   }
@@ -70,12 +70,7 @@ export class WWADataExtractor {
     if (this._wwaData.version <= 29) {
       this._convertAttributeV2toV3(PartsType.MAP);
       this._convertAttributeV2toV3(PartsType.OBJECT);
-      /*
-            throw new Error(
-                "このバージョンのWWAには、現在対応しておりません。\n" +
-                "マップデータバージョン: " + (Math.floor(this._wwaData.version / 10)) + "." + ( this._wwaData.version % 10 ));
-             */
-    }
+   }
 
     this._replaceAllRandomObjects();
   }
@@ -201,7 +196,7 @@ export class WWADataExtractor {
           this._currentPosition += 1;
         }
         if ((x * this._wwaData.mapWidth + y) % 200 === 0) {
-          LoaderCore.sendProgressToMainProgram(x * this._wwaData.mapWidth + y, this._wwaData.mapWidth * this._wwaData.mapWidth, partsType === PartsType.MAP ? LoadStage.MAP_LOAD : LoadStage.OBJ_LOAD);
+          this.emitProgress(x * this._wwaData.mapWidth + y, this._wwaData.mapWidth * this._wwaData.mapWidth, partsType === PartsType.MAP ? LoadStage.MAP_LOAD : LoadStage.OBJ_LOAD);
         }
         // 範囲外のパーツ削除
         if (fieldArray[x][y] >= partsMax) {
@@ -209,7 +204,7 @@ export class WWADataExtractor {
         }
       }
     }
-    LoaderCore.sendProgressToMainProgram(this._wwaData.mapWidth * this._wwaData.mapWidth, this._wwaData.mapWidth * this._wwaData.mapWidth, partsType === PartsType.MAP ? LoadStage.MAP_LOAD : LoadStage.OBJ_LOAD);
+    this.emitProgress(this._wwaData.mapWidth * this._wwaData.mapWidth, this._wwaData.mapWidth * this._wwaData.mapWidth, partsType === PartsType.MAP ? LoadStage.MAP_LOAD : LoadStage.OBJ_LOAD);
 
     return fieldArray;
   }
@@ -222,7 +217,7 @@ export class WWADataExtractor {
     for (i = 0; i < partsMax; i++) {
       for (j = 0; j < attrMax; j++) {
         if ((i * this._wwaData.mapWidth + j) % 200 === 0) {
-          LoaderCore.sendProgressToMainProgram(i * attrMax + j, partsMax * attrMax, partsType === PartsType.MAP ? LoadStage.MAP_ATTR : LoadStage.OBJ_ATTR);
+          this.emitProgress(i * attrMax + j, partsMax * attrMax, partsType === PartsType.MAP ? LoadStage.MAP_ATTR : LoadStage.OBJ_ATTR);
         }
         if (j === WWAConsts.ATR_CROP1 || j === WWAConsts.ATR_CROP2) {
           partsData[i][j] = 0;
@@ -233,59 +228,23 @@ export class WWADataExtractor {
         this._currentPosition += 2;
       }
     }
-    LoaderCore.sendProgressToMainProgram(partsMax * attrMax, partsMax * attrMax, partsType === PartsType.MAP ? LoadStage.MAP_ATTR : LoadStage.OBJ_ATTR);
+    this.emitProgress(partsMax * attrMax, partsMax * attrMax, partsType === PartsType.MAP ? LoadStage.MAP_ATTR : LoadStage.OBJ_ATTR);
     return partsData;
   }
-  /*
-
-    private _extractObjectPartsData(): void {
-
-    }
-
-    private _convertPartsDataToOldVersion(): void {
-
-    }
-
-    private _replaceRandomObjects(): void {
-
-    }
-
-    private _extractMessagesData(): void {
-
-    }
-*/
 
   private _replaceAllRandomObjects(): void {
-    /*
-       * // 廃止
-        var x, y;
-        var partsID, partsType;
-        for (x = 0; x < this._wwaData.mapWidth; x++) {
-            for (y = 0; y < this._wwaData.mapWidth; y++) {
-                partsID = this._wwaData.mapObject[x][y];
-                partsType =
-                this._wwaData.objectAttribute[partsID][WWAConsts.ATR_TYPE];
-                if (partsType === WWAConsts.OBJECT_RANDOM) {
-                    this._replaceRandomObject(partsID, x, y);
-                        loader_core.sendProgressToMainProgram(
-                            x * this._wwaData.mapWidth + y, this._wwaData.mapWidth * this._wwaData.mapWidth,
-                            loader_wwa_data.LoadStage.RAND_PARTS
-                            );
-                }
-            }
-        }
-        */
-    LoaderCore.sendProgressToMainProgram(this._wwaData.mapWidth * this._wwaData.mapWidth, this._wwaData.mapWidth * this._wwaData.mapWidth, LoadStage.RAND_PARTS);
+   this.emitProgress(this._wwaData.mapWidth * this._wwaData.mapWidth, this._wwaData.mapWidth * this._wwaData.mapWidth, LoadStage.RAND_PARTS);
   }
 
-  private _replaceRandomObject(partsID: number, x: number, y: number): void {
-    var randomNum: number = Math.floor(Math.random() * 10);
-    var afterPartsID: number = this._wwaData.objectAttribute[partsID][10 + randomNum];
-
-    if (afterPartsID >= this._wwaData.objPartsMax) {
-      afterPartsID = 0;
-    }
-    this._wwaData.mapObject[x][y] = afterPartsID;
+  // TODO: loader_core との重複をなくす
+  // eventEmitter を継承をつかってうまくできるはず
+  private emitProgress(
+    current: number,
+    total: number,
+    stage: LoadStage
+  ): void {
+     this.eventEmitter.dispatch("progress", { current, total, stage });
   }
+
 }
 

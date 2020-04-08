@@ -3,7 +3,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./lib"
+    "outDir": "./lib",
+    "strict": true,
+    "module": "esnext"
   },
   "include": [
     "src/**/*.ts"

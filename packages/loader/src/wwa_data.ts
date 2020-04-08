@@ -50,12 +50,6 @@ export class WWAConsts {
     static DEFAULT_STATUS_COLOR_B = 0x0;
 }
 
-export class LoaderResponse {
-    error: LoaderError;
-    progress: LoaderProgress;
-    wwaData: WWAData;
-}
-
 export class LoaderError implements Error {
     name: string;
     message: string;
@@ -79,50 +73,17 @@ export class Coord {
     public x: number;
     public y: number;
     public equals(coord: Coord): boolean {
-    return this.x === coord.x && this.y === coord.y;
+        return this.x === coord.x && this.y === coord.y;
     }
     public substract(c: Coord): Coord {
-    return new Coord(this.x - c.x, this.y - c.y);
+        return new Coord(this.x - c.x, this.y - c.y);
     }
     public clone(): Coord {
-    return new Coord(this.x, this.y);
+        return new Coord(this.x, this.y);
     }
-    /*
-    public convertIntoPosition(wwa: wwa_main.WWA): Position {
-        return new Position(wwa, this.x, this.y, 0, 0);
-    }
-    public getDirectionTo(dest: Coord): Direction {
-        if (this.x < dest.x) {
-            if (this.y > dest.y) {
-                return Direction.RIGHT_UP;
-            }
-            if (this.y === dest.y) {
-                return Direction.RIGHT;
-            }
-            return Direction.RIGHT_DOWN;
-        }
-        if (this.x === dest.x) {
-            if (this.y > dest.y) {
-                return Direction.UP;
-            }
-            if (this.y === dest.y) {
-                return Direction.NO_DIRECTION;
-            }
-            return Direction.DOWN;
-        }
-
-        if (this.y > dest.y) {
-            return Direction.LEFT_UP;
-        }
-        if (this.y === dest.y) {
-            return Direction.LEFT;
-        }
-        return Direction.LEFT_DOWN;
-    }
-    */
     public constructor(x: number = 0, y: number = 0) {
-    this.x = x;
-    this.y = y;
+        this.x = x;
+        this.y = y;
     }
 }
 

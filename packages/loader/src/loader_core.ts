@@ -2,8 +2,8 @@
 import { WWAData } from "@wwawing/common-interface";
 import { WWADataExtractor } from "./loader_extractor";
 import { WWAConsts } from "./wwa_data";
-import { sendToMain } from ".";
 import { util } from "./loader_util";
+import { CustomEventEmitter } from "@wwawing/event-emitter";
 
 export class DecodeResult {
   public mapData: Uint8Array;
@@ -25,7 +25,7 @@ export class WWALoader {
   private _currentPos: number;
   private _srcData: Uint8Array;
 
-  public constructor(fileName) {
+  public constructor(fileName: string, private eventEmitter: CustomEventEmitter) {
     this._fileName = fileName;
   }
 
@@ -40,48 +40,48 @@ export class WWALoader {
           if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200 || xhr.status === 304) {
               this.loadMapData(xhr.response);
-              this.sendDataToMainProgram();
+              this.emitMapData(this._dataJSObj);
             } else if (xhr.status === 404) {
               throw new Error(
                 "マップデータ「" +
-                  this._fileName +
-                  "」が見つかりませんでした。\n" +
-                  "HTTPステータスコードは " +
-                  xhr.status +
-                  "です。"
+                this._fileName +
+                "」が見つかりませんでした。\n" +
+                "HTTPステータスコードは " +
+                xhr.status +
+                "です。"
               );
             } else if (xhr.status === 403) {
               throw new Error(
                 "マップデータ「" +
-                  this._fileName +
-                  "」を読み取る権限がないようです。\n" +
-                  "管理者の方へ: マップデータのパーミッションを確認してください。\n" +
-                  "HTTPステータスコードは " +
-                  xhr.status +
-                  "です。"
+                this._fileName +
+                "」を読み取る権限がないようです。\n" +
+                "管理者の方へ: マップデータのパーミッションを確認してください。\n" +
+                "HTTPステータスコードは " +
+                xhr.status +
+                "です。"
               );
             } else {
               throw new Error(
                 "マップデータ「" +
-                  this._fileName +
-                  "」の読み込みに失敗しました。\n" +
-                  "HTTPステータスコードは " +
-                  xhr.status +
-                  "です。"
+                this._fileName +
+                "」の読み込みに失敗しました。\n" +
+                "HTTPステータスコードは " +
+                xhr.status +
+                "です。"
               );
             }
           }
         } catch (e) {
-          this.sendErrorToMainProgram(e);
+          this.emitError(e);
         }
       };
       xhr.send(null);
     } catch (e) {
       var error = new Error(
         "ロードエラー: ローカルテストの場合は、ブラウザが対応していない可能性があります。\n" +
-          e.message
+        e.message
       );
-      this.sendErrorToMainProgram(error);
+      this.emitError(error);
     }
   }
 
@@ -89,7 +89,7 @@ export class WWALoader {
     try {
       this._srcData = new Uint8Array(data);
       var extResult: DecodeResult = this.decodeMapData();
-      this._dataExtractor = new WWADataExtractor(extResult.mapData);
+      this._dataExtractor = new WWADataExtractor(extResult.mapData, this.eventEmitter);
       this._dataExtractor.extractAllData();
       this._dataJSObj = this._dataExtractor.getJSObject();
       this._currentPos = extResult.extractEndPos;
@@ -100,13 +100,11 @@ export class WWALoader {
   }
 
   private _loadAllTextData(): void {
-    var i;
-    //            if (this._srcData[WWADataExtractor.POS_VERSION] >= 30) {
+    let i: number;
     if (this._dataJSObj.version >= 30) {
       this._dataJSObj.worldPassword = this._getMessageFromData();
     }
 
-    //            if (this._srcData[WWADataExtractor.POS_VERSION] <= 29) {
     if (this._dataJSObj.version <= 29) {
       this._dataJSObj.messageNum = WWALoader.OLDVER_MESSAGE_MAX;
     }
@@ -115,7 +113,7 @@ export class WWALoader {
     for (i = 0; i < this._dataJSObj.message.length; i++) {
       this._dataJSObj.message[i] = this._getMessageFromData();
       if (i % 200 === 0) {
-        sendProgressToMainProgram(
+        this.emitProgress(
           i,
           this._dataJSObj.message.length,
           loader_wwa_data.LoadStage.MESSAGE
@@ -128,7 +126,7 @@ export class WWALoader {
       this._dataJSObj.message.push("");
       this._dataJSObj.messageNum++;
     }
-    sendProgressToMainProgram(
+    this.emitProgress(
       this._dataJSObj.message.length,
       this._dataJSObj.message.length,
       loader_wwa_data.LoadStage.MESSAGE
@@ -201,24 +199,6 @@ export class WWALoader {
     this._dataJSObj.statusColorG = WWAConsts.DEFAULT_STATUS_COLOR_G;
     this._dataJSObj.statusColorB = WWAConsts.DEFAULT_STATUS_COLOR_B;
   }
-  public sendDataToMainProgram(): void {
-    var resp = new loader_wwa_data.LoaderResponse();
-    resp.progress = null;
-    resp.error = null;
-    resp.wwaData = this._dataJSObj;
-    sendToMain(resp);
-  }
-
-  public sendErrorToMainProgram(error: Error): void {
-    var resp = new loader_wwa_data.LoaderResponse();
-    resp.wwaData = null;
-    resp.progress = null;
-    resp.error = new loader_wwa_data.LoaderError();
-    resp.error.name = error.name;
-    resp.error.message = error.message;
-
-    sendToMain(resp);
-  }
 
   public decodeMapData(): DecodeResult {
     var destData: Uint8Array = new Uint8Array(this._srcData.length);
@@ -263,7 +243,7 @@ export class WWALoader {
     }
     try {
       console.log("EXTRACT DATA = " + destCounter + " " + srcCounter);
-    } catch (e) {}
+    } catch (e) { }
     try {
       this.checkCompletelyDecoded(destData, destCounter);
     } catch (e) {
@@ -286,7 +266,7 @@ export class WWALoader {
       }
       str += String.fromCharCode(
         (this._srcData[this._currentPos + i * 2 + 1] << 8) +
-          this._srcData[this._currentPos + i * 2]
+        this._srcData[this._currentPos + i * 2]
       );
     }
     this._currentPos += i * 2 + 2;
@@ -307,29 +287,32 @@ export class WWALoader {
       if (checkSum !== sum) {
         throw new Error(
           "マップデータが壊れているようです。\n チェックサムの値は" +
-            checkSum +
-            "ですが、" +
-            "実際の和は" +
-            sum +
-            "でした。"
+          checkSum +
+          "ですが、" +
+          "実際の和は" +
+          sum +
+          "でした。"
         );
       }
     }
   }
-}
 
-export function sendProgressToMainProgram(
-  current: number,
-  total: number,
-  stage: loader_wwa_data.LoadStage
-): void {
-  var data = new loader_wwa_data.LoaderResponse();
-  data.error = null;
-  data.wwaData = null;
-  data.progress = new loader_wwa_data.LoaderProgress();
-  data.progress.current = current;
-  data.progress.total = total;
-  data.progress.stage = stage;
-  sendToMain(data);
-}
+  public emitMapData(wwaData: WWAData): void {
+    this.eventEmitter.dispatch("mapData", wwaData);
+  }
 
+  public emitError(error: Error): void {
+    this.eventEmitter.dispatch("error", {
+      name: error.name,
+      message: error.message
+    });
+  }
+
+  private emitProgress(
+    current: number,
+    total: number,
+    stage: loader_wwa_data.LoadStage
+  ): void {
+     this.eventEmitter.dispatch("progress", { current, total, stage });
+  }
+}

@@ -1,8 +1,12 @@
 # WWALoader
 WWA( http://wwajp.com )のマップデータを解析した結果をJavaScriptのオブジェクトとして返すプログラムです。
-WebWorkers対応版( wwaload.js )と WebWorkers非対応版( wwaload.noworker.js )があります。
 
-参考までに、WWA Wingでは「wwaload.js」を、WWA Phoenixでは「wwaload.noworker.js」を使っています。用途に応じて使い分けてください。
+## 重要なお知らせ
+WWALoader は、他のnpm パッケージから依存されることを前提に開発されています。
+
+WWALoader 単体では、ブラウザ間の実装差異を埋めるような構成にはなっていません。(例: IE11には対応していない `Promise` を利用するなど)
+
+最終的なアプリケーション側で、必ずpolyfillの付加など適切な措置を行ってください。
 
 ## ライセンス
 - MIT License (Expat)。詳しくは「LICENSE」ファイルを参照。
