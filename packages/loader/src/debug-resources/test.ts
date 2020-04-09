@@ -47,13 +47,18 @@ const display = (data: WWAData) => {
 const main = () => {
     t_start = new Date();
     const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
-    eventEmitter.addListener("mapData", (wwaMap) => display(wwaMap));
-    eventEmitter.addListener("progress", (progress) => {
+    const mapDataListener = eventEmitter.addListener("mapData", (wwaMap) => {
+        eventEmitter.removeListener("mapData", mapDataListener);
+        eventEmitter.removeListener("progress", progressListener);
+        eventEmitter.removeListener("error", errorListener);
+        display(wwaMap)
+    });
+    const progressListener = eventEmitter.addListener("progress", (progress) => {
         ($id("progressCurrent")).value = `${progress.current}`;
         ($id("progressTotal")).value = `${progress.total}`;
         ($id("progressStage")).value = `${progress.stage}`;
    });
-   eventEmitter.addListener("error", (error) => alert(error.message));
+   const errorListener = eventEmitter.addListener("error", (error) => alert(error.message));
 
    const loader = new WWALoader(EXTRACTING_MAPDATA_FILENAME, eventEmitter);
    loader.requestMapData();
