@@ -1,4 +1,4 @@
-import { BrowserEventEmitter } from "@wwawing/event-emitter/lib/impl/browser";
+import { BrowserEventEmitter } from "@wwawing/event-emitter";
 import { WWALoader, WWALoaderEventEmitter } from "..";
 import { WWAData } from "@wwawing/common-interface";
 

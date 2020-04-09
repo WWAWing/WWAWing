@@ -11,6 +11,7 @@ export class NodeEventEmitter implements IEventEmitter {
     }
     addListener(eventName: string, callback: (...args: any[]) => any) {
       this.target.addListener(eventName, callback);
+      return callback;
     }
     removeListener(eventName: string, callback: (...args: any[]) => any) {
       this.target.removeListener(eventName, callback);

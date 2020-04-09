@@ -2,6 +2,7 @@
   "name": "@wwawing/common-interface",
   "version": "3.3.0",
   "description": "",
+  "sideEffects": false,
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

@@ -173,9 +173,9 @@ export interface WWALoaderEventEmitter extends IEventEmitter {
   dispatch(eventName: "mapData", data: WWAData): void;
   dispatch(eventName: "progress", data: Progress): void;
   dispatch(eventName: "error", data: LoaderError): void;
-  addListener(eventName: "mapData", callback: (data: WWAData) => any): void;
-  addListener(eventName: "progress", callback: (data: Progress) => any): void;
-  addListener(eventName: "error", callback: (data: LoaderError) => any): void;
+  addListener(eventName: "mapData", callback: (data: WWAData) => any): (data: WWAData) => any;
+  addListener(eventName: "progress", callback: (data: Progress) => any):  (data: Progress) => any;
+  addListener(eventName: "error", callback: (data: LoaderError) => any):  (data: LoaderError) => any;
   removeListener(eventName: "mapData", callback: (data: WWAData) => any): void;
   removeListener(eventName: "progress", callback: (data: Progress) => any): void;
   removeListener(eventName: "error", callback: (data: LoaderError) => any): void;

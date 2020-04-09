@@ -1,2 +1,2 @@
-export { IEventEmitter } from "./interface"
-export { NodeEventEmitter, BrowserEventEmitter } from "./impl"
+export * from "./interface"
+export * from "./impl"

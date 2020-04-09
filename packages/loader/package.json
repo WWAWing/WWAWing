@@ -3,7 +3,7 @@
   "version": "3.3.0",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/wwaload.js",
-  "sideEffects": false,
+  "sideEffects": ["./**/*.html", "./**/*.dat"],
   "files": [
     "./lib"
   ],

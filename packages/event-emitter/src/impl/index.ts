@@ -1,2 +1,2 @@
-export { BrowserEventEmitter }  from "./browser";
-export { NodeEventEmitter } from "./node";
+export * from "./browser";
+export * from "./node";
