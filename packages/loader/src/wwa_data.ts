@@ -1,4 +1,5 @@
 import { WWAData } from "@wwawing/common-interface";
+import { IEventEmitter } from "@wwawing/event-emitter";
 
 export class WWAConsts {
     static ITEMBOX_SIZE: number = 12;
@@ -157,3 +158,25 @@ export function createDefaultWWAData(): WWAData {
     };
 }
 
+export interface Progress {
+  current: number;
+  total: number;
+  stage: LoadStage;
+}
+
+export interface LoaderError {
+  name: string;
+  message: string;
+}
+
+export interface WWALoaderEventEmitter extends IEventEmitter {
+  dispatch(eventName: "mapData", data: WWAData): void;
+  dispatch(eventName: "progress", data: Progress): void;
+  dispatch(eventName: "error", data: LoaderError): void;
+  addListener(eventName: "mapData", callback: (data: WWAData) => any): void;
+  addListener(eventName: "progress", callback: (data: Progress) => any): void;
+  addListener(eventName: "error", callback: (data: LoaderError) => any): void;
+  removeListener(eventName: "mapData", callback: (data: WWAData) => any): void;
+  removeListener(eventName: "progress", callback: (data: Progress) => any): void;
+  removeListener(eventName: "error", callback: (data: LoaderError) => any): void;
+}

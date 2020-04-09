@@ -1,23 +1,22 @@
-import { CustomEventEmitter } from "@wwawing/event-emitter";
-import { WWALoader } from "..";
+import { BrowserEventEmitter } from "@wwawing/event-emitter/lib/impl/browser";
+import { WWALoader, WWALoaderEventEmitter } from "..";
+import { WWAData } from "@wwawing/common-interface";
 
 const EXTRACTING_MAPDATA_FILENAME = "wwamap.dat"; // 吸い出すファイル名
 
 let t_start: Date;
 let t_end: Date;
 
-const $id = function (id: string) {
-    return document.getElementById(id) as HTMLInputElement;
-};
+const $id = (id: string) => document.getElementById(id) as HTMLInputElement;
 
-const disp = function (data) {
+const display = (data: WWAData) => {
     t_end = new Date();
 
     console.log(data);   
 
     ($id("loadTime")).value = `${t_end.getTime() - t_start.getTime()}`;
 
-    var ids = [
+    const ids = [
        "playerX",
        "playerY",
        "gameoverX",
@@ -35,8 +34,8 @@ const disp = function (data) {
        "mapCGName"
     ];
     
-    for (var i in ids) {
-        var key = ids[i];
+    for (let i in ids) {
+        const key = ids[i];
         try {
             ($id(key)).value = data[key];
         } catch (e) {
@@ -45,14 +44,14 @@ const disp = function (data) {
     }
 }
 
-const main = function () {
+const main = () => {
     t_start = new Date();
-    const eventEmitter = new CustomEventEmitter();
-    eventEmitter.addListener("mapData", (wwaMap) => disp(wwaMap));
+    const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
+    eventEmitter.addListener("mapData", (wwaMap) => display(wwaMap));
     eventEmitter.addListener("progress", (progress) => {
-        ($id("progressCurrent")).value = progress.current;
-        ($id("progressTotal")).value = progress.total;
-        ($id("progressStage")).value = progress.stage;
+        ($id("progressCurrent")).value = `${progress.current}`;
+        ($id("progressTotal")).value = `${progress.total}`;
+        ($id("progressStage")).value = `${progress.stage}`;
    });
    eventEmitter.addListener("error", (error) => alert(error.message));
 
@@ -60,4 +59,4 @@ const main = function () {
    loader.requestMapData();
 };
 
-window.addEventListener("load", function () { main(); });
+window.addEventListener("load", main);

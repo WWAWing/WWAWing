@@ -1,14 +1,13 @@
 ﻿import * as loader_wwa_data from "./wwa_data";
 import { WWAData } from "@wwawing/common-interface";
 import { WWADataExtractor } from "./loader_extractor";
-import { WWAConsts } from "./wwa_data";
+import { WWAConsts, WWALoaderEventEmitter } from "./wwa_data";
 import { util } from "./loader_util";
-import { CustomEventEmitter } from "@wwawing/event-emitter";
 
 export class DecodeResult {
   public mapData: Uint8Array;
   public extractEndPos: number;
-  public constructor(mapData: Uint8Array, extractEndPos) {
+  public constructor(mapData: Uint8Array, extractEndPos: number) {
     this.mapData = mapData;
     this.extractEndPos = extractEndPos;
   }
@@ -25,13 +24,17 @@ export class WWALoader {
   private _currentPos: number;
   private _srcData: Uint8Array;
 
-  public constructor(fileName: string, private eventEmitter: CustomEventEmitter) {
+  public constructor(fileName: string, private eventEmitter: WWALoaderEventEmitter) {
     this._fileName = fileName;
   }
 
   public requestMapData(): void {
     var xhr: XMLHttpRequest = new XMLHttpRequest();
     try {
+      // TODO: XHR をやめて、nodeでも動くようにする
+      // 例えば、axiosを導入すればどちらでも動くコードにできるはず
+      // (Promise を IE11で使えるようにするためにengine側で @babel/preset-env をかける必要があるので注意)
+      // (この場合は、ライセンス表記に「axios」「core-js」を増やす必要があることに注意 どちらもMIT)
       xhr.open("GET", this._fileName, true);
       xhr.responseType = "arraybuffer";
 
@@ -40,7 +43,7 @@ export class WWALoader {
           if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200 || xhr.status === 304) {
               this.loadMapData(xhr.response);
-              this.emitMapData(this._dataJSObj);
+              this.eventEmitter.dispatch("mapData", this._dataJSObj);
             } else if (xhr.status === 404) {
               throw new Error(
                 "マップデータ「" +
@@ -72,7 +75,7 @@ export class WWALoader {
             }
           }
         } catch (e) {
-          this.emitError(e);
+          this.eventEmitter.dispatch("error", e);
         }
       };
       xhr.send(null);
@@ -81,7 +84,7 @@ export class WWALoader {
         "ロードエラー: ローカルテストの場合は、ブラウザが対応していない可能性があります。\n" +
         e.message
       );
-      this.emitError(error);
+      this.eventEmitter.dispatch("error", error);
     }
   }
 
@@ -113,11 +116,11 @@ export class WWALoader {
     for (i = 0; i < this._dataJSObj.message.length; i++) {
       this._dataJSObj.message[i] = this._getMessageFromData();
       if (i % 200 === 0) {
-        this.emitProgress(
-          i,
-          this._dataJSObj.message.length,
-          loader_wwa_data.LoadStage.MESSAGE
-        );
+        this.eventEmitter.dispatch("progress",{
+          current: i,
+          total: this._dataJSObj.message.length,
+          stage: loader_wwa_data.LoadStage.MESSAGE
+        });
       }
     }
 
@@ -126,14 +129,13 @@ export class WWALoader {
       this._dataJSObj.message.push("");
       this._dataJSObj.messageNum++;
     }
-    this.emitProgress(
-      this._dataJSObj.message.length,
-      this._dataJSObj.message.length,
-      loader_wwa_data.LoadStage.MESSAGE
-    );
+    this.eventEmitter.dispatch("progress",{
+      current: this._dataJSObj.message.length,
+      total: this._dataJSObj.message.length,
+      stage: loader_wwa_data.LoadStage.MESSAGE
+    });
 
     this._dataJSObj.worldName = this._getMessageFromData();
-    //            if (this._srcData[WWADataExtractor.POS_VERSION] <= 29) {
     if (this._dataJSObj.version <= 29) {
       this._dataJSObj.worldPassword = this._getMessageFromData();
     } else {
@@ -142,7 +144,6 @@ export class WWALoader {
     if (this._dataJSObj.worldPassword === "") {
       this._dataJSObj.worldPassNumber = 0;
     } else {
-      //                if (this._srcData[WWADataExtractor.POS_VERSION] >= 29) {
       if (this._dataJSObj.version >= 29) {
         this._dataJSObj.worldPassNumber =
           (parseInt(this._dataJSObj.worldPassword) / 10 - 1197) / 17 - 2357;
@@ -295,24 +296,5 @@ export class WWALoader {
         );
       }
     }
-  }
-
-  public emitMapData(wwaData: WWAData): void {
-    this.eventEmitter.dispatch("mapData", wwaData);
-  }
-
-  public emitError(error: Error): void {
-    this.eventEmitter.dispatch("error", {
-      name: error.name,
-      message: error.message
-    });
-  }
-
-  private emitProgress(
-    current: number,
-    total: number,
-    stage: loader_wwa_data.LoadStage
-  ): void {
-     this.eventEmitter.dispatch("progress", { current, total, stage });
   }
 }

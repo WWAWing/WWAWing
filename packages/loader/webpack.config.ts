@@ -7,7 +7,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
  */
 const config: webpack.Configuration = {
     mode: "development",
-    entry: ["./src/index.ts", "./src/debug-resources/test.ts", "./src/debug-resources/index.html" ],
+    entry: ["./src/index.ts", "./src/debug-resources/test.ts", "./src/debug-resources/index.html"],
     output: {
         filename: "wwaload-debug.js",
         path: path.resolve(__dirname, "debug")
@@ -19,12 +19,16 @@ const config: webpack.Configuration = {
         rules: [
             {
                 test: /\.ts/,
-                use: [{ loader: "ts-loader" }],
+                use: [{
+                    loader: "ts-loader",
+                    options: { configFile: "tsconfig.webpack.json" }
+                }],
+
                 exclude: /node_modules/
             },
             {
                 test: /\.html?/,
-                use: [{loader: "html-loader"}]
+                use: [{ loader: "html-loader" }]
             }
         ]
     },

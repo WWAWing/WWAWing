@@ -3,6 +3,7 @@
   "version": "3.3.0",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/wwaload.js",
+  "sideEffects": false,
   "files": [
     "./lib"
   ],
@@ -10,7 +11,7 @@
     "start": "run-p watch:* start:deploy server",
     "start:deploy": "shx mkdir -p lib && shx cp -R resources/* lib",
     "test": "echo \"no test specified\"",
-    "server": "webpack && shx cp ./src/debug-resources/wwamap.dat ./debug && http-server ./debug -o",
+    "server": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack && shx cp ./src/debug-resources/wwamap.dat ./debug && http-server ./debug -o",
     "build": "npm run clean && tsc",
     "clean": "shx rm -rf lib",
     "prepare": "npm run build"
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@types/uglifyjs-webpack-plugin": "^1.1.0",
     "@wwawing/common-interface": "^3.3.0",
+    "cross-env": "^7.0.2",
     "html-loader": "^1.1.0",
     "html-webpack-plugin": "^4.0.4",
     "http-server": "^0.10.0",
@@ -38,7 +40,7 @@
     "shelljs": "^0.8.3",
     "shx": "^0.3.2",
     "ts-loader": "^4.3.0",
-    "ts-node": "^8.6.2",
+    "ts-node": "^8.8.2",
     "typescript": "^3.7.2",
     "uglify-js": "^3.3.27",
     "uglifyjs-webpack-plugin": "^1.2.5",

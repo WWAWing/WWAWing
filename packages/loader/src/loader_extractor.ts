@@ -1,7 +1,6 @@
 import { util } from "./loader_util";
 import { WWAData } from "@wwawing/common-interface";
-import { WWAConsts, PartsType, LoadStage, createDefaultWWAData } from "./wwa_data";
-import { CustomEventEmitter } from "@wwawing/event-emitter";
+import { WWAConsts, PartsType, LoadStage, createDefaultWWAData, WWALoaderEventEmitter } from "./wwa_data";
 
 export class WWADataExtractor {
   // --- vars ---
@@ -40,7 +39,7 @@ export class WWADataExtractor {
   private _currentPosition: number;
 
   // --- methods and constructors
-  public constructor(data: Uint8Array, private eventEmitter: CustomEventEmitter) {
+  public constructor(data: Uint8Array, private eventEmitter: WWALoaderEventEmitter) {
     this._bitData = data;
     this._wwaData = createDefaultWWAData();
   }
@@ -236,8 +235,6 @@ export class WWADataExtractor {
    this.emitProgress(this._wwaData.mapWidth * this._wwaData.mapWidth, this._wwaData.mapWidth * this._wwaData.mapWidth, LoadStage.RAND_PARTS);
   }
 
-  // TODO: loader_core との重複をなくす
-  // eventEmitter を継承をつかってうまくできるはず
   private emitProgress(
     current: number,
     total: number,

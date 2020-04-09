@@ -4,6 +4,7 @@
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "files":["lib"],
   "main": "lib/index.js",
+  "sideEffects": false,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p .",
