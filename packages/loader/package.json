@@ -11,9 +11,13 @@
     "start": "run-p watch:* start:deploy server",
     "start:deploy": "shx mkdir -p lib && shx cp -R resources/* lib",
     "test": "echo \"no test specified\"",
-    "server": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack && shx cp ./src/debug-resources/wwamap.dat ./debug && http-server ./debug -o",
-    "build": "npm run clean && tsc",
-    "clean": "shx rm -rf lib",
+    "debug": "run-s clean:debug build:debug server",
+    "server": "http-server ./debug -o",
+    "build": "npm run clean:lib && tsc",
+    "build:debug": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack && shx cp ./src/debug-resources/wwamap.dat ./debug",
+    "clean": "run-p clean:*",
+    "clean:lib": "shx rm -rf lib",
+    "clean:debug": "shx rm -rf debug",
     "prepare": "npm run build"
   },
   "repository": {

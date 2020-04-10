@@ -3,7 +3,6 @@ import { WWAData } from "@wwawing/common-interface";
 import { WWAConsts, PartsType, LoadStage, createDefaultWWAData, WWALoaderEventEmitter } from "./wwa_data";
 
 export class WWADataExtractor {
-  // --- vars ---
   public static POS_CHECK = 0x00; //  0
   public static POS_VERSION = 0x02; //  2
   public static POS_OLD_MAP_COUNT = 0x03; //  3
@@ -34,57 +33,59 @@ export class WWADataExtractor {
   public static POS_MAPDATA_TOP = 0x5a; // 90
   public static POS_OLD_MAPDATA_TOP = 0x64; //100
 
-  private _bitData: Uint8Array;
-  private _wwaData: WWAData;
-  private _currentPosition: number;
+  private wwaData: WWAData;
+  private currentPosition: number;
 
-  // --- methods and constructors
-  public constructor(data: Uint8Array, private eventEmitter: WWALoaderEventEmitter) {
-    this._bitData = data;
-    this._wwaData = createDefaultWWAData();
+  public constructor(
+    private byteMapData: Uint8Array,
+    private eventEmitter: WWALoaderEventEmitter
+  ) {
+    this.wwaData = createDefaultWWAData();
   }
 
-  public extractAllData(): void {
+  public extractAllData(): WWAData {
     var mapAttrMax: number, objAttrMax: number;
-    this._wwaData.version = this._bitData[WWADataExtractor.POS_VERSION];
+    this.wwaData.version = this.byteMapData[WWADataExtractor.POS_VERSION];
     this._extractInitialParameters();
 
-    if (this._wwaData.version >= 29) {
-      this._currentPosition = WWADataExtractor.POS_MAPDATA_TOP;
+    if (this.wwaData.version >= 29) {
+      this.currentPosition = WWADataExtractor.POS_MAPDATA_TOP;
     } else {
-      this._currentPosition = WWADataExtractor.POS_OLD_MAPDATA_TOP;
+      this.currentPosition = WWADataExtractor.POS_OLD_MAPDATA_TOP;
     }
 
-    this._wwaData.map = this._getFieldDataFromBits(PartsType.MAP, this._wwaData.mapPartsMax).concat();
+    this.wwaData.map = this._getFieldDataFromBits(PartsType.MAP, this.wwaData.mapPartsMax).concat();
 
-    this._wwaData.mapObject = this._getFieldDataFromBits(PartsType.OBJECT, this._wwaData.objPartsMax).concat();
+    this.wwaData.mapObject = this._getFieldDataFromBits(PartsType.OBJECT, this.wwaData.objPartsMax).concat();
 
-    mapAttrMax = this._wwaData.version > 29 ? WWAConsts.MAP_ATR_MAX : WWAConsts.OLD_MAP_ATR_MAX;
-    objAttrMax = this._wwaData.version > 29 ? WWAConsts.OBJ_ATR_MAX : WWAConsts.OLD_OBJ_ATR_MAX;
+    mapAttrMax = this.wwaData.version > 29 ? WWAConsts.MAP_ATR_MAX : WWAConsts.OLD_MAP_ATR_MAX;
+    objAttrMax = this.wwaData.version > 29 ? WWAConsts.OBJ_ATR_MAX : WWAConsts.OLD_OBJ_ATR_MAX;
 
-    this._wwaData.mapAttribute = this._getPartsDataFromBits(PartsType.MAP, this._wwaData.mapPartsMax, mapAttrMax).concat();
-    this._wwaData.objectAttribute = this._getPartsDataFromBits(PartsType.OBJECT, this._wwaData.objPartsMax, objAttrMax).concat();
+    this.wwaData.mapAttribute = this._getPartsDataFromBits(PartsType.MAP, this.wwaData.mapPartsMax, mapAttrMax).concat();
+    this.wwaData.objectAttribute = this._getPartsDataFromBits(PartsType.OBJECT, this.wwaData.objPartsMax, objAttrMax).concat();
 
     //  下位互換拡張キャラクタ変換
-    if (this._wwaData.version <= 29) {
+    if (this.wwaData.version <= 29) {
       this._convertAttributeV2toV3(PartsType.MAP);
       this._convertAttributeV2toV3(PartsType.OBJECT);
    }
 
     this._replaceAllRandomObjects();
+
+    return this.wwaData;
   }
 
   private _convertAttributeV2toV3(partsType: PartsType) {
-    var partsMax;
-    var attributeArray;
-    var localGateIndex;
+    var partsMax: number;
+    var attributeArray: number[][];
+    var localGateIndex: number;
     if (partsType == PartsType.MAP) {
-      partsMax = this._wwaData.mapPartsMax;
-      attributeArray = this._wwaData.mapAttribute;
+      partsMax = this.wwaData.mapPartsMax;
+      attributeArray = this.wwaData.mapAttribute;
       localGateIndex = WWAConsts.MAP_LOCALGATE;
     } else if (partsType == PartsType.OBJECT) {
-      partsMax = this._wwaData.objPartsMax;
-      attributeArray = this._wwaData.objectAttribute;
+      partsMax = this.wwaData.objPartsMax;
+      attributeArray = this.wwaData.objectAttribute;
       localGateIndex = WWAConsts.OBJECT_LOCALGATE;
     } else {
       throw new Error("謎のパーツ種別が指定されました");
@@ -122,60 +123,55 @@ export class WWADataExtractor {
     }
   }
 
-  public getJSObject(): WWAData {
-    return this._wwaData;
-  }
-
   private _get1ByteNumber(index: number): number {
-    return this._bitData[index];
+    return this.byteMapData[index];
   }
 
   private _get2BytesNumber(index: number): number {
-    return this._bitData[index] + this._bitData[index + 1] * 0x100;
+    return this.byteMapData[index] + this.byteMapData[index + 1] * 0x100;
   }
 
   private _extractInitialParameters(): void {
     // 現行はこちら
-    if (this._wwaData.version > 29) {
-      this._wwaData.gameoverX = this._get2BytesNumber(WWADataExtractor.POS_GAMEOVER_X);
-      this._wwaData.gameoverY = this._get2BytesNumber(WWADataExtractor.POS_GAMEOVER_Y);
-      this._wwaData.playerX = this._get2BytesNumber(WWADataExtractor.POS_PLAYER_X);
-      this._wwaData.playerY = this._get2BytesNumber(WWADataExtractor.POS_PLAYER_Y);
-      this._wwaData.mapPartsMax = this._get2BytesNumber(WWADataExtractor.POS_MAP_COUNT);
-      this._wwaData.objPartsMax = this._get2BytesNumber(WWADataExtractor.POS_OBJ_COUNT);
-      this._wwaData.isOldMap = false;
+    if (this.wwaData.version > 29) {
+      this.wwaData.gameoverX = this._get2BytesNumber(WWADataExtractor.POS_GAMEOVER_X);
+      this.wwaData.gameoverY = this._get2BytesNumber(WWADataExtractor.POS_GAMEOVER_Y);
+      this.wwaData.playerX = this._get2BytesNumber(WWADataExtractor.POS_PLAYER_X);
+      this.wwaData.playerY = this._get2BytesNumber(WWADataExtractor.POS_PLAYER_Y);
+      this.wwaData.mapPartsMax = this._get2BytesNumber(WWADataExtractor.POS_MAP_COUNT);
+      this.wwaData.objPartsMax = this._get2BytesNumber(WWADataExtractor.POS_OBJ_COUNT);
+      this.wwaData.isOldMap = false;
 
       // 旧バージョン互換
     } else {
-      this._wwaData.gameoverX = this._get1ByteNumber(WWADataExtractor.POS_OLD_GAMEOVER_X);
-      this._wwaData.gameoverY = this._get1ByteNumber(WWADataExtractor.POS_OLD_GAMEOVER_Y);
-      this._wwaData.playerX = this._get1ByteNumber(WWADataExtractor.POS_OLD_PLAYER_X);
-      this._wwaData.playerY = this._get1ByteNumber(WWADataExtractor.POS_OLD_PLAYER_Y);
-      this._wwaData.mapPartsMax = this._get1ByteNumber(WWADataExtractor.POS_OLD_MAP_COUNT);
-      this._wwaData.objPartsMax = this._get1ByteNumber(WWADataExtractor.POS_OLD_OBJ_COUNT);
-      this._wwaData.isOldMap = true;
+      this.wwaData.gameoverX = this._get1ByteNumber(WWADataExtractor.POS_OLD_GAMEOVER_X);
+      this.wwaData.gameoverY = this._get1ByteNumber(WWADataExtractor.POS_OLD_GAMEOVER_Y);
+      this.wwaData.playerX = this._get1ByteNumber(WWADataExtractor.POS_OLD_PLAYER_X);
+      this.wwaData.playerY = this._get1ByteNumber(WWADataExtractor.POS_OLD_PLAYER_Y);
+      this.wwaData.mapPartsMax = this._get1ByteNumber(WWADataExtractor.POS_OLD_MAP_COUNT);
+      this.wwaData.objPartsMax = this._get1ByteNumber(WWADataExtractor.POS_OLD_OBJ_COUNT);
+      this.wwaData.isOldMap = true;
     }
-    this._wwaData.statusEnergyMax = this._get2BytesNumber(WWADataExtractor.POS_STATUS_ENERGY_MAX);
-    this._wwaData.statusEnergy = this._get2BytesNumber(WWADataExtractor.POS_STATUS_ENERGY);
-    this._wwaData.statusStrength = this._get2BytesNumber(WWADataExtractor.POS_STATUS_STRENGTH);
-    this._wwaData.statusDefence = this._get2BytesNumber(WWADataExtractor.POS_STATUS_DEFENCE);
-    this._wwaData.statusGold = this._get2BytesNumber(WWADataExtractor.POS_STATUS_GOLD);
+    this.wwaData.statusEnergyMax = this._get2BytesNumber(WWADataExtractor.POS_STATUS_ENERGY_MAX);
+    this.wwaData.statusEnergy = this._get2BytesNumber(WWADataExtractor.POS_STATUS_ENERGY);
+    this.wwaData.statusStrength = this._get2BytesNumber(WWADataExtractor.POS_STATUS_STRENGTH);
+    this.wwaData.statusDefence = this._get2BytesNumber(WWADataExtractor.POS_STATUS_DEFENCE);
+    this.wwaData.statusGold = this._get2BytesNumber(WWADataExtractor.POS_STATUS_GOLD);
     this._extractInitialItemData();
-    this._wwaData.mapWidth = this._get2BytesNumber(WWADataExtractor.POS_MAP_SIZE);
-    this._wwaData.messageNum = this._get2BytesNumber(WWADataExtractor.POS_MESSAGE_NUM);
+    this.wwaData.mapWidth = this._get2BytesNumber(WWADataExtractor.POS_MAP_SIZE);
+    this.wwaData.messageNum = this._get2BytesNumber(WWADataExtractor.POS_MESSAGE_NUM);
 
     // 旧バージョン互換
-    if (this._wwaData.version < 28) this._wwaData.mapWidth = 71;
-    else if (this._wwaData.version <= 29) this._wwaData.mapWidth = 101;
+    if (this.wwaData.version < 28) this.wwaData.mapWidth = 71;
+    else if (this.wwaData.version <= 29) this.wwaData.mapWidth = 101;
   }
 
   private _extractInitialItemData(): void {
-    var i;
-    var topIdx = this._wwaData.version > 29 ? WWADataExtractor.POS_ITEMBOX_TOP : WWADataExtractor.POS_OLD_ITEMBOX_TOP;
+    const topIdx = this.wwaData.version > 29 ? WWADataExtractor.POS_ITEMBOX_TOP : WWADataExtractor.POS_OLD_ITEMBOX_TOP;
 
-    this._wwaData.itemBox = new Array(WWAConsts.ITEMBOX_SIZE);
-    for (i = 0; i < WWAConsts.ITEMBOX_SIZE; i++) {
-      this._wwaData.itemBox[i] = this._get1ByteNumber(topIdx + i);
+    this.wwaData.itemBox = new Array(WWAConsts.ITEMBOX_SIZE);
+    for (let i = 0; i < WWAConsts.ITEMBOX_SIZE; i++) {
+      this.wwaData.itemBox[i] = this._get1ByteNumber(topIdx + i);
     }
   }
 
@@ -183,19 +179,19 @@ export class WWADataExtractor {
     var x: number, y: number;
     var fieldArray: number[][];
 
-    fieldArray = util.new2DArray(this._wwaData.mapWidth, this._wwaData.mapWidth);
+    fieldArray = util.new2DArray(this.wwaData.mapWidth, this.wwaData.mapWidth);
 
-    for (x = 0; x < this._wwaData.mapWidth; x++) {
-      for (y = 0; y < this._wwaData.mapWidth; y++) {
-        if (this._wwaData.version > 29) {
-          fieldArray[x][y] = this._get2BytesNumber(this._currentPosition);
-          this._currentPosition += 2;
+    for (x = 0; x < this.wwaData.mapWidth; x++) {
+      for (y = 0; y < this.wwaData.mapWidth; y++) {
+        if (this.wwaData.version > 29) {
+          fieldArray[x][y] = this._get2BytesNumber(this.currentPosition);
+          this.currentPosition += 2;
         } else {
-          fieldArray[x][y] = this._get1ByteNumber(this._currentPosition);
-          this._currentPosition += 1;
+          fieldArray[x][y] = this._get1ByteNumber(this.currentPosition);
+          this.currentPosition += 1;
         }
-        if ((x * this._wwaData.mapWidth + y) % 200 === 0) {
-          this.emitProgress(x * this._wwaData.mapWidth + y, this._wwaData.mapWidth * this._wwaData.mapWidth, partsType === PartsType.MAP ? LoadStage.MAP_LOAD : LoadStage.OBJ_LOAD);
+        if ((x * this.wwaData.mapWidth + y) % 200 === 0) {
+          this.emitProgress(x * this.wwaData.mapWidth + y, this.wwaData.mapWidth * this.wwaData.mapWidth, partsType === PartsType.MAP ? LoadStage.MAP_LOAD : LoadStage.OBJ_LOAD);
         }
         // 範囲外のパーツ削除
         if (fieldArray[x][y] >= partsMax) {
@@ -203,7 +199,7 @@ export class WWADataExtractor {
         }
       }
     }
-    this.emitProgress(this._wwaData.mapWidth * this._wwaData.mapWidth, this._wwaData.mapWidth * this._wwaData.mapWidth, partsType === PartsType.MAP ? LoadStage.MAP_LOAD : LoadStage.OBJ_LOAD);
+    this.emitProgress(this.wwaData.mapWidth * this.wwaData.mapWidth, this.wwaData.mapWidth * this.wwaData.mapWidth, partsType === PartsType.MAP ? LoadStage.MAP_LOAD : LoadStage.OBJ_LOAD);
 
     return fieldArray;
   }
@@ -215,16 +211,16 @@ export class WWADataExtractor {
 
     for (i = 0; i < partsMax; i++) {
       for (j = 0; j < attrMax; j++) {
-        if ((i * this._wwaData.mapWidth + j) % 200 === 0) {
+        if ((i * this.wwaData.mapWidth + j) % 200 === 0) {
           this.emitProgress(i * attrMax + j, partsMax * attrMax, partsType === PartsType.MAP ? LoadStage.MAP_ATTR : LoadStage.OBJ_ATTR);
         }
         if (j === WWAConsts.ATR_CROP1 || j === WWAConsts.ATR_CROP2) {
           partsData[i][j] = 0;
-          this._currentPosition += 2;
+          this.currentPosition += 2;
           continue;
         }
-        partsData[i][j] = this._get2BytesNumber(this._currentPosition);
-        this._currentPosition += 2;
+        partsData[i][j] = this._get2BytesNumber(this.currentPosition);
+        this.currentPosition += 2;
       }
     }
     this.emitProgress(partsMax * attrMax, partsMax * attrMax, partsType === PartsType.MAP ? LoadStage.MAP_ATTR : LoadStage.OBJ_ATTR);
@@ -232,7 +228,7 @@ export class WWADataExtractor {
   }
 
   private _replaceAllRandomObjects(): void {
-   this.emitProgress(this._wwaData.mapWidth * this._wwaData.mapWidth, this._wwaData.mapWidth * this._wwaData.mapWidth, LoadStage.RAND_PARTS);
+   this.emitProgress(this.wwaData.mapWidth * this.wwaData.mapWidth, this.wwaData.mapWidth * this.wwaData.mapWidth, LoadStage.RAND_PARTS);
   }
 
   private emitProgress(

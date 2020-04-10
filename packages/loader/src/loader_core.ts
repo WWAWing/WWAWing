@@ -4,13 +4,9 @@ import { WWADataExtractor } from "./loader_extractor";
 import { WWAConsts, WWALoaderEventEmitter } from "./wwa_data";
 import { util } from "./loader_util";
 
-export class DecodeResult {
-  public mapData: Uint8Array;
-  public extractEndPos: number;
-  public constructor(mapData: Uint8Array, extractEndPos: number) {
-    this.mapData = mapData;
-    this.extractEndPos = extractEndPos;
-  }
+export interface DecodeResult {
+  byteMapData: Uint8Array;
+  endPosition: number;
 }
 
 export class WWALoader {
@@ -18,15 +14,14 @@ export class WWALoader {
   public static EXT_LAST_PADDING: number = 3;
   public static OLDVER_MESSAGE_MAX: number = 400;
 
-  private _fileName: string;
-  private _dataExtractor: WWADataExtractor;
-  private _dataJSObj: WWAData;
+  private wwaData: WWAData;
   private _currentPos: number;
   private _srcData: Uint8Array;
 
-  public constructor(fileName: string, private eventEmitter: WWALoaderEventEmitter) {
-    this._fileName = fileName;
-  }
+  public constructor(
+    private fileName: string,
+    private eventEmitter: WWALoaderEventEmitter
+  ) { }
 
   public requestMapData(): void {
     var xhr: XMLHttpRequest = new XMLHttpRequest();
@@ -35,7 +30,7 @@ export class WWALoader {
       // 例えば、axiosを導入すればどちらでも動くコードにできるはず
       // (Promise を IE11で使えるようにするためにengine側で @babel/preset-env をかける必要があるので注意)
       // (この場合は、ライセンス表記に「axios」「core-js」を増やす必要があることに注意 どちらもMIT)
-      xhr.open("GET", this._fileName, true);
+      xhr.open("GET", this.fileName, true);
       xhr.responseType = "arraybuffer";
 
       xhr.onreadystatechange = () => {
@@ -43,11 +38,11 @@ export class WWALoader {
           if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200 || xhr.status === 304) {
               this.loadMapData(xhr.response);
-              this.eventEmitter.dispatch("mapData", this._dataJSObj);
+              this.eventEmitter.dispatch("mapData", this.wwaData);
             } else if (xhr.status === 404) {
               throw new Error(
                 "マップデータ「" +
-                this._fileName +
+                this.fileName +
                 "」が見つかりませんでした。\n" +
                 "HTTPステータスコードは " +
                 xhr.status +
@@ -56,7 +51,7 @@ export class WWALoader {
             } else if (xhr.status === 403) {
               throw new Error(
                 "マップデータ「" +
-                this._fileName +
+                this.fileName +
                 "」を読み取る権限がないようです。\n" +
                 "管理者の方へ: マップデータのパーミッションを確認してください。\n" +
                 "HTTPステータスコードは " +
@@ -66,7 +61,7 @@ export class WWALoader {
             } else {
               throw new Error(
                 "マップデータ「" +
-                this._fileName +
+                this.fileName +
                 "」の読み込みに失敗しました。\n" +
                 "HTTPステータスコードは " +
                 xhr.status +
@@ -91,11 +86,9 @@ export class WWALoader {
   public loadMapData(data: any): void {
     try {
       this._srcData = new Uint8Array(data);
-      var extResult: DecodeResult = this.decodeMapData();
-      this._dataExtractor = new WWADataExtractor(extResult.mapData, this.eventEmitter);
-      this._dataExtractor.extractAllData();
-      this._dataJSObj = this._dataExtractor.getJSObject();
-      this._currentPos = extResult.extractEndPos;
+      const decodedResult = this.decodeMapData();
+      this.wwaData = new WWADataExtractor(decodedResult.byteMapData, this.eventEmitter).extractAllData();
+      this._currentPos = decodedResult.endPosition;
     } catch (e) {
       throw e;
     }
@@ -104,101 +97,101 @@ export class WWALoader {
 
   private _loadAllTextData(): void {
     let i: number;
-    if (this._dataJSObj.version >= 30) {
-      this._dataJSObj.worldPassword = this._getMessageFromData();
+    if (this.wwaData.version >= 30) {
+      this.wwaData.worldPassword = this._getMessageFromData();
     }
 
-    if (this._dataJSObj.version <= 29) {
-      this._dataJSObj.messageNum = WWALoader.OLDVER_MESSAGE_MAX;
+    if (this.wwaData.version <= 29) {
+      this.wwaData.messageNum = WWALoader.OLDVER_MESSAGE_MAX;
     }
 
-    this._dataJSObj.message = new Array(this._dataJSObj.messageNum);
-    for (i = 0; i < this._dataJSObj.message.length; i++) {
-      this._dataJSObj.message[i] = this._getMessageFromData();
+    this.wwaData.message = new Array(this.wwaData.messageNum);
+    for (i = 0; i < this.wwaData.message.length; i++) {
+      this.wwaData.message[i] = this._getMessageFromData();
       if (i % 200 === 0) {
-        this.eventEmitter.dispatch("progress",{
+        this.eventEmitter.dispatch("progress", {
           current: i,
-          total: this._dataJSObj.message.length,
+          total: this.wwaData.message.length,
           stage: loader_wwa_data.LoadStage.MESSAGE
         });
       }
     }
 
     // システムメッセージが足りない時対策
-    while (this._dataJSObj.messageNum < 10) {
-      this._dataJSObj.message.push("");
-      this._dataJSObj.messageNum++;
+    while (this.wwaData.messageNum < 10) {
+      this.wwaData.message.push("");
+      this.wwaData.messageNum++;
     }
-    this.eventEmitter.dispatch("progress",{
-      current: this._dataJSObj.message.length,
-      total: this._dataJSObj.message.length,
+    this.eventEmitter.dispatch("progress", {
+      current: this.wwaData.message.length,
+      total: this.wwaData.message.length,
       stage: loader_wwa_data.LoadStage.MESSAGE
     });
 
-    this._dataJSObj.worldName = this._getMessageFromData();
-    if (this._dataJSObj.version <= 29) {
-      this._dataJSObj.worldPassword = this._getMessageFromData();
+    this.wwaData.worldName = this._getMessageFromData();
+    if (this.wwaData.version <= 29) {
+      this.wwaData.worldPassword = this._getMessageFromData();
     } else {
       this._getMessageFromData();
     }
-    if (this._dataJSObj.worldPassword === "") {
-      this._dataJSObj.worldPassNumber = 0;
+    if (this.wwaData.worldPassword === "") {
+      this.wwaData.worldPassNumber = 0;
     } else {
-      if (this._dataJSObj.version >= 29) {
-        this._dataJSObj.worldPassNumber =
-          (parseInt(this._dataJSObj.worldPassword) / 10 - 1197) / 17 - 2357;
+      if (this.wwaData.version >= 29) {
+        this.wwaData.worldPassNumber =
+          (parseInt(this.wwaData.worldPassword) / 10 - 1197) / 17 - 2357;
       } else {
-        this._dataJSObj.worldPassNumber = parseInt(
-          this._dataJSObj.worldPassword
+        this.wwaData.worldPassNumber = parseInt(
+          this.wwaData.worldPassword
         );
       }
     }
-    this._dataJSObj.charCGName = this._getMessageFromData();
-    this._dataJSObj.mapCGName = this._getMessageFromData();
-    this._dataJSObj.systemMessage = new Array(WWAConsts.SYSTEM_MESSAGE_NUM);
+    this.wwaData.charCGName = this._getMessageFromData();
+    this.wwaData.mapCGName = this._getMessageFromData();
+    this.wwaData.systemMessage = new Array(WWAConsts.SYSTEM_MESSAGE_NUM);
     for (i = 0; i < WWAConsts.SYSTEM_MESSAGE_NUM; i++) {
-      if (this._dataJSObj.version >= 30) {
-        this._dataJSObj.systemMessage[i] = this._getMessageFromData();
+      if (this.wwaData.version >= 30) {
+        this.wwaData.systemMessage[i] = this._getMessageFromData();
       } else {
-        this._dataJSObj.systemMessage[i] = "";
+        this.wwaData.systemMessage[i] = "";
       }
     }
-    this._dataJSObj.yesnoImgPosX =
+    this.wwaData.yesnoImgPosX =
       loader_wwa_data.WWAConsts.IMGPOS_DEFAULT_YESNO_X;
-    this._dataJSObj.yesnoImgPosY =
+    this.wwaData.yesnoImgPosY =
       loader_wwa_data.WWAConsts.IMGPOS_DEFAULT_YESNO_Y;
-    this._dataJSObj.playerImgPosX =
+    this.wwaData.playerImgPosX =
       loader_wwa_data.WWAConsts.IMGPOS_DEFAULT_PLAYER_X;
-    this._dataJSObj.playerImgPosY =
+    this.wwaData.playerImgPosY =
       loader_wwa_data.WWAConsts.IMGPOS_DEFAULT_PLAYER_Y;
-    this._dataJSObj.clickableItemSignImgPosX =
+    this.wwaData.clickableItemSignImgPosX =
       loader_wwa_data.WWAConsts.IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_X;
-    this._dataJSObj.clickableItemSignImgPosY =
+    this.wwaData.clickableItemSignImgPosY =
       loader_wwa_data.WWAConsts.IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_Y;
-    this._dataJSObj.disableSaveFlag =
+    this.wwaData.disableSaveFlag =
       loader_wwa_data.WWAConsts.DEFAULT_DISABLE_SAVE;
-    this._dataJSObj.isOldMap = loader_wwa_data.WWAConsts.DEFAULT_OLDMAP;
-    this._dataJSObj.objectNoCollapseDefaultFlag =
+    this.wwaData.isOldMap = loader_wwa_data.WWAConsts.DEFAULT_OLDMAP;
+    this.wwaData.objectNoCollapseDefaultFlag =
       loader_wwa_data.WWAConsts.DEFAULT_OBJECT_NO_COLLAPSE;
-    this._dataJSObj.delPlayerFlag = false;
-    this._dataJSObj.bgm = 0;
-    this._dataJSObj.effectCoords = [];
-    this._dataJSObj.effectWaits = 0;
-    this._dataJSObj.imgClickX = 0;
-    this._dataJSObj.imgClickY = 0;
+    this.wwaData.delPlayerFlag = false;
+    this.wwaData.bgm = 0;
+    this.wwaData.effectCoords = [];
+    this.wwaData.effectWaits = 0;
+    this.wwaData.imgClickX = 0;
+    this.wwaData.imgClickY = 0;
 
-    this._dataJSObj.frameColorR = WWAConsts.DEFAULT_FRAME_COLOR_R;
-    this._dataJSObj.frameColorG = WWAConsts.DEFAULT_FRAME_COLOR_G;
-    this._dataJSObj.frameColorB = WWAConsts.DEFAULT_FRAME_COLOR_B;
-    this._dataJSObj.frameOutColorR = WWAConsts.DEFAULT_FRAMEOUT_COLOR_R;
-    this._dataJSObj.frameOutColorG = WWAConsts.DEFAULT_FRAMEOUT_COLOR_G;
-    this._dataJSObj.frameOutColorB = WWAConsts.DEFAULT_FRAMEOUT_COLOR_B;
-    this._dataJSObj.fontColorR = WWAConsts.DEFAULT_STR_COLOR_R;
-    this._dataJSObj.fontColorG = WWAConsts.DEFAULT_STR_COLOR_G;
-    this._dataJSObj.fontColorB = WWAConsts.DEFAULT_STR_COLOR_B;
-    this._dataJSObj.statusColorR = WWAConsts.DEFAULT_STATUS_COLOR_R;
-    this._dataJSObj.statusColorG = WWAConsts.DEFAULT_STATUS_COLOR_G;
-    this._dataJSObj.statusColorB = WWAConsts.DEFAULT_STATUS_COLOR_B;
+    this.wwaData.frameColorR = WWAConsts.DEFAULT_FRAME_COLOR_R;
+    this.wwaData.frameColorG = WWAConsts.DEFAULT_FRAME_COLOR_G;
+    this.wwaData.frameColorB = WWAConsts.DEFAULT_FRAME_COLOR_B;
+    this.wwaData.frameOutColorR = WWAConsts.DEFAULT_FRAMEOUT_COLOR_R;
+    this.wwaData.frameOutColorG = WWAConsts.DEFAULT_FRAMEOUT_COLOR_G;
+    this.wwaData.frameOutColorB = WWAConsts.DEFAULT_FRAMEOUT_COLOR_B;
+    this.wwaData.fontColorR = WWAConsts.DEFAULT_STR_COLOR_R;
+    this.wwaData.fontColorG = WWAConsts.DEFAULT_STR_COLOR_G;
+    this.wwaData.fontColorB = WWAConsts.DEFAULT_STR_COLOR_B;
+    this.wwaData.statusColorR = WWAConsts.DEFAULT_STATUS_COLOR_R;
+    this.wwaData.statusColorG = WWAConsts.DEFAULT_STATUS_COLOR_G;
+    this.wwaData.statusColorB = WWAConsts.DEFAULT_STATUS_COLOR_B;
   }
 
   public decodeMapData(): DecodeResult {
@@ -251,7 +244,7 @@ export class WWALoader {
       throw e;
     }
 
-    return new DecodeResult(destData, srcCounter + WWALoader.EXT_LAST_PADDING);
+    return { byteMapData: destData, endPosition: srcCounter + WWALoader.EXT_LAST_PADDING };
   }
 
   private _getMessageFromData(): string {
