@@ -3,7 +3,7 @@ import { WWAData } from "@wwawing/common-interface";
 import { WWADataExtractor } from "./loader_extractor";
 import { WWAConsts, WWALoaderEventEmitter } from "./wwa_data";
 import { util } from "./loader_util";
-
+import { MapdataClient } from "./mapdata-client";
 export interface DecodeResult {
   byteMapData: Uint8Array;
   endPosition: number;
@@ -23,67 +23,23 @@ export class WWALoader {
     private eventEmitter: WWALoaderEventEmitter
   ) { }
 
-  public requestMapData(): void {
-    var xhr: XMLHttpRequest = new XMLHttpRequest();
-    try {
-      // TODO: XHR をやめて、nodeでも動くようにする
-      // 例えば、axiosを導入すればどちらでも動くコードにできるはず
-      // (Promise を IE11で使えるようにするためにengine側で @babel/preset-env をかける必要があるので注意)
-      // (この場合は、ライセンス表記に「axios」「core-js」を増やす必要があることに注意 どちらもMIT)
-      xhr.open("GET", this.fileName, true);
-      xhr.responseType = "arraybuffer";
-
-      xhr.onreadystatechange = () => {
-        try {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200 || xhr.status === 304) {
-              this.loadMapData(xhr.response);
-              this.eventEmitter.dispatch("mapData", this.wwaData);
-            } else if (xhr.status === 404) {
-              throw new Error(
-                "マップデータ「" +
-                this.fileName +
-                "」が見つかりませんでした。\n" +
-                "HTTPステータスコードは " +
-                xhr.status +
-                "です。"
-              );
-            } else if (xhr.status === 403) {
-              throw new Error(
-                "マップデータ「" +
-                this.fileName +
-                "」を読み取る権限がないようです。\n" +
-                "管理者の方へ: マップデータのパーミッションを確認してください。\n" +
-                "HTTPステータスコードは " +
-                xhr.status +
-                "です。"
-              );
-            } else {
-              throw new Error(
-                "マップデータ「" +
-                this.fileName +
-                "」の読み込みに失敗しました。\n" +
-                "HTTPステータスコードは " +
-                xhr.status +
-                "です。"
-              );
-            }
-          }
-        } catch (e) {
-          this.eventEmitter.dispatch("error", e);
-        }
-      };
-      xhr.send(null);
-    } catch (e) {
-      var error = new Error(
-        "ロードエラー: ローカルテストの場合は、ブラウザが対応していない可能性があります。\n" +
-        e.message
-      );
-      this.eventEmitter.dispatch("error", error);
-    }
+  public requestAndLoadMapData() {
+    const client = new MapdataClient(this.fileName);
+    client.request((error, data) => {
+      if (error) {
+        const name = error.name || "";
+        const message = error.message || "";
+        this.eventEmitter.dispatch("error", { name, message});
+      } else if (!data) {
+        this.eventEmitter.dispatch("error", { name: "マップデータ取得に失敗しました", message: "mapdata is empty" });
+      } else {
+        this.loadMapData(data);
+        this.eventEmitter.dispatch("mapData", this.wwaData);
+      }
+    });
   }
 
-  public loadMapData(data: any): void {
+  private loadMapData(data: any): void {
     try {
       this._srcData = new Uint8Array(data);
       const decodedResult = this.decodeMapData();

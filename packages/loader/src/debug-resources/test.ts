@@ -54,7 +54,7 @@ const main = () => {
         ($id("progressStage")).value = `${progress.stage}`;
    });
    const errorListener = eventEmitter.addListener("error", (error) => alert(error.message));
-   loader.requestMapData();
+   loader.requestAndLoadMapData();
 };
 
 window.addEventListener("load", main);
