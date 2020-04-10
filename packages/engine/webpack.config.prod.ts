@@ -4,6 +4,7 @@ import UglifyJsPlugin from "uglifyjs-webpack-plugin";
 
 export default {
     ...config,
+    mode: "production",
     output: {
         ...config.output,
         pathinfo: false,
