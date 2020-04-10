@@ -27,4 +27,3 @@ WWALoader 単体では、ブラウザ間の実装差異を埋めるような構�
 不具合を発見された場合は、issuesかPull Requestまで。Githubのアカウントを持っていない場合はバグ報告板( http://jbbs.shitaraba.net/netgame/14732/ )まで。
 
 WWA Wing - https://wwawing.com
-

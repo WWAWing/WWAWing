@@ -2,11 +2,10 @@
   "name": "@wwawing/loader",
   "version": "3.3.0",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
-  "main": "./lib/wwaload.js",
+  "main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
   "sideEffects": ["./**/*.html", "./**/*.dat"],
-  "files": [
-    "./lib"
-  ],
+  "files": [    "./lib"  ],
   "scripts": {
     "start": "run-p watch:* start:deploy server",
     "start:deploy": "shx mkdir -p lib && shx cp -R resources/* lib",

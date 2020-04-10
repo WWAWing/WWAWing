@@ -1,6 +1,4 @@
-declare var external_script_inject_mode: boolean;
 declare var VERSION_WWAJS: string; // webpackにより注入
-declare function loader_start(e: any): void;
 
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position,
@@ -35,9 +33,9 @@ import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
-
+import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
+import { BrowserEventEmitter } from "@wwawing/event-emitter";
 let wwa: WWA;
-let wwap_mode: boolean = false;
 
 /**
 *
@@ -173,7 +171,7 @@ export class WWA {
     private hoge: number[][];
     ////////////////////////
 
-    private _loadHandler: (e) => void;
+    private _loadHandler: (wwaData: WWAData) => void;
     public audioContext: AudioContext;
     public audioGain: GainNode;
     private audioExtension: string = "";
@@ -300,17 +298,8 @@ export class WWA {
                 break;
         }
 
-        this._loadHandler = (e): void => {
-            if (e.data.error !== null && e.data.error !== void 0) {
-                this._setErrorMessage("下記のエラーが発生しました。: \n" + e.data.error.message, ctxCover);
-                return;
-            }
-            if (e.data.progress !== null && e.data.progress !== void 0) {
-                this._setProgressBar(e.data.progress);
-                return;
-            }
-
-            this._wwaData = e.data.wwaData;
+        this._loadHandler = (wwaData: WWAData): void => {
+            this._wwaData = wwaData;
             this._wwaData.isItemEffectEnabled = itemEffectEnabled;
             this._itemboxBackgroundPos = {
                 x: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_X,
@@ -875,56 +864,16 @@ export class WWA {
                 }
             });
         }
-        if (wwap_mode || Worker === void 0) {
-            var script: HTMLScriptElement;
-            if (!external_script_inject_mode) {
-                script = document.createElement("script");
-                if (wwap_mode) {
-                    script.src = Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_LOADER_NO_WORKER;
-                } else {
-                    script.src = "wwaload.noworker.js";
-                }
-                document.getElementsByTagName("head")[0].appendChild(script);
-            } else {
-                script = <HTMLScriptElement>document.getElementById("wwaloader-ex");
-                if (!script.src.match(/^http:\/\/wwawing\.com/) &&
-                    !script.src.match(/^http:\/\/www\.wwawing\.com/) &&
-                    !script.src.match(/^https:\/\/wwaphoenix\.github\.io/) &&
-                    !script.src.match(/^https:\/\/www\.wwaphoenix\.github\.io/)) {
-                    throw new Error("SCRIPT ORIGIN ERROR");
-                }
-            }
-            var self1 = this;
-            (window as any).postMessage_noWorker = (e): void => {
-                self1._loadHandler(e);
-            };
-
-            // 黒魔術
-            try {
-                loader_start({
-                    data: {
-                        fileName: mapFileName + "?date=" + t_start
-                    }
-                });
-            } catch (e) {
-                script.onload = function () {
-                    loader_start({
-                        data: {
-                            fileName: mapFileName + "?date=" + t_start
-                        }
-                    });
-                }
-            }
-        } else {
-            try {
-                var loadWorker: Worker = new Worker(workerFileName + "?date=" + t_start);
-                loadWorker.postMessage({ "fileName": mapFileName + "?date=" + t_start });
-                loadWorker.addEventListener("message", this._loadHandler);
-            } catch (e) {
-                alert("マップデータのロード時のエラーが発生しました。:\nWebWorkerの生成に失敗しました。" + e.message);
-                return;
-            }
-        }
+        const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
+        const mapDataHandler = (mapData: WWAData) =>  this._loadHandler(mapData);
+        const progressHandler = (progress: Progress) => this._setProgressBar(progress);
+        const errorHandler = (error: LoaderError) => this._setErrorMessage("下記のエラーが発生しました。: \n" + error.message, ctxCover);
+        // TODO removeListener
+        eventEmitter.addListener("mapData", mapDataHandler )
+        eventEmitter.addListener("progress", progressHandler )
+        eventEmitter.addListener("error", errorHandler )
+        const loader = new WWALoader(mapFileName, eventEmitter);
+        loader.requestAndLoadMapData();
     }
 
     private _setProgressBar(progress: LoaderProgress) {
@@ -1029,9 +978,7 @@ export class WWA {
         if (this._audioInstances[idx] !== void 0) {
             return;
         }
-        const file = wwap_mode
-            ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + "." + this.audioExtension
-            : this._audioDirectory + idx + "." + this.audioExtension;
+        const file = this._audioDirectory + idx + "." + this.audioExtension;
         // WebAudio
         if (audioContext) {
             this._audioInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
@@ -4393,9 +4340,6 @@ font-weight: bold;
 
 var isCopyRightClick = false;
 function start() {
-    if (window["wwap_mode"] === void 0) {
-        wwap_mode = false;
-    }
     Array.prototype.forEach.call(util.$qsAll("a.wwa-copyright"), (node: HTMLElement) => {
         node.addEventListener("click", (): void => {
             isCopyRightClick = true;
@@ -4409,9 +4353,7 @@ function start() {
             return mes;             // Gecko and WebKit
         }
     });
-    var titleImgName = wwap_mode ?
-        Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG :
-        util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
+    var titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
     inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName);
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
     var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
