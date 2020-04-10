@@ -2,12 +2,8 @@
 import { WWAData } from "@wwawing/common-interface";
 import { WWADataExtractor } from "./loader_extractor";
 import { WWAConsts, WWALoaderEventEmitter } from "./wwa_data";
-import { util } from "./loader_util";
+import { decodeMapData } from "./decoder"
 import { MapdataClient } from "./mapdata-client";
-export interface DecodeResult {
-  byteMapData: Uint8Array;
-  endPosition: number;
-}
 
 export class WWALoader {
   public static MEM_BLOCK: number = 65000;
@@ -42,7 +38,7 @@ export class WWALoader {
   private loadMapData(data: any): void {
     try {
       this._srcData = new Uint8Array(data);
-      const decodedResult = this.decodeMapData();
+      const decodedResult = decodeMapData(this._srcData);
       this.wwaData = new WWADataExtractor(decodedResult.byteMapData, this.eventEmitter).extractAllData();
       this._currentPos = decodedResult.endPosition;
     } catch (e) {
@@ -150,59 +146,6 @@ export class WWALoader {
     this.wwaData.statusColorB = WWAConsts.DEFAULT_STATUS_COLOR_B;
   }
 
-  public decodeMapData(): DecodeResult {
-    var destData: Uint8Array = new Uint8Array(this._srcData.length);
-    var srcCounter: number, destCounter: number;
-    var maxim: number;
-    var i: number;
-
-    for (
-      srcCounter = 0, destCounter = 0;
-      srcCounter < this._srcData.length;
-      srcCounter++
-    ) {
-      if (
-        this._srcData[srcCounter] === 0 &&
-        this._srcData[srcCounter + 1] === 0 &&
-        this._srcData[srcCounter + 2] === 0
-      ) {
-        break;
-      }
-
-      destData[destCounter++] = this._srcData[srcCounter];
-
-      // 数字が連続していれば解凍処理
-      if (this._srcData[srcCounter] === this._srcData[srcCounter + 1]) {
-        maxim = this._srcData[srcCounter + 2];
-        for (i = 0; i < maxim; i++) {
-          destData[destCounter++] = this._srcData[srcCounter];
-        }
-        srcCounter += 2;
-      }
-
-      // マップサイズとパーツ数のデータから必要領域取得
-      // 最大サイズを超えそうなときは領域拡張して続行
-      if (destCounter + 255 >= destData.length) {
-        var newDestData: Uint8Array = new Uint8Array(
-          destData.length + WWALoader.MEM_BLOCK
-        );
-
-        newDestData.set(destData);
-        destData = newDestData;
-      }
-    }
-    try {
-      console.log("EXTRACT DATA = " + destCounter + " " + srcCounter);
-    } catch (e) { }
-    try {
-      this.checkCompletelyDecoded(destData, destCounter);
-    } catch (e) {
-      throw e;
-    }
-
-    return { byteMapData: destData, endPosition: srcCounter + WWALoader.EXT_LAST_PADDING };
-  }
-
   private _getMessageFromData(): string {
     var str = "";
     // WWA V3.10 Fix (Unicode Byte-length Problem, 1000->1500)
@@ -223,27 +166,4 @@ export class WWALoader {
     return str;
   }
 
-  public checkCompletelyDecoded(mapData: Uint8Array, dataLength: number): void {
-    var i: number;
-    var checkSum: number =
-      mapData[WWADataExtractor.POS_CHECK] +
-      mapData[WWADataExtractor.POS_CHECK + 1] * 0x100;
-    var sum: number = 0;
-    if (mapData[WWADataExtractor.POS_VERSION] >= 29) {
-      for (i = 2; i < dataLength; i++) {
-        sum += util.signedByte(mapData[i]) * (i % 8 + 1);
-      }
-      sum = (sum % 0x10000) & 0xffff;
-      if (checkSum !== sum) {
-        throw new Error(
-          "マップデータが壊れているようです。\n チェックサムの値は" +
-          checkSum +
-          "ですが、" +
-          "実際の和は" +
-          sum +
-          "でした。"
-        );
-      }
-    }
-  }
 }
