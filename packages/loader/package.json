@@ -14,7 +14,7 @@
     "debug": "run-s clean:debug build:debug server",
     "server": "http-server ./debug -o",
     "build": "npm run clean:lib && tsc",
-    "build:debug": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack && shx cp ./src/debug-resources/wwamap.dat ./debug",
+    "build:debug": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack && shx cp ./src/___debug-resources___/wwamap.dat ./debug",
     "clean": "run-p clean:*",
     "clean:lib": "shx rm -rf lib",
     "clean:debug": "shx rm -rf debug",

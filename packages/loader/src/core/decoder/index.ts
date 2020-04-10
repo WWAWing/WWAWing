@@ -1,8 +1,7 @@
-import { checkCompletelyDecoded } from "./check";
-
 export interface DecodeResult {
   byteMapData: Uint8Array;
-  endPosition: number;
+  byteMapLength: number;
+  compressedEndPosition: number;
 }
 const MEM_BLOCK = 65000;
 const EXT_LAST_PADDING = 3;
@@ -46,14 +45,8 @@ export function decodeMapData(srcData: Uint8Array): DecodeResult {
       destData = newDestData;
     }
   }
-  try {
-    console.log("EXTRACT DATA = " + destCounter + " " + srcCounter);
-  } catch (e) { }
-  try {
-    checkCompletelyDecoded(destData, destCounter);
-  } catch (e) {
-    throw e;
-  }
 
-  return { byteMapData: destData, endPosition: srcCounter + EXT_LAST_PADDING };
+  console.log("EXTRACT DATA = " + destCounter + " " + srcCounter);
+
+  return { byteMapData: destData, byteMapLength: destCounter, compressedEndPosition: srcCounter + EXT_LAST_PADDING };
 }

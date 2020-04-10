@@ -2,6 +2,7 @@ import { WWAData } from "@wwawing/common-interface";
 import { IEventEmitter } from "@wwawing/event-emitter";
 
 export class WWAConsts {
+    // TODO: WWA本体のものと共通化して common-interface におく
     static ITEMBOX_SIZE: number = 12;
     static MAP_ATR_MAX: number = 60;
     static OBJ_ATR_MAX: number = 60;
@@ -14,18 +15,12 @@ export class WWAConsts {
     static ATR_JUMP_Y: number = 17;
 
     static MAP_LOCALGATE: number = 2;
-    static OBJECT_RANDOM: number = 16;
     static OBJECT_LOCALGATE: number = 18;
 
     static SYSTEM_MESSAGE_NUM: number = 20;
 
     static IMGPOS_DEFAULT_YESNO_X: number = 3;
     static IMGPOS_DEFAULT_YESNO_Y: number = 1;
-
-    static IMGRELPOS_YESNO_YES_X: number = 0;
-    static IMGRELPOS_YESNO_NO_X: number = 1;
-    static IMGRELPOS_YESNO_YESP_X: number = 2;
-    static IMGRELPOS_YESNO_NOP_X: number = 3;
 
     static IMGPOS_DEFAULT_PLAYER_X: number = 2;
     static IMGPOS_DEFAULT_PLAYER_Y: number = 0;
@@ -68,24 +63,6 @@ export enum PartsType {
 
 export enum LoadStage {
     INIT = 0, MAP_LOAD = 1, OBJ_LOAD = 2, MAP_ATTR = 3, OBJ_ATTR = 4, RAND_PARTS = 5, MESSAGE = 6
-}
-
-export class Coord {
-    public x: number;
-    public y: number;
-    public equals(coord: Coord): boolean {
-        return this.x === coord.x && this.y === coord.y;
-    }
-    public substract(c: Coord): Coord {
-        return new Coord(this.x - c.x, this.y - c.y);
-    }
-    public clone(): Coord {
-        return new Coord(this.x, this.y);
-    }
-    public constructor(x: number = 0, y: number = 0) {
-        this.x = x;
-        this.y = y;
-    }
 }
 
 /**

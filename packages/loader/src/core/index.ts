@@ -1,6 +1,6 @@
 ﻿import { WWAData } from "@wwawing/common-interface";
-import { WWADataExtractor } from "./loader_extractor";
-import { WWALoaderEventEmitter } from "./wwa_data";
+import { WWADataExtractor } from "./extractor";
+import { WWALoaderEventEmitter } from "../infra";
 import { decodeMapData } from "./decoder";
 import { TextLoader } from "./text-loader";
 import { MapdataClient } from "./mapdata-client";
@@ -30,9 +30,9 @@ export class WWALoader {
   private loadMapData(data: any): WWAData {
     try {
       const compressedByteMapData = new Uint8Array(data);
-      const decodedResult = decodeMapData(compressedByteMapData);
-      const wwaData = new WWADataExtractor(decodedResult.byteMapData, this.eventEmitter).extractAllData();
-      return new TextLoader(wwaData, compressedByteMapData, decodedResult.endPosition, this.eventEmitter).load();
+      const { byteMapData, byteMapLength, compressedEndPosition} = decodeMapData(compressedByteMapData);
+      const wwaData = new WWADataExtractor(byteMapData, byteMapLength, this.eventEmitter).extractAllData();
+      return new TextLoader(wwaData, compressedByteMapData, compressedEndPosition, this.eventEmitter).load();
     } catch (e) {
       throw e;
     }

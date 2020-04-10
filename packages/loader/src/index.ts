@@ -1,2 +1,2 @@
-﻿export { WWALoader } from "./loader_core";
-export * from "./wwa_data";
+﻿export { WWALoader } from "./core";
+export * from "./infra";
