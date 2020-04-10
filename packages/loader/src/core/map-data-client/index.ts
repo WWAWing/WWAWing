@@ -1,4 +1,4 @@
-export class MapdataClient {
+export class MapDataClient {
   constructor(private fileName: string) {}
   
   public request(callback: (error?: any, data?: any) => any): void {

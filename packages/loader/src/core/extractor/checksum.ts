@@ -16,7 +16,7 @@ function calculateByteSum(mapData: Uint8Array, dataLength: number): number {
   return sum;
 }
 
-export function checkCompletelyDecoded(mapData: Uint8Array, dataLength: number): void {
+export function checkMapDataBroken(mapData: Uint8Array, dataLength: number): void {
   const correctCheckSum = calculateCorrectCheckSum(mapData);
   const sum = calculateByteSum(mapData, dataLength);
   if (correctCheckSum !== sum) {

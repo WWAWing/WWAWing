@@ -1,9 +1,9 @@
 ﻿import { WWAData } from "@wwawing/common-interface";
 import { WWADataExtractor } from "./extractor";
 import { WWALoaderEventEmitter } from "../infra";
-import { decodeMapData } from "./decoder";
+import { decompressMapData } from "./decompressor";
 import { TextLoader } from "./text-loader";
-import { MapdataClient } from "./mapdata-client";
+import { MapDataClient } from "./map-data-client";
 
 export class WWALoader {
   public constructor(
@@ -12,7 +12,7 @@ export class WWALoader {
   ) { }
 
   public requestAndLoadMapData() {
-    const client = new MapdataClient(this.fileName);
+    const client = new MapDataClient(this.fileName);
     client.request((error, data) => {
       if (error) {
         const name = error.name || "";
@@ -30,7 +30,7 @@ export class WWALoader {
   private loadMapData(data: any): WWAData {
     try {
       const compressedByteMapData = new Uint8Array(data);
-      const { byteMapData, byteMapLength, compressedEndPosition} = decodeMapData(compressedByteMapData);
+      const { byteMapData, byteMapLength, compressedEndPosition} = decompressMapData(compressedByteMapData);
       const wwaData = new WWADataExtractor(byteMapData, byteMapLength, this.eventEmitter).extractAllData();
       return new TextLoader(wwaData, compressedByteMapData, compressedEndPosition, this.eventEmitter).load();
     } catch (e) {

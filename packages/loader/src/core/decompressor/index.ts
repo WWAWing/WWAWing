@@ -1,4 +1,4 @@
-export interface DecodeResult {
+export interface DecompressResult {
   byteMapData: Uint8Array;
   byteMapLength: number;
   compressedEndPosition: number;
@@ -6,9 +6,9 @@ export interface DecodeResult {
 const MEM_BLOCK = 65000;
 const EXT_LAST_PADDING = 3;
 
-export function decodeMapData(srcData: Uint8Array): DecodeResult {
-  var destData: Uint8Array = new Uint8Array(srcData.length);
-  var srcCounter: number, destCounter: number;
+export function decompressMapData(srcData: Uint8Array): DecompressResult {
+  let destData: Uint8Array = new Uint8Array(srcData.length);
+  let srcCounter: number, destCounter: number;
 
   for (
     srcCounter = 0, destCounter = 0;

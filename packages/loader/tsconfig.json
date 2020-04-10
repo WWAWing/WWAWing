@@ -10,6 +10,6 @@
     "src/**/*.ts", "core/loader_core.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules", "src/___debug-resources___"
   ]
 }

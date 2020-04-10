@@ -1,6 +1,6 @@
 import { new2DArray } from "../../infra/util";
-import { checkCompletelyDecoded } from "./checksum";
-import { BytePosition} from "./constants";
+import { checkMapDataBroken } from "./checksum";
+import { BytePosition } from "./constants";
 import { WWAData } from "@wwawing/common-interface";
 import { WWAConsts, PartsType, LoadStage, createDefaultWWAData, WWALoaderEventEmitter } from "../../infra";
 
@@ -13,7 +13,7 @@ export class WWADataExtractor {
     byteMapLength: number,
     private eventEmitter: WWALoaderEventEmitter
   ) {
-    checkCompletelyDecoded(byteMapData, byteMapLength);
+    checkMapDataBroken(byteMapData, byteMapLength);
     this.wwaData = createDefaultWWAData();
   }
 
