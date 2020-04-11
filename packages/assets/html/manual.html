@@ -53,7 +53,6 @@
       |  +-- 70...98.mp3 - BGMです。アップロードは任意です。
       |
       +-- wwa.js - wwa本体です。本家のWWA.classに相当します。名前はHTML中のscript要素で変更できます。
-      +-- wwaload.js - wwa.jsから起動するマップデータのローダです。名前は「起動するには」で紹介する「data-wwa-loader」属性で変更できます。
       +-- wwa.css - WWAの見栄えを調整するCSSファイルです。アップロードしないと見栄えがかなり大変なことになります。名前はHTML中のlink要素で変更できます。
       +-- wwa_classic.css - wwa.cssのメッセージウィンドウを、WWA原作(Java版)風味に近づけたものです。こちらを指定する場合にはwwa.cssは不要です。
       +-- style.css - ページのWWAの部分以外の見栄えを調整するCSSファイルです。自由に編集してみてください。
@@ -68,7 +67,6 @@
                 <p>
                     <pre><code>&lt;div id=&quot;wwa-wrapper&quot; class=&quot;wwa-size-box&quot;
 &nbsp;&nbsp;data-wwa-mapdata=&quot;caves01.dat&quot;
-&nbsp;&nbsp;data-wwa-loader=&quot;wwaload.js&quot;
 &nbsp;&nbsp;data-wwa-urlgate-enable=&quot;true&quot;&gt;
 &nbsp;&nbsp;data-wwa-title-img=&quot;cover.gif&quot;&gt;
 &lt;/div&gt;</code></pre>
@@ -85,8 +83,6 @@
                 <dl>
                     <dt class="require"><code>data-wwa-mapdata</code>属性</dt>
                     <dd>起動したいマップデータのファイル名を記述します。（例:<code>wwamap.dat</code>）</dd>
-                    <dt class="require"><code>data-wwa-loader</code>属性</dt>
-                    <dd>ローダのファイル名を記述します。通常、<code>wwaload.js</code>から変更する必要はありません。</dd>
                     <dt class="require"><code>data-wwa-urlgate-enable</code>属性</dt>
                     <dd>通常は<code>true</code>を指定してください。falseを指定するとURLゲートが無効になります。</dd>
                     <dt><code>data-wwa-title-img</code>属性</dt>

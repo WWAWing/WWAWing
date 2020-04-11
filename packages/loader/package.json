@@ -2,22 +2,23 @@
   "name": "@wwawing/loader",
   "version": "3.3.0",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
-  "main": "./lib/wwaload.js",
+  "main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
+  "sideEffects": ["./**/*.html", "./**/*.dat"],
+  "files": [
+    "./lib"
+  ],
   "scripts": {
     "start": "run-p watch:* start:deploy server",
     "start:deploy": "shx mkdir -p lib && shx cp -R resources/* lib",
     "test": "echo \"no test specified\"",
-    "watch:worker": "webpack -w ",
-    "watch:noworker": "webpack -w --config ./webpack.config.noworker.js",
-    "server": "http-server ./lib -o",
-    "build": "npm run clean && npm run build:worker && npm run build:noworker",
-    "build:worker": "npm run build:worker:dev && npm run build:worker:prod",
-    "build:worker:dev": "webpack",
-    "build:worker:prod": "webpack --config ./webpack.config.prod.ts",
-    "build:noworker": "npm run build:noworker:dev && npm run build:noworker:prod",
-    "build:noworker:dev": "webpack --config ./webpack.config.noworker.ts",
-    "build:noworker:prod": "webpack --config ./webpack.config.prod.noworker.ts",
-    "clean": "shx rm -rf lib",
+    "debug": "run-s clean:debug build:debug server",
+    "server": "http-server ./debug -o",
+    "build": "npm run clean:lib && tsc",
+    "build:debug": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack && shx cp ./src/___debug-resources___/wwamap.dat ./debug",
+    "clean": "run-p clean:*",
+    "clean:lib": "shx rm -rf lib",
+    "clean:debug": "shx rm -rf debug",
     "prepare": "npm run build"
   },
   "repository": {
@@ -30,15 +31,21 @@
     "url": "https://github.com/WWAWing/WWALoader/issues"
   },
   "homepage": "https://github.com/WWAWing/WWALoader#readme",
+  "dependencies": {
+    "@wwawing/event-emitter": "3.3.0"
+  },
   "devDependencies": {
     "@types/uglifyjs-webpack-plugin": "^1.1.0",
     "@wwawing/common-interface": "^3.3.0",
+    "cross-env": "^7.0.2",
+    "html-loader": "^1.1.0",
+    "html-webpack-plugin": "^4.0.4",
     "http-server": "^0.10.0",
     "npm-run-all": "^4.1.5",
     "shelljs": "^0.8.3",
     "shx": "^0.3.2",
     "ts-loader": "^4.3.0",
-    "ts-node": "^8.6.2",
+    "ts-node": "^8.8.2",
     "typescript": "^3.7.2",
     "uglify-js": "^3.3.27",
     "uglifyjs-webpack-plugin": "^1.2.5",

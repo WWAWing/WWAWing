@@ -1,6 +1,8 @@
 import { WWAData } from "@wwawing/common-interface";
+import { IEventEmitter } from "@wwawing/event-emitter";
 
 export class WWAConsts {
+    // TODO: WWA本体のものと共通化して common-interface におく
     static ITEMBOX_SIZE: number = 12;
     static MAP_ATR_MAX: number = 60;
     static OBJ_ATR_MAX: number = 60;
@@ -13,18 +15,12 @@ export class WWAConsts {
     static ATR_JUMP_Y: number = 17;
 
     static MAP_LOCALGATE: number = 2;
-    static OBJECT_RANDOM: number = 16;
     static OBJECT_LOCALGATE: number = 18;
 
     static SYSTEM_MESSAGE_NUM: number = 20;
 
     static IMGPOS_DEFAULT_YESNO_X: number = 3;
     static IMGPOS_DEFAULT_YESNO_Y: number = 1;
-
-    static IMGRELPOS_YESNO_YES_X: number = 0;
-    static IMGRELPOS_YESNO_NO_X: number = 1;
-    static IMGRELPOS_YESNO_YESP_X: number = 2;
-    static IMGRELPOS_YESNO_NOP_X: number = 3;
 
     static IMGPOS_DEFAULT_PLAYER_X: number = 2;
     static IMGPOS_DEFAULT_PLAYER_Y: number = 0;
@@ -50,12 +46,6 @@ export class WWAConsts {
     static DEFAULT_STATUS_COLOR_B = 0x0;
 }
 
-export class LoaderResponse {
-    error: LoaderError;
-    progress: LoaderProgress;
-    wwaData: WWAData;
-}
-
 export class LoaderError implements Error {
     name: string;
     message: string;
@@ -73,57 +63,6 @@ export enum PartsType {
 
 export enum LoadStage {
     INIT = 0, MAP_LOAD = 1, OBJ_LOAD = 2, MAP_ATTR = 3, OBJ_ATTR = 4, RAND_PARTS = 5, MESSAGE = 6
-}
-
-export class Coord {
-    public x: number;
-    public y: number;
-    public equals(coord: Coord): boolean {
-    return this.x === coord.x && this.y === coord.y;
-    }
-    public substract(c: Coord): Coord {
-    return new Coord(this.x - c.x, this.y - c.y);
-    }
-    public clone(): Coord {
-    return new Coord(this.x, this.y);
-    }
-    /*
-    public convertIntoPosition(wwa: wwa_main.WWA): Position {
-        return new Position(wwa, this.x, this.y, 0, 0);
-    }
-    public getDirectionTo(dest: Coord): Direction {
-        if (this.x < dest.x) {
-            if (this.y > dest.y) {
-                return Direction.RIGHT_UP;
-            }
-            if (this.y === dest.y) {
-                return Direction.RIGHT;
-            }
-            return Direction.RIGHT_DOWN;
-        }
-        if (this.x === dest.x) {
-            if (this.y > dest.y) {
-                return Direction.UP;
-            }
-            if (this.y === dest.y) {
-                return Direction.NO_DIRECTION;
-            }
-            return Direction.DOWN;
-        }
-
-        if (this.y > dest.y) {
-            return Direction.LEFT_UP;
-        }
-        if (this.y === dest.y) {
-            return Direction.LEFT;
-        }
-        return Direction.LEFT_DOWN;
-    }
-    */
-    public constructor(x: number = 0, y: number = 0) {
-    this.x = x;
-    this.y = y;
-    }
 }
 
 /**
@@ -196,3 +135,25 @@ export function createDefaultWWAData(): WWAData {
     };
 }
 
+export interface Progress {
+  current: number;
+  total: number;
+  stage: LoadStage;
+}
+
+export interface LoaderError {
+  name: string;
+  message: string;
+}
+
+export interface WWALoaderEventEmitter extends IEventEmitter {
+  dispatch(eventName: "mapData", data: WWAData): void;
+  dispatch(eventName: "progress", data: Progress): void;
+  dispatch(eventName: "error", data: LoaderError): void;
+  addListener(eventName: "mapData", callback: (data: WWAData) => any): (data: WWAData) => any;
+  addListener(eventName: "progress", callback: (data: Progress) => any):  (data: Progress) => any;
+  addListener(eventName: "error", callback: (data: LoaderError) => any):  (data: LoaderError) => any;
+  removeListener(eventName: "mapData", callback: (...arg: any[]) => any): void;
+  removeListener(eventName: "progress", callback: (...arg: any[]) => any): void;
+  removeListener(eventName: "error", callback: (...arg: any[]) => any): void;
+}

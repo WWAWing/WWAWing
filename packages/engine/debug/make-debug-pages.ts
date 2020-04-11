@@ -49,7 +49,7 @@ function createConfig(mapdata: string): WWAPageConfig {
             wwa: {
                 resources: {
                     mapdata,
-                    wwaJs: "wwa.long.js",
+                    wwaJs: "wwa.js",
                     titleImg: "cover.gif",
                 },
                 urlgateEnable: true
