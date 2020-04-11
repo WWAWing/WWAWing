@@ -2701,12 +2701,6 @@ export class WWA {
             for (var i = 0; i < topmes.macro.length; i++) {
                 this._execMacroListInNextFrame.push(topmes.macro[i]);
             }
-            /*
-            if ( topmes.message === "" && topmes.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
-            this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
-            this._reservedMoveMacroTurn = void 0;
-            }
-            */
 
             this._lastMessage = topmes;
 
@@ -2842,14 +2836,12 @@ export class WWA {
                     if (targetPartsID >= this._wwaData.mapPartsMax) {
                         throw new Error("背景パーツの範囲外IDが指定されました");
                     }
-                    //this._wwaData.map[targetY][targetX] = targetPartsID;
                     var cand: Coord = new Coord(targetX, targetY);
                     this.setPartsOnPosition(PartsType.MAP, targetPartsID, cand);
                 } else {
                     if (targetPartsID >= this._wwaData.objPartsMax) {
                         throw new Error("物体パーツの範囲外IDが指定されました");
                     }
-                    //this._wwaData.mapObject[targetY][targetX] = targetPartsID;
                     var cand: Coord = new Coord(targetX, targetY);
                     this.setPartsOnPosition(PartsType.OBJECT, targetPartsID, cand);
                     this._replaceRandomObject(new Coord(targetX, targetY));

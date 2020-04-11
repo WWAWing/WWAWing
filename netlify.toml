@@ -1,5 +1,5 @@
 [build]
   base = "/"
   publish = "packages/engine/lib"
-  command = "npm run deploy"
+  command = "npm run bootstrap:netlify && npm run deploy"
   ignore = "git diff --quiet HEAD^ HEAD packages/engine/"
