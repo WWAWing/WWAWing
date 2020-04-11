@@ -72,7 +72,6 @@ export class WWA {
     public _messageWindow: MessageWindow; // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
     private _monsterWindow: MosterWindow;
     private _scoreWindow: ScoreWindow;
-    //        private _messageQueue: string[];
     private _messageQueue: MessageInfo[];
     private _yesNoJudge: YesNoState;
     private _yesNoJudgeInNextFrame: YesNoState;
@@ -82,11 +81,9 @@ export class WWA {
     private _yesNoDispCounter: number;
     private _yesNoUseItemPos: number;
     private _yesNoURL: string;
-    // private _waitTimeInCurrentFrame: number;
     private _waitFrame: number;
     private _usePassword: boolean;
     private _bottomButtonType: number;
-    private _wwaWrapperElement: HTMLDivElement;
     private _mouseControllerElement: HTMLDivElement;
     private _statusPressCounter: Status; // ステータス型があるので、アニメーション残りカウンタもこれで代用しまぁす。
     private _battleEstimateWindow: BattleEstimateWindow;
@@ -96,7 +93,6 @@ export class WWA {
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
-    //private _quickSaveData: WWAData;
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
@@ -105,8 +101,6 @@ export class WWA {
     private _battleEffectCoord: Coord;
 
     private _audioInstances: WWAAudio[];
-
-    private _playSound: (s: number) => void;
 
     private _temporaryInputDisable: boolean;
 
@@ -179,7 +173,6 @@ export class WWA {
 
     constructor(
         mapFileName: string,
-        workerFileName: string,
         urlgateEnabled: boolean = false,
         titleImgName: string,
         classicModeEnabled: boolean,
@@ -539,7 +532,6 @@ export class WWA {
             });
 
 
-            this._wwaWrapperElement = <HTMLDivElement>(util.$id("wwa-wrapper"));
             this._mouseControllerElement = <HTMLDivElement>(util.$id("wwa-controller"));
             this._mouseControllerElement.addEventListener("mousedown", (e): void => {
                 if (!this._isActive) { return; }
@@ -4356,7 +4348,6 @@ function start() {
     var titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
     inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName);
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
-    var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
 
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
     var urlgateEnabled = true;
@@ -4380,7 +4371,6 @@ function start() {
     }
     wwa = new WWA(
         mapFileName,
-        loaderFileName,
         urlgateEnabled,
         titleImgName,
         classicModeEnabled,
