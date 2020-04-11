@@ -36,7 +36,7 @@ const display = (data: WWAData) => {
 }
 
 const main = () => {
-    const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
+    const eventEmitter = new BrowserEventEmitter() as WWALoaderEventEmitter;
     const loader = new WWALoader(EXTRACTING_MAPDATA_FILENAME, eventEmitter);
     const startedLoadAt = new Date();
     const mapDataListener = eventEmitter.addListener("mapData", (wwaMap) => {
