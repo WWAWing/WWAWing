@@ -35,7 +35,6 @@
     "@wwawing/event-emitter": "3.3.0"
   },
   "devDependencies": {
-    "@types/uglifyjs-webpack-plugin": "^1.1.0",
     "@wwawing/common-interface": "^3.3.0",
     "cross-env": "^7.0.2",
     "html-loader": "^1.1.0",
@@ -47,8 +46,6 @@
     "ts-loader": "^4.3.0",
     "ts-node": "^8.8.2",
     "typescript": "^3.7.2",
-    "uglify-js": "^3.3.27",
-    "uglifyjs-webpack-plugin": "^1.2.5",
     "webpack": "^4.40.2",
     "webpack-cli": "^3.3.9"
   },
