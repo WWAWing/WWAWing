@@ -301,6 +301,12 @@ export class Face {
     }
 }
 
+export enum ControlPanelBottomButton {
+    GOTO_WWA = 0,
+    BATTLE_REPORT = 1,
+    GAME_END = 2
+};
+
 export enum Direction {
     LEFT = 0,
     RIGHT = 1,
@@ -547,7 +553,8 @@ export enum MacroType {
     EFFITEM = 20,
     COLOR = 21,
     WAIT = 22,
-    SOUND = 23
+    SOUND = 23,
+    GAMEPAD_BUTTON = 100
 }
 
 export var macrotable = {
@@ -574,7 +581,8 @@ export var macrotable = {
     "$effitem": 20,
     "$color": 21,
     "$wait": 22,
-    "$sound": 23
+    "$sound": 23,
+    "$gamepad_button" : 100
 }
 
 export enum MacroStatusIndex {
@@ -786,6 +794,22 @@ export class WWAConsts {
     static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
 
     static ITEMBOX_TOP_Y = 140;
+    static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数
+    static QUICK_SAVE_THUMNAIL_WIDTH: number = 99;//セーブデータサムネイル横幅
+    static QUICK_SAVE_THUMNAIL_HEIGHT: number = 99;//セーブデータサムネイル縦幅
+    static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
+}
+
+export class WWAButtonTexts {
+    static EMPTY_LOAD: string = "";
+    static EMPTY_SAVE: string = "";
+    static PASSWORD: string         = "Password";
+    static QUICK_SAVE: string       = "Quick Save";
+    static QUICK_LOAD: string       = "Quick Load";
+    static BATTLE_REPORT: string    = "Battle Report";
+    static GAME_END: string         = "Game End";
+    static GOTO_WWA: string         = "Goto WWA";
+    static RESTART_GAME: string     = "Restart Game";
 }
 
 export class LoaderResponse {
