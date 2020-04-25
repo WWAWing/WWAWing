@@ -8,7 +8,6 @@ interface WWAConfigWithDefaults {
     urlGateEnable: boolean;
     resources: {
         mapdata: string;
-        loader: string;
         audio: {
             dir: string;
         };
@@ -56,7 +55,6 @@ export interface WWAConfig {
     urlgateEnable?: boolean;
     resources?: {
         mapdata: string;
-        loader?: string;
         audio?: {
             dir?: string;
         };
@@ -163,7 +161,6 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
                 urlGateEnable: true,
                 resources: {
                     mapdata: "mapdata.dat",
-                    loader: "wwaload.js",
                     audio: {
                         dir: "audio/",
                     },

@@ -4,12 +4,13 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./lib",
-    "module": "ESNext",
+    "strict": true,
+    "module": "esnext"
   },
   "include": [
-    "src/**/*.ts", "core/loader_core.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
-    "node_modules", "src/___debug-resources___"
+    "node_modules"
   ]
 }
