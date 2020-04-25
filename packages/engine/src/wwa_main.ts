@@ -783,22 +783,26 @@ export class WWA {
 
             this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, (): void => {
                 this._isSkippedSoundMessage = true;
-                if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
-                    this._isLoadedSound = true;
+                const setGameStartingMessageWhenPcOrSP = () => {
                     switch (this.userDevice.device) {
                         case DEVICE_TYPE.PC:
-                            this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。\n", false, true);
+                            this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
+                            break;
+                        case DEVICE_TYPE.SP:
+                            this.setMessageQueue("ゲームを開始します。\n画面にふれてください。", false, true);
                             break;
                     }
+                };
+                if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
+                    this._isLoadedSound = true;
+                    setGameStartingMessageWhenPcOrSP();
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound();
-
                     window.requestAnimationFrame(this.soundCheckCaller);
-
                     return;
                 } else if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "OFF") {
                     this._isLoadedSound = false;
-                    this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
+                    setGameStartingMessageWhenPcOrSP();
                     this.openGameWindow();
                     return;
                 } // 読み込みメッセージをスキップした場合、処理はここまで
