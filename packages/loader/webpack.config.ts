@@ -1,12 +1,16 @@
 import * as webpack from "webpack";
 import * as path from "path";
+import HtmlWebpackPlugin from "html-webpack-plugin";
 
-const config: webpack.Configuration =  {
+/**
+ * 注:  resources/index.html を開いて使うためのデバッグ用です。
+ */
+const config: webpack.Configuration = {
     mode: "development",
-    entry: "./src/index.ts",
+    entry: ["./src/index.ts", "./src/___debug-resources___/test.ts", "./src/___debug-resources___/index.html"],
     output: {
-        filename: "wwaload.long.js",
-        path: path.resolve(__dirname, "lib")
+        filename: "wwaload-debug.js",
+        path: path.resolve(__dirname, "debug")
     },
     resolve: {
         extensions: [".ts", ".js"]
@@ -15,14 +19,24 @@ const config: webpack.Configuration =  {
         rules: [
             {
                 test: /\.ts/,
-                use: [{ loader: "ts-loader" }],
+                use: [{
+                    loader: "ts-loader",
+                    options: { configFile: "tsconfig.webpack.json" }
+                }],
+
                 exclude: /node_modules/
+            },
+            {
+                test: /\.html?/,
+                use: [{ loader: "html-loader" }]
             }
         ]
     },
     plugins: [
-        new webpack.DefinePlugin({
-            IS_WEB_WORKER_MODE: JSON.stringify(true)
+        new HtmlWebpackPlugin({
+            filename: "index.html",
+            template: "./src/___debug-resources___/index.html",
+            js: "wwaload-debug.js"
         })
     ]
 };
