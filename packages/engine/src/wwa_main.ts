@@ -602,7 +602,7 @@ export class WWA {
             });
 
             //////////////// タッチ関連 超β ////////////////////////////
-            if (window["TouchEvent"] /* ←コンパイルエラー回避 */) {
+            if (window.TouchEvent) {
                 if (this.audioContext) {
                     /**
                      * audioTest は WebAudio API の再生操作を行うだけのメソッドです。
@@ -617,28 +617,26 @@ export class WWA {
                     this._mouseControllerElement.addEventListener("touchstart", audioTest);
                 }
 
-                this._mouseControllerElement.addEventListener("touchstart", (e: any /*←コンパイルエラー回避*/): void => {
+                this._mouseControllerElement.addEventListener("touchstart", (touchEvent): void => {
                     if (!this._isActive) { return; }
                     if (this._mouseStore.getMouseState() !== MouseState.NONE) {
-                        e.preventDefault();
+                        touchEvent.preventDefault();
                         return;
                     }
-                    var changedTouches = e.changedTouches;
-                    var touchLength: number = changedTouches.length;
-                    var touchID = 0;
-                    var changedTouche: Touch;
-                    for (touchID = 0; touchID < touchLength; touchID++) {
-                        changedTouche = changedTouches[touchID];
-                        var mousePos = util.$localPos(changedTouche.clientX, changedTouche.clientY);
-                        var playerPos = this._player.getDrawingCenterPosition();
-                        var dist = mousePos.substract(playerPos);
-                        var dx = Math.abs(dist.x);
-                        var dy = Math.abs(dist.y);
-                        var dir: Direction;
-                        var sideFlag = false;
+                    const changedTouches = touchEvent.changedTouches;
+                    const touchLength = changedTouches.length;
+                    for (let touchID = 0; touchID < touchLength; touchID++) {
+                        const changedTouch = changedTouches[touchID];
+                        const touchedPosition = util.$localPos(changedTouch.clientX, changedTouch.clientY);
+                        const playerPosition = this._player.getDrawingCenterPosition();
+                        const dist = touchedPosition.substract(playerPosition);
+                        const dx = Math.abs(dist.x);
+                        const dy = Math.abs(dist.y);
+                        let dir: Direction;
+                        let sideFlag = false;
                         if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
                             //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
-                            switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
+                            switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
                                 case 0:
                                     sideFlag = true;
                                     dir = Direction.LEFT;
@@ -648,7 +646,7 @@ export class WWA {
                                     dir = Direction.RIGHT;
                                     break;
                             }
-                            switch ((playerPos.y / Consts.CHIP_SIZE | 0)) {
+                            switch ((playerPosition.y / Consts.CHIP_SIZE | 0)) {
                                 case 0:
                                     sideFlag = true;
                                     dir = Direction.UP;
@@ -671,35 +669,25 @@ export class WWA {
                                 dir = Direction.LEFT;
                             }
                         }
-                        this._mouseStore.setPressInfo(dir, changedTouche.identifier);
+                        this._mouseStore.setPressInfo(dir, changedTouch.identifier);
                     }
-                    if (e.cancelable) {
-                        e.preventDefault();
+                    if (touchEvent.cancelable) {
+                        touchEvent.preventDefault();
                     }
                 });
 
-                this._mouseControllerElement.addEventListener("touchend", (e: any): void => {
+                const onTouchReleased = (event: TouchEvent): void => {
                     if (!this._isActive) { return; }
-                    for (var i = 0; i < e.changedTouches.length; i++) {
-                        if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
+                    for (let i = 0; i < event.changedTouches.length; i++) {
+                        if (this._mouseStore.getTouchID() === event.changedTouches[i].identifier) {
                             this._mouseStore.setReleaseInfo();
-                            e.preventDefault();
+                            event.preventDefault();
                             break;
                         }
                     }
-                });
-
-
-                this._mouseControllerElement.addEventListener("touchcancel", (e: any): void => {
-                    if (!this._isActive) { return; }
-                    for (var i = 0; i < e.changedTouches.length; i++) {
-                        if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
-                            this._mouseStore.setReleaseInfo();
-                            e.preventDefault();
-                            break;
-                        }
-                    }
-                });
+                };
+                this._mouseControllerElement.addEventListener("touchend", onTouchReleased);
+                this._mouseControllerElement.addEventListener("touchcancel", onTouchReleased);
             }
             //////////////// タッチ関連 超β ////////////////////////////
 
