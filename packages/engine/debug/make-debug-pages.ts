@@ -4,6 +4,8 @@ import * as pug from "pug";
 import * as path from "path";
 import maps from "./maps-config";
 
+const isDev = process.argv.length >= 3 && process.argv[2] === "dev";
+
 interface IndexPageOption {
     page: {
         maps: {
@@ -49,7 +51,7 @@ function createConfig(mapdata: string): WWAPageConfig {
             wwa: {
                 resources: {
                     mapdata,
-                    wwaJs: "wwa.js",
+                    wwaJs: isDev ? "wwa.long.js" : "wwa.js",
                     titleImg: "cover.gif",
                 },
                 urlgateEnable: true
