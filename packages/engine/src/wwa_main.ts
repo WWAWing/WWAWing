@@ -1314,7 +1314,7 @@ export class WWA {
         // キー入力とプレイヤー移動
         ////////////// DEBUG IMPLEMENTATION //////////////////////
         /////// 本番では必ず消すこと /////////////////////////////
-        //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
+        //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SPACE);
         //////////////////////////////////////////////////////////
         var prevPosition = this._player.getPosition();
 
