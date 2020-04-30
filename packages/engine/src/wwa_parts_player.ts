@@ -184,6 +184,7 @@ export class Player extends PartsObject {
     }
 
     public setDir(newDir: Direction): void {
+        this._isPreparedForLookingAround = false;
         this._dir = newDir;
     }
 
