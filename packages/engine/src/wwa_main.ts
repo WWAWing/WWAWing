@@ -584,7 +584,7 @@ export class WWA {
                             dir = Direction.LEFT;
                         }
                     }
-                    this._mouseStore.setPressInfo(dir);
+                    this._mouseStore.setPressInfo(dir,0);
                     //e.preventDefault();//無効にするとクリック時にWWAにフォーカスされなくなる
                 }
             });
@@ -602,7 +602,7 @@ export class WWA {
             });
 
             //////////////// タッチ関連 超β ////////////////////////////
-            if (window["TouchEvent"] /* ←コンパイルエラー回避 */) {
+            if (window.TouchEvent) {
                 if (this.audioContext) {
                     /**
                      * audioTest は WebAudio API の再生操作を行うだけのメソッドです。
@@ -617,82 +617,77 @@ export class WWA {
                     this._mouseControllerElement.addEventListener("touchstart", audioTest);
                 }
 
-                this._mouseControllerElement.addEventListener("touchstart", (e: any /*←コンパイルエラー回避*/): void => {
+                this._mouseControllerElement.addEventListener("touchstart", (touchEvent): void => {
                     if (!this._isActive) { return; }
                     if (this._mouseStore.getMouseState() !== MouseState.NONE) {
-                        e.preventDefault();
+                        touchEvent.preventDefault();
                         return;
                     }
-                    var mousePos = util.$localPos(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                    var playerPos = this._player.getDrawingCenterPosition();
-                    var dist = mousePos.substract(playerPos);
-                    var dx = Math.abs(dist.x);
-                    var dy = Math.abs(dist.y);
-                    var dir: Direction;
-                    var sideFlag = false;
-                    if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
-                        //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
-                        switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
-                            case 0:
-                                sideFlag = true;
-                                dir = Direction.LEFT;
-                                break;
-                            case Consts.H_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
-                                dir = Direction.RIGHT;
-                                break;
+                    const changedTouches = touchEvent.changedTouches;
+                    const touchLength = changedTouches.length;
+                    for (let touchID = 0; touchID < touchLength; touchID++) {
+                        const changedTouch = changedTouches[touchID];
+                        const touchedPosition = util.$localPos(changedTouch.clientX, changedTouch.clientY);
+                        const playerPosition = this._player.getDrawingCenterPosition();
+                        const dist = touchedPosition.substract(playerPosition);
+                        const dx = Math.abs(dist.x);
+                        const dy = Math.abs(dist.y);
+                        let dir: Direction;
+                        let sideFlag = false;
+                        if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
+                            //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
+                            switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
+                                case 0:
+                                    sideFlag = true;
+                                    dir = Direction.LEFT;
+                                    break;
+                                case Consts.H_PARTS_NUM_IN_WINDOW - 1:
+                                    sideFlag = true;
+                                    dir = Direction.RIGHT;
+                                    break;
+                            }
+                            switch ((playerPosition.y / Consts.CHIP_SIZE | 0)) {
+                                case 0:
+                                    sideFlag = true;
+                                    dir = Direction.UP;
+                                    break;
+                                case Consts.V_PARTS_NUM_IN_WINDOW - 1:
+                                    sideFlag = true;
+                                    dir = Direction.DOWN;
+                                    break;
+                            }
+
                         }
-                        switch ((playerPos.y / Consts.CHIP_SIZE | 0)) {
-                            case 0:
-                                sideFlag = true;
-                                dir = Direction.UP;
-                                break;
-                            case Consts.V_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
+                        if (!sideFlag) {
+                            if (dist.y > 0 && dy > dx) {
                                 dir = Direction.DOWN;
-                                break;
+                            } else if (dist.y < 0 && dy > dx) {
+                                dir = Direction.UP;
+                            } else if (dist.x > 0 && dy < dx) {
+                                dir = Direction.RIGHT;
+                            } else if (dist.x < 0 && dy < dx) {
+                                dir = Direction.LEFT;
+                            }
                         }
-
+                        this._mouseStore.setPressInfo(dir, changedTouch.identifier);
                     }
-                    if (!sideFlag) {
-                        if (dist.y > 0 && dy > dx) {
-                            dir = Direction.DOWN;
-                        } else if (dist.y < 0 && dy > dx) {
-                            dir = Direction.UP;
-                        } else if (dist.x > 0 && dy < dx) {
-                            dir = Direction.RIGHT;
-                        } else if (dist.x < 0 && dy < dx) {
-                            dir = Direction.LEFT;
-                        }
-                    }
-                    this._mouseStore.setPressInfo(dir, e.changedTouches[0].identifier);
-                    if (e.cancelable) {
-                        e.preventDefault();
+                    if (touchEvent.cancelable) {
+                        touchEvent.preventDefault();
                     }
                 });
 
-                this._mouseControllerElement.addEventListener("touchend", (e: any): void => {
+                const onTouchReleased = (event: TouchEvent): void => {
                     if (!this._isActive) { return; }
-                    for (var i = 0; i < e.changedTouches.length; i++) {
-                        if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
+                    for (let i = 0; i < event.changedTouches.length; i++) {
+                        if (this._mouseStore.getTouchID() === event.changedTouches[i].identifier) {
                             this._mouseStore.setReleaseInfo();
-                            e.preventDefault();
+                            event.preventDefault();
                             break;
                         }
                     }
-                });
-
-
-                this._mouseControllerElement.addEventListener("touchcancel", (e: any): void => {
-                    if (!this._isActive) { return; }
-                    for (var i = 0; i < e.changedTouches.length; i++) {
-                        if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
-                            this._mouseStore.setReleaseInfo();
-                            e.preventDefault();
-                            break;
-                        }
-                    }
-                });
+                };
+                this._mouseControllerElement.addEventListener("touchend", onTouchReleased);
+                this._mouseControllerElement.addEventListener("touchcancel", onTouchReleased);
             }
             //////////////// タッチ関連 超β ////////////////////////////
 
@@ -1274,6 +1269,14 @@ export class WWA {
         this.setMessageQueue(speedMessage, false, true);
     }
 
+    /**
+     * 方向キーと同時押しで、移動せずにプレイヤーの向きを変更するキーの入力判定
+     */
+    private _checkTurnKeyPressed = () => (
+        this._keyStore.checkHitKey(KeyCode.KEY_ESC)  ||
+        this._keyStore.checkHitKey(KeyCode.KEY_SHIFT) ||
+        this._keyStore.checkHitKey(KeyCode.KEY_N)
+    );
 
     private _main(): void {
         this._temporaryInputDisable = false;
@@ -1311,7 +1314,7 @@ export class WWA {
         // キー入力とプレイヤー移動
         ////////////// DEBUG IMPLEMENTATION //////////////////////
         /////// 本番では必ず消すこと /////////////////////////////
-        //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
+        //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SPACE);
         //////////////////////////////////////////////////////////
         var prevPosition = this._player.getPosition();
 
@@ -1328,47 +1331,166 @@ export class WWA {
                  */
                 this._player.updateDelayFrame();
             } else {
-                if (this._actionGamePadButtonItemMacro()) {
                     //マクロ用処理割込
-                }else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ||
-                    this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
-                    this._player.controll(Direction.LEFT);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_UP) === KeyState.KEYDOWN ||
-                    this._mouseStore.getMouseStateForControllPlayer(Direction.UP) === MouseState.MOUSEDOWN) {
-                    this._player.controll(Direction.UP);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN ||
-                    this._mouseStore.getMouseStateForControllPlayer(Direction.RIGHT) === MouseState.MOUSEDOWN) {
-                    this._player.controll(Direction.RIGHT);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_DOWN) === KeyState.KEYDOWN ||
-                    this._mouseStore.getMouseStateForControllPlayer(Direction.DOWN) === MouseState.MOUSEDOWN) {
-                    this._player.controll(Direction.DOWN);
-                    this._objectMovingDataManager.update();
+                if (this._actionGamePadButtonItemMacro()) {
+
+                    //getKeyStateForControllPlayer　分岐
+                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === KeyState.KEYDOWN) {
+                    if (this._checkTurnKeyPressed()) {
+                        this._player.setDir(Direction.LEFT);
+                    } else {
+                        this._player.controll(Direction.LEFT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
+                    if (this._checkTurnKeyPressed()) {
+                        this._player.setDir(Direction.UP);
+                    } else {
+                        this._player.controll(Direction.UP);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
+                    if (this._checkTurnKeyPressed()) {
+                        this._player.setDir(Direction.RIGHT);
+                    } else {
+                        this._player.controll(Direction.RIGHT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
+                    if (this._checkTurnKeyPressed()) {
+                        this._player.setDir(Direction.DOWN);
+                    } else {
+                        this._player.controll(Direction.DOWN);
+                        this._objectMovingDataManager.update();
+                    }
+
+
+                    //getMouseStateForControllPlayer　分岐
+                } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.LEFT) === MouseState.MOUSEDOWN) {
+                    if (this._mouseStore.touchIDIsSetDir()) {
+                        this._player.setDir(Direction.LEFT);
+                    } else {
+                        this._player.controll(Direction.LEFT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.UP) === MouseState.MOUSEDOWN) {
+                    if (this._mouseStore.touchIDIsSetDir()) {
+                        this._player.setDir(Direction.UP);
+                    } else {
+                        this._player.controll(Direction.UP);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.RIGHT) === MouseState.MOUSEDOWN) {
+                    if (this._mouseStore.touchIDIsSetDir()) {
+                        this._player.setDir(Direction.RIGHT);
+                    } else {
+                        this._player.controll(Direction.RIGHT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._mouseStore.getMouseStateForControllPlayer(Direction.DOWN) === MouseState.MOUSEDOWN) {
+                    if (this._mouseStore.touchIDIsSetDir()) {
+                        this._player.setDir(Direction.DOWN);
+                    } else {
+                        this._player.controll(Direction.DOWN);
+                        this._objectMovingDataManager.update();
+                    }
+
+                    //checkHitKey　pdir　分岐
                 } else if (this._keyStore.checkHitKey(dirToKey[pdir])) {
-                    this._player.controll(pdir);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                    this._mouseStore.checkClickMouse(Direction.LEFT) ||
-                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
-                    this._player.controll(Direction.LEFT);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                    this._mouseStore.checkClickMouse(Direction.UP) ||
-                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
-                    this._player.controll(Direction.UP);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                    this._mouseStore.checkClickMouse(Direction.RIGHT) ||
-                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
-                    this._player.controll(Direction.RIGHT);
-                    this._objectMovingDataManager.update();
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                    this._mouseStore.checkClickMouse(Direction.DOWN) ||
-                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
-                    this._player.controll(Direction.DOWN);
-                    this._objectMovingDataManager.update();
+                    if (this._checkTurnKeyPressed()) {
+                        this._player.setDir(pdir);
+                    } else {
+                        this._player.controll(pdir);
+                        this._objectMovingDataManager.update();
+                    }
+                    //checkHitKey　分岐
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT)) {
+                    if (this._checkTurnKeyPressed()) {
+                        this._player.setDir(Direction.LEFT);
+                    } else {
+                        this._player.controll(Direction.LEFT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP)) {
+                    if (this._checkTurnKeyPressed()) {
+                        this._player.setDir(Direction.UP);
+                    } else {
+                        this._player.controll(Direction.UP);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT)) {
+                    if (this._checkTurnKeyPressed()) {
+                        this._player.setDir(Direction.RIGHT);
+                    } else {
+                        this._player.controll(Direction.RIGHT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN)) {
+                    if (this._checkTurnKeyPressed()) {
+                        this._player.setDir(Direction.DOWN);
+                    } else {
+                        this._player.controll(Direction.DOWN);
+                        this._objectMovingDataManager.update();
+                    }
+                    //checkClickMouse　分岐
+                } else if (this._mouseStore.checkClickMouse(Direction.LEFT)) {
+                    if (this._mouseStore.touchIDIsSetDir()) {
+                        this._player.setDir(Direction.LEFT);
+                    } else {
+                        this._player.controll(Direction.LEFT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._mouseStore.checkClickMouse(Direction.UP)) {
+                    if (this._mouseStore.touchIDIsSetDir()) {
+                        this._player.setDir(Direction.UP);
+                    } else {
+                        this._player.controll(Direction.UP);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._mouseStore.checkClickMouse(Direction.RIGHT)) {
+                    if (this._mouseStore.touchIDIsSetDir()) {
+                        this._player.setDir(Direction.RIGHT);
+                    } else {
+                        this._player.controll(Direction.RIGHT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._mouseStore.checkClickMouse(Direction.DOWN)) {
+                    if (this._mouseStore.touchIDIsSetDir()) {
+                        this._player.setDir(Direction.DOWN);
+                    } else {
+                        this._player.controll(Direction.DOWN);
+                        this._objectMovingDataManager.update();
+                    }
+                    //crossPressed　分岐
+                } else if (this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
+                    if (this._gamePadStore.buttonPressed(GamePadState.BUTTON_INDEX_B)) {
+                        this._player.setDir(Direction.LEFT);
+                    } else {
+                        this._player.controll(Direction.LEFT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
+                    if (this._gamePadStore.buttonPressed(GamePadState.BUTTON_INDEX_B)) {
+                        this._player.setDir(Direction.UP);
+                    } else {
+                        this._player.controll(Direction.UP);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
+                    if (this._gamePadStore.buttonPressed(GamePadState.BUTTON_INDEX_B)) {
+                        this._player.setDir(Direction.RIGHT);
+                    } else {
+                        this._player.controll(Direction.RIGHT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
+                    if (this._gamePadStore.buttonPressed(GamePadState.BUTTON_INDEX_B)) {
+                        this._player.setDir(Direction.DOWN);
+                    } else {
+                        this._player.controll(Direction.DOWN);
+                        this._objectMovingDataManager.update();
+                    }
+                    //アイテムショートカット
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_1) === KeyState.KEYDOWN) {
                     this.onselectitem(1);
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_2) === KeyState.KEYDOWN) {
@@ -1393,6 +1515,7 @@ export class WWA {
                     this.onselectitem(11);
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_C) === KeyState.KEYDOWN) {
                     this.onselectitem(12);
+                    //移動速度
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_I) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_MINUS)) {
                     this.onchangespeed(SpeedChange.DOWN);
@@ -1401,11 +1524,11 @@ export class WWA {
                     this._keyStore.checkHitKey(KeyCode.KEY_F2) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_PLUS)) {
                     this.onchangespeed(SpeedChange.UP);
+                    // 戦闘結果予測 
                 } else if (
                     this._keyStore.getKeyState(KeyCode.KEY_F1) === KeyState.KEYDOWN ||
                     this._keyStore.getKeyState(KeyCode.KEY_M) === KeyState.KEYDOWN ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)) {
-                    // 戦闘結果予測 
                     if (this.launchBattleEstimateWindow()) {
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {

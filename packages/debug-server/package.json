@@ -14,7 +14,7 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/express": "^4.16.0",
+    "@types/express": "4.16.0",
     "@types/node": "^12.12.6",
     "express": "^4.16.4",
     "nexe": "^3.3.2",
