@@ -1269,6 +1269,14 @@ export class WWA {
         this.setMessageQueue(speedMessage, false, true);
     }
 
+    /**
+     * 方向キーと同時押しで、移動せずにプレイヤーの向きを変更するキーの入力判定
+     */
+    private _checkTurnKeyPressed = () => (
+        this._keyStore.checkHitKey(KeyCode.KEY_ESC)  ||
+        this._keyStore.checkHitKey(KeyCode.KEY_SHIFT) ||
+        this._keyStore.checkHitKey(KeyCode.KEY_N)
+    );
 
     private _main(): void {
         this._temporaryInputDisable = false;
@@ -1328,28 +1336,28 @@ export class WWA {
 
                     //getKeyStateForControllPlayer　分岐
                 } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_LEFT) === KeyState.KEYDOWN) {
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_ESC)) {
+                    if (this._checkTurnKeyPressed()) {
                         this._player.setDir(Direction.LEFT);
                     } else {
                         this._player.controll(Direction.LEFT);
                         this._objectMovingDataManager.update();
                     }
                 } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_ESC)) {
+                    if (this._checkTurnKeyPressed()) {
                         this._player.setDir(Direction.UP);
                     } else {
                         this._player.controll(Direction.UP);
                         this._objectMovingDataManager.update();
                     }
                 } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_ESC)) {
+                    if (this._checkTurnKeyPressed()) {
                         this._player.setDir(Direction.RIGHT);
                     } else {
                         this._player.controll(Direction.RIGHT);
                         this._objectMovingDataManager.update();
                     }
                 } else if (this._keyStore.getKeyStateForControllPlayer(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_ESC)) {
+                    if (this._checkTurnKeyPressed()) {
                         this._player.setDir(Direction.DOWN);
                     } else {
                         this._player.controll(Direction.DOWN);
@@ -1389,7 +1397,7 @@ export class WWA {
 
                     //checkHitKey　pdir　分岐
                 } else if (this._keyStore.checkHitKey(dirToKey[pdir])) {
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_ESC)) {
+                    if (this._checkTurnKeyPressed()) {
                         this._player.setDir(pdir);
                     } else {
                         this._player.controll(pdir);
@@ -1397,28 +1405,28 @@ export class WWA {
                     }
                     //checkHitKey　分岐
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT)) {
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_ESC)) {
+                    if (this._checkTurnKeyPressed()) {
                         this._player.setDir(Direction.LEFT);
                     } else {
                         this._player.controll(Direction.LEFT);
                         this._objectMovingDataManager.update();
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP)) {
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_ESC)) {
+                    if (this._checkTurnKeyPressed()) {
                         this._player.setDir(Direction.UP);
                     } else {
                         this._player.controll(Direction.UP);
                         this._objectMovingDataManager.update();
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT)) {
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_ESC)) {
+                    if (this._checkTurnKeyPressed()) {
                         this._player.setDir(Direction.RIGHT);
                     } else {
                         this._player.controll(Direction.RIGHT);
                         this._objectMovingDataManager.update();
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN)) {
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_ESC)) {
+                    if (this._checkTurnKeyPressed()) {
                         this._player.setDir(Direction.DOWN);
                     } else {
                         this._player.controll(Direction.DOWN);
