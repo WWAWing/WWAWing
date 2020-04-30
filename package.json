@@ -11,7 +11,7 @@
     "clean": "lerna clean --yes",
     "start": "lerna run start --stream --scope @wwawing/engine",
     "build": "lerna run build --stream",
-    "deploy": "lerna run deploy --scope @wwawing/engine",
+    "deploy": "lerna run deploy:prod --scope @wwawing/engine",
     "generate": "lerna exec --scope @wwawing/debug-server -- npm run generate",
     "make-dist": "npm run build && lerna run make-dist --stream",
     "make-wwa-page": "ts-node ./scripts/make-wwa-page all",
