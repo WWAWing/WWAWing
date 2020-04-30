@@ -1475,7 +1475,7 @@ export class WWA {
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_R)) {
                     this.onselectbutton(SidebarButton.RESTART_GAME);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
-                    this.onselectbutton(SidebarButton.GOTO_WWA);
+                    this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X)) {
                     if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
@@ -3844,7 +3844,7 @@ export class WWA {
                                 "ＺＲ：一時保存データの読み込み\n" +
                                 "＋: 移動速度を上げる\n" +
                                 "－: 移動速度を落とす\n" +
-                                "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                // 移動回数・プレイ時間表記なし
                                 "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
@@ -3884,22 +3884,20 @@ export class WWA {
                     }
                     break;
                 case DEVICE_TYPE.SP:
+                    // TODO: 仮想パッドでの操作方法を追記
                     return;
                 case DEVICE_TYPE.VR:
                     return;
                 case DEVICE_TYPE.PC:
-                    helpMessage = "　【ショートカットキーの一覧】\n" +
+                    helpMessage = "　【操作方法】\n" +
                         "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
-                        //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
                         "Ｆ３：復帰用パスワード入力\n" +
                         "Ｆ４：復帰用パスワード表示\n" +
                         "Ｆ５：一時保存データの読み込み\n" +
                         "Ｆ６：データの一時保存\n" +
                         "Ｆ７：初めからスタート\n" +
                         "Ｆ８：ＷＷＡ公式ページにリンク\n" +
-                        //                               "Ｆ９、Ｇ：描画モードの切り換え\n" +
                         "Ｆ１２：このリストの表示\n" +
-                        //                                "Ｌ：リンクを別のウィンドウで開く\n" +
                         "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
                         "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
                         "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
