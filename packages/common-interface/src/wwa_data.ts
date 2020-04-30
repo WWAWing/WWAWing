@@ -88,6 +88,12 @@ export interface WWAData {
 
     isItemEffectEnabled: boolean;
 
+    /**
+     * プレイ時間
+     * memo: playFrameCount というのは古い表記なのでマージなどの時に注意
+     */
+    frameCount: number
+
     /** 
      * `gamePadButtonItemTable[i]` (ただし `i` は ゲームパッドのボタンID) に、
      * 対応するアイテムボックスの番号(1以上12以下) または アイテムボックスの対応がないことを示す「0」が入っているような配列
