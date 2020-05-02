@@ -247,7 +247,6 @@ export class WWA {
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
                             break;
                     }
-                    util.$id("cell-gotowwa").textContent = "Game End";
                     this._bottomButtonType = ControlPanelBottomButton.GAME_END;
                     break;
                 default:
