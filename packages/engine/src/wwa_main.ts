@@ -3332,6 +3332,8 @@ export class WWA {
         qd.statusDefence = st.defence;
         qd.statusGold = st.gold;
         qd.moves = this._player.getMoveCount();
+        qd.frameCount = this._player.getFrameCount();
+        
         if (isPassword) {
             qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
             qd.mapCompressed = this._compressMap(qd.map);
