@@ -1072,7 +1072,7 @@ export class WWA {
                 var loadi = ((id: number, self: WWA): void => {
                     var timer = setInterval((): void => {
                         if (self._wwaData.bgm === id) {
-                            if (!self._audioInstances[id].hasData()) {
+                            if (self._audioInstances[id].hasData()) {
                                 this._audioInstances[id].play();
                                 this._wwaData.bgm = id;
                                 clearInterval(timer);
@@ -1083,10 +1083,10 @@ export class WWA {
                                 loadi(self._wwaData.bgm, self);
                             }
                         }
-                    }, 4);
+                    }, 100);
                 });
-                loadi(id, this);
                 this._wwaData.bgm = id;
+                loadi(id, this);
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
