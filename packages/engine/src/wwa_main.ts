@@ -1068,10 +1068,15 @@ export class WWA {
         const audioInstance = this._audioInstances[id];
         if (!audioInstance.hasData()) {
             if (id >= SystemSound.BGM_LB) {
+                /**
+                 * 音楽ファイルの存在確認を頻繁に行うように設定します。
+                 * @param id 
+                 * @param self 
+                 */
                 var loadi = ((id: number, self: WWA): void => {
                     var timer = setInterval((): void => {
                         if (self._wwaData.bgm === id) {
-                            if (!self._audioInstances[id].hasData()) {
+                            if (self._audioInstances[id].hasData()) {
                                 this._audioInstances[id].play();
                                 this._wwaData.bgm = id;
                                 clearInterval(timer);
@@ -1082,14 +1087,12 @@ export class WWA {
                                 loadi(self._wwaData.bgm, self);
                             }
                         }
-                    }, 4);
+                    }, 100);
                 });
+                this._wwaData.bgm = id;
                 loadi(id, this);
             }
-            this._wwaData.bgm = id;
-            return;
-        }
-        if (id !== 0 && this._audioInstances[id].hasData()) {
+        } else {
             if (id >= SystemSound.BGM_LB) {
                 this._audioInstances[id].play();
                 this._wwaData.bgm = id;
@@ -1097,7 +1100,6 @@ export class WWA {
                 this._audioInstances[id].play();
             }
         }
-
 
     }
 
