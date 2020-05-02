@@ -55,7 +55,7 @@ WWA Wing 本体のソースは `packages/engine/src` 下にあります。
 - Pull Request を作成する場合は、 リポジトリのフォークを作成した上でこのリポジトリの `develop` ブランチに向けて作成してください。
 - リリース作業は　WWA Wing Team のメンテナ(まつゆき @matsuyuki-a)が行います。(`develop` ブランチを `master` ブランチにマージします。)
 
-詳細は [Wiki の Contributing](https://github.com/WWAWing/WWAWing/wiki/Contributing) に含まれています。
+詳細は [コントリビューションガイドライン](./CONTRIBUTING.md) に含まれています。
 
 ## ライセンス
 - ソースコード: MIT (Expat) 
