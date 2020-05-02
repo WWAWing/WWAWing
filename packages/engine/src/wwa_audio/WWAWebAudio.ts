@@ -97,6 +97,10 @@ export default class WWAWebAudio extends WWAAudio {
             }
             try {
                 bufferSource.stop();
+                //メモリ解放
+                bufferSource.disconnect(this.audioGain);
+
+                bufferSource.buffer = null;//Chromeのメモリ解放　EDGEではエラーでる場合あり
             } catch (e) {
                 
             }
@@ -110,6 +114,10 @@ export default class WWAWebAudio extends WWAAudio {
         this.bufferSources.forEach(bufferSource => {
             try {
                 bufferSource.stop();
+                //メモリ解放
+                bufferSource.disconnect(this.audioGain);
+
+                bufferSource.buffer = null;//Chromeのメモリ解放　EDGEではエラーでる場合あり
             } catch (e) {
 
             }
