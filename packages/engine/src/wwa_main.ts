@@ -171,6 +171,7 @@ export class WWA {
     public audioGain: GainNode;
     private audioExtension: string = "";
     public userDevice: UserDevice;
+    private soundLoadedCheckTimer: number | undefined = undefined;
 
     constructor(
         mapFileName: string,
@@ -1051,24 +1052,30 @@ export class WWA {
         if (targetAudio.isError()) {
             return;
         }
-        const timer = setInterval((): void => {
+        this.soundLoadedCheckTimer = window.setInterval((): void => {
             // 本来鳴っているはずのBGMが targetSoundId 番であるときは再生
             if (this._wwaData.bgm === targetSoundId) {
                 if (targetAudio.hasData()) {
                     targetAudio.play();
                     this._wwaData.bgm = targetSoundId;
-                    clearInterval(timer);
+                    this._clearSoundLoadedCheckTimer();
                 } else if (targetAudio.isError()) {
                     // 途中でロードがエラーになった場合はそこでチェックを終了
-                    clearInterval(timer);
+                    this._clearSoundLoadedCheckTimer();
                 }
-            } else { // 他のBGMが鳴っているはずの設定になっているなら、その音源のロード完了確認に変更
-                clearInterval(timer);
-                if (this._wwaData.bgm !== SystemSound.NO_SOUND) {
-                    this._setSoundLoadedCheckTimer(this._wwaData.bgm);
-                }
+            } else {
+                // 他のBGMが鳴っているはずの設定になっているなら、タイマーを止める
+                // そのBGMの再生系の処理は playSound で実行されているはずなので、ここでは何もしない
+                this._clearSoundLoadedCheckTimer();
             }
         }, 100);
+    }
+
+    private _clearSoundLoadedCheckTimer(): void {
+        if(this.soundLoadedCheckTimer) {
+            clearInterval(this.soundLoadedCheckTimer);
+            this.soundLoadedCheckTimer = undefined;
+        }
     }
 
     public playSound(id: number): void {
