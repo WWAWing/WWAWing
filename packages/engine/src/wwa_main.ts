@@ -35,7 +35,9 @@ import { ItemMenu } from "./wwa_item_menu";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
 import { BrowserEventEmitter } from "@wwawing/event-emitter";
-let wwa: WWA;
+// TODO: 多分あとでつかう
+// import { WWACompress } from "./wwa_psave";
+let wwa: WWA
 
 /**
 *
@@ -3345,6 +3347,7 @@ export class WWA {
 
     private _quickSave(isPassword: boolean = false): string {
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
+
         var pc = this._player.getPosition().getPartsCoord();
         var st = this._player.getStatusWithoutEquipments();
         qd.itemBox = this._player.getCopyOfItemBox();
