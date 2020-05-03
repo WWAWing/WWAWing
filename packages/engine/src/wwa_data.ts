@@ -481,7 +481,8 @@ export enum ChoiceCallInfo {
     CALL_BY_GOTO_WWA,
     CALL_BY_PASSWORD_SAVE,
     CALL_BY_PASSWORD_LOAD,
-    CALL_BY_END_GAME
+    CALL_BY_END_GAME,
+    CALL_BY_SUSPEND
 }
 
 export enum SidebarButton {

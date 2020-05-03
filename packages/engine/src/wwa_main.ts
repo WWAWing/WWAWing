@@ -35,8 +35,7 @@ import { ItemMenu } from "./wwa_item_menu";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
 import { BrowserEventEmitter } from "@wwawing/event-emitter";
-// TODO: 多分あとでつかう
-// import { WWACompress } from "./wwa_psave";
+import { WWACompress } from "./wwa_psave";
 let wwa: WWA
 
 /**
@@ -95,6 +94,7 @@ export class WWA {
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
+    public _checkOriginalMapString: string; 
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
@@ -124,6 +124,7 @@ export class WWA {
     private _audioDirectory: string;
     private _hasTitleImg: boolean;
     private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
+    private _useSuspend: boolean = false;
 
     private _isActive: boolean;
 
@@ -318,9 +319,8 @@ export class WWA {
             pathList.pop(); //最後のファイルを消す
             pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
-            // TODO: 下記2行は PLiCy 2019 Phase 3で使う: https://github.com/WWAWing/WWAWing/issues/201
-            // this._restartData = JSON.parse(JSON.stringify(this._wwaData)); 
-            // this._checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            this._restartData = JSON.parse(JSON.stringify(this._wwaData));
+            this._checkOriginalMapString = this._generateMapDataHash(this._restartData);
             
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
@@ -332,7 +332,6 @@ export class WWA {
                     "管理者の方へ: データがアップロードされているか、\n" +
                     "パーミッションを確かめてください。", ctxCover);
             });
-            this._restartData = JSON.parse(JSON.stringify(this._wwaData));
 
             var escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
             Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
@@ -414,6 +413,18 @@ export class WWA {
             const liikingAroundString = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
             this._useLookingAround = !((liikingAroundString) && (liikingAroundString.match(/false/i)));
 
+            WWACompress.setRestartData(this._restartData);
+            var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
+            if (typeof resumeSaveDataText === "string") {
+                this._useSuspend = true;//中断モード
+                if (resumeSaveDataText) {
+                    //再開
+                    var resumeData: WWAData = WWACompress.getStartWWAData(resumeSaveDataText);
+                    if (this._restartData !== resumeData) {
+                        this._applyQuickLoad(resumeData);
+                    }
+                }
+            }
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
@@ -747,6 +758,7 @@ export class WWA {
             this._useConsole = false;
 
             var self = this;
+            this.wwaCustomEvent('wwa_startup');
             /*
             var count = 0;
             for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
@@ -866,6 +878,8 @@ export class WWA {
                     window.requestAnimationFrame(this.soundCheckCaller);
                 }
             });
+
+            this.wwaCustomEvent('wwa_start');
         }
         const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
         const mapDataHandler = (mapData: WWAData) =>  this._loadHandler(mapData);
@@ -973,7 +987,7 @@ export class WWA {
         }
     }
 
-    public createWWAAudioInstance(idx: number, isSub: boolean = false): void {
+    public createWWAAudioInstance(idx: number): void {
         if (idx === 0 || idx === SystemSound.NO_SOUND) {
             return;
         }
@@ -985,6 +999,7 @@ export class WWA {
         // WebAudio
         if (audioContext) {
             this._audioInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
+            this.wwaCustomEvent('wwa_web_audio_set', { wwaWebAudio:this._audioInstances[idx]});
         } else {
             this._audioInstances[idx] = new WWAAudioElement(idx, file, util.$id("wwa-audio-wrapper"));
         }
@@ -1258,7 +1273,10 @@ export class WWA {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
         bg.classList.add("onpress");
         if (!this._wwaData.disableSaveFlag) {
-            if (this._usePassword) {
+            if (this._useSuspend) {//中断モード
+                this.setMessageQueue("ゲームを中断しますか？", true, true);
+                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
+            }else if (this._usePassword) {
                 this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
             }
@@ -1819,11 +1837,14 @@ export class WWA {
             this._fadeout((): void => {
                 if (this._loadType === LoadType.QUICK_LOAD) {
                     this._quickLoad();
+                    this.wwaCustomEvent('wwa_quickload');
                 } else if (this._loadType === LoadType.RESTART_GAME) {
                     this._restartGame();
+                    this.wwaCustomEvent('wwa_restert');
                 } else if (this._loadType === LoadType.PASSWORD) {
                     this._applyQuickLoad(this._passwordSaveExtractData);
                     this._passwordSaveExtractData = void 0;
+                    this.wwaCustomEvent('wwa_passwordload');
                 }
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
@@ -2747,7 +2768,7 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
                     this._messageWindow.deleteSaveDom();
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
-                    this._quickSave();
+                    this._quickSave(ChoiceCallInfo.CALL_BY_QUICK_SAVE);
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_RESTART_GAME) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.RESTART_GAME]))).classList.remove("onpress");
                     this._stopUpdateByLoadFlag = true;
@@ -2766,8 +2787,11 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                     this._player.setPasswordWindowWating();
-                    this._passwordWindow.password = this._quickSave(true);
+                    this._passwordWindow.password = this._quickSave(ChoiceCallInfo.CALL_BY_PASSWORD_SAVE);
                     this._passwordWindow.show(Mode.SAVE);
+                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_SUSPEND) {
+                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                    this._quickSave(ChoiceCallInfo.CALL_BY_SUSPEND);
                 }
                 this._yesNoJudge = YesNoState.UNSELECTED;
                 this._setNextMessage();
@@ -2810,7 +2834,7 @@ export class WWA {
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
                     this._messageWindow.deleteSaveDom();
-                    if ((this._usePassword) /*|| (this._useSuspend )  ←中断取り込み後コメントアウト解除*/) {
+                    if ((this._usePassword) || (this._useSuspend)) {
                         this._yesNoJudge = YesNoState.UNSELECTED;
                         this.onpasswordsavecalled();
                         return;
@@ -2826,6 +2850,8 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_PASSWORD_LOAD) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
+                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_SUSPEND) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                 }
 
@@ -3337,15 +3363,12 @@ export class WWA {
     }
     private _saveDataList = []
 
-    /*
-    // TODO: 圧縮取り込み後コメントアウト解除
-    // PLiCy 2019 Phase 3: https://github.com/WWAWing/WWAWing/issues/201
     public compressSystem(): WWACompress {
         return WWACompress;
     }
-    */
 
-    private _quickSave(isPassword: boolean = false): string {
+    private _quickSave(callInfo: number): string {
+        var cd;
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
 
         var pc = this._player.getPosition().getPartsCoord();
@@ -3360,17 +3383,24 @@ export class WWA {
         qd.statusGold = st.gold;
         qd.moves = this._player.getMoveCount();
         qd.frameCount = this._player.getFrameCount();
-        
-        if (isPassword) {
-            qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            qd.mapCompressed = this._compressMap(qd.map);
-            qd.mapObjectCompressed = this._compressMap(qd.mapObject);
-            qd.checkString = this._generateSaveDataHash(qd);
-            qd.frameCount = this._player.getFrameCount();
 
-            // map, mapObjectについてはcompressから復元
-            qd.map = void 0;
-            qd.mapObject = void 0;
+        switch (callInfo) {
+            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
+                qd.checkString = this._generateSaveDataHash(qd);
+                break;
+            case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
+                qd.checkOriginalMapString = this._checkOriginalMapString;
+                qd.mapCompressed = this._compressMap(qd.map);
+                qd.mapObjectCompressed = this._compressMap(qd.mapObject);
+                qd.checkString = this._generateSaveDataHash(qd);
+                qd.frameCount = this._player.getFrameCount();
+
+                // map, mapObjectについてはcompressから復元
+                qd.map = void 0;
+                qd.mapObject = void 0;
+                break;
+            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                break;
         }
 
         // message, mapAttribute, objectAttributeについてはrestartdataから復元
@@ -3379,21 +3409,50 @@ export class WWA {
         qd.mapAttribute = void 0;
         qd.objectAttribute = void 0;
 
-        if (isPassword) {
-            var s = JSON.stringify(qd);
-            return CryptoJS.AES.encrypt(
-                CryptoJS.enc.Utf8.parse(s),
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
-            ).toString();
+        switch (callInfo) {
+            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
+                this._messageWindow.save(this._cvs, qd);
+                util.$id("cell-load").textContent = "Quick Load";
+                this.wwaCustomEvent('wwa_quicksave', {
+                    data: qd,
+                    compress: WWACompress.compress(qd)
+                });
+                return "";
+            case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
+                var s = JSON.stringify(qd);
+                this.wwaCustomEvent('wwa_passwordsave', {
+                    data: qd,
+                    compress: WWACompress.compress(qd)
+                });
+                return CryptoJS.AES.encrypt(
+                    CryptoJS.enc.Utf8.parse(s),
+                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
+                ).toString();
+            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                this.wwaCustomEvent('wwa_suspend', {
+                    data: qd,
+                    compress: WWACompress.compress(qd)
+                });
+                break;
         }
-        this._messageWindow.save(this._cvs, qd);
-        //this._quickSaveData = qd;
-        util.$id("cell-load").textContent = "Quick Load";
-        return "";
+    }
+
+    public wwaCustomEvent(event_name: string, suspendSendData: object = {}) {
+        var customEvent;
+        suspendSendData["wwa"] = this;
+        if (window["CustomEvent"]) {
+            customEvent = new CustomEvent(event_name, { detail: suspendSendData });
+        } else {
+            customEvent = document.createEvent('CustomEvent');
+            customEvent.initCustomEvent('eventName', false, false, suspendSendData);
+
+        }
+        util.$id("wwa-wrapper").dispatchEvent(customEvent); // イベントを発火させる
+
     }
 
     private _decodePassword(pass: string): WWAData {
-        var ori = this._generateMapDataHash(this._restartData);
+        var ori = this._checkOriginalMapString;
         try {
             var json = CryptoJS.AES.decrypt(
                 pass,
@@ -3439,7 +3498,7 @@ export class WWA {
             if (newData.checkString !== checkString) {
                 throw new Error("データが壊れているようです。\nInvalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
             }
-            var checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            var checkOriginalMapString = this._checkOriginalMapString;
             if (newData.checkOriginalMapString !== checkOriginalMapString) {
                 throw new Error("管理者によってマップが変更されたようです。\nInvalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
             }
@@ -4488,7 +4547,7 @@ font-weight: bold;
             var currentButtonID: string, currentButtonKey: string;
             this._wwaData.gamePadButtonItemTable = [];
             for (currentButtonKey in GamePadState) {
-                currentButtonID = GamePadState[currentButtonKey];
+                currentButtonID = currentButtonKey;
                 this._wwaData.gamePadButtonItemTable[currentButtonID] = 0;
             }
         }
