@@ -171,6 +171,7 @@ export class WWA {
     public audioGain: GainNode;
     private audioExtension: string = "";
     public userDevice: UserDevice;
+    private soundLoadedCheckTimer: number | undefined = undefined;
 
     constructor(
         mapFileName: string,
@@ -1040,6 +1041,42 @@ export class WWA {
         this.openGameWindow();
     }
 
+    /**
+     * 音楽ファイルがロードされたかの確認を 100ms 間隔で行うように設定します。
+     * ロードが完了した場合には再生します。
+     * @param targetSoundId 確認する音楽ファイルのサウンド番号
+     */
+    private _setSoundLoadedCheckTimer(targetSoundId: number): void {
+        const targetAudio = this._audioInstances[targetSoundId];
+        // 対象音源が存在しないなど、エラーの場合は何度確認しても無駄なので何もせず終了
+        if (targetAudio.isError()) {
+            return;
+        }
+        this.soundLoadedCheckTimer = window.setInterval((): void => {
+            // 本来鳴っているはずのBGMが targetSoundId 番であるときは再生
+            if (this._wwaData.bgm === targetSoundId) {
+                if (targetAudio.hasData()) {
+                    targetAudio.play();
+                    this._wwaData.bgm = targetSoundId;
+                    this._clearSoundLoadedCheckTimer();
+                } else if (targetAudio.isError()) {
+                    // 途中でロードがエラーになった場合はそこでチェックを終了
+                    this._clearSoundLoadedCheckTimer();
+                }
+            } else {
+                // 他のBGMが鳴っているはずの設定になっているなら、タイマーを止める
+                // そのBGMの再生系の処理は playSound で実行されているはずなので、ここでは何もしない
+                this._clearSoundLoadedCheckTimer();
+            }
+        }, 100);
+    }
+
+    private _clearSoundLoadedCheckTimer(): void {
+        if(this.soundLoadedCheckTimer) {
+            clearInterval(this.soundLoadedCheckTimer);
+            this.soundLoadedCheckTimer = undefined;
+        }
+    }
 
     public playSound(id: number): void {
         if (!this._isLoadedSound) {
@@ -1072,29 +1109,12 @@ export class WWA {
         const audioInstance = this._audioInstances[id];
         if (!audioInstance.hasData()) {
             if (id >= SystemSound.BGM_LB) {
-                /**
-                 * 音楽ファイルの存在確認を頻繁に行うように設定します。
-                 * @param id 
-                 * @param self 
-                 */
-                var loadi = ((id: number, self: WWA): void => {
-                    var timer = setInterval((): void => {
-                        if (self._wwaData.bgm === id) {
-                            if (self._audioInstances[id].hasData()) {
-                                this._audioInstances[id].play();
-                                this._wwaData.bgm = id;
-                                clearInterval(timer);
-                            }
-                        } else {
-                            clearInterval(timer);
-                            if (self._wwaData.bgm !== SystemSound.NO_SOUND) {
-                                loadi(self._wwaData.bgm, self);
-                            }
-                        }
-                    }, 100);
-                });
+               /* 
+                  音源がロードされていなくても、QuickLoad などでゲーム状態を復元したときにはBGMを復元しなければならない。
+                  ので、ゲームデータ上にはBGM設定を反映する
+                */
                 this._wwaData.bgm = id;
-                loadi(id, this);
+                this._setSoundLoadedCheckTimer(id);
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
