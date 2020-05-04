@@ -34,7 +34,7 @@ import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
-import { BrowserEventEmitter } from "@wwawing/event-emitter";
+import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { WWACompress } from "./wwa_psave";
 let wwa: WWA
 
@@ -170,6 +170,13 @@ export class WWA {
      */
     private _mapObjectIDTable: number[][];
 
+    /**
+     * #wwa-wrapper の DOM に対してカスタムイベントを発生させる EventEmitter.
+     * 外部のアプリケーションが #wwa-wrapper に対してイベントリスナを設定することで
+     * WWAと連携する機能を作ることができます。
+     */
+    public wwaCustomEventEmitter: IEventEmitter;
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -191,6 +198,7 @@ export class WWA {
         useGoToWWA: boolean,
         audioDirectory: string = ""
     ) {
+        this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
@@ -3445,18 +3453,8 @@ export class WWA {
         }
     }
 
-    public wwaCustomEvent(event_name: string, suspendSendData: object = {}) {
-        var customEvent;
-        suspendSendData["wwa"] = this;
-        if (window["CustomEvent"]) {
-            customEvent = new CustomEvent(event_name, { detail: suspendSendData });
-        } else {
-            customEvent = document.createEvent('CustomEvent');
-            customEvent.initCustomEvent('eventName', false, false, suspendSendData);
-
-        }
-        util.$id("wwa-wrapper").dispatchEvent(customEvent); // イベントを発火させる
-
+    public wwaCustomEvent(eventName: string, data: object = {}) {
+        this.wwaCustomEventEmitter.dispatch(eventName, data)
     }
 
     private _decodePassword(pass: string): WWAData {
