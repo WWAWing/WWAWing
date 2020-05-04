@@ -454,7 +454,7 @@ export class WWASaveDB {
     }
     public static init(_messageWindow: MessageWindow, wwa: WWA) {
         this._messageWindow = _messageWindow;
-        this._checkOriginalMapString = wwa._checkOriginalMapString;
+        this._checkOriginalMapString = wwa.checkOriginalMapString;
         if (this.indexedDB) {
             try {
                 if (this.indexedDB.open) {

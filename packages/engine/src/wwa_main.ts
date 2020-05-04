@@ -94,7 +94,13 @@ export class WWA {
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
-    public _checkOriginalMapString: string; 
+
+    /**
+     * 所持状態のマップデータの文字列加工をMD5化した文字列です。
+     * データが壊れていないかなどの検証に使います。
+     * TODO: originalMapDataHash などの名前が適切だと思うが、WWADataに同じ名前のプロパティがいるので安易に変えられない。どこかで対応する。
+     */
+    public checkOriginalMapString: string; 
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
@@ -320,7 +326,7 @@ export class WWA {
             pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
-            this._checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
             
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
@@ -416,10 +422,10 @@ export class WWA {
             WWACompress.setRestartData(this._restartData);
             var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
             if (typeof resumeSaveDataText === "string") {
-                this._useSuspend = true;//中断モード
+                this._useSuspend = true; // 中断モード
                 if (resumeSaveDataText) {
-                    //再開
-                    var resumeData: WWAData = WWACompress.getStartWWAData(resumeSaveDataText);
+                    // 再開
+                    const resumeData = WWACompress.getStartWWAData(resumeSaveDataText);
                     if (this._restartData !== resumeData) {
                         this._applyQuickLoad(resumeData);
                     }
@@ -3307,6 +3313,10 @@ export class WWA {
         return dest;
     }
 
+    /**
+     * マップデータを所定の方法で文字列化したもののMD5ハッシュを返します。
+     * @param data 対象のマップデータ
+     */
     private _generateMapDataHash(data: WWAData): string {
         var text = "A";
         var len = 0;
@@ -3368,7 +3378,6 @@ export class WWA {
     }
 
     private _quickSave(callInfo: number): string {
-        var cd;
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
 
         var pc = this._player.getPosition().getPartsCoord();
@@ -3389,7 +3398,7 @@ export class WWA {
                 qd.checkString = this._generateSaveDataHash(qd);
                 break;
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
-                qd.checkOriginalMapString = this._checkOriginalMapString;
+                qd.checkOriginalMapString = this.checkOriginalMapString;
                 qd.mapCompressed = this._compressMap(qd.map);
                 qd.mapObjectCompressed = this._compressMap(qd.mapObject);
                 qd.checkString = this._generateSaveDataHash(qd);
@@ -3419,13 +3428,12 @@ export class WWA {
                 });
                 return "";
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
-                var s = JSON.stringify(qd);
                 this.wwaCustomEvent('wwa_passwordsave', {
                     data: qd,
                     compress: WWACompress.compress(qd)
                 });
                 return CryptoJS.AES.encrypt(
-                    CryptoJS.enc.Utf8.parse(s),
+                    CryptoJS.enc.Utf8.parse(JSON.stringify(qd)),
                     "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
                 ).toString();
             case ChoiceCallInfo.CALL_BY_SUSPEND:
@@ -3452,7 +3460,7 @@ export class WWA {
     }
 
     private _decodePassword(pass: string): WWAData {
-        var ori = this._checkOriginalMapString;
+        var ori = this.checkOriginalMapString;
         try {
             var json = CryptoJS.AES.decrypt(
                 pass,
@@ -3498,7 +3506,7 @@ export class WWA {
             if (newData.checkString !== checkString) {
                 throw new Error("データが壊れているようです。\nInvalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
             }
-            var checkOriginalMapString = this._checkOriginalMapString;
+            var checkOriginalMapString = this.checkOriginalMapString;
             if (newData.checkOriginalMapString !== checkOriginalMapString) {
                 throw new Error("管理者によってマップが変更されたようです。\nInvalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
             }

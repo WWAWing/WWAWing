@@ -10,7 +10,7 @@ import {
     YesNoState,
     Position,
     DEVICE_TYPE,
-    Direction,
+    Direction
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -557,7 +557,7 @@ export class TextWindow {
         this._element.style.display = "block";
         this.update();
         this._wwa.wwaCustomEvent('wwa_window_show', {
-            name: this.window_name,
+            name: this.windowName,
             element: this._element,
             text: this._element.textContent
         });
@@ -566,13 +566,13 @@ export class TextWindow {
         this._isVisible = false;
         this._element.style.display = "none";
         this.update();
-        this._wwa.wwaCustomEvent('wwa_window_hide', { name: this.window_name});
+        this._wwa.wwaCustomEvent('wwa_window_hide', { name: this.windowName});
     }
     public isVisible(): boolean {
         return this._isVisible;
     }
 
-    protected get window_name(): string {
+    protected get windowName(): string {
         return "TextWindow";
     }
 }
@@ -644,7 +644,7 @@ export class MosterWindow extends TextWindow {
 
     }
 
-    protected get window_name(): string {
+    protected get windowName(): string {
         return "TextWindow";
     }
 }
@@ -682,7 +682,7 @@ export class ScoreWindow extends TextWindow {
         }
     }
 
-    protected get window_name(): string {
+    protected get windowName(): string {
         return "ScoreWindow";
     }
 }
