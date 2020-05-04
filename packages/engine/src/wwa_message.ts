@@ -577,7 +577,7 @@ export class TextWindow {
     }
 }
 
-export class MosterWindow extends TextWindow {
+export class MonsterWindow extends TextWindow {
     protected _monsterBox: HTMLDivElement;
     protected _energyBox: HTMLDivElement;
     protected _strengthBox: HTMLDivElement;
@@ -645,7 +645,7 @@ export class MosterWindow extends TextWindow {
     }
 
     protected get windowName(): string {
-        return "TextWindow";
+        return "MonsterWindow";
     }
 }
 
@@ -1200,7 +1200,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
             util.$id("cell-load").textContent = "Quick Load";
         }
     }
-    protected get window_name(): string {
+    protected get windowName(): string {
         return "MessageWindow";
     }
 }

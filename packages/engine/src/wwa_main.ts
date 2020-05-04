@@ -26,7 +26,7 @@ import { Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MosterWindow, WWASaveData,  ScoreWindow, MessageInfo, Macro, parseMacro
+    MessageWindow, MonsterWindow, ScoreWindow, MessageInfo, Macro, parseMacro
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -71,7 +71,7 @@ export class WWA {
     public _itemMenu: ItemMenu;  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
     private _objectMovingDataManager: ObjectMovingDataManager;
     public _messageWindow: MessageWindow; // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
-    private _monsterWindow: MosterWindow;
+    private _monsterWindow: MonsterWindow;
     private _scoreWindow: ScoreWindow;
     private _messageQueue: MessageInfo[];
     private _yesNoJudge: YesNoState;
@@ -761,7 +761,7 @@ export class WWA {
             this._passwordWindow = new PasswordWindow(
                 this, <HTMLDivElement>util.$id("wwa-wrapper"));
 
-            this._monsterWindow = new MosterWindow(
+            this._monsterWindow = new MonsterWindow(
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
             this._setProgressBar(getProgress(3, 4, LoadStage.GAME_INIT));
 
@@ -3454,7 +3454,7 @@ export class WWA {
     }
 
     public wwaCustomEvent(eventName: string, data: object = {}) {
-        this.wwaCustomEventEmitter.dispatch(eventName, data)
+        this.wwaCustomEventEmitter.dispatch(eventName, data);
     }
 
     private _decodePassword(pass: string): WWAData {
