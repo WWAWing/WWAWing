@@ -263,6 +263,7 @@ export class WWA {
                 case DEVICE_TYPE.GAME:
                     switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
+                            WWACompress.usingByte(true);
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
                             break;
                     }
@@ -428,6 +429,7 @@ export class WWA {
             this._useLookingAround = !((liikingAroundString) && (liikingAroundString.match(/false/i)));
 
             WWACompress.setRestartData(this._restartData);
+            this.clearFaces();
             var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
             if (typeof resumeSaveDataText === "string") {
                 this._useSuspend = true; // 中断モード
@@ -436,6 +438,7 @@ export class WWA {
                     const resumeData = WWACompress.getStartWWAData(resumeSaveDataText);
                     if (this._restartData !== resumeData) {
                         this._applyQuickLoad(resumeData);
+                        this._quickSave(ChoiceCallInfo.CALL_BY_QUICK_SAVE);
                     }
                 }
             }
@@ -1350,7 +1353,7 @@ export class WWA {
             return;
         }
         this._waitFrame = 0;
-
+        2.7 * 20
         // メッセージウィンドウによる入力割り込みが発生した時
         if (this._yesNoJudgeInNextFrame !== void 0) {
             this._yesNoJudge = this._yesNoJudgeInNextFrame;
@@ -1639,25 +1642,21 @@ export class WWA {
                 if (this._messageWindow.isSaveChoice()) {
                     //セーブ領域参照
                     this._messageWindow.saveUpdate();
-                    if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
-                        this._messageWindow.saveControll(Direction.LEFT);
-                    } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
-                        this._messageWindow.saveControll(Direction.UP);
-                    } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
-                        this._messageWindow.saveControll(Direction.RIGHT);
-                    } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                        this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
-                        this._messageWindow.saveControll(Direction.DOWN);
+                    if (!this._messageWindow.isSaveClose()) {
+                        if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
+                            this._messageWindow.saveControll(Direction.LEFT);
+                        } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
+                            this._messageWindow.saveControll(Direction.UP);
+                        } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
+                            this._messageWindow.saveControll(Direction.RIGHT);
+                        } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
+                            this._messageWindow.saveControll(Direction.DOWN);
+                        }
                     }
-                    /*
-                    if (this._messageWindow.isSaveClose()) {
-                        //項目クリックによるYES選択扱い
-                        //this._yesNoJudge = YesNoState.YES;
-                    }
-                    */
                 }
                 if (!this._messageWindow.isInputDisable()) {
                     if (this._yesNoJudge === YesNoState.UNSELECTED) {
