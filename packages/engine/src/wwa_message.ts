@@ -22,6 +22,10 @@ import * as util from "./wwa_util";
 import {
     WWAData
 } from "./wwa_data";
+import {
+    WWACompress,
+    WWASaveDB
+} from "./wwa_psave"; 
 import { ItemMenu } from "./wwa_item_menu";
 
 export class MessageInfo {
@@ -552,18 +556,28 @@ export class TextWindow {
         this._isVisible = true;
         this._element.style.display = "block";
         this.update();
+        this._wwa.wwaCustomEvent('wwa_window_show', {
+            name: this.windowName,
+            element: this._element,
+            text: this._element.textContent
+        });
     }
     public hide(): void {
         this._isVisible = false;
         this._element.style.display = "none";
         this.update();
+        this._wwa.wwaCustomEvent('wwa_window_hide', { name: this.windowName});
     }
     public isVisible(): boolean {
         return this._isVisible;
     }
+
+    protected get windowName(): string {
+        return "TextWindow";
+    }
 }
 
-export class MosterWindow extends TextWindow {
+export class MonsterWindow extends TextWindow {
     protected _monsterBox: HTMLDivElement;
     protected _energyBox: HTMLDivElement;
     protected _strengthBox: HTMLDivElement;
@@ -630,9 +644,13 @@ export class MosterWindow extends TextWindow {
 
     }
 
+    protected get windowName(): string {
+        return "MonsterWindow";
+    }
 }
 
 export class ScoreWindow extends TextWindow {
+    protected static WINDOW_NAME: string = "ScoreWindow";
     constructor(
         wwa: WWA,
         coord: Coord,
@@ -662,6 +680,10 @@ export class ScoreWindow extends TextWindow {
         if (score !== void 0) {
             this._element.textContent = "Score: " + score;
         }
+    }
+
+    protected get windowName(): string {
+        return "ScoreWindow";
     }
 }
 
@@ -784,6 +806,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._ynWrapperElement.appendChild(this._divNoElement);
 
         thisA._isInputDisable = false;
+        this._saveDataList = [];
+        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
+            this._saveDataList[i] = new WWASaveData(i);
+        }
         switch (wwa.userDevice.device) {
             case DEVICE_TYPE.SP:
             case DEVICE_TYPE.VR:
@@ -793,9 +819,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         }
         this._saveDataList = [];
         for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            this._saveDataList[i] = new WWASaveData();
+            this._saveDataList[i] = new WWASaveData(i);
         }
         this.update();
+        WWASaveDB.init(this,this._wwa)
     }
 
     public setPosition(x: number, y: number, width: number, height: number): void {
@@ -1160,33 +1187,69 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         }
         this.setSaveID((this._save_select_id + WWAConsts.QUICK_SAVE_MAX) % WWAConsts.QUICK_SAVE_MAX);
     }
+    public dbSaveDataLoad(dbSaveDataList: object[]) {
+        var usingQuickLoad: boolean = false;
+        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
+            var dbSaveData = dbSaveDataList[i];
+            if (dbSaveData) {
+                this._saveDataList[i].dbSaveDataLoad(dbSaveData);
+                usingQuickLoad = true;
+            }
+        }
+        if (usingQuickLoad) {
+            util.$id("cell-load").textContent = "Quick Load";
+        }
+    }
+    protected get windowName(): string {
+        return "MessageWindow";
+    }
 }
 
 export class WWASaveData {
-    flag: boolean = false;
-    date: Date = void 0;
-    cvs: HTMLCanvasElement = void 0;
-    ctx: CanvasRenderingContext2D = void 0;
-    quickSaveData: WWAData = null;
-    constructor() {
+    private _id: number = 0;
+    public flag: boolean = false;
+    public date: Date = void 0;
+    public cvs: HTMLCanvasElement = void 0;
+    public ctx: CanvasRenderingContext2D = void 0;
+    public quickSaveData: WWAData = null;
+    private _statusEnergy: number;
+    private compressData: object;
+    public constructor(id) {
+        this._id = id;
         this.cvs = document.createElement("canvas");
         this.cvs.width = WWAConsts.QUICK_SAVE_THUMNAIL_WIDTH;
         this.cvs.height = WWAConsts.QUICK_SAVE_THUMNAIL_HEIGHT;
         this.ctx = this.cvs.getContext("2d");
     }
-    save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
+    public save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
+        this._statusEnergy = _quickSaveData.statusEnergy;
+        this.compressData = WWACompress.compress(_quickSaveData);
         this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
         this.ctx.drawImage(gameCvs, 0, 0, gameCvs.width, gameCvs.height, 0, 0, this.cvs.width, this.cvs.height);
         this.quickSaveData = _quickSaveData;
         //this.quickSaveData.statusEnergy;//life
         this.flag = true;
         this.date = new Date();
+        WWASaveDB.dbUpdateSaveData(this._id, gameCvs, this.compressData, this.date);
         return true;
     }
-    getStatusEnergy(): number {
-        return this.flag ? this.quickSaveData.statusEnergy : -1;
+    public getStatusEnergy(): number {
+        return this.flag ? this._statusEnergy : -1;
     }
-    load(): WWAData {
-        return this.quickSaveData;
+    public load(): WWAData {
+        return WWACompress.decompress(this.compressData);
+    }
+    public dbSaveDataLoad(dbSaveData) {
+        var quickSaveData = WWACompress.decompress(dbSaveData.data);
+        this.compressData = dbSaveData.data;
+        this._statusEnergy = quickSaveData.statusEnergy;
+        this.date = dbSaveData.date;
+        this.flag = true;
+        var img = document.createElement("img");
+        img.src = dbSaveData.image;
+        img.addEventListener("load", () => {
+            this.flag = true;
+            this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.cvs.width, this.cvs.height);
+        });
     }
 }
