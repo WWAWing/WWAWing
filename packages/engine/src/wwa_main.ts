@@ -1353,7 +1353,7 @@ export class WWA {
             return;
         }
         this._waitFrame = 0;
-        2.7 * 20
+
         // メッセージウィンドウによる入力割り込みが発生した時
         if (this._yesNoJudgeInNextFrame !== void 0) {
             this._yesNoJudge = this._yesNoJudgeInNextFrame;
