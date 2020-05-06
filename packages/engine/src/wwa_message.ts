@@ -8,9 +8,10 @@ import {
     MacroImgFrameIndex,
     macrotable,
     YesNoState,
+
     Position,
     DEVICE_TYPE,
-    Direction
+    Direction,
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -711,7 +712,8 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _isInputDisable: boolean;
 
     private _element: HTMLElement;
-    public _msgWrapperElement: HTMLElement;
+    private _msgWrapperElement: HTMLElement;
+
     private _dummyElement: HTMLElement;
     private _saveElement: HTMLElement;
     private _ynWrapperElement: HTMLElement;

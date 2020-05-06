@@ -554,6 +554,7 @@ export enum MacroType {
     EFFITEM = 20,
     COLOR = 21,
     WAIT = 22,
+
     SOUND = 23,
     GAMEPAD_BUTTON = 100
 }
@@ -614,6 +615,7 @@ export enum SystemSound {
 export var speedList = [2, 5, 8, 10];
 export var speedNameList = ["低速", "準低速", "中速", "高速"];
 export class WWAConsts {
+
 
     static WWA_HOME: string = "http://wwajp.com";
 
