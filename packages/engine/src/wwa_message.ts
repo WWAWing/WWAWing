@@ -711,7 +711,8 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _isInputDisable: boolean;
 
     private _element: HTMLElement;
-    public _msgWrapperElement: HTMLElement;
+    private _msgWrapperElement: HTMLElement;
+
     private _dummyElement: HTMLElement;
     private _saveElement: HTMLElement;
     private _ynWrapperElement: HTMLElement;

@@ -263,9 +263,8 @@ export class WWA {
                 case DEVICE_TYPE.GAME:
                     switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
-                            WWACompress.usingByte(true);
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
-                            break;
+                            return;
                     }
                     this._bottomButtonType = ControlPanelBottomButton.GAME_END;
                     break;
@@ -1016,7 +1015,6 @@ export class WWA {
         // WebAudio
         if (audioContext) {
             this._audioInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
-            this.wwaCustomEvent('wwa_web_audio_set', { wwaWebAudio:this._audioInstances[idx]});
         } else {
             this._audioInstances[idx] = new WWAAudioElement(idx, file, util.$id("wwa-audio-wrapper"));
         }
@@ -1058,6 +1056,7 @@ export class WWA {
             if (instance === void 0 || instance.isError()) {
                 continue;
             }
+
             total++;
             if (!instance.hasData()) {
                 continue;
@@ -1184,6 +1183,7 @@ export class WWA {
     */
     public mainCaller = (() => this._main());
     public soundCheckCaller = (() => this.checkAllSoundLoaded());
+
     /**
      * アイテムを使用。
      * @param itemPos アイテムのID
@@ -1240,7 +1240,7 @@ export class WWA {
                     this.setMessageQueue("データの一時保存先を選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 } else {
-                    this.setMessageQueue("データの一時保存を選んでください。", true, true);
+                    this.setMessageQueue("データの一時保存先を選んでください。", true, true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 }
             } else {
