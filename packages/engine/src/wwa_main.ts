@@ -125,7 +125,6 @@ export class WWA {
     private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
-    private _useGameEnd: boolean;
 
     private _useConsole: boolean;
     private _audioDirectory: string;
@@ -210,7 +209,6 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-        this._useGameEnd = false;
         
         if (titleImgName === null) {
             this._hasTitleImg = false;
