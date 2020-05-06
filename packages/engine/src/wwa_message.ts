@@ -8,10 +8,9 @@ import {
     MacroImgFrameIndex,
     macrotable,
     YesNoState,
-
     Position,
     DEVICE_TYPE,
-    Direction,
+    Direction
 } from "./wwa_data";
 import {
     Positioning as MPositioning
