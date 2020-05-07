@@ -177,6 +177,8 @@ export class WWA {
      */
     public wwaCustomEventEmitter: IEventEmitter;
 
+    private _hasControlToNextMessage: boolean;
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -1338,6 +1340,7 @@ export class WWA {
     );
 
     private _main(): void {
+        this._hasControlToNextMessage = false;
         this._temporaryInputDisable = false;
         this._stopUpdateByLoadFlag = false;
 
@@ -1630,11 +1633,6 @@ export class WWA {
             this._player.move();
             this._objectMovingDataManager.update();
         } else if (this._player.isWaitingMessage()) {
-
-            if (!this._messageWindow.isVisible()) {
-                this._messageWindow.show();
-            }
-
             if (this._messageWindow.isYesNoChoice()) {
                 //Yes No 選択肢
                 if (this._messageWindow.isSaveChoice()) {
@@ -1705,7 +1703,7 @@ export class WWA {
                     this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)
                 ) {
-                    this._setNextMessage();
+                    this.onNextMessageButtonPressed();
                     this._messageWindow.setItemMenuChoice(false);
                     this._itemMenu.ok();
                 } else if (
@@ -1724,7 +1722,7 @@ export class WWA {
                         }
                     }
                     this._itemMenu.ng();
-                    this._setNextMessage();
+                    this.onNextMessageButtonPressed();
                     this.playSound(SystemSound.DECISION);
                     this._messageWindow.setItemMenuChoice(false);
                 }
@@ -1744,7 +1742,7 @@ export class WWA {
                             elm.classList.remove("onpress");
                         }
                     }
-                    this._setNextMessage();
+                    this.onNextMessageButtonPressed();
 
                 }
             }
@@ -1811,8 +1809,51 @@ export class WWA {
             this._passwordLoadExecInNextFrame = false;
         }
 
+        // メッセージ送り 2020-05-08 工事中
+        let messageUnitToShow: ParsedMessageUnit | undefined;
+        let willHideMessageWindow: boolean = false
+        if (this._messageQueue.length > 0) {
+            const headMessageUnit = this._messageQueue.shift();
+            messageUnitToShow = headMessageUnit;
+            // TODO: マクロの実行もこのへんでやりたい
+
+            this._player.setMessageWaiting();
+        }
+
+        // setNextMessage からもってきたコード 2020-05-08 整理中
+        if (this._hasControlToNextMessage) {
+            // ↓ おそらく「アイテムを使いますか？」の二者択一の後にプレイヤーのアイテム使用が走るという話だと思うが、この関数から消したい
+            /*
+            if (this._player.isReadyToUseItem()) {
+                itemID = this._player.useItem();
+            }
+            */
+            this.clearFaces();
+            if (messageUnitToShow) {
+                this._player.setDelayFrame();
+                this._messageWindow.hide();
+                this._keyStore.allClear();
+                this._mouseStore.clear();
+            }
+            willHideMessageWindow = true;
+        }
+
         // draw
         this._drawAll();
+
+        // メッセージウィンドウ掲出
+        if (this._messageWindow.isVisible()) {
+            if (willHideMessageWindow) {
+                this._hideMessageWindow();
+            }
+        } else {
+            if (messageUnitToShow) {
+                this._messageWindow.setYesNoChoice(!!messageUnitToShow.isChoice)
+                this._messageWindow.setMessage(messageUnitToShow.message);
+                this._messageWindow.show();
+            }
+        }
+
 
         this._mainCallCounter++;
         this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
@@ -2801,7 +2842,7 @@ export class WWA {
                     this._quickSave(ChoiceCallInfo.CALL_BY_SUSPEND);
                 }
                 this._yesNoJudge = YesNoState.UNSELECTED;
-                this._setNextMessage();
+                this.onNextMessageButtonPressed();
 
                 this._yesNoChoicePartsCoord = void 0;
                 this._yesNoChoicePartsID = void 0;
@@ -2863,7 +2904,7 @@ export class WWA {
                 }
 
                 this._yesNoJudge = YesNoState.UNSELECTED;
-                this._setNextMessage();
+                this.onNextMessageButtonPressed();
                 this._yesNoChoicePartsCoord = void 0;
                 this._yesNoChoicePartsID = void 0;
                 this._yesNoUseItemPos = void 0;
@@ -2911,7 +2952,8 @@ export class WWA {
      * キー入力による次メッセージのセットが想定されている
      * @param displayCenter 
      */
-    public _setNextMessage(displayCenter: boolean = false): void {  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
+    public onNextMessageButtonPressed(): void {  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
+        this._hasControlToNextMessage = true;
         // あまりにもカオスなので内容全部消しました。再設計中。
    }
 
