@@ -769,22 +769,7 @@ export class WWA {
             this._useConsole = false;
             
             this.wwaCustomEvent('wwa_startup');
-            /*
-            var count = 0;
-            for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
-            for (var yy = 0; yy < this._wwaData.mapWidth; yy++) {
-            if (this._wwaData.mapObject[yy][xx] === 1620) {
-            if (count === 0) {
-            count++;
-            continue;
-            }
-            throw new Error("Found!!" + xx + " " + yy);
-            }
-            }
-            }
-            */
-
-
+            
             this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, (): void => {
                 this._isSkippedSoundMessage = true;
                 const setGameStartingMessageWhenPcOrSP = () => {
