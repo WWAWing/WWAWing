@@ -1192,7 +1192,7 @@ export class WWA {
                 this._player.readyToUseItem(itemPos);
                 var itemID = this._player.useItem();
                 var mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
-                this.setMessageQueue(
+                this.prepareMessage(
                     this.getMessageById(mesID),
                     false, itemID, PartsType.OBJECT,
                     this._player.getPosition().getPartsCoord());
@@ -2297,7 +2297,7 @@ export class WWA {
         //this._waitTimeInCurrentFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * 100;
         this._waitFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
         this._temporaryInputDisable = true;
-        var messageDisplayed = this.setMessageQueue(message, false, partsID, PartsType.MAP, pos.clone());
+        var messageDisplayed = this.prepareMessage(message, false, partsID, PartsType.MAP, pos.clone());
         this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
 
         return messageID !== 0 && messageDisplayed;
@@ -2316,7 +2316,7 @@ export class WWA {
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             var message = this._wwaData.message[messageID];
 
-            this.setMessageQueue(message, false, partsID, PartsType.MAP, pos.clone());
+            this.prepareMessage(message, false, partsID, PartsType.MAP, pos.clone());
             this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
             return false;
         }
@@ -2384,7 +2384,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験的に踏み潰し判定と処理の順序を入れ替えています。不具合があるようなら戻します。 150415
-        this.setMessageQueue(message, false, partsID, PartsType.OBJECT, pos);
+        this.prepareMessage(message, false, partsID, PartsType.OBJECT, pos);
         // 待ち時間
         //this._waitTimeInCurrentFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * 100;
         this._waitFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
@@ -2439,7 +2439,7 @@ export class WWA {
             return;
         }
 
-        this.setMessageQueue(message, false, partsID, PartsType.OBJECT, pos.clone());
+        this.prepareMessage(message, false, partsID, PartsType.OBJECT, pos.clone());
 
 
         //this._wwaData.mapObject[pos.y][pos.x] = 0;
@@ -2486,7 +2486,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験的に(ry
-        this.setMessageQueue(message, true, partsID, PartsType.OBJECT, pos.clone());
+        this.prepareMessage(message, true, partsID, PartsType.OBJECT, pos.clone());
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -2504,7 +2504,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験的に(ry
-        this.setMessageQueue(message, true, partsID, PartsType.OBJECT, pos.clone());
+        this.prepareMessage(message, true, partsID, PartsType.OBJECT, pos.clone());
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -2532,7 +2532,7 @@ export class WWA {
             if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 // 使用型アイテム の場合は、処理は使用時です。
             } else {
-                this.setMessageQueue(message, false, partsID, PartsType.OBJECT, pos.clone());
+                this.prepareMessage(message, false, partsID, PartsType.OBJECT, pos.clone());
                 this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
             }
         } catch (e) {
@@ -2557,7 +2557,7 @@ export class WWA {
                 this._player.removeItemByPartsID(itemID);
             }
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
-            this.setMessageQueue(message, false, partsID, PartsType.OBJECT, pos.clone());
+            this.prepareMessage(message, false, partsID, PartsType.OBJECT, pos.clone());
             //this._wwaData.mapObject[pos.y][pos.x] = 0;
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
             this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
@@ -2577,7 +2577,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験(ry
-        this.setMessageQueue(message, true, partsID, PartsType.OBJECT, pos.clone());
+        this.prepareMessage(message, true, partsID, PartsType.OBJECT, pos.clone());
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -2661,7 +2661,7 @@ export class WWA {
             this._scoreWindow.update(score);
             this._scoreWindow.show();
         }
-        this.setMessageQueue(rawMessage, false, partsID, PartsType.OBJECT, pos);
+        this.prepareMessage(rawMessage, false, partsID, PartsType.OBJECT, pos);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
 
     }
@@ -2890,8 +2890,8 @@ export class WWA {
        return false;
     }
 
-
-    public setMessageQueue(
+    // 旧 
+    public prepareMessage(
         message: string,
         showChoice: boolean,
         partsID: number = 0,

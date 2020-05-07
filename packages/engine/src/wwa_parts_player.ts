@@ -999,7 +999,7 @@ export class Player extends PartsObject {
                     // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
                     this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
                     this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-                    this._wwa.setMessageQueue(this._enemy.message, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
+                    this._wwa.prepareMessage(this._enemy.message, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
                     this._enemy.battleEndProcess();
                     this._battleTurnNum = 0;
                     this._enemy = null;
