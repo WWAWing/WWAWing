@@ -28,33 +28,23 @@ import {
 } from "./wwa_psave"; 
 import { ItemMenu } from "./wwa_item_menu";
 
-export class MessageInfo {
-    constructor(
-        public message: string,
-        public isSystemMessage: boolean,
-        public isEndOfPartsEvent?: boolean,
-        public macro?: Macro[]
-    ) {
-        if (this.macro === void 0) {
-            this.macro = [];
-        }
-    }
-
-}
-
-export function strArrayToMessageInfoArray(strArray: string[], isSystemMessage: boolean): MessageInfo[] {
-    var newq: MessageInfo[] = [];
-    strArray.forEach((s) => {
-        newq.push(new MessageInfo(s, isSystemMessage));
-    });
-    return newq;
+/**
+ * `<P>` で区切られた一つのメッセージ画面で表示されるメッセージ
+ */
+export interface ParsedMessageUnit {
+    /** マクロ込みだった頃のメッセージ (`<P>` では既に区切られている状態で, `<C>` もない) */
+    originalMessage: string;
+    /** マクロが除去されたメッセージ文字列 */
+    message: string;
+    /** このメッセージは <P> で区切られた中の最後のメッセージである場合 true */
+    isLastMessage?: true;
+    /** マクロ (出現順) */
+    macros: Macro[];
 }
 
 export class Macro {
     constructor(
         private _wwa: WWA,
-        private _triggerPartsID: number,
-        private _triggerPartsType: number,
         private _triggerPartsPosition: Coord,
         public macroType: MacroType,
         public macroArgs: string[]
@@ -496,8 +486,6 @@ export class Macro {
 
 export function parseMacro(
     wwa: WWA,
-    partsID: number,
-    partsType: PartsType,
     position: Coord,
     macroStr: string
 ): Macro {
@@ -510,9 +498,9 @@ export function parseMacro(
     var macroIndex = macrotable["$" + macroType.toLowerCase()];
     if (macroIndex === void 0) {
         // undefined macro
-        return new Macro(wwa, partsID, partsType, position, MacroType.UNDEFINED, matchInfo[2].split(","));
+        return new Macro(wwa, position, MacroType.UNDEFINED, matchInfo[2].split(","));
     }
-    return new Macro(wwa, partsID, partsType, position, macroIndex, matchInfo[2].split(",").map((e) => { return e.trim(); }));
+    return new Macro(wwa, position, macroIndex, matchInfo[2].split(",").map((e) => { return e.trim(); }));
 }
 
 
