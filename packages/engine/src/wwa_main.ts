@@ -2653,7 +2653,7 @@ export class WWA {
     private _execObjectScoreEvent(pos: Coord, partsID: number, mapAttr: number): void {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
-        const messageQueue = this.parseMessage(rawMessage, pos);
+        const messageQueue = this.parseMessage(rawMessage, pos, false);
         const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !!messageInfo.message, false);
         if (existsMessage) {
             const score = this._player.getStatus().calculateScore({
@@ -2893,12 +2893,17 @@ export class WWA {
     // 旧 setMessageQueue 
     public prepareMessage(
         message: string,
-        showChoice: boolean,
+        isChoice: boolean,
         partsPosition: Coord = new Coord(0, 0),
-        messageDisplayed: boolean = false
     ): boolean {
-        this._messageQueue = this._messageQueue.concat(this.parseMessage(message, partsPosition));
+        // WWAの実行モデルでは、メッセージが途中で割り込んでくることはないはず
+        if (this._messageQueue.length !== 0) {
+            console.warn("MessageQueueの中にメッセージが既に入っています! 内容:", this._messageQueue);
+        }
+        this._messageQueue = this.parseMessage(message, partsPosition, isChoice)
+
         // あまりにもカオスなので内容全部消しました。再設計中。
+
        return false;
     }
 
@@ -2915,6 +2920,7 @@ export class WWA {
         originalMessage: string,
         // 指定位置にパーツを出現させる系マクロで、相対座標を計算するのに使う
         partsPosition: Coord,
+        isChoice: boolean,
      ): ParsedMessageUnit[] {
 
         // コメント削除
@@ -2951,6 +2957,9 @@ export class WWA {
                     originalMessage,
                     message: linesWithoutMacro.join("\n"),
                     isLastMessage: j === rawQueue.length - 1 || undefined,
+                    // 二者択一・物を売る・物を買うパーツに `<P>` が含まれる場合、最初のメッセージに選択肢が出る仕様。
+                    // 違和感はあるが、Java版がそうなので仕方ない。将来的に変更するタイミングがあれば修正したい。
+                    isChoice: (isChoice && j === 0) || undefined,
                     macros: macroQueue
                 });
             }

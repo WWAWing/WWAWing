@@ -38,6 +38,8 @@ export interface ParsedMessageUnit {
     message: string;
     /** このメッセージは <P> で区切られた中の最後のメッセージである場合 true */
     isLastMessage?: true;
+    /** 二者択一メッセージであるなら true */
+    isChoice?: true;
     /** マクロ (出現順) */
     macros: Macro[];
 }
