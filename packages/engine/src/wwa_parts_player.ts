@@ -757,9 +757,9 @@ export class Player extends PartsObject {
             var mes = this._wwa.getSystemMessageById(SystemMessage2.CLICKABLE_ITEM);
             if (!this._isClickableItemGot) {
                 if (mes !== "BLANK") {
-                    this._wwa.setMessageQueue(mes === "" ?
+                    this._wwa.prepareSystemMessage(mes === "" ?
                         "このアイテムは右のボックスをクリックすることで使用できます。\n" +
-                        "使用できるアイテムは色枠で囲まれます。" : mes, false, true
+                        "使用できるアイテムは色枠で囲まれます。" : mes, false
                     );
                 }
                 this._isClickableItemGot = true;
@@ -999,7 +999,7 @@ export class Player extends PartsObject {
                     // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
                     this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
                     this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-                    this._wwa.setMessageQueue(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
+                    this._wwa.setMessageQueue(this._enemy.message, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
                     this._enemy.battleEndProcess();
                     this._battleTurnNum = 0;
                     this._enemy = null;
@@ -1008,7 +1008,7 @@ export class Player extends PartsObject {
                 return;
             }
             this._enemy.battleEndProcess();
-            this._wwa.setMessageQueue("相手の防御能力が高すぎる！", false, true);
+            this._wwa.prepareSystemMessage("相手の防御能力が高すぎる！", false);
             this._battleTurnNum = 0;
             this._enemy = null;
         } else {
