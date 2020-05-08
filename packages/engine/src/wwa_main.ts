@@ -121,7 +121,6 @@ export class WWA {
     private _passwordSaveExtractData: WWAData;
 
     private _faces: Face[];
-    private _execMacroListInNextFrame: Macro[];
     private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
@@ -420,7 +419,6 @@ export class WWA {
                 message: "",
                 macros: []
             };
-            this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
 
             //ロード処理の前に追加
@@ -1364,14 +1362,10 @@ export class WWA {
             this.clearFaces();
             this._clearFacesInNextFrame = false;
         }
-        for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
-            this._execMacroListInNextFrame[i].execute();
-        }
         if (this._lastMessage.message === "" && this._lastMessage.isLastMessage && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
-        this._execMacroListInNextFrame = [];
 
         // キー入力とプレイヤー移動
         ////////////// DEBUG IMPLEMENTATION //////////////////////
@@ -3252,7 +3246,6 @@ export class WWA {
 
         this._waitFrame = 0;
         this._temporaryInputDisable = true;
-        this._execMacroListInNextFrame = [];
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
     }
 
