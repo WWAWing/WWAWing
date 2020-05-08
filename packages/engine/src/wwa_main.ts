@@ -1808,11 +1808,12 @@ export class WWA {
             this._player.clearPasswordWindowWaiting();
             this._passwordLoadExecInNextFrame = false;
         }
+        if (this._messageQueue.length > 0) console.warn("<><>", [...this._messageQueue])
 
         // メッセージ送り 2020-05-08 工事中
         let messageUnitToShow: ParsedMessageUnit | undefined;
         let willHideMessageWindow: boolean = false
-        if (this._messageQueue.length > 0) {
+        if (this._messageQueue.length > 0 && (!this._player.isWaitingMessage() || this._hasControlToNextMessage)) {
             const headMessageUnit = this._messageQueue.shift();
             messageUnitToShow = headMessageUnit;
             // TODO: マクロの実行もこのへんでやりたい
