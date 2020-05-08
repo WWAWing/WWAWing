@@ -120,7 +120,6 @@ export class WWA {
     private _passwordSaveExtractData: WWAData;
 
     private _faces: Face[];
-    private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
 
@@ -763,7 +762,6 @@ export class WWA {
             this._isLoadedSound = false;
             this._temporaryInputDisable = false;
             this._paintSkipByDoorOpen = false
-            this._clearFacesInNextFrame = false
             this._useConsole = false;
             
             this.wwaCustomEvent('wwa_startup');
@@ -1352,10 +1350,6 @@ export class WWA {
             this._yesNoJudge = this._yesNoJudgeInNextFrame;
             this._yesNoJudgeInNextFrame = void 0;
         }
-        if (this._clearFacesInNextFrame) {
-            this.clearFaces();
-            this._clearFacesInNextFrame = false;
-        }
         if (this._reservedMoveMacroTurn !== undefined) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = undefined;
@@ -1805,6 +1799,7 @@ export class WWA {
             if (headMessageUnit.message) {
                 this._player.setMessageWaiting();
             }
+            this.clearFaces();
             headMessageUnit.macros.forEach(macro => macro.execute());
         }
 
@@ -1817,13 +1812,13 @@ export class WWA {
                 itemID = this._player.useItem();
             }
             */
-            this.clearFaces();
             this._player.setDelayFrame();
             this._messageWindow.hide();
             this._keyStore.allClear();
             this._mouseStore.clear();
             if (!headMessageUnit) {
                 this._player.clearMessageWaiting();
+                this.clearFaces();
             }
             willHideMessageWindow = true;
         }
@@ -1845,6 +1840,13 @@ export class WWA {
             if (headMessageUnit && headMessageUnit.message) {
                 this._messageWindow.setYesNoChoice(!!headMessageUnit.isChoice)
                 this._messageWindow.setMessage(headMessageUnit.message);
+                this._messageWindow.setPositionByPlayerPosition(
+                    this._faces.length !== 0,
+                    this._scoreWindow.isVisible(),
+                    false,
+                    this._player.getPosition(),
+                    this._camera.getPosition()
+                )
                 this._messageWindow.show();
             }
         }
@@ -2944,7 +2946,6 @@ export class WWA {
 
     /**
      * キー入力による次メッセージのセットが想定されている
-     * @param displayCenter 
      */
     public onNextMessageButtonPressed(): void {  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
         this._hasControlToNextMessage = true;
