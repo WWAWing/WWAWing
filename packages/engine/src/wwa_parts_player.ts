@@ -1118,6 +1118,7 @@ export class Player extends PartsObject {
     }
 
     public decrementMoveObjectAutoExecTimer(): number {
+        console.warn("R", this._moveMacroWaitingRemainMoves);
         if (this._moveMacroWaitingRemainMoves >= 0 && this._moveObjectAutoExecTimer > 0) {
             this._moveObjectAutoExecTimer--;
             if (this._moveMacroWaitingRemainMoves === 0 && this._moveObjectAutoExecTimer === 0) {

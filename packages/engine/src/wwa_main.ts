@@ -104,7 +104,6 @@ export class WWA {
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
-    private _lastMessage: ParsedMessageUnit;
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
@@ -414,11 +413,6 @@ export class WWA {
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
             this._prevFrameEventExected = false;
-            this._lastMessage = {
-                originalMessage: "",
-                message: "",
-                macros: []
-            };
             this._passwordLoadExecInNextFrame = false;
 
             //ロード処理の前に追加
@@ -1362,9 +1356,9 @@ export class WWA {
             this.clearFaces();
             this._clearFacesInNextFrame = false;
         }
-        if (this._lastMessage.message === "" && this._lastMessage.isLastMessage && this._reservedMoveMacroTurn !== void 0) {
+        if (this._reservedMoveMacroTurn !== undefined) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
-            this._reservedMoveMacroTurn = void 0;
+            this._reservedMoveMacroTurn = undefined;
         }
 
         // キー入力とプレイヤー移動
@@ -1802,7 +1796,6 @@ export class WWA {
             this._player.clearPasswordWindowWaiting();
             this._passwordLoadExecInNextFrame = false;
         }
-        if (this._messageQueue.length > 0) console.warn("<><>", [...this._messageQueue])
 
         // メッセージ送り 2020-05-08 工事中
         let headMessageUnit: ParsedMessageUnit | undefined;
