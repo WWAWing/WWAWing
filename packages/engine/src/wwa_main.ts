@@ -1821,6 +1821,7 @@ export class WWA {
             this._player.setMessageWaiting();
         }
 
+
         // setNextMessage からもってきたコード 2020-05-08 整理中
         if (this._hasControlToNextMessage) {
             // ↓ おそらく「アイテムを使いますか？」の二者択一の後にプレイヤーのアイテム使用が走るという話だと思うが、この関数から消したい
@@ -1839,6 +1840,11 @@ export class WWA {
             willHideMessageWindow = true;
         }
 
+        // TODO: マクロと指定位置パーツを出現のどちらが優先かを与える
+        this._partsAppearanceList.forEach(appearance => {
+            this.setPartsOnPosition(appearance.partsType, appearance.partsId, appearance.position)
+        });
+        
         // draw
         this._drawAll();
 
@@ -2336,7 +2342,7 @@ export class WWA {
             return false;
         }
 
-        this.appearParts(pos, AppearanceTriggerType.MAP);
+        this.prepareAppearParts(pos, AppearanceTriggerType.MAP);
         var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
         var message = this._wwaData.message[messageID];
         // 待ち時間
@@ -2358,7 +2364,7 @@ export class WWA {
                 !this._player.hasItem(this.getObjectAttributeById(objID, Consts.ATR_ITEM)) ||
                 this.getObjectAttributeById(objType, Consts.ATR_MODE) === Consts.PASSABLE_OBJECT)) {
 
-            this.appearParts(pos, AppearanceTriggerType.MAP);
+            this.prepareAppearParts(pos, AppearanceTriggerType.MAP);
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             var message = this._wwaData.message[messageID];
 
@@ -2381,7 +2387,7 @@ export class WWA {
         if (jy > Consts.RELATIVE_COORD_LOWER) {
             jy = pos.y + jy - Consts.RELATIVE_COORD_BIAS;
         }
-        this.appearParts(pos, AppearanceTriggerType.MAP);
+        this.prepareAppearParts(pos, AppearanceTriggerType.MAP);
         if (
             0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth &&
             (jx !== playerPos.x || jy !== playerPos.y)
@@ -2435,7 +2441,7 @@ export class WWA {
         //this._waitTimeInCurrentFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * 100;
         this._waitFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
         this._temporaryInputDisable = true;
-        this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+        this.prepareAppearParts(pos, AppearanceTriggerType.OBJECT, partsID);
 
         this.playSound(soundID);
     }
@@ -2490,7 +2496,7 @@ export class WWA {
 
         //this._wwaData.mapObject[pos.y][pos.x] = 0;
         this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
-        this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+        this.prepareAppearParts(pos, AppearanceTriggerType.OBJECT, partsID);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
     }
 
@@ -2579,7 +2585,7 @@ export class WWA {
                 // 使用型アイテム の場合は、処理は使用時です。
             } else {
                 this.prepareMessage(message, false, pos.clone());
-                this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+                this.prepareAppearParts(pos, AppearanceTriggerType.OBJECT, partsID);
             }
         } catch (e) {
             // これ以上、アイテムを持てません
@@ -2606,7 +2612,7 @@ export class WWA {
             this.prepareMessage(message, false, pos.clone());
             //this._wwaData.mapObject[pos.y][pos.x] = 0;
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
-            this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+            this.prepareAppearParts(pos, AppearanceTriggerType.OBJECT, partsID);
             this._paintSkipByDoorOpen = true;
         }
 
@@ -2647,7 +2653,7 @@ export class WWA {
         if (jy > Consts.RELATIVE_COORD_LOWER) {
             jy = playerPos.y + jy - Consts.RELATIVE_COORD_BIAS;
         }
-        this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+        this.prepareAppearParts(pos, AppearanceTriggerType.OBJECT, partsID);
         if (
             0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth &&
             (jx !== playerPos.x || jy !== playerPos.y)
@@ -2730,7 +2736,7 @@ export class WWA {
                             gold = this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD];
                             this._player.earnGold(gold);
                             this.setStatusChangedEffect(new Status(0, 0, 0, gold));
-                            this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
+                            this.prepareAppearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                         } else {
                             // アイテムを持っていない
                             if (this._wwaData.message[SystemMessage1.NO_ITEM] !== "BLANK") {
@@ -2777,7 +2783,7 @@ export class WWA {
                                     this.gameover();
                                     return;
                                 }
-                                this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
+                                this.prepareAppearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                             } else {
                                 // アイテムをボックスがいっぱい
                                 if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
@@ -2800,7 +2806,7 @@ export class WWA {
                         }
 
                     } else if (partsType === Consts.OBJECT_SELECT) {
-                        this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_YES, this._yesNoChoicePartsID);
+                        this.prepareAppearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_YES, this._yesNoChoicePartsID);
                     } else if (partsType === Consts.OBJECT_URLGATE) {
                         location.href = util.$escapedURI(this._yesNoURL);
                     }
@@ -2865,7 +2871,7 @@ export class WWA {
                     } else if (partsType === Consts.OBJECT_SELL) {
 
                     } else if (partsType === Consts.OBJECT_SELECT) {
-                        this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_NO, this._yesNoChoicePartsID);
+                        this.prepareAppearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_NO, this._yesNoChoicePartsID);
                     } else if (partsType === Consts.OBJECT_URLGATE) {
 
                     }
@@ -3010,7 +3016,8 @@ export class WWA {
         return parsedMessages;
     }
 
-    public appearParts(pos: Coord, triggerType: AppearanceTriggerType, triggerPartsID: number = 0): void {
+    private _partsAppearanceList: {partsType: PartsType, partsId: number, position: Coord}[] = [];
+    public prepareAppearParts(pos: Coord, triggerType: AppearanceTriggerType, triggerPartsID: number = 0): void {
         var triggerPartsType: PartsType;
         var rangeMin: number = (triggerType === AppearanceTriggerType.CHOICE_NO) ?
             Consts.APPERANCE_PARTS_MIN_INDEX_NO : Consts.APPERANCE_PARTS_MIN_INDEX;
@@ -3075,13 +3082,15 @@ export class WWA {
                         throw new Error("背景パーツの範囲外IDが指定されました");
                     }
                     var cand: Coord = new Coord(targetX, targetY);
-                    this.setPartsOnPosition(PartsType.MAP, targetPartsID, cand);
+                    // this.setPartsOnPosition(PartsType.MAP, targetPartsID, cand);
+                    this._partsAppearanceList.push({partsType: PartsType.MAP, partsId: targetPartsID, position: cand});
                 } else {
                     if (targetPartsID >= this._wwaData.objPartsMax) {
                         throw new Error("物体パーツの範囲外IDが指定されました");
                     }
                     var cand: Coord = new Coord(targetX, targetY);
-                    this.setPartsOnPosition(PartsType.OBJECT, targetPartsID, cand);
+                    // this.setPartsOnPosition(PartsType.OBJECT, targetPartsID, cand);
+                    this._partsAppearanceList.push({partsType: PartsType.OBJECT, partsId: targetPartsID, position: cand});
                     this._replaceRandomObject(new Coord(targetX, targetY));
                     if (targetX === this._player.getPosition().getPartsCoord().x &&
                         targetY === this._player.getPosition().getPartsCoord().y) {
@@ -3095,7 +3104,7 @@ export class WWA {
         }
 
     }
-    public appearPartsByDirection(
+    public prepareAppearPartsByDirection(
         distance: number,
         targetPartsID: number,
         targetPartsType: PartsType
@@ -3105,7 +3114,7 @@ export class WWA {
         var signX = vx[pdir];
         var signY = vy[pdir];
 
-        this.appearPartsEval(
+        this.prepareApearPartsEval(
             ppos,
             (signX >= 0 ? "+" : "-") + (Math.abs(signX) * distance),
             (signY >= 0 ? "+" : "-") + (Math.abs(signY) * distance),
@@ -3116,7 +3125,7 @@ export class WWA {
     }
 
 
-    public appearPartsEval(
+    public prepareApearPartsEval(
         triggerPartsPos: Coord,
         xstr: string,
         ystr: string,

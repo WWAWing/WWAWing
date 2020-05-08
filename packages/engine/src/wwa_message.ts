@@ -252,7 +252,7 @@ export class Macro {
                 throw new Error("パーツ番号が不正です");
             }
         }
-        this._wwa.appearPartsEval(this._triggerPartsPosition, xstr, ystr, partsID, partsType);
+        this._wwa.prepareApearPartsEval(this._triggerPartsPosition, xstr, ystr, partsID, partsType);
     }
 
     private _executeDirMapMacro(): void {
@@ -275,7 +275,7 @@ export class Macro {
                 throw new Error("パーツ番号が不正です");
             }
         }
-        this._wwa.appearPartsByDirection(dist, partsID, partsType);
+        this._wwa.prepareAppearPartsByDirection(dist, partsID, partsType);
     }
 
     private _executeImgFrameMacro(): void {
