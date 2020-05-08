@@ -1811,14 +1811,14 @@ export class WWA {
         if (this._messageQueue.length > 0) console.warn("<><>", [...this._messageQueue])
 
         // メッセージ送り 2020-05-08 工事中
-        let messageUnitToShow: ParsedMessageUnit | undefined;
+        let headMessageUnit: ParsedMessageUnit | undefined;
         let willHideMessageWindow: boolean = false
         if (this._messageQueue.length > 0 && (!this._player.isWaitingMessage() || this._hasControlToNextMessage)) {
-            const headMessageUnit = this._messageQueue.shift();
-            messageUnitToShow = headMessageUnit;
-            // TODO: マクロの実行もこのへんでやりたい
-
-            this._player.setMessageWaiting();
+            headMessageUnit = this._messageQueue.shift();
+            if (headMessageUnit.message) {
+                this._player.setMessageWaiting();
+            }
+            headMessageUnit.macros.forEach(macro => macro.execute());
         }
 
 
@@ -1831,11 +1831,12 @@ export class WWA {
             }
             */
             this.clearFaces();
-            if (messageUnitToShow) {
-                this._player.setDelayFrame();
-                this._messageWindow.hide();
-                this._keyStore.allClear();
-                this._mouseStore.clear();
+            this._player.setDelayFrame();
+            this._messageWindow.hide();
+            this._keyStore.allClear();
+            this._mouseStore.clear();
+            if (!headMessageUnit) {
+                this._player.clearMessageWaiting();
             }
             willHideMessageWindow = true;
         }
@@ -1844,23 +1845,22 @@ export class WWA {
         this._partsAppearanceList.forEach(appearance => {
             this.setPartsOnPosition(appearance.partsType, appearance.partsId, appearance.position)
         });
-        
+
         // draw
         this._drawAll();
 
         // メッセージウィンドウ掲出
         if (this._messageWindow.isVisible()) {
             if (willHideMessageWindow) {
-                this._hideMessageWindow();
+                this._messageWindow.hide();
             }
         } else {
-            if (messageUnitToShow) {
-                this._messageWindow.setYesNoChoice(!!messageUnitToShow.isChoice)
-                this._messageWindow.setMessage(messageUnitToShow.message);
+            if (headMessageUnit && headMessageUnit.message) {
+                this._messageWindow.setYesNoChoice(!!headMessageUnit.isChoice)
+                this._messageWindow.setMessage(headMessageUnit.message);
                 this._messageWindow.show();
             }
         }
-
 
         this._mainCallCounter++;
         this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
@@ -3004,7 +3004,7 @@ export class WWA {
                 }
                 parsedMessages.push({
                     originalMessage,
-                    message: linesWithoutMacro.join("\n"),
+                    message: linesWithoutMacro.length > 0 ? linesWithoutMacro.join("\n") : undefined,
                     isLastMessage: j === rawQueue.length - 1 || undefined,
                     // 二者択一・物を売る・物を買うパーツに `<P>` が含まれる場合、最初のメッセージに選択肢が出る仕様。
                     // 違和感はあるが、Java版がそうなので仕方ない。将来的に変更するタイミングがあれば修正したい。
@@ -4139,23 +4139,6 @@ export class WWA {
         }
     }
 
-
-    private _hideMessageWindow(messageDisplayed: boolean = true): void {
-        // この関数では、メッセージウィンドウを閉じることに専念して、次のメッセージはセットしない
-        var itemID = 0;
-        // ↓ おそらく「アイテムを使いますか？」の二者択一の後にプレイヤーのアイテム使用が走るという話だと思うが、この関数から消したい
-        if (this._player.isReadyToUseItem()) {
-            itemID = this._player.useItem();
-        }
-        this.clearFaces();
-        if (messageDisplayed) {
-            this._player.setDelayFrame();
-            this._messageWindow.hide();
-            this._keyStore.allClear();
-            this._mouseStore.clear();
-        }
-        this._player.clearMessageWaiting();
-    }
     public loadMapPartsObjectID(id: number): number {
         id = id | 0;
         if ((id < 0) || (id >= this._wwaData.objPartsMax)) {

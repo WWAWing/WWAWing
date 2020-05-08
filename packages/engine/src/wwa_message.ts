@@ -34,8 +34,8 @@ import { ItemMenu } from "./wwa_item_menu";
 export interface ParsedMessageUnit {
     /** マクロ込みだった頃のメッセージ (`<P>` では既に区切られている状態で, `<C>` もない) */
     originalMessage: string;
-    /** マクロが除去されたメッセージ文字列 */
-    message: string;
+    /** マクロが除去されたメッセージ文字列. マクロのみの場合 undefined になる。 */
+    message?: string;
     /** このメッセージは <P> で区切られた中の最後のメッセージである場合 true */
     isLastMessage?: true;
     /** 二者択一メッセージであるなら true */
