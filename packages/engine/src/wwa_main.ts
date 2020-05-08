@@ -1335,7 +1335,7 @@ export class WWA {
         this._hasControlToNextMessage = false;
         this._temporaryInputDisable = false;
         this._stopUpdateByLoadFlag = false;
-
+        this._partsAppearanceList = [];
         // キー情報のアップデート
         this._keyStore.update();
         this._mouseStore.update();
@@ -3005,6 +3005,7 @@ export class WWA {
 
     private _partsAppearanceList: {partsType: PartsType, partsId: number, position: Coord}[] = [];
     public prepareAppearParts(pos: Coord, triggerType: AppearanceTriggerType, triggerPartsID: number = 0): void {
+        console.log("prepare",pos)
         var triggerPartsType: PartsType;
         var rangeMin: number = (triggerType === AppearanceTriggerType.CHOICE_NO) ?
             Consts.APPERANCE_PARTS_MIN_INDEX_NO : Consts.APPERANCE_PARTS_MIN_INDEX;
@@ -3069,14 +3070,12 @@ export class WWA {
                         throw new Error("背景パーツの範囲外IDが指定されました");
                     }
                     var cand: Coord = new Coord(targetX, targetY);
-                    // this.setPartsOnPosition(PartsType.MAP, targetPartsID, cand);
                     this._partsAppearanceList.push({partsType: PartsType.MAP, partsId: targetPartsID, position: cand});
                 } else {
                     if (targetPartsID >= this._wwaData.objPartsMax) {
                         throw new Error("物体パーツの範囲外IDが指定されました");
                     }
                     var cand: Coord = new Coord(targetX, targetY);
-                    // this.setPartsOnPosition(PartsType.OBJECT, targetPartsID, cand);
                     this._partsAppearanceList.push({partsType: PartsType.OBJECT, partsId: targetPartsID, position: cand});
                     this._replaceRandomObject(new Coord(targetX, targetY));
                     if (targetX === this._player.getPosition().getPartsCoord().x &&
@@ -3197,7 +3196,8 @@ export class WWA {
             id = newId;
 
         }
-        this.setPartsOnPosition(PartsType.OBJECT, newId, pos);
+        // pushするより、リストの中を書き換える方が望ましいが、バグりそうなので一旦これで
+        this._partsAppearanceList.push({partsType:PartsType.OBJECT, partsId: newId, position: pos});
     }
 
     private _replaceRandomObjectsInScreen(): void {
@@ -3279,6 +3279,7 @@ export class WWA {
     }
 
     public setPartsOnPosition(partsType: PartsType, id: number, pos: Coord) {
+        console.log(`partsType=${partsType?"OBJ":"MAP"}/id=${id}/x=${pos.x}/y=${pos.y}`)
         var before_id, no;
         var posKey = (pos.y << IDTable.BITSHIFT) | pos.x;
         if (partsType === PartsType.MAP) {
