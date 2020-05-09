@@ -1,7 +1,6 @@
-import { WWAData, BROWSER_TYPE } from "./wwa_data";
-import { WWASaveData, MessageWindow } from "./wwa_message";
-import { WWA } from "./wwa_main";
-// MEMO: psave ã¯ Phase4ã§ãªããªã‚‹ã®ã§ã€ã‚³ãƒ¼ãƒ‰ã®å¤‰æ›´ã¯æœ€å°é™ã«é€²ã‚ã‚‹
+import {
+    WWAData
+} from "../wwa_data";
 
 var SAVE_COMPRESS_ID = {
     MAP: "map",
@@ -15,7 +14,7 @@ var NOT_COMPRESS_ID = {
     "message": true,
 };
 
-export class WWACompress {
+export default class WWACompress {
     private static _usingByteFlag = false;
     private static MIN_LOOP_COUNT = 3;
     private static _restartData: WWAData = void 0;
@@ -73,8 +72,8 @@ export class WWACompress {
                     restartMapY = restartObject[y];
                     writeMapY = {};
                     oldValue = -1;
-                    //ç‰©ä½“ãƒ»èƒŒæ™¯IDã”ã¨ã«ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’ä½œã‚Šã€ãã“ã«åº§æ¨™æƒ…å ±ã‚’ä¿å­˜ã™ã‚‹ã€‚
-                    //Yåº§æ¨™ã‚’æ·»ãˆå­—ã«ã—ã¦Xåº§æ¨™ã‚’é…åˆ—ã«æ ¼ç´ã€‚åŒã˜Yåº§æ¨™ã«å­˜åœ¨ã™ã‚‹Xåº§æ¨™ã‚’æŠ½å‡ºã€‚
+                    //•¨‘ÌE”wŒiID‚²‚Æ‚Éƒe[ƒuƒ‹‚ğì‚èA‚»‚±‚ÉÀ•Wî•ñ‚ğ•Û‘¶‚·‚éB
+                    //YÀ•W‚ğ“Y‚¦š‚É‚µ‚ÄXÀ•W‚ğ”z—ñ‚ÉŠi”[B“¯‚¶YÀ•W‚É‘¶İ‚·‚éXÀ•W‚ğ’ŠoB
                     for (x in mapY) {
                         id = mapY[x];
                         if (id !== restartMapY[x]) {
@@ -92,7 +91,7 @@ export class WWACompress {
                         }
                     }
                 }
-                //Yåº§æ¨™æƒ…å ±ã®æ•´ç†
+                //YÀ•Wî•ñ‚Ì®—
                 for (idText in allIdTableY) {
                     idTableY = allIdTableY[idText];
                     if (allIdTableX[idText] === undefined) {
@@ -107,8 +106,8 @@ export class WWACompress {
 
                         xList = idTableY[y];
                         if ((xList.length === 1)) {
-                            //Yåº§æ¨™ã«å¯¾ã—ã€Xåº§æ¨™ãŒä¸€ã¤ã—ã‹å­˜åœ¨ã—ãªã„ãŸã‚ã€
-                            //Xåº§æ¨™ã‚’æ·»ãˆå­—ã«ã—ã¦Yåº§æ¨™ã‚’é…åˆ—ã«æ ¼ç´ã€‚åŒã˜Xåº§æ¨™ã«å­˜åœ¨ã™ã‚‹Yåº§æ¨™ã‚’æŠ½å‡ºã€‚
+                            //YÀ•W‚É‘Î‚µAXÀ•W‚ªˆê‚Â‚µ‚©‘¶İ‚µ‚È‚¢‚½‚ßA
+                            //XÀ•W‚ğ“Y‚¦š‚É‚µ‚ÄYÀ•W‚ğ”z—ñ‚ÉŠi”[B“¯‚¶XÀ•W‚É‘¶İ‚·‚éYÀ•W‚ğ’ŠoB
                             x_number = xList[0];
                             if (idTableX[x_number] === undefined) {
                                 idTableX[x_number] = [];
@@ -117,19 +116,19 @@ export class WWACompress {
                             yList = idTableX[x_number];
                             yList.push(Number(y));
                         } else {
-                            //Yåº§æ¨™ã«å­˜åœ¨ã™ã‚‹åº§æ¨™ãŒè¤‡æ•°ã‚ã£ãŸãŸã‚ã€ãƒ‡ãƒ¼ã‚¿ã®æ ¼ç´ã‚’è¡Œã†
+                            //YÀ•W‚É‘¶İ‚·‚éÀ•W‚ª•¡”‚ ‚Á‚½‚½‚ßAƒf[ƒ^‚ÌŠi”[‚ğs‚¤
 
-                            //ä¸€ã¤å‰ã®Yåº§æ¨™ã¨æ¯”è¼ƒã—ã€Yåº§æ¨™ã®ç›¸å¯¾æ•°å€¤ã‚’æŠ½å‡º
+                            //ˆê‚Â‘O‚ÌYÀ•W‚Æ”äŠr‚µAYÀ•W‚Ì‘Š‘Î”’l‚ğ’Šo
                             newValue = Number(y);
-                            addValue = newValue - oldValue - 1;//å¤‰å‹•å€¤ã«0ã¯ä½¿ã‚ã‚Œãªã„ãŸã‚ã€1ã§æ¸›ç®—ã—ã¦ç„¡é§„ã‚’å‰Šé™¤
+                            addValue = newValue - oldValue - 1;//•Ï“®’l‚É0‚Íg‚í‚ê‚È‚¢‚½‚ßA1‚ÅŒ¸Z‚µ‚Ä–³‘Ê‚ğíœ
                             oldValue = newValue;
 
-                            //Xåº§æ¨™ã®é…åˆ—ã‚’ç›¸å¯¾åº§æ¨™ã®é…åˆ—ã«å¤‰æ›ã—ã¦æ ¼ç´
+                            //XÀ•W‚Ì”z—ñ‚ğ‘Š‘ÎÀ•W‚Ì”z—ñ‚É•ÏŠ·‚µ‚ÄŠi”[
                             saveObject[idText].push(this.getCompressArray(xList), addValue);
                         }
                     }
                 }
-                //Xåº§æ¨™æƒ…å ±ã®æ•´ç†
+                //XÀ•Wî•ñ‚Ì®—
                 for (idText in allIdTableX) {
                     id = Number(idText);
                     idTableX = allIdTableX[idText];
@@ -138,16 +137,16 @@ export class WWACompress {
                     for (x in idTableX) {
                         yList = idTableX[x];
 
-                        //ä¸€ã¤å‰ã®Xåº§æ¨™ã¨æ¯”è¼ƒã—ã€Xåº§æ¨™ã®ç›¸å¯¾æ•°å€¤ã‚’æŠ½å‡º
+                        //ˆê‚Â‘O‚ÌXÀ•W‚Æ”äŠr‚µAXÀ•W‚Ì‘Š‘Î”’l‚ğ’Šo
                         newValue = Number(x);
-                        addValue = newValue - oldValue - 1;//å¤‰å‹•å€¤ã«0ã¯ä½¿ã‚ã‚Œãªã„ãŸã‚ã€1ã§æ¸›ç®—ã—ã¦ç„¡é§„ã‚’å‰Šé™¤
+                        addValue = newValue - oldValue - 1;//•Ï“®’l‚É0‚Íg‚í‚ê‚È‚¢‚½‚ßA1‚ÅŒ¸Z‚µ‚Ä–³‘Ê‚ğíœ
                         oldValue = newValue;
                         if ((yList.length === 1)) {
-                            //Xåº§æ¨™ã¨Yåº§æ¨™ãã‚Œãã‚Œç‹¬ç«‹ã—ã¦ã„ã¦é‡è¤‡ãªã—ã€‚
+                            //XÀ•W‚ÆYÀ•W‚»‚ê‚¼‚ê“Æ—§‚µ‚Ä‚¢‚Äd•¡‚È‚µB
                             saveObject[idText].push(addValue, yList[0]);
                         } else {
-                            //Yåº§æ¨™ã«å­˜åœ¨ã™ã‚‹åº§æ¨™ãŒè¤‡æ•°ã‚ã£ãŸãŸã‚ã€ãƒ‡ãƒ¼ã‚¿ã®æ ¼ç´ã‚’è¡Œã†
-                            //Yåº§æ¨™ã®é…åˆ—ã‚’ç›¸å¯¾åº§æ¨™ã®é…åˆ—ã«å¤‰æ›ã—ã¦æ ¼ç´
+                            //YÀ•W‚É‘¶İ‚·‚éÀ•W‚ª•¡”‚ ‚Á‚½‚½‚ßAƒf[ƒ^‚ÌŠi”[‚ğs‚¤
+                            //YÀ•W‚Ì”z—ñ‚ğ‘Š‘ÎÀ•W‚Ì”z—ñ‚É•ÏŠ·‚µ‚ÄŠi”[
                             saveObject[idText].push(addValue, this.getCompressArray(yList));
                         }
                     }
@@ -156,7 +155,7 @@ export class WWACompress {
                 var saveListTest = [];
                 oldValue = -1;
 
-                //ãƒ†ãƒ¼ãƒ–ãƒ«æƒ…å ±ã‚’é…åˆ—æƒ…å ±ã«å¤‰æ›
+                //ƒe[ƒuƒ‹î•ñ‚ğ”z—ñî•ñ‚É•ÏŠ·
                 var usingUint8Flag: boolean = false;
                 for (idText in saveObject) {
                     newValue = Number(idText);
@@ -164,7 +163,7 @@ export class WWACompress {
                     oldValue = newValue;
                     usingUint8Flag = false;
                     if (this._usingByteFlag) {
-                        //ãƒã‚¤ãƒŠãƒªåŒ–
+                        //ƒoƒCƒiƒŠ‰»
                         saveObject[idText] = this.compressUint8Array(newValue, saveObject[idText], wwaObject);
                         if (saveObject[idText] instanceof Uint8Array) {
                             usingUint8Flag = true;
@@ -202,11 +201,11 @@ export class WWACompress {
         return saveObject;
     }
     /**
-     * JSONåŒ–ã—ãŸã¨ãã®æ–‡å­—åˆ—ã®é•·ã•ã«ã‚ˆã‚Šåˆ¤å®šã—ã€åˆ†å²ã™ã‚‹ã€‚
-     * bitå˜ä½ã§ãƒ•ãƒ©ã‚°ç®¡ç†ã—ã€ãƒãƒƒãƒ—å…¨ä½“ã®é€šè¡Œæƒ…å ±ã‚’æ ¼ç´ã™ã‚‹æ–¹å¼ã«å¤‰æ›ã€‚
-     * æœ€åˆã®0ã®ç¾…åˆ—ã¯ãƒã‚¤ãƒŠãƒªãƒ‡ãƒ¼ã‚¿ã‹ã‚‰æ¶ˆå»ã—ã€æ•°å€¤ã‚’æ ¼ç´ã—ã¦è©°ã‚ã‚‹ã€‚
-     * ä½¿ç”¨ã•ã‚Œã¦ã„ã‚‹ãƒ‘ãƒ¼ãƒ„ã‚’indexé…åˆ—ã«ç™»éŒ²ã—ã€ä½¿ç”¨æ•°é †ã«ã‚½ãƒ¼ãƒˆã™ã‚‹ã€‚
-     * ãƒ•ãƒ©ã‚°ã®æ•°ã ã‘é…ç½®ã™ã‚‹ãƒ‘ãƒ¼ãƒ„ã®indexã‚’é…åˆ—ã«æ ¼ç´ã™ã‚‹ã€‚
+     * JSON‰»‚µ‚½‚Æ‚«‚Ì•¶š—ñ‚Ì’·‚³‚É‚æ‚è”»’è‚µA•ªŠò‚·‚éB
+     * bit’PˆÊ‚Åƒtƒ‰ƒOŠÇ—‚µAƒ}ƒbƒv‘S‘Ì‚Ì’Êsî•ñ‚ğŠi”[‚·‚é•û®‚É•ÏŠ·B
+     * Å‰‚Ì0‚Ì—…—ñ‚ÍƒoƒCƒiƒŠƒf[ƒ^‚©‚çÁ‹‚µA”’l‚ğŠi”[‚µ‚Ä‹l‚ß‚éB
+     * g—p‚³‚ê‚Ä‚¢‚éƒp[ƒc‚ğindex”z—ñ‚É“o˜^‚µAg—p”‡‚Éƒ\[ƒg‚·‚éB
+     * ƒtƒ‰ƒO‚Ì”‚¾‚¯”z’u‚·‚éƒp[ƒc‚Ìindex‚ğ”z—ñ‚ÉŠi”[‚·‚éB
      * @param wwaObject
      * @param restartObject
      */
@@ -232,22 +231,22 @@ export class WWACompress {
                 if (id !== restartObject[y][x]) {
 
                     if (startIndex === -1) {
-                        //0ã§ã¯ãªã„ãƒã‚¤ãƒˆé–‹å§‹ä½ç½®ã‚’å–å¾—
+                        //0‚Å‚Í‚È‚¢ƒoƒCƒgŠJnˆÊ’u‚ğæ“¾
                         startIndex = position;
                     }
 
-                    //ãƒ“ãƒƒãƒˆå˜ä½ã§åº§æ¨™ãŒå­˜åœ¨ã™ã‚‹ã‹ã‚’è¨˜éŒ²
+                    //ƒrƒbƒg’PˆÊ‚ÅÀ•W‚ª‘¶İ‚·‚é‚©‚ğ‹L˜^
                     uint8Array[position] = uint8Array[position] | (1 << bit);
 
-                    //æœ€å¾Œã®ãƒ“ãƒƒãƒˆã¨ã—ã¦è¨­å®š
+                    //ÅŒã‚Ìƒrƒbƒg‚Æ‚µ‚Äİ’è
                     lastPosition = position;
 
-                    //ãã®åº§æ¨™ã®IDã‚’å–å¾—
+                    //‚»‚ÌÀ•W‚ÌID‚ğæ“¾
                     if (idClassTable[id] === undefined) {
                         idClassTable[id] = new WWACompressIndexTable(id, indexCount++);
                     }
 
-                    //ãã®åº§æ¨™ã®IDã®åˆ©ç”¨å›æ•°ã‚’åŠ ç®—
+                    //‚»‚ÌÀ•W‚ÌID‚Ì—˜—p‰ñ”‚ğ‰ÁZ
                     idClassTable[id].count++;
                 }
                 bit++;
@@ -257,18 +256,18 @@ export class WWACompress {
                 }
             }
         }
-        //ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’é…åˆ—ã«å¤‰æ›
+        //ƒe[ƒuƒ‹‚ğ”z—ñ‚É•ÏŠ·
         for (idText in idClassTable) {
             index = idClassTable[idText].index;
             compressClassList[index] = idClassTable[idText];
         }
 
-        //IDã”ã¨ã®åˆ©ç”¨å›æ•°é †ã«ä¸¦ã³æ›¿ãˆ
+        //ID‚²‚Æ‚Ì—˜—p‰ñ”‡‚É•À‚Ñ‘Ö‚¦
         compressClassList.sort(this.idSort);
 
         indexTable = {};
         oldID = -1;
-        //Indexé…åˆ—ã‚’ç”Ÿæˆã™ã‚‹ã€‚ä½¿ç”¨å›æ•°ãŒå¤šã„é †ã«æ ¼ç´ã™ã‚‹
+        //Index”z—ñ‚ğ¶¬‚·‚éBg—p‰ñ”‚ª‘½‚¢‡‚ÉŠi”[‚·‚é
         for (indexText in compressClassList) {
             id = compressClassList[indexText].id;
             indexTable[id] = Number(indexText);
@@ -289,9 +288,9 @@ export class WWACompress {
 
         return [startIndex, uint8Array.subarray(startIndex, lastPosition + 1), idList, this.indexListCompress(indexList, idList.length)];
     }
-    private static indexListCompress(indexList: Array<number>, idLength:number): Array<number> {
+    private static indexListCompress(indexList: Array<number>, idLength: number): Array<number> {
         var newIndexList: Array<number> = [];
-        var i: number, n: number, s: number, len: number, index: number, indexLog: number, nextIndex: number, repeatCount:number;
+        var i: number, n: number, s: number, len: number, index: number, indexLog: number, nextIndex: number, repeatCount: number;
         len = indexList.length;
         indexLog = -1;
         n = 0;
@@ -328,14 +327,14 @@ export class WWACompress {
         return b.count - a.count;
     }
     /**
-     * JSONåŒ–ã—ãŸã¨ãã®æ–‡å­—åˆ—ã®é•·ã•ã«ã‚ˆã‚Šåˆ¤å®šã—ã€åˆ†å²ã™ã‚‹ã€‚
-     * bitå˜ä½ã§ãƒ•ãƒ©ã‚°ç®¡ç†ã—ã€ãƒãƒƒãƒ—å…¨ä½“ã®é€šè¡Œæƒ…å ±ã‚’æ ¼ç´ã™ã‚‹æ–¹å¼ã«å¤‰æ›ã€‚
-     * ãƒ©ãƒ³ãƒ€ãƒ ã«å¤§é‡ã«åŒã˜ãƒãƒƒãƒ—ãŒä½¿ã‚ã‚Œã¦ã„ã‚‹å ´åˆã«åˆ‡ã‚Šæ›¿ãˆã‚‹ã€‚
+     * JSON‰»‚µ‚½‚Æ‚«‚Ì•¶š—ñ‚Ì’·‚³‚É‚æ‚è”»’è‚µA•ªŠò‚·‚éB
+     * bit’PˆÊ‚Åƒtƒ‰ƒOŠÇ—‚µAƒ}ƒbƒv‘S‘Ì‚Ì’Êsî•ñ‚ğŠi”[‚·‚é•û®‚É•ÏŠ·B
+     * ƒ‰ƒ“ƒ_ƒ€‚É‘å—Ê‚É“¯‚¶ƒ`ƒbƒv‚ªg‚í‚ê‚Ä‚¢‚éê‡‚ÉØ‚è‘Ö‚¦‚éB
      * @param id
      * @param saveObject
      * @param wwaObject
      */
-    private static compressUint8Array(id: number, saveObject: object, wwaObject: object):object {
+    private static compressUint8Array(id: number, saveObject: object, wwaObject: object): object {
         var x: number, y: number, bit: number, position: number, lastPosition: number;
         var mapWidth: number = this._restartData.mapWidth;
         if (JSON.stringify(saveObject).length < this._mapByteLength) {
@@ -370,36 +369,36 @@ export class WWACompress {
         return window.btoa(String.fromCharCode.apply(null, uint8Array));
     }
     /**
-     * çµ¶å¯¾æ•°å€¤ã‚’ç¤ºã—ãŸé…åˆ—ã‚’ã€ç›¸å¯¾æ•°å€¤ã‚’ç¤ºã—ãŸé…åˆ—ã«å¤‰æ›ã™ã‚‹
+     * â‘Î”’l‚ğ¦‚µ‚½”z—ñ‚ğA‘Š‘Î”’l‚ğ¦‚µ‚½”z—ñ‚É•ÏŠ·‚·‚é
      * @param list
      */
     private static getCompressArray(list: number[]): number[] {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
         var k: number, loopCount: number, n: number;
-        //0ã¯é€£ç¶šå€¤ã®ãƒ•ãƒ©ã‚°ã¨ã—ã¦ä½¿ç”¨ã™ã‚‹ãŸã‚ã€åˆæœŸå€¤ã‚’-1ã«ã—ã¦
-        //0åº§æ¨™ã®addValueã‚’1ã«ãªã‚‹ã‚ˆã†ã«ã™ã‚‹
+        //0‚Í˜A‘±’l‚Ìƒtƒ‰ƒO‚Æ‚µ‚Äg—p‚·‚é‚½‚ßA‰Šú’l‚ğ-1‚É‚µ‚Ä
+        //0À•W‚ÌaddValue‚ğ1‚É‚È‚é‚æ‚¤‚É‚·‚é
         oldValue = -1;
         len = list.length;
-        for (k=0,i = 0; i < len; i++) {
+        for (k = 0, i = 0; i < len; i++) {
             newValue = list[i];
             addValue = newValue - oldValue;
             loopCount = 0;
             n = i;
             while ((n < len - 1) && (list[n] + 1 === list[n + 1])) {
-                //é€£ç¶šã—ã¦å€¤ãŒ1ãšã¤å¢—ãˆã¦ã„ã‚‹æ•°ã‚’å–å¾—
+                //˜A‘±‚µ‚Ä’l‚ª1‚¸‚Â‘‚¦‚Ä‚¢‚é”‚ğæ“¾
                 n++;
                 loopCount++;
             }
             if (loopCount < this.MIN_LOOP_COUNT) {
-                //é€£ç¶šã—ã¦å€¤ãŒ1ãšã¤å¢—ãˆã¦ã„ã‚‹å›æ•°ãŒæœ€ä½ãƒ«ãƒ¼ãƒ—å›æ•°ä»¥ä¸‹ã®å ´åˆã€
-                //1å¤‰æ•°ã§ä¿æŒã—ãŸæ–¹ãŒè»½ã„ãŸã‚1ã¤ã¥ã¤æ ¼ç´
+                //˜A‘±‚µ‚Ä’l‚ª1‚¸‚Â‘‚¦‚Ä‚¢‚é‰ñ”‚ªÅ’áƒ‹[ƒv‰ñ”ˆÈ‰º‚Ìê‡A
+                //1•Ï”‚Å•Û‚µ‚½•û‚ªŒy‚¢‚½‚ß1‚Â‚Ã‚ÂŠi”[
                 newList[k++] = addValue;
             } else {
                 i = n;
                 newValue += loopCount;
-                //æœ€åˆã®æ•°å€¤ã‚’ãƒ•ãƒ©ã‚°åˆ¤å®šç”¨ã«0ã«ã—ã¦ã€ãƒ«ãƒ¼ãƒ—å›æ•°ã‚’æ ¼ç´ã€‚
-                //ãƒ«ãƒ¼ãƒ—å›æ•°ã¯3å›æœªæº€ã«ãªã‚‰ãªã„ãŸã‚ã€å€¤ã‹ã‚‰æœ€ä½ãƒ«ãƒ¼ãƒ—å›æ•°ã‚’å¼•ã
+                //Å‰‚Ì”’l‚ğƒtƒ‰ƒO”»’è—p‚É0‚É‚µ‚ÄAƒ‹[ƒv‰ñ”‚ğŠi”[B
+                //ƒ‹[ƒv‰ñ”‚Í3‰ñ–¢–‚É‚È‚ç‚È‚¢‚½‚ßA’l‚©‚çÅ’áƒ‹[ƒv‰ñ”‚ğˆø‚­
                 newList[k++] = 0;
                 newList[k++] = addValue;
                 newList[k++] = loopCount - this.MIN_LOOP_COUNT;
@@ -409,29 +408,29 @@ export class WWACompress {
         return newList;
     }
     /**
-     * ç›¸å¯¾æ•°å€¤ã‚’ç¤ºã—ãŸé…åˆ—ã‚’ã€çµ¶å¯¾æ•°å€¤ã‚’ç¤ºã—ãŸé…åˆ—ã«å¤‰æ›ã™ã‚‹
+     * ‘Š‘Î”’l‚ğ¦‚µ‚½”z—ñ‚ğAâ‘Î”’l‚ğ¦‚µ‚½”z—ñ‚É•ÏŠ·‚·‚é
      * @param list
      */
     private static getDecompressArray(list: number[]): number[] {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
-        var lastValue:number,k:number;
-        oldValue = -1;//åˆæœŸå€¤ã‚’-1ã«ã™ã‚‹ã“ã¨ã§ã€0åº§æ¨™ã§ã‚‚å€¤ãŒ0ã«ãªã‚‰ãªã„ã‚ˆã†ã«ã™ã‚‹
+        var lastValue: number, k: number;
+        oldValue = -1;//‰Šú’l‚ğ-1‚É‚·‚é‚±‚Æ‚ÅA0À•W‚Å‚à’l‚ª0‚É‚È‚ç‚È‚¢‚æ‚¤‚É‚·‚é
         len = list.length;
-        for (i = 0,k=0; i < len; i++) {
+        for (i = 0, k = 0; i < len; i++) {
             addValue = list[i];
             if (addValue === 0) {
-                //é€£ç¶šã—ã¦1ãšã¤å¢—ãˆã‚‹é…åˆ—ãŒå­˜åœ¨
+                //˜A‘±‚µ‚Ä1‚¸‚Â‘‚¦‚é”z—ñ‚ª‘¶İ
                 addValue = list[++i];
-                newValue = oldValue + addValue;//å¢—åŠ æ•°å€¤ã‹ã‚‰çµ¶å¯¾æ•°å€¤ã‚’ç®—å‡º
-                lastValue = newValue + list[++i] + this.MIN_LOOP_COUNT;//å¤‰æ•°ã‹ã‚‰æœ€ä½ãƒ«ãƒ¼ãƒ—å›æ•°ã‚’åŠ ç®—ã—ã€ãƒ«ãƒ¼ãƒ—å›æ•°ã‚’ç®—å‡º
+                newValue = oldValue + addValue;//‘‰Á”’l‚©‚çâ‘Î”’l‚ğZo
+                lastValue = newValue + list[++i] + this.MIN_LOOP_COUNT;//•Ï”‚©‚çÅ’áƒ‹[ƒv‰ñ”‚ğ‰ÁZ‚µAƒ‹[ƒv‰ñ”‚ğZo
                 for (; newValue <= lastValue; newValue++) {
                     newList[k++] = newValue;
                 }
                 oldValue = lastValue;
             } else {
-                //ãã®æ•°å€¤ã‚’æ ¼ç´
-                newValue = oldValue + addValue;//å¢—åŠ æ•°å€¤ã‹ã‚‰çµ¶å¯¾æ•°å€¤ã‚’ç®—å‡º
+                //‚»‚Ì”’l‚ğŠi”[
+                newValue = oldValue + addValue;//‘‰Á”’l‚©‚çâ‘Î”’l‚ğZo
                 newList[k++] = newValue;
                 oldValue = newValue;
             }
@@ -485,10 +484,10 @@ export class WWACompress {
                         return newObject;
                     }
                 }
-                //é…åˆ—ã‹ã‚‰ç‰©ä½“IDãƒ»èƒŒæ™¯IDãƒ†ãƒ¼ãƒ–ãƒ«ã«å¤‰æ›
-                for (i = 0; i < len;i+=2) {
+                //”z—ñ‚©‚ç•¨‘ÌIDE”wŒiIDƒe[ƒuƒ‹‚É•ÏŠ·
+                for (i = 0; i < len; i += 2) {
                     addValue = Number(loadArray[i]);
-                    newValue = oldValue + addValue + 1;//å¤‰å‹•å€¤ã«0ã¯ä½¿ã‚ã‚Œãªã„ãŸã‚ã€1ã§åŠ ç®—ã—ã¦ç„¡é§„ã‚’å‰Šé™¤
+                    newValue = oldValue + addValue + 1;//•Ï“®’l‚É0‚Íg‚í‚ê‚È‚¢‚½‚ßA1‚Å‰ÁZ‚µ‚Ä–³‘Ê‚ğíœ
                     oldValue = newValue;
 
                     id = newValue;
@@ -501,50 +500,50 @@ export class WWACompress {
 
                     loadArray = <object[]>saveObject[idText];
                     if (this.decompressUint8Array(id, loadArray, newObject)) {
-                        //ãƒã‚¤ãƒˆãƒ‡ãƒ¼ã‚¿ã§ã‚ã‚‹å ´åˆã¯æ›¸ãè¾¼ã‚“ã§æˆ»ã‚‹
+                        //ƒoƒCƒgƒf[ƒ^‚Å‚ ‚éê‡‚Í‘‚«‚ñ‚Å–ß‚é
                         continue;
                     }
                     len = loadArray.length;
                     idTableX = [];
                     idTableY = [];
-                    
-                    //é…åˆ—ã‹ã‚‰Xã€Yé…åˆ—ã‚’æŠ½å‡º
+
+                    //”z—ñ‚©‚çXAY”z—ñ‚ğ’Šo
                     for (i = 0; i < len; i += 2) {
 
                         var xData = loadArray[i];
                         var yData = loadArray[i + 1];
                         var newData;
                         if (xData instanceof Array) {
-                            //Xåº§æ¨™é…åˆ—ã®å ´åˆã€é…åˆ—ã‚’ç›¸å¯¾é…åˆ—ã‹ã‚‰çµ¶å¯¾é…åˆ—ã«å¤‰æ›
+                            //XÀ•W”z—ñ‚Ìê‡A”z—ñ‚ğ‘Š‘Î”z—ñ‚©‚çâ‘Î”z—ñ‚É•ÏŠ·
                             xData = this.getDecompressArray(xData);
                         }
                         if (yData instanceof Array) {
-                            //Xåº§æ¨™é…åˆ—ã®å ´åˆã€é…åˆ—ã‚’çµ¶å¯¾é…åˆ—ã‹ã‚‰ç›¸å¯¾é…åˆ—ã«å¤‰æ›
+                            //XÀ•W”z—ñ‚Ìê‡A”z—ñ‚ğâ‘Î”z—ñ‚©‚ç‘Š‘Î”z—ñ‚É•ÏŠ·
                             yData = this.getDecompressArray(yData);
                         }
                         if (typeof xData === "object") {
-                            //Xé…åˆ—ã¨ã—ã¦å‡¦ç†
+                            //X”z—ñ‚Æ‚µ‚Äˆ—
                             idTableX.push({ x: xData, y: yData });
                         } else {
-                            //Yé…åˆ—ã¨ã—ã¦å‡¦ç†
+                            //Y”z—ñ‚Æ‚µ‚Äˆ—
                             idTableY.push({ x: xData, y: yData });
                         }
                     }
 
                     var code: string;
 
-                    //Xåº§æ¨™æƒ…å ±ã‚’ãƒ™ãƒ¼ã‚¹ã¨ã—ãŸé…åˆ—ã‚’æ¢ç´¢
+                    //XÀ•Wî•ñ‚ğƒx[ƒX‚Æ‚µ‚½”z—ñ‚ğ’Tõ
                     oldValue = -1;
                     for (code in idTableX) {
-                        //ç›¸å¯¾æ•°å€¤ã‹ã‚‰çµ¶å¯¾æ•°å€¤ã®Yåº§æ¨™ã«å¤‰æ›
+                        //‘Š‘Î”’l‚©‚çâ‘Î”’l‚ÌYÀ•W‚É•ÏŠ·
                         addValue = Number(idTableX[code].y);
-                        newValue = oldValue + addValue + 1;//å¤‰å‹•å€¤ã«0ã¯ä½¿ã‚ã‚Œãªã„ãŸã‚ã€1ã§åŠ ç®—ã—ã¦ç„¡é§„ã‚’å‰Šé™¤
+                        newValue = oldValue + addValue + 1;//•Ï“®’l‚É0‚Íg‚í‚ê‚È‚¢‚½‚ßA1‚Å‰ÁZ‚µ‚Ä–³‘Ê‚ğíœ
                         oldValue = newValue;
                         xData = idTableX[code].x;
                         y = String(newValue);
 
                         if (xData instanceof Array) {
-                            //Xåº§æ¨™æƒ…å ±ãŒé…åˆ—
+                            //XÀ•Wî•ñ‚ª”z—ñ
                             loadArray = <object[]>xData;
                             len = loadArray.length;
                             for (i = 0; i < len; i++) {
@@ -552,25 +551,25 @@ export class WWACompress {
                                 newObject[y][x] = id;
                             }
                         } else {
-                            //Xåº§æ¨™æƒ…å ±ãŒæ•°å€¤
-                            //â€»æœ¬æ¥ã“ã®å‡¦ç†ã¯å®Ÿè¡Œã•ã‚Œãªã„ãŒå¿µã®ãŸã‚ã«è¨˜è¿°
+                            //XÀ•Wî•ñ‚ª”’l
+                            //¦–{—ˆ‚±‚Ìˆ—‚ÍÀs‚³‚ê‚È‚¢‚ª”O‚Ì‚½‚ß‚É‹Lq
                             x = String(xData);
                             newObject[y][x] = id;
                         }
                     }
 
-                    //Yåº§æ¨™æƒ…å ±ã‚’ãƒ™ãƒ¼ã‚¹ã¨ã—ãŸé…åˆ—ã‚’æ¢ç´¢
+                    //YÀ•Wî•ñ‚ğƒx[ƒX‚Æ‚µ‚½”z—ñ‚ğ’Tõ
                     oldValue = -1;
                     for (code in idTableY) {
-                        //ç›¸å¯¾æ•°å€¤ã‹ã‚‰çµ¶å¯¾æ•°å€¤ã®Xåº§æ¨™ã«å¤‰æ›
+                        //‘Š‘Î”’l‚©‚çâ‘Î”’l‚ÌXÀ•W‚É•ÏŠ·
                         addValue = Number(idTableY[code].x);
-                        newValue = oldValue + addValue + 1;//å¤‰å‹•å€¤ã«0ã¯ä½¿ã‚ã‚Œãªã„ãŸã‚ã€1ã§åŠ ç®—ã—ã¦ç„¡é§„ã‚’å‰Šé™¤
+                        newValue = oldValue + addValue + 1;//•Ï“®’l‚É0‚Íg‚í‚ê‚È‚¢‚½‚ßA1‚Å‰ÁZ‚µ‚Ä–³‘Ê‚ğíœ
                         oldValue = newValue;
                         yData = idTableY[code].y;
                         x = String(newValue);
 
                         if (yData instanceof Array) {
-                            //Yåº§æ¨™æƒ…å ±ãŒé…åˆ—
+                            //YÀ•Wî•ñ‚ª”z—ñ
                             loadArray = <object[]>yData;
                             len = loadArray.length;
                             for (i = 0; i < len; i++) {
@@ -578,7 +577,7 @@ export class WWACompress {
                                 newObject[y][x] = id;
                             }
                         } else {
-                            //Yåº§æ¨™æƒ…å ±ãŒæ•°å€¤
+                            //YÀ•Wî•ñ‚ª”’l
                             y = String(yData);
                             newObject[y][x] = id;
                         }
@@ -608,7 +607,7 @@ export class WWACompress {
         }
     }
     /**
-     * Uint8Arrayã«ä¿å­˜ã•ã‚Œã¦ã„ã‚‹ãƒ•ãƒ©ã‚°æƒ…å ±ã‚’å±•é–‹
+     * Uint8Array‚É•Û‘¶‚³‚ê‚Ä‚¢‚éƒtƒ‰ƒOî•ñ‚ğ“WŠJ
      * @param id
      * @param loadArray
      * @param newObject
@@ -617,7 +616,7 @@ export class WWACompress {
         if (!(loadArray instanceof Uint8Array)) {
             return false;
         }
-        var x: number, y: number, bit: number, position: number, len: number,count:number;
+        var x: number, y: number, bit: number, position: number, len: number, count: number;
         var mapWidth = this._restartData.mapWidth;
         var uint8Array = <Uint8Array>loadArray;
         len = uint8Array.length;
@@ -625,7 +624,7 @@ export class WWACompress {
         for (position = 0; position < len; position++) {
             for (bit = 0; bit < 8; bit++) {
                 if ((uint8Array[position] & (1 << bit)) !== 0) {
-                    //è¨­ç½®ã—ã¦ã„ã‚‹
+                    //İ’u‚µ‚Ä‚¢‚é
                     x = count % mapWidth;
                     y = (count / mapWidth) | 0;
                     newObject[y][x] = id;
@@ -654,7 +653,7 @@ export class WWACompress {
         var idLength: number = idList.length;
         var len: number, i: number, n: number, repeatCount: number, k: number, indexLog: number;
         len = loadIndexList.length;
-        for (i = 0,n = 0; i < len; i++) {
+        for (i = 0, n = 0; i < len; i++) {
             index = loadIndexList[i];
             if (index >= idLength) {
                 repeatCount = index - idLength;
@@ -676,7 +675,7 @@ export class WWACompress {
         for (position = 0; position < len; position++) {
             for (bit = 0; bit < 8; bit++) {
                 if ((uint8Array[position] & (1 << bit)) !== 0) {
-                    //è¨­ç½®ã—ã¦ã„ã‚‹
+                    //İ’u‚µ‚Ä‚¢‚é
                     index = indexList[indexCount++];
                     id = idList[index];
                     x = count % mapWidth;
@@ -704,7 +703,7 @@ export class WWACompress {
             byte = byteSrc.charCodeAt(position);
             for (bit = 0; bit < 8; bit++) {
                 if ((byte & (1 << bit)) !== 0) {
-                    //è¨­ç½®ã—ã¦ã„ã‚‹
+                    //İ’u‚µ‚Ä‚¢‚é
                     x = count % mapWidth;
                     y = (count / mapWidth) | 0;
                     newObject[y][x] = id;
@@ -715,7 +714,7 @@ export class WWACompress {
         }
         return true;
     }
-    
+
     public static setRestartData(restartData: WWAData) {
         this._restartData = restartData;
         this._mapByteLength = Math.ceil(restartData.mapWidth * restartData.mapWidth / 8);
@@ -744,227 +743,15 @@ export class WWACompress {
         return this._restartData;
     }
     /**
-     * WWA COLLECTIONå‘ã‘å‡¦ç†ã€‚
-     * ãƒã‚¤ãƒŠãƒªãƒ‡ãƒ¼ã‚¿ä¿å­˜ç”¨ã®Uint8Arrayã®ä¿å­˜æ–¹å¼ã‚’ä½µç”¨ã™ã‚‹ã€‚
+     * WWA COLLECTIONŒü‚¯ˆ—B
+     * ƒoƒCƒiƒŠƒf[ƒ^•Û‘¶—p‚ÌUint8Array‚Ì•Û‘¶•û®‚ğ•¹—p‚·‚éB
      * @param _usingByteFlag
      */
-    public static usingByte(_usingByteFlag):void {
+    public static usingByte(_usingByteFlag): void {
         this._usingByteFlag = _usingByteFlag;
     }
 };
 
-export class WWASaveDB {
-    private static _messageWindow: MessageWindow;
-    private static selectDatas: object[];
-    private static selectLoad:boolean = false;
-    private static INDEXEDDB_DB_NAME = "WWA_WING_DB";
-    private static INDEXEDDB_TABLE_NAME = "SAVE_TABLE";
-    private static indexedDB = window["indexedDB"] || window["webkitIndexedDB"] || window["mozIndexedDB"];
-    private static _checkOriginalMapString: string;
-    private static IDBTransaction: object = {
-        READ_ONLY: "readonly",
-        READ_WRITE: "readwrite",
-        VERSION_CHANGE : "versionchangetransaction"
-    };
-    /**
-     * IE/EDGEã§getAllé–¢æ•°ãŒå­˜åœ¨ã—ãªãã€ãƒ­ãƒ¼ãƒ‰å¤±æ•—ã™ã‚‹ãŸã‚æŒ™å‹•ã‚’ã‚¨ãƒŸãƒ¥ãƒ¬ãƒ¼ãƒˆã™ã‚‹
-     */
-    private static getAlEmulate() {
-        var getAll = function (query) {
-            var queryResult = this.openCursor(query);
-            var dataList = [];
-            var callBackResult = { onsuccess: null, onerror:null};
-
-            queryResult.onsuccess = (e) => {
-                var cursor = e.target.result;
-                if (cursor === null) {
-                    var callBackEvent = {
-                        target: {
-                            result: dataList
-                        }
-                    };
-                    if (typeof callBackResult.onsuccess === "function") {
-                        callBackResult.onsuccess(callBackEvent);
-                    }
-                } else {
-                    dataList.push(e.target.result.value);
-                    cursor.continue();
-                }
-            };
-            queryResult.onerror = (e) =>{
-                if (typeof callBackResult.onerror === "function") {
-                    callBackResult.onerror(e);
-                }
-            };
-            return callBackResult;
-        };
-        if (window.IDBIndex.prototype.getAll === undefined) {
-            // @ts-ignore TS2322 ã©ã†ã›ãªããªã‚‹ã‚³ãƒ¼ãƒ‰ãªã®ã§...
-            window.IDBIndex.prototype.getAll = getAll;
-        }
-        if (window.IDBObjectStore.prototype.getAll === undefined) {
-            // @ts-ignore TS2322 ã©ã†ã›ãªããªã‚‹ã‚³ãƒ¼ãƒ‰ãªã®ã§...
-            window.IDBObjectStore.prototype.getAll = getAll;
-        }
-    }
-    private static indexDBOpen() {
-        this.getAlEmulate();
-        return this.indexedDB.open(this.INDEXEDDB_DB_NAME, 201205201);
-    }
-    public static init(_messageWindow: MessageWindow, wwa: WWA) {
-        this._messageWindow = _messageWindow;
-        this._checkOriginalMapString = wwa.checkOriginalMapString;
-        if (this.indexedDB) {
-            try {
-                if (this.indexedDB.open) {
-                } else {
-                    this.indexedDB = null;
-                }
-            } catch (e) {
-                this.indexedDB = null;
-            }
-        }
-
-        try {
-            var databaselog = this.indexedDB.open('test');
-            if (databaselog.error) {
-                this.indexedDB = null;
-            }
-        } catch (e) {
-        }
-        if (!this.indexedDB) {
-            return;
-        }
-        this.createDataBase();
-        this.selectSaveData();
-    }
-    private static createDataBase() {
-        try {
-            var reqOpen = this.indexDBOpen();
-            reqOpen.onupgradeneeded = (e) => {
-                var indexedDBSystem = reqOpen.result;
-                var oDBOptions = { keyPath: ["id", "url"]};
-                if (!indexedDBSystem.objectStoreNames.contains(this.INDEXEDDB_TABLE_NAME)) {
-                    var objectStore = indexedDBSystem.createObjectStore(this.INDEXEDDB_TABLE_NAME, oDBOptions);
-                    objectStore.createIndex("url", "url", { unique: false });
-                }
-            };
-            reqOpen.onsuccess = (e) =>{
-            };
-            reqOpen.onerror = (err) =>{
-            };
-            reqOpen.onblocked = (err) => {
-                this.indexedDB = null;
-            };
-        } catch (error) {
-        }
-    }
-    public static dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, quickSaveData: object, date: Date) {
-        if (!this.indexedDB) {
-            return;
-        }
-        var reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = (e) => {
-        };
-        reqOpen.onsuccess = (e) => {
-            var indexedDBSystem = reqOpen.result;
-            try {
-                var transaction = indexedDBSystem.transaction(this.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_WRITE"]);
-                var store = transaction.objectStore(this.INDEXEDDB_TABLE_NAME);
-            } catch (error) {
-                return;
-            }
-
-            var addData = {
-                "url": location.href,
-                "id": saveID,
-                "hash": this._checkOriginalMapString,
-                "image": gameCvs.toDataURL(),
-                "data": quickSaveData,
-                "date": date
-            };
-            this.selectDatas[saveID] = addData;
-
-            var reqAdd = store.put(addData);
-            //reqAdd.callbackLog = callback;
-            reqAdd.onsuccess = (e) => {
-            };
-            reqAdd.onerror = (e) => {
-            };
-        };
-        reqOpen.onerror = (e) => {
-        };
-        reqOpen.onblocked = (e) => {
-        };
-    }
-    private static selectSaveData() {
-        if (!this.indexedDB) {
-            return;
-        }
-        var reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = function (e) {
-        };
-        reqOpen.onsuccess = (e) => {
-            var indexedDBSystem = reqOpen.result;
-            var transaction, store;
-            try {
-                transaction = indexedDBSystem.transaction(this.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_ONLY"]);
-                store = transaction.objectStore(this.INDEXEDDB_TABLE_NAME);
-            } catch (error) {
-                return;
-            }
-            //var range = IDBKeyRange.bound(10);
-            this.selectDatas = [];
-            this.selectLoad = false;
-
-            var index = store.index("url");
-            var range = IDBKeyRange.only(location.href);
-            var saveDataResult = index.getAll(range);
-
-            saveDataResult.onsuccess = (e) => {
-                var i, len, loadend, onsuccess, onerror, saveData;
-                loadend = 0;
-                var result = e.target.result;
-                len = result.length;
-                for (i = 0; i < len; i++) {
-                    var resultData = result[i];
-                    try {
-                        /*saveData = {
-                            id: resultData.id,
-                            hash: resultData.hash,
-                            data: JSON.parse(resultData.data),
-                            date: new Date(resultData.date),
-                            image: resultData.image
-                        };*/
-                        saveData = {
-                            id: resultData.id,
-                            hash: resultData.hash,
-                            data: resultData.data,
-                            date: resultData.date,
-                            image: resultData.image
-                        };
-                    } catch (error) {
-                        continue;
-                    }
-                    if (this._checkOriginalMapString !== saveData.hash) {
-                        continue;
-                    }
-                    this.selectDatas[saveData.id] = saveData;
-                }
-                this._messageWindow.dbSaveDataLoad(this.selectDatas);
-                this.selectLoad = true;
-            };
-            saveDataResult.onerror = (e) => {
-                this.indexedDB = null;
-            };
-
-        };
-        reqOpen.onerror = (e) => {
-        };
-        reqOpen.onblocked = (e) => {
-        };
-    }
-}
 export class WWACompressIndexTable {
     public id: number = 0;
     public index: number = 0;

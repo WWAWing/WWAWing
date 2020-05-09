@@ -32,10 +32,10 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
+import { WWACompress, WWASave } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
-import { WWACompress } from "./wwa_psave";
 let wwa: WWA
 
 /**
@@ -89,6 +89,7 @@ export class WWA {
     private _statusPressCounter: Status; // ステータス型があるので、アニメーション残りカウンタもこれで代用しまぁす。
     private _battleEstimateWindow: BattleEstimateWindow;
     private _passwordWindow: PasswordWindow;
+    private _wwaSave: WWASave;
 
     private _stopUpdateByLoadFlag: boolean;
     private _isURLGateEnable: boolean;
@@ -423,19 +424,29 @@ export class WWA {
             this._scoreWindow = new ScoreWindow(
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
-            this.clearFaces();
+            this._wwaSave = new WWASave(wwa);
+            this._messageWindow.setWWASave(this._wwaSave);
 
             WWACompress.setRestartData(this._restartData);
-            // TODO オートセーブ実装後にコメントアウト解除
-            /*
-            var autosaveString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-autosave");
-            if (autosaveString !== null) {
-                this._wwaSave.setAutoSaveInterval(Number(autosaveString) | 0);
+            this.clearFaces();
+            var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
+            if (typeof resumeSaveDataText === "string") {
+                this._useSuspend = true;//中断モード
+                if (resumeSaveDataText) {
+                    //再開
+                    var resumeData: WWAData = WWACompress.getStartWWAData(resumeSaveDataText);
+                    if (this._restartData !== resumeData) {
+                        this._applyQuickLoad(resumeData);
+                        this._wwaSave.resumeStart();
+                    }
+                }
             }
-            */
+            var autosaveString = util.$id("wwa-wrapper").getAttribute("data-wwa-autosave");
+            if ((autosaveString)&&(autosaveString.match(/^false$/i))) {
+                this._wwaSave.setAutoSaveFlag(false);
+            }
             const liikingAroundString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
             this._useLookingAround = !((liikingAroundString) && (liikingAroundString.match(/false/i)));
-
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
@@ -1230,17 +1241,39 @@ export class WWA {
         this._itemMenu.close();
         bg.classList.add("onpress");
         if (button === SidebarButton.QUICK_LOAD) {
-            if (this._messageWindow.hasSaveData() && !forcePassword) {
-                this._messageWindow.createSaveDom();
-                if (this._usePassword) {
-                    this.setMessageQueue("読み込むデータを選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
-                    this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_LOAD;
-                } else {
-                    this.setMessageQueue("読み込むデータを選んでください。", true, true);
-                    this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_LOAD;
-                }
-            } else {
-                this.onpasswordloadcalled();
+            this._yesNoChoiceCallInfo = this._wwaSave.getFirstSaveChoiceCallInfo(forcePassword, this._usePassword);
+            switch (this._yesNoChoiceCallInfo) {
+                case ChoiceCallInfo.CALL_BY_QUICK_LOAD:
+                case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
+                    var secondCallInfo: ChoiceCallInfo;
+                    var loadTest: string = "";
+                    switch (this._yesNoChoiceCallInfo) {
+                        case ChoiceCallInfo.CALL_BY_QUICK_LOAD:
+                            loadTest = "読み込むデータを選んでください。";
+                            this._wwaSave.selectDBSaveDataList();
+                            break;
+                        case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
+                            loadTest = "読み込むオートセーブを選んでください。";
+                            this._wwaSave.selectLogSaveDataList();
+                            break;
+                    }
+                    secondCallInfo = this._wwaSave.getSecondSaveChoiceCallInfo(this._usePassword);//クイックロード後の選択肢
+                    this._messageWindow.createSaveDom();
+                    switch (secondCallInfo) {
+                        case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
+                            this.setMessageQueue(loadTest+"\n→Ｎｏでオートセーブ復帰画面に移ります。", true, true);
+                            break;
+                        case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
+                            this.setMessageQueue(loadTest +"\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
+                            break;
+                        case ChoiceCallInfo.NONE:
+                            this.setMessageQueue(loadTest, true, true);
+                            break;
+                    }
+                    break;
+                case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
+                    this.onpasswordloadcalled();
+                    break;
             }
         } else if (button === SidebarButton.QUICK_SAVE) {
             if (!this._wwaData.disableSaveFlag) {
@@ -1393,7 +1426,12 @@ export class WWA {
 
 
         if (this._player.isControllable()) {
-
+            if (!this._wwaData.disableSaveFlag) {
+                //オートセーブ処理
+                if (this._wwaSave.isAutoSaveFrame(this._player)) {
+                    this._quickSave(ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE)
+                }
+            }
             if (this._player.isDelayFrame()) {
                 /*
                  * メッセージ表示直後、何も操作しないフレームを用意する。
@@ -2779,7 +2817,8 @@ export class WWA {
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_ITEM_USE) {
                     this._player.readyToUseItem(this._yesNoUseItemPos);
-                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) {
+                } else if ((this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) ||
+                           (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD)) {
                     this._messageWindow.deleteSaveDom();
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
                     if (this._messageWindow.load()) {
@@ -2845,14 +2884,32 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_ITEM_USE) {
                     var bg = <HTMLDivElement>(util.$id("item" + (this._yesNoUseItemPos - 1)));
                     bg.classList.remove("onpress");
-                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) {
+                } else if ((this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) ||
+                           (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD)) {
                     this._messageWindow.deleteSaveDom();
-                    if (this._usePassword) {
-                        this._yesNoJudge = YesNoState.UNSELECTED;
-                        this.onpasswordloadcalled();
-                        return;
-                    } else {
-                        (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+                    this._yesNoChoiceCallInfo = this._wwaSave.getSecondSaveChoiceCallInfo(this._usePassword);
+                    switch (this._yesNoChoiceCallInfo) {
+                        case ChoiceCallInfo.NONE:
+                            (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+                        case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
+                            this._yesNoJudge = YesNoState.UNSELECTED;
+                            this.onpasswordloadcalled();
+                            return;
+                        case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
+                            this._wwaSave.selectLogSaveDataList();
+                            this._messageWindow.createSaveDom();
+                            var secondCallInfo: ChoiceCallInfo = this._wwaSave.getSecondSaveChoiceCallInfo(this._usePassword);//クイックロード後の選択肢
+                            this._yesNoJudge = YesNoState.UNSELECTED;
+                            switch (secondCallInfo) {
+                                case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
+                                    this.setMessageQueue("読み込むオートセーブを選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
+                                    break;
+                                case ChoiceCallInfo.NONE:
+                                    this.setMessageQueue("読み込むオートセーブを選んでください。", true, true);
+                                    break;
+                            }
+
+                            return;
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
                     this._messageWindow.deleteSaveDom();
@@ -3411,6 +3468,7 @@ export class WWA {
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
+            case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
                 qd.checkString = this._generateSaveDataHash(qd);
                 break;
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
@@ -3458,6 +3516,13 @@ export class WWA {
                     compress: WWACompress.compress(qd)
                 });
                 break;
+            case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
+                this.wwaCustomEvent('wwa_autosave', {
+                    data: qd,
+                    compress: WWACompress.compress(qd)
+                });
+                this._wwaSave.autoSave(this._cvs, qd);
+                break;
         }
     }
 
@@ -3485,7 +3550,7 @@ export class WWA {
     }
 
     private _quickLoad(restart: boolean = false, password: string = null, apply: boolean = true): WWAData {
-        if (!restart && this._messageWindow.hasSaveData() === void 0 && password === null) {
+        if (!restart && this._wwaSave.hasSaveData() === void 0 && password === null) {
             throw new Error("セーブデータがありません。");
         }
         var newData: WWAData;
@@ -3552,6 +3617,7 @@ export class WWA {
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
         this.updateCSSRule();
+        this._wwaSave.setPlayer(this._player);
     }
     private _mapIDTableCreate(): void {
         var pid: number;

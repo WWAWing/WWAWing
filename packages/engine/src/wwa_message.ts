@@ -1,6 +1,7 @@
 import { WWA } from "./wwa_main";
 import {
     WWAConsts,
+    WWASaveConsts,
     Coord,
     PartsType,
     Face,
@@ -24,8 +25,9 @@ import {
 } from "./wwa_data";
 import {
     WWACompress,
-    WWASaveDB
-} from "./wwa_psave"; 
+    WWASave,
+    WWASaveData
+} from "./wwa_save"; 
 import { ItemMenu } from "./wwa_item_menu";
 
 export class MessageInfo {
@@ -720,7 +722,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _divYesElement: HTMLElement;
     private _divNoElement: HTMLElement;
     private _parentElement: HTMLElement;
-    private _saveDataList: WWASaveData[] = void 0;
+    private _wwaSave: WWASave = void 0;
     private _save_select_id: number = 0;
     private _save_counter: number = 0;
     private _save_close: boolean = false;
@@ -807,10 +809,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._ynWrapperElement.appendChild(this._divNoElement);
 
         thisA._isInputDisable = false;
-        this._saveDataList = [];
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            this._saveDataList[i] = new WWASaveData(i);
-        }
         switch (wwa.userDevice.device) {
             case DEVICE_TYPE.SP:
             case DEVICE_TYPE.VR:
@@ -818,12 +816,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 this._parentElement.classList.add("useScaleUp");
                 break;
         }
-        this._saveDataList = [];
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            this._saveDataList[i] = new WWASaveData(i);
-        }
         this.update();
-        WWASaveDB.init(this,this._wwa)
     }
 
     public setPosition(x: number, y: number, width: number, height: number): void {
@@ -1021,6 +1014,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._element.style.width = this._width + "px";
         this._element.style.minHeight = this._height + "px"; // minなのでoverflowしても安心!!!
     }
+    setWWASave(wwaSave: WWASave) {
+        this._wwaSave = wwaSave;
+    }
 
     createSaveDom(): void {
         var loadWWAData: WWASaveData;
@@ -1029,9 +1025,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         energy_original_dom = document.getElementById("disp-energy");
         backgroundPositionText = energy_original_dom.style["backgroundPosition"];
         backgroundImageText = energy_original_dom.style["backgroundImage"];
-        
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            loadWWAData = this._saveDataList[i];
+        var len: number = this._wwaSave.list.length;
+        for (var i = 0; i < len; i++) {
+            loadWWAData = this._wwaSave.list[i];
 
             savedata_main_div = document.createElement("div");
             savedata_main_div.classList.add("savedata");
@@ -1122,7 +1118,8 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._save_select_id = save_select_id;
         var domList = document.querySelectorAll(".savedata");
         var dom;
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
+        var len: number = domList.length;
+        for (var i = 0; i < len; i++) {
             dom = domList[i];
             if (save_select_id === i) {
                 dom.classList.add("select");
@@ -1133,29 +1130,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         }
     }
     save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
-        var saveData: WWASaveData = this._saveDataList[this._save_select_id];
-        if (!saveData) {
-            return false;
-        }
-        return saveData.save(gameCvs, _quickSaveData);
+        return this._wwaSave.save(gameCvs,_quickSaveData,this._save_select_id);
     }
     load(): WWAData {
-        var saveData: WWASaveData = this._saveDataList[this._save_select_id];
-        if (!saveData) {
-            return null;
-        }
-        if (!saveData.compressData) {
-            return null;
-        }
-        return saveData.load();
-    }
-    hasSaveData(): boolean {
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            if (this._saveDataList[i].flag) {
-                return true;
-            }
-        }
-        return false;
+        return this._wwaSave.load(this._save_select_id);
     }
     public saveUpdate(): void {
         if (this._save_counter > 0) {
@@ -1195,76 +1173,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 this.cursor_wait();
                 break;
         }
-        this.setSaveID((this._save_select_id + WWAConsts.QUICK_SAVE_MAX) % WWAConsts.QUICK_SAVE_MAX);
-    }
-    public dbSaveDataLoad(dbSaveDataList: object[]) {
-        var usingQuickLoad: boolean = false;
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            var dbSaveData = dbSaveDataList[i];
-            if (dbSaveData) {
-                this._saveDataList[i].dbSaveDataLoad(dbSaveData);
-                usingQuickLoad = true;
-            }
-        }
-        if (usingQuickLoad) {
-            util.$id("cell-load").textContent = "Quick Load";
-        }
+        this.setSaveID((this._save_select_id + WWASaveConsts.QUICK_SAVE_MAX) % WWASaveConsts.QUICK_SAVE_MAX);
     }
     protected get windowName(): string {
         return "MessageWindow";
-    }
-}
-
-export class WWASaveData {
-    private _id: number = 0;
-    public flag: boolean = false;
-    public date: Date = void 0;
-    public cvs: HTMLCanvasElement = void 0;
-    public ctx: CanvasRenderingContext2D = void 0;
-    private quickSaveData: WWAData = null;
-    private _statusEnergy: number;
-    public compressData: object;
-    public constructor(id) {
-        this._id = id;
-        this.cvs = document.createElement("canvas");
-        this.cvs.width = WWAConsts.QUICK_SAVE_THUMNAIL_WIDTH;
-        this.cvs.height = WWAConsts.QUICK_SAVE_THUMNAIL_HEIGHT;
-        this.ctx = this.cvs.getContext("2d");
-    }
-    public save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
-        this._statusEnergy = _quickSaveData.statusEnergy;
-        this.compressData = WWACompress.compress(_quickSaveData);
-        this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
-        this.ctx.drawImage(gameCvs, 0, 0, gameCvs.width, gameCvs.height, 0, 0, this.cvs.width, this.cvs.height);
-        this.quickSaveData = _quickSaveData;
-        //this.quickSaveData.statusEnergy;//life
-        this.flag = true;
-        this.date = new Date();
-        WWASaveDB.dbUpdateSaveData(this._id, gameCvs, this.compressData, this.date);
-        return true;
-    }
-    public getStatusEnergy(): number {
-        return this.flag ? this._statusEnergy : -1;
-    }
-    public load(): WWAData {
-        return WWACompress.decompress(this.compressData);
-    }
-    public dbSaveDataLoad(dbSaveData) {
-        var quickSaveData = WWACompress.decompress(dbSaveData.data);
-        try {
-            this.compressData = dbSaveData.data;
-            this._statusEnergy = quickSaveData.statusEnergy;
-            this.date = dbSaveData.date;
-            this.flag = true;
-            var img = document.createElement("img");
-            img.src = dbSaveData.image;
-            img.addEventListener("load", () => {
-                this.flag = true;
-                this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.cvs.width, this.cvs.height);
-            });
-
-        } catch (error) {
-
-        }
     }
 }
