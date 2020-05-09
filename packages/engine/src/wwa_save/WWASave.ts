@@ -63,8 +63,8 @@ export default class WWASave {
     hasSaveData(): boolean {
         return this.list.hasSaveData();
     }
-    setAutoSaveFlag(useAutoSave: boolean): void {
-        return this._wwaLogSaveList.setAutoSaveFlag(useAutoSave);
+    setAutoSaveInterval(autoInterval: number): void {
+        return this._wwaLogSaveList.setAutoSaveInterval(autoInterval);
     } 
 
 
@@ -82,9 +82,9 @@ export default class WWASave {
     }
     getSecondSaveChoiceCallInfo(usePassword: boolean): ChoiceCallInfo {
         if (this.list === this._wwaDBSaveList) {
-            //DBクイックセーブを参照中
+            //DB繧ｯ繧､繝�繧ｯ繧ｻ繝ｼ繝悶ｒ蜿ら�ｧ荳ｭ
             if (this._wwaLogSaveList.hasSaveData()) {
-                //セーブログがある場合そちらを利用
+                //繧ｻ繝ｼ繝悶Ο繧ｰ縺後≠繧句ｴ蜷医◎縺｡繧峨ｒ蛻ｩ逕ｨ
                 return ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD;
             }
         }

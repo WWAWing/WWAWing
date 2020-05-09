@@ -130,8 +130,8 @@ export class WWA {
     private _useConsole: boolean;
     private _audioDirectory: string;
     private _hasTitleImg: boolean;
-    private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
     private _useSuspend: boolean = false;
+    private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
 
     private _isActive: boolean;
 
@@ -429,7 +429,7 @@ export class WWA {
 
             WWACompress.setRestartData(this._restartData);
             this.clearFaces();
-            var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
+            const resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
             if (typeof resumeSaveDataText === "string") {
                 this._useSuspend = true;//中断モード
                 if (resumeSaveDataText) {
@@ -441,12 +441,13 @@ export class WWA {
                     }
                 }
             }
-            var autosaveString = util.$id("wwa-wrapper").getAttribute("data-wwa-autosave");
-            if ((autosaveString)&&(autosaveString.match(/^false$/i))) {
-                this._wwaSave.setAutoSaveFlag(false);
+            const autosaveString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-autosave");
+            if (autosaveString !== null) {
+                this._wwaSave.setAutoSaveInterval(Number(autosaveString) | 0);
             }
             const liikingAroundString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
             this._useLookingAround = !((liikingAroundString) && (liikingAroundString.match(/false/i)));
+
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {

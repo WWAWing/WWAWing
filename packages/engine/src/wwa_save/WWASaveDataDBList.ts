@@ -50,7 +50,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
         this.selectSaveData();
     }
     /**
-     * IE/EDGE��getAll�֐������݂��Ȃ��A���[�h���s���邽�ߋ������G�~�����[�g����
+     *  IE/EDGEでgetAll関数が存在しなく、ロード失敗するため挙動をエミュレートする
      */
     private getAlEmulate() {
         var getAll = function (query) {
