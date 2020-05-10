@@ -546,38 +546,42 @@ export class WWA {
                         e.preventDefault();
                         return;
                     }
-                    var mousePos = util.$localPos(e.clientX, e.clientY);
-                    var playerPos = this._player.getDrawingCenterPosition();
-                    var dist = mousePos.substract(playerPos);
-                    var dx = Math.abs(dist.x);
-                    var dy = Math.abs(dist.y);
-                    var dir: Direction;
-                    var sideFlag = false;
+                    // TODO: タッチ入力と似たようなコードになっているので統合する
+                    const clickingPosition = util.$localPos(e.clientX, e.clientY);
+                    const playerPosition = this._player.getDrawingCenterPosition();
+                    const dist = clickingPosition.substract(playerPosition);
+                    const dx = Math.abs(dist.x);
+                    const dy = Math.abs(dist.y);
+                    let dir: Direction;
+                    let isPlayerInScreenEdge = false;
+                    /*
+                        プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
+                        に、タップしている方向にプレイヤーを動かすことを可能にする細かい処理
+                     */
                     if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
-                        //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
-                        switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
+                        switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
                             case 0:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.LEFT;
                                 break;
                             case Consts.H_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.RIGHT;
                                 break;
                         }
-                        switch ((playerPos.y / Consts.CHIP_SIZE | 0)) {
+                        switch ((playerPosition.y / Consts.CHIP_SIZE | 0)) {
                             case 0:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.UP;
                                 break;
                             case Consts.V_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.DOWN;
                                 break;
                         }
 
                     }
-                    if (!sideFlag) {
+                    if (!isPlayerInScreenEdge) {
                         if (dist.y > 0 && dy > dx) {
                             dir = Direction.DOWN;
                         } else if (dist.y < 0 && dy > dx) {
@@ -639,8 +643,13 @@ export class WWA {
                         let dir: Direction;
                         let isPlayerInScreenEdge = false;
                         /*
+<<<<<<< Updated upstream
                           プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
                           に、タップしている方向にプレイヤーを動かすことを可能にする細かい処理
+=======
+                            プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
+                            に、タップしている方向にプレイヤーを動かすことを可能にする細かい処理
+>>>>>>> Stashed changes
                         */
                         if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
                             switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
