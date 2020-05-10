@@ -637,32 +637,36 @@ export class WWA {
                         const dx = Math.abs(dist.x);
                         const dy = Math.abs(dist.y);
                         let dir: Direction;
-                        let sideFlag = false;
+                        let isPlayerInScreenEdge = false;
+                        /*
+                          プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
+                          に、タップしている方向にプレイヤーを動かすことを可能にする細かい処理
+                        */
                         if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
-                            //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
                             switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
                                 case 0:
-                                    sideFlag = true;
+                                    isPlayerInScreenEdge = true;
                                     dir = Direction.LEFT;
                                     break;
                                 case Consts.H_PARTS_NUM_IN_WINDOW - 1:
-                                    sideFlag = true;
+                                    isPlayerInScreenEdge = true;
                                     dir = Direction.RIGHT;
                                     break;
                             }
                             switch ((playerPosition.y / Consts.CHIP_SIZE | 0)) {
                                 case 0:
-                                    sideFlag = true;
+                                    isPlayerInScreenEdge = true;
                                     dir = Direction.UP;
                                     break;
                                 case Consts.V_PARTS_NUM_IN_WINDOW - 1:
-                                    sideFlag = true;
+                                    isPlayerInScreenEdge = true;
                                     dir = Direction.DOWN;
                                     break;
                             }
 
                         }
-                        if (!sideFlag) {
+                        // 画面端4辺でない普通の場合
+                        if (!isPlayerInScreenEdge) {
                             if (dist.y > 0 && dy > dx) {
                                 dir = Direction.DOWN;
                             } else if (dist.y < 0 && dy > dx) {
