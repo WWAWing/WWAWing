@@ -409,8 +409,8 @@ export class WWA {
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
             this.clearFaces();
-            const liikingAroundString = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
-            this._useLookingAround = !((liikingAroundString) && (liikingAroundString.match(/false/i)));
+            const lookingAroundString = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
+            this._useLookingAround = !((lookingAroundString) && (lookingAroundString.match(/false/i)));
 
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
@@ -588,7 +588,7 @@ export class WWA {
                             dir = Direction.LEFT;
                         }
                     }
-                    this._mouseStore.setPressInfo(dir,0);
+                    this._mouseStore.setPressInfo(dir, 0);
                     //e.preventDefault();//無効にするとクリック時にWWAにフォーカスされなくなる
                 }
             });
@@ -3984,8 +3984,8 @@ export class WWA {
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                             break;
-		                default:
-		                    return;
+                        default:
+                            return;
                     }
                     break;
                 case DEVICE_TYPE.SP:

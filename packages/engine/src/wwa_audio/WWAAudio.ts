@@ -40,6 +40,7 @@ export default abstract class WWAAudio {
      * - hasData も isError も false だった場合 -> まだ読み込み中です。
      * - hasData は false だけど isError が true だった場合 -> 読込に失敗しています。
      * - hasData は true だけど isError が false だった場合 -> 正常に読み込まれています。
+     * TODO: isErrorと統合して 名前を getLoadingStatus にして 出力値を "LOADING" | "DONE" | "ERROR" にする
      */
     public hasData(): boolean {
         return false;
