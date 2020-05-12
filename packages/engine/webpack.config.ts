@@ -24,8 +24,11 @@ const config: webpack.Configuration = {
         rules: [
             {
                 test: /\.ts/,
-                use: [{ loader: "ts-loader" }],
-                exclude: /node_modules/
+                use: [{
+                    loader: "ts-loader",
+                    options: { configFile: "tsconfig.webpack.json" },
+                }],
+                exclude: /node_modules/,
             }
         ]
     },

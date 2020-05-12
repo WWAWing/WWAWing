@@ -102,5 +102,18 @@ export interface WWAData {
     checkOriginalMapString: string;
     checkString: string;
 
-    isItemEffectEnabled: boolean; 
+    isItemEffectEnabled: boolean;
+
+    /**
+     * プレイ時間
+     * memo: playFrameCount というのは古い表記なのでマージなどの時に注意
+     */
+    frameCount: number
+
+    /** 
+     * `gamePadButtonItemTable[i]` (ただし `i` は ゲームパッドのボタンID) に、
+     * 対応するアイテムボックスの番号(1以上12以下) または アイテムボックスの対応がないことを示す「0」が入っているような配列
+     * NOTE: この配列は $gamepad_button が一度でも使用されなければ、配列ではなくundefinedが入っていることに注意せよ
+     */
+    gamePadButtonItemTable: number[];
 }
