@@ -192,7 +192,7 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-        
+
         if (titleImgName === null) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
@@ -201,7 +201,7 @@ export class WWA {
         } else {
             this._hasTitleImg = true;
         }
-        
+
         try {
             if (this._hasTitleImg) {
                 util.$id("version").textContent = "WWA Wing Ver." + VERSION_WWAJS;
@@ -374,7 +374,7 @@ export class WWA {
 
             var t_end: number = new Date().getTime();
             console.log("Loading Complete!" + (t_end - t_start) + "ms");
-            
+
             this._cvs = <HTMLCanvasElement>util.$id("wwa-map");
             this._cvsSub = <HTMLCanvasElement>util.$id("wwa-map-sub");
             var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d");
@@ -555,9 +555,18 @@ export class WWA {
                     let dir: Direction;
                     let isPlayerInScreenEdge = false;
                     /*
-                        プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
-                        に、タップしている方向にプレイヤーを動かすことを可能にする細かい処理
-                     */
+                      プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
+                      に、画面外にプレイヤーを動かすことを可能にする細かい処理
+
+                      4辺(4隅以外)のマスについて:
+                      プレイヤーが4辺のいずれかのマスにいる場合に、プレイヤーと同じマスをクリックした場合は下記のような挙動をします。
+                      プレイヤーが左の辺にいる => 左の画面へ移動, 上の辺 => 上の画面へ移動, 下の辺 => 下の画面へ移動, 右の辺 => 右の辺へ移動
+
+                      4隅の場合について:
+                      プレイヤーが画面四隅のいずれかマスにいる場合に、プレイヤーと同じマスをクリックした場合は下記のような挙動をします。
+                      (上下方向の方が左右方向より優先されます。)
+                      プレイヤーが左上にいる => 上に移動, 左下 => 下に移動, 右上 => 上に移動, 右下 => 下に移動
+                    */
                     if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
                         switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
                             case 0:
@@ -643,20 +652,24 @@ export class WWA {
                         let dir: Direction;
                         let isPlayerInScreenEdge = false;
                         /*
-<<<<<<< Updated upstream
                           プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
-                          に、タップしている方向にプレイヤーを動かすことを可能にする細かい処理
-=======
-                            プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
-                            に、タップしている方向にプレイヤーを動かすことを可能にする細かい処理
->>>>>>> Stashed changes
+                          に、画面外にプレイヤーを動かすことを可能にする細かい処理
+
+                          4辺(4隅以外)のマスについて:
+                          プレイヤーが4辺のいずれかのマスにいる場合に、プレイヤーと同じマスをタッチした場合は下記のような挙動をします。
+                          プレイヤーが左の辺にいる => 左の画面へ移動, 上の辺 => 上の画面へ移動, 下の辺 => 下の画面へ移動, 右の辺 => 右の辺へ移動
+
+                          4隅の場合について:
+                          プレイヤーが画面四隅のいずれかマスにいる場合に、プレイヤーと同じマスをタッチした場合は下記のような挙動をします。
+                          (上下方向の方が左右方向より優先されます。)
+                          プレイヤーが左上にいる => 上に移動, 左下 => 下に移動, 右上 => 上に移動, 右下 => 下に移動
                         */
                         if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
                             switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
                                 case 0:
                                     isPlayerInScreenEdge = true;
                                     dir = Direction.LEFT;
-                                    break;
+                                    break; 
                                 case Consts.H_PARTS_NUM_IN_WINDOW - 1:
                                     isPlayerInScreenEdge = true;
                                     dir = Direction.RIGHT;
