@@ -131,6 +131,7 @@ export function createDefaultWWAData(): WWAData {
         checkOriginalMapString: undefined,
         checkString: undefined,
         isItemEffectEnabled: undefined,
+        frameCount: undefined,
         gamePadButtonItemTable: undefined
     };
 }

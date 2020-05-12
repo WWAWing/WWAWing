@@ -84,6 +84,7 @@ export class Player extends PartsObject {
 
     protected _enemy: Monster;
     protected _moves: number;
+    protected _frameCount: number;
 
     protected _moveMacroWaitingRemainMoves: number;
     protected _moveObjectAutoExecTimer: number;
@@ -181,6 +182,11 @@ export class Player extends PartsObject {
             }
 
         }
+    }
+
+    public setDir(newDir: Direction): void {
+        this._isPreparedForLookingAround = false;
+        this._dir = newDir;
     }
 
 
@@ -1057,6 +1063,35 @@ export class Player extends PartsObject {
         return new Coord(targetX, targetY);
     }
 
+    /**
+     * ゲーム開始から経過したフレーム数を基に、 HHHH:MM:SS 形式のプレイ時間文字列を返します。
+     */
+    public getPlayTimeText(): string {
+        const seconds = Math.floor(this._frameCount / 60);
+        // FIY: 0とのビットOR( | ) は 小数点以下切り捨て
+        return seconds >= 60 * 60 * 10000 ?
+            "9999:99:99" :
+            ("000" + ((seconds / 60 / 60) | 0)).slice(-4) +
+            ":" + ("0" + (((seconds / 60) | 0) % 60)).slice(-2) +
+            ":" + ("0" + (seconds % 60)).slice(-2);
+    }
+
+    //プレイ時間を計測
+    public mainFrameCount(): void {
+        this._frameCount++;
+    }
+
+    public getFrameCount(): number {
+        return this._frameCount;
+    }
+
+    public setFrameCount(count: number): number {
+        if (typeof count !== "number") {
+            count = 0;
+        }
+        return this._frameCount = count;
+    }
+
     public getMoveCount(): number {
         return this._moves;
     }
@@ -1146,6 +1181,7 @@ export class Player extends PartsObject {
         this._isReadyToUseItem = false;
         this._isClickableItemGot = false;
         this._moves = 0;
+        this._frameCount = 0;
         this._moveMacroWaitingRemainMoves = 0;
         this._moveObjectAutoExecTimer = 0;
         this.updateStatusValueBox();
