@@ -9,7 +9,8 @@ import {
     macrotable,
     YesNoState,
     Position,
-    DEVICE_TYPE
+    DEVICE_TYPE,
+    Direction
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -18,6 +19,10 @@ import {
     Monster
 } from "./wwa_monster";
 import * as util from "./wwa_util";
+import {
+    WWAData
+} from "./wwa_data";
+import { ItemMenu } from "./wwa_item_menu";
 
 export class MessageInfo {
     constructor(
@@ -52,54 +57,83 @@ export class Macro {
     ) { }
     public execute(): void {
         try {
-            if (this.macroType === MacroType.IMGPLAYER) {
-                this._executeImgPlayerMacro();
-            } else if (this.macroType === MacroType.IMGYESNO) {
-                this._executeImgYesNoMacro();
-            } else if (this.macroType === MacroType.HPMAX) {
-                this._executeHPMaxMacro();
-            } else if (this.macroType === MacroType.SAVE) {
-                this._executeSaveMacro();
-            } else if (this.macroType === MacroType.ITEM) {
-                this._executeItemMacro();
-            } else if (this.macroType === MacroType.DEFAULT) {
-                this._executeDefaultMacro();
-            } else if (this.macroType === MacroType.OLDMAP) {
-                this._executeOldMapMacro();
-            } else if (this.macroType === MacroType.PARTS) {
-                this._executePartsMacro();
-            } else if (this.macroType === MacroType.MOVE) {
-                this._executeMoveMacro();
-            } else if (this.macroType === MacroType.MAP) {
-                this._executeMapMacro();
-            } else if (this.macroType === MacroType.DIRMAP) {
-                this._executeDirMapMacro();
-            } else if (this.macroType === MacroType.IMGFRAME) {
-                this._executeImgFrameMacro();
-            } else if (this.macroType === MacroType.IMGBOM) {
-                this._executeImgBomMacro();
-            } else if (this.macroType === MacroType.DELPLAYER) {
-                this._executeDelPlayerMacro();
-            } else if (this.macroType === MacroType.FACE) {
-                this._executeFaceMacro();
-            } else if (this.macroType === MacroType.EFFECT) {
-                this._executeEffectMacro();
-            } else if (this.macroType === MacroType.GAMEOVER) {
-                this._executeGameOverMacro();
-            } else if (this.macroType === MacroType.IMGCLICK) {
-                this._executeImgClickMacro();
-            } else if (this.macroType === MacroType.STATUS) {
-                this._executeStatusMacro();
-            } else if(this.macroType === MacroType.EFFITEM) {
-                this._executeEffItemMacro();
-            } else if (this.macroType === MacroType.COLOR) {
-                this._executeColorMacro();
-            } else if (this.macroType === MacroType.WAIT) {
-                this._executeWaitMacro();
-            } else if (this.macroType === MacroType.SOUND) {
-                this._executeSoundMacro();
+            switch (this.macroType) {
+                case MacroType.IMGPLAYER:
+                    this._executeImgPlayerMacro();
+                    break;
+                case MacroType.IMGYESNO:
+                    this._executeImgYesNoMacro();
+                    break;
+                case MacroType.HPMAX:
+                    this._executeHPMaxMacro();
+                    break;
+                case MacroType.SAVE:
+                    this._executeSaveMacro();
+                    break;
+                case MacroType.ITEM:
+                    this._executeItemMacro();
+                    break;
+                case MacroType.DEFAULT:
+                    this._executeDefaultMacro();
+                    break;
+                case MacroType.OLDMAP:
+                    this._executeOldMapMacro();
+                    break;
+                case MacroType.PARTS:
+                    this._executePartsMacro();
+                    break;
+                case MacroType.MOVE:
+                    this._executeMoveMacro();
+                    break;
+                case MacroType.MAP:
+                    this._executeMapMacro();
+                    break;
+                case MacroType.DIRMAP:
+                    this._executeDirMapMacro();
+                    break;
+                case MacroType.IMGFRAME:
+                    this._executeImgFrameMacro();
+                    break;
+                case MacroType.IMGBOM:
+                    this._executeImgBomMacro();
+                    break;
+                case MacroType.DELPLAYER:
+                    this._executeDelPlayerMacro();
+                    break;
+                case MacroType.FACE:
+                    this._executeFaceMacro();
+                    break;
+                case MacroType.EFFECT:
+                    this._executeEffectMacro();
+                    break;
+                case MacroType.GAMEOVER:
+                    this._executeGameOverMacro();
+                    break;
+                case MacroType.IMGCLICK:
+                    this._executeImgClickMacro();
+                    break;
+                case MacroType.STATUS:
+                    this._executeStatusMacro();
+                    break;
+                case MacroType.EFFITEM:
+                    this._executeEffItemMacro();
+                    break;
+                case MacroType.COLOR:
+                    this._executeColorMacro();
+                    break;
+                case MacroType.WAIT:
+                    this._executeWaitMacro();
+                    break;
+                case MacroType.SOUND:
+                    this._executeSoundMacro();
+                    break;
+                case MacroType.GAMEPAD_BUTTON:
+                    this._executeGamePadButtonMacro();
+                    break;
+                default:
+                    console.log("不明なマクロIDが実行されました:" + this.macroType);
+                    break;
             }
-
         } catch (e) {
             // デベロッパーモードならエラーを吐くとかしたいね
         }
@@ -431,6 +465,20 @@ export class Macro {
         var id = parseInt(this.macroArgs[0]);
         this._wwa.playSound(id);
     }
+    private _executeGamePadButtonMacro(): void {
+        this._concatEmptyArgs(2);
+        var buttonID:number = this._parseInt(0);
+        var itemNo: number = this._parseInt(1);
+
+        if (buttonID < 0 || itemNo < 0) {
+            throw new Error("各引数は0以上の整数でなければなりません。");
+        }
+
+        if (itemNo > WWAConsts.ITEMBOX_SIZE) {
+            throw new Error("アイテムボックス上限を超えた数値が指定されました。");
+        }
+        this._wwa.setGamePadButtonItemTable(buttonID, itemNo);
+    }
 }
 
 export function parseMacro(
@@ -627,16 +675,23 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _cgFileName: string;
     private _isVisible: boolean;
     private _isYesno: boolean;
+    private _isSave: boolean;
     private _isItemMenu: boolean;
     private _isInputDisable: boolean;
 
     private _element: HTMLElement;
-    private _msgWrapperElement: HTMLElement;
+    public _msgWrapperElement: HTMLElement;
+    private _dummyElement: HTMLElement;
+    private _saveElement: HTMLElement;
     private _ynWrapperElement: HTMLElement;
 
     private _divYesElement: HTMLElement;
     private _divNoElement: HTMLElement;
     private _parentElement: HTMLElement;
+    private _saveDataList: WWASaveData[] = void 0;
+    private _save_select_id: number = 0;
+    private _save_counter: number = 0;
+    private _save_close: boolean = false;
 
     constructor(
         wwa: WWA,
@@ -675,7 +730,16 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._msgWrapperElement.style.margin = wwa.isClassicMode() ? "8px 0 8px 16px" : "0";
         this._msgWrapperElement.style.padding = wwa.isClassicMode() ? "0" : "7px";
         this._element.appendChild(this._msgWrapperElement);
-
+        this._saveElement = document.createElement("div");
+        this._saveElement.style.padding = "0";
+        this._saveElement.style.margin = "0";
+        this._element.appendChild(this._saveElement);
+        this._dummyElement = document.createElement("div");
+        this._dummyElement.style.display = "none";
+        this._dummyElement.style.padding = "0";
+        this._dummyElement.style.margin = "0";
+        this._dummyElement.style.height = "55px";
+        this._element.appendChild(this._dummyElement);
         this._ynWrapperElement = document.createElement("div");
         this._ynWrapperElement.classList.add("wwa-yesno-wrapper");
         this._element.appendChild(this._ynWrapperElement);
@@ -717,6 +781,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 //スマートフォン用に拡大
                 this._parentElement.classList.add("useScaleUp");
                 break;
+        }
+        this._saveDataList = [];
+        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
+            this._saveDataList[i] = new WWASaveData();
         }
         this.update();
     }
@@ -790,6 +858,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     }
     public isYesNoChoice(): boolean {
         return this._isYesno;
+    }
+    public isSaveChoice(): boolean {
+        return this._isSave;
     }
     public setItemMenuChoice(isItemMenu: boolean): boolean {
         this._isInputDisable = false;
@@ -905,10 +976,208 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
             this._element.style.left = "-999999px";
             this._element.style.top = "-999999px";
         }
+        if (this._isSave) {
+            this._saveElement.style.display = "block";
+        } else {
+            this._saveElement.style.display = "none";
+        }
         this._element.style.width = this._width + "px";
         this._element.style.minHeight = this._height + "px"; // minなのでoverflowしても安心!!!
     }
+
+    createSaveDom(): void {
+        var loadWWAData: WWASaveData;
+        var owner_div, savedata_main_div, ss_div, energy_div, span, energy_icon_div, energy_original_dom, energy_status_value_div, backgroundPositionText, backgroundImageText;
+        owner_div = document.createElement("div");
+        energy_original_dom = document.getElementById("disp-energy");
+        backgroundPositionText = energy_original_dom.style["backgroundPosition"];
+        backgroundImageText = energy_original_dom.style["backgroundImage"];
+        
+        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
+            loadWWAData = this._saveDataList[i];
+
+            savedata_main_div = document.createElement("div");
+            savedata_main_div.classList.add("savedata");
+            savedata_main_div.setAttribute("save_id", i);
+            savedata_main_div.addEventListener("click", (e): void => {
+                this.setSaveID(e.currentTarget.getAttribute("save_id") | 0);
+                this._save_close = true;
+                e.preventDefault();
+            });
+
+            ss_div = document.createElement("div");
+            ss_div.classList.add("ss");
+            savedata_main_div.appendChild(ss_div);
+
+            energy_div = document.createElement("div");
+            energy_div.classList.add("wide-cell-row");
+            energy_div.style["backgroundPosition"] = backgroundPositionText;
+            energy_div.style["backgroundImage"] = backgroundImageText;
+            savedata_main_div.appendChild(energy_div);
+            owner_div.appendChild(savedata_main_div);
+
+
+            if (loadWWAData.flag) {
+                //セーブデータあり
+                ss_div.appendChild(loadWWAData.cvs);
+
+                span = document.createElement("span");
+                span.innerText = loadWWAData.date.toLocaleString();
+                ss_div.appendChild(span);
+
+                energy_icon_div = document.createElement("div");
+                energy_icon_div.classList.add("status-icon");
+                energy_icon_div.style["backgroundImage"] = backgroundImageText;
+                energy_icon_div.style["backgroundPosition"] = "-120px -80px";
+                energy_div.appendChild(energy_icon_div);
+
+                energy_status_value_div = document.createElement("div");
+                energy_status_value_div.classList.add("status-value-box");
+                energy_status_value_div.innerText = loadWWAData.getStatusEnergy();
+                energy_div.appendChild(energy_status_value_div);
+            }
+        }
+        this._saveElement.textContent = "";
+        this._saveElement.appendChild(owner_div);
+        this.setSaveID(this._save_select_id);
+        this._isSave = true;
+        this._save_counter = 0;
+        this._save_close = false;
+    } 
+    // TODO: 5b0cbaa, 7e19570 で入る
+    /*
+    createAbortDom(): void {
+        switch (this._wwa.userDevice.os) {
+            case OS_TYPE.NINTENDO:
+            default:
+                var YbuttonTextDom, YbuttonHeightDom;
+                YbuttonTextDom = document.createElement("div");
+                YbuttonTextDom.style.display = "inline-block";
+                YbuttonTextDom.style.verticalAlign = "middle";
+                YbuttonTextDom.textContent = "Ｙを押してゲーム中断";
+
+                YbuttonHeightDom = document.createElement("div");
+                YbuttonHeightDom.style.display = "inline-block";
+                YbuttonHeightDom.style.height = "100%";
+                YbuttonHeightDom.style.verticalAlign = "middle";
+                this._saveElement.appendChild(YbuttonTextDom);
+                this._saveElement.appendChild(YbuttonHeightDom);
+
+                break;
+        }
+    }
+    selectGameAbort(wwaData: WWAData): void {
+        switch (this._wwa.userDevice.os) {
+            case OS_TYPE.NINTENDO:
+            default:
+                this.deleteSaveDom();
+                var json: object = WWACompress.compress(wwaData);
+                console.log(json);
+                break;
+        }
+    } 
+    */
+    deleteSaveDom(): void {
+        this._saveElement.textContent = "";
+        this._isSave = false;
+    }
+    setSaveID(save_select_id: number): void {
+        this._save_select_id = save_select_id;
+        var domList = document.querySelectorAll(".savedata");
+        var dom;
+        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
+            dom = domList[i];
+            if (save_select_id === i) {
+                dom.classList.add("select");
+            } else {
+                dom.classList.remove("select");
+            }
+
+        }
+    }
+    save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
+        if (!this._saveDataList[this._save_select_id]) {
+            return false;
+        }
+        return this._saveDataList[this._save_select_id].save(gameCvs, _quickSaveData);
+    }
+    load(): WWAData {
+        if (!this._saveDataList[this._save_select_id]) {
+            return null;
+        }
+        return this._saveDataList[this._save_select_id].load();
+    }
+    hasSaveData(): boolean {
+        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
+            if (this._saveDataList[i].flag) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public saveUpdate(): void {
+        if (this._save_counter > 0) {
+            this._save_counter--;
+        }
+    }
+    public isSaveClose(): boolean {
+        return this._save_close;
+    }
+    private cursor_wait() {
+        this._save_counter = WWAConsts.CONTROLL_WAIT_FRAME;
+    }
+    public saveControll(moveDir: Direction): void {
+        if (this._save_counter > 0) {
+            //カーソルリピート待機
+            return;
+        }
+        switch (moveDir) {
+            case Direction.DOWN:
+                this._save_select_id -= 2;
+                this.cursor_wait();
+                break;
+            case Direction.UP:
+                this._save_select_id += 2;
+                this.cursor_wait();
+                break;
+            case Direction.LEFT:
+                this._save_select_id--;
+                this.cursor_wait();
+                break;
+            case Direction.RIGHT:
+                this._save_select_id++;
+                this.cursor_wait();
+                break;
+        }
+        this.setSaveID((this._save_select_id + WWAConsts.QUICK_SAVE_MAX) % WWAConsts.QUICK_SAVE_MAX);
+    }
 }
 
-
-
+export class WWASaveData {
+    flag: boolean = false;
+    date: Date = void 0;
+    cvs: HTMLCanvasElement = void 0;
+    ctx: CanvasRenderingContext2D = void 0;
+    quickSaveData: WWAData = null;
+    constructor() {
+        this.cvs = document.createElement("canvas");
+        this.cvs.width = WWAConsts.QUICK_SAVE_THUMNAIL_WIDTH;
+        this.cvs.height = WWAConsts.QUICK_SAVE_THUMNAIL_HEIGHT;
+        this.ctx = this.cvs.getContext("2d");
+    }
+    save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
+        this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
+        this.ctx.drawImage(gameCvs, 0, 0, gameCvs.width, gameCvs.height, 0, 0, this.cvs.width, this.cvs.height);
+        this.quickSaveData = _quickSaveData;
+        //this.quickSaveData.statusEnergy;//life
+        this.flag = true;
+        this.date = new Date();
+        return true;
+    }
+    getStatusEnergy(): number {
+        return this.flag ? this.quickSaveData.statusEnergy : -1;
+    }
+    load(): WWAData {
+        return this.quickSaveData;
+    }
+}

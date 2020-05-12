@@ -1,5 +1,6 @@
 [build]
   base = "/"
   publish = "packages/engine/lib"
-  command = "npm install && npm run deploy"
+  # npm i の段階で prepareスクリプトが走って production ビルドされるので、できているものをデプロイする
+  command = "npm run bootstrap:netlify && npm run deploy"
   ignore = "git diff --quiet HEAD^ HEAD packages/engine/"

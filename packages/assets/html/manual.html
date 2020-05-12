@@ -53,7 +53,6 @@
       |  +-- 70...98.mp3 - BGMです。アップロードは任意です。
       |
       +-- wwa.js - wwa本体です。本家のWWA.classに相当します。名前はHTML中のscript要素で変更できます。
-      +-- wwaload.js - wwa.jsから起動するマップデータのローダです。名前は「起動するには」で紹介する「data-wwa-loader」属性で変更できます。
       +-- wwa.css - WWAの見栄えを調整するCSSファイルです。アップロードしないと見栄えがかなり大変なことになります。名前はHTML中のlink要素で変更できます。
       +-- wwa_classic.css - wwa.cssのメッセージウィンドウを、WWA原作(Java版)風味に近づけたものです。こちらを指定する場合にはwwa.cssは不要です。
       +-- style.css - ページのWWAの部分以外の見栄えを調整するCSSファイルです。自由に編集してみてください。
@@ -68,7 +67,6 @@
                 <p>
                     <pre><code>&lt;div id=&quot;wwa-wrapper&quot; class=&quot;wwa-size-box&quot;
 &nbsp;&nbsp;data-wwa-mapdata=&quot;caves01.dat&quot;
-&nbsp;&nbsp;data-wwa-loader=&quot;wwaload.js&quot;
 &nbsp;&nbsp;data-wwa-urlgate-enable=&quot;true&quot;&gt;
 &nbsp;&nbsp;data-wwa-title-img=&quot;cover.gif&quot;&gt;
 &lt;/div&gt;</code></pre>
@@ -85,8 +83,6 @@
                 <dl>
                     <dt class="require"><code>data-wwa-mapdata</code>属性</dt>
                     <dd>起動したいマップデータのファイル名を記述します。（例:<code>wwamap.dat</code>）</dd>
-                    <dt class="require"><code>data-wwa-loader</code>属性</dt>
-                    <dd>ローダのファイル名を記述します。通常、<code>wwaload.js</code>から変更する必要はありません。</dd>
                     <dt class="require"><code>data-wwa-urlgate-enable</code>属性</dt>
                     <dd>通常は<code>true</code>を指定してください。falseを指定するとURLゲートが無効になります。</dd>
                     <dt><code>data-wwa-title-img</code>属性</dt>
@@ -103,6 +99,9 @@
                     <dt><code>data-wwa-use-go-to-wwa</code>属性</dt>
                     <dd><code>true</code>を指定すると、現在戦闘予測ボタン「Battle Report」が WWA公式サイトへの移動ボタン「GoTo WWA」（v3.1系以下やJava版WWAでのボタン）でに変更できます。
                     指定しなかった場合は<code>false</code>になります。</dd>
+                    <dt><code>data-wwa-looking-around</code>属性</dt>
+                    <dd><code>false</code>を指定すると、ゲーム開始時やジャンプゲートのジャンプ後の無操作時にプレイヤーが回転しなくなります。
+                    指定しなかった場合は<code>true</code>になります。</dd>
                 </dl>
             </section>
 
@@ -129,6 +128,19 @@
             <section>
                 <h2>更新情報</h2>
                 <section>
+                    <h3>v3.3.0からv3.3.1への変更点</h3>
+                    <ul>
+                        <li>F8 キー で WWA の公式サイトを開く機能が使えなくなっていたのを修正</li>
+                        <li>ヘルプの見出しにある「ショートカットキーの一覧」を「操作方法」に変更</li>
+                    </ul>
+                    <h3>v3.2.11からv3.3.0への変更点</h3>
+                    <ul>
+                        <li>Quick Saveによるセーブ枠を1つから4つに変更</li>
+                        <li>戦闘終了後のメッセージ表示までに使用型アイテムのマクロのイベントが割り込める不具合の修正</li>
+                        <li>ゲームパッドのボタン 2 を押した時にヘルプを表示する機能を実装</li>
+                        <li>戦闘時にゲームパッドが振動する機能を実装</li>
+                        <li>ゲームパッドのボタンと、アイテムボックスの特定の枠を割り当てるマクロ<code>$gamepad_button</code>の追加</li>
+                    </ul>
                     <h3>v3.2.10からv3.2.11への変更点</h3>
                     <ul>
                         <li><code>$color</code>マクロで背景色が変わらない問題を修正</li>
@@ -334,9 +346,9 @@
                 OSは不問です。
                 <ul>
                     <li>Microsoft Internet Explorer 11</li>
-                    <li>Microsoft Edge (最新版)</li>
+                    <li>Microsoft Edge (EdgeHTML 18) ※Microsoft社から、Chromium版Edgeへの自動アップデートが提供され次第サポート終了予定</li>
                     <li>Mozilla Firefox (最新版)</li>
-                    <li>Google Chrome/Chromium (最新版)</li>
+                    <li>Google Chrome/Chromium (最新版) ※Microsoft Edgeの最新版を含む</li>
                     <li>Safari (最新版)</li>
                 </ul>
                 <h3>スマートフォン・タブレット</h3>
@@ -346,22 +358,6 @@
                 </ul>
             </section>
             
-            <section>
-                <h2>次回予定</h2>
-                <p>本家実装が一段落したので、もう少し考えてみることにします。</p>
-                <section>
-                    <h3>遠くない未来に更新予定</h3>
-                    <ul>
-                        <li>SuperQuickSave(仮)</li>
-                        <li>超高速戦闘</li>
-                        <li>スコア表示Twitter連携機能</li>
-                        <li>スマートフォン・タブレット向けゲームパッド</li>
-                        <li>スマートフォン・タブレット向けviewport設定</li>
-                        <li>その他、提案された多数の新機能</li>
-                    </ul>
-                </section>
-            </section>
-
             <footer>
                 <h2>ライセンス情報</h2>
                 <p>WWA Wingのソースコードの使用の制限については<a href="./LICENSE">MIT License</a>とします。</p>
@@ -372,7 +368,7 @@
                 <p><a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja"><img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />
                 また、このマニュアルについては <a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja">クリエイティブ・コモンズ 表示 4.0 国際 ライセンスの下に提供されています。</a></p>
                 <p> Internet RPG &quot;<a href="http://www.wwajp.com">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
-                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2019 WWA Wing Team</p>
+                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2020 WWA Wing Team</p>
             </footer>
         </section>
     </div>
