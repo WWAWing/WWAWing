@@ -172,7 +172,6 @@ export class MouseStore {
     private _prevMouseStateOnControllable: boolean;
     private _inputDir: Direction;
     private _touchID: number;
-    private _isDirUpdate: boolean;
 
 
     public checkClickMouse(dir?: Direction): boolean {

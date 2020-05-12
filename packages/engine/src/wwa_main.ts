@@ -209,7 +209,7 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-        
+
         if (titleImgName === null) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
@@ -218,7 +218,7 @@ export class WWA {
         } else {
             this._hasTitleImg = true;
         }
-        
+
         try {
             if (this._hasTitleImg) {
                 util.$id("version").textContent = "WWA Wing Ver." + VERSION_WWAJS;
@@ -389,7 +389,7 @@ export class WWA {
 
             var t_end: number = new Date().getTime();
             console.log("Loading Complete!" + (t_end - t_start) + "ms");
-            
+
             this._cvs = <HTMLCanvasElement>util.$id("wwa-map");
             this._cvsSub = <HTMLCanvasElement>util.$id("wwa-map-sub");
             var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d");
@@ -433,8 +433,8 @@ export class WWA {
                 this._wwaSave.setAutoSaveInterval(Number(autosaveString) | 0);
             }
             */
-            const liikingAroundString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
-            this._useLookingAround = !((liikingAroundString) && (liikingAroundString.match(/false/i)));
+            const lookingAroundString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
+            this._useLookingAround = !((lookingAroundString) && (lookingAroundString.match(/false/i)));
 
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
@@ -570,38 +570,51 @@ export class WWA {
                         e.preventDefault();
                         return;
                     }
-                    var mousePos = util.$localPos(e.clientX, e.clientY);
-                    var playerPos = this._player.getDrawingCenterPosition();
-                    var dist = mousePos.substract(playerPos);
-                    var dx = Math.abs(dist.x);
-                    var dy = Math.abs(dist.y);
-                    var dir: Direction;
-                    var sideFlag = false;
+                    // TODO: タッチ入力と似たようなコードになっているので統合する
+                    const clickingPosition = util.$localPos(e.clientX, e.clientY);
+                    const playerPosition = this._player.getDrawingCenterPosition();
+                    const dist = clickingPosition.substract(playerPosition);
+                    const dx = Math.abs(dist.x);
+                    const dy = Math.abs(dist.y);
+                    let dir: Direction;
+                    let isPlayerInScreenEdge = false;
+                    /*
+                      プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
+                      に、画面外にプレイヤーを動かすことを可能にする細かい処理
+
+                      4辺(4隅以外)のマスについて:
+                      プレイヤーが4辺のいずれかのマスにいる場合に、プレイヤーと同じマスをクリックした場合は下記のような挙動をします。
+                      プレイヤーが左の辺にいる => 左の画面へ移動, 上の辺 => 上の画面へ移動, 下の辺 => 下の画面へ移動, 右の辺 => 右の辺へ移動
+
+                      4隅の場合について:
+                      プレイヤーが画面四隅のいずれかマスにいる場合に、プレイヤーと同じマスをクリックした場合は下記のような挙動をします。
+                      (上下方向の方が左右方向より優先されます。)
+                      プレイヤーが左上にいる => 上に移動, 左下 => 下に移動, 右上 => 上に移動, 右下 => 下に移動
+                    */
                     if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
-                        //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
-                        switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
+                        switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
                             case 0:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.LEFT;
                                 break;
                             case Consts.H_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.RIGHT;
                                 break;
                         }
-                        switch ((playerPos.y / Consts.CHIP_SIZE | 0)) {
+                        switch ((playerPosition.y / Consts.CHIP_SIZE | 0)) {
                             case 0:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.UP;
                                 break;
                             case Consts.V_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.DOWN;
                                 break;
                         }
 
                     }
-                    if (!sideFlag) {
+                    if (!isPlayerInScreenEdge) {
                         if (dist.y > 0 && dy > dx) {
                             dir = Direction.DOWN;
                         } else if (dist.y < 0 && dy > dx) {
@@ -612,7 +625,7 @@ export class WWA {
                             dir = Direction.LEFT;
                         }
                     }
-                    this._mouseStore.setPressInfo(dir,0);
+                    this._mouseStore.setPressInfo(dir, 0);
                     //e.preventDefault();//無効にするとクリック時にWWAにフォーカスされなくなる
                 }
             });
@@ -661,32 +674,45 @@ export class WWA {
                         const dx = Math.abs(dist.x);
                         const dy = Math.abs(dist.y);
                         let dir: Direction;
-                        let sideFlag = false;
+                        let isPlayerInScreenEdge = false;
+                        /*
+                          プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
+                          に、画面外にプレイヤーを動かすことを可能にする細かい処理
+
+                          4辺(4隅以外)のマスについて:
+                          プレイヤーが4辺のいずれかのマスにいる場合に、プレイヤーと同じマスをタッチした場合は下記のような挙動をします。
+                          プレイヤーが左の辺にいる => 左の画面へ移動, 上の辺 => 上の画面へ移動, 下の辺 => 下の画面へ移動, 右の辺 => 右の辺へ移動
+
+                          4隅の場合について:
+                          プレイヤーが画面四隅のいずれかマスにいる場合に、プレイヤーと同じマスをタッチした場合は下記のような挙動をします。
+                          (上下方向の方が左右方向より優先されます。)
+                          プレイヤーが左上にいる => 上に移動, 左下 => 下に移動, 右上 => 上に移動, 右下 => 下に移動
+                        */
                         if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
-                            //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
                             switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
                                 case 0:
-                                    sideFlag = true;
+                                    isPlayerInScreenEdge = true;
                                     dir = Direction.LEFT;
-                                    break;
+                                    break; 
                                 case Consts.H_PARTS_NUM_IN_WINDOW - 1:
-                                    sideFlag = true;
+                                    isPlayerInScreenEdge = true;
                                     dir = Direction.RIGHT;
                                     break;
                             }
                             switch ((playerPosition.y / Consts.CHIP_SIZE | 0)) {
                                 case 0:
-                                    sideFlag = true;
+                                    isPlayerInScreenEdge = true;
                                     dir = Direction.UP;
                                     break;
                                 case Consts.V_PARTS_NUM_IN_WINDOW - 1:
-                                    sideFlag = true;
+                                    isPlayerInScreenEdge = true;
                                     dir = Direction.DOWN;
                                     break;
                             }
 
                         }
-                        if (!sideFlag) {
+                        // 画面端4辺でない普通の場合
+                        if (!isPlayerInScreenEdge) {
                             if (dist.y > 0 && dy > dx) {
                                 dir = Direction.DOWN;
                             } else if (dist.y < 0 && dy > dx) {
@@ -4060,8 +4086,8 @@ export class WWA {
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                             break;
-		                default:
-		                    return;
+                        default:
+                            return;
                     }
                     break;
                 case DEVICE_TYPE.SP:
