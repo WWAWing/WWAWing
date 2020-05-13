@@ -4313,30 +4313,31 @@ export class WWA {
         const x = coord.x * Consts.CHIP_SIZE;
         const y = coord.y * Consts.CHIP_SIZE;
 
+        const setBackgroundIconNode = (elementId: string) => {
+            const iconNode = util.$qsh(elementId);
+            iconNode.style.backgroundPosition = `-${x}px -${y}px`;
+        };
+
         switch (type) {
             case MacroImgFrameIndex.ENERGY:
                 this._wwaData.imgStatusEnergyX = coord.x;
                 this._wwaData.imgStatusEnergyY = coord.y;
-                var iconNode_energy = util.$qsh("#disp-energy>.status-icon");
-                iconNode_energy.style.backgroundPosition = "-" + x + "px -" + y + "px";
+                setBackgroundIconNode("#disp-energy>.status-icon");
                 break;
             case MacroImgFrameIndex.STRENGTH:
                 this._wwaData.imgStatusStrengthX = coord.x;
                 this._wwaData.imgStatusStrengthY = coord.y;
-                var iconNode_strength = util.$qsh("#disp-strength>.status-icon");
-                iconNode_strength.style.backgroundPosition = "-" + x + "px -" + y + "px";
+                setBackgroundIconNode("#disp-strength>.status-icon");
                 break;
             case MacroImgFrameIndex.DEFENCE:
                 this._wwaData.imgStatusDefenceX = coord.x;
                 this._wwaData.imgStatusDefenceY = coord.y;
-                var iconNode_defence = util.$qsh("#disp-defence>.status-icon");
-                iconNode_defence.style.backgroundPosition = "-" + x + "px -" + y + "px";
+                setBackgroundIconNode("#disp-defence>.status-icon");
                 break;
             case MacroImgFrameIndex.GOLD:
                 this._wwaData.imgStatusGoldX = coord.x;
                 this._wwaData.imgStatusGoldY = coord.y;
-                var iconNode_gold = util.$qsh("#disp-gold>.status-icon");
-                iconNode_gold.style.backgroundPosition = "-" + x + "px -" + y + "px";
+                setBackgroundIconNode("#disp-gold>.status-icon");
                 break;
             default:
                 throw new Error("種別が不正です。");
