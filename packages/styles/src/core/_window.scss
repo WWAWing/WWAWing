@@ -156,21 +156,12 @@ div.savedata {
     }
     > div.wide-cell-row {
         // TODO: _sidebar にいる %wide-cell と共通化できる部分を共通化したい
-        padding: 10px 0 0 0;
-        margin: 0px;
-        border: 0px;
-        width: 120px;
-        height: 25px;
-        font-size: 14px;
+        @extend %wide_cell;
         position: relative;
         pointer-events: none;
+
         > div.status-icon {
-            // TODO: _sidebar にいる %item_cell をどこからでも使える場所において、それを使うようにする。
-            // @extend %item_cell; // ここから
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            // ここまで
+            @extend %item_cell;
 
             top: 0;
             left: 6px; // $wwa_status_x_offset
