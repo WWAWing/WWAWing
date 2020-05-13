@@ -4314,7 +4314,7 @@ export class WWA {
         const y = coord.y * Consts.CHIP_SIZE;
 
         const setBackgroundIconNode = (elementId: string) => {
-            const iconNode = util.$qsh(elementId);
+            const iconNode = util.$qsh(`${elementId}>.status-icon`);
             iconNode.style.backgroundPosition = `-${x}px -${y}px`;
         };
 
@@ -4322,22 +4322,22 @@ export class WWA {
             case MacroImgFrameIndex.ENERGY:
                 this._wwaData.imgStatusEnergyX = coord.x;
                 this._wwaData.imgStatusEnergyY = coord.y;
-                setBackgroundIconNode("#disp-energy>.status-icon");
+                setBackgroundIconNode("#disp-energy");
                 break;
             case MacroImgFrameIndex.STRENGTH:
                 this._wwaData.imgStatusStrengthX = coord.x;
                 this._wwaData.imgStatusStrengthY = coord.y;
-                setBackgroundIconNode("#disp-strength>.status-icon");
+                setBackgroundIconNode("#disp-strength");
                 break;
             case MacroImgFrameIndex.DEFENCE:
                 this._wwaData.imgStatusDefenceX = coord.x;
                 this._wwaData.imgStatusDefenceY = coord.y;
-                setBackgroundIconNode("#disp-defence>.status-icon");
+                setBackgroundIconNode("#disp-defence");
                 break;
             case MacroImgFrameIndex.GOLD:
                 this._wwaData.imgStatusGoldX = coord.x;
                 this._wwaData.imgStatusGoldY = coord.y;
-                setBackgroundIconNode("#disp-gold>.status-icon");
+                setBackgroundIconNode("#disp-gold");
                 break;
             default:
                 throw new Error("種別が不正です。");
