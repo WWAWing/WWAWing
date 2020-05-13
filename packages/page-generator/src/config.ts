@@ -6,6 +6,7 @@ import * as _ from "lodash";
 
 interface WWAConfigWithDefaults {
     urlGateEnable: boolean;
+    classicModeEnable: boolean;
     resources: {
         mapdata: string;
         audio: {
@@ -53,6 +54,7 @@ export type WWAPageConfigForRendering = WWAPageConfigWithDefaults & {
 // @see https://github.com/bcherny/json-schema-to-typescript
 export interface WWAConfig {
     urlgateEnable?: boolean;
+    classicModeEnable?: boolean;
     resources?: {
         mapdata: string;
         audio?: {
@@ -95,6 +97,7 @@ const schema = {
                 wwa: {
                     properties: {
                         urlgateEnable: { type: "boolean" },
+                        classicModeEnable: { type: "boolean" },
                         resources: {
                             properties: {
                                 mapdata: { type: "string" },
@@ -159,6 +162,7 @@ function getDefaultConfig(): WWAPageConfigWithDefaults {
             ],
             wwa: {
                 urlGateEnable: true,
+                classicModeEnable: false,
                 resources: {
                     mapdata: "mapdata.dat",
                     audio: {

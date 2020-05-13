@@ -16,9 +16,12 @@ page:
   # 各項目無指定はデフォルトになります
   # ただし、マップデータは必須です
   wwa:
-    # URLゲートを有効にする場合は true, しない場合はfalseを指定します
+    # URLゲートを有効にする場合は true, しない場合は false を指定します
     urlgateEnable: true
-    
+
+    # クラシックモードを有効にする場合は true, しなければ false を指定します
+    classicMode: false
+
     resources:
       # マップデータの場所を指定します
       mapdata: "mapdata.dat"

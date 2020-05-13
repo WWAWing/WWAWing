@@ -11,6 +11,7 @@ interface IndexPageOption {
         maps: {
             fileName: string;
             title: string;
+            classicModeEnable?: boolean;
         }[];
         thisYear: number;
     }
@@ -54,7 +55,8 @@ function createConfig(mapdata: string): WWAPageConfig {
                     wwaJs: isDev ? "wwa.long.js" : "wwa.js",
                     titleImg: "cover.gif",
                 },
-                urlgateEnable: true
+                urlgateEnable: true,
+                classicModeEnable: false
             },
             copyrights: getDefaultCopyrights()
         }

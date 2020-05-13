@@ -1,6 +1,7 @@
 export default [
     { fileName: "test", title: "テストマップ" },
     { fileName: "wwamap", title: "Standard Map" },
+    { fileName: "wwamap", title: "Standard Map (Classic Mode)", classicModeEnable: true },
     { fileName: "island02", title: "Fantasy Island" },
     { fileName: "caves01", title: "Cave Dungeon I" },
     { fileName: "caves02", title: "Cave Dungeon II" },
