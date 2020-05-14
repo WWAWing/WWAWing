@@ -6,7 +6,7 @@ import {
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, WWAButtonTexts
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, WWAButtonTexts, MacroImgFrameIndex
 } from "./wwa_data";
 
 import {
@@ -105,8 +105,6 @@ export class WWA {
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
     private _lastMessage: MessageInfo;
-    private _frameCoord: Coord;
-    private _battleEffectCoord: Coord;
 
     private _audioInstances: WWAAudio[];
 
@@ -133,13 +131,6 @@ export class WWA {
     private _useSuspend: boolean = false;
 
     private _isActive: boolean;
-
-    /**
-     *   $imgframe で変更可能なアイテムボックスの画像位置（チップ単位）
-     *   TODO: 将来はセーブデータに含まれるようになるので、 WWADataに移す。
-     *   @see https://github.com/WWAWing/WWAWing/issues/156
-     */
-    private _itemboxBackgroundPos : {x: number, y: number};
 
     /**
      * 背景パーツ番号として添字を与えると
@@ -312,10 +303,6 @@ export class WWA {
         this._loadHandler = (wwaData: WWAData): void => {
             this._wwaData = wwaData;
             this._wwaData.isItemEffectEnabled = itemEffectEnabled;
-            this._itemboxBackgroundPos = {
-                x: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_X,
-                y: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_Y
-            };
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -348,11 +335,19 @@ export class WWA {
             });
 
             var escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
+            /**
+             * Node に対して background-color を設定します。
+             *     主に操作パネルの各部位に背景画像を割り当てる際に使用します。
+             * @param node 
+             */
+            const applyBackground = (node: HTMLElement) => {
+                node.style.backgroundImage = "url(" + escapedFilename + ")";
+            };
             Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
                 node.style.backgroundPosition = `-${
-                    this._itemboxBackgroundPos.x * Consts.CHIP_SIZE
+                    this._wwaData.imgItemboxX * Consts.CHIP_SIZE
                 }px -${
-                    this._itemboxBackgroundPos.y * Consts.CHIP_SIZE
+                    this._wwaData.imgItemboxY * Consts.CHIP_SIZE
                 }px`;
                 node.style.backgroundImage = "url(" + escapedFilename + ")";
             });
@@ -366,21 +361,20 @@ export class WWA {
                 node.style.display = "none";
                 node.style.cursor = "pointer";
             });
-            Array.prototype.forEach.call(util.$qsAll(".item-cell>.item-disp"), (node: HTMLElement) => {
-                node.style.backgroundImage = "url(" + escapedFilename + ")";
-            });
-            var iconNode_energy: HTMLElement = util.$qsh("#disp-energy>.status-icon");
-            iconNode_energy.style.backgroundPosition = "-120px -80px";
-            iconNode_energy.style.backgroundImage = "url(" + escapedFilename + ")";
-            var iconNode_strength = util.$qsh("#disp-strength>.status-icon");
-            iconNode_strength.style.backgroundPosition = "-160px -80px";
-            iconNode_strength.style.backgroundImage = "url(" + escapedFilename + ")";
-            var iconNode_defence = util.$qsh("#disp-defence>.status-icon");
-            iconNode_defence.style.backgroundPosition = "-200px -80px";
-            iconNode_defence.style.backgroundImage = "url(" + escapedFilename + ")";
-            var iconNode_gold = util.$qsh("#disp-gold>.status-icon");
-            iconNode_gold.style.backgroundPosition = "-240px -80px";
-            iconNode_gold.style.backgroundImage = "url(" + escapedFilename + ")";
+            Array.prototype.forEach.call(util.$qsAll(".item-cell>.item-disp"), applyBackground);
+            Array.prototype.forEach.call(util.$qsAll("div.wide-cell-row>.status-icon"), applyBackground);
+            this.setStatusIconCoord(MacroImgFrameIndex.ENERGY,
+                new Coord(this._wwaData.imgStatusEnergyX, this._wwaData.imgStatusEnergyY)
+            );
+            this.setStatusIconCoord(MacroImgFrameIndex.STRENGTH,
+                new Coord(this._wwaData.imgStatusStrengthX, this._wwaData.imgStatusStrengthY)
+            );
+            this.setStatusIconCoord(MacroImgFrameIndex.DEFENCE,
+                new Coord(this._wwaData.imgStatusDefenceX, this._wwaData.imgStatusDefenceY)
+            );
+            this.setStatusIconCoord(MacroImgFrameIndex.GOLD,
+                new Coord(this._wwaData.imgStatusGoldX, this._wwaData.imgStatusGoldY)
+            );
 
             this._setProgressBar(getProgress(1, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 3);
@@ -775,8 +769,7 @@ export class WWA {
 
             });
 
-            this._frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
-            this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);
+            const frameCoord = new Coord(this._wwaData.imgFrameX, this._wwaData.imgFrameY);
 
             this._battleEstimateWindow = new BattleEstimateWindow(
                 this, this._wwaData.mapCGName, util.$id("wwa-wrapper"));
@@ -811,7 +804,7 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, (): void => {
+            this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, frameCoord, (): void => {
                 this._isSkippedSoundMessage = true;
                 const setGameStartingMessageWhenPcOrSP = () => {
                     switch (this.userDevice.device) {
@@ -1954,7 +1947,7 @@ export class WWA {
             targetY = this._player.isTurn() ? this._monster.position.y : ppos.y;
 
             this._cgManager.drawCanvas(
-                this._battleEffectCoord.x, this._battleEffectCoord.y,
+                this._wwaData.imgBattleEffectX, this._wwaData.imgBattleEffectY,
                 Consts.CHIP_SIZE * (targetX - cpParts.x) - cpOffset.x,
                 Consts.CHIP_SIZE * (targetY - cpParts.y) - cpOffset.y,
                 false);
@@ -2564,8 +2557,8 @@ export class WWA {
                 this._wwaData.isItemEffectEnabled ? {
                     screenPixelCoord: new Coord(screenXPixel, screenYPixel),
                     itemBoxBackgroundImageCoord: new Coord(
-                        this._itemboxBackgroundPos.x * Consts.CHIP_SIZE,
-                        this._itemboxBackgroundPos.y * Consts.CHIP_SIZE
+                        this._wwaData.imgItemboxX * Consts.CHIP_SIZE,
+                        this._wwaData.imgItemboxY * Consts.CHIP_SIZE
                     )
                 } : undefined
             );
@@ -2748,8 +2741,8 @@ export class WWA {
                                         this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM], 0, false, this._wwaData.isItemEffectEnabled ? {
                                             screenPixelCoord: new Coord(screenXPixel, screenYPixel),
                                             itemBoxBackgroundImageCoord: new Coord(
-                                                this._itemboxBackgroundPos.x * Consts.CHIP_SIZE,
-                                                this._itemboxBackgroundPos.y * Consts.CHIP_SIZE
+                                                this._wwaData.imgItemboxX * Consts.CHIP_SIZE,
+                                                this._wwaData.imgItemboxY * Consts.CHIP_SIZE
                                             )
                                         } : undefined
                                     );
@@ -3577,6 +3570,13 @@ export class WWA {
         this._wwaData = newData;
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
+        this.setStatusIconCoord(MacroImgFrameIndex.ENERGY, new Coord(newData.imgStatusEnergyX, newData.imgStatusEnergyY));
+        this.setStatusIconCoord(MacroImgFrameIndex.STRENGTH, new Coord(newData.imgStatusStrengthX, newData.imgStatusStrengthY));
+        this.setStatusIconCoord(MacroImgFrameIndex.DEFENCE, new Coord(newData.imgStatusDefenceX, newData.imgStatusDefenceY));
+        this.setStatusIconCoord(MacroImgFrameIndex.GOLD, new Coord(newData.imgStatusGoldX, newData.imgStatusGoldY));
+        this.setWideCellCoord(new Coord(newData.imgWideCellX, newData.imgWideCellY));
+        this.setItemboxBackgroundPosition({ x: newData.imgItemboxX, y: newData.imgItemboxY });
+        this.setFrameCoord(new Coord(newData.imgFrameX, newData.imgFrameY));
         this.updateCSSRule();
     }
     private _mapIDTableCreate(): void {
@@ -4379,12 +4379,75 @@ export class WWA {
         }
     }
 
+    /**
+     * ステータス画像のアイコンを設定します。
+     * @param type 種別
+     * @param coord 変更するアイコンのイメージ画像内の座標 (マス単位)
+     * @throws 種別が 生命力 ～ 所持金 の範囲を外した場合
+     */
+    public setStatusIconCoord(type: MacroImgFrameIndex, coord: Coord): Coord {
+        const x = coord.x * Consts.CHIP_SIZE;
+        const y = coord.y * Consts.CHIP_SIZE;
+
+        const setBackgroundIconNode = (elementId: string) => {
+            const iconNode = util.$qsh(`${elementId}>.status-icon`);
+            iconNode.style.backgroundPosition = `-${x}px -${y}px`;
+        };
+
+        switch (type) {
+            case MacroImgFrameIndex.ENERGY:
+                this._wwaData.imgStatusEnergyX = coord.x;
+                this._wwaData.imgStatusEnergyY = coord.y;
+                setBackgroundIconNode("#disp-energy");
+                break;
+            case MacroImgFrameIndex.STRENGTH:
+                this._wwaData.imgStatusStrengthX = coord.x;
+                this._wwaData.imgStatusStrengthY = coord.y;
+                setBackgroundIconNode("#disp-strength");
+                break;
+            case MacroImgFrameIndex.DEFENCE:
+                this._wwaData.imgStatusDefenceX = coord.x;
+                this._wwaData.imgStatusDefenceY = coord.y;
+                setBackgroundIconNode("#disp-defence");
+                break;
+            case MacroImgFrameIndex.GOLD:
+                this._wwaData.imgStatusGoldX = coord.x;
+                this._wwaData.imgStatusGoldY = coord.y;
+                setBackgroundIconNode("#disp-gold");
+                break;
+            default:
+                throw new Error("種別が不正です。");
+        }
+        return coord.clone();
+    }
+
+    /**
+     * 操作パネルのステータスやボタンの背景画像を変更します。
+     * @param coord 変更する背景画像左部分のイメージ画像内の座標 (マス単位)
+     */
+    public setWideCellCoord(coord: Coord): Coord {
+        this._wwaData.imgWideCellX = coord.x;
+        this._wwaData.imgWideCellY = coord.y;
+
+        const x = coord.x * Consts.CHIP_SIZE;
+        const y = coord.y * Consts.CHIP_SIZE;
+        Array.prototype.forEach.call(util.$qsAll("div.wide-cell-row"), (node: HTMLElement) => {
+            node.style.backgroundPosition = "-" + x + "px -" + y + "px";
+        });
+        return coord.clone();
+    }
+
     public setFrameCoord(coord: Coord): Coord {
-        return this._frameCoord = coord.clone();
+        this._wwaData.imgFrameX = coord.x;
+        this._wwaData.imgFrameY = coord.y;
+        this._cgManager.setFrameImage(coord);
+        return coord.clone();
     }
 
     public setBattleEffectCoord(coord: Coord): Coord {
-        return this._battleEffectCoord = coord.clone();
+        this._wwaData.imgBattleEffectX = coord.x;
+        this._wwaData.imgBattleEffectY = coord.y;
+        return coord.clone();
     }
 
     public canInput(): boolean {
@@ -4520,7 +4583,8 @@ font-weight: bold;
      * @param pos 置き換えるアイテムボックスの背景の画像の、WWAで利用している画像内における位置
      */
     public setItemboxBackgroundPosition(pos: { x: number, y: number}): void {
-        this._itemboxBackgroundPos = pos;
+        this._wwaData.imgItemboxX = pos.x;
+        this._wwaData.imgItemboxY = pos.y;
         Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
             node.style.backgroundPosition = `-${pos.x * Consts.CHIP_SIZE}px -${pos.y * Consts.CHIP_SIZE}px`;
         });

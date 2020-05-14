@@ -84,6 +84,23 @@ export class TextLoader {
     wwaData.bgm = 0;
     wwaData.effectCoords = [];
     wwaData.effectWaits = 0;
+
+    wwaData.imgStatusEnergyX = WWAConsts.IMGPOS_DEFAULT_STATUS_X + WWAConsts.IMGRELPOS_ENERGY_ICON_X;
+    wwaData.imgStatusEnergyY = WWAConsts.IMGPOS_DEFAULT_STATUS_Y;
+    wwaData.imgStatusStrengthX = WWAConsts.IMGPOS_DEFAULT_STATUS_X + WWAConsts.IMGRELPOS_STRENGTH_ICON_X;
+    wwaData.imgStatusStrengthY = WWAConsts.IMGPOS_DEFAULT_STATUS_Y;
+    wwaData.imgStatusDefenceX = WWAConsts.IMGPOS_DEFAULT_STATUS_X + WWAConsts.IMGRELPOS_DEFENCE_ICON_X;
+    wwaData.imgStatusDefenceY = WWAConsts.IMGPOS_DEFAULT_STATUS_Y;
+    wwaData.imgStatusGoldX = WWAConsts.IMGPOS_DEFAULT_STATUS_X + WWAConsts.IMGRELPOS_GOLD_ICON_X;
+    wwaData.imgStatusGoldY = WWAConsts.IMGPOS_DEFAULT_STATUS_Y;
+    wwaData.imgWideCellX = WWAConsts.IMGPOS_DEFAULT_WIDE_CELL_X;
+    wwaData.imgWideCellY = WWAConsts.IMGPOS_DEFAULT_WIDE_CELL_Y;
+    wwaData.imgItemboxX = WWAConsts.IMGPOS_DEFAULT_ITEMBOX_X;
+    wwaData.imgItemboxY = WWAConsts.IMGPOS_DEFAULT_ITEMBOX_Y;
+    wwaData.imgFrameX = WWAConsts.IMGPOS_DEFAULT_FRAME_X;
+    wwaData.imgFrameY = WWAConsts.IMGPOS_DEFAULT_FRAME_Y;
+    wwaData.imgBattleEffectX = WWAConsts.IMGPOS_DEFAULT_BATTLE_EFFECT_X;
+    wwaData.imgBattleEffectY = WWAConsts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y;
     wwaData.imgClickX = 0;
     wwaData.imgClickY = 0;
 
