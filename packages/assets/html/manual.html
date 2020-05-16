@@ -53,7 +53,6 @@
       |  +-- 70...98.mp3 - BGMです。アップロードは任意です。
       |
       +-- wwa.js - wwa本体です。本家のWWA.classに相当します。名前はHTML中のscript要素で変更できます。
-      +-- wwaload.js - wwa.jsから起動するマップデータのローダです。名前は「起動するには」で紹介する「data-wwa-loader」属性で変更できます。
       +-- wwa.css - WWAの見栄えを調整するCSSファイルです。アップロードしないと見栄えがかなり大変なことになります。名前はHTML中のlink要素で変更できます。
       +-- wwa_classic.css - wwa.cssのメッセージウィンドウを、WWA原作(Java版)風味に近づけたものです。こちらを指定する場合にはwwa.cssは不要です。
       +-- style.css - ページのWWAの部分以外の見栄えを調整するCSSファイルです。自由に編集してみてください。
@@ -68,7 +67,6 @@
                 <p>
                     <pre><code>&lt;div id=&quot;wwa-wrapper&quot; class=&quot;wwa-size-box&quot;
 &nbsp;&nbsp;data-wwa-mapdata=&quot;caves01.dat&quot;
-&nbsp;&nbsp;data-wwa-loader=&quot;wwaload.js&quot;
 &nbsp;&nbsp;data-wwa-urlgate-enable=&quot;true&quot;&gt;
 &nbsp;&nbsp;data-wwa-title-img=&quot;cover.gif&quot;&gt;
 &lt;/div&gt;</code></pre>
@@ -85,8 +83,6 @@
                 <dl>
                     <dt class="require"><code>data-wwa-mapdata</code>属性</dt>
                     <dd>起動したいマップデータのファイル名を記述します。（例:<code>wwamap.dat</code>）</dd>
-                    <dt class="require"><code>data-wwa-loader</code>属性</dt>
-                    <dd>ローダのファイル名を記述します。通常、<code>wwaload.js</code>から変更する必要はありません。</dd>
                     <dt class="require"><code>data-wwa-urlgate-enable</code>属性</dt>
                     <dd>通常は<code>true</code>を指定してください。falseを指定するとURLゲートが無効になります。</dd>
                     <dt><code>data-wwa-title-img</code>属性</dt>
@@ -103,6 +99,9 @@
                     <dt><code>data-wwa-use-go-to-wwa</code>属性</dt>
                     <dd><code>true</code>を指定すると、現在戦闘予測ボタン「Battle Report」が WWA公式サイトへの移動ボタン「GoTo WWA」（v3.1系以下やJava版WWAでのボタン）でに変更できます。
                     指定しなかった場合は<code>false</code>になります。</dd>
+                    <dt><code>data-wwa-looking-around</code>属性</dt>
+                    <dd><code>false</code>を指定すると、ゲーム開始時やジャンプゲートのジャンプ後の無操作時にプレイヤーが回転しなくなります。
+                    指定しなかった場合は<code>true</code>になります。</dd>
                 </dl>
             </section>
 
@@ -129,6 +128,19 @@
             <section>
                 <h2>更新情報</h2>
                 <section>
+                    <h3>v3.3.1からv3.4.1への変更点</h3>
+                    <p class="important">wwaload.js と data-wwa-loader 属性は廃止され、機能は wwa.js 内に統合されました。</p>
+                    <p class="important">v3.4.1以降にアップデート後、wwaload.js と HTML中のdata-wwa-loader 属性は放っておいても動作に支障はありませんし、消してしまっても問題ありません。</p>
+                    <ul>
+                        <li>プレイヤーの方向変更機能を追加: キーボード Esc/N/Shift のいずれか + 方向キー / ゲームパッド のボタン 0 + 方向キーで、移動せずにプレイヤーの向きを変えることができます。</li>
+                        <li><code>data-wwa-looking-around</code>属性を追加。<code>false</code>を与えることで無操作時にプレイヤーが回る仕様を回避することができます。</li>
+                        <li>マクロ<code>$imgframe</code>, <code>$imgbom</code>で指定された「枠」「ステータスアイコン」「戦闘エフェクト」の画像指定がセーブデータに保存されるように変更。</li>
+                        <li>wwaload.js を廃止し、機能を wwa.js へ統合。</li>
+                        <li>ヘルプ画面にプレイ時間を追加</li>
+                        <li>スマートフォン環境で、サウンド自動読み込み設定のマップデータの場合に「ゲームを開始します。」の表記を復活。</li>
+                        <li>存在しない効果音が指定されているパーツに触れた後にBGMが変更された場合にBGMが2重に再生される不具合を修正。</li>
+                        <li>当初 v3.4.0 として配布予定でしたが、マニュアルに不備が見つかったため 修正したバージョンを v3.4.1 として配布します。</li>
+                    </ul>
                     <h3>v3.3.0からv3.3.1への変更点</h3>
                     <ul>
                         <li>F8 キー で WWA の公式サイトを開く機能が使えなくなっていたのを修正</li>

@@ -683,21 +683,9 @@ export class WWAConsts {
     static IMGRELPOS_YESNO_YESP_X: number = 2;
     static IMGRELPOS_YESNO_NOP_X: number = 3;
 
-    static IMGPOS_DEFAULT_PLAYER_X: number = 2;
-    static IMGPOS_DEFAULT_PLAYER_Y: number = 0;
-
     static IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_X: number = 0;
     static IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_Y: number = 0;
 
-    static IMGPOS_DEFAULT_FRAME_X: number = 0;
-    static IMGPOS_DEFAULT_FRAME_Y: number = 1;
-
-    static IMGPOS_DEFAULT_BATTLE_EFFECT_X: number = 3;
-    static IMGPOS_DEFAULT_BATTLE_EFFECT_Y: number = 3;
-
-    static IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_X: number = 1;
-    static IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_Y: number = 2;
-    
     static DEFAULT_DISABLE_SAVE: boolean = false;
     static DEFAULT_OLDMAP: boolean = false;
     static DEFAULT_OBJECT_NO_COLLAPSE: boolean = false;

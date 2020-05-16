@@ -33,7 +33,6 @@ export default async function makeDistribution(
             copy("engine", path.join("LICENSE")),
             copy("assets", path.join("html", "manual.html")),
             copy("engine", path.join("lib", "wwa.js")),
-            copy("loader", path.join("lib", "wwaload.js")),
             copy("assets", path.join("style", "*.css")),
             copy("styles", path.join("output","*.css"))
         ];
@@ -43,7 +42,6 @@ export default async function makeDistribution(
             copy("engine", path.join("LICENSE")),
             copy("assets", path.join("html", "manual.html")),
             copy("engine", path.join("lib", "wwa.js"), "mapdata"),
-            copy("loader", path.join("lib", "wwaload.js"), "mapdata"),
             copy("assets", path.join("style", "*.css"), "mapdata"),
             copy("assets", path.join("wwamk310", "WinWwamk.exe")),
             copy("assets", path.join("wwamk310", "wwamk_manual.html")),

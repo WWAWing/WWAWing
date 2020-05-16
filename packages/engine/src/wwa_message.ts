@@ -287,34 +287,25 @@ export class Macro {
         var type = this._parseInt(0);
         var posX = this._parseInt(1);
         var posY = this._parseInt(2);
-
-        var x = posX * WWAConsts.CHIP_SIZE;
-        var y = posY * WWAConsts.CHIP_SIZE
-
+        
         if (posX < 0 || posY < 0) {
             throw new Error("座標は正でなければなりません。");
         }
-        if (type === MacroImgFrameIndex.ENERGY) {
-            var iconNode_energy = util.$qsh("#disp-energy>.status-icon");
-            iconNode_energy.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.STRENGTH) {
-            var iconNode_strength = util.$qsh("#disp-strength>.status-icon");
-            iconNode_strength.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.DEFENCE) {
-            var iconNode_defence = util.$qsh("#disp-defence>.status-icon");
-            iconNode_defence.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.GOLD) {
-            var iconNode_gold = util.$qsh("#disp-gold>.status-icon");
-            iconNode_gold.style.backgroundPosition = "-" + x + "px -" + y + "px";
+        if (type === MacroImgFrameIndex.ENERGY ||
+            type === MacroImgFrameIndex.STRENGTH ||
+            type === MacroImgFrameIndex.DEFENCE ||
+            type === MacroImgFrameIndex.GOLD) {
+            this._wwa.setStatusIconCoord(type, new Coord(posX, posY));
+
         } else if (type === MacroImgFrameIndex.WIDE_CELL_ROW) {
-            Array.prototype.forEach.call(util.$qsAll("div.wide-cell-row"), (node: HTMLElement) => {
-                node.style.backgroundPosition = "-" + x + "px -" + y + "px";
-            });
+            this._wwa.setWideCellCoord(new Coord(posX, posY));
+
         } else if (type === MacroImgFrameIndex.ITEM_BG) {
             this._wwa.setItemboxBackgroundPosition({x: posX, y: posY});
 
         } else if (type === MacroImgFrameIndex.MAIN_FRAME) {
             this._wwa.setFrameCoord(new Coord(posX, posY));
+
         } else {
             throw new Error("種別が不正です。");
         }
@@ -1053,6 +1044,39 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._save_counter = 0;
         this._save_close = false;
     } 
+    // TODO: 5b0cbaa, 7e19570 で入る
+    /*
+    createAbortDom(): void {
+        switch (this._wwa.userDevice.os) {
+            case OS_TYPE.NINTENDO:
+            default:
+                var YbuttonTextDom, YbuttonHeightDom;
+                YbuttonTextDom = document.createElement("div");
+                YbuttonTextDom.style.display = "inline-block";
+                YbuttonTextDom.style.verticalAlign = "middle";
+                YbuttonTextDom.textContent = "Ｙを押してゲーム中断";
+
+                YbuttonHeightDom = document.createElement("div");
+                YbuttonHeightDom.style.display = "inline-block";
+                YbuttonHeightDom.style.height = "100%";
+                YbuttonHeightDom.style.verticalAlign = "middle";
+                this._saveElement.appendChild(YbuttonTextDom);
+                this._saveElement.appendChild(YbuttonHeightDom);
+
+                break;
+        }
+    }
+    selectGameAbort(wwaData: WWAData): void {
+        switch (this._wwa.userDevice.os) {
+            case OS_TYPE.NINTENDO:
+            default:
+                this.deleteSaveDom();
+                var json: object = WWACompress.compress(wwaData);
+                console.log(json);
+                break;
+        }
+    } 
+    */
     deleteSaveDom(): void {
         this._saveElement.textContent = "";
         this._isSave = false;

@@ -65,6 +65,22 @@ export interface WWAData {
     effectCoords: Coord[];
     effectWaits: number;
 
+    imgStatusEnergyX: number;
+    imgStatusEnergyY: number;
+    imgStatusStrengthX: number;
+    imgStatusStrengthY: number;
+    imgStatusDefenceX: number;
+    imgStatusDefenceY: number;
+    imgStatusGoldX: number;
+    imgStatusGoldY: number;
+    imgWideCellX: number;
+    imgWideCellY: number;
+    imgItemboxX: number;
+    imgItemboxY: number;
+    imgFrameX: number;
+    imgFrameY: number;
+    imgBattleEffectX: number;
+    imgBattleEffectY: number;
     imgClickX: number;
     imgClickY: number;
 
@@ -87,6 +103,12 @@ export interface WWAData {
     checkString: string;
 
     isItemEffectEnabled: boolean;
+
+    /**
+     * プレイ時間
+     * memo: playFrameCount というのは古い表記なのでマージなどの時に注意
+     */
+    frameCount: number
 
     /** 
      * `gamePadButtonItemTable[i]` (ただし `i` は ゲームパッドのボタンID) に、
