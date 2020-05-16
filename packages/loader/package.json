@@ -9,7 +9,7 @@
     "./**/*.dat"
   ],
   "files": [
-    "./lib"
+    "lib"
   ],
   "scripts": {
     "start": "run-p watch:* start:deploy server",
