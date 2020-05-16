@@ -59,6 +59,7 @@ export class CGManager {
 
         this._image = new Image();
         this._image.addEventListener("load", () => {
+            this._createCacheCanvas();
             this.createFrame();
             this._loadCompleteCallBack();
         });
@@ -69,9 +70,16 @@ export class CGManager {
         this._isLoaded = true;
     }
 
-    private createFrame(): void {
+    /**
+     * キャッシュの Canvas を作成します。
+     */
+    private _createCacheCanvas(): void {
         this._frameCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
         this._backCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
+    }
+
+    private createFrame(): void {
+        this._frameCanvas.clear();
         // 左上端
         this._frameCanvas.drawCanvas(this._image, this._frameCoord.x, this._frameCoord.y, 0, 0, false);
         // 右上端
@@ -213,6 +221,15 @@ export class CGManager {
         var ctx = isSub ? this._ctxSub : this._ctx;
         ctx.fillStyle = "#9E9E9E";
         ctx.fillRect(x, y, w, h);
+    }
+
+    /**
+     * フレーム画像を変更し、そのフレーム画像から Canvas を再作成します。
+     * @param frameCoord フレーム画像一番左上端の座標
+     */
+    public setFrameImage(frameCoord: Coord): void {
+        this._frameCoord = frameCoord;
+        this.createFrame();
     }
 
     public constructor(ctx: CanvasRenderingContext2D, ctxSub: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {
