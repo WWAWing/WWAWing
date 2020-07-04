@@ -1,12 +1,12 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
 import {
-    WWAConsts as Consts, WWAData as Data, Coord, Position,
+    WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, WWAButtonTexts, MacroImgFrameIndex
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData
 } from "./wwa_data";
 
 import {
@@ -106,6 +106,8 @@ export class WWA {
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
     private _lastMessage: MessageInfo;
+    private _frameCoord: Coord;
+    private _battleEffectCoord: Coord;
 
     private _audioInstances: WWAAudio[];
 
@@ -201,7 +203,6 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-
         if (titleImgName === null) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
@@ -256,7 +257,7 @@ export class WWA {
                     switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
-                            return;
+                            break;
                     }
                     this._bottomButtonType = ControlPanelBottomButton.GAME_END;
                     break;
@@ -386,9 +387,7 @@ export class WWA {
             console.log("Loading Complete!" + (t_end - t_start) + "ms");
 
             this._cvs = <HTMLCanvasElement>util.$id("wwa-map");
-            this._cvsSub = <HTMLCanvasElement>util.$id("wwa-map-sub");
-            var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d");
-            var ctxSub = <CanvasRenderingContext2D>this._cvsSub.getContext("2d");
+            var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d", {alpha:false});
             ctx.fillStyle = "rgba( 255, 255, 255, 0.5)";
             ctx.fillRect(0, 0, 440, 440);
             var playerPosition = new Position(this, this._wwaData.playerX, this._wwaData.playerY);
@@ -421,7 +420,7 @@ export class WWA {
             this._wwaSave = new WWASave(wwa);
             this._messageWindow.setWWASave(this._wwaSave);
 
-            WWACompress.setRestartData(this._restartData);
+            WWACompress.setRestartData(this._restartData, this._wwaData);
             this.clearFaces();
             const resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
             if (typeof resumeSaveDataText === "string") {
@@ -781,7 +780,8 @@ export class WWA {
 
             });
 
-            const frameCoord = new Coord(this._wwaData.imgFrameX, this._wwaData.imgFrameY);
+            this._frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
+            this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);;
 
             this._battleEstimateWindow = new BattleEstimateWindow(
                 this, this._wwaData.mapCGName, util.$id("wwa-wrapper"));
@@ -816,7 +816,7 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, frameCoord, (): void => {
+            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, (): void => {
                 this._isSkippedSoundMessage = true;
                 const setGameStartingMessageWhenPcOrSP = () => {
                     switch (this.userDevice.device) {
@@ -1192,8 +1192,7 @@ export class WWA {
             this._player.setPartsAppearedFlag();
         }
 
-        //ゲーム開始直後に中断データ再開 TODO: 中断実装次第コメントアウト解除
-        /*
+        //ゲーム開始直後に中断データ再開
         var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
         if (typeof resumeSaveDataText === "string") {
             this._useSuspend = true;//中断モード
@@ -1206,7 +1205,6 @@ export class WWA {
                 }
             }
         }
-        */
 
         setTimeout( () => {
             util.$id("wwa-wrapper").removeChild(util.$id("wwa-cover"));
@@ -1297,6 +1295,7 @@ export class WWA {
             }
         } else if (button === SidebarButton.QUICK_SAVE) {
             if (!this._wwaData.disableSaveFlag) {
+                this._wwaSave.selectDBSaveDataList();
                 this._messageWindow.createSaveDom();
                 if (this._usePassword) {
                     this.setMessageQueue("データの一時保存先を選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
@@ -1362,6 +1361,17 @@ export class WWA {
         } else {
             this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
         }
+    }
+    public onpasssuspendsavecalled() {
+        var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
+        bg.classList.add("onpress");
+        if (!this._wwaData.disableSaveFlag) {
+            this.setMessageQueue("ゲームを中断しますか？", true, true);
+            this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
+        } else {
+            this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
+        }
+
     }
     public onitemmenucalled() {
         this.setMessageQueue("右のメニューを選択してください。", false, true);
@@ -1665,7 +1675,11 @@ export class WWA {
                     this.onselectbutton(SidebarButton.QUICK_LOAD, true);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
                     this.playSound(SystemSound.DECISION);
-                    this.onpasswordsavecalled()
+                    if (this._useSuspend) {//中断モード
+                        this.onpasssuspendsavecalled();
+                    } else if (this._usePassword) {
+                        this.onpasswordsavecalled();
+                    }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F5) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_ZR)) {
                     this.onselectbutton(SidebarButton.QUICK_LOAD);
@@ -1975,10 +1989,22 @@ export class WWA {
 
             }
         }
+        var cacheDrawFlag: boolean = false;
+        if (yLimit !== this._cgManager.mapCacheYLimit) {
+            //yLimitが異なるために再描画
+            this._cgManager.mapCacheYLimit = yLimit;
+            cacheDrawFlag = true;
+        }
+        if ((cpParts.x !== this._cgManager.cpPartsLog.x) || (cpParts.y !== this._cgManager.cpPartsLog.y)) {
+            //cpParts座標が変わったため再描画
+            this._cgManager.cpPartsLog.x = cpParts.x;
+            this._cgManager.cpPartsLog.y = cpParts.y;
+            cacheDrawFlag = true;
+        }
 
-        this._drawMap(cpParts, cpOffset, yLimit);
+        this._drawMap(cpParts, cpOffset, yLimit, false, cacheDrawFlag);
         this._drawPlayer(cpParts, cpOffset, yLimit);
-        this._drawObjects(cpParts, cpOffset, yLimit);
+        this._drawObjects(cpParts, cpOffset, yLimit , false , cacheDrawFlag);
 
         // 攻撃エフェクト描画
         if (this._player.isFighting() && !this._player.isBattleStartFrame()) {
@@ -1986,10 +2012,10 @@ export class WWA {
             targetY = this._player.isTurn() ? this._monster.position.y : ppos.y;
 
             this._cgManager.drawCanvas(
-                this._wwaData.imgBattleEffectX, this._wwaData.imgBattleEffectY,
+                this._battleEffectCoord.x, this._battleEffectCoord.y,
                 Consts.CHIP_SIZE * (targetX - cpParts.x) - cpOffset.x,
-                Consts.CHIP_SIZE * (targetY - cpParts.y) - cpOffset.y,
-                false);
+                Consts.CHIP_SIZE * (targetY - cpParts.y) - cpOffset.y
+            );;
         }
         this._drawEffect();
         this._drawFaces();
@@ -1998,7 +2024,7 @@ export class WWA {
     }
 
     // 背景描画
-    private _drawMap(cpParts: Coord, cpOffset: Coord, yLimit: number, isPrevCamera: boolean = false): void {
+    private _drawMap(cpParts: Coord, cpOffset: Coord, yLimit: number, isPrevCamera: boolean = false, cacheDrawFlag: boolean = false): void {
         if (cpParts === void 0) {
             return;
         }
@@ -2006,8 +2032,7 @@ export class WWA {
         var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW);
         var yTop = Math.max(0, cpParts.y - 1);
         var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW);
-        var count: number, drawFlag: boolean;
-        drawFlag = false;
+        var count: number;
         count = 0;
 
         if (isPrevCamera) {
@@ -2027,24 +2052,13 @@ export class WWA {
                     var partsID: number = this._wwaData.map[y][x];
                     if (this._cgManager.mapCache[count] !== partsID) {
                         this._cgManager.mapCache[count] = partsID;
-                        drawFlag = true;
+                        cacheDrawFlag = true;
                     }
                     count++;
                 }
             }
-            if (yLimit !== this._cgManager.mapCacheYLimit) {
-                //yLimitが異なるために再描画
-                this._cgManager.mapCacheYLimit = yLimit;
-                drawFlag = true;
-            }
-            if ((cpParts.x !== this._cgManager.cpPartsLog.x) || (cpParts.y !== this._cgManager.cpPartsLog.y)) {
-                //cpParts座標が変わったため再描画
-                this._cgManager.cpPartsLog.x = cpParts.x;
-                this._cgManager.cpPartsLog.y = cpParts.y;
-                drawFlag = true;
-            }
 
-            if (drawFlag) {
+            if (cacheDrawFlag) {
                 //バックキャンバスをクリア
                 this._cgManager.clearBackCanvas();
                 //バックキャンバスに背景を描画
@@ -2095,7 +2109,7 @@ export class WWA {
     }
 
     // 物体描画
-    private _drawObjects(cpParts: Coord, cpOffset: Coord, yLimit: number, isPrevCamera: boolean = false): void {
+    private _drawObjects(cpParts: Coord, cpOffset: Coord, yLimit: number, isPrevCamera: boolean = false, cacheDrawFlag:boolean = false): void {
         if (cpParts === void 0) {
             return;
         }
@@ -2104,44 +2118,146 @@ export class WWA {
         var yTop = Math.max(0, cpParts.y - 1);
         var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW);
         var offset: Coord;
-        // 画面内物体描画
-        for (var x: number = xLeft; x <= xRight; x++) {
-            for (var y: number = yTop; y <= yBottom; y++) {
-                if (this._player.isFighting() &&
-                    this._player.isTurn() &&
-                    this._player.getPosition().getPartsCoord().equals(this._monster.position) &&
-                    new Coord(x, y).equals(this._monster.position)) {
-                    continue;
-                }
-                var partsIDObj: number = this._wwaData.mapObject[y][x];
-                offset = new Coord(0, 0);
-                if (this._wwaData.objectAttribute[partsIDObj][Consts.ATR_MOVE] !== MoveType.STATIC) {
-                    var result = this._objectMovingDataManager.getOffsetByBeforePartsCoord(new Coord(x, y));
-                    if (result !== null) {
-                        offset = result;
+        var count: number = 0;
+        var animationType: boolean = this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
+        var imgType: boolean, ppxo: number, ppyo: number, canvasX: number, canvasY: number, type: number, num: number, result: Coord;
+        var x: number, y: number, partsIDObj: number, savePartsIDObj: number, n: number;
+        var useBattleArea: boolean = this._player.isFighting() &&
+            this._player.isTurn() &&
+            this._player.getPosition().getPartsCoord().equals(this._monster.position);
+        if (isPrevCamera) {
+            // 画面内物体描画
+            for (x = xLeft; x <= xRight; x++) {
+                for (y = yTop; y <= yBottom; y++) {
+                    if ((useBattleArea) &&
+                        new Coord(x, y).equals(this._monster.position)) {
+                        continue;
                     }
-                }
-                var imgType: boolean = (
-                    this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME ||
-                    this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
-                    this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
-                );
-                var ppxo =
-                    this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
-                var ppyo =
-                    this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
-                var canvasX = Consts.CHIP_SIZE * (x - cpParts.x) + offset.x - cpOffset.x;
-                var canvasY = Consts.CHIP_SIZE * (y - cpParts.y) + offset.y - cpOffset.y;
-                var type = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_TYPE];
-                var num = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_NUMBER];
-                if (partsIDObj !== 0 && !this._checkNoDrawObject(new Coord(x, y), type, num)) {
-                    if (isPrevCamera) {
+                    partsIDObj = this._wwaData.mapObject[y][x];
+                    offset = new Coord(0, 0);
+                    if (this._wwaData.objectAttribute[partsIDObj][Consts.ATR_MOVE] !== MoveType.STATIC) {
+                        result = this._objectMovingDataManager.getOffsetByBeforePartsCoord(new Coord(x, y));
+                        if (result !== null) {
+                            offset = result;
+                        }
+                    }
+                    imgType = (
+                        animationType ||
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
+                    );
+                    ppxo =
+                        this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
+                    ppyo =
+                        this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
+                    canvasX = Consts.CHIP_SIZE * (x - cpParts.x) + offset.x - cpOffset.x;
+                    canvasY = Consts.CHIP_SIZE * (y - cpParts.y) + offset.y - cpOffset.y;
+                    type = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_TYPE];
+                    num = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_NUMBER];
+                    if (partsIDObj !== 0 && !this._checkNoDrawObject(new Coord(x, y), type, num)) {
                         this._cgManager.drawCanvasWithLowerYLimit(ppxo, ppyo, canvasX, canvasY, yLimit);
-                    } else {
-                        this._cgManager.drawCanvasWithUpperYLimit(ppxo, ppyo, canvasX, canvasY, yLimit);
                     }
                 }
             }
+        }
+        else {
+            var drawPartsList: DrawPartsData[] = [];
+            var drawStaticPartsList: DrawPartsData[] = [];
+            var drawPartsData: DrawPartsData;
+            var isStatic: boolean, isFighting: boolean;
+            for (x = xLeft; x <= xRight; x++) {
+                for (y = yTop; y <= yBottom; y++) {
+                    savePartsIDObj = partsIDObj = this._wwaData.mapObject[y][x];
+                    type = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_TYPE];
+                    num = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_NUMBER];
+                    if (this._checkNoDrawObject(new Coord(x, y), type, num)) {
+                        savePartsIDObj = 0;//非表示オブジェクト
+                    }
+                    isStatic = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_MOVE] === MoveType.STATIC;
+                    if (savePartsIDObj !== 0) {
+                        //描画対象に追加
+                        if ((useBattleArea) &&
+                            new Coord(x, y).equals(this._monster.position)) {
+                            isFighting = true;
+                        } else {
+                            isFighting = false;
+                        }
+                        
+                        if (isStatic) {
+                            drawStaticPartsList.push(new DrawPartsData(partsIDObj, x, y, isStatic, isFighting));
+                        } else {
+                            drawPartsList.push(new DrawPartsData(partsIDObj, x, y, isStatic, isFighting));
+                            savePartsIDObj = 0;//移動系は表示しないものとみなす
+                        }
+                        if (isFighting) {
+                            savePartsIDObj = 0;//戦闘中に一時的に描画をOFFにする
+                        }
+                    }
+                    if (this._cgManager.mapObjectCache[count] !== savePartsIDObj) {
+                        this._cgManager.mapObjectCache[count] = savePartsIDObj;
+                        cacheDrawFlag = true;
+                    }
+                    count++;
+                }
+            }
+
+            if (cacheDrawFlag) {
+                //バックキャンバスをクリア
+                this._cgManager.clearObjectCanvases();
+                Array.prototype.push.apply(drawPartsList, drawStaticPartsList);//staticを描画対象に追加
+            }
+            var i: number, len: number;
+            len = drawPartsList.length;
+            for (i = 0; i < len; i++) {
+                drawPartsData = drawPartsList[i];
+                x = drawPartsData.x;
+                y = drawPartsData.y;
+                partsIDObj = drawPartsData.partsIDObj;
+                isStatic = drawPartsData.isStatic;
+                isFighting = drawPartsData.isFighting;
+                canvasX = Consts.CHIP_SIZE * (x - cpParts.x) - cpOffset.x;
+                canvasY = Consts.CHIP_SIZE * (y - cpParts.y) - cpOffset.y;
+                if (isStatic) {
+                    if (isFighting) {
+                        //戦闘中に一時的に描画をOFFにする
+                        continue;
+                    }
+                    //移動しないもの
+                    //キャッシュキャンバスに移動しない物体を描画
+                    for (n = 0; n < 2; n++) {
+                        imgType = (
+                            (!!n) ||
+                            this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
+                            this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
+                        );
+                        ppxo =
+                            this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
+                        ppyo =
+                            this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
+                        this._cgManager.copyObjectCanvasWithUpperYLimit(n, ppxo, ppyo, canvasX, canvasY, yLimit);
+                    }
+                } else {
+                    //移動するもの
+                    result = this._objectMovingDataManager.getOffsetByBeforePartsCoord(new Coord(x, y));
+                    if (result !== null) {
+                        canvasX += result.x;
+                        canvasY += result.y;
+                    }
+                    imgType = (
+                        animationType ||
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
+                    );
+                    ppxo =
+                        this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
+                    ppyo =
+                        this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
+                    this._cgManager.drawCanvasWithUpperYLimit(ppxo, ppyo, canvasX, canvasY, yLimit);
+
+                }
+            }
+            //バックキャンバスをメインキャンバスに描画
+            this._cgManager.drawObjectCanvas(animationType ? 1 : 0);
         }
 
     }
@@ -2150,19 +2266,8 @@ export class WWA {
         if (this._wwaData.effectCoords.length === 0 || this._wwaData.effectWaits === 0) {
             return;
         }
-        var i = Math.floor(this._mainCallCounter % (this._wwaData.effectCoords.length * this._wwaData.effectWaits) / this._wwaData.effectWaits);
-        for (var y = 0; y < Consts.V_PARTS_NUM_IN_WINDOW; y++) {
-            for (var x = 0; x < Consts.H_PARTS_NUM_IN_WINDOW; x++) {
-                if (!this._wwaData.effectCoords[i]) {
-                    continue;
-                }
-                this._cgManager.drawCanvas(
-                    this._wwaData.effectCoords[i].x,
-                    this._wwaData.effectCoords[i].y,
-                    x * Consts.CHIP_SIZE,
-                    y * Consts.CHIP_SIZE, false);
-            }
-        }
+        var id:number = Math.floor(this._mainCallCounter % (this._wwaData.effectCoords.length * this._wwaData.effectWaits) / this._wwaData.effectWaits);
+        this._cgManager.drawEffect(id);
     }
 
     private _drawFaces(): void {
@@ -2170,8 +2275,7 @@ export class WWA {
             this._cgManager.drawCanvasWithSize(
                 this._faces[i].srcPos.x, this._faces[i].srcPos.y,
                 this._faces[i].srcSize.x, this._faces[i].srcSize.y,
-                this._faces[i].destPos.x, this._faces[i].destPos.y,
-                false
+                this._faces[i].destPos.x, this._faces[i].destPos.y
             );
         }
     }
@@ -2936,7 +3040,11 @@ export class WWA {
                     this._messageWindow.deleteSaveDom();
                     if ((this._usePassword) || (this._useSuspend)) {
                         this._yesNoJudge = YesNoState.UNSELECTED;
-                        this.onpasswordsavecalled();
+                        if (this._useSuspend) {//中断モード
+                            this.onpasssuspendsavecalled();
+                        } else if (this._usePassword) {
+                            this.onpasswordsavecalled();
+                        }
                         return;
                     } else {
                         (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
@@ -2952,7 +3060,13 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_SUSPEND) {
-                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                    if (this._usePassword) {
+                        this._yesNoJudge = YesNoState.UNSELECTED;
+                        this.onpasswordsavecalled();
+                        return;
+                    } else {
+                        (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                    }
                 }
 
                 this._yesNoJudge = YesNoState.UNSELECTED;
@@ -3488,22 +3602,21 @@ export class WWA {
         qd.frameCount = this._player.getFrameCount();
 
         switch (callInfo) {
-            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
-                qd.checkString = this._generateSaveDataHash(qd);
+            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
+            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                //qd.checkString = this._generateSaveDataHash(qd);
                 break;
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
                 qd.checkOriginalMapString = this.checkOriginalMapString;
-                qd.mapCompressed = this._compressMap(qd.map);
-                qd.mapObjectCompressed = this._compressMap(qd.mapObject);
+                //qd.mapCompressed = this._compressMap(qd.map);
+                //qd.mapObjectCompressed = this._compressMap(qd.mapObject);
                 qd.checkString = this._generateSaveDataHash(qd);
                 qd.frameCount = this._player.getFrameCount();
 
                 // map, mapObjectについてはcompressから復元
-                qd.map = void 0;
-                qd.mapObject = void 0;
-                break;
-            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                //qd.map = void 0;
+                //qd.mapObject = void 0;
                 break;
         }
 
@@ -3516,16 +3629,17 @@ export class WWA {
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
                 this._messageWindow.save(this._cvs, qd);
-                util.$id("cell-load").textContent = "Quick Load";
                 this.wwaCustomEvent('wwa_quicksave', {
-                    data: qd,
-                    compress: WWACompress.compress(qd)
+                    data: qd
                 });
                 return "";
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
+                var compressQD:any = WWACompress.compress(qd);
+                compressQD.isCompress = 1;
+                var s = JSON.stringify(compressQD);
                 this.wwaCustomEvent('wwa_passwordsave', {
                     data: qd,
-                    compress: WWACompress.compress(qd)
+                    compress: compressQD
                 });
                 return CryptoJS.AES.encrypt(
                     CryptoJS.enc.Utf8.parse(JSON.stringify(qd)),
@@ -3539,8 +3653,7 @@ export class WWA {
                 break;
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
                 this.wwaCustomEvent('wwa_autosave', {
-                    data: qd,
-                    compress: WWACompress.compress(qd)
+                    data: qd
                 });
                 this._wwaSave.autoSave(this._cvs, qd);
                 break;
@@ -3561,13 +3674,21 @@ export class WWA {
         } catch (e) {
             throw new Error("データが破損しています。\n" + e.message)
         }
-        var obj: WWAData;
+        var obj: any;
+        var decodeWWAData: WWAData;
         try {
             obj = JSON.parse(json);
         } catch (e) {
             throw new Error("マップデータ以外のものが暗号化されたか、マップデータに何かが不足しているようです。\nJSON PARSE FAILED");
         }
-        return obj;
+        if (obj.isCompress) {
+            delete obj.isCompress;
+            decodeWWAData = WWACompress.decompress(obj);
+        } else {
+            decodeWWAData = <WWAData>obj;
+        }
+        
+        return decodeWWAData;
     }
 
     private _quickLoad(restart: boolean = false, password: string = null, apply: boolean = true): WWAData {
@@ -3586,12 +3707,12 @@ export class WWA {
         newData.objectAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.objectAttribute));
         if (newData.map === void 0) {
             newData.map = this._decompressMap(newData.mapCompressed);
-            newData.mapCompressed = void 0;
         }
         if (newData.mapObject === void 0) {
             newData.mapObject = this._decompressMap(newData.mapObjectCompressed);
-            newData.mapObjectCompressed = void 0;
         }
+        delete newData.mapCompressed;
+        delete newData.mapObjectCompressed;
 
         if (password !== null) {
             var checkString = this._generateSaveDataHash(newData);
@@ -3645,7 +3766,8 @@ export class WWA {
         this.setItemboxBackgroundPosition({ x: newData.imgItemboxX, y: newData.imgItemboxY });
         this.setFrameCoord(new Coord(newData.imgFrameX, newData.imgFrameY));
         this.updateCSSRule();
-        this._wwaSave.setPlayer(this._player);
+        this.updateEffect();
+        this._wwaSave.gameStart(this._wwaData,this._player);
     }
     private _mapIDTableCreate(): void {
         var pid: number;
@@ -4395,7 +4517,9 @@ export class WWA {
     }
 
     public disableSave(flag: boolean): boolean {
-        return this._wwaData.disableSaveFlag = flag;
+        this._wwaData.disableSaveFlag = flag;
+        this._wwaSave.quickSaveButtonUpdate(this._wwaData);
+        return flag;
     }
 
     public isOldMap(): boolean {
@@ -4506,16 +4630,11 @@ export class WWA {
     }
 
     public setFrameCoord(coord: Coord): Coord {
-        this._wwaData.imgFrameX = coord.x;
-        this._wwaData.imgFrameY = coord.y;
-        this._cgManager.setFrameImage(coord);
-        return coord.clone();
+        return this._frameCoord = coord.clone();
     }
 
     public setBattleEffectCoord(coord: Coord): Coord {
-        this._wwaData.imgBattleEffectX = coord.x;
-        this._wwaData.imgBattleEffectY = coord.y;
-        return coord.clone();
+        return this._battleEffectCoord = coord.clone();
     }
 
     public canInput(): boolean {
@@ -4531,10 +4650,15 @@ export class WWA {
     public setEffect(waits: number, coords: Coord[]): void {
         this._wwaData.effectWaits = waits;
         this._wwaData.effectCoords = coords;
+        this.updateEffect();
     }
 
     public stopEffect(): void {
         this._wwaData.effectCoords = [];
+        this.updateEffect();
+    }
+    public updateEffect(): void {
+        this._cgManager.updateEffects(<Coord[]>this._wwaData.effectCoords);
     }
 
     public setImgClick(pos: Coord): void {

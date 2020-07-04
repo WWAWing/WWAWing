@@ -300,6 +300,21 @@ export class Face {
         this.srcSize = srcSize.clone();
     }
 }
+export class DrawPartsData {
+    public partsIDObj: number;
+    public x: number;
+    public y: number;
+    public isStatic: boolean;
+    public isFighting: boolean;
+    constructor(partsIDObj: number, x: number, y: number, isStatic: boolean, isFighting: boolean) {
+        this.partsIDObj = partsIDObj;
+        this.x = x;
+        this.y = y;
+        this.isStatic = isStatic;
+        this.isFighting = isFighting;
+    }
+}
+
 
 export enum ControlPanelBottomButton {
     GOTO_WWA = 0,
@@ -689,6 +704,12 @@ export class WWAConsts {
     static IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_X: number = 0;
     static IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_Y: number = 0;
 
+    static IMGPOS_DEFAULT_FRAME_X: number = 0;
+    static IMGPOS_DEFAULT_FRAME_Y: number = 1;
+
+    static IMGPOS_DEFAULT_BATTLE_EFFECT_X: number = 3;
+    static IMGPOS_DEFAULT_BATTLE_EFFECT_Y: number = 3;
+
     static DEFAULT_DISABLE_SAVE: boolean = false;
     static DEFAULT_OLDMAP: boolean = false;
     static DEFAULT_OBJECT_NO_COLLAPSE: boolean = false;
@@ -793,7 +814,9 @@ export class WWASaveConsts {
     static QUICK_SAVE_THUMNAIL_WIDTH: number = 99;//セーブデータサムネイル横幅
     static QUICK_SAVE_THUMNAIL_HEIGHT: number = 99;//セーブデータサムネイル縦幅
     static SAVE_INTERVAL_MOVE: number = 200;//この歩数ごとにオートセーブ
-
+    static INDEXEDDB_DB_NAME: string = "WWA_WING_DB";   //IndexedDBに保存するDBの名称
+    static INDEXEDDB_TABLE_NAME: string = "SAVE_TABLE"; //IndexedDBに保存するテーブルの名称
+    static DATE_LAST_SAVE_TEXT_COLOR: string = "rgba(255,255,0,1)";
 }
 
 export class WWAButtonTexts {

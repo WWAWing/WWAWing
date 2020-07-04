@@ -11,8 +11,6 @@ import WWASaveDataList from "./WWASaveDataList";
 export default class WWASaveDataDBList extends WWASaveDataList {
     private selectDatas: object[];
     private selectLoad: boolean = false;
-    private INDEXEDDB_DB_NAME = "WWA_WING_DB";
-    private INDEXEDDB_TABLE_NAME = "SAVE_TABLE";
     private indexedDB = window["indexedDB"] || window["webkitIndexedDB"] || window["mozIndexedDB"];
     private IDBTransaction: object = {
         READ_ONLY: "readonly",
@@ -92,7 +90,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
     }
     private indexDBOpen() {
         this.getAlEmulate();
-        return this.indexedDB.open(this.INDEXEDDB_DB_NAME, 201205201);
+        return this.indexedDB.open(WWASaveConsts.INDEXEDDB_DB_NAME, 201205201);
     }
     private createDataBase(): void {
         try {
@@ -100,8 +98,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             reqOpen.onupgradeneeded = (e) => {
                 var indexedDBSystem = reqOpen.result;
                 var oDBOptions = { keyPath: ["id", "url"] };
-                if (!indexedDBSystem.objectStoreNames.contains(this.INDEXEDDB_TABLE_NAME)) {
-                    var objectStore = indexedDBSystem.createObjectStore(this.INDEXEDDB_TABLE_NAME, oDBOptions);
+                if (!indexedDBSystem.objectStoreNames.contains(WWASaveConsts.INDEXEDDB_TABLE_NAME)) {
+                    var objectStore = indexedDBSystem.createObjectStore(WWASaveConsts.INDEXEDDB_TABLE_NAME, oDBOptions);
                     objectStore.createIndex("url", "url", { unique: false });
                 }
             };
@@ -115,7 +113,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
         } catch (error) {
         }
     }
-    public dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, quickSaveData: object, date: Date): void {
+    public dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, date: Date): void {
         if (!this.indexedDB) {
             return;
         }
@@ -125,24 +123,30 @@ export default class WWASaveDataDBList extends WWASaveDataList {
         reqOpen.onsuccess = (e) => {
             var indexedDBSystem = reqOpen.result;
             try {
-                var transaction = indexedDBSystem.transaction(this.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_WRITE"]);
-                var store = transaction.objectStore(this.INDEXEDDB_TABLE_NAME);
+                var transaction = indexedDBSystem.transaction(WWASaveConsts.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_WRITE"]);
+                var store = transaction.objectStore(WWASaveConsts.INDEXEDDB_TABLE_NAME);
             } catch (error) {
                 return;
             }
+            var compressData: object = WWACompress.compress(_quickSaveData);
 
             var addData = {
                 "url": location.href,
                 "id": saveID,
                 "hash": WWASave.checkOriginalMapString,
                 "image": gameCvs.toDataURL(),
-                "data": quickSaveData,
+                "data": compressData,
                 "date": date
             };
             this.selectDatas[saveID] = addData;
 
-            var reqAdd = store.put(addData);
-            //reqAdd.callbackLog = callback;
+            try {
+                var reqAdd = store.put(addData);
+                //reqAdd.callbackLog = callback;
+            } catch (error) {
+                //EDGE‚ÅƒGƒ‰[H
+                return;
+            }
             reqAdd.onsuccess = (e) => {
             };
             reqAdd.onerror = (e) => {
@@ -164,8 +168,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             var indexedDBSystem = reqOpen.result;
             var transaction, store;
             try {
-                transaction = indexedDBSystem.transaction(this.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_ONLY"]);
-                store = transaction.objectStore(this.INDEXEDDB_TABLE_NAME);
+                transaction = indexedDBSystem.transaction(WWASaveConsts.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_ONLY"]);
+                store = transaction.objectStore(WWASaveConsts.INDEXEDDB_TABLE_NAME);
             } catch (error) {
                 return;
             }
@@ -198,7 +202,11 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     if (WWASave.checkOriginalMapString !== saveData.hash) {
                         continue;
                     }
-                    (this[i] as WWASaveDataDB).saveDataDecompress(saveData);
+                    if (!this[saveData.id]) {
+                        continue;
+                    }
+                    var quickSaveData = WWACompress.decompress(saveData.data);
+                    this[saveData.id].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
                 this.selectLoad = true;
             };
