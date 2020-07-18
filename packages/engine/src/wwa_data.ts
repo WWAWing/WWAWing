@@ -385,7 +385,11 @@ export class UserDevice {
             return OS_TYPE.WINDOWS;
         }
         if (ua.match(/macintosh/i)) {
-            return OS_TYPE.MACINTOSH;
+            // iPadOS において、デフォルトで Safari は PC向けサイトを表示する設定になっている。
+            // その場合、 ユーザエージェント は Macintosh 扱いとなる。
+            // ここでは、touchStart イベントが実装されているかどうかを見て iPadOS か macOSかを判定する。
+            // (2020-06-07 現在、タッチパネルが搭載されたmac端末は発売されていないため、macOS を iPad に誤検知することは起こりにくいはず。)
+            return "ontouchstart" in document ? OS_TYPE.IOS : OS_TYPE.MACINTOSH;
         }
         if (ua.match(/iphone|ipad|ipod/i)) {
             return OS_TYPE.IOS;
