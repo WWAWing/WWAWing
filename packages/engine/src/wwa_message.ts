@@ -1046,7 +1046,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 ss_div.appendChild(loadWWAData.cvs);
 
                 span = document.createElement("span");
-                span.innerText = loadWWAData.getDateText();//時刻の表示
+                span.textContent = loadWWAData.getDateText();//時刻の表示
                 if (loadWWAData.isLastSaveData()) {
                     span.style.color = WWASaveConsts.DATE_LAST_SAVE_TEXT_COLOR;//最後にセーブした箇所の色を変更
                 }
@@ -1061,7 +1061,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
                 energy_status_value_div = document.createElement("div");
                 energy_status_value_div.classList.add("status-value-box");
-                energy_status_value_div.innerText = loadWWAData.getStatusEnergy();
+                energy_status_value_div.textContent = loadWWAData.getStatusEnergy();
                 energy_div.appendChild(energy_status_value_div);
             }
         }
