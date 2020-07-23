@@ -3634,15 +3634,15 @@ export class WWA {
                 });
                 return "";
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
-                var compressQD:any = WWACompress.compress(qd);
+                const compressQD:any = WWACompress.compress(qd);
                 compressQD.isCompress = 1;
-                var s = JSON.stringify(compressQD);
+                const s = JSON.stringify(compressQD);
                 this.wwaCustomEvent('wwa_passwordsave', {
                     data: qd,
                     compress: compressQD
                 });
                 return CryptoJS.AES.encrypt(
-                    CryptoJS.enc.Utf8.parse(JSON.stringify(qd)),
+                    CryptoJS.enc.Utf8.parse(s),
                     "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
                 ).toString();
             case ChoiceCallInfo.CALL_BY_SUSPEND:
