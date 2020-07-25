@@ -1072,39 +1072,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._save_counter = 0;
         this._save_close = false;
     } 
-    // TODO: 5b0cbaa, 7e19570 で入る
-    /*
-    createAbortDom(): void {
-        switch (this._wwa.userDevice.os) {
-            case OS_TYPE.NINTENDO:
-            default:
-                var YbuttonTextDom, YbuttonHeightDom;
-                YbuttonTextDom = document.createElement("div");
-                YbuttonTextDom.style.display = "inline-block";
-                YbuttonTextDom.style.verticalAlign = "middle";
-                YbuttonTextDom.textContent = "Ｙを押してゲーム中断";
-
-                YbuttonHeightDom = document.createElement("div");
-                YbuttonHeightDom.style.display = "inline-block";
-                YbuttonHeightDom.style.height = "100%";
-                YbuttonHeightDom.style.verticalAlign = "middle";
-                this._saveElement.appendChild(YbuttonTextDom);
-                this._saveElement.appendChild(YbuttonHeightDom);
-
-                break;
-        }
-    }
-    selectGameAbort(wwaData: WWAData): void {
-        switch (this._wwa.userDevice.os) {
-            case OS_TYPE.NINTENDO:
-            default:
-                this.deleteSaveDom();
-                var json: object = WWACompress.compress(wwaData);
-                console.log(json);
-                break;
-        }
-    } 
-    */
     deleteSaveDom(): void {
         this._saveElement.textContent = "";
         this._isSave = false;
