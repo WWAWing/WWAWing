@@ -63,6 +63,8 @@ export class WWAConsts {
     static DEFAULT_STATUS_COLOR_R = 0x0;
     static DEFAULT_STATUS_COLOR_G = 0x0;
     static DEFAULT_STATUS_COLOR_B = 0x0;
+
+    static DEFAULT_MOVES = 0;
 }
 
 export class LoaderError implements Error {
