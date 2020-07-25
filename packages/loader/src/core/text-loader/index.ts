@@ -117,6 +117,8 @@ export class TextLoader {
     wwaData.statusColorG = WWAConsts.DEFAULT_STATUS_COLOR_G;
     wwaData.statusColorB = WWAConsts.DEFAULT_STATUS_COLOR_B;
 
+    wwaData.moves = WWAConsts.DEFAULT_MOVES;
+
     return wwaData;
   }
 
