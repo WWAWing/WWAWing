@@ -1183,7 +1183,7 @@ export class Player extends PartsObject {
         return this._speedIndex = Math.max(Consts.MIN_SPEED_INDEX, this._speedIndex - 1);
     }
 
-    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number) {
+    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number) {
         super(pos);
         this._status = status;
         this._equipStatus = new EquipmentStatus(0, 0);
@@ -1209,7 +1209,7 @@ export class Player extends PartsObject {
         this._goldValueElement = util.$qsh("#disp-gold>.status-value-box");
         this._isReadyToUseItem = false;
         this._isClickableItemGot = false;
-        this._moves = 0;
+        this._moves = moves;
         this._frameCount = 0;
         this._moveMacroWaitingRemainMoves = 0;
         this._moveObjectAutoExecTimer = 0;
