@@ -2028,7 +2028,7 @@ export class WWA {
                 this._battleEffectCoord.x, this._battleEffectCoord.y,
                 Consts.CHIP_SIZE * (targetX - cpParts.x) - cpOffset.x,
                 Consts.CHIP_SIZE * (targetY - cpParts.y) - cpOffset.y
-            );;
+            );
         }
 
         // 7. マクロ文で描画されるエフェクトや顔表示、フレームなどを描画
