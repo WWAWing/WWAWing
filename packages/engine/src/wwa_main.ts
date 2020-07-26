@@ -1354,7 +1354,7 @@ export class WWA {
             if (this._useSuspend) {//中断モード
                 this.setMessageQueue("ゲームを中断しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
-            }else if (this._usePassword) {
+            } else if (this._usePassword) {
                 this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
             }
