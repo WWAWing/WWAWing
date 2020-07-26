@@ -1962,13 +1962,37 @@ export class WWA {
         this._cgManager.clearCanvas(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT);
         this._cgManager.drawBase(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT);
 
+        // 1. カメラの状況を確認し、エフェクト効果の段階であれば、 yLimit を更新
         if (this._camera.isResetting()) {
             if (this._camera.getPreviousPosition() !== null) {
                 var cpPartsPrev = this._camera.getPreviousPosition().getPartsCoord();
                 var cpOffsetPrev = this._camera.getPreviousPosition().getOffsetCoord();
             }
             yLimit = this._camera.getTransitionStepNum() * Consts.CHIP_SIZE;
+        }
 
+        // 2. 再描画が必要であればフラグを更新
+        var cacheDrawFlag: boolean = false;
+        if (yLimit !== this._cgManager.mapCacheYLimit) {
+            //yLimitが異なるために再描画
+            this._cgManager.mapCacheYLimit = yLimit;
+            cacheDrawFlag = true;
+        }
+        if ((cpParts.x !== this._cgManager.cpPartsLog.x) || (cpParts.y !== this._cgManager.cpPartsLog.y)) {
+            //cpParts座標が変わったため再描画
+            this._cgManager.cpPartsLog.x = cpParts.x;
+            this._cgManager.cpPartsLog.y = cpParts.y;
+            cacheDrawFlag = true;
+        }
+
+        // 3. 再描画が必要であれば、事前に Canvas をクリア
+        if (cacheDrawFlag) {
+            // バックキャンバスをクリア
+            this._cgManager.clearBackCanvas();
+        }
+
+        // 4. エフェクト効果の段階であれば、エフェクトを描画
+        if (this._camera.isResetting()) {
             this._drawMap(cpPartsPrev, cpOffsetPrev, yLimit, true);
             this._drawPlayer(cpPartsPrev, cpOffsetPrev, yLimit, true);
             this._drawObjects(cpPartsPrev, cpOffsetPrev, yLimit, true);
@@ -1989,24 +2013,13 @@ export class WWA {
 
             }
         }
-        var cacheDrawFlag: boolean = false;
-        if (yLimit !== this._cgManager.mapCacheYLimit) {
-            //yLimitが異なるために再描画
-            this._cgManager.mapCacheYLimit = yLimit;
-            cacheDrawFlag = true;
-        }
-        if ((cpParts.x !== this._cgManager.cpPartsLog.x) || (cpParts.y !== this._cgManager.cpPartsLog.y)) {
-            //cpParts座標が変わったため再描画
-            this._cgManager.cpPartsLog.x = cpParts.x;
-            this._cgManager.cpPartsLog.y = cpParts.y;
-            cacheDrawFlag = true;
-        }
 
+        // 5. マップを描画
         this._drawMap(cpParts, cpOffset, yLimit, false, cacheDrawFlag);
         this._drawPlayer(cpParts, cpOffset, yLimit);
         this._drawObjects(cpParts, cpOffset, yLimit , false , cacheDrawFlag);
 
-        // 攻撃エフェクト描画
+        // 6. 攻撃エフェクト描画
         if (this._player.isFighting() && !this._player.isBattleStartFrame()) {
             targetX = this._player.isTurn() ? this._monster.position.x : ppos.x;
             targetY = this._player.isTurn() ? this._monster.position.y : ppos.y;
@@ -2017,6 +2030,8 @@ export class WWA {
                 Consts.CHIP_SIZE * (targetY - cpParts.y) - cpOffset.y
             );;
         }
+
+        // 7. マクロ文で描画されるエフェクトや顔表示、フレームなどを描画
         this._drawEffect();
         this._drawFaces();
         this._drawFrame();
@@ -2043,7 +2058,7 @@ export class WWA {
                     var ppy = this._wwaData.mapAttribute[partsID][Consts.ATR_Y] / Consts.CHIP_SIZE;
                     var canvasX = Consts.CHIP_SIZE * (x - cpParts.x) - cpOffset.x;
                     var canvasY = Consts.CHIP_SIZE * (y - cpParts.y) - cpOffset.y;
-                    this._cgManager.drawCanvasWithLowerYLimit(ppx, ppy, canvasX, canvasY, yLimit);
+                    this._cgManager.copyBackCanvasWithLowerYLimit(ppx, ppy, canvasX, canvasY, yLimit);
                 }
             }
         } else {
@@ -2059,8 +2074,6 @@ export class WWA {
             }
 
             if (cacheDrawFlag) {
-                //バックキャンバスをクリア
-                this._cgManager.clearBackCanvas();
                 //バックキャンバスに背景を描画
                 for (var x: number = xLeft; x <= xRight; x++) {
                     for (var y: number = yTop; y <= yBottom; y++) {

@@ -228,6 +228,30 @@ export class CGManager {
             Consts.CHIP_SIZE, Consts.CHIP_SIZE
         );
     }
+
+    /**
+     * 背景パーツの Canvas に画像データを書き込みます
+     *     描画する座標が yLimit 以下でないと書き込めません
+     * @param chipX 描画するX座標 (マス単位)
+     * @param chipY 描画するY座標 (マス単位)
+     * @param canvasX 描画したい画像データのX座標 (ピクセル単位)
+     * @param canvasY 描画したい画像データのY座標 (ピクセル単位)
+     * @param yLimit 描画可能な境界値 (ピクセル単位)
+     */
+    public copyBackCanvasWithLowerYLimit(chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number): void {
+        if (!this._isLoaded) {
+            throw new Error("No image was loaded.");
+        }
+        var delLength = Math.max(0, yLimit - canvasY);
+        if (delLength >= Consts.CHIP_SIZE) {
+            return;
+        }
+        this._backCanvas.ctx.drawImage(
+            this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY + delLength,
+            Consts.CHIP_SIZE, Consts.CHIP_SIZE - delLength, canvasX, canvasY + delLength,
+            Consts.CHIP_SIZE, Consts.CHIP_SIZE
+        );
+    }
     public copyObjectCanvasWithUpperYLimit(frameType:number,chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number): void {
         if (!this._isLoaded) {
             throw new Error("No image was loaded.");
