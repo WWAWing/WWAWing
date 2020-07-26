@@ -2172,8 +2172,7 @@ export class WWA {
                     }
                 }
             }
-        }
-        else {
+        } else {
             var drawPartsList: DrawPartsData[] = [];
             var drawStaticPartsList: DrawPartsData[] = [];
             var drawPartsData: DrawPartsData;
