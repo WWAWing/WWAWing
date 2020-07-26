@@ -214,58 +214,47 @@ export class CGManager {
             Consts.CHIP_SIZE, Consts.CHIP_SIZE
         );
     }
-    public copyBackCanvasWithUpperYLimit(chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number): void {
-        if (!this._isLoaded) {
-            throw new Error("No image was loaded.");
-        }
-        var delLength = Math.max(0, canvasY + Consts.CHIP_SIZE - yLimit);
-        if (delLength >= Consts.CHIP_SIZE) {
-            return;
-        }
-        this._backCanvas.ctx.drawImage(
-            this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY + delLength,
-            Consts.CHIP_SIZE, Consts.CHIP_SIZE - delLength, canvasX, canvasY + delLength,
-            Consts.CHIP_SIZE, Consts.CHIP_SIZE
-        );
-    }
 
     /**
-     * 背景パーツの Canvas に画像データを書き込みます
-     *     描画する座標が yLimit 以下でないと書き込めません
-     * @param chipX 描画するX座標 (マス単位)
-     * @param chipY 描画するY座標 (マス単位)
-     * @param canvasX 描画したい画像データのX座標 (ピクセル単位)
-     * @param canvasY 描画したい画像データのY座標 (ピクセル単位)
-     * @param yLimit 描画可能な境界値 (ピクセル単位)
+     * 指定したキャッシュキャンバスに画像データを書き込みます。
+     * @param cacheCanvas 
+     * @param delLengthFunc 
      */
+    private copyCanvas(cacheCanvas: CacheCanvas, delLengthFunc: (canvasY: number, yLimit: number) => number):
+        (chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number) => void
+    {
+        return (chipX, chipY, canvasX, canvasY, yLimit) => {
+            if (!this._isLoaded) {
+                throw new Error("No image was loaded.");
+            }
+            const delLength = Math.max(0, delLengthFunc(canvasY, yLimit));
+            if (delLength >= Consts.CHIP_SIZE) {
+                return;
+            }
+            cacheCanvas.ctx.drawImage(
+                this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY + delLength,
+                Consts.CHIP_SIZE, Consts.CHIP_SIZE - delLength, canvasX, canvasY + delLength,
+                Consts.CHIP_SIZE, Consts.CHIP_SIZE
+            );
+        };
+    }
+
+    public copyBackCanvasWithUpperYLimit(chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number): void {
+        this.copyCanvas(this._backCanvas, (canvasY, yLimit) => canvasY + Consts.CHIP_SIZE - yLimit)(chipX, chipY, canvasX, canvasY, yLimit);
+    }
+
     public copyBackCanvasWithLowerYLimit(chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number): void {
-        if (!this._isLoaded) {
-            throw new Error("No image was loaded.");
-        }
-        var delLength = Math.max(0, yLimit - canvasY);
-        if (delLength >= Consts.CHIP_SIZE) {
-            return;
-        }
-        this._backCanvas.ctx.drawImage(
-            this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY + delLength,
-            Consts.CHIP_SIZE, Consts.CHIP_SIZE - delLength, canvasX, canvasY + delLength,
-            Consts.CHIP_SIZE, Consts.CHIP_SIZE
-        );
+        this.copyCanvas(this._backCanvas, (canvasY, yLimit) => yLimit - canvasY)(chipX, chipY, canvasX, canvasY, yLimit);
     }
-    public copyObjectCanvasWithUpperYLimit(frameType:number,chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number): void {
-        if (!this._isLoaded) {
-            throw new Error("No image was loaded.");
-        }
-        var delLength = Math.max(0, canvasY + Consts.CHIP_SIZE - yLimit);
-        if (delLength >= Consts.CHIP_SIZE) {
-            return;
-        }
-        this._objectCanvases[frameType].ctx.drawImage(
-            this._image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY + delLength,
-            Consts.CHIP_SIZE, Consts.CHIP_SIZE - delLength, canvasX, canvasY + delLength,
-            Consts.CHIP_SIZE, Consts.CHIP_SIZE
-        );
+
+    public copyObjectCanvasWithUpperYLimit(frameType: number, chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number): void {
+        this.copyCanvas(this._objectCanvases[frameType], (canvasY, yLimit) => canvasY + Consts.CHIP_SIZE - yLimit)(chipX, chipY, canvasX, canvasY, yLimit);
     }
+
+    public copyObjectCanvasWithLowerYLimit(frameType: number, chipX: number, chipY: number, canvasX: number, canvasY: number, yLimit: number): void {
+        this.copyCanvas(this._objectCanvases[frameType], (canvasY, yLimit) => yLimit - canvasY)(chipX, chipY, canvasX, canvasY, yLimit);
+    }
+
     public drawBackCanvas(): void {
         if (!this._isLoaded) {
             throw new Error("No image was loaded.");

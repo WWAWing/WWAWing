@@ -1987,8 +1987,8 @@ export class WWA {
 
         // 3. 再描画が必要であれば、事前に Canvas をクリア
         if (cacheDrawFlag) {
-            // バックキャンバスをクリア
             this._cgManager.clearBackCanvas();
+            this._cgManager.clearObjectCanvases();
         }
 
         // 4. エフェクト効果の段階であれば、エフェクトを描画
@@ -2154,6 +2154,8 @@ export class WWA {
                             offset = result;
                         }
                     }
+                    canvasX = Consts.CHIP_SIZE * (x - cpParts.x) + offset.x - cpOffset.x;
+                    canvasY = Consts.CHIP_SIZE * (y - cpParts.y) + offset.y - cpOffset.y;
                     imgType = (
                         animationType ||
                         this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
@@ -2163,12 +2165,10 @@ export class WWA {
                         this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
                     ppyo =
                         this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
-                    canvasX = Consts.CHIP_SIZE * (x - cpParts.x) + offset.x - cpOffset.x;
-                    canvasY = Consts.CHIP_SIZE * (y - cpParts.y) + offset.y - cpOffset.y;
                     type = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_TYPE];
                     num = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_NUMBER];
                     if (partsIDObj !== 0 && !this._checkNoDrawObject(new Coord(x, y), type, num)) {
-                        this._cgManager.drawCanvasWithLowerYLimit(ppxo, ppyo, canvasX, canvasY, yLimit);
+                        this._cgManager.copyObjectCanvasWithLowerYLimit(animationType ? 1 : 0, ppxo, ppyo, canvasX, canvasY, yLimit);
                     }
                 }
             }
@@ -2214,9 +2214,7 @@ export class WWA {
             }
 
             if (cacheDrawFlag) {
-                //バックキャンバスをクリア
-                this._cgManager.clearObjectCanvases();
-                Array.prototype.push.apply(drawPartsList, drawStaticPartsList);//staticを描画対象に追加
+                Array.prototype.push.apply(drawPartsList, drawStaticPartsList); // staticを描画対象に追加
             }
             var i: number, len: number;
             len = drawPartsList.length;
