@@ -2017,7 +2017,7 @@ export class WWA {
         // 5. マップを描画
         this._drawMap(cpParts, cpOffset, yLimit, false, cacheDrawFlag);
         this._drawPlayer(cpParts, cpOffset, yLimit);
-        this._drawObjects(cpParts, cpOffset, yLimit , false , cacheDrawFlag);
+        this._drawObjects(cpParts, cpOffset, yLimit, false, cacheDrawFlag);
 
         // 6. 攻撃エフェクト描画
         if (this._player.isFighting() && !this._player.isBattleStartFrame()) {
