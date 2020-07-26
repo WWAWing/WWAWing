@@ -1974,12 +1974,12 @@ export class WWA {
         // 2. 再描画が必要であればフラグを更新
         var cacheDrawFlag: boolean = false;
         if (yLimit !== this._cgManager.mapCacheYLimit) {
-            //yLimitが異なるために再描画
+            // yLimitが異なるために再描画
             this._cgManager.mapCacheYLimit = yLimit;
             cacheDrawFlag = true;
         }
         if ((cpParts.x !== this._cgManager.cpPartsLog.x) || (cpParts.y !== this._cgManager.cpPartsLog.y)) {
-            //cpParts座標が変わったため再描画
+            // cpParts座標が変わったため再描画
             this._cgManager.cpPartsLog.x = cpParts.x;
             this._cgManager.cpPartsLog.y = cpParts.y;
             cacheDrawFlag = true;
@@ -2010,7 +2010,6 @@ export class WWA {
                     }
                     elm.style.opacity = (opacity / 255) + "";
                 }, 20);
-
             }
         }
 
@@ -2074,6 +2073,7 @@ export class WWA {
             }
 
             if (cacheDrawFlag) {
+                this._cgManager.clearBackCanvasWithLowerYLimit(yLimit);
                 //バックキャンバスに背景を描画
                 for (var x: number = xLeft; x <= xRight; x++) {
                     for (var y: number = yTop; y <= yBottom; y++) {
@@ -2214,6 +2214,7 @@ export class WWA {
             }
 
             if (cacheDrawFlag) {
+                this._cgManager.clearObjectCanvasesWithLowerYLimit(yLimit);
                 Array.prototype.push.apply(drawPartsList, drawStaticPartsList); // staticを描画対象に追加
             }
             var i: number, len: number;

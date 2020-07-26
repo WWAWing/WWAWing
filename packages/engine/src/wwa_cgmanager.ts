@@ -21,11 +21,23 @@ export class CacheCanvas {
         );
     }
     public clear() {
+        this.clearRect(0, 0, this.cvs.width, this.cvs.height);
+    }
+
+    /**
+     * yLimit より上の領域を削除します。
+     * @param yLimit Y座標の境界値
+     */
+    public clearRectWithLowerYLimit(yLimit: number) {
+        this.clearRect(0, 0, this.cvs.width, yLimit);
+    }
+
+    private clearRect(x: number, y: number, width: number, height: number) {
         if (!this._alpha) {
             this.ctx.fillStyle = "#9E9E9E";
-            this.ctx.fillRect(0, 0, this.cvs.width, this.cvs.height);
+            this.ctx.fillRect(x, y, width, height);
         } else {
-            this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
+            this.ctx.clearRect(x, y, width, height);
         }
     }
 }
@@ -278,10 +290,19 @@ export class CGManager {
     public clearBackCanvas(): void {
         this._backCanvas.clear();
     }
+    public clearBackCanvasWithLowerYLimit(yLimit: number): void {
+        this._backCanvas.clearRectWithLowerYLimit(yLimit);
+    }
     public clearObjectCanvases(): void {
         var i;
         for (i = 0; i < 2; i++) {
             this._objectCanvases[i].clear();
+        }
+    }
+    public clearObjectCanvasesWithLowerYLimit(yLimit: number): void {
+        var i;
+        for (i = 0; i < 2; i++) {
+            this._objectCanvases[i].clearRectWithLowerYLimit(yLimit);
         }
     }
 
