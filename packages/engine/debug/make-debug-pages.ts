@@ -1,4 +1,4 @@
-import { generateWWAPageFromConfig, WWAPageConfig, getDefaultCopyrights } from "@wwawing/page-generator";
+import { render, InputConfig } from "@wwawing/page-generator";
 import * as fs from "fs";
 import * as pug from "pug";
 import * as path from "path";
@@ -38,26 +38,25 @@ function createHTMLFilePromises(mapNames: string[]): Promise<void>[] {
     return mapNames
         .map(mapName => ({
             mapName,
-            html: generateWWAPageFromConfig(createConfig(`${mapName}.dat`))
+            html: render(createConfig(`${mapName}.dat`))
         }))
         .map(params => createWriteFilePromise(
             path.join(outputDirectory, `${params.mapName}.html`), params.html));
 }
 
-function createConfig(mapdata: string): WWAPageConfig {
+function createConfig(mapData: string): InputConfig {
     return {
         page: {
             additionalCssFiles: ["style.css"],
-            wwa: {
-                resources: {
-                    mapdata,
-                    wwaJs: isDev ? "wwa.long.js" : "wwa.js",
-                    titleImg: "cover.gif",
-                },
-                urlgateEnable: true
+        },
+        wwa: {
+            resources: {
+                mapData,
+                wwaJs: isDev ? "wwa.long.js" : "wwa.js",
+                titleImage: "cover.gif",
             },
-            copyrights: getDefaultCopyrights()
-        }
+        },
+        copyrights: "official-and-wing"
     };
 }
 
