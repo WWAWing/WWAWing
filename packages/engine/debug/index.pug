@@ -10,7 +10,7 @@ html(lang="ja")
     ul
         each map in page.maps
             li
-                a(href=map.fileName + ".html") #{map.title}
+                a(href=(map.outputPageName || map.fileName) + ".html") #{map.title}
 
     p
         | Internet RPG &quot;

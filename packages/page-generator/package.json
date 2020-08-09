@@ -6,7 +6,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
+    "build": "tsc && shx cp ./src/wwa.pug ./lib/wwa.pug",
     "start": "npm run build && shx mkdir -p output && node debug/debug.js",
     "prepare": "npm run build"
   },
@@ -21,9 +21,6 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/js-yaml": "^3.11.1",
-    "@types/jsonschema": "^1.1.1",
-    "@types/lodash": "^4.14.120",
     "@types/node": "^12.12.6",
     "@types/pug": "^2.0.4",
     "pug-cli": "^1.0.0-alpha6",
@@ -32,9 +29,6 @@
     "typescript": "^3.7.2"
   },
   "dependencies": {
-    "js-yaml": "^3.13.1",
-    "jsonschema": "^1.2.4",
-    "lodash": "^4.17.13",
     "pug": "^2.0.4"
   },
   "publishConfig": {
