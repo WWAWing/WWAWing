@@ -1,8 +1,6 @@
 import {
     WWAData
 } from "../wwa_data";
-import * as util from "../wwa_util";
-import WWACompress from "./WWACompress";
 import WWASaveData from "./WWASaveData";
 import WWASaveDataDBList from "./WWASaveDataDBList";
 

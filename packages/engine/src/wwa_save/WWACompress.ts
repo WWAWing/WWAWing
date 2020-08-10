@@ -158,7 +158,6 @@ export default class WWACompress {
                     }
                 }
                 var saveList = [];
-                var saveListTest = [];
                 oldValue = -1;
 
                 //テーブル情報を配列情報に変換
