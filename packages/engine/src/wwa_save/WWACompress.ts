@@ -643,12 +643,10 @@ export default class WWACompress {
     private static getChangedUint8Array(wwaObject: object, restartObject: object): Uint8Array {
         var x: number, y: number, bit: number, position: number;
         var mapWidth: number = this._restartData.mapWidth;
-        var indexCount: number;
         var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
         var startIndex: number = -1;
         bit = 0;
         position = 0;
-        indexCount = 0;
         for (y = 0; y < mapWidth; y++) {
             for (x = 0; x < mapWidth; x++) {
                 if (wwaObject[y][x] !== restartObject[y][x]) {
