@@ -2267,7 +2267,7 @@ export class WWA {
 
                 }
             }
-            //バックキャンバスをメインキャンバスに描画
+            // オブジェクトキャンバスをメインキャンバスに描画
             this._cgManager.drawObjectCanvas(animationType ? 1 : 0);
         }
 
