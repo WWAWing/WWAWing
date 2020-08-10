@@ -277,7 +277,7 @@ export class CGManager {
             0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW
         );
     }
-    public drawObjectCanvas(frameType:number): void {
+    public drawObjectCanvas(frameType: number): void {
         if (!this._isLoaded) {
             throw new Error("No image was loaded.");
         }
@@ -357,4 +357,3 @@ export class CGManager {
         this.cpPartsLog = new Coord(0, 0);
     }
 }
-
