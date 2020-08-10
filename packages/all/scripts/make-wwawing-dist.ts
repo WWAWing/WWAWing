@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as shell from "shelljs";
-import { generateWWAPageFromConfig, WWAPageConfig, getDefaultCopyrights } from "@wwawing/page-generator";
+import { render, InputConfig } from "@wwawing/page-generator";
 
 const wwawingDistDirName = "wwawing-dist";
 const wwawingUpdateDirName = "wwawing-update";
@@ -128,7 +128,7 @@ export default async function makeDistribution(
         return mapNames
             .map(mapName => ({
                 mapName,
-                html: generateWWAPageFromConfig(createConfig(`${mapName}.dat`))
+                html: render(createConfig(`${mapName}.dat`))
             }))
             .map(params => createWriteFilePromise(
                 path.join(__dirname, "..", "dist", "wwawing-dist", "mapdata", `${params.mapName}.html`),
@@ -136,20 +136,19 @@ export default async function makeDistribution(
             ));
     }
     
-    function createConfig(mapdata: string): WWAPageConfig {
+    function createConfig(mapData: string): InputConfig {
         return {
             page: {
-                additionalCssFiles: ["style.css"],
-                wwa: {
-                    resources: {
-                        mapdata,
-                        wwaJs: "wwa.js",
-                        titleImg: "cover.gif",
-                    },
-                    urlgateEnable: true
+                additionalCssFiles: ["style.css"]
+            },
+            wwa: {
+                resources: {
+                    mapData,
+                    wwaJs: "wwa.js",
+                    titleImage: "cover.gif",
                 },
-                copyrights: getDefaultCopyrights()
-            }
+            },
+            copyrights: "official-and-wing"
         };
     }
     
