@@ -4,13 +4,13 @@ import { WWAConsts as Consts, Coord } from "./wwa_data";
 export class CacheCanvas {
     public cvs: HTMLCanvasElement;
     public ctx: CanvasRenderingContext2D;
-    private _alpha: boolean;
-    public constructor(width: number, height: number, alpha: boolean) {
+    private _isTransparent: boolean;
+    public constructor(width: number, height: number, isTransparent: boolean) {
         this.cvs = document.createElement("canvas");
         this.cvs.width = width;
         this.cvs.height = height;
-        this.ctx = this.cvs.getContext("2d", { alpha: alpha });
-        this._alpha = alpha;
+        this.ctx = this.cvs.getContext("2d", { alpha: isTransparent });
+        this._isTransparent = isTransparent;
         //document.body.appendChild(this.cvs);
     }
     public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number): void {
@@ -33,7 +33,7 @@ export class CacheCanvas {
     }
 
     private clearRect(x: number, y: number, width: number, height: number) {
-        if (!this._alpha) {
+        if (!this._isTransparent) {
             this.ctx.fillStyle = "#9E9E9E";
             this.ctx.fillRect(x, y, width, height);
         } else {
