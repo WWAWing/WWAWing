@@ -144,7 +144,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                 var reqAdd = store.put(addData);
                 //reqAdd.callbackLog = callback;
             } catch (error) {
-                //EDGE‚ÅƒGƒ‰[H
+                // EDGEã§ã‚¨ãƒ©ãƒ¼ï¼Ÿ
                 return;
             }
             reqAdd.onsuccess = (e) => {
