@@ -1092,7 +1092,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         }
     }
     save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
-        return this._wwaSave.save(gameCvs,_quickSaveData,this._save_select_id);
+        return this._wwaSave.save(gameCvs, _quickSaveData, this._save_select_id);
     }
     load(): WWAData {
         return this._wwaSave.load(this._save_select_id);
