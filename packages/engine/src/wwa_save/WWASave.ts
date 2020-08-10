@@ -6,7 +6,6 @@ import {
     BROWSER_TYPE
 } from "../wwa_data";
 import * as util from "../wwa_util";
-import { MessageWindow } from "../wwa_message";
 import { WWA } from "../wwa_main";
 import { Player } from "../wwa_parts_player"; 
 import WWASaveData from "./WWASaveData";
@@ -15,7 +14,6 @@ import WWASaveDataDBList from "./WWASaveDataDBList";
 import WWASaveDataLogList from "./WWASaveDataLogList";
 
 export default class WWASave {
-    private _messageWindow: MessageWindow;
     public static checkOriginalMapString: string;
     private _wwaDBSaveList: WWASaveDataDBList;
     private _wwaLogSaveList: WWASaveDataLogList;

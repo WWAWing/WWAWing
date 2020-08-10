@@ -3623,7 +3623,6 @@ export class WWA {
                 //qd.mapCompressed = this._compressMap(qd.map);
                 //qd.mapObjectCompressed = this._compressMap(qd.mapObject);
                 qd.checkString = this._generateSaveDataHash(qd);
-                qd.frameCount = this._player.getFrameCount();
 
                 // map, mapObjectについてはcompressから復元
                 //qd.map = void 0;

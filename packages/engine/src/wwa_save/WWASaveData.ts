@@ -5,7 +5,6 @@ import {
 } from "../wwa_data";
 import * as util from "../wwa_util";
 import WWASaveDataList from "./WWASaveDataList";
-import WWACompress from "./WWACompress";
 
 export default class WWASaveData {
     protected _parent: WWASaveDataList;
@@ -61,7 +60,7 @@ export default class WWASaveData {
         }
     }
     public getDateText(): string{
-        var y, m, d, ho, mi, se, date;
+        let y, m, d, ho, mi, se;
         if (!this.date) {
             return '';
         }

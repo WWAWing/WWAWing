@@ -206,7 +206,7 @@ export default class WWACompress {
     private static compressMapAllObject(wwaObject: object, restartObject: object, firstRandomMapObjectUtf8Array: Uint8Array): object {
         var x: number, y: number, bit: number, position: number, idText: string, lastPosition: number, count: number, id: number;
         var mapWidth: number = this._restartData.mapWidth;
-        var oldID: number, idList: Array<number>, indexList: Array<number>, compressClassList: Array<WWACompressIndexTable>, indexText: string, indexTable: object, idClassTable: object, index: number, indexCount: number;
+        var idList: Array<number>, indexList: Array<number>, compressClassList: Array<WWACompressIndexTable>, indexText: string, indexTable: object, idClassTable: object, index: number, indexCount: number;
         var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
         var startIndex: number = -1;
         var len: number;
@@ -260,14 +260,12 @@ export default class WWACompress {
         compressClassList.sort(this.idSort);
 
         indexTable = {};
-        oldID = -1;
         //Index配列を生成する。使用回数が多い順に格納する
         for (indexText in compressClassList) {
             id = compressClassList[indexText].id;
             indexTable[id] = Number(indexText);
 
             idList[indexText] = id;
-            oldID = id;
         }
 
         //
@@ -305,9 +303,8 @@ export default class WWACompress {
     }
     private static indexListCompress(indexList: Array<number>, idLength: number): Array<number> {
         var newIndexList: Array<number> = [];
-        var i: number, n: number, s: number, len: number, index: number, indexLog: number, nextIndex: number, repeatCount: number;
+        var i: number, n: number, s: number, len: number, index: number, nextIndex: number, repeatCount: number;
         len = indexList.length;
-        indexLog = -1;
         n = 0;
         for (i = 0; i < len; i++) {
             index = indexList[i];
@@ -439,12 +436,12 @@ export default class WWACompress {
         return newData;
     }
     private static decompressObject(key: string, loadObject: object, newObject: object): object {
-        var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
+        var saveObject: object;
         var key: string;
         switch (key) {
             case SAVE_COMPRESS_ID.MAP:
             case SAVE_COMPRESS_ID.MAP_OBJECT:
-                var newValue: number, oldValue: number, addValue: number, x: string, y: string, x_number: number, y_number: number, id: number, allIdTableX: object, allIdTableY: object, idText: string, xList: number[], yList: number[];
+                var newValue: number, oldValue: number, addValue: number, x: string, y: string, id: number, idText: string;
 
                 saveObject = {};
 
@@ -577,7 +574,7 @@ export default class WWACompress {
         }
     }
     private static decompressAllMapObject(loadArray: object, newObject: object,firstRandomMapObjectUtf8Array: Uint8Array): boolean {
-        var x: number, y: number, id: number, bit: number, position: number, idText: string, lastPosition: number, count: number, id: number;
+        var x: number, y: number, id: number, bit: number, position: number, count: number, id: number;
         var mapWidth: number = this._restartData.mapWidth;
         var loadIndexList: Array<number>, indexList: Array<number>, idList: Array<number>, index: number, indexCount: number;
         var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
@@ -614,7 +611,6 @@ export default class WWACompress {
 
         bit = 0;
         position = 0;
-        lastPosition = 0;
         count = 0;
         indexCount = 0;
         len = uint8Array.length;
@@ -646,15 +642,13 @@ export default class WWACompress {
     }
 
     private static getChangedUint8Array(wwaObject: object, restartObject: object): Uint8Array {
-        var x: number, y: number, bit: number, position: number, lastPosition: number, count: number;
+        var x: number, y: number, bit: number, position: number;
         var mapWidth: number = this._restartData.mapWidth;
         var indexCount: number;
         var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
         var startIndex: number = -1;
         bit = 0;
         position = 0;
-        lastPosition = 0;
-        count = 0;
         indexCount = 0;
         for (y = 0; y < mapWidth; y++) {
             for (x = 0; x < mapWidth; x++) {
@@ -668,8 +662,6 @@ export default class WWACompress {
                     //ビット単位で座標が存在するかを記録
                     uint8Array[position] = uint8Array[position] | (1 << bit);
 
-                    //最後のビットとして設定
-                    lastPosition = position;
                 }
                 bit++;
                 if (bit === 8) {
