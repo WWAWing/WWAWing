@@ -50,7 +50,10 @@ function createPlayPageConfig(mapData: string, isClassicMode?: true): InputConfi
         },
         wwa: {
             gameOption: {
-                isClassicMode
+                isClassicMode,
+                autoSave: {
+                    intervalSteps: 200
+                }
             },
             resources: {
                 mapData,

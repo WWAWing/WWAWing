@@ -3,6 +3,9 @@ export interface GameOption {
     isClassicMode?: boolean;
     isItemEffectEnabled?: boolean;
     useGoToWWA?: boolean;
+    autoSave?: {
+        intervalSteps: number;
+    };
     useLookingAround?: boolean;
 }
 
