@@ -1,7 +1,6 @@
-import { WWAData, BROWSER_TYPE } from "./wwa_data";
-import { WWASaveData, MessageWindow } from "./wwa_message";
-import { WWA } from "./wwa_main";
-// MEMO: psave は Phase4でなくなるので、コードの変更は最小限に進める
+import {
+    WWAData
+} from "../wwa_data";
 
 var SAVE_COMPRESS_ID = {
     MAP: "map",
@@ -15,11 +14,17 @@ var NOT_COMPRESS_ID = {
     "message": true,
 };
 
-export class WWACompress {
+export class FirstChangedMapUint8Table {
+    public map: Uint8Array;
+    public mapObject: Uint8Array;
+}
+
+export default class WWACompress {
     private static _usingByteFlag = false;
     private static MIN_LOOP_COUNT = 3;
     private static _restartData: WWAData = void 0;
     private static _mapByteLength: number = 0;
+    private static _firstRandomMapObjectUtf8Table: FirstChangedMapUint8Table = new FirstChangedMapUint8Table();
     public static compress(wwaData: WWAData): object {
         var saveObject: object = {};
         var key: string, value;
@@ -153,31 +158,18 @@ export class WWACompress {
                     }
                 }
                 var saveList = [];
-                var saveListTest = [];
                 oldValue = -1;
 
                 //テーブル情報を配列情報に変換
-                var usingUint8Flag: boolean = false;
                 for (idText in saveObject) {
                     newValue = Number(idText);
                     addValue = newValue - oldValue - 1;
                     oldValue = newValue;
-                    usingUint8Flag = false;
-                    if (this._usingByteFlag) {
-                        //バイナリ化
-                        saveObject[idText] = this.compressUint8Array(newValue, saveObject[idText], wwaObject);
-                        if (saveObject[idText] instanceof Uint8Array) {
-                            usingUint8Flag = true;
-                        }
-                    }
-                    if (!usingUint8Flag) {
-                        saveListTest.push(addValue, saveObject[idText]);
-                    }
                     saveList.push(addValue, saveObject[idText]);
                 }
                 if (this._usingByteFlag) {
-                    if (JSON.stringify(saveListTest).length >= this._mapByteLength) {
-                        return this.compressMapAllObject(wwaObject, restartObject);
+                    if (JSON.stringify(saveList).length >= this._mapByteLength) {
+                        return this.compressMapAllObject(wwaObject, restartObject, this._firstRandomMapObjectUtf8Table[key]);
                     }
                 }
 
@@ -210,13 +202,13 @@ export class WWACompress {
      * @param wwaObject
      * @param restartObject
      */
-    private static compressMapAllObject(wwaObject: object, restartObject: object): object {
-        var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
+    private static compressMapAllObject(wwaObject: object, restartObject: object, firstRandomMapObjectUtf8Array: Uint8Array): object {
         var x: number, y: number, bit: number, position: number, idText: string, lastPosition: number, count: number, id: number;
         var mapWidth: number = this._restartData.mapWidth;
-        var oldID: number, idList: Array<number>, indexList: Array<number>, compressClassList: Array<WWACompressIndexTable>, indexText: string, indexTable: object, idClassTable: object, index: number, indexCount: number;
+        var idList: Array<number>, indexList: Array<number>, compressClassList: Array<WWACompressIndexTable>, indexText: string, indexTable: object, idClassTable: object, index: number, indexCount: number;
         var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
         var startIndex: number = -1;
+        var len: number;
         bit = 0;
         position = 0;
         lastPosition = 0;
@@ -267,14 +259,12 @@ export class WWACompress {
         compressClassList.sort(this.idSort);
 
         indexTable = {};
-        oldID = -1;
         //Index配列を生成する。使用回数が多い順に格納する
         for (indexText in compressClassList) {
             id = compressClassList[indexText].id;
             indexTable[id] = Number(indexText);
 
             idList[indexText] = id;
-            oldID = id;
         }
 
         //
@@ -286,14 +276,34 @@ export class WWACompress {
                 }
             }
         }
+        if (firstRandomMapObjectUtf8Array) {
+            len = uint8Array.length;
+            startIndex = -1;
+            lastPosition = 0;
+            for (position = 0; position < len; position++) {
+                uint8Array[position] = uint8Array[position] & (~firstRandomMapObjectUtf8Array[position]);
+                if (uint8Array[position] !== 0) {
+                    if (startIndex === -1) {
+                        //0ではないバイト開始位置を取得
+                        startIndex = position;
+                    }
+                    //最後のビットとして設定
+                    lastPosition = position;
+                }
+            }
+            if (startIndex === -1) {
+                //データなし
+                startIndex = 0;
+                lastPosition = 0;
+            }
+        }
 
         return [startIndex, uint8Array.subarray(startIndex, lastPosition + 1), idList, this.indexListCompress(indexList, idList.length)];
     }
-    private static indexListCompress(indexList: Array<number>, idLength:number): Array<number> {
+    private static indexListCompress(indexList: Array<number>, idLength: number): Array<number> {
         var newIndexList: Array<number> = [];
-        var i: number, n: number, s: number, len: number, index: number, indexLog: number, nextIndex: number, repeatCount:number;
+        var i: number, n: number, s: number, len: number, index: number, nextIndex: number, repeatCount: number;
         len = indexList.length;
-        indexLog = -1;
         n = 0;
         for (i = 0; i < len; i++) {
             index = indexList[i];
@@ -327,48 +337,7 @@ export class WWACompress {
     private static idSort(a: WWACompressIndexTable, b: WWACompressIndexTable): number {
         return b.count - a.count;
     }
-    /**
-     * JSON化したときの文字列の長さにより判定し、分岐する。
-     * bit単位でフラグ管理し、マップ全体の通行情報を格納する方式に変換。
-     * ランダムに大量に同じチップが使われている場合に切り替える。
-     * @param id
-     * @param saveObject
-     * @param wwaObject
-     */
-    private static compressUint8Array(id: number, saveObject: object, wwaObject: object):object {
-        var x: number, y: number, bit: number, position: number, lastPosition: number;
-        var mapWidth: number = this._restartData.mapWidth;
-        if (JSON.stringify(saveObject).length < this._mapByteLength) {
-            return saveObject;
-        }
 
-        var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
-        bit = 0;
-        position = 0;
-        lastPosition = 0;
-        for (y = 0; y < mapWidth; y++) {
-            for (x = 0; x < mapWidth; x++) {
-                if (wwaObject[y][x] === id) {
-                    uint8Array[position] = uint8Array[position] | (1 << bit);
-                    lastPosition = position;
-                }
-                bit++;
-                if (bit === 8) {
-                    bit = 0;
-                    position++;
-                }
-            }
-        }
-        return uint8Array.subarray(0, lastPosition + 1);
-    }
-    private static compressBase64(id: number, saveObject: object, wwaObject: object) {
-        var compressObject: object = this.compressUint8Array(id, saveObject, wwaObject);
-        if (compressObject instanceof Uint8Array) {
-            return compressObject;
-        }
-        var uint8Array: Uint8Array = <Uint8Array>compressObject;
-        return window.btoa(String.fromCharCode.apply(null, uint8Array));
-    }
     /**
      * 絶対数値を示した配列を、相対数値を示した配列に変換する
      * @param list
@@ -381,7 +350,7 @@ export class WWACompress {
         //0座標のaddValueを1になるようにする
         oldValue = -1;
         len = list.length;
-        for (k=0,i = 0; i < len; i++) {
+        for (k = 0, i = 0; i < len; i++) {
             newValue = list[i];
             addValue = newValue - oldValue;
             loopCount = 0;
@@ -415,10 +384,10 @@ export class WWACompress {
     private static getDecompressArray(list: number[]): number[] {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
-        var lastValue:number,k:number;
+        var lastValue: number, k: number;
         oldValue = -1;//初期値を-1にすることで、0座標でも値が0にならないようにする
         len = list.length;
-        for (i = 0,k=0; i < len; i++) {
+        for (i = 0, k = 0; i < len; i++) {
             addValue = list[i];
             if (addValue === 0) {
                 //連続して1ずつ増える配列が存在
@@ -466,12 +435,12 @@ export class WWACompress {
         return newData;
     }
     private static decompressObject(key: string, loadObject: object, newObject: object): object {
-        var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
+        var saveObject: object;
         var key: string;
         switch (key) {
             case SAVE_COMPRESS_ID.MAP:
             case SAVE_COMPRESS_ID.MAP_OBJECT:
-                var newValue: number, oldValue: number, addValue: number, x: string, y: string, x_number: number, y_number: number, id: number, allIdTableX: object, allIdTableY: object, idText: string, xList: number[], yList: number[];
+                var newValue: number, oldValue: number, addValue: number, x: string, y: string, id: number, idText: string;
 
                 saveObject = {};
 
@@ -481,12 +450,12 @@ export class WWACompress {
                 len = loadArray.length;
                 if (len === 4) {
                     if ((typeof loadArray[0] === "number") && ((loadArray[1] instanceof Uint8Array) || (loadArray[1] instanceof Array)) && (loadArray[2] instanceof Array) && (loadArray[3] instanceof Array)) {
-                        this.decompressAllMapObject(loadArray, newObject);
+                        this.decompressAllMapObject(loadArray, newObject, this._firstRandomMapObjectUtf8Table[key]);
                         return newObject;
                     }
                 }
                 //配列から物体ID・背景IDテーブルに変換
-                for (i = 0; i < len;i+=2) {
+                for (i = 0; i < len; i += 2) {
                     addValue = Number(loadArray[i]);
                     newValue = oldValue + addValue + 1;//変動値に0は使われないため、1で加算して無駄を削除
                     oldValue = newValue;
@@ -500,14 +469,10 @@ export class WWACompress {
                     id = Number(idText);
 
                     loadArray = <object[]>saveObject[idText];
-                    if (this.decompressUint8Array(id, loadArray, newObject)) {
-                        //バイトデータである場合は書き込んで戻る
-                        continue;
-                    }
                     len = loadArray.length;
                     idTableX = [];
                     idTableY = [];
-                    
+
                     //配列からX、Y配列を抽出
                     for (i = 0; i < len; i += 2) {
 
@@ -607,40 +572,10 @@ export class WWACompress {
                 return newObject;
         }
     }
-    /**
-     * Uint8Arrayに保存されているフラグ情報を展開
-     * @param id
-     * @param loadArray
-     * @param newObject
-     */
-    private static decompressUint8Array(id: number, loadArray: object, newObject: object) {
-        if (!(loadArray instanceof Uint8Array)) {
-            return false;
-        }
-        var x: number, y: number, bit: number, position: number, len: number,count:number;
-        var mapWidth = this._restartData.mapWidth;
-        var uint8Array = <Uint8Array>loadArray;
-        len = uint8Array.length;
-        count = 0;
-        for (position = 0; position < len; position++) {
-            for (bit = 0; bit < 8; bit++) {
-                if ((uint8Array[position] & (1 << bit)) !== 0) {
-                    //設置している
-                    x = count % mapWidth;
-                    y = (count / mapWidth) | 0;
-                    newObject[y][x] = id;
-
-                }
-                count++;
-            }
-        }
-        return true;
-    }
-    private static decompressAllMapObject(loadArray: object, newObject: object): boolean {
-        var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
-        var x: number, y: number, id: number, bit: number, position: number, idText: string, lastPosition: number, count: number, id: number;
+    private static decompressAllMapObject(loadArray: object, newObject: object,firstRandomMapObjectUtf8Array: Uint8Array): boolean {
+        var x: number, y: number, id: number, bit: number, position: number, count: number, id: number;
         var mapWidth: number = this._restartData.mapWidth;
-        var oldID: number, loadIndexList: Array<number>, indexList: Array<number>, idList: Array<number>, index: number, indexCount: number;
+        var loadIndexList: Array<number>, indexList: Array<number>, idList: Array<number>, index: number, indexCount: number;
         var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
         var x: number, y: number, bit: number, position: number, len: number, count: number;
 
@@ -650,11 +585,17 @@ export class WWACompress {
         loadIndexList = loadArray[3];
         var uintCopy8Array: Uint8Array = <Uint8Array>loadArray[1];
         uint8Array.set(uintCopy8Array, startIndex);
+        if (firstRandomMapObjectUtf8Array) {
+            len = uint8Array.length;
+            for (position = 0; position < len; position++) {
+                uint8Array[position] = uint8Array[position] | firstRandomMapObjectUtf8Array[position];
+            }
+        }
         indexList = [];
         var idLength: number = idList.length;
         var len: number, i: number, n: number, repeatCount: number, k: number, indexLog: number;
         len = loadIndexList.length;
-        for (i = 0,n = 0; i < len; i++) {
+        for (i = 0, n = 0; i < len; i++) {
             index = loadIndexList[i];
             if (index >= idLength) {
                 repeatCount = index - idLength;
@@ -669,7 +610,6 @@ export class WWACompress {
 
         bit = 0;
         position = 0;
-        lastPosition = 0;
         count = 0;
         indexCount = 0;
         len = uint8Array.length;
@@ -678,6 +618,9 @@ export class WWACompress {
                 if ((uint8Array[position] & (1 << bit)) !== 0) {
                     //設置している
                     index = indexList[indexCount++];
+                    if (index === undefined) {
+                        return false;
+                    }
                     id = idList[index];
                     x = count % mapWidth;
                     y = (count / mapWidth) | 0;
@@ -690,35 +633,41 @@ export class WWACompress {
 
         return true;
     }
-    private static decompressBase64(id: number, loadArray: object, newObject: object) {
-        if (typeof loadArray !== "string") {
-            return false;
-        }
-        var src = <string>loadArray;
-        var byteSrc: string = window.atob(src);
-        len = byteSrc.length;
-        var x: number, y: number, bit: number, position: number, len: number, count: number, byte: number;
-        var mapWidth = this._restartData.mapWidth;
-        count = 0;
-        for (position = 0; position < len; position++) {
-            byte = byteSrc.charCodeAt(position);
-            for (bit = 0; bit < 8; bit++) {
-                if ((byte & (1 << bit)) !== 0) {
-                    //設置している
-                    x = count % mapWidth;
-                    y = (count / mapWidth) | 0;
-                    newObject[y][x] = id;
 
-                }
-                count++;
-            }
-        }
-        return true;
-    }
-    
-    public static setRestartData(restartData: WWAData) {
+    public static setRestartData(restartData: WWAData, firstFrameData: WWAData) {
         this._restartData = restartData;
         this._mapByteLength = Math.ceil(restartData.mapWidth * restartData.mapWidth / 8);
+        this._firstRandomMapObjectUtf8Table[SAVE_COMPRESS_ID.MAP_OBJECT] = this.getChangedUint8Array(firstFrameData[SAVE_COMPRESS_ID.MAP_OBJECT], restartData[SAVE_COMPRESS_ID.MAP_OBJECT]);
+    }
+
+    private static getChangedUint8Array(wwaObject: object, restartObject: object): Uint8Array {
+        var x: number, y: number, bit: number, position: number;
+        var mapWidth: number = this._restartData.mapWidth;
+        var uint8Array: Uint8Array = new Uint8Array(this._mapByteLength);
+        var startIndex: number = -1;
+        bit = 0;
+        position = 0;
+        for (y = 0; y < mapWidth; y++) {
+            for (x = 0; x < mapWidth; x++) {
+                if (wwaObject[y][x] !== restartObject[y][x]) {
+
+                    if (startIndex === -1) {
+                        //0ではないバイト開始位置を取得
+                        startIndex = position;
+                    }
+
+                    //ビット単位で座標が存在するかを記録
+                    uint8Array[position] = uint8Array[position] | (1 << bit);
+
+                }
+                bit++;
+                if (bit === 8) {
+                    bit = 0;
+                    position++;
+                }
+            }
+        }
+        return uint8Array;
     }
 
     public static getStartWWAData(resumeSaveTextData: string) {
@@ -748,223 +697,11 @@ export class WWACompress {
      * バイナリデータ保存用のUint8Arrayの保存方式を併用する。
      * @param _usingByteFlag
      */
-    public static usingByte(_usingByteFlag):void {
+    public static usingByte(_usingByteFlag): void {
         this._usingByteFlag = _usingByteFlag;
     }
 };
 
-export class WWASaveDB {
-    private static _messageWindow: MessageWindow;
-    private static selectDatas: object[];
-    private static selectLoad:boolean = false;
-    private static INDEXEDDB_DB_NAME = "WWA_WING_DB";
-    private static INDEXEDDB_TABLE_NAME = "SAVE_TABLE";
-    private static indexedDB = window["indexedDB"] || window["webkitIndexedDB"] || window["mozIndexedDB"];
-    private static _checkOriginalMapString: string;
-    private static IDBTransaction: object = {
-        READ_ONLY: "readonly",
-        READ_WRITE: "readwrite",
-        VERSION_CHANGE : "versionchangetransaction"
-    };
-    /**
-     * IE/EDGEでgetAll関数が存在しなく、ロード失敗するため挙動をエミュレートする
-     */
-    private static getAlEmulate() {
-        var getAll = function (query) {
-            var queryResult = this.openCursor(query);
-            var dataList = [];
-            var callBackResult = { onsuccess: null, onerror:null};
-
-            queryResult.onsuccess = (e) => {
-                var cursor = e.target.result;
-                if (cursor === null) {
-                    var callBackEvent = {
-                        target: {
-                            result: dataList
-                        }
-                    };
-                    if (typeof callBackResult.onsuccess === "function") {
-                        callBackResult.onsuccess(callBackEvent);
-                    }
-                } else {
-                    dataList.push(e.target.result.value);
-                    cursor.continue();
-                }
-            };
-            queryResult.onerror = (e) =>{
-                if (typeof callBackResult.onerror === "function") {
-                    callBackResult.onerror(e);
-                }
-            };
-            return callBackResult;
-        };
-        if (window.IDBIndex.prototype.getAll === undefined) {
-            // @ts-ignore TS2322 どうせなくなるコードなので...
-            window.IDBIndex.prototype.getAll = getAll;
-        }
-        if (window.IDBObjectStore.prototype.getAll === undefined) {
-            // @ts-ignore TS2322 どうせなくなるコードなので...
-            window.IDBObjectStore.prototype.getAll = getAll;
-        }
-    }
-    private static indexDBOpen() {
-        this.getAlEmulate();
-        return this.indexedDB.open(this.INDEXEDDB_DB_NAME, 201205201);
-    }
-    public static init(_messageWindow: MessageWindow, wwa: WWA) {
-        this._messageWindow = _messageWindow;
-        this._checkOriginalMapString = wwa.checkOriginalMapString;
-        if (this.indexedDB) {
-            try {
-                if (this.indexedDB.open) {
-                } else {
-                    this.indexedDB = null;
-                }
-            } catch (e) {
-                this.indexedDB = null;
-            }
-        }
-
-        try {
-            var databaselog = this.indexedDB.open('test');
-            if (databaselog.error) {
-                this.indexedDB = null;
-            }
-        } catch (e) {
-        }
-        if (!this.indexedDB) {
-            return;
-        }
-        this.createDataBase();
-        this.selectSaveData();
-    }
-    private static createDataBase() {
-        try {
-            var reqOpen = this.indexDBOpen();
-            reqOpen.onupgradeneeded = (e) => {
-                var indexedDBSystem = reqOpen.result;
-                var oDBOptions = { keyPath: ["id", "url"]};
-                if (!indexedDBSystem.objectStoreNames.contains(this.INDEXEDDB_TABLE_NAME)) {
-                    var objectStore = indexedDBSystem.createObjectStore(this.INDEXEDDB_TABLE_NAME, oDBOptions);
-                    objectStore.createIndex("url", "url", { unique: false });
-                }
-            };
-            reqOpen.onsuccess = (e) =>{
-            };
-            reqOpen.onerror = (err) =>{
-            };
-            reqOpen.onblocked = (err) => {
-                this.indexedDB = null;
-            };
-        } catch (error) {
-        }
-    }
-    public static dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, quickSaveData: object, date: Date) {
-        if (!this.indexedDB) {
-            return;
-        }
-        var reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = (e) => {
-        };
-        reqOpen.onsuccess = (e) => {
-            var indexedDBSystem = reqOpen.result;
-            try {
-                var transaction = indexedDBSystem.transaction(this.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_WRITE"]);
-                var store = transaction.objectStore(this.INDEXEDDB_TABLE_NAME);
-            } catch (error) {
-                return;
-            }
-
-            var addData = {
-                "url": location.href,
-                "id": saveID,
-                "hash": this._checkOriginalMapString,
-                "image": gameCvs.toDataURL(),
-                "data": quickSaveData,
-                "date": date
-            };
-            this.selectDatas[saveID] = addData;
-
-            var reqAdd = store.put(addData);
-            //reqAdd.callbackLog = callback;
-            reqAdd.onsuccess = (e) => {
-            };
-            reqAdd.onerror = (e) => {
-            };
-        };
-        reqOpen.onerror = (e) => {
-        };
-        reqOpen.onblocked = (e) => {
-        };
-    }
-    private static selectSaveData() {
-        if (!this.indexedDB) {
-            return;
-        }
-        var reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = function (e) {
-        };
-        reqOpen.onsuccess = (e) => {
-            var indexedDBSystem = reqOpen.result;
-            var transaction, store;
-            try {
-                transaction = indexedDBSystem.transaction(this.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_ONLY"]);
-                store = transaction.objectStore(this.INDEXEDDB_TABLE_NAME);
-            } catch (error) {
-                return;
-            }
-            //var range = IDBKeyRange.bound(10);
-            this.selectDatas = [];
-            this.selectLoad = false;
-
-            var index = store.index("url");
-            var range = IDBKeyRange.only(location.href);
-            var saveDataResult = index.getAll(range);
-
-            saveDataResult.onsuccess = (e) => {
-                var i, len, loadend, onsuccess, onerror, saveData;
-                loadend = 0;
-                var result = e.target.result;
-                len = result.length;
-                for (i = 0; i < len; i++) {
-                    var resultData = result[i];
-                    try {
-                        /*saveData = {
-                            id: resultData.id,
-                            hash: resultData.hash,
-                            data: JSON.parse(resultData.data),
-                            date: new Date(resultData.date),
-                            image: resultData.image
-                        };*/
-                        saveData = {
-                            id: resultData.id,
-                            hash: resultData.hash,
-                            data: resultData.data,
-                            date: resultData.date,
-                            image: resultData.image
-                        };
-                    } catch (error) {
-                        continue;
-                    }
-                    if (this._checkOriginalMapString !== saveData.hash) {
-                        continue;
-                    }
-                    this.selectDatas[saveData.id] = saveData;
-                }
-                this._messageWindow.dbSaveDataLoad(this.selectDatas);
-                this.selectLoad = true;
-            };
-            saveDataResult.onerror = (e) => {
-                this.indexedDB = null;
-            };
-
-        };
-        reqOpen.onerror = (e) => {
-        };
-        reqOpen.onblocked = (e) => {
-        };
-    }
-}
 export class WWACompressIndexTable {
     public id: number = 0;
     public index: number = 0;

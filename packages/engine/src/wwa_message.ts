@@ -1,6 +1,7 @@
 import { WWA } from "./wwa_main";
 import {
     WWAConsts,
+    WWASaveConsts,
     Coord,
     PartsType,
     Face,
@@ -24,8 +25,9 @@ import {
 } from "./wwa_data";
 import {
     WWACompress,
-    WWASaveDB
-} from "./wwa_psave"; 
+    WWASave,
+    WWASaveData
+} from "./wwa_save"; 
 import { ItemMenu } from "./wwa_item_menu";
 
 /**
@@ -283,34 +285,25 @@ export class Macro {
         var type = this._parseInt(0);
         var posX = this._parseInt(1);
         var posY = this._parseInt(2);
-
-        var x = posX * WWAConsts.CHIP_SIZE;
-        var y = posY * WWAConsts.CHIP_SIZE
-
+        
         if (posX < 0 || posY < 0) {
             throw new Error("座標は正でなければなりません。");
         }
-        if (type === MacroImgFrameIndex.ENERGY) {
-            var iconNode_energy = util.$qsh("#disp-energy>.status-icon");
-            iconNode_energy.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.STRENGTH) {
-            var iconNode_strength = util.$qsh("#disp-strength>.status-icon");
-            iconNode_strength.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.DEFENCE) {
-            var iconNode_defence = util.$qsh("#disp-defence>.status-icon");
-            iconNode_defence.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.GOLD) {
-            var iconNode_gold = util.$qsh("#disp-gold>.status-icon");
-            iconNode_gold.style.backgroundPosition = "-" + x + "px -" + y + "px";
+        if (type === MacroImgFrameIndex.ENERGY ||
+            type === MacroImgFrameIndex.STRENGTH ||
+            type === MacroImgFrameIndex.DEFENCE ||
+            type === MacroImgFrameIndex.GOLD) {
+            this._wwa.setStatusIconCoord(type, new Coord(posX, posY));
+
         } else if (type === MacroImgFrameIndex.WIDE_CELL_ROW) {
-            Array.prototype.forEach.call(util.$qsAll("div.wide-cell-row"), (node: HTMLElement) => {
-                node.style.backgroundPosition = "-" + x + "px -" + y + "px";
-            });
+            this._wwa.setWideCellCoord(new Coord(posX, posY));
+
         } else if (type === MacroImgFrameIndex.ITEM_BG) {
             this._wwa.setItemboxBackgroundPosition({x: posX, y: posY});
 
         } else if (type === MacroImgFrameIndex.MAIN_FRAME) {
             this._wwa.setFrameCoord(new Coord(posX, posY));
+
         } else {
             throw new Error("種別が不正です。");
         }
@@ -710,7 +703,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _divYesElement: HTMLElement;
     private _divNoElement: HTMLElement;
     private _parentElement: HTMLElement;
-    private _saveDataList: WWASaveData[] = void 0;
+    private _wwaSave: WWASave = void 0;
     private _save_select_id: number = 0;
     private _save_counter: number = 0;
     private _save_close: boolean = false;
@@ -797,10 +790,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._ynWrapperElement.appendChild(this._divNoElement);
 
         thisA._isInputDisable = false;
-        this._saveDataList = [];
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            this._saveDataList[i] = new WWASaveData(i);
-        }
         switch (wwa.userDevice.device) {
             case DEVICE_TYPE.SP:
             case DEVICE_TYPE.VR:
@@ -808,12 +797,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 this._parentElement.classList.add("useScaleUp");
                 break;
         }
-        this._saveDataList = [];
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            this._saveDataList[i] = new WWASaveData(i);
-        }
         this.update();
-        WWASaveDB.init(this,this._wwa)
     }
 
     public setPosition(x: number, y: number, width: number, height: number): void {
@@ -1011,6 +995,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._element.style.width = this._width + "px";
         this._element.style.minHeight = this._height + "px"; // minなのでoverflowしても安心!!!
     }
+    setWWASave(wwaSave: WWASave) {
+        this._wwaSave = wwaSave;
+    }
 
     createSaveDom(): void {
         var loadWWAData: WWASaveData;
@@ -1019,9 +1006,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         energy_original_dom = document.getElementById("disp-energy");
         backgroundPositionText = energy_original_dom.style["backgroundPosition"];
         backgroundImageText = energy_original_dom.style["backgroundImage"];
-        
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            loadWWAData = this._saveDataList[i];
+        var len: number = this._wwaSave.list.length;
+        for (var i = 0; i < len; i++) {
+            loadWWAData = this._wwaSave.list[i];
 
             savedata_main_div = document.createElement("div");
             savedata_main_div.classList.add("savedata");
@@ -1049,7 +1036,11 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 ss_div.appendChild(loadWWAData.cvs);
 
                 span = document.createElement("span");
-                span.innerText = loadWWAData.date.toLocaleString();
+                span.textContent = loadWWAData.getDateText();//時刻の表示
+                if (loadWWAData.isLastSaveData()) {
+                    span.style.color = WWASaveConsts.DATE_LAST_SAVE_TEXT_COLOR;//最後にセーブした箇所の色を変更
+                }
+
                 ss_div.appendChild(span);
 
                 energy_icon_div = document.createElement("div");
@@ -1060,7 +1051,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
                 energy_status_value_div = document.createElement("div");
                 energy_status_value_div.classList.add("status-value-box");
-                energy_status_value_div.innerText = loadWWAData.getStatusEnergy();
+                energy_status_value_div.textContent = loadWWAData.getStatusEnergy();
                 energy_div.appendChild(energy_status_value_div);
             }
         }
@@ -1071,39 +1062,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._save_counter = 0;
         this._save_close = false;
     } 
-    // TODO: 5b0cbaa, 7e19570 で入る
-    /*
-    createAbortDom(): void {
-        switch (this._wwa.userDevice.os) {
-            case OS_TYPE.NINTENDO:
-            default:
-                var YbuttonTextDom, YbuttonHeightDom;
-                YbuttonTextDom = document.createElement("div");
-                YbuttonTextDom.style.display = "inline-block";
-                YbuttonTextDom.style.verticalAlign = "middle";
-                YbuttonTextDom.textContent = "Ｙを押してゲーム中断";
-
-                YbuttonHeightDom = document.createElement("div");
-                YbuttonHeightDom.style.display = "inline-block";
-                YbuttonHeightDom.style.height = "100%";
-                YbuttonHeightDom.style.verticalAlign = "middle";
-                this._saveElement.appendChild(YbuttonTextDom);
-                this._saveElement.appendChild(YbuttonHeightDom);
-
-                break;
-        }
-    }
-    selectGameAbort(wwaData: WWAData): void {
-        switch (this._wwa.userDevice.os) {
-            case OS_TYPE.NINTENDO:
-            default:
-                this.deleteSaveDom();
-                var json: object = WWACompress.compress(wwaData);
-                console.log(json);
-                break;
-        }
-    } 
-    */
     deleteSaveDom(): void {
         this._saveElement.textContent = "";
         this._isSave = false;
@@ -1112,7 +1070,8 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._save_select_id = save_select_id;
         var domList = document.querySelectorAll(".savedata");
         var dom;
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
+        var len: number = domList.length;
+        for (var i = 0; i < len; i++) {
             dom = domList[i];
             if (save_select_id === i) {
                 dom.classList.add("select");
@@ -1123,29 +1082,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         }
     }
     save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
-        var saveData: WWASaveData = this._saveDataList[this._save_select_id];
-        if (!saveData) {
-            return false;
-        }
-        return saveData.save(gameCvs, _quickSaveData);
+        return this._wwaSave.save(gameCvs, _quickSaveData, this._save_select_id);
     }
     load(): WWAData {
-        var saveData: WWASaveData = this._saveDataList[this._save_select_id];
-        if (!saveData) {
-            return null;
-        }
-        if (!saveData.compressData) {
-            return null;
-        }
-        return saveData.load();
-    }
-    hasSaveData(): boolean {
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            if (this._saveDataList[i].flag) {
-                return true;
-            }
-        }
-        return false;
+        return this._wwaSave.load(this._save_select_id);
     }
     public saveUpdate(): void {
         if (this._save_counter > 0) {
@@ -1185,76 +1125,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 this.cursor_wait();
                 break;
         }
-        this.setSaveID((this._save_select_id + WWAConsts.QUICK_SAVE_MAX) % WWAConsts.QUICK_SAVE_MAX);
-    }
-    public dbSaveDataLoad(dbSaveDataList: object[]) {
-        var usingQuickLoad: boolean = false;
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            var dbSaveData = dbSaveDataList[i];
-            if (dbSaveData) {
-                this._saveDataList[i].dbSaveDataLoad(dbSaveData);
-                usingQuickLoad = true;
-            }
-        }
-        if (usingQuickLoad) {
-            util.$id("cell-load").textContent = "Quick Load";
-        }
+        this.setSaveID((this._save_select_id + WWASaveConsts.QUICK_SAVE_MAX) % WWASaveConsts.QUICK_SAVE_MAX);
     }
     protected get windowName(): string {
         return "MessageWindow";
-    }
-}
-
-export class WWASaveData {
-    private _id: number = 0;
-    public flag: boolean = false;
-    public date: Date = void 0;
-    public cvs: HTMLCanvasElement = void 0;
-    public ctx: CanvasRenderingContext2D = void 0;
-    private quickSaveData: WWAData = null;
-    private _statusEnergy: number;
-    public compressData: object;
-    public constructor(id) {
-        this._id = id;
-        this.cvs = document.createElement("canvas");
-        this.cvs.width = WWAConsts.QUICK_SAVE_THUMNAIL_WIDTH;
-        this.cvs.height = WWAConsts.QUICK_SAVE_THUMNAIL_HEIGHT;
-        this.ctx = this.cvs.getContext("2d");
-    }
-    public save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
-        this._statusEnergy = _quickSaveData.statusEnergy;
-        this.compressData = WWACompress.compress(_quickSaveData);
-        this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
-        this.ctx.drawImage(gameCvs, 0, 0, gameCvs.width, gameCvs.height, 0, 0, this.cvs.width, this.cvs.height);
-        this.quickSaveData = _quickSaveData;
-        //this.quickSaveData.statusEnergy;//life
-        this.flag = true;
-        this.date = new Date();
-        WWASaveDB.dbUpdateSaveData(this._id, gameCvs, this.compressData, this.date);
-        return true;
-    }
-    public getStatusEnergy(): number {
-        return this.flag ? this._statusEnergy : -1;
-    }
-    public load(): WWAData {
-        return WWACompress.decompress(this.compressData);
-    }
-    public dbSaveDataLoad(dbSaveData) {
-        var quickSaveData = WWACompress.decompress(dbSaveData.data);
-        try {
-            this.compressData = dbSaveData.data;
-            this._statusEnergy = quickSaveData.statusEnergy;
-            this.date = dbSaveData.date;
-            this.flag = true;
-            var img = document.createElement("img");
-            img.src = dbSaveData.image;
-            img.addEventListener("load", () => {
-                this.flag = true;
-                this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.cvs.width, this.cvs.height);
-            });
-
-        } catch (error) {
-
-        }
     }
 }
