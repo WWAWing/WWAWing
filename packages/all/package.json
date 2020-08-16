@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "make-zip": "npm run clean && ts-node ./scripts",
+    "upload-zip": "source .env && ts-node ./scripts/release",
     "clean": "shx rm -rf dist",
     "prepare": "npm run make-zip"
   },
@@ -17,6 +18,7 @@
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
+    "@octokit/rest": "^18.0.3",
     "@types/jszip": "^3.1.6",
     "@types/shelljs": "^0.8.6",
     "@wwawing/assets": "^3.4.2",
