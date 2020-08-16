@@ -30,6 +30,7 @@ export interface TemplateValues {
             "data-wwa-item-effect-enable"?: DataTypes.StringBoolean;
             "data-wwa-use-go-to-wwa"?: DataTypes.StringBoolean;
             "data-wwa-looking-around"?: DataTypes.StringBoolean;
+            "data-wwa-autosave"?: string;
             "data-wwa-resume-savedata"?: string;
         };
     };
@@ -56,6 +57,7 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-item-effect-enable": Helper.toStringBooleanOptional(wwa.gameOption?.isItemEffectEnabled),
                 "data-wwa-use-go-to-wwa": Helper.toStringBooleanOptional(wwa.gameOption?.useGoToWWA),
                 "data-wwa-looking-around": Helper.toStringBooleanOptional(wwa.gameOption?.useLookingAround),
+                "data-wwa-autosave": `${wwa.gameOption?.autoSave?.intervalSteps ?? "0"}`,
                 "data-wwa-resume-savedata": wwa.resumeSaveData
             }
         },

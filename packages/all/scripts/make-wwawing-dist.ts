@@ -142,6 +142,11 @@ export default async function makeDistribution(
                 additionalCssFiles: ["style.css"]
             },
             wwa: {
+                gameOption: {
+                    autoSave: {
+                        intervalSteps: 200,
+                    }
+                },
                 resources: {
                     mapData,
                     wwaJs: "wwa.js",
