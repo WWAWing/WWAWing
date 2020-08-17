@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "make-zip": "npm run clean && ts-node ./scripts",
-    "upload-zip": "source .env && ts-node ./scripts/release",
+    "upload-zip": "ts-node ./scripts/release",
     "clean": "shx rm -rf dist",
     "prepare": "npm run make-zip"
   },
