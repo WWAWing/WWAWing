@@ -42,7 +42,7 @@ const main = async () => {
       readFile(path.join(__dirname, "..", "dist", DIST_FILE_NAME)),
       readFile(path.join(__dirname, "..", "dist", UPDATE_FILE_NAME)),
     ]);
-    await upload(WWA_WING_VERSION, dist, update);
+    await upload(`v${WWA_WING_VERSION}`, dist, update);
   } catch (error) {
     console.error(error);
   }
