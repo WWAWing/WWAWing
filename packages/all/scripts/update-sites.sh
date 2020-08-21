@@ -31,6 +31,7 @@ cd sites
 # sites で配布しているバージョンリストに リリースしようとしているバージョンを追記 して Push
 git checkout "feature/append-version" # 開発中のためあるものです. あとでけす.
 npm i && npx ts-node ./scripts/append-version.ts $WWA_WING_VERSION
+cp ../../assets/html/manual.html ./wwawing.com/wing # マニュアルのコピー
 export BRANCH_NAME="feature/update-to-v$WWA_WING_VERSION"
 git checkout -b $BRANCH_NAME
 git add -u
