@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>WWA Wing - a World Wide Adventure implementation in JavaScript</title>
+    <title>WWA Wing: 簡易マニュアル</title>
     <style>
         .fl {
             float: left;
@@ -39,8 +39,8 @@
     <div id="wrapper">
         <section>
             <h1>WWA Wing: 簡易マニュアル</h1>
-            <p><a href="http://wwawing.com">WWA Wing</a>( WWA In the Next Generation )は、<a href="http://wwajp.com">WWA</a>のJavaScript実装です。
-            煩わしい警告は出ず、スマートフォンでも動作します。</p>
+            <p><a href="http://wwawing.com">WWA Wing</a>は、インターネットRPG 「<a href="http://wwajp.com">World Wide Adventure</a>」の現代のWeb技術における実行環境です。
+            PCのほか、スマートフォンでも動作します。</p>
             
             <section>
                 <h2>サーバにアップロードするファイルについて</h2>
@@ -102,6 +102,17 @@
                     <dt><code>data-wwa-looking-around</code>属性</dt>
                     <dd><code>false</code>を指定すると、ゲーム開始時やジャンプゲートのジャンプ後の無操作時にプレイヤーが回転しなくなります。
                     指定しなかった場合は<code>true</code>になります。</dd>
+                    <dt><code>data-wwa-autosave</code>属性</dt>
+                    <dd><code>正の整数</code>を指定すると、プレイヤーが指定した歩数歩くごとにオートセーブを実行するようになります。</dd>
+                    <dd>オートセーブは、マクロ <code>$save=1</code> により Quick Save が禁止されている時には実行されません。</dd>
+                    <dd>オートセーブを無効にするには <code>0</code> を与えて下さい。値を与えなかった場合は 200歩ごとにオートセーブされます。</dd>
+                    <dd>(オートセーブについては、今後あり方を見直す可能性が高いです。その際は設定方法が変更になる可能性がありますことをあらかじめご了承ください。)</dd>
+                    <dt><code>data-wwa-resume-savedata</code>属性【開発者向け】</dt>
+                    <dd>セーブデータをパスワードセーブの形式で与えると、セーブデータをもとにゲーム内容が復元されます。
+                        なお、このオプションが与えられた場合、パスワードセーブの代わりに「ゲームを中断しますか？」と聞かれるようになります。
+                        中断が実行された場合、外部アプリケーションは <a href="https://github.com/WWAWing/WWAWing/wiki/WWACustomEvents">WWA Custom Events</a>
+                        の<code>wwa_suspend</code>イベントをハンドリングしてセーブデータを取り回す必要があります。
+                        (今後、データの復元と、中断を利用するかどうかのオプションは別オプションに整理する可能性があります。実験的な機能でありますことをあらかじめご了承ください。)</dd>
                 </dl>
             </section>
 
@@ -382,6 +393,13 @@
                 <ul>
                     <li>Android 上の Google Chrome (最新版)</li>
                     <li>iOS 上の Safari (最新版)</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>開発者向け情報</h2>
+                <ul>
+                    <li><a href="https://github.com/WWAWing/WWAWing/wiki/WWACustomEvents">WWA Custom Events 仕様</a>: WWA Wingと連携するアプリケーションを作るのに便利です。</li>
                 </ul>
             </section>
             
