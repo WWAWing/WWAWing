@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/loader",
-  "version": "3.4.2",
+  "version": "3.5.0",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/index.js",
   "typings": "./lib/index.d.ts",
@@ -35,10 +35,10 @@
   },
   "homepage": "https://github.com/WWAWing/WWALoader#readme",
   "dependencies": {
-    "@wwawing/event-emitter": "^3.4.2"
+    "@wwawing/event-emitter": "^3.5.0"
   },
   "devDependencies": {
-    "@wwawing/common-interface": "^3.4.2",
+    "@wwawing/common-interface": "^3.5.0",
     "cross-env": "^7.0.2",
     "html-loader": "^1.1.0",
     "html-webpack-plugin": "^4.0.4",
