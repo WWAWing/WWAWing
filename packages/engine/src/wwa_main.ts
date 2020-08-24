@@ -1678,17 +1678,33 @@ export class WWA {
                     }
                     // checkTouchingButton 分岐
                 } else if (this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_LEFT)) {
-                    this._player.controll(Direction.LEFT);
-                    this._objectMovingDataManager.update();
+                    if (this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_ESC)) {
+                        this._player.setDir(Direction.LEFT);
+                    } else {
+                        this._player.controll(Direction.LEFT);
+                        this._objectMovingDataManager.update();
+                    }
                 } else if (this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_UP)) {
-                    this._player.controll(Direction.UP);
-                    this._objectMovingDataManager.update();
+                    if (this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_ESC)) {
+                        this._player.setDir(Direction.UP);
+                    } else {
+                        this._player.controll(Direction.UP);
+                        this._objectMovingDataManager.update();
+                    }
                 } else if (this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_RIGHT)) {
-                    this._player.controll(Direction.RIGHT);
-                    this._objectMovingDataManager.update();
+                    if (this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_ESC)) {
+                        this._player.setDir(Direction.RIGHT);
+                    } else {
+                        this._player.controll(Direction.RIGHT);
+                        this._objectMovingDataManager.update();
+                    }
                 } else if (this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_DOWN)) {
-                    this._player.controll(Direction.DOWN);
-                    this._objectMovingDataManager.update();
+                    if (this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_ESC)) {
+                        this._player.setDir(Direction.DOWN);
+                    } else {
+                        this._player.controll(Direction.DOWN);
+                        this._objectMovingDataManager.update();
+                    }
                     //アイテムショートカット
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_1) === KeyState.KEYDOWN) {
                     this.onselectitem(1);

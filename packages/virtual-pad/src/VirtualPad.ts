@@ -97,7 +97,7 @@ export default class VirtualPadStore {
 
         for (let buttonTypeString in buttons) {
             /**
-             * for in ... で渡される buttonTypeScript は必ず文字列型になります。
+             * for in ... で渡される buttonTypeString は必ず文字列型になります。
              *     このまま buttons の配列のキーに渡すと、正しく要素が受け取れません。
              *     このため、一度 parseInt で数字に変換した上で渡しています。
              */
