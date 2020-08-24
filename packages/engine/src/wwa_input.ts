@@ -161,6 +161,9 @@ export enum MouseState {
     MOUSEPRESS,
     MOUSEUP
 }
+export enum MouseTouchIDFlag {
+    DIR_KEY = 1
+}
 
 export class MouseStore {
     private _prevMouseState: boolean;
@@ -222,8 +225,12 @@ export class MouseStore {
     }
 
     public setReleaseInfo(): void {
-        this._touchID = void 0;
+        this._touchID = 0;
         this._nextMouseState = false;
+    }
+
+    public touchIDIsSetDir(): boolean {
+        return this._touchID === MouseTouchIDFlag.DIR_KEY;
     }
 
     public memorizeMouseStateOnControllableFrame(): void {

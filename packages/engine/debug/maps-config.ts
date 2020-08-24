@@ -1,6 +1,11 @@
+/**
+ * 原則, 出力先のHTMLファイル名はマップデータ名 (fileName) と同じですが,
+ * outputPageName を指定することで, 出力先のファイル名をマップデータ名と違うものにできます.
+ */
 export default [
     { fileName: "test", title: "テストマップ" },
     { fileName: "wwamap", title: "Standard Map" },
+    { fileName: "wwamap", outputPageName: "wwamap-classic", title: "Standard Map (Classic Mode)", isClassicMode: true as const },
     { fileName: "island02", title: "Fantasy Island" },
     { fileName: "caves01", title: "Cave Dungeon I" },
     { fileName: "caves02", title: "Cave Dungeon II" },

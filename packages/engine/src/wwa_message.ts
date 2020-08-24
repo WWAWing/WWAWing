@@ -1,6 +1,7 @@
 import { WWA } from "./wwa_main";
 import {
     WWAConsts,
+    WWASaveConsts,
     Coord,
     PartsType,
     Face,
@@ -22,6 +23,11 @@ import * as util from "./wwa_util";
 import {
     WWAData
 } from "./wwa_data";
+import {
+    WWACompress,
+    WWASave,
+    WWASaveData
+} from "./wwa_save"; 
 import { ItemMenu } from "./wwa_item_menu";
 
 export class MessageInfo {
@@ -287,34 +293,25 @@ export class Macro {
         var type = this._parseInt(0);
         var posX = this._parseInt(1);
         var posY = this._parseInt(2);
-
-        var x = posX * WWAConsts.CHIP_SIZE;
-        var y = posY * WWAConsts.CHIP_SIZE
-
+        
         if (posX < 0 || posY < 0) {
             throw new Error("座標は正でなければなりません。");
         }
-        if (type === MacroImgFrameIndex.ENERGY) {
-            var iconNode_energy = util.$qsh("#disp-energy>.status-icon");
-            iconNode_energy.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.STRENGTH) {
-            var iconNode_strength = util.$qsh("#disp-strength>.status-icon");
-            iconNode_strength.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.DEFENCE) {
-            var iconNode_defence = util.$qsh("#disp-defence>.status-icon");
-            iconNode_defence.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.GOLD) {
-            var iconNode_gold = util.$qsh("#disp-gold>.status-icon");
-            iconNode_gold.style.backgroundPosition = "-" + x + "px -" + y + "px";
+        if (type === MacroImgFrameIndex.ENERGY ||
+            type === MacroImgFrameIndex.STRENGTH ||
+            type === MacroImgFrameIndex.DEFENCE ||
+            type === MacroImgFrameIndex.GOLD) {
+            this._wwa.setStatusIconCoord(type, new Coord(posX, posY));
+
         } else if (type === MacroImgFrameIndex.WIDE_CELL_ROW) {
-            Array.prototype.forEach.call(util.$qsAll("div.wide-cell-row"), (node: HTMLElement) => {
-                node.style.backgroundPosition = "-" + x + "px -" + y + "px";
-            });
+            this._wwa.setWideCellCoord(new Coord(posX, posY));
+
         } else if (type === MacroImgFrameIndex.ITEM_BG) {
             this._wwa.setItemboxBackgroundPosition({x: posX, y: posY});
 
         } else if (type === MacroImgFrameIndex.MAIN_FRAME) {
             this._wwa.setFrameCoord(new Coord(posX, posY));
+
         } else {
             throw new Error("種別が不正です。");
         }
@@ -552,18 +549,28 @@ export class TextWindow {
         this._isVisible = true;
         this._element.style.display = "block";
         this.update();
+        this._wwa.wwaCustomEvent('wwa_window_show', {
+            name: this.windowName,
+            element: this._element,
+            text: this._element.textContent
+        });
     }
     public hide(): void {
         this._isVisible = false;
         this._element.style.display = "none";
         this.update();
+        this._wwa.wwaCustomEvent('wwa_window_hide', { name: this.windowName});
     }
     public isVisible(): boolean {
         return this._isVisible;
     }
+
+    protected get windowName(): string {
+        return "TextWindow";
+    }
 }
 
-export class MosterWindow extends TextWindow {
+export class MonsterWindow extends TextWindow {
     protected _monsterBox: HTMLDivElement;
     protected _energyBox: HTMLDivElement;
     protected _strengthBox: HTMLDivElement;
@@ -630,9 +637,13 @@ export class MosterWindow extends TextWindow {
 
     }
 
+    protected get windowName(): string {
+        return "MonsterWindow";
+    }
 }
 
 export class ScoreWindow extends TextWindow {
+    protected static WINDOW_NAME: string = "ScoreWindow";
     constructor(
         wwa: WWA,
         coord: Coord,
@@ -663,6 +674,10 @@ export class ScoreWindow extends TextWindow {
             this._element.textContent = "Score: " + score;
         }
     }
+
+    protected get windowName(): string {
+        return "ScoreWindow";
+    }
 }
 
 export enum Positioning {
@@ -689,7 +704,8 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _isInputDisable: boolean;
 
     private _element: HTMLElement;
-    public _msgWrapperElement: HTMLElement;
+    private _msgWrapperElement: HTMLElement;
+
     private _dummyElement: HTMLElement;
     private _saveElement: HTMLElement;
     private _ynWrapperElement: HTMLElement;
@@ -697,7 +713,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _divYesElement: HTMLElement;
     private _divNoElement: HTMLElement;
     private _parentElement: HTMLElement;
-    private _saveDataList: WWASaveData[] = void 0;
+    private _wwaSave: WWASave = void 0;
     private _save_select_id: number = 0;
     private _save_counter: number = 0;
     private _save_close: boolean = false;
@@ -790,10 +806,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 //スマートフォン用に拡大
                 this._parentElement.classList.add("useScaleUp");
                 break;
-        }
-        this._saveDataList = [];
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            this._saveDataList[i] = new WWASaveData();
         }
         this.update();
     }
@@ -993,6 +1005,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._element.style.width = this._width + "px";
         this._element.style.minHeight = this._height + "px"; // minなのでoverflowしても安心!!!
     }
+    setWWASave(wwaSave: WWASave) {
+        this._wwaSave = wwaSave;
+    }
 
     createSaveDom(): void {
         var loadWWAData: WWASaveData;
@@ -1001,9 +1016,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         energy_original_dom = document.getElementById("disp-energy");
         backgroundPositionText = energy_original_dom.style["backgroundPosition"];
         backgroundImageText = energy_original_dom.style["backgroundImage"];
-        
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            loadWWAData = this._saveDataList[i];
+        var len: number = this._wwaSave.list.length;
+        for (var i = 0; i < len; i++) {
+            loadWWAData = this._wwaSave.list[i];
 
             savedata_main_div = document.createElement("div");
             savedata_main_div.classList.add("savedata");
@@ -1031,7 +1046,11 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 ss_div.appendChild(loadWWAData.cvs);
 
                 span = document.createElement("span");
-                span.innerText = loadWWAData.date.toLocaleString();
+                span.textContent = loadWWAData.getDateText();//時刻の表示
+                if (loadWWAData.isLastSaveData()) {
+                    span.style.color = WWASaveConsts.DATE_LAST_SAVE_TEXT_COLOR;//最後にセーブした箇所の色を変更
+                }
+
                 ss_div.appendChild(span);
 
                 energy_icon_div = document.createElement("div");
@@ -1042,7 +1061,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
                 energy_status_value_div = document.createElement("div");
                 energy_status_value_div.classList.add("status-value-box");
-                energy_status_value_div.innerText = loadWWAData.getStatusEnergy();
+                energy_status_value_div.textContent = loadWWAData.getStatusEnergy();
                 energy_div.appendChild(energy_status_value_div);
             }
         }
@@ -1061,7 +1080,8 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._save_select_id = save_select_id;
         var domList = document.querySelectorAll(".savedata");
         var dom;
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
+        var len: number = domList.length;
+        for (var i = 0; i < len; i++) {
             dom = domList[i];
             if (save_select_id === i) {
                 dom.classList.add("select");
@@ -1072,24 +1092,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         }
     }
     save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
-        if (!this._saveDataList[this._save_select_id]) {
-            return false;
-        }
-        return this._saveDataList[this._save_select_id].save(gameCvs, _quickSaveData);
+        return this._wwaSave.save(gameCvs, _quickSaveData, this._save_select_id);
     }
     load(): WWAData {
-        if (!this._saveDataList[this._save_select_id]) {
-            return null;
-        }
-        return this._saveDataList[this._save_select_id].load();
-    }
-    hasSaveData(): boolean {
-        for (var i = 0; i < WWAConsts.QUICK_SAVE_MAX; i++) {
-            if (this._saveDataList[i].flag) {
-                return true;
-            }
-        }
-        return false;
+        return this._wwaSave.load(this._save_select_id);
     }
     public saveUpdate(): void {
         if (this._save_counter > 0) {
@@ -1105,6 +1111,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     public saveControll(moveDir: Direction): void {
         if (this._save_counter > 0) {
             //カーソルリピート待機
+            return;
+        }
+        if (this._isInputDisable) {
+            //受付しないタイミング
             return;
         }
         switch (moveDir) {
@@ -1125,35 +1135,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 this.cursor_wait();
                 break;
         }
-        this.setSaveID((this._save_select_id + WWAConsts.QUICK_SAVE_MAX) % WWAConsts.QUICK_SAVE_MAX);
+        this.setSaveID((this._save_select_id + WWASaveConsts.QUICK_SAVE_MAX) % WWASaveConsts.QUICK_SAVE_MAX);
     }
-}
-
-export class WWASaveData {
-    flag: boolean = false;
-    date: Date = void 0;
-    cvs: HTMLCanvasElement = void 0;
-    ctx: CanvasRenderingContext2D = void 0;
-    quickSaveData: WWAData = null;
-    constructor() {
-        this.cvs = document.createElement("canvas");
-        this.cvs.width = WWAConsts.QUICK_SAVE_THUMNAIL_WIDTH;
-        this.cvs.height = WWAConsts.QUICK_SAVE_THUMNAIL_HEIGHT;
-        this.ctx = this.cvs.getContext("2d");
-    }
-    save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
-        this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
-        this.ctx.drawImage(gameCvs, 0, 0, gameCvs.width, gameCvs.height, 0, 0, this.cvs.width, this.cvs.height);
-        this.quickSaveData = _quickSaveData;
-        //this.quickSaveData.statusEnergy;//life
-        this.flag = true;
-        this.date = new Date();
-        return true;
-    }
-    getStatusEnergy(): number {
-        return this.flag ? this.quickSaveData.statusEnergy : -1;
-    }
-    load(): WWAData {
-        return this.quickSaveData;
+    protected get windowName(): string {
+        return "MessageWindow";
     }
 }

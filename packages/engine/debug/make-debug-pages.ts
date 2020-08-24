@@ -1,15 +1,15 @@
-import { generateWWAPageFromConfig, WWAPageConfig, getDefaultCopyrights } from "@wwawing/page-generator";
+import { render, InputConfig } from "@wwawing/page-generator";
 import * as fs from "fs";
 import * as pug from "pug";
 import * as path from "path";
 import maps from "./maps-config";
 
+const isDev = process.argv.length >= 3 && process.argv[2] === "dev";
+
+type Maps = typeof maps;
 interface IndexPageOption {
     page: {
-        maps: {
-            fileName: string;
-            title: string;
-        }[];
+        maps: Maps;
         thisYear: number;
     }
 }
@@ -19,7 +19,7 @@ const compileIndexPage = pug.compileFile(indexPageTemplageFile, { pretty: true }
 const outputDirectory = path.join(__dirname, "..", "lib");
 
 Promise.all([
-    ...createHTMLFilePromises(maps.map(map => map.fileName)),
+    ...createPlayPagePromises(maps),
     createIndexPage({ page: { maps, thisYear: new Date().getFullYear() } })
 ])
     .catch(error => {
@@ -32,30 +32,36 @@ function createIndexPage(option: IndexPageOption): Promise<void> {
         path.join(outputDirectory, "index.html"), `${compileIndexPage(option)}\n`);
 }
 
-function createHTMLFilePromises(mapNames: string[]): Promise<void>[] {
-    return mapNames
-        .map(mapName => ({
-            mapName,
-            html: generateWWAPageFromConfig(createConfig(`${mapName}.dat`))
+function createPlayPagePromises(maps: Maps): Promise<void>[] {
+    return maps
+        .map(map => ({
+            mapName: map.fileName,
+            outputPageName: map.outputPageName || map.fileName,
+            html: render(createPlayPageConfig(`${map.fileName}.dat`, map.isClassicMode))
         }))
         .map(params => createWriteFilePromise(
-            path.join(outputDirectory, `${params.mapName}.html`), params.html));
+            path.join(outputDirectory, `${params.outputPageName}.html`), params.html));
 }
 
-function createConfig(mapdata: string): WWAPageConfig {
+function createPlayPageConfig(mapData: string, isClassicMode?: true): InputConfig {
     return {
         page: {
             additionalCssFiles: ["style.css"],
-            wwa: {
-                resources: {
-                    mapdata,
-                    wwaJs: "wwa.js",
-                    titleImg: "cover.gif",
-                },
-                urlgateEnable: true
+        },
+        wwa: {
+            gameOption: {
+                isClassicMode,
+                autoSave: {
+                    intervalSteps: 200
+                }
             },
-            copyrights: getDefaultCopyrights()
-        }
+            resources: {
+                mapData,
+                wwaJs: isDev ? "wwa.long.js" : "wwa.js",
+                titleImage: "cover.gif",
+            },
+        },
+        copyrights: "official-and-wing"
     };
 }
 
