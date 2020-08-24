@@ -124,14 +124,11 @@ export default class VirtualPadStore {
                 }
             };
 
-            button.addEventListener('touchstart', (event: TouchEvent) => {
+            button.addEventListener("touchstart", (event: TouchEvent) => {
                 this.setTouchInfo(buttonCode);
                 cancelBrowserTouchEvent(event);
             });
 
-            button.addEventListener("touchend", () => {
-                this.allClear();
-            });
             button.addEventListener("cancel", () => {
                 this.allClear();
             });
@@ -140,11 +137,26 @@ export default class VirtualPadStore {
              * 移動ボタンに関しては、指先を移動しながら操作することがあるため、 touchmove イベントにも対応します。
              */
             if (VirtualPadStore.isMoveButton(buttonCode)) {
-                button.addEventListener("touchmove", this._detectMovedButton.bind(this));
+                button.addEventListener("touchmove", this._detectMovingMoveButton.bind(this));
+                button.addEventListener("touchend", this.allMoveClear.bind(this));
+            } else {
+                button.addEventListener("touchend", event => {
+                    const touchElement = event.target as HTMLElement;
+                    if (!touchElement.hasAttribute("type")) {
+                        return;
+                    }
+
+                    const buttonType = parseInt(touchElement.getAttribute("type"));
+                    if (this._availableButtons[buttonType] === undefined) {
+                        return;
+                    }
+
+                    this.clearTouchInfo(buttonType);
+                });
             }
         }
         if (moveButtons !== null) {
-            moveButtons.addEventListener("touchmove", this._detectMovedButton.bind(this));
+            moveButtons.addEventListener("touchmove", this._detectMovingMoveButton.bind(this));
         }
     }
 
@@ -152,7 +164,7 @@ export default class VirtualPadStore {
      * TouchMove した要素から触れた先の要素に、触れたことを呼び出します。
      * @param event 
      */
-    private _detectMovedButton(event: TouchEvent) {
+    private _detectMovingMoveButton(event: TouchEvent) {
         event.preventDefault();
         this.allClear();
         
@@ -243,6 +255,26 @@ export default class VirtualPadStore {
     }
 
     /**
+     * ボタンのタッチ信号を解除します
+     * @param buttonType 
+     */
+    public clearTouchInfo(buttonType: VirtualPadButtonCode) {
+        if (!this._enabled) {
+            return;
+        }
+
+        this._isTouchingButtons[buttonType].next = false;
+    }
+
+    public allMoveClear(): void {
+        this._availableButtons.forEach((buttonCode) => {
+            if (VirtualPadStore.isMoveButton(buttonCode)) {
+                this.clearTouchInfo(buttonCode);
+            }
+        });
+    }
+
+    /**
      * すべてのボタンのタッチ信号をキャンセルします。
      */
     public allClear(): void {
@@ -285,6 +317,6 @@ export default class VirtualPadStore {
                     this._onTouchEnd(buttonCode);
                     break;
             }
-        })
+        });
     }
 }
