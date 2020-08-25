@@ -45,6 +45,13 @@ type VirtualPadButtonTouching = {
 
 type VirtualPadEventFunction = (buttonCode: VirtualPadButtonCode) => void;
 
+const VirtualPadMoveButtonCodes = [
+    VirtualPadButtonCode.BUTTON_LEFT,
+    VirtualPadButtonCode.BUTTON_UP,
+    VirtualPadButtonCode.BUTTON_RIGHT,
+    VirtualPadButtonCode.BUTTON_DOWN
+];
+
 /**
  * 仮想パッドの状態管理を行うクラスです。
  * @todo PCといった、タッチデバイスでないデバイスでは、このクラスのインスタンスを生成しないようにする。
@@ -124,14 +131,22 @@ export default class VirtualPadStore {
                 }
             };
 
-            button.addEventListener("touchstart", (event: TouchEvent) => {
-                this.setTouchInfo(buttonCode);
+            /**
+             * 何かしらの割り込み処理が発生した場合に、緊急で仮想パッドを停止する処理です。
+             * @param event 
+             */
+            const cancelVirtualPad = (event: TouchEvent) => {
                 cancelBrowserTouchEvent(event);
+                this.allClear();
+            };
+
+            button.addEventListener("touchstart", (event: TouchEvent) => {
+                cancelBrowserTouchEvent(event);
+                this.setTouchInfo(buttonCode);
             });
 
-            button.addEventListener("cancel", () => {
-                this.allClear();
-            });
+            button.addEventListener("cancel", cancelVirtualPad);
+            button.addEventListener("touchcancel", cancelVirtualPad);
 
             /**
              * 移動ボタンに関しては、指先を移動しながら操作することがあるため、 touchmove イベントにも対応します。
@@ -140,18 +155,9 @@ export default class VirtualPadStore {
                 button.addEventListener("touchmove", this._detectMovingMoveButton.bind(this));
                 button.addEventListener("touchend", this.allMoveClear.bind(this));
             } else {
-                button.addEventListener("touchend", event => {
-                    const touchElement = event.target as HTMLElement;
-                    if (!touchElement.hasAttribute("type")) {
-                        return;
-                    }
-
-                    const buttonType = parseInt(touchElement.getAttribute("type"));
-                    if (this._availableButtons[buttonType] === undefined) {
-                        return;
-                    }
-
-                    this.clearTouchInfo(buttonType);
+                button.addEventListener("touchend", (event: TouchEvent) => {
+                    cancelBrowserTouchEvent(event);
+                    this.clearTouchInfo(buttonCode);
                 });
             }
         }
@@ -166,7 +172,7 @@ export default class VirtualPadStore {
      */
     private _detectMovingMoveButton(event: TouchEvent) {
         event.preventDefault();
-        this.allClear();
+        this.allMoveClear();
         
         // 中央のポジションを取得
         const moveButtonRect = this._moveButtonsElement.getBoundingClientRect();
@@ -266,9 +272,12 @@ export default class VirtualPadStore {
         this._isTouchingButtons[buttonType].next = false;
     }
 
+    /**
+     * すべての移動ボタンのタッチ信号をキャンセルします
+     */
     public allMoveClear(): void {
-        this._availableButtons.forEach((buttonCode) => {
-            if (VirtualPadStore.isMoveButton(buttonCode)) {
+        VirtualPadMoveButtonCodes.forEach((buttonCode) => {
+            if (this._availableButtons.includes(buttonCode)) {
                 this.clearTouchInfo(buttonCode);
             }
         });
@@ -288,13 +297,7 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public static isMoveButton(buttonType: VirtualPadButtonCode): boolean {
-        if (buttonType === VirtualPadButtonCode.BUTTON_LEFT ||
-            buttonType === VirtualPadButtonCode.BUTTON_UP ||
-            buttonType === VirtualPadButtonCode.BUTTON_RIGHT ||
-            buttonType === VirtualPadButtonCode.BUTTON_DOWN) {
-            return true;
-        }
-        return false;
+        return VirtualPadMoveButtonCodes.includes(buttonType);
     }
 
     /**
