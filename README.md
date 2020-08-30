@@ -17,9 +17,9 @@ npm install
 OSは不問です。
 
 - Microsoft Internet Explorer 11
-- Microsoft Edge (最新版)
+- Microsoft Edge (EdgeHTML 18) ※Microsoft Edge レガシ は遅くとも2021年3月9日までにサポートを終了します。今後は Chromium 版 Edge の利用を強くおすすめします。
 - Mozilla Firefox (最新版)
-- Google Chrome/Chromium (最新版)
+- Google Chrome/Chromium (最新版) ※Microsoft Edgeの最新版を含む
 - Safari (最新版)
 
 ### スマートフォン・タブレット
@@ -32,7 +32,6 @@ OSは不問です。
 ├── lerna.json                                  ## lerna の構成ファイル
 ├── netlify.toml                                ## Netlify によるテストファイル自動生成のための設定ファイル
 ├── tsconfig.json                               ## TypeScript のコンパイル設定ファイル
-├── keys                                        ## Travis CIによる配布物自動公開に使用するSSH公開鍵（暗号化済）
 └── packages ================================== ## このディレクトリ以下に各 npm パッケージを格納しています
      ├── all ================================== ## WWA Wing の配布物すべてを含むパッケージ
      ├── assets =============================== ## 開発時や配布物の生成時に使う静的なファイル
