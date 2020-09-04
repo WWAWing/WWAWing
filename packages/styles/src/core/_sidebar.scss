@@ -1,5 +1,4 @@
-$wwa_status_x_offset: 6px;
-$wwa_icon_width: 40px;
+$wwa_status_x_offset: 6px !default;
 
 
 %wide_cell_absolute {
@@ -14,6 +13,7 @@ div#wwa-sidebar {
     width: 120px;
     height: 440px;
     background-color: #000000;
+    font-family: $sans-serif_font;
 
     > div.wide-cell-row {
         @extend %wide_cell_absolute;

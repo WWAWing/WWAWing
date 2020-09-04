@@ -1,5 +1,4 @@
-$wwa_icon_width: 40px;
-$wwa_icon_width-scale_up: 100px;
+$wwa_icon_width-scale_up: 100px !default;
 
 %wwa_window {
     background-color: rgba( 255, 255, 255, 0.9 ); // システムで指定することになりました。$colorで。
