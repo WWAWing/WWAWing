@@ -65,6 +65,22 @@ export interface WWAData {
     effectCoords: Coord[];
     effectWaits: number;
 
+    imgStatusEnergyX: number;
+    imgStatusEnergyY: number;
+    imgStatusStrengthX: number;
+    imgStatusStrengthY: number;
+    imgStatusDefenceX: number;
+    imgStatusDefenceY: number;
+    imgStatusGoldX: number;
+    imgStatusGoldY: number;
+    imgWideCellX: number;
+    imgWideCellY: number;
+    imgItemboxX: number;
+    imgItemboxY: number;
+    imgFrameX: number;
+    imgFrameY: number;
+    imgBattleEffectX: number;
+    imgBattleEffectY: number;
     imgClickX: number;
     imgClickY: number;
 

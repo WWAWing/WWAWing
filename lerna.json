@@ -1,5 +1,5 @@
 {
-  "lerna": "3.20.2",
+  "lerna": "3.22.1",
   "npmClient": "npm",
   "packages": [
     "packages/*"
@@ -9,5 +9,5 @@
       "graphType": "all"
     }
   },
-  "version": "3.3.1"
+  "version": "3.5.2"
 }
