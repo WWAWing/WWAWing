@@ -37,13 +37,13 @@ function createPlayPagePromises(maps: Maps): Promise<void>[] {
         .map(map => ({
             mapName: map.fileName,
             outputPageName: map.outputPageName || map.fileName,
-            html: render(createPlayPageConfig(`${map.fileName}.dat`, map.isClassicMode))
+            html: render(createPlayPageConfig(`${map.fileName}.dat`, map.cssName, map.isClassicMode))
         }))
         .map(params => createWriteFilePromise(
             path.join(outputDirectory, `${params.outputPageName}.html`), params.html));
 }
 
-function createPlayPageConfig(mapData: string, isClassicMode?: true): InputConfig {
+function createPlayPageConfig(mapData: string, cssName?: string, isClassicMode?: true): InputConfig {
     return {
         page: {
             additionalCssFiles: ["style.css"],
@@ -58,6 +58,7 @@ function createPlayPageConfig(mapData: string, isClassicMode?: true): InputConfi
             resources: {
                 mapData,
                 wwaJs: isDev ? "wwa.long.js" : "wwa.js",
+                wwaCss: cssName,
                 titleImage: "cover.gif",
             },
         },
