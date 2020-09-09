@@ -49,9 +49,6 @@ export default class WWASaveDataLogList extends WWASaveDataList {
         this._saveNo = this._saveNo % WWASaveConsts.QUICK_SAVE_MAX;
     }
     public setAutoSaveInterval(autoInterval: number): void {
-        if (autoInterval <= 0) {
-            return;
-        }
         this._autoInterval = autoInterval | 0;
     } 
 }
