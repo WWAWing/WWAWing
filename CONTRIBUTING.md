@@ -53,7 +53,7 @@ WWA Wing では、下記のことに念頭して活動していただくこと�
 8. 環境変数 `GH_TOKEN` に GitHub のアクセストークンが入っている状態で,  ローカルのリポジトリの `all` パッケージのディレクトリに入り次を実行します。(GitHub のリリースに配布物がアップロードされ、新しくアップロードされた配布物へのリンクを出力するようなプルリクエストを [sites](https://github.com/WWAWing/sites) リポジトリに作成します。 ) 
 
 ``` sh
-$ WWA_WING_VERSION=X.X.X ./update-sites.sh # X.X.X にはリリースに使ったバージョンを v なしで与えます。(Good: 3.5.2 / Bad: v3.5.2)
+$ WWA_WING_VERSION=X.X.X ./scripts/update-sites.sh # X.X.X にはリリースに使ったバージョンを v なしで与えます。(Good: 3.5.2 / Bad: v3.5.2)
 ```
 
 アクセストークンについては, 次のページを参照してください. (権限が必要です) https://github.com/matsuyuki-a/wwawing-release-token
