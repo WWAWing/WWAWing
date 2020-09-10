@@ -49,6 +49,10 @@ export default class WWASaveDataLogList extends WWASaveDataList {
         this._saveNo = this._saveNo % WWASaveConsts.QUICK_SAVE_MAX;
     }
     public setAutoSaveInterval(autoInterval: number): void {
+        if (autoInterval < 0) {
+            console.warn(`オートセーブの歩数 (${autoInterval}) に負の値が設定されています。`);
+            return;
+        }
         this._autoInterval = autoInterval | 0;
     } 
 }
