@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/styles",
-  "version": "3.2.9",
+  "version": "3.5.0",
   "description": "WWA Wing stylesheet files",
   "main": "index.js",
   "files": [
@@ -8,12 +8,9 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run clean:script && tsc",
-    "compile": "npm run clean:dist && node ./lib/make-css",
-    "clean": "npm run clean:script && npm run clean:dist",
-    "clean:script": "shx rm -rf lib && shx mkdir -p lib",
-    "clean:dist": "shx rm -rf output && shx mkdir -p output",
-    "prepare": "npm run build && npm run compile"
+    "build": "npm run clean && ts-node ./scripts/make-css.ts",
+    "clean": "shx rm -rf output && shx mkdir -p output",
+    "prepare": "npm run build"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
@@ -21,6 +18,7 @@
     "@types/node-sass": "^3.10.32",
     "node-sass": "^4.10.0",
     "shx": "^0.3.2",
-    "typescript": "^3.3.3333"
+    "ts-node": "^8.8.2",
+    "typescript": "^3.7.2"
   }
 }

@@ -1,7 +1,8 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "3.2.3",
+  "version": "3.5.0",
   "description": "",
+  "sideEffects": false,
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,7 +12,7 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^3.3.3333"
+    "typescript": "^3.7.2"
   },
   "publishConfig": {
     "access": "public"

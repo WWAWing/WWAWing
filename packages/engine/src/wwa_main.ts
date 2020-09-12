@@ -1,14 +1,12 @@
-declare var external_script_inject_mode: boolean;
 declare var VERSION_WWAJS: string; // webpackにより注入
-declare function loader_start(e: any): void;
 
 import {
-    WWAConsts as Consts, WWAData as Data, Coord, Position,
+    WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData
 } from "./wwa_data";
 
 import {
@@ -32,21 +30,24 @@ import { Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MosterWindow, ScoreWindow, MessageInfo, Macro, parseMacro
+    MessageWindow, MonsterWindow, ScoreWindow, MessageInfo, Macro, parseMacro
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject, checkTouchDevice } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
+import { WWACompress, WWASave } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
+
 import WWAKeyStore from "./wwa_input/WWAKeyStore";
 import WWAMouseStore from "./wwa_input/WWAMouseStore";
 import WWAInputManager from "./wwa_input/WWAInputManager";
 import { WWAInputStoreType, WWAInputState } from "@wwawing/common-interface";
-import { WWAGamePadStore, WWAWebkitGamepadStore } from "./wwa_input/WWAGamePadStore";
+import { WWAGamePadStore, WWAWebkitGamepadStore, GamePadButtonCode } from "./wwa_input/WWAGamePadStore";
 
-let wwa: WWA;
-let wwap_mode: boolean = false;
+import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
+import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
+let wwa: WWA
 
 /**
 *
@@ -83,9 +84,8 @@ export class WWA {
     public _itemMenu: ItemMenu;  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
     private _objectMovingDataManager: ObjectMovingDataManager;
     public _messageWindow: MessageWindow; // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
-    private _monsterWindow: MosterWindow;
+    private _monsterWindow: MonsterWindow;
     private _scoreWindow: ScoreWindow;
-    //        private _messageQueue: string[];
     private _messageQueue: MessageInfo[];
     private _yesNoJudge: YesNoState;
     private _yesNoJudgeInNextFrame: YesNoState;
@@ -95,22 +95,26 @@ export class WWA {
     private _yesNoDispCounter: number;
     private _yesNoUseItemPos: number;
     private _yesNoURL: string;
-    // private _waitTimeInCurrentFrame: number;
     private _waitFrame: number;
     private _usePassword: boolean;
-    private _useHelp: boolean;
-    private _useBattleReportButton: boolean;
-    private _wwaWrapperElement: HTMLDivElement;
+    private _bottomButtonType: number;
     private _mouseControllerElement: HTMLDivElement;
     private _statusPressCounter: Status; // ステータス型があるので、アニメーション残りカウンタもこれで代用しまぁす。
     private _battleEstimateWindow: BattleEstimateWindow;
     private _passwordWindow: PasswordWindow;
+    private _wwaSave: WWASave;
 
     private _stopUpdateByLoadFlag: boolean;
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
-    private _quickSaveData: WWAData;
+
+    /**
+     * 所持状態のマップデータの文字列加工をMD5化した文字列です。
+     * データが壊れていないかなどの検証に使います。
+     * TODO: originalMapDataHash などの名前が適切だと思うが、WWADataに同じ名前のプロパティがいるので安易に変えられない。どこかで対応する。
+     */
+    public checkOriginalMapString: string; 
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
@@ -119,8 +123,6 @@ export class WWA {
     private _battleEffectCoord: Coord;
 
     private _audioInstances: WWAAudio[];
-
-    private _playSound: (s: number) => void;
 
     private _temporaryInputDisable: boolean;
 
@@ -137,11 +139,12 @@ export class WWA {
     private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
-    private _useGameEnd: boolean;
 
     private _useConsole: boolean;
     private _audioDirectory: string;
     private _hasTitleImg: boolean;
+    private _useSuspend: boolean = false;
+    private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
 
     private _isActive: boolean;
 
@@ -150,7 +153,7 @@ export class WWA {
      *   TODO: 将来はセーブデータに含まれるようになるので、 WWADataに移す。
      *   @see https://github.com/WWAWing/WWAWing/issues/156
      */
-    private _itemboxBackgroundPos : {x: number, y: number};
+    private _itemboxBackgroundPos: { x: number, y: number };
 
     /**
      * 背景パーツ番号として添字を与えると
@@ -181,20 +184,27 @@ export class WWA {
      */
     private _mapObjectIDTable: number[][];
 
+    /**
+     * #wwa-wrapper の DOM に対してカスタムイベントを発生させる EventEmitter.
+     * 外部のアプリケーションが #wwa-wrapper に対してイベントリスナを設定することで
+     * WWAと連携する機能を作ることができます。
+     */
+    public wwaCustomEventEmitter: IEventEmitter;
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
     ////////////////////////
 
-    private _loadHandler: (e) => void;
+    private _loadHandler: (wwaData: WWAData) => void;
     public audioContext: AudioContext;
     public audioGain: GainNode;
     private audioExtension: string = "";
-    public userDevice:  UserDevice;
+    public userDevice: UserDevice;
+    private soundLoadedCheckTimer: number | undefined = undefined;
 
     constructor(
         mapFileName: string,
-        workerFileName: string,
         urlgateEnabled: boolean = false,
         titleImgName: string,
         classicModeEnabled: boolean,
@@ -202,6 +212,7 @@ export class WWA {
         useGoToWWA: boolean,
         audioDirectory: string = ""
     ) {
+        this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
@@ -212,8 +223,6 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-        this._useGameEnd = false;
-
         if (titleImgName === null) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
@@ -258,7 +267,8 @@ export class WWA {
         }
         this._audioDirectory = audioDirectory;
         // Go To WWA を強制するオプションが無効なら、Battle Reportにする
-        this._useBattleReportButton = !useGoToWWA;
+        this._bottomButtonType = useGoToWWA ? ControlPanelBottomButton.GOTO_WWA : ControlPanelBottomButton.BATTLE_REPORT;
+
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
         if (isLocal) {
@@ -267,10 +277,9 @@ export class WWA {
                     switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
                             Consts.BATTLE_INTERVAL_FRAME_NUM = 5;
-                            return;
+                            break;
                     }
-                    this._useGameEnd = true;
-                    this._useBattleReportButton = false;
+                    this._bottomButtonType = ControlPanelBottomButton.GAME_END;
                     break;
                 default:
                     alert(
@@ -294,44 +303,28 @@ export class WWA {
                 this._usePassword = true;
                 break;
         }
-        switch (this.userDevice.device) {
-            case DEVICE_TYPE.SP:
-            case DEVICE_TYPE.VR:
-            case DEVICE_TYPE.GAME:
-                this._useHelp = false;
-                break;
-            default:
-                this._useHelp = true;
-                break;
-        }
 
+        util.$id("cell-save").textContent = WWAButtonTexts.QUICK_SAVE;
         if (!this._usePassword) {
-            util.$id("cell-load").textContent = "Quick Load";
+            util.$id("cell-load").textContent = WWAButtonTexts.EMPTY_LOAD;
+        } else {
+            util.$id("cell-load").textContent = WWAButtonTexts.PASSWORD;
         }
-        if (this._useGameEnd) {
-            util.$id("cell-gotowwa").textContent = "Game End";
-
+        switch (this._bottomButtonType) {
+            case ControlPanelBottomButton.GOTO_WWA:
+                util.$id("cell-gotowwa").textContent = WWAButtonTexts.GOTO_WWA;
+                break;
+            case ControlPanelBottomButton.BATTLE_REPORT:
+                util.$id("cell-gotowwa").textContent = WWAButtonTexts.BATTLE_REPORT;
+                break;
+            case ControlPanelBottomButton.GAME_END:
+                util.$id("cell-gotowwa").textContent = WWAButtonTexts.GAME_END;
+                break;
         }
-        if (this._useBattleReportButton) {
-            util.$id("cell-gotowwa").textContent = "Battle Report";
-        }
 
-        this._loadHandler = (e): void => {
-            if (e.data.error !== null && e.data.error !== void 0) {
-                this._setErrorMessage("下記のエラーが発生しました。: \n" + e.data.error.message, ctxCover);
-                return;
-            }
-            if (e.data.progress !== null && e.data.progress !== void 0) {
-                this._setProgressBar(e.data.progress);
-                return;
-            }
-
-            this._wwaData = e.data.wwaData;
+        this._loadHandler = (wwaData: WWAData): void => {
+            this._wwaData = wwaData;
             this._wwaData.isItemEffectEnabled = itemEffectEnabled;
-            this._itemboxBackgroundPos = {
-                x: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_X,
-                y: Consts.IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_Y
-            };
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -348,9 +341,10 @@ export class WWA {
             var pathList = mapFileName.split("/"); //ディレクトリで分割
             pathList.pop(); //最後のファイルを消す
             pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
-            this._wwaData.mapCGName = pathList.join("/"); // pathを復元
-
-
+            this._wwaData.mapCGName = pathList.join("/");  //pathを復元
+            this._restartData = JSON.parse(JSON.stringify(this._wwaData));
+            this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 2);
@@ -361,14 +355,21 @@ export class WWA {
                     "管理者の方へ: データがアップロードされているか、\n" +
                     "パーミッションを確かめてください。", ctxCover);
             });
-            this._restartData = JSON.parse(JSON.stringify(this._wwaData));
 
             var escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
+            /**
+             * Node に対して background-color を設定します。
+             *     主に操作パネルの各部位に背景画像を割り当てる際に使用します。
+             * @param node 
+             */
+            const applyBackground = (node: HTMLElement) => {
+                node.style.backgroundImage = "url(" + escapedFilename + ")";
+            };
             Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
                 node.style.backgroundPosition = `-${
-                    this._itemboxBackgroundPos.x * Consts.CHIP_SIZE
+                    this._wwaData.imgItemboxX * Consts.CHIP_SIZE
                 }px -${
-                    this._itemboxBackgroundPos.y * Consts.CHIP_SIZE
+                    this._wwaData.imgItemboxY * Consts.CHIP_SIZE
                 }px`;
                 node.style.backgroundImage = "url(" + escapedFilename + ")";
             });
@@ -382,21 +383,20 @@ export class WWA {
                 node.style.display = "none";
                 node.style.cursor = "pointer";
             });
-            Array.prototype.forEach.call(util.$qsAll(".item-cell>.item-disp"), (node: HTMLElement) => {
-                node.style.backgroundImage = "url(" + escapedFilename + ")";
-            });
-            var iconNode_energy: HTMLElement = util.$qsh("#disp-energy>.status-icon");
-            iconNode_energy.style.backgroundPosition = "-120px -80px";
-            iconNode_energy.style.backgroundImage = "url(" + escapedFilename + ")";
-            var iconNode_strength = util.$qsh("#disp-strength>.status-icon");
-            iconNode_strength.style.backgroundPosition = "-160px -80px";
-            iconNode_strength.style.backgroundImage = "url(" + escapedFilename + ")";
-            var iconNode_defence = util.$qsh("#disp-defence>.status-icon");
-            iconNode_defence.style.backgroundPosition = "-200px -80px";
-            iconNode_defence.style.backgroundImage = "url(" + escapedFilename + ")";
-            var iconNode_gold = util.$qsh("#disp-gold>.status-icon");
-            iconNode_gold.style.backgroundPosition = "-240px -80px";
-            iconNode_gold.style.backgroundImage = "url(" + escapedFilename + ")";
+            Array.prototype.forEach.call(util.$qsAll(".item-cell>.item-disp"), applyBackground);
+            Array.prototype.forEach.call(util.$qsAll("div.wide-cell-row>.status-icon"), applyBackground);
+            this.setStatusIconCoord(MacroImgFrameIndex.ENERGY,
+                new Coord(this._wwaData.imgStatusEnergyX, this._wwaData.imgStatusEnergyY)
+            );
+            this.setStatusIconCoord(MacroImgFrameIndex.STRENGTH,
+                new Coord(this._wwaData.imgStatusStrengthX, this._wwaData.imgStatusStrengthY)
+            );
+            this.setStatusIconCoord(MacroImgFrameIndex.DEFENCE,
+                new Coord(this._wwaData.imgStatusDefenceX, this._wwaData.imgStatusDefenceY)
+            );
+            this.setStatusIconCoord(MacroImgFrameIndex.GOLD,
+                new Coord(this._wwaData.imgStatusGoldX, this._wwaData.imgStatusGoldY)
+            );
 
             this._setProgressBar(getProgress(1, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 3);
@@ -407,9 +407,7 @@ export class WWA {
             console.log("Loading Complete!" + (t_end - t_start) + "ms");
 
             this._cvs = <HTMLCanvasElement>util.$id("wwa-map");
-            this._cvsSub = <HTMLCanvasElement>util.$id("wwa-map-sub");
-            var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d");
-            var ctxSub = <CanvasRenderingContext2D>this._cvsSub.getContext("2d");
+            var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d", {alpha:false});
             ctx.fillStyle = "rgba( 255, 255, 255, 0.5)";
             ctx.fillRect(0, 0, 440, 440);
             var playerPosition = new Position(this, this._wwaData.playerX, this._wwaData.playerY);
@@ -418,7 +416,7 @@ export class WWA {
             var status = new Status(
                 this._wwaData.statusEnergy, this._wwaData.statusStrength,
                 this._wwaData.statusDefence, this._wwaData.statusGold);
-            this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax);
+            this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax, this._wwaData.moves);
             this._objectMovingDataManager = new ObjectMovingDataManager(this, this._player);
             this._camera.setPlayer(this._player);
 
@@ -434,15 +432,15 @@ export class WWA {
             }
             if (checkTouchDevice()) {
                 this._virtualPadButtonElements = {
-                    [VirtualPadButtonCode.BUTTON_ENTER]:    <HTMLButtonElement>util.$id("wwa-enter-button"),
-                    [VirtualPadButtonCode.BUTTON_ESC]:      <HTMLButtonElement>util.$id("wwa-esc-button"),
+                    [VirtualPadButtonCode.BUTTON_ENTER]: <HTMLButtonElement>util.$id("wwa-enter-button"),
+                    [VirtualPadButtonCode.BUTTON_ESC]: <HTMLButtonElement>util.$id("wwa-esc-button"),
                     [VirtualPadButtonCode.BUTTON_ESTIMATE]: <HTMLButtonElement>util.$id("wwa-estimate-button"),
-                    [VirtualPadButtonCode.BUTTON_FAST]:     <HTMLButtonElement>util.$id("wwa-fast-button"),
-                    [VirtualPadButtonCode.BUTTON_SLOW]:     <HTMLButtonElement>util.$id("wwa-slow-button"),
-                    [VirtualPadButtonCode.BUTTON_LEFT]:     <HTMLButtonElement>util.$id("wwa-left-button"),
-                    [VirtualPadButtonCode.BUTTON_UP]:       <HTMLButtonElement>util.$id("wwa-up-button"),
-                    [VirtualPadButtonCode.BUTTON_RIGHT]:    <HTMLButtonElement>util.$id("wwa-right-button"),
-                    [VirtualPadButtonCode.BUTTON_DOWN]:     <HTMLButtonElement>util.$id("wwa-down-button")
+                    [VirtualPadButtonCode.BUTTON_FAST]: <HTMLButtonElement>util.$id("wwa-fast-button"),
+                    [VirtualPadButtonCode.BUTTON_SLOW]: <HTMLButtonElement>util.$id("wwa-slow-button"),
+                    [VirtualPadButtonCode.BUTTON_LEFT]: <HTMLButtonElement>util.$id("wwa-left-button"),
+                    [VirtualPadButtonCode.BUTTON_UP]: <HTMLButtonElement>util.$id("wwa-up-button"),
+                    [VirtualPadButtonCode.BUTTON_RIGHT]: <HTMLButtonElement>util.$id("wwa-right-button"),
+                    [VirtualPadButtonCode.BUTTON_DOWN]: <HTMLButtonElement>util.$id("wwa-down-button")
                 };
                 this._virtualPadStore = new VirtualPadStore(
                     this._virtualPadButtonElements,
@@ -463,6 +461,37 @@ export class WWA {
             this._lastMessage = new MessageInfo("", false, false, []);
             this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
+
+            //ロード処理の前に追加
+            this._messageWindow = new MessageWindow(
+                this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
+            this._scoreWindow = new ScoreWindow(
+                this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
+
+            this._wwaSave = new WWASave(wwa);
+            this._messageWindow.setWWASave(this._wwaSave);
+
+            WWACompress.setRestartData(this._restartData, this._wwaData);
+            this.clearFaces();
+            const resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
+            if (typeof resumeSaveDataText === "string") {
+                this._useSuspend = true;//中断モード
+                if (resumeSaveDataText) {
+                    //再開
+                    var resumeData: WWAData = WWACompress.getStartWWAData(resumeSaveDataText);
+                    if (this._restartData !== resumeData) {
+                        this._applyQuickLoad(resumeData);
+                        this._wwaSave.resumeStart();
+                    }
+                }
+            }
+            const autosaveString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-autosave");
+            if (autosaveString !== null) {
+                this._wwaSave.setAutoSaveInterval(Number(autosaveString) | 0);
+            }
+            const lookingAroundString: string = util.$id("wwa-wrapper").getAttribute("data-wwa-looking-around");
+            this._useLookingAround = !((lookingAroundString) && (lookingAroundString.match(/false/i)));
+
             this._setProgressBar(getProgress(2, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 4);
             window.addEventListener("keydown", (e): void => {
@@ -589,7 +618,6 @@ export class WWA {
             });
 
 
-            this._wwaWrapperElement = <HTMLDivElement>(util.$id("wwa-wrapper"));
             this._mouseControllerElement = <HTMLDivElement>(util.$id("wwa-controller"));
             this._mouseControllerElement.addEventListener("mousedown", (e): void => {
                 if (!this._isActive) { return; }
@@ -598,38 +626,51 @@ export class WWA {
                         e.preventDefault();
                         return;
                     }
-                    var mousePos = util.$localPos(e.clientX, e.clientY);
-                    var playerPos = this._player.getDrawingCenterPosition();
-                    var dist = mousePos.substract(playerPos);
-                    var dx = Math.abs(dist.x);
-                    var dy = Math.abs(dist.y);
-                    var dir: Direction;
-                    var sideFlag = false;
+                    // TODO: タッチ入力と似たようなコードになっているので統合する
+                    const clickingPosition = util.$localPos(e.clientX, e.clientY);
+                    const playerPosition = this._player.getDrawingCenterPosition();
+                    const dist = clickingPosition.substract(playerPosition);
+                    const dx = Math.abs(dist.x);
+                    const dy = Math.abs(dist.y);
+                    let dir: Direction;
+                    let isPlayerInScreenEdge = false;
+                    /*
+                      プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
+                      に、画面外にプレイヤーを動かすことを可能にする細かい処理
+
+                      4辺(4隅以外)のマスについて:
+                      プレイヤーが4辺のいずれかのマスにいる場合に、プレイヤーと同じマスをクリックした場合は下記のような挙動をします。
+                      プレイヤーが左の辺にいる => 左の画面へ移動, 上の辺 => 上の画面へ移動, 下の辺 => 下の画面へ移動, 右の辺 => 右の辺へ移動
+
+                      4隅の場合について:
+                      プレイヤーが画面四隅のいずれかマスにいる場合に、プレイヤーと同じマスをクリックした場合は下記のような挙動をします。
+                      (上下方向の方が左右方向より優先されます。)
+                      プレイヤーが左上にいる => 上に移動, 左下 => 下に移動, 右上 => 上に移動, 右下 => 下に移動
+                    */
                     if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
-                        //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
-                        switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
+                        switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
                             case 0:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.LEFT;
                                 break;
                             case Consts.H_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.RIGHT;
                                 break;
                         }
-                        switch ((playerPos.y / Consts.CHIP_SIZE | 0)) {
+                        switch ((playerPosition.y / Consts.CHIP_SIZE | 0)) {
                             case 0:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.UP;
                                 break;
                             case Consts.V_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
+                                isPlayerInScreenEdge = true;
                                 dir = Direction.DOWN;
                                 break;
                         }
 
                     }
-                    if (!sideFlag) {
+                    if (!isPlayerInScreenEdge) {
                         if (dist.y > 0 && dy > dx) {
                             dir = Direction.DOWN;
                         } else if (dist.y < 0 && dy > dx) {
@@ -640,7 +681,7 @@ export class WWA {
                             dir = Direction.LEFT;
                         }
                     }
-                    this._mouseStore.setPressInfo(dir);
+                    this._mouseStore.setPressInfo(dir, 0);
                     //e.preventDefault();//無効にするとクリック時にWWAにフォーカスされなくなる
                 }
             });
@@ -658,7 +699,7 @@ export class WWA {
             });
 
             //////////////// タッチ関連 超β ////////////////////////////
-            if (window["TouchEvent"] /* ←コンパイルエラー回避 */) {
+            if (window.TouchEvent) {
                 if (this.audioContext) {
                     /**
                      * audioTest は WebAudio API の再生操作を行うだけのメソッドです。
@@ -673,83 +714,90 @@ export class WWA {
                     this._mouseControllerElement.addEventListener("touchstart", audioTest);
                 }
 
-                this._mouseControllerElement.addEventListener("touchstart", (e: any /*←コンパイルエラー回避*/): void => {
+                this._mouseControllerElement.addEventListener("touchstart", (touchEvent): void => {
                     if (!this._isActive) { return; }
                     if (this._mouseStore.getMouseState() !== WWAInputState.NONE) {
-                        e.preventDefault();
+                        touchEvent.preventDefault();
                         return;
                     }
-                    var mousePos = util.$localPos(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                    var playerPos = this._player.getDrawingCenterPosition();
-                    var dist = mousePos.substract(playerPos);
-                    var dx = Math.abs(dist.x);
-                    var dy = Math.abs(dist.y);
-                    var dir: Direction;
-                    var sideFlag = false;
-                    if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
-                        //同一のマスをタップしていて、かつ側面の場合はその方向へ移動
-                        switch ((playerPos.x / Consts.CHIP_SIZE | 0)) {
-                            case 0:
-                                sideFlag = true;
-                                dir = Direction.LEFT;
-                                break;
-                            case Consts.H_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
-                                dir = Direction.RIGHT;
-                                break;
+                    const changedTouches = touchEvent.changedTouches;
+                    const touchLength = changedTouches.length;
+                    for (let touchID = 0; touchID < touchLength; touchID++) {
+                        const changedTouch = changedTouches[touchID];
+                        const touchedPosition = util.$localPos(changedTouch.clientX, changedTouch.clientY);
+                        const playerPosition = this._player.getDrawingCenterPosition();
+                        const dist = touchedPosition.substract(playerPosition);
+                        const dx = Math.abs(dist.x);
+                        const dy = Math.abs(dist.y);
+                        let dir: Direction;
+                        let isPlayerInScreenEdge = false;
+                        /*
+                          プレイヤーと同じマスをタップしていて、画面端4辺にプレイヤーがいる場合
+                          に、画面外にプレイヤーを動かすことを可能にする細かい処理
+
+                          4辺(4隅以外)のマスについて:
+                          プレイヤーが4辺のいずれかのマスにいる場合に、プレイヤーと同じマスをタッチした場合は下記のような挙動をします。
+                          プレイヤーが左の辺にいる => 左の画面へ移動, 上の辺 => 上の画面へ移動, 下の辺 => 下の画面へ移動, 右の辺 => 右の辺へ移動
+
+                          4隅の場合について:
+                          プレイヤーが画面四隅のいずれかマスにいる場合に、プレイヤーと同じマスをタッチした場合は下記のような挙動をします。
+                          (上下方向の方が左右方向より優先されます。)
+                          プレイヤーが左上にいる => 上に移動, 左下 => 下に移動, 右上 => 上に移動, 右下 => 下に移動
+                        */
+                        if ((dx < Consts.CHIP_SIZE) && (dy < Consts.CHIP_SIZE)) {
+                            switch ((playerPosition.x / Consts.CHIP_SIZE | 0)) {
+                                case 0:
+                                    isPlayerInScreenEdge = true;
+                                    dir = Direction.LEFT;
+                                    break; 
+                                case Consts.H_PARTS_NUM_IN_WINDOW - 1:
+                                    isPlayerInScreenEdge = true;
+                                    dir = Direction.RIGHT;
+                                    break;
+                            }
+                            switch ((playerPosition.y / Consts.CHIP_SIZE | 0)) {
+                                case 0:
+                                    isPlayerInScreenEdge = true;
+                                    dir = Direction.UP;
+                                    break;
+                                case Consts.V_PARTS_NUM_IN_WINDOW - 1:
+                                    isPlayerInScreenEdge = true;
+                                    dir = Direction.DOWN;
+                                    break;
+                            }
+
                         }
-                        switch ((playerPos.y / Consts.CHIP_SIZE | 0)) {
-                            case 0:
-                                sideFlag = true;
-                                dir = Direction.UP;
-                                break;
-                            case Consts.V_PARTS_NUM_IN_WINDOW - 1:
-                                sideFlag = true;
+                        // 画面端4辺でない普通の場合
+                        if (!isPlayerInScreenEdge) {
+                            if (dist.y > 0 && dy > dx) {
                                 dir = Direction.DOWN;
-                                break;
+                            } else if (dist.y < 0 && dy > dx) {
+                                dir = Direction.UP;
+                            } else if (dist.x > 0 && dy < dx) {
+                                dir = Direction.RIGHT;
+                            } else if (dist.x < 0 && dy < dx) {
+                                dir = Direction.LEFT;
+                            }
                         }
-
+                        this._mouseStore.setPressInfo(dir, changedTouch.identifier);
                     }
-                    if (!sideFlag) {
-                        if (dist.y > 0 && dy > dx) {
-                            dir = Direction.DOWN;
-                        } else if (dist.y < 0 && dy > dx) {
-                            dir = Direction.UP;
-                        } else if (dist.x > 0 && dy < dx) {
-                            dir = Direction.RIGHT;
-                        } else if (dist.x < 0 && dy < dx) {
-                            dir = Direction.LEFT;
-                        }
-                    }
-                    this._mouseStore.setPressInfo(dir, e.changedTouches[0].identifier);
-                    if (e.cancelable) {
-                        e.preventDefault();
+                    if (touchEvent.cancelable) {
+                        touchEvent.preventDefault();
                     }
                 });
 
-                this._mouseControllerElement.addEventListener("touchend", (e: any): void => {
+                const onTouchReleased = (event: TouchEvent): void => {
                     if (!this._isActive) { return; }
-                    for (var i = 0; i < e.changedTouches.length; i++) {
-                        if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
+                    for (let i = 0; i < event.changedTouches.length; i++) {
+                        if (this._mouseStore.getTouchID() === event.changedTouches[i].identifier) {
                             this._mouseStore.setReleaseInfo();
-                            e.preventDefault();
+                            event.preventDefault();
                             break;
                         }
                     }
-                });
-
-
-                this._mouseControllerElement.addEventListener("touchcancel", (e: any): void => {
-                    if (!this._isActive) { return; }
-                    for (var i = 0; i < e.changedTouches.length; i++) {
-                        if (this._mouseStore.getTouchID() === e.changedTouches[i].identifier) {
-                            this._mouseStore.setReleaseInfo();
-                            e.preventDefault();
-                            break;
-                        }
-                    }
-                });
-
+                };
+                this._mouseControllerElement.addEventListener("touchend", onTouchReleased);
+                this._mouseControllerElement.addEventListener("touchcancel", onTouchReleased);
             }
             //////////////// タッチ関連 超β ////////////////////////////
 
@@ -772,7 +820,7 @@ export class WWA {
             });
             util.$id("button-gotowwa").addEventListener("click", () => {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
-                    this.onselectbutton(SidebarButton.GOTO_WWA, false, !this._useBattleReportButton);
+                    this.onselectbutton(SidebarButton.GOTO_WWA, false, false);
                 }
             });
 
@@ -784,7 +832,7 @@ export class WWA {
             });
 
             this._frameCoord = new Coord(Consts.IMGPOS_DEFAULT_FRAME_X, Consts.IMGPOS_DEFAULT_YESNO_Y);
-            this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);
+            this._battleEffectCoord = new Coord(Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_X, Consts.IMGPOS_DEFAULT_BATTLE_EFFECT_Y);;
 
             this._battleEstimateWindow = new BattleEstimateWindow(
                 this, this._wwaData.mapCGName, util.$id("wwa-wrapper"));
@@ -792,12 +840,8 @@ export class WWA {
             this._passwordWindow = new PasswordWindow(
                 this, <HTMLDivElement>util.$id("wwa-wrapper"));
 
-            this._messageWindow = new MessageWindow(
-                this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
-            this._monsterWindow = new MosterWindow(
+            this._monsterWindow = new MonsterWindow(
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
-            this._scoreWindow = new ScoreWindow(
-                this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
             this._setProgressBar(getProgress(3, 4, LoadStage.GAME_INIT));
 
             this._isLoadedSound = false;
@@ -805,8 +849,8 @@ export class WWA {
             this._paintSkipByDoorOpen = false
             this._clearFacesInNextFrame = false
             this._useConsole = false;
-            this.clearFaces();
-
+            
+            this.wwaCustomEvent('wwa_startup');
             /*
             var count = 0;
             for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
@@ -823,20 +867,28 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, ctxSub, this._wwaData.mapCGName, this._frameCoord, () => {
+            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, (): void => {
                 this._isSkippedSoundMessage = true;
+                const setGameStartingMessageWhenPcOrSP = () => {
+                    switch (this.userDevice.device) {
+                        case DEVICE_TYPE.PC:
+                            this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
+                            break;
+                        case DEVICE_TYPE.SP:
+                            this.setMessageQueue("ゲームを開始します。\n画面にふれてください。", false, true);
+                            break;
+                    }
+                };
                 if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
                     this._isLoadedSound = true;
-                    this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
+                    setGameStartingMessageWhenPcOrSP();
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound();
-
-                    requestAnimationFrame(this.soundCheckCaller);
-
+                    window.requestAnimationFrame(this.soundCheckCaller);
                     return;
                 } else if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "OFF") {
                     this._isLoadedSound = false;
-                    this.setMessageQueue("ゲームを開始します。\n画面をクリックしてください。", false, true);
+                    setGameStartingMessageWhenPcOrSP();
                     this.openGameWindow();
                     return;
                 } // 読み込みメッセージをスキップした場合、処理はここまで
@@ -878,13 +930,14 @@ export class WWA {
                             this._yesNoJudge = this._yesNoJudgeInNextFrame;
                             this._messageWindow.setInputDisable();
                             setTimeout((): void => {
+                                this._player.setDelayFrame();
                                 this._messageWindow.hide();
                                 this._yesNoJudge = YesNoState.UNSELECTED;
                                 this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
                                 this._isLoadedSound = true;
                                 this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                                 this.loadSound();
-                                requestAnimationFrame(this.soundCheckCaller);
+                                window.requestAnimationFrame(this.soundCheckCaller);
                             }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                         }
 
@@ -894,6 +947,7 @@ export class WWA {
                             this._yesNoJudge = this._yesNoJudgeInNextFrame;
                             this._messageWindow.setInputDisable();
                             setTimeout((): void => {
+                                this._player.setDelayFrame();
                                 this._messageWindow.hide();
                                 this._yesNoJudge = YesNoState.UNSELECTED;
                                 this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
@@ -905,65 +959,28 @@ export class WWA {
 
                 } else {
                     clearInterval(timer);
+                    this._player.setDelayFrame();
                     this._messageWindow.hide();
                     this._yesNoJudge = YesNoState.UNSELECTED;
                     this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
                     this._isLoadedSound = true;
                     this.loadSound();
-                    requestAnimationFrame(this.soundCheckCaller);
+                    window.requestAnimationFrame(this.soundCheckCaller);
                 }
             });
-        }
-        if (wwap_mode || Worker === void 0) {
-            var script: HTMLScriptElement;
-            if (!external_script_inject_mode) {
-                script = document.createElement("script");
-                if (wwap_mode) {
-                    script.src = Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_LOADER_NO_WORKER;
-                } else {
-                    script.src = "wwaload.noworker.js";
-                }
-                document.getElementsByTagName("head")[0].appendChild(script);
-            } else {
-                script = <HTMLScriptElement>document.getElementById("wwaloader-ex");
-                if (!script.src.match(/^http:\/\/wwawing\.com/) &&
-                    !script.src.match(/^http:\/\/www\.wwawing\.com/) &&
-                    !script.src.match(/^https:\/\/wwaphoenix\.github\.io/) &&
-                    !script.src.match(/^https:\/\/www\.wwaphoenix\.github\.io/)) {
-                    throw new Error("SCRIPT ORIGIN ERROR");
-                }
-            }
-            var self1 = this;
-            (window as any).postMessage_noWorker = (e): void => {
-                self1._loadHandler(e);
-            };
 
-            // 黒魔術
-            try {
-                loader_start({
-                    data: {
-                        fileName: mapFileName + "?date=" + t_start
-                    }
-                });
-            } catch (e) {
-                script.onload = function () {
-                    loader_start({
-                        data: {
-                            fileName: mapFileName + "?date=" + t_start
-                        }
-                    });
-                }
-            }
-        } else {
-            try {
-                var loadWorker: Worker = new Worker(workerFileName + "?date=" + t_start);
-                loadWorker.postMessage({ "fileName": mapFileName + "?date=" + t_start });
-                loadWorker.addEventListener("message", this._loadHandler);
-            } catch (e) {
-                alert("マップデータのロード時のエラーが発生しました。:\nWebWorkerの生成に失敗しました。" + e.message);
-                return;
-            }
+            this.wwaCustomEvent('wwa_start');
         }
+        const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
+        const mapDataHandler = (mapData: WWAData) => this._loadHandler(mapData);
+        const progressHandler = (progress: Progress) => this._setProgressBar(progress);
+        const errorHandler = (error: LoaderError) => this._setErrorMessage("下記のエラーが発生しました。: \n" + error.message, ctxCover);
+        // TODO removeListener
+        eventEmitter.addListener("mapData", mapDataHandler)
+        eventEmitter.addListener("progress", progressHandler)
+        eventEmitter.addListener("error", errorHandler)
+        const loader = new WWALoader(mapFileName, eventEmitter);
+        loader.requestAndLoadMapData();
     }
 
     private _setProgressBar(progress: LoaderProgress) {
@@ -1060,7 +1077,7 @@ export class WWA {
         }
     }
 
-    public createWWAAudioInstance(idx: number, isSub: boolean = false): void {
+    public createWWAAudioInstance(idx: number): void {
         if (idx === 0 || idx === SystemSound.NO_SOUND) {
             return;
         }
@@ -1068,9 +1085,7 @@ export class WWA {
         if (this._audioInstances[idx] !== void 0) {
             return;
         }
-        const file = wwap_mode
-            ? Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_AUDIO_DIR + "/" + idx + "." + this.audioExtension
-            : this._audioDirectory + idx + "." + this.audioExtension;
+        const file = this._audioDirectory + idx + "." + this.audioExtension;
         // WebAudio
         if (audioContext) {
             this._audioInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
@@ -1115,6 +1130,7 @@ export class WWA {
             if (instance === void 0 || instance.isError()) {
                 continue;
             }
+
             total++;
             if (!instance.hasData()) {
                 continue;
@@ -1123,7 +1139,7 @@ export class WWA {
         }
         if (loadedNum < total && !this._soundLoadSkipFlag) {
             this._setProgressBar(getProgress(loadedNum, total, LoadStage.AUDIO));
-            requestAnimationFrame(this.soundCheckCaller);
+            window.requestAnimationFrame(this.soundCheckCaller);
             return;
         }
 
@@ -1132,11 +1148,47 @@ export class WWA {
         this.openGameWindow();
     }
 
+    /**
+     * 音楽ファイルがロードされたかの確認を 100ms 間隔で行うように設定します。
+     * ロードが完了した場合には再生します。
+     * @param targetSoundId 確認する音楽ファイルのサウンド番号
+     */
+    private _setSoundLoadedCheckTimer(targetSoundId: number): void {
+        const targetAudio = this._audioInstances[targetSoundId];
+        // 対象音源が存在しないなど、エラーの場合は何度確認しても無駄なので何もせず終了
+        if (targetAudio.isError()) {
+            return;
+        }
+        this.soundLoadedCheckTimer = window.setInterval((): void => {
+            // 本来鳴っているはずのBGMが targetSoundId 番であるときは再生
+            if (this._wwaData.bgm === targetSoundId) {
+                if (targetAudio.hasData()) {
+                    targetAudio.play();
+                    this._wwaData.bgm = targetSoundId;
+                    this._clearSoundLoadedCheckTimer();
+                } else if (targetAudio.isError()) {
+                    // 途中でロードがエラーになった場合はそこでチェックを終了
+                    this._clearSoundLoadedCheckTimer();
+                }
+            } else {
+                // 他のBGMが鳴っているはずの設定になっているなら、タイマーを止める
+                // そのBGMの再生系の処理は playSound で実行されているはずなので、ここでは何もしない
+                this._clearSoundLoadedCheckTimer();
+            }
+        }, 100);
+    }
+
+    private _clearSoundLoadedCheckTimer(): void {
+        if(this.soundLoadedCheckTimer) {
+            clearInterval(this.soundLoadedCheckTimer);
+            this.soundLoadedCheckTimer = undefined;
+        }
+    }
 
     public playSound(id: number): void {
         if (!this._isLoadedSound) {
             // 音声データがロードされていなくても、次に音が流れる設定でゲーム開始したときにBGMを復元しなければならない。
-            if(id === SystemSound.NO_SOUND) {
+            if (id === SystemSound.NO_SOUND) {
                 this._wwaData.bgm = 0;
             } else if (id >= SystemSound.BGM_LB) {
                 this._wwaData.bgm = id;
@@ -1164,29 +1216,14 @@ export class WWA {
         const audioInstance = this._audioInstances[id];
         if (!audioInstance.hasData()) {
             if (id >= SystemSound.BGM_LB) {
-                var loadi = ((id: number, self: WWA): void => {
-                    var timer = setInterval((): void => {
-                        if (self._wwaData.bgm === id) {
-                            if (!self._audioInstances[id].hasData()) {
-                                this._audioInstances[id].play();
-                                this._wwaData.bgm = id;
-                                clearInterval(timer);
-                            }
-                        } else {
-                            clearInterval(timer);
-                            if (self._wwaData.bgm !== SystemSound.NO_SOUND) {
-                                loadi(self._wwaData.bgm, self);
-                            }
-                        }
-                    }, 4);
-                });
-                loadi(id, this);
+               /* 
+                  音源がロードされていなくても、QuickLoad などでゲーム状態を復元したときにはBGMを復元しなければならない。
+                  ので、ゲームデータ上にはBGM設定を反映する
+                */
+                this._wwaData.bgm = id;
+                this._setSoundLoadedCheckTimer(id);
             }
-            this._wwaData.bgm = id;
-            return;
-        }
-
-        if (id !== 0 && this._audioInstances[id].hasData()) {
+        } else {
             if (id >= SystemSound.BGM_LB) {
                 this._audioInstances[id].play();
                 this._wwaData.bgm = id;
@@ -1195,22 +1232,34 @@ export class WWA {
             }
         }
 
-
     }
 
     public openGameWindow(): void {
-        var self = this;
         var ppos = this._player.getPosition();
         util.$id("wwa-cover").style.opacity = "0";
         if (this.getObjectIdByPosition(ppos) !== 0) {
             this._player.setPartsAppearedFlag();
         }
 
-        setTimeout(function () {
+        //ゲーム開始直後に中断データ再開
+        var resumeSaveDataText = util.$id("wwa-wrapper").getAttribute("data-wwa-resume-savedata");
+        if (typeof resumeSaveDataText === "string") {
+            this._useSuspend = true;//中断モード
+            if (resumeSaveDataText) {
+                //再開
+                var resumeData: WWAData = WWACompress.getStartWWAData(resumeSaveDataText);
+                if (this._restartData !== resumeData) {
+                    this._applyQuickLoad(resumeData);
+                    this._wwaSave.resumeStart();
+                }
+            }
+        }
+
+        setTimeout( () => {
             util.$id("wwa-wrapper").removeChild(util.$id("wwa-cover"));
             // TODO: これが表示終わるまでプレイヤーをcontrollableにしない
-            //                setTimeout(self.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, self);
-            self._main();
+            //                setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
+            this._main();
         }, Consts.SPLASH_SCREEN_DISP_MILLS);
 
     }
@@ -1222,7 +1271,12 @@ export class WWA {
     public mainCaller = (() => this._main());
     public soundCheckCaller = (() => this.checkAllSoundLoaded());
 
-    public onselectitem(itemPos: number): void {
+    /**
+     * アイテムを使用。
+     * @param itemPos アイテムのID
+     * @returns {boolean} 使用できる場合
+     */
+    public onselectitem(itemPos: number): boolean {
         if (this._player.canUseItem(itemPos)) {
             var bg = <HTMLDivElement>(util.$id("item" + (itemPos - 1)));
             bg.classList.add("onpress");
@@ -1243,7 +1297,9 @@ export class WWA {
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_ITEM_USE;
                 this._yesNoUseItemPos = itemPos;
             }
+            return true;
         }
+        return false;
     }
 
     public onselectbutton(button: SidebarButton, forcePassword: boolean = false, forceGoToWWA: boolean = false): void {
@@ -1252,24 +1308,49 @@ export class WWA {
         this._itemMenu.close();
         bg.classList.add("onpress");
         if (button === SidebarButton.QUICK_LOAD) {
-            if (this._quickSaveData !== void 0 && !forcePassword) {
-                if (this._usePassword) {
-                    this.setMessageQueue("データを読み込みますか？\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
-                    this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_LOAD;
-                } else {
-                    this.setMessageQueue("データを読み込みますか？", true, true);
-                    this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_LOAD;
-                }
-            } else {
-                this.onpasswordloadcalled();
+            this._yesNoChoiceCallInfo = this._wwaSave.getFirstSaveChoiceCallInfo(forcePassword, this._usePassword);
+            switch (this._yesNoChoiceCallInfo) {
+                case ChoiceCallInfo.CALL_BY_QUICK_LOAD:
+                case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
+                    var secondCallInfo: ChoiceCallInfo;
+                    var loadTest: string = "";
+                    switch (this._yesNoChoiceCallInfo) {
+                        case ChoiceCallInfo.CALL_BY_QUICK_LOAD:
+                            loadTest = "読み込むデータを選んでください。";
+                            this._wwaSave.selectDBSaveDataList();
+                            break;
+                        case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
+                            loadTest = "読み込むオートセーブを選んでください。";
+                            this._wwaSave.selectLogSaveDataList();
+                            break;
+                    }
+                    secondCallInfo = this._wwaSave.getSecondSaveChoiceCallInfo(this._usePassword);//クイックロード後の選択肢
+                    this._messageWindow.createSaveDom();
+                    switch (secondCallInfo) {
+                        case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
+                            this.setMessageQueue(loadTest+"\n→Ｎｏでオートセーブ復帰画面に移ります。", true, true);
+                            break;
+                        case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
+                            this.setMessageQueue(loadTest +"\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
+                            break;
+                        case ChoiceCallInfo.NONE:
+                            this.setMessageQueue(loadTest, true, true);
+                            break;
+                    }
+                    break;
+                case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
+                    this.onpasswordloadcalled();
+                    break;
             }
         } else if (button === SidebarButton.QUICK_SAVE) {
             if (!this._wwaData.disableSaveFlag) {
+                this._wwaSave.selectDBSaveDataList();
+                this._messageWindow.createSaveDom();
                 if (this._usePassword) {
-                    this.setMessageQueue("データの一時保存をします。\nよろしいですか？\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
+                    this.setMessageQueue("データの一時保存先を選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 } else {
-                    this.setMessageQueue("データの一時保存をします。\nよろしいですか？", true, true);
+                    this.setMessageQueue("データの一時保存先を選んでください。", true, true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 }
             } else {
@@ -1279,20 +1360,28 @@ export class WWA {
             this.setMessageQueue("初めからスタートしなおしますか？", true, true);
             this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_RESTART_GAME;
         } else if (button === SidebarButton.GOTO_WWA) {
-            if (this._useGameEnd) {
-                (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
-                this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
-                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
-            } else if (forceGoToWWA) {
-                // F8 で GoTo WWAを選んだ場合で、Battle Reportボタンが表示されている場合は、
+            if (forceGoToWWA) {
+                // F8 で Goto WWAを選んだ場合で、Goto WWAボタンが表示されていない場合は、
                 // Battle Report ボタンを凹ませない
-                if (this._useBattleReportButton) {
+                if (this._bottomButtonType !== ControlPanelBottomButton.GOTO_WWA) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 }
                 this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
-            } else if (this._useBattleReportButton) {
-                this.launchBattleEstimateWindow();
+            } else {
+                switch (this._bottomButtonType) {
+                    case ControlPanelBottomButton.GOTO_WWA:
+                        this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
+                        this.setMessageQueue("ＷＷＡの公式サイトを開きますか？", true, true);
+                        break;
+                    case ControlPanelBottomButton.GAME_END:
+                        this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
+                        this.setMessageQueue("ＷＷＡゲームを終了しますか？", true, true);
+                        break;
+                    case ControlPanelBottomButton.BATTLE_REPORT:
+                        this.launchBattleEstimateWindow();
+                        break;
+                }
             }
         }
     }
@@ -1311,13 +1400,27 @@ export class WWA {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
         bg.classList.add("onpress");
         if (!this._wwaData.disableSaveFlag) {
-            if (this._usePassword) {
+            if (this._useSuspend) {//中断モード
+                this.setMessageQueue("ゲームを中断しますか？", true, true);
+                this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
+            } else if (this._usePassword) {
                 this.setMessageQueue("データ復帰用のパスワードを表示しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
             }
         } else {
             this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
         }
+    }
+    public onpasssuspendsavecalled() {
+        var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
+        bg.classList.add("onpress");
+        if (!this._wwaData.disableSaveFlag) {
+            this.setMessageQueue("ゲームを中断しますか？", true, true);
+            this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
+        } else {
+            this.setMessageQueue("ここではセーブ機能は\n使用できません。", false, true);
+        }
+
     }
     public onitemmenucalled() {
         this.setMessageQueue("右のメニューを選択してください。", false, true);
@@ -1337,14 +1440,23 @@ export class WWA {
             (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
             "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "）";
         // TODO(rmn): 適切な分岐に直したい
-        if (this._useGameEnd) {
-            speedMessage += "速度を落とすには-ボタン, 速度を上げるには+ボタンを押してください。";
-        } else {
-            speedMessage += "速度を落とすにはIキー, 速度を上げるにはPキーを押してください。";
+        switch (this.userDevice.os) {
+            case OS_TYPE.NINTENDO:
+                speedMessage += "速度を落とすには-ボタン, 速度を上げるには+ボタンを押してください。";
+                break;
+            default:
+                speedMessage += "速度を落とすにはIキー, 速度を上げるにはPキーを押してください。";
+                break;
         }
         this.setMessageQueue(speedMessage, false, true);
     }
 
+    /**
+     * 方向キーと同時押しで、移動せずにプレイヤーの向きを変更するキーの入力判定
+     */
+    private _checkTurnInputPressed = () => (
+        this._inputManager.checkTrigger("NO")
+    );
 
     private _main(): void {
         this._temporaryInputDisable = false;
@@ -1355,7 +1467,7 @@ export class WWA {
         this._virtualPadStore.update();
         if (this._waitFrame-- > 0) {
             //待ち時間待機
-            requestAnimationFrame(this.mainCaller);
+            window.requestAnimationFrame(this.mainCaller);
             return;
         }
         this._waitFrame = 0;
@@ -1381,107 +1493,126 @@ export class WWA {
         // キー入力とプレイヤー移動
         ////////////// DEBUG IMPLEMENTATION //////////////////////
         /////// 本番では必ず消すこと /////////////////////////////
-        //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SHIFT);
+        //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SPACE);
         //////////////////////////////////////////////////////////
+        this._player.mainFrameCount();//プレイ時間を計測加算
         var prevPosition = this._player.getPosition();
 
         var pdir = this._player.getDir();
 
 
         if (this._player.isControllable()) {
-
-            if (this._inputManager.checkTriggerForControllPlayer('LEFT')) {
-                this._player.controll(Direction.LEFT);
-                this._objectMovingDataManager.update();
-            } else if (this._inputManager.checkTriggerForControllPlayer('UP')) {
-                this._player.controll(Direction.UP);
-                this._objectMovingDataManager.update();
-            } else if (this._inputManager.checkTriggerForControllPlayer('RIGHT')) {
-                this._player.controll(Direction.RIGHT);
-                this._objectMovingDataManager.update();
-            } else if (this._inputManager.checkTriggerForControllPlayer('DOWN')) {
-                this._player.controll(Direction.DOWN);
-                this._objectMovingDataManager.update();
-            } else if (this._inputManager.checkHit(dirToKey[pdir])) {
-                this._player.controll(pdir);
-                this._objectMovingDataManager.update();
-            } else if (this._inputManager.checkHit('LEFT') ||
-                this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_LEFT)) {
-                this._player.controll(Direction.LEFT);
-                this._objectMovingDataManager.update();
-            } else if (this._inputManager.checkHit('UP') ||
-                this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_UP)) {
-                this._player.controll(Direction.UP);
-                this._objectMovingDataManager.update();
-            } else if (this._inputManager.checkHit('RIGHT') ||
-                this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_RIGHT)) {
-                this._player.controll(Direction.RIGHT);
-                this._objectMovingDataManager.update();
-            } else if (this._inputManager.checkHit('DOWN') ||
-                this._virtualPadStore.checkTouchingButton(VirtualPadButtonCode.BUTTON_DOWN)) {
-                this._player.controll(Direction.DOWN);
-                this._objectMovingDataManager.update();
-            } else if (this._inputManager.checkTrigger('ITEM_1')) {
-                this.onselectitem(1);
-            } else if (this._inputManager.checkTrigger('ITEM_2')) {
-                this.onselectitem(2);
-            } else if (this._inputManager.checkTrigger('ITEM_3')) {
-                this.onselectitem(3);
-            } else if (this._inputManager.checkTrigger('ITEM_4')) {
-                this.onselectitem(4);
-            } else if (this._inputManager.checkTrigger('ITEM_5')) {
-                this.onselectitem(5);
-            } else if (this._inputManager.checkTrigger('ITEM_6')) {
-                this.onselectitem(6);
-            } else if (this._inputManager.checkTrigger('ITEM_7')) {
-                this.onselectitem(7);
-            } else if (this._inputManager.checkTrigger('ITEM_8')) {
-                this.onselectitem(8);
-            } else if (this._inputManager.checkTrigger('ITEM_9')) {
-                this.onselectitem(9);
-            } else if (this._inputManager.checkTrigger('ITEM_10')) {
-                this.onselectitem(10);
-            } else if (this._inputManager.checkTrigger('ITEM_11')) {
-                this.onselectitem(11);
-            } else if (this._inputManager.checkTrigger('ITEM_12')) {
-                this.onselectitem(12);
-            } else if (
-                this._inputManager.checkTrigger('SPEED_DOWN') ||
-                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_SLOW)) {
-                this.onchangespeed(SpeedChange.DOWN);
-            } else if (
-                this._inputManager.checkTrigger('SPEED_UP') ||
-                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_FAST)) {
-                this.onchangespeed(SpeedChange.UP);
-            } else if (
-                this._inputManager.checkTrigger('ESTIMATE_REPORT') ||
-                this._virtualPadStore.checkTouchButton(VirtualPadButtonCode.BUTTON_ESTIMATE)) {
-                // 戦闘結果予測 
-                if (this.launchBattleEstimateWindow()) {
+            if (!this._wwaData.disableSaveFlag) {
+                //オートセーブ処理
+                if (this._wwaSave.isAutoSaveFrame(this._player)) {
+                    this._quickSave(ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE)
                 }
-            } else if (this._inputManager.checkTrigger('PASSOWRD_LOAD')) {
-                this.playSound(SystemSound.DECISION);
-                this.onselectbutton(SidebarButton.QUICK_LOAD, true);
-            } else if (this._inputManager.checkTrigger('PASSWORD_SAVE')) {
-                this.playSound(SystemSound.DECISION);
-                this.onpasswordsavecalled()
-            } else if (this._inputManager.checkTrigger('QUICK_LOAD')) {
-                this.onselectbutton(SidebarButton.QUICK_LOAD);
-            } else if (this._inputManager.checkTrigger('QUICK_SAVE')) {
-                this.onselectbutton(SidebarButton.QUICK_SAVE);
-            } else if (this._inputManager.checkTrigger('RESTART_GAME')) {
-                this.onselectbutton(SidebarButton.RESTART_GAME);
-            } else if (this._inputManager.checkTrigger('GOTO_WWA')) {
-                this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
-            } else if (this._inputManager.checkTrigger('CONTROL_PANEL_SELECT')) {
-                if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
-                    this.onitemmenucalled();
-                }
-            } else if (this._inputManager.checkTrigger('HOWOTO_CONTROL')) {
-                // コマンドのヘルプ 
-                this._displayHelp()
             }
+            if (this._player.isDelayFrame()) {
+                /*
+                 * メッセージ表示直後、何も操作しないフレームを用意する。
+                 * ショップで1フレーム待機しないと効果音付きのアイテムが入手されないため、
+                 * ゲームパッド使用時に購入アイテムが入手されないケースがあることの対処
+                 */
+                this._player.updateDelayFrame();
+            } else {
+                    //マクロ用処理割込
+                if (this._actionGamePadButtonItemMacro()) {
 
+                    //getKeyStateForControllPlayer　分岐
+                } else if (this._inputManager.checkTriggerForControllPlayer("LEFT")) {
+                    if (this._checkTurnInputPressed()) {
+                        this._player.setDir(Direction.LEFT);
+                    } else {
+                        this._player.controll(Direction.LEFT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._inputManager.checkTriggerForControllPlayer("UP")) {
+                    if (this._checkTurnInputPressed()) {
+                        this._player.setDir(Direction.UP);
+                    } else {
+                        this._player.controll(Direction.UP);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._inputManager.checkTriggerForControllPlayer("RIGHT")) {
+                    if (this._checkTurnInputPressed()) {
+                        this._player.setDir(Direction.RIGHT);
+                    } else {
+                        this._player.controll(Direction.RIGHT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._inputManager.checkTriggerForControllPlayer("DOWN")) {
+                    if (this._checkTurnInputPressed()) {
+                        this._player.setDir(Direction.DOWN);
+                    } else {
+                        this._player.controll(Direction.DOWN);
+                        this._objectMovingDataManager.update();
+                    }
+
+                // TODO: マウスクリックにより移動処理や振り向き処理ができるか確認し、できなければ実装しておく
+
+                    //アイテムショートカット
+                } else if (this._inputManager.checkHit("ITEM_1")) {
+                    this.onselectitem(1);
+                } else if (this._inputManager.checkHit("ITEM_2")) {
+                    this.onselectitem(2);
+                } else if (this._inputManager.checkHit("ITEM_3")) {
+                    this.onselectitem(3);
+                } else if (this._inputManager.checkHit("ITEM_4")) {
+                    this.onselectitem(4);
+                } else if (this._inputManager.checkHit("ITEM_5")) {
+                    this.onselectitem(5);
+                } else if (this._inputManager.checkHit("ITEM_6")) {
+                    this.onselectitem(6);
+                } else if (this._inputManager.checkHit("ITEM_7")) {
+                    this.onselectitem(7);
+                } else if (this._inputManager.checkHit("ITEM_8")) {
+                    this.onselectitem(8);
+                } else if (this._inputManager.checkHit("ITEM_9")) {
+                    this.onselectitem(9);
+                } else if (this._inputManager.checkHit("ITEM_10")) {
+                    this.onselectitem(10);
+                } else if (this._inputManager.checkHit("ITEM_11")) {
+                    this.onselectitem(11);
+                } else if (this._inputManager.checkHit("ITEM_12")) {
+                    this.onselectitem(12);
+                    //移動速度
+                } else if (this._inputManager.checkHit("SPEED_DOWN")) {
+                    this.onchangespeed(SpeedChange.DOWN);
+                } else if (this._inputManager.checkHit("SPEED_UP")) {
+                    this.onchangespeed(SpeedChange.UP);
+                    // 戦闘結果予測 
+                } else if (this._inputManager.checkHit("ESTIMATE_REPORT")) {
+                    // 戦闘結果予測 
+                    if (this.launchBattleEstimateWindow()) {
+                    }
+                } else if (this._inputManager.checkHit("PASSOWRD_LOAD")) {
+                    this.playSound(SystemSound.DECISION);
+                    this.onselectbutton(SidebarButton.QUICK_LOAD, true);
+                } else if (this._inputManager.checkHit("PASSWORD_SAVE")) {
+                    this.playSound(SystemSound.DECISION);
+                    if (this._useSuspend) {//中断モード
+                        this.onpasssuspendsavecalled();
+                    } else if (this._usePassword) {
+                        this.onpasswordsavecalled();
+                    }
+                } else if (this._inputManager.checkHit("QUICK_LOAD")) {
+                    this.onselectbutton(SidebarButton.QUICK_LOAD);
+                } else if (this._inputManager.checkHit("QUICK_SAVE")) {
+                    this.onselectbutton(SidebarButton.QUICK_SAVE);
+                } else if (this._inputManager.checkHit("RESTART_GAME")) {
+                    this.onselectbutton(SidebarButton.RESTART_GAME);
+                } else if (this._inputManager.checkHit("GOTO_WWA")) {
+                    this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
+                } else if (this._inputManager.checkHit("CONTROL_PANEL_SELECT")) {
+                    if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
+                        this.onitemmenucalled();
+                    }
+                } else if (this._inputManager.checkHit("HOWOTO_CONTROL")) {
+                    // コマンドのヘルプ 
+                    this._displayHelp()
+                }
+            }
             this._inputManager.memorizeKeyStateOnControllableFrame();
         } else if (this._player.isJumped()) {
             if (!this._camera.isResetting()) {
@@ -1497,18 +1628,27 @@ export class WWA {
             }
 
             if (this._messageWindow.isYesNoChoice()) {
-                
+                //Yes No 選択肢
+                if (this._messageWindow.isSaveChoice()) {
+                    //セーブ領域参照
+                    this._messageWindow.saveUpdate();
+                    if (!this._messageWindow.isSaveClose()) {
+                        if (this._inputManager.checkHit("LEFT")) {
+                            this._messageWindow.saveControll(Direction.LEFT);
+                        } else if (this._inputManager.checkHit("UP")) {
+                            this._messageWindow.saveControll(Direction.UP);
+                        } else if (this._inputManager.checkHit("RIGHT")) {
+                            this._messageWindow.saveControll(Direction.RIGHT);
+                        } else if (this._inputManager.checkHit("DOWN")) {
+                            this._messageWindow.saveControll(Direction.DOWN);
+                        }
+                    }
+                }
                 if (!this._messageWindow.isInputDisable()) {
                     if (this._yesNoJudge === YesNoState.UNSELECTED) {
-                        if (
-                            this._inputManager.checkTrigger('YES') ||
-                            this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH
-                        ) {
+                        if (this._inputManager.checkHit("YES")) {
                             this._yesNoJudge = YesNoState.YES
-                        } else if (
-                            this._inputManager.checkTrigger('NO') ||
-                            this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.TOUCH
-                        ) {
+                        } else if (this._inputManager.checkHit("NO")) {
                             this._yesNoJudge = YesNoState.NO
                         }
                     }
@@ -1527,25 +1667,22 @@ export class WWA {
             } else if (this._messageWindow.isItemMenuChoice()) {
                 //Item Menu 選択肢
                 this._itemMenu.update();
-                if (this._inputManager.checkHit('LEFT')) {
-                    this._itemMenu.cursor_left();
-                } else if (this._inputManager.checkHit('UP')) {
-                    this._itemMenu.cursor_up();
-                } else if (this._inputManager.checkHit('RIGHT')) {
-                    this._itemMenu.cursor_right();
-                } else if (this._inputManager.checkHit('DOWN')) {
-                    this._itemMenu.cursor_down();
+                if (this._inputManager.checkHit("LEFT")) {
+                    this._itemMenu.controll(Direction.LEFT);
+                } else if (this._inputManager.checkHit("UP")) {
+                    this._itemMenu.controll(Direction.UP);
+                } else if (this._inputManager.checkHit("RIGHT")) {
+                    this._itemMenu.controll(Direction.RIGHT);
+                } else if (this._inputManager.checkHit("DOWN")) {
+                    this._itemMenu.controll(Direction.DOWN);
                 }
-                if (this._inputManager.checkTrigger('YES')) {
+                if (this._inputManager.checkHit("YES")) {
                     this._setNextMessage();
                     this._messageWindow.setItemMenuChoice(false);
                     this._itemMenu.ok();
                 } else if (
-                    this._inputManager.checkTrigger('NO') ||
-                    this._inputManager.checkTrigger('LEFT', [WWAInputStoreType.MOUSE]) ||
-                    this._inputManager.checkTrigger('UP', [WWAInputStoreType.MOUSE]) ||
-                    this._inputManager.checkTrigger('RIGHT', [WWAInputStoreType.MOUSE]) ||
-                    this._inputManager.checkTrigger('DOWN', [WWAInputStoreType.MOUSE])
+                    // TODO: WWA のフィールド画面をクリックするとキャンセルするようにしたい
+                    this._inputManager.checkHit("NO")
                 ) {
                     for (var i = 0; i < sidebarButtonCellElementID.length; i++) {
                         var elm = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[i]));
@@ -1560,9 +1697,7 @@ export class WWA {
                 }
             } else {
                 //通常メッセージ
-                if (this._inputManager.canMessageChange('MESSAGE') ||
-                    this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH ||
-                    this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.TOUCH) {
+                if (this._inputManager.checkHit("MESSAGE")) {
                     for (var i = 0; i < sidebarButtonCellElementID.length; i++) {
                         var elm = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[i]));
                         if (elm.classList.contains("onpress")) {
@@ -1572,12 +1707,10 @@ export class WWA {
                     this._setNextMessage();
 
                 }
-                
+
             }
         } else if (this._player.isWatingEstimateWindow()) {
-            if (this._inputManager.checkTrigger('MESSAGE') ||
-                this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ENTER) === VirtualPadState.TOUCH ||
-                this._virtualPadStore.getButtonState(VirtualPadButtonCode.BUTTON_ESC) === VirtualPadState.TOUCH) {
+            if (this._inputManager.checkHit("MESSAGE")) {
                 this.hideBattleEstimateWindow();
             }
         } else if (this._player.isFighting()) {
@@ -1669,20 +1802,29 @@ export class WWA {
         }
         if (!this._stopUpdateByLoadFlag) {
             //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
-            requestAnimationFrame(this.mainCaller);
+            window.requestAnimationFrame(this.mainCaller);
         } else {
             this._fadeout((): void => {
                 if (this._loadType === LoadType.QUICK_LOAD) {
                     this._quickLoad();
+                    this.wwaCustomEvent('wwa_quickload');
                 } else if (this._loadType === LoadType.RESTART_GAME) {
                     this._restartGame();
+                    this.wwaCustomEvent('wwa_restert');
                 } else if (this._loadType === LoadType.PASSWORD) {
                     this._applyQuickLoad(this._passwordSaveExtractData);
                     this._passwordSaveExtractData = void 0;
+                    this.wwaCustomEvent('wwa_passwordload');
                 }
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
+    }
+    public vibration(isStrong: boolean) {
+        // TODO: wwa_input/WWAGamePadStore に vibration メソッドを実装する
+        // this._inputManager.getInputStore(WWAInputStoreType.GAMEPAD, (gamepadStore: WWAGamePadStore) => {
+        //     gamepadStore.vibration(isStrong);
+        // });
     }
 
     private _drawAll() {
@@ -1699,13 +1841,37 @@ export class WWA {
         this._cgManager.clearCanvas(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT);
         this._cgManager.drawBase(0, 0, Consts.MAP_WINDOW_WIDTH, Consts.MAP_WINDOW_HEIGHT);
 
+        // 1. カメラの状況を確認し、エフェクト効果の段階であれば、 yLimit を更新
         if (this._camera.isResetting()) {
             if (this._camera.getPreviousPosition() !== null) {
                 var cpPartsPrev = this._camera.getPreviousPosition().getPartsCoord();
                 var cpOffsetPrev = this._camera.getPreviousPosition().getOffsetCoord();
             }
             yLimit = this._camera.getTransitionStepNum() * Consts.CHIP_SIZE;
+        }
 
+        // 2. 再描画が必要であればフラグを更新
+        var cacheDrawFlag: boolean = false;
+        if (yLimit !== this._cgManager.mapCacheYLimit) {
+            // yLimitが異なるために再描画
+            this._cgManager.mapCacheYLimit = yLimit;
+            cacheDrawFlag = true;
+        }
+        if ((cpParts.x !== this._cgManager.cpPartsLog.x) || (cpParts.y !== this._cgManager.cpPartsLog.y)) {
+            // cpParts座標が変わったため再描画
+            this._cgManager.cpPartsLog.x = cpParts.x;
+            this._cgManager.cpPartsLog.y = cpParts.y;
+            cacheDrawFlag = true;
+        }
+
+        // 3. 再描画が必要であれば、事前に Canvas をクリア
+        if (cacheDrawFlag) {
+            this._cgManager.clearBackCanvas();
+            this._cgManager.clearObjectCanvases();
+        }
+
+        // 4. エフェクト効果の段階であれば、エフェクトを描画
+        if (this._camera.isResetting()) {
             this._drawMap(cpPartsPrev, cpOffsetPrev, yLimit, true);
             this._drawPlayer(cpPartsPrev, cpOffsetPrev, yLimit, true);
             this._drawObjects(cpPartsPrev, cpOffsetPrev, yLimit, true);
@@ -1723,15 +1889,15 @@ export class WWA {
                     }
                     elm.style.opacity = (opacity / 255) + "";
                 }, 20);
-
             }
         }
 
-        this._drawMap(cpParts, cpOffset, yLimit);
+        // 5. マップを描画
+        this._drawMap(cpParts, cpOffset, yLimit, false, cacheDrawFlag);
         this._drawPlayer(cpParts, cpOffset, yLimit);
-        this._drawObjects(cpParts, cpOffset, yLimit);
+        this._drawObjects(cpParts, cpOffset, yLimit, false, cacheDrawFlag);
 
-        // 攻撃エフェクト描画
+        // 6. 攻撃エフェクト描画
         if (this._player.isFighting() && !this._player.isBattleStartFrame()) {
             targetX = this._player.isTurn() ? this._monster.position.x : ppos.x;
             targetY = this._player.isTurn() ? this._monster.position.y : ppos.y;
@@ -1739,9 +1905,11 @@ export class WWA {
             this._cgManager.drawCanvas(
                 this._battleEffectCoord.x, this._battleEffectCoord.y,
                 Consts.CHIP_SIZE * (targetX - cpParts.x) - cpOffset.x,
-                Consts.CHIP_SIZE * (targetY - cpParts.y) - cpOffset.y,
-                false);
+                Consts.CHIP_SIZE * (targetY - cpParts.y) - cpOffset.y
+            );
         }
+
+        // 7. マクロ文で描画されるエフェクトや顔表示、フレームなどを描画
         this._drawEffect();
         this._drawFaces();
         this._drawFrame();
@@ -1749,7 +1917,7 @@ export class WWA {
     }
 
     // 背景描画
-    private _drawMap(cpParts: Coord, cpOffset: Coord, yLimit: number, isPrevCamera: boolean = false): void {
+    private _drawMap(cpParts: Coord, cpOffset: Coord, yLimit: number, isPrevCamera: boolean = false, cacheDrawFlag: boolean = false): void {
         if (cpParts === void 0) {
             return;
         }
@@ -1757,8 +1925,7 @@ export class WWA {
         var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW);
         var yTop = Math.max(0, cpParts.y - 1);
         var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW);
-        var count: number, drawFlag: boolean;
-        drawFlag = false;
+        var count: number;
         count = 0;
 
         if (isPrevCamera) {
@@ -1769,7 +1936,7 @@ export class WWA {
                     var ppy = this._wwaData.mapAttribute[partsID][Consts.ATR_Y] / Consts.CHIP_SIZE;
                     var canvasX = Consts.CHIP_SIZE * (x - cpParts.x) - cpOffset.x;
                     var canvasY = Consts.CHIP_SIZE * (y - cpParts.y) - cpOffset.y;
-                    this._cgManager.drawCanvasWithLowerYLimit(ppx, ppy, canvasX, canvasY, yLimit);
+                    this._cgManager.copyBackCanvasWithLowerYLimit(ppx, ppy, canvasX, canvasY, yLimit);
                 }
             }
         } else {
@@ -1778,26 +1945,14 @@ export class WWA {
                     var partsID: number = this._wwaData.map[y][x];
                     if (this._cgManager.mapCache[count] !== partsID) {
                         this._cgManager.mapCache[count] = partsID;
-                        drawFlag = true;
+                        cacheDrawFlag = true;
                     }
                     count++;
                 }
             }
-            if (yLimit !== this._cgManager.mapCacheYLimit) {
-                //yLimitが異なるために再描画
-                this._cgManager.mapCacheYLimit = yLimit;
-                drawFlag = true;
-            }
-            if ((cpParts.x !== this._cgManager.cpPartsLog.x) || (cpParts.y !== this._cgManager.cpPartsLog.y)) {
-                //cpParts座標が変わったため再描画
-                this._cgManager.cpPartsLog.x = cpParts.x;
-                this._cgManager.cpPartsLog.y = cpParts.y;
-                drawFlag = true;
-            }
 
-            if (drawFlag) {
-                //バックキャンバスをクリア
-                this._cgManager.clearBackCanvas();
+            if (cacheDrawFlag) {
+                this._cgManager.clearBackCanvasWithLowerYLimit(yLimit);
                 //バックキャンバスに背景を描画
                 for (var x: number = xLeft; x <= xRight; x++) {
                     for (var y: number = yTop; y <= yBottom; y++) {
@@ -1831,7 +1986,7 @@ export class WWA {
         var crop: number;
         var dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
 
-        if (this._player.isLookingAround() && !this._player.isWaitingMessage()) {
+        if (this._useLookingAround && this._player.isLookingAround() && !this._player.isWaitingMessage()) {
             crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
         } else if (this._player.isMovingImage()) {
             crop = this._wwaData.playerImgPosX + relpcrop + 1;
@@ -1846,7 +2001,7 @@ export class WWA {
     }
 
     // 物体描画
-    private _drawObjects(cpParts: Coord, cpOffset: Coord, yLimit: number, isPrevCamera: boolean = false): void {
+    private _drawObjects(cpParts: Coord, cpOffset: Coord, yLimit: number, isPrevCamera: boolean = false, cacheDrawFlag:boolean = false): void {
         if (cpParts === void 0) {
             return;
         }
@@ -1855,44 +2010,144 @@ export class WWA {
         var yTop = Math.max(0, cpParts.y - 1);
         var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW);
         var offset: Coord;
-        // 画面内物体描画
-        for (var x: number = xLeft; x <= xRight; x++) {
-            for (var y: number = yTop; y <= yBottom; y++) {
-                if (this._player.isFighting() &&
-                    this._player.isTurn() &&
-                    this._player.getPosition().getPartsCoord().equals(this._monster.position) &&
-                    new Coord(x, y).equals(this._monster.position)) {
-                    continue;
-                }
-                var partsIDObj: number = this._wwaData.mapObject[y][x];
-                offset = new Coord(0, 0);
-                if (this._wwaData.objectAttribute[partsIDObj][Consts.ATR_MOVE] !== MoveType.STATIC) {
-                    var result = this._objectMovingDataManager.getOffsetByBeforePartsCoord(new Coord(x, y));
-                    if (result !== null) {
-                        offset = result;
+        var count: number = 0;
+        var animationType: boolean = this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
+        var imgType: boolean, ppxo: number, ppyo: number, canvasX: number, canvasY: number, type: number, num: number, result: Coord;
+        var x: number, y: number, partsIDObj: number, savePartsIDObj: number, n: number;
+        var useBattleArea: boolean = this._player.isFighting() &&
+            this._player.isTurn() &&
+            this._player.getPosition().getPartsCoord().equals(this._monster.position);
+        if (isPrevCamera) {
+            // 画面内物体描画
+            for (x = xLeft; x <= xRight; x++) {
+                for (y = yTop; y <= yBottom; y++) {
+                    if ((useBattleArea) &&
+                        new Coord(x, y).equals(this._monster.position)) {
+                        continue;
                     }
-                }
-                var imgType: boolean = (
-                    this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME ||
-                    this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
-                    this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
-                );
-                var ppxo =
-                    this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
-                var ppyo =
-                    this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
-                var canvasX = Consts.CHIP_SIZE * (x - cpParts.x) + offset.x - cpOffset.x;
-                var canvasY = Consts.CHIP_SIZE * (y - cpParts.y) + offset.y - cpOffset.y;
-                var type = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_TYPE];
-                var num = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_NUMBER];
-                if (partsIDObj !== 0 && !this._checkNoDrawObject(new Coord(x, y), type, num)) {
-                    if (isPrevCamera) {
-                        this._cgManager.drawCanvasWithLowerYLimit(ppxo, ppyo, canvasX, canvasY, yLimit);
-                    } else {
-                        this._cgManager.drawCanvasWithUpperYLimit(ppxo, ppyo, canvasX, canvasY, yLimit);
+                    partsIDObj = this._wwaData.mapObject[y][x];
+                    offset = new Coord(0, 0);
+                    if (this._wwaData.objectAttribute[partsIDObj][Consts.ATR_MOVE] !== MoveType.STATIC) {
+                        result = this._objectMovingDataManager.getOffsetByBeforePartsCoord(new Coord(x, y));
+                        if (result !== null) {
+                            offset = result;
+                        }
+                    }
+                    canvasX = Consts.CHIP_SIZE * (x - cpParts.x) + offset.x - cpOffset.x;
+                    canvasY = Consts.CHIP_SIZE * (y - cpParts.y) + offset.y - cpOffset.y;
+                    imgType = (
+                        animationType ||
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
+                    );
+                    ppxo =
+                        this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
+                    ppyo =
+                        this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
+                    type = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_TYPE];
+                    num = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_NUMBER];
+                    if (partsIDObj !== 0 && !this._checkNoDrawObject(new Coord(x, y), type, num)) {
+                        this._cgManager.copyObjectCanvasWithLowerYLimit(animationType ? 1 : 0, ppxo, ppyo, canvasX, canvasY, yLimit);
                     }
                 }
             }
+        } else {
+            var drawPartsList: DrawPartsData[] = [];
+            var drawStaticPartsList: DrawPartsData[] = [];
+            var drawPartsData: DrawPartsData;
+            var isStatic: boolean, isFighting: boolean;
+            for (x = xLeft; x <= xRight; x++) {
+                for (y = yTop; y <= yBottom; y++) {
+                    savePartsIDObj = partsIDObj = this._wwaData.mapObject[y][x];
+                    type = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_TYPE];
+                    num = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_NUMBER];
+                    if (this._checkNoDrawObject(new Coord(x, y), type, num)) {
+                        savePartsIDObj = 0;//非表示オブジェクト
+                    }
+                    isStatic = this._wwaData.objectAttribute[partsIDObj][Consts.ATR_MOVE] === MoveType.STATIC;
+                    if (savePartsIDObj !== 0) {
+                        //描画対象に追加
+                        if ((useBattleArea) &&
+                            new Coord(x, y).equals(this._monster.position)) {
+                            isFighting = true;
+                        } else {
+                            isFighting = false;
+                        }
+                        
+                        if (isStatic) {
+                            drawStaticPartsList.push(new DrawPartsData(partsIDObj, x, y, isStatic, isFighting));
+                        } else {
+                            drawPartsList.push(new DrawPartsData(partsIDObj, x, y, isStatic, isFighting));
+                            savePartsIDObj = 0;//移動系は表示しないものとみなす
+                        }
+                        if (isFighting) {
+                            savePartsIDObj = 0;//戦闘中に一時的に描画をOFFにする
+                        }
+                    }
+                    if (this._cgManager.mapObjectCache[count] !== savePartsIDObj) {
+                        this._cgManager.mapObjectCache[count] = savePartsIDObj;
+                        cacheDrawFlag = true;
+                    }
+                    count++;
+                }
+            }
+
+            if (cacheDrawFlag) {
+                this._cgManager.clearObjectCanvasesWithLowerYLimit(yLimit);
+                Array.prototype.push.apply(drawPartsList, drawStaticPartsList); // staticを描画対象に追加
+            }
+            var i: number, len: number;
+            len = drawPartsList.length;
+            for (i = 0; i < len; i++) {
+                drawPartsData = drawPartsList[i];
+                x = drawPartsData.x;
+                y = drawPartsData.y;
+                partsIDObj = drawPartsData.partsIDObj;
+                isStatic = drawPartsData.isStatic;
+                isFighting = drawPartsData.isFighting;
+                canvasX = Consts.CHIP_SIZE * (x - cpParts.x) - cpOffset.x;
+                canvasY = Consts.CHIP_SIZE * (y - cpParts.y) - cpOffset.y;
+                if (isStatic) {
+                    if (isFighting) {
+                        //戦闘中に一時的に描画をOFFにする
+                        continue;
+                    }
+                    //移動しないもの
+                    //キャッシュキャンバスに移動しない物体を描画
+                    for (n = 0; n < 2; n++) {
+                        imgType = (
+                            (!!n) ||
+                            this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
+                            this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
+                        );
+                        ppxo =
+                            this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
+                        ppyo =
+                            this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
+                        this._cgManager.copyObjectCanvasWithUpperYLimit(n, ppxo, ppyo, canvasX, canvasY, yLimit);
+                    }
+                } else {
+                    //移動するもの
+                    result = this._objectMovingDataManager.getOffsetByBeforePartsCoord(new Coord(x, y));
+                    if (result !== null) {
+                        canvasX += result.x;
+                        canvasY += result.y;
+                    }
+                    imgType = (
+                        animationType ||
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_X2] === 0 &&
+                        this._wwaData.objectAttribute[partsIDObj][Consts.ATR_Y2] === 0
+                    );
+                    ppxo =
+                        this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_X : Consts.ATR_X2] / Consts.CHIP_SIZE;
+                    ppyo =
+                        this._wwaData.objectAttribute[partsIDObj][imgType ? Consts.ATR_Y : Consts.ATR_Y2] / Consts.CHIP_SIZE;
+                    this._cgManager.drawCanvasWithUpperYLimit(ppxo, ppyo, canvasX, canvasY, yLimit);
+
+                }
+            }
+            // オブジェクトキャンバスをメインキャンバスに描画
+            this._cgManager.drawObjectCanvas(animationType ? 1 : 0);
         }
 
     }
@@ -1901,19 +2156,8 @@ export class WWA {
         if (this._wwaData.effectCoords.length === 0 || this._wwaData.effectWaits === 0) {
             return;
         }
-        var i = Math.floor(this._mainCallCounter % (this._wwaData.effectCoords.length * this._wwaData.effectWaits) / this._wwaData.effectWaits);
-        for (var y = 0; y < Consts.V_PARTS_NUM_IN_WINDOW; y++) {
-            for (var x = 0; x < Consts.H_PARTS_NUM_IN_WINDOW; x++) {
-                if (!this._wwaData.effectCoords[i]) {
-                    continue;
-                }
-                this._cgManager.drawCanvas(
-                    this._wwaData.effectCoords[i].x,
-                    this._wwaData.effectCoords[i].y,
-                    x * Consts.CHIP_SIZE,
-                    y * Consts.CHIP_SIZE, false);
-            }
-        }
+        var id:number = Math.floor(this._mainCallCounter % (this._wwaData.effectCoords.length * this._wwaData.effectWaits) / this._wwaData.effectWaits);
+        this._cgManager.drawEffect(id);
     }
 
     private _drawFaces(): void {
@@ -1921,8 +2165,7 @@ export class WWA {
             this._cgManager.drawCanvasWithSize(
                 this._faces[i].srcPos.x, this._faces[i].srcPos.y,
                 this._faces[i].srcSize.x, this._faces[i].srcSize.y,
-                this._faces[i].destPos.x, this._faces[i].destPos.y,
-                false
+                this._faces[i].destPos.x, this._faces[i].destPos.y
             );
         }
     }
@@ -2340,15 +2583,15 @@ export class WWA {
         var message = this._wwaData.message[messageID];
         try {
             var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
-            var screenXPixel = ( pos.x - screenTopCoord.x ) * Consts.CHIP_SIZE;
-            var screenYPixel = ( pos.y - screenTopCoord.y ) * Consts.CHIP_SIZE;
+            var screenXPixel = (pos.x - screenTopCoord.x) * Consts.CHIP_SIZE;
+            var screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
             this._player.addItem(
                 partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false,
                 this._wwaData.isItemEffectEnabled ? {
                     screenPixelCoord: new Coord(screenXPixel, screenYPixel),
                     itemBoxBackgroundImageCoord: new Coord(
-                        this._itemboxBackgroundPos.x * Consts.CHIP_SIZE,
-                        this._itemboxBackgroundPos.y * Consts.CHIP_SIZE
+                        this._wwaData.imgItemboxX * Consts.CHIP_SIZE,
+                        this._wwaData.imgItemboxY * Consts.CHIP_SIZE
                     )
                 } : undefined
             );
@@ -2531,8 +2774,8 @@ export class WWA {
                                         this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM], 0, false, this._wwaData.isItemEffectEnabled ? {
                                             screenPixelCoord: new Coord(screenXPixel, screenYPixel),
                                             itemBoxBackgroundImageCoord: new Coord(
-                                                this._itemboxBackgroundPos.x * Consts.CHIP_SIZE,
-                                                this._itemboxBackgroundPos.y * Consts.CHIP_SIZE
+                                                this._wwaData.imgItemboxX * Consts.CHIP_SIZE,
+                                                this._wwaData.imgItemboxY * Consts.CHIP_SIZE
                                             )
                                         } : undefined
                                     );
@@ -2588,13 +2831,19 @@ export class WWA {
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_ITEM_USE) {
                     this._player.readyToUseItem(this._yesNoUseItemPos);
-                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) {
+                } else if ((this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) ||
+                           (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD)) {
+                    this._messageWindow.deleteSaveDom();
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
-                    this._stopUpdateByLoadFlag = true;
-                    this._loadType = LoadType.QUICK_LOAD;
+                    if (this._messageWindow.load()) {
+                        //ロード可能
+                        this._stopUpdateByLoadFlag = true;
+                        this._loadType = LoadType.QUICK_LOAD;
+                    }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
+                    this._messageWindow.deleteSaveDom();
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
-                    this._quickSave();
+                    this._quickSave(ChoiceCallInfo.CALL_BY_QUICK_SAVE);
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_RESTART_GAME) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.RESTART_GAME]))).classList.remove("onpress");
                     this._stopUpdateByLoadFlag = true;
@@ -2613,8 +2862,11 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
                     this._player.setPasswordWindowWating();
-                    this._passwordWindow.password = this._quickSave(true);
+                    this._passwordWindow.password = this._quickSave(ChoiceCallInfo.CALL_BY_PASSWORD_SAVE);
                     this._passwordWindow.show(Mode.SAVE);
+                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_SUSPEND) {
+                    (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                    this._quickSave(ChoiceCallInfo.CALL_BY_SUSPEND);
                 }
                 this._yesNoJudge = YesNoState.UNSELECTED;
                 this._setNextMessage();
@@ -2646,18 +2898,43 @@ export class WWA {
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_ITEM_USE) {
                     var bg = <HTMLDivElement>(util.$id("item" + (this._yesNoUseItemPos - 1)));
                     bg.classList.remove("onpress");
-                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) {
-                    if (this._usePassword) {
-                        this._yesNoJudge = YesNoState.UNSELECTED;
-                        this.onpasswordloadcalled();
-                        return;
-                    } else {
-                        (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+                } else if ((this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_LOAD) ||
+                           (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD)) {
+                    this._messageWindow.deleteSaveDom();
+                    this._yesNoChoiceCallInfo = this._wwaSave.getSecondSaveChoiceCallInfo(this._usePassword);
+                    switch (this._yesNoChoiceCallInfo) {
+                        case ChoiceCallInfo.NONE:
+                            (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
+                            break;
+                        case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
+                            this._yesNoJudge = YesNoState.UNSELECTED;
+                            this.onpasswordloadcalled();
+                            return;
+                        case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
+                            this._wwaSave.selectLogSaveDataList();
+                            this._messageWindow.createSaveDom();
+                            var secondCallInfo: ChoiceCallInfo = this._wwaSave.getSecondSaveChoiceCallInfo(this._usePassword);//クイックロード後の選択肢
+                            this._yesNoJudge = YesNoState.UNSELECTED;
+                            switch (secondCallInfo) {
+                                case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
+                                    this.setMessageQueue("読み込むオートセーブを選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
+                                    break;
+                                case ChoiceCallInfo.NONE:
+                                    this.setMessageQueue("読み込むオートセーブを選んでください。", true, true);
+                                    break;
+                            }
+
+                            return;
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_QUICK_SAVE) {
-                    if (this._usePassword) {
+                    this._messageWindow.deleteSaveDom();
+                    if ((this._usePassword) || (this._useSuspend)) {
                         this._yesNoJudge = YesNoState.UNSELECTED;
-                        this.onpasswordsavecalled();
+                        if (this._useSuspend) {//中断モード
+                            this.onpasssuspendsavecalled();
+                        } else if (this._usePassword) {
+                            this.onpasswordsavecalled();
+                        }
                         return;
                     } else {
                         (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
@@ -2672,6 +2949,14 @@ export class WWA {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]))).classList.remove("onpress");
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_PASSWORD_SAVE) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_SUSPEND) {
+                    if (this._usePassword) {
+                        this._yesNoJudge = YesNoState.UNSELECTED;
+                        this.onpasswordsavecalled();
+                        return;
+                    } else {
+                        (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]))).classList.remove("onpress");
+                    }
                 }
 
                 this._yesNoJudge = YesNoState.UNSELECTED;
@@ -2706,12 +2991,6 @@ export class WWA {
             for (var i = 0; i < topmes.macro.length; i++) {
                 this._execMacroListInNextFrame.push(topmes.macro[i]);
             }
-            /*
-            if ( topmes.message === "" && topmes.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
-            this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
-            this._reservedMoveMacroTurn = void 0;
-            }
-            */
 
             this._lastMessage = topmes;
 
@@ -2847,14 +3126,12 @@ export class WWA {
                     if (targetPartsID >= this._wwaData.mapPartsMax) {
                         throw new Error("背景パーツの範囲外IDが指定されました");
                     }
-                    //this._wwaData.map[targetY][targetX] = targetPartsID;
                     var cand: Coord = new Coord(targetX, targetY);
                     this.setPartsOnPosition(PartsType.MAP, targetPartsID, cand);
                 } else {
                     if (targetPartsID >= this._wwaData.objPartsMax) {
                         throw new Error("物体パーツの範囲外IDが指定されました");
                     }
-                    //this._wwaData.mapObject[targetY][targetX] = targetPartsID;
                     var cand: Coord = new Coord(targetX, targetY);
                     this.setPartsOnPosition(PartsType.OBJECT, targetPartsID, cand);
                     this._replaceRandomObject(new Coord(targetX, targetY));
@@ -3007,6 +3284,7 @@ export class WWA {
         if (this._messageWindow.isVisible()) {
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._messageQueue = []; // force clear!!
+            this._player.setDelayFrame();
             this._messageWindow.hide();
             this._yesNoChoicePartsCoord = void 0;
             this._yesNoChoicePartsID = void 0;
@@ -3017,6 +3295,7 @@ export class WWA {
 
         this._waitFrame = 0;
         this._temporaryInputDisable = true;
+        this._execMacroListInNextFrame = [];
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
     }
 
@@ -3132,6 +3411,10 @@ export class WWA {
         return dest;
     }
 
+    /**
+     * マップデータを所定の方法で文字列化したもののMD5ハッシュを返します。
+     * @param data 対象のマップデータ
+     */
     private _generateMapDataHash(data: WWAData): string {
         var text = "A";
         var len = 0;
@@ -3186,9 +3469,15 @@ export class WWA {
 
         return CryptoJS.MD5(text).toString();
     }
+    private _saveDataList = []
 
-    private _quickSave(isPassword: boolean = false): string {
+    public compressSystem(): WWACompress {
+        return WWACompress;
+    }
+
+    private _quickSave(callInfo: number): string {
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
+
         var pc = this._player.getPosition().getPartsCoord();
         var st = this._player.getStatusWithoutEquipments();
         qd.itemBox = this._player.getCopyOfItemBox();
@@ -3200,15 +3489,24 @@ export class WWA {
         qd.statusDefence = st.defence;
         qd.statusGold = st.gold;
         qd.moves = this._player.getMoveCount();
-        if (isPassword) {
-            qd.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            qd.mapCompressed = this._compressMap(qd.map);
-            qd.mapObjectCompressed = this._compressMap(qd.mapObject);
-            qd.checkString = this._generateSaveDataHash(qd);
+        qd.frameCount = this._player.getFrameCount();
 
-            // map, mapObjectについてはcompressから復元
-            qd.map = void 0;
-            qd.mapObject = void 0;
+        switch (callInfo) {
+            case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
+            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
+            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                //qd.checkString = this._generateSaveDataHash(qd);
+                break;
+            case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
+                qd.checkOriginalMapString = this.checkOriginalMapString;
+                //qd.mapCompressed = this._compressMap(qd.map);
+                //qd.mapObjectCompressed = this._compressMap(qd.mapObject);
+                qd.checkString = this._generateSaveDataHash(qd);
+
+                // map, mapObjectについてはcompressから復元
+                //qd.map = void 0;
+                //qd.mapObject = void 0;
+                break;
         }
 
         // message, mapAttribute, objectAttributeについてはrestartdataから復元
@@ -3217,20 +3515,46 @@ export class WWA {
         qd.mapAttribute = void 0;
         qd.objectAttribute = void 0;
 
-        if (isPassword) {
-            var s = JSON.stringify(qd);
-            return CryptoJS.AES.encrypt(
-                CryptoJS.enc.Utf8.parse(s),
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
-            ).toString();
+        switch (callInfo) {
+            case ChoiceCallInfo.CALL_BY_QUICK_SAVE:
+                this._messageWindow.save(this._cvs, qd);
+                this.wwaCustomEvent('wwa_quicksave', {
+                    data: qd
+                });
+                return "";
+            case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
+                const compressQD:any = WWACompress.compress(qd);
+                compressQD.isCompress = 1;
+                const s = JSON.stringify(compressQD);
+                this.wwaCustomEvent('wwa_passwordsave', {
+                    data: qd,
+                    compress: compressQD
+                });
+                return CryptoJS.AES.encrypt(
+                    CryptoJS.enc.Utf8.parse(s),
+                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
+                ).toString();
+            case ChoiceCallInfo.CALL_BY_SUSPEND:
+                this.wwaCustomEvent('wwa_suspend', {
+                    data: qd,
+                    compress: WWACompress.compress(qd)
+                });
+                break;
+            case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
+                this.wwaCustomEvent('wwa_autosave', {
+                    data: qd
+                });
+                this._wwaSave.autoSave(this._cvs, qd);
+                break;
         }
-        this._quickSaveData = qd;
-        util.$id("cell-load").textContent = "Quick Load";
-        return "";
+    }
+
+    public wwaCustomEvent(eventName: string, data: object = {}) {
+        this.wwaCustomEventEmitter.dispatch(eventName, data);
     }
 
     private _decodePassword(pass: string): WWAData {
-        var ori = this._generateMapDataHash(this._restartData);
+        var ori = this.checkOriginalMapString;
         try {
             var json = CryptoJS.AES.decrypt(
                 pass,
@@ -3239,24 +3563,32 @@ export class WWA {
         } catch (e) {
             throw new Error("データが破損しています。\n" + e.message)
         }
-        var obj: WWAData;
+        var obj: any;
+        var decodeWWAData: WWAData;
         try {
             obj = JSON.parse(json);
         } catch (e) {
             throw new Error("マップデータ以外のものが暗号化されたか、マップデータに何かが不足しているようです。\nJSON PARSE FAILED");
         }
-        return obj;
+        if (obj.isCompress) {
+            delete obj.isCompress;
+            decodeWWAData = WWACompress.decompress(obj);
+        } else {
+            decodeWWAData = <WWAData>obj;
+        }
+        
+        return decodeWWAData;
     }
 
     private _quickLoad(restart: boolean = false, password: string = null, apply: boolean = true): WWAData {
-        if (!restart && this._quickSaveData === void 0 && password === null) {
+        if (!restart && this._wwaSave.hasSaveData() === void 0 && password === null) {
             throw new Error("セーブデータがありません。");
         }
         var newData: WWAData;
         if (password !== null) {
             newData = this._decodePassword(password);
         } else {
-            newData = <WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._quickSaveData));
+            newData = <WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._messageWindow.load()));
         }
         // TODO: WWAEvalの属性変更対策, もう少しスマートなディープコピー方法考える
         newData.message = <string[]>JSON.parse(JSON.stringify(this._restartData.message));
@@ -3264,19 +3596,19 @@ export class WWA {
         newData.objectAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.objectAttribute));
         if (newData.map === void 0) {
             newData.map = this._decompressMap(newData.mapCompressed);
-            newData.mapCompressed = void 0;
         }
         if (newData.mapObject === void 0) {
             newData.mapObject = this._decompressMap(newData.mapObjectCompressed);
-            newData.mapObjectCompressed = void 0;
         }
+        delete newData.mapCompressed;
+        delete newData.mapObjectCompressed;
 
         if (password !== null) {
             var checkString = this._generateSaveDataHash(newData);
             if (newData.checkString !== checkString) {
                 throw new Error("データが壊れているようです。\nInvalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
             }
-            var checkOriginalMapString = this._generateMapDataHash(this._restartData);
+            var checkOriginalMapString = this.checkOriginalMapString;
             if (newData.checkOriginalMapString !== checkOriginalMapString) {
                 throw new Error("管理者によってマップが変更されたようです。\nInvalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
             }
@@ -3296,6 +3628,7 @@ export class WWA {
         this._player.setDefence(newData.statusDefence);
         this._player.setGold(newData.statusGold);
         this._player.setMoveCount(newData.moves);
+        this._player.setFrameCount(newData.frameCount);
         this._player.clearItemBox();
         for (var i = 0; i < newData.itemBox.length; i++) {
             this._player.addItem(newData.itemBox[i], i + 1, true);
@@ -3314,7 +3647,16 @@ export class WWA {
         this._wwaData = newData;
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
+        this.setStatusIconCoord(MacroImgFrameIndex.ENERGY, new Coord(newData.imgStatusEnergyX, newData.imgStatusEnergyY));
+        this.setStatusIconCoord(MacroImgFrameIndex.STRENGTH, new Coord(newData.imgStatusStrengthX, newData.imgStatusStrengthY));
+        this.setStatusIconCoord(MacroImgFrameIndex.DEFENCE, new Coord(newData.imgStatusDefenceX, newData.imgStatusDefenceY));
+        this.setStatusIconCoord(MacroImgFrameIndex.GOLD, new Coord(newData.imgStatusGoldX, newData.imgStatusGoldY));
+        this.setWideCellCoord(new Coord(newData.imgWideCellX, newData.imgWideCellY));
+        this.setItemboxBackgroundPosition({ x: newData.imgItemboxX, y: newData.imgItemboxY });
+        this.setFrameCoord(new Coord(newData.imgFrameX, newData.imgFrameY));
         this.updateCSSRule();
+        this.updateEffect();
+        this._wwaSave.gameStart(this._wwaData,this._player);
     }
     private _mapIDTableCreate(): void {
         var pid: number;
@@ -3729,7 +4071,7 @@ export class WWA {
                 }
             }
         }
-        if (this._useBattleReportButton) {
+        if (this._bottomButtonType === ControlPanelBottomButton.BATTLE_REPORT) {
             (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.add("onpress");
         }
         if (monsterList.length === 0) {
@@ -3768,35 +4110,98 @@ export class WWA {
     }
 
     private _displayHelp(): void {
-        if (!this._useHelp) {
-            //パスワードなしの場合はヘルプを開かない
-            return;
-        }
         if (this._player.isControllable()) {
-            this.setMessageQueue(
-                "　【ショートカットキーの一覧】\n" +
-                "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
-                //                                "Ｆ２、Ｐ：移動速度の切り換え\n" +
-                "Ｆ３：復帰用パスワード入力\n" +
-                "Ｆ４：復帰用パスワード表示\n" +
-                "Ｆ５：一時保存データの読み込み\n" +
-                "Ｆ６：データの一時保存\n" +
-                "Ｆ７：初めからスタート\n" +
-                "Ｆ８：ＷＷＡ公式ページにリンク\n" +
-                //                               "Ｆ９、Ｇ：描画モードの切り換え\n" +
-                "Ｆ１２：このリストの表示\n" +
-                //                                "Ｌ：リンクを別のウィンドウで開く\n" +
-                "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
-                "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
-                "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
-                "　　　Ｉ: 移動速度を落とす／\n" +
-                "Ｆ２、Ｐ: 移動速度を上げる\n" +
-                "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
-                "　マップデータ バージョン: " +
-                Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10,
-                false, true
-            );
+            var helpMessage: string = "";
+            switch (this.userDevice.device) {
+                case DEVICE_TYPE.GAME:
+                    switch (this.userDevice.os) {
+                        case OS_TYPE.NINTENDO:
+                            helpMessage = "　【操作方法】\n" +
+                                "Ａ：Ｙｅｓ,戦闘結果予測の表示\n" +
+                                "Ｂ：Ｎｏ\n" +
+                                "Ｘ：メニュー\n" +
+                                "Ｙ：このリストの表示\n" +
+                                "Ｒ：初めからスタート\n" +
+                                "ＺＬ：データの一時保存\n" +
+                                "ＺＲ：一時保存データの読み込み\n" +
+                                "＋: 移動速度を上げる\n" +
+                                "－: 移動速度を落とす\n" +
+                                // 移動回数・プレイ時間表記なし
+                                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
+                                "　マップデータ バージョン: " +
+                                Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
+                            break;
+                        case OS_TYPE.PLAY_STATION:
+                            helpMessage = "　【操作方法】\n" +
+                                "〇：Ｙｅｓ,戦闘結果予測の表示\n" +
+                                "×：Ｎｏ\n" +
+                                "△：メニュー\n" +
+                                "□：このリストの表示\n" +
+                                "Ｒ１：初めからスタート\n" +
+                                "Ｌ２：データの一時保存\n" +
+                                "Ｒ２：一時保存データの読み込み\n" +
+                                "OPTIONS: 移動速度を上げる\n" +
+                                "SHARE: 移動速度を落とす\n" +
+                                "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                "　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
+                                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
+                                "　マップデータ バージョン: " +
+                                Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
+                            break;
+                        case OS_TYPE.XBOX:
+                            helpMessage = "　【操作方法】\n" +
+                                "Ｂ：Ｙｅｓ,戦闘結果予測の表示\n" +
+                                "Ａ：Ｎｏ\n" +
+                                "Ｙ：メニュー\n" +
+                                "Ｘ：このリストの表示\n" +
+                                "ＲＢ：初めからスタート\n" +
+                                "ＬＴ：データの一時保存\n" +
+                                "ＲＴ：一時保存データの読み込み\n" +
+                                "MENU: 移動速度を上げる\n" +
+                                "WINDOW: 移動速度を落とす\n" +
+                                "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                                "　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
+                                "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
+                                "　マップデータ バージョン: " +
+                                Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
+                            break;
+                        default:
+                            return;
+                    }
+                    break;
+                case DEVICE_TYPE.SP:
+                    // TODO: 仮想パッドでの操作方法を追記
+                    return;
+                case DEVICE_TYPE.VR:
+                    return;
+                case DEVICE_TYPE.PC:
+                    helpMessage = "　【操作方法】\n" +
+                        "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
+                        "Ｆ３：復帰用パスワード入力\n" +
+                        "Ｆ４：復帰用パスワード表示\n" +
+                        "Ｆ５：一時保存データの読み込み\n" +
+                        "Ｆ６：データの一時保存\n" +
+                        "Ｆ７：初めからスタート\n" +
+                        "Ｆ８：ＷＷＡ公式ページにリンク\n" +
+                        "Ｆ１２：このリストの表示\n" +
+                        "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
+                        "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
+                        "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
+                        "　　　Ｉ: 移動速度を落とす／\n" +
+                        "Ｆ２、Ｐ: 移動速度を上げる\n" +
+                        "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
+                        "　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
+                        "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
+                        "　マップデータ バージョン: " +
+                        Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
+                    break;
+                default:
+                    return;
+            }
+            if (helpMessage) {
+                this.setMessageQueue(helpMessage, false, true);
+            }
+
         }
     }
 
@@ -3823,6 +4228,7 @@ export class WWA {
 
             // empty->hide
             if (message !== "") {
+                this._player.setDelayFrame();
                 this._messageWindow.hide();
                 this._messageWindow.setMessage(message);
                 this._messageWindow.setPositionByPlayerPosition(
@@ -3853,6 +4259,7 @@ export class WWA {
         this.clearFaces();
         if (mesID === 0) {
             if (messageDisplayed) {
+                this._player.setDelayFrame();
                 this._messageWindow.hide();
                 this._inputManager.allClear();
                 this._mouseStore.clear();
@@ -3999,7 +4406,9 @@ export class WWA {
     }
 
     public disableSave(flag: boolean): boolean {
-        return this._wwaData.disableSaveFlag = flag;
+        this._wwaData.disableSaveFlag = flag;
+        this._wwaSave.quickSaveButtonUpdate(this._wwaData);
+        return flag;
     }
 
     public isOldMap(): boolean {
@@ -4051,8 +4460,69 @@ export class WWA {
         }
     }
 
+    /**
+     * ステータス画像のアイコンを設定します。
+     * @param type 種別
+     * @param coord 変更するアイコンのイメージ画像内の座標 (マス単位)
+     * @throws 種別が 生命力 ～ 所持金 の範囲を外した場合
+     */
+    public setStatusIconCoord(type: MacroImgFrameIndex, coord: Coord): Coord {
+        const x = coord.x * Consts.CHIP_SIZE;
+        const y = coord.y * Consts.CHIP_SIZE;
+
+        const setBackgroundIconNode = (elementId: string) => {
+            const iconNode = util.$qsh(`${elementId}>.status-icon`);
+            iconNode.style.backgroundPosition = `-${x}px -${y}px`;
+        };
+
+        switch (type) {
+            case MacroImgFrameIndex.ENERGY:
+                this._wwaData.imgStatusEnergyX = coord.x;
+                this._wwaData.imgStatusEnergyY = coord.y;
+                setBackgroundIconNode("#disp-energy");
+                break;
+            case MacroImgFrameIndex.STRENGTH:
+                this._wwaData.imgStatusStrengthX = coord.x;
+                this._wwaData.imgStatusStrengthY = coord.y;
+                setBackgroundIconNode("#disp-strength");
+                break;
+            case MacroImgFrameIndex.DEFENCE:
+                this._wwaData.imgStatusDefenceX = coord.x;
+                this._wwaData.imgStatusDefenceY = coord.y;
+                setBackgroundIconNode("#disp-defence");
+                break;
+            case MacroImgFrameIndex.GOLD:
+                this._wwaData.imgStatusGoldX = coord.x;
+                this._wwaData.imgStatusGoldY = coord.y;
+                setBackgroundIconNode("#disp-gold");
+                break;
+            default:
+                throw new Error("種別が不正です。");
+        }
+        return coord.clone();
+    }
+
+    /**
+     * 操作パネルのステータスやボタンの背景画像を変更します。
+     * @param coord 変更する背景画像左部分のイメージ画像内の座標 (マス単位)
+     */
+    public setWideCellCoord(coord: Coord): Coord {
+        this._wwaData.imgWideCellX = coord.x;
+        this._wwaData.imgWideCellY = coord.y;
+
+        const x = coord.x * Consts.CHIP_SIZE;
+        const y = coord.y * Consts.CHIP_SIZE;
+        Array.prototype.forEach.call(util.$qsAll("div.wide-cell-row"), (node: HTMLElement) => {
+            node.style.backgroundPosition = "-" + x + "px -" + y + "px";
+        });
+        return coord.clone();
+    }
+
     public setFrameCoord(coord: Coord): Coord {
-        return this._frameCoord = coord.clone();
+        this._wwaData.imgFrameX = coord.x;
+        this._wwaData.imgFrameY = coord.y;
+        this._cgManager.setFrameImage(coord);
+        return coord.clone();
     }
 
     public setBattleEffectCoord(coord: Coord): Coord {
@@ -4072,10 +4542,15 @@ export class WWA {
     public setEffect(waits: number, coords: Coord[]): void {
         this._wwaData.effectWaits = waits;
         this._wwaData.effectCoords = coords;
+        this.updateEffect();
     }
 
     public stopEffect(): void {
         this._wwaData.effectCoords = [];
+        this.updateEffect();
+    }
+    public updateEffect(): void {
+        this._cgManager.updateEffects(<Coord[]>this._wwaData.effectCoords);
     }
 
     public setImgClick(pos: Coord): void {
@@ -4131,11 +4606,11 @@ export class WWA {
                 }
             }
         }
-        const messageWindowStyleSelector = "div.wwa-message-window, div#wwa-battle-estimate, div#wwa-password-window";
+        const messageWindowStyleSelector = "div.wwa-message-window, div#wwa-text-message-window, div#wwa-battle-estimate, div#wwa-password-window";
         const messageWindowOpacity = this._isClassicModeEnable ? 1 : 0.9;
         const messageWindowStyleRules = `
 background-color: rgba(${this._wwaData.frameColorR},  ${this._wwaData.frameColorG}, ${this._wwaData.frameColorB}, ${messageWindowOpacity});
-border-color: rgba(${this._wwaData.frameOutColorR}, ${this._wwaData.frameOutColorG}, ${this._wwaData.frameOutColorB }, 1);
+border-color: rgba(${this._wwaData.frameOutColorR}, ${this._wwaData.frameOutColorG}, ${this._wwaData.frameOutColorB}, 1);
 color: rgba(${this._wwaData.fontColorR}, ${this._wwaData.fontColorG}, ${this._wwaData.fontColorB}, 1);
 white-space: pre-wrap;
 `;
@@ -4146,7 +4621,7 @@ font-weight: bold;
 `;
 
         if (this._sheet.addRule !== void 0) {
-            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(messageWindowStyleSelector,messageWindowStyleRules);
+            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(messageWindowStyleSelector, messageWindowStyleRules);
             this._stylePos[SelectorType.SIDEBAR] = this._sheet.addRule(sidebarStyleSelector, sidebarStyleRules);
         } else {
             this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(`${messageWindowStyleSelector} { ${messageWindowStyleRules} }`, 0);
@@ -4192,7 +4667,8 @@ font-weight: bold;
      * @param pos 置き換えるアイテムボックスの背景の画像の、WWAで利用している画像内における位置
      */
     public setItemboxBackgroundPosition(pos: { x: number, y: number}): void {
-        this._itemboxBackgroundPos = pos;
+        this._wwaData.imgItemboxX = pos.x;
+        this._wwaData.imgItemboxY = pos.y;
         Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
             node.style.backgroundPosition = `-${pos.x * Consts.CHIP_SIZE}px -${pos.y * Consts.CHIP_SIZE}px`;
         });
@@ -4209,7 +4685,7 @@ font-weight: bold;
         }
         return this._virtualPadButtonElements[buttonCode];
     }
-    
+
     /**
      * 仮想パッドの状態を押下状態に変化させます。
      *     主に VirtualPadState のコンストラクタに指定する onTouchStart や onTouchEnd で指定します。
@@ -4219,7 +4695,7 @@ font-weight: bold;
         const button = this._getVirtualPadButton(buttonCode);
         button.classList.add("wwa-virtualpad__button--pressed");
     }
-    
+
     /**
      * 仮想パッドの状態を通常状態に戻します。
      *     基本的な扱い方は setVirtualPadLeave をご参照ください。
@@ -4230,13 +4706,89 @@ font-weight: bold;
         const button = this._getVirtualPadButton(buttonCode);
         button.classList.remove("wwa-virtualpad__button--pressed");
     }
+    private _actionGamePadButtonItemMacro(): boolean {
+        if (!this._wwaData.gamePadButtonItemTable) {
+            return false;
+        }
+        var len: number, buttonID: number, itemBoxNo: number, inputButtonFlag: boolean;
+        len = this._wwaData.gamePadButtonItemTable.length;
+        for (buttonID = 0; buttonID < len; buttonID++) {
+            itemBoxNo = this._wwaData.gamePadButtonItemTable[buttonID];
+            if (!itemBoxNo) {
+                //使用するアイテムボックス番号が存在しない
+                continue;
+            }
+            inputButtonFlag = false;
+            switch (buttonID) {
+                case GamePadButtonCode.BUTTON_CROSS_KEY_LEFT:
+                    this._inputManager.getInputStore(WWAInputStoreType.GAMEPAD, (store: WWAGamePadStore) => {
+                        if (store._buttonIsPressed(buttonID)) {
+                            inputButtonFlag = true;
+                        }
+                    });
+                    break;
+                case GamePadButtonCode.BUTTON_CROSS_KEY_RIGHT:
+                    this._inputManager.getInputStore(WWAInputStoreType.GAMEPAD, (store: WWAGamePadStore) => {
+                        if (store._buttonIsPressed(buttonID)) {
+                            inputButtonFlag = true;
+                        }
+                    });
+                    break;
+                case GamePadButtonCode.BUTTON_CROSS_KEY_UP:
+                    this._inputManager.getInputStore(WWAInputStoreType.GAMEPAD, (store: WWAGamePadStore) => {
+                        if (store._buttonIsPressed(buttonID)) {
+                            inputButtonFlag = true;
+                        }
+                    });
+                    break;
+                case GamePadButtonCode.BUTTON_CROSS_KEY_DOWN:
+                    this._inputManager.getInputStore(WWAInputStoreType.GAMEPAD, (store: WWAGamePadStore) => {
+                        if (store._buttonIsPressed(buttonID)) {
+                            inputButtonFlag = true;
+                        }
+                    });
+                    break;
+            }
+            this._inputManager.getInputStore(WWAInputStoreType.GAMEPAD, (store: WWAGamePadStore) => {
+                if (store._buttonIsPressed(buttonID)) {
+                    inputButtonFlag = true;
+                }
+            });
+            if (inputButtonFlag) {
+                //ゲームパッドのボタンIDが押されている
+                if (this.onselectitem(itemBoxNo)) {
+                    //アイテムを実行
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
+    /**
+      ゲームパッドのボタン割当設定を追加します。
+      @param buttonID ボタンのID ( GamePad で割り当てているボタンに従う )
+      @param itemBoxNo 割り当てるアイテムボックスの番号 (アイテムの物体パーツ番号ではない)
+    **/
+    public setGamePadButtonItemTable(buttonID: number, itemBoxNo: number): void {
+        // TODO: this._wwaData.gamePadButtonItemTable は起動時に初期化したい
+        if (!this._wwaData.gamePadButtonItemTable) {
+            var currentButtonID: string, currentButtonKey: string;
+            this._wwaData.gamePadButtonItemTable = [];
+            for (currentButtonKey in GamePadButtonCode) {
+                currentButtonID = currentButtonKey;
+                this._wwaData.gamePadButtonItemTable[currentButtonID] = 0;
+            }
+        }
+        if (this._wwaData.gamePadButtonItemTable.length > buttonID) {
+            this._wwaData.gamePadButtonItemTable[buttonID] = itemBoxNo;
+        }
+    }
 };
 
 var isCopyRightClick = false;
 function start() {
-    if (window["wwap_mode"] === void 0) {
-        wwap_mode = false;
-    }
     Array.prototype.forEach.call(util.$qsAll("a.wwa-copyright"), (node: HTMLElement) => {
         node.addEventListener("click", (): void => {
             isCopyRightClick = true;
@@ -4250,12 +4802,9 @@ function start() {
             return mes;             // Gecko and WebKit
         }
     });
-    var titleImgName = wwap_mode ?
-        Consts.WWAP_SERVER + "/" + Consts.WWAP_SERVER_TITLE_IMG :
-        util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
+    var titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
     inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName);
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
-    var loaderFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-loader");
 
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
     var urlgateEnabled = true;
@@ -4284,7 +4833,6 @@ function start() {
     }
     wwa = new WWA(
         mapFileName,
-        loaderFileName,
         urlgateEnabled,
         titleImgName,
         classicModeEnabled,

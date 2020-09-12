@@ -45,6 +45,13 @@ type VirtualPadButtonTouching = {
 
 type VirtualPadEventFunction = (buttonCode: VirtualPadButtonCode) => void;
 
+const VirtualPadMoveButtonCodes = [
+    VirtualPadButtonCode.BUTTON_LEFT,
+    VirtualPadButtonCode.BUTTON_UP,
+    VirtualPadButtonCode.BUTTON_RIGHT,
+    VirtualPadButtonCode.BUTTON_DOWN
+];
+
 /**
  * 仮想パッドの状態管理を行うクラスです。
  * @todo PCといった、タッチデバイスでないデバイスでは、このクラスのインスタンスを生成しないようにする。
@@ -71,6 +78,12 @@ export default class VirtualPadStore {
     };
 
     /**
+     * 移動ボタンの要素自体です。主に移動ボタンで指を動かす際に使用します。
+     * @property
+     */
+    private _moveButtonsElement: HTMLElement;
+
+    /**
      * @param buttons 仮想パッドの各要素
      * @param moveButtons 仮想パッドの移動ボタンの要素
      * @param onTouchStart 仮想パッドを押下した場合に発生するコールバック関数
@@ -87,10 +100,11 @@ export default class VirtualPadStore {
         this._onTouchEnd = onTouchEnd || null;
         this._availableButtons = [];
         this._isTouchingButtons = {};
+        this._moveButtonsElement = moveButtons;
 
         for (let buttonTypeString in buttons) {
             /**
-             * for in ... で渡される buttonTypeScript は必ず文字列型になります。
+             * for in ... で渡される buttonTypeString は必ず文字列型になります。
              *     このまま buttons の配列のキーに渡すと、正しく要素が受け取れません。
              *     このため、一度 parseInt で数字に変換した上で渡しています。
              */
@@ -117,27 +131,38 @@ export default class VirtualPadStore {
                 }
             };
 
-            button.addEventListener('touchstart', (event: TouchEvent) => {
-                this.setTouchInfo(buttonCode);
+            /**
+             * 何かしらの割り込み処理が発生した場合に、緊急で仮想パッドを停止する処理です。
+             * @param event 
+             */
+            const cancelVirtualPad = (event: TouchEvent) => {
                 cancelBrowserTouchEvent(event);
+                this.allClear();
+            };
+
+            button.addEventListener("touchstart", (event: TouchEvent) => {
+                cancelBrowserTouchEvent(event);
+                this.setTouchInfo(buttonCode);
             });
 
-            button.addEventListener("touchend", () => {
-                this.allClear();
-            });
-            button.addEventListener("cancel", () => {
-                this.allClear();
-            });
+            button.addEventListener("cancel", cancelVirtualPad);
+            button.addEventListener("touchcancel", cancelVirtualPad);
 
             /**
              * 移動ボタンに関しては、指先を移動しながら操作することがあるため、 touchmove イベントにも対応します。
              */
             if (VirtualPadStore.isMoveButton(buttonCode)) {
-                button.addEventListener("touchmove", this._detectMovedButton.bind(this));
+                button.addEventListener("touchmove", this._detectMovingMoveButton.bind(this));
+                button.addEventListener("touchend", this.allMoveClear.bind(this));
+            } else {
+                button.addEventListener("touchend", (event: TouchEvent) => {
+                    cancelBrowserTouchEvent(event);
+                    this.clearTouchInfo(buttonCode);
+                });
             }
         }
         if (moveButtons !== null) {
-            moveButtons.addEventListener("touchmove", this._detectMovedButton.bind(this));
+            moveButtons.addEventListener("touchmove", this._detectMovingMoveButton.bind(this));
         }
     }
 
@@ -145,29 +170,34 @@ export default class VirtualPadStore {
      * TouchMove した要素から触れた先の要素に、触れたことを呼び出します。
      * @param event 
      */
-    private _detectMovedButton(event: TouchEvent) {
+    private _detectMovingMoveButton(event: TouchEvent) {
         event.preventDefault();
-        this.allClear();
+        this.allMoveClear();
+        
+        // 中央のポジションを取得
+        const moveButtonRect = this._moveButtonsElement.getBoundingClientRect();
+        const centerPositionX = moveButtonRect.left + (moveButtonRect.width / 2);
+        const centerPositionY = moveButtonRect.top + (moveButtonRect.height / 2);
 
-        /**
-         * targetTouches で触れている座標を検出し、その場所から要素を取得します。
-         *     Q: どうして touch.target を使用しないの？
-         *     A: touchmove イベントの touch.target はタッチし始めた要素が取得され、動いた先を取得することはできないため。
-         * @see https://developer.mozilla.org/ja/docs/Web/API/DocumentOrShadowRoot/elementFromPoint
-         */
         const touch = event.targetTouches.item(0);
-        let element = document.elementFromPoint(touch.pageX, touch.pageY);
-        if (element === null || !element.hasAttribute("type")) {
-            return;
-        }
+        const touchX = touch.pageX - centerPositionX;
+        const touchY = touch.pageY - centerPositionY;
 
-        /**
-         * 触れた先の要素が見つかった場合は、その要素の種類を取得し、その要素に対して触れたことを呼び出します。
-         */
-        const touchButtonType = element.getAttribute("type");
-        const touchButtonCode = parseInt(touchButtonType);
-        if (VirtualPadStore.isMoveButton(touchButtonCode)) {
-            this.setTouchInfo(touchButtonCode);
+        if (touchX >= touchY) { // 上と右
+            /**
+             * touchY をマイナスにして、グラフの空間上で擬似的に表現します。
+             */
+            if (touchX <= -touchY) { // 上
+                this.setTouchInfo(VirtualPadButtonCode.BUTTON_UP);
+            } else { // 右
+                this.setTouchInfo(VirtualPadButtonCode.BUTTON_RIGHT);
+            }
+        } else { // 左と下
+            if (touchX >= -touchY) { // 下
+                this.setTouchInfo(VirtualPadButtonCode.BUTTON_DOWN);
+            } else { // 左
+                this.setTouchInfo(VirtualPadButtonCode.BUTTON_LEFT);
+            }
         }
     }
 
@@ -231,6 +261,29 @@ export default class VirtualPadStore {
     }
 
     /**
+     * ボタンのタッチ信号を解除します
+     * @param buttonType 
+     */
+    public clearTouchInfo(buttonType: VirtualPadButtonCode) {
+        if (!this._enabled) {
+            return;
+        }
+
+        this._isTouchingButtons[buttonType].next = false;
+    }
+
+    /**
+     * すべての移動ボタンのタッチ信号をキャンセルします
+     */
+    public allMoveClear(): void {
+        VirtualPadMoveButtonCodes.forEach((buttonCode) => {
+            if (this._availableButtons.includes(buttonCode)) {
+                this.clearTouchInfo(buttonCode);
+            }
+        });
+    }
+
+    /**
      * すべてのボタンのタッチ信号をキャンセルします。
      */
     public allClear(): void {
@@ -244,13 +297,7 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public static isMoveButton(buttonType: VirtualPadButtonCode): boolean {
-        if (buttonType === VirtualPadButtonCode.BUTTON_LEFT ||
-            buttonType === VirtualPadButtonCode.BUTTON_UP ||
-            buttonType === VirtualPadButtonCode.BUTTON_RIGHT ||
-            buttonType === VirtualPadButtonCode.BUTTON_DOWN) {
-            return true;
-        }
-        return false;
+        return VirtualPadMoveButtonCodes.includes(buttonType);
     }
 
     /**
@@ -273,6 +320,6 @@ export default class VirtualPadStore {
                     this._onTouchEnd(buttonCode);
                     break;
             }
-        })
+        });
     }
 }

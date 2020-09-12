@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as shell from "shelljs";
-import { generateWWAPageFromConfig, WWAPageConfig, getDefaultCopyrights } from "@wwawing/page-generator";
+import { render, InputConfig } from "@wwawing/page-generator";
 
 const wwawingDistDirName = "wwawing-dist";
 const wwawingUpdateDirName = "wwawing-update";
@@ -33,7 +33,6 @@ export default async function makeDistribution(
             copy("engine", path.join("LICENSE")),
             copy("assets", path.join("html", "manual.html")),
             copy("engine", path.join("lib", "wwa.js")),
-            copy("loader", path.join("lib", "wwaload.js")),
             copy("assets", path.join("style", "*.css")),
             copy("styles", path.join("output","*.css"))
         ];
@@ -43,7 +42,6 @@ export default async function makeDistribution(
             copy("engine", path.join("LICENSE")),
             copy("assets", path.join("html", "manual.html")),
             copy("engine", path.join("lib", "wwa.js"), "mapdata"),
-            copy("loader", path.join("lib", "wwaload.js"), "mapdata"),
             copy("assets", path.join("style", "*.css"), "mapdata"),
             copy("assets", path.join("wwamk310", "WinWwamk.exe")),
             copy("assets", path.join("wwamk310", "wwamk_manual.html")),
@@ -130,7 +128,7 @@ export default async function makeDistribution(
         return mapNames
             .map(mapName => ({
                 mapName,
-                html: generateWWAPageFromConfig(createConfig(`${mapName}.dat`))
+                html: render(createConfig(`${mapName}.dat`))
             }))
             .map(params => createWriteFilePromise(
                 path.join(__dirname, "..", "dist", "wwawing-dist", "mapdata", `${params.mapName}.html`),
@@ -138,20 +136,24 @@ export default async function makeDistribution(
             ));
     }
     
-    function createConfig(mapdata: string): WWAPageConfig {
+    function createConfig(mapData: string): InputConfig {
         return {
             page: {
-                additionalCssFiles: ["style.css"],
-                wwa: {
-                    resources: {
-                        mapdata,
-                        wwaJs: "wwa.js",
-                        titleImg: "cover.gif",
-                    },
-                    urlgateEnable: true
+                additionalCssFiles: ["style.css"]
+            },
+            wwa: {
+                gameOption: {
+                    autoSave: {
+                        intervalSteps: 200,
+                    }
                 },
-                copyrights: getDefaultCopyrights()
-            }
+                resources: {
+                    mapData,
+                    wwaJs: "wwa.js",
+                    titleImage: "cover.gif",
+                },
+            },
+            copyrights: "official-and-wing"
         };
     }
     

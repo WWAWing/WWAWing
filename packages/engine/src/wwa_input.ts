@@ -161,6 +161,9 @@ export enum MouseState {
     MOUSEPRESS,
     MOUSEUP
 }
+export enum MouseTouchIDFlag {
+    DIR_KEY = 1
+}
 
 export class MouseStore {
     private _prevMouseState: boolean;
@@ -222,8 +225,12 @@ export class MouseStore {
     }
 
     public setReleaseInfo(): void {
-        this._touchID = void 0;
+        this._touchID = 0;
         this._nextMouseState = false;
+    }
+
+    public touchIDIsSetDir(): boolean {
+        return this._touchID === MouseTouchIDFlag.DIR_KEY;
     }
 
     public memorizeMouseStateOnControllableFrame(): void {
@@ -260,10 +267,15 @@ export enum GamePadState {
     BUTTON_INDEX_ZR = 7,
     BUTTON_INDEX_MINUS = 8,
     BUTTON_INDEX_PLUS = 9,
+    BUTTON_INDEX_LEFT_STICK = 10,
+    BUTTON_INDEX_RIGHT_STICK = 11,
     BUTTON_CROSS_KEY_UP = 12,
     BUTTON_CROSS_KEY_DOWN = 13,
     BUTTON_CROSS_KEY_LEFT = 14,
-    BUTTON_CROSS_KEY_RIGHT = 15,
+    BUTTON_CROSS_KEY_RIGHT = 15
+}
+
+export enum GamePadStateAxes {
     AXES_L_HORIZONTAL_INDEX = 0,
     AXES_L_VERTICAL_INDEX = 1,
     AXES_R_HORIZONTAL_INDEX = 2,
@@ -354,33 +366,33 @@ export class GamePadStore {
             code = codes[i];
             switch (code) {
                 case GamePadState.BUTTON_CROSS_KEY_UP:
-                    if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] <= -0.6 ||
-                        this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] <= -0.6 ||
-                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === -1 ||
+                    if (this.gamepad.axes[GamePadStateAxes.AXES_L_VERTICAL_INDEX] <= -0.6 ||
+                        this.gamepad.axes[GamePadStateAxes.AXES_R_VERTICAL_INDEX] <= -0.6 ||
+                        this.stickFloor(GamePadStateAxes.AXES_CROSS_KEY) === -1 ||
                         this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
                         return true;
                     }
                     break;
                 case GamePadState.BUTTON_CROSS_KEY_DOWN:
-                    if (this.gamepad.axes[GamePadState.AXES_L_VERTICAL_INDEX] >= 0.7 ||
-                        this.gamepad.axes[GamePadState.AXES_R_VERTICAL_INDEX] >= 0.7 ||
-                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.1 ||
+                    if (this.gamepad.axes[GamePadStateAxes.AXES_L_VERTICAL_INDEX] >= 0.7 ||
+                        this.gamepad.axes[GamePadStateAxes.AXES_R_VERTICAL_INDEX] >= 0.7 ||
+                        this.stickFloor(GamePadStateAxes.AXES_CROSS_KEY) === 0.1 ||
                         this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
                         return true;
                     }
                     break;
                 case GamePadState.BUTTON_CROSS_KEY_LEFT:
-                    if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] <= -0.7 ||
-                        this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] <= -0.7 ||
-                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === 0.7 ||
+                    if (this.gamepad.axes[GamePadStateAxes.AXES_L_HORIZONTAL_INDEX] <= -0.7 ||
+                        this.gamepad.axes[GamePadStateAxes.AXES_R_HORIZONTAL_INDEX] <= -0.7 ||
+                        this.stickFloor(GamePadStateAxes.AXES_CROSS_KEY) === 0.7 ||
                         this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
                         return true;
                     }
                     break;
                 case GamePadState.BUTTON_CROSS_KEY_RIGHT:
-                    if (this.gamepad.axes[GamePadState.AXES_L_HORIZONTAL_INDEX] > 0.6 ||
-                        this.gamepad.axes[GamePadState.AXES_R_HORIZONTAL_INDEX] > 0.6 ||
-                        this.stickFloor(GamePadState.AXES_CROSS_KEY) === -0.5 ||
+                    if (this.gamepad.axes[GamePadStateAxes.AXES_L_HORIZONTAL_INDEX] > 0.6 ||
+                        this.gamepad.axes[GamePadStateAxes.AXES_R_HORIZONTAL_INDEX] > 0.6 ||
+                        this.stickFloor(GamePadStateAxes.AXES_CROSS_KEY) === -0.5 ||
                         this.buttonPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
                         return true;
                     }
@@ -388,6 +400,36 @@ export class GamePadStore {
             }
         }
         return false;
+    }
+    
+    /**
+     * ゲームパッドをバイブレーションします。
+     * バイブレーションは chromium 系のブラウザ のみで動作します。
+     * @param isStrong バイブレーションの大きさ (true でより大きく)
+     * @returns ゲームパッドやバイブレーションをサポートしていない場合に false を出力
+     */
+    public vibration(isStrong: boolean) {
+        if (!this.gamepad) {
+            return false;
+        }
+        if (!this.gamepad.vibrationActuator) {
+            return false;
+        }
+        if (isStrong) {
+            this.gamepad.vibrationActuator.playEffect("dual-rumble", {
+                startDelay: 0,
+                duration: 100,
+                weakMagnitude: 1,
+                strongMagnitude: 0.5
+            });
+        } else {
+            this.gamepad.vibrationActuator.playEffect("dual-rumble", {
+                startDelay: 0,
+                duration: 100,
+                weakMagnitude: 0.5,
+                strongMagnitude: 1
+            });
+        }
     }
 
     private stickFloor(...codes): number {

@@ -299,6 +299,27 @@ export class Face {
         this.srcSize = srcSize.clone();
     }
 }
+export class DrawPartsData {
+    public partsIDObj: number;
+    public x: number;
+    public y: number;
+    public isStatic: boolean;
+    public isFighting: boolean;
+    constructor(partsIDObj: number, x: number, y: number, isStatic: boolean, isFighting: boolean) {
+        this.partsIDObj = partsIDObj;
+        this.x = x;
+        this.y = y;
+        this.isStatic = isStatic;
+        this.isFighting = isFighting;
+    }
+}
+
+
+export enum ControlPanelBottomButton {
+    GOTO_WWA = 0,
+    BATTLE_REPORT = 1,
+    GAME_END = 2
+};
 
 export enum Direction {
     LEFT = 0,
@@ -363,7 +384,11 @@ export class UserDevice {
             return OS_TYPE.WINDOWS;
         }
         if (ua.match(/macintosh/i)) {
-            return OS_TYPE.MACINTOSH;
+            // iPadOS において、デフォルトで Safari は PC向けサイトを表示する設定になっている。
+            // その場合、 ユーザエージェント は Macintosh 扱いとなる。
+            // ここでは、touchStart イベントが実装されているかどうかを見て iPadOS か macOSかを判定する。
+            // (2020-06-07 現在、タッチパネルが搭載されたmac端末は発売されていないため、macOS を iPad に誤検知することは起こりにくいはず。)
+            return "ontouchstart" in document ? OS_TYPE.IOS : OS_TYPE.MACINTOSH;
         }
         if (ua.match(/iphone|ipad|ipod/i)) {
             return OS_TYPE.IOS;
@@ -474,7 +499,10 @@ export enum ChoiceCallInfo {
     CALL_BY_GOTO_WWA,
     CALL_BY_PASSWORD_SAVE,
     CALL_BY_PASSWORD_LOAD,
-    CALL_BY_END_GAME
+    CALL_BY_END_GAME,
+    CALL_BY_SUSPEND,
+    CALL_BY_LOG_QUICK_SAVE,
+    CALL_BY_LOG_QUICK_LOAD
 }
 
 export enum SidebarButton {
@@ -546,7 +574,8 @@ export enum MacroType {
     EFFITEM = 20,
     COLOR = 21,
     WAIT = 22,
-    SOUND = 23
+    SOUND = 23,
+    GAMEPAD_BUTTON = 100
 }
 
 export var macrotable = {
@@ -573,7 +602,8 @@ export var macrotable = {
     "$effitem": 20,
     "$color": 21,
     "$wait": 22,
-    "$sound": 23
+    "$sound": 23,
+    "$gamepad_button" : 100
 }
 
 export enum MacroStatusIndex {
@@ -674,9 +704,6 @@ export class WWAConsts {
     static IMGRELPOS_YESNO_YESP_X: number = 2;
     static IMGRELPOS_YESNO_NOP_X: number = 3;
 
-    static IMGPOS_DEFAULT_PLAYER_X: number = 2;
-    static IMGPOS_DEFAULT_PLAYER_Y: number = 0;
-
     static IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_X: number = 0;
     static IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_Y: number = 0;
 
@@ -686,9 +713,6 @@ export class WWAConsts {
     static IMGPOS_DEFAULT_BATTLE_EFFECT_X: number = 3;
     static IMGPOS_DEFAULT_BATTLE_EFFECT_Y: number = 3;
 
-    static IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_X: number = 1;
-    static IMGPOS_DEFAULT_ITEMBOX_BACKGROUND_Y: number = 2;
-    
     static DEFAULT_DISABLE_SAVE: boolean = false;
     static DEFAULT_OLDMAP: boolean = false;
     static DEFAULT_OBJECT_NO_COLLAPSE: boolean = false;
@@ -785,6 +809,29 @@ export class WWAConsts {
     static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
 
     static ITEMBOX_TOP_Y = 140;
+    static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
+
+}
+export class WWASaveConsts {
+    static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数
+    static QUICK_SAVE_THUMNAIL_WIDTH: number = 99;//セーブデータサムネイル横幅
+    static QUICK_SAVE_THUMNAIL_HEIGHT: number = 99;//セーブデータサムネイル縦幅
+    static SAVE_INTERVAL_MOVE: number = 200; //この歩数ごとにオートセーブ
+    static INDEXEDDB_DB_NAME: string = "WWA_WING_DB";   //IndexedDBに保存するDBの名称
+    static INDEXEDDB_TABLE_NAME: string = "SAVE_TABLE"; //IndexedDBに保存するテーブルの名称
+    static DATE_LAST_SAVE_TEXT_COLOR: string = "rgba(255,255,0,1)";
+}
+
+export class WWAButtonTexts {
+    static EMPTY_LOAD: string = "";
+    static EMPTY_SAVE: string = "";
+    static PASSWORD: string         = "Password";
+    static QUICK_SAVE: string       = "Quick Save";
+    static QUICK_LOAD: string       = "Quick Load";
+    static BATTLE_REPORT: string    = "Battle Report";
+    static GAME_END: string         = "Game End";
+    static GOTO_WWA: string         = "Goto WWA";
+    static RESTART_GAME: string     = "Restart Game";
 }
 
 export class LoaderResponse {

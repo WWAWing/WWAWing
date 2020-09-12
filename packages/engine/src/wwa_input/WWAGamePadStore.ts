@@ -273,7 +273,7 @@ export class WWAGamePadStore implements WWAInputStore {
      * @param buttonCode 確認したいボタンのコード番号
      * @returns ボタンが押下されているか？ (そもそもボタン情報がない場合は null)
      */
-    protected _buttonIsPressed(buttonCode: GamePadButtonCode): boolean | null {
+    public _buttonIsPressed(buttonCode: GamePadButtonCode): boolean | null {
         const buttonData = this.gamepad.buttons[buttonCode];
         if (!buttonData) {
             return null;
@@ -309,7 +309,7 @@ export class WWAWebkitGamepadStore extends WWAGamePadStore implements WWAInputSt
         }
     }
 
-    protected _buttonIsPressed(buttonCode: GamePadButtonCode): boolean | null {
+    public _buttonIsPressed(buttonCode: GamePadButtonCode): boolean | null {
         const buttonData = this.gamepad.buttons[buttonCode];
         if (!buttonData) {
             return null;

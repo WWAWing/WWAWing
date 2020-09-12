@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>WWA Wing - a World Wide Adventure implementation in JavaScript</title>
+    <title>WWA Wing: 簡易マニュアル</title>
     <style>
         .fl {
             float: left;
@@ -39,8 +39,8 @@
     <div id="wrapper">
         <section>
             <h1>WWA Wing: 簡易マニュアル</h1>
-            <p><a href="http://wwawing.com">WWA Wing</a>( WWA In the Next Generation )は、<a href="http://wwajp.com">WWA</a>のJavaScript実装です。
-            煩わしい警告は出ず、スマートフォンでも動作します。</p>
+            <p><a href="http://wwawing.com">WWA Wing</a>は、インターネットRPG 「<a href="http://wwajp.com">World Wide Adventure</a>」の現代のWeb技術における実行環境です。
+            PCのほか、スマートフォンでも動作します。</p>
             
             <section>
                 <h2>サーバにアップロードするファイルについて</h2>
@@ -53,7 +53,6 @@
       |  +-- 70...98.mp3 - BGMです。アップロードは任意です。
       |
       +-- wwa.js - wwa本体です。本家のWWA.classに相当します。名前はHTML中のscript要素で変更できます。
-      +-- wwaload.js - wwa.jsから起動するマップデータのローダです。名前は「起動するには」で紹介する「data-wwa-loader」属性で変更できます。
       +-- wwa.css - WWAの見栄えを調整するCSSファイルです。アップロードしないと見栄えがかなり大変なことになります。名前はHTML中のlink要素で変更できます。
       +-- wwa_classic.css - wwa.cssのメッセージウィンドウを、WWA原作(Java版)風味に近づけたものです。こちらを指定する場合にはwwa.cssは不要です。
       +-- style.css - ページのWWAの部分以外の見栄えを調整するCSSファイルです。自由に編集してみてください。
@@ -68,7 +67,6 @@
                 <p>
                     <pre><code>&lt;div id=&quot;wwa-wrapper&quot; class=&quot;wwa-size-box&quot;
 &nbsp;&nbsp;data-wwa-mapdata=&quot;caves01.dat&quot;
-&nbsp;&nbsp;data-wwa-loader=&quot;wwaload.js&quot;
 &nbsp;&nbsp;data-wwa-urlgate-enable=&quot;true&quot;&gt;
 &nbsp;&nbsp;data-wwa-title-img=&quot;cover.gif&quot;&gt;
 &lt;/div&gt;</code></pre>
@@ -85,8 +83,6 @@
                 <dl>
                     <dt class="require"><code>data-wwa-mapdata</code>属性</dt>
                     <dd>起動したいマップデータのファイル名を記述します。（例:<code>wwamap.dat</code>）</dd>
-                    <dt class="require"><code>data-wwa-loader</code>属性</dt>
-                    <dd>ローダのファイル名を記述します。通常、<code>wwaload.js</code>から変更する必要はありません。</dd>
                     <dt class="require"><code>data-wwa-urlgate-enable</code>属性</dt>
                     <dd>通常は<code>true</code>を指定してください。falseを指定するとURLゲートが無効になります。</dd>
                     <dt><code>data-wwa-title-img</code>属性</dt>
@@ -103,6 +99,20 @@
                     <dt><code>data-wwa-use-go-to-wwa</code>属性</dt>
                     <dd><code>true</code>を指定すると、現在戦闘予測ボタン「Battle Report」が WWA公式サイトへの移動ボタン「GoTo WWA」（v3.1系以下やJava版WWAでのボタン）でに変更できます。
                     指定しなかった場合は<code>false</code>になります。</dd>
+                    <dt><code>data-wwa-looking-around</code>属性</dt>
+                    <dd><code>false</code>を指定すると、ゲーム開始時やジャンプゲートのジャンプ後の無操作時にプレイヤーが回転しなくなります。
+                    指定しなかった場合は<code>true</code>になります。</dd>
+                    <dt><code>data-wwa-autosave</code>属性</dt>
+                    <dd><code>正の整数</code>を指定すると、プレイヤーが指定した歩数歩くごとにオートセーブを実行するようになります。</dd>
+                    <dd>オートセーブは、マクロ <code>$save=1</code> により Quick Save が禁止されている時には実行されません。</dd>
+                    <dd>オートセーブを無効にするには <code>0</code> を与えて下さい。値を与えなかった場合は 200歩ごとにオートセーブされます。</dd>
+                    <dd>(オートセーブについては、今後あり方を見直す可能性が高いです。その際は設定方法が変更になる可能性がありますことをあらかじめご了承ください。)</dd>
+                    <dt><code>data-wwa-resume-savedata</code>属性【開発者向け】</dt>
+                    <dd>セーブデータをパスワードセーブの形式で与えると、セーブデータをもとにゲーム内容が復元されます。
+                        なお、このオプションが与えられた場合、パスワードセーブの代わりに「ゲームを中断しますか？」と聞かれるようになります。
+                        中断が実行された場合、外部アプリケーションは <a href="https://github.com/WWAWing/WWAWing/wiki/WWACustomEvents">WWA Custom Events</a>
+                        の<code>wwa_suspend</code>イベントをハンドリングしてセーブデータを取り回す必要があります。
+                        (今後、データの復元と、中断を利用するかどうかのオプションは別オプションに整理する可能性があります。実験的な機能でありますことをあらかじめご了承ください。)</dd>
                     <dt><code>data-wwa-auto-rotate-enable</code>属性</dt>
                     <dd><code>true</code>を指定すると、スマートフォンの自動回転に応じてWWAの画面のサイズを調整します。
                     指定しなかった場合は<code>true</code>になります。</dd>
@@ -132,13 +142,54 @@
             <section>
                 <h2>更新情報</h2>
                 <section>
-                    <h3>v3.2.2からv3.2.10への変更点</h3>
+                    <h3>v3.4.2からv3.5.1への変更点</h3>
                     <ul>
-                        <li>挙動の変更はありません。（CSS開発のscssへの移行, リリースフローの見直し, マニュアル訂正など）</li>
+                        <li>オートセーブ機能追加: 200歩ごとにオートセーブされます。Quick Loadでロードできます。</li>
+                        <li><code>data-wwa-autosave</code>属性追加。オートセーブの無効化や歩数の変更ができます。</li>
+                        <li>セーブデータのブラウザ保存: Quick Save したデータがページ遷移したりブラウザを閉じたりしても有効になります。</li>
+                        <li>最後に Quick Save したデータの日付を黄色く表示するよう変更</li>
+                        <li>セーブ禁止時に Quick Save ボタン名を表示しない対応</li>
+                        <li>パスワードセーブが大幅に短くなる</li>
+                        <li>物体パーツを差分描画にすることにより描画を高速化</li>
                     </ul>
-                    <h3>v3.2.1からv3.2.2への変更点</h3>
+                    <h3>v3.4.1からv3.4.2への変更点</h3>
+                    <ul>
+                        <li>Restart Game を実行した場合に、歩数が正常でなくなる不具合を修正。</li>
+                    </ul>
+                    <h3>v3.3.1からv3.4.1への変更点</h3>
+                    <p class="important">wwaload.js と data-wwa-loader 属性は廃止され、機能は wwa.js 内に統合されました。</p>
+                    <p class="important">v3.4.1以降にアップデート後、wwaload.js と HTML中のdata-wwa-loader 属性は放っておいても動作に支障はありませんし、消してしまっても問題ありません。</p>
+                    <ul>
+                        <li>プレイヤーの方向変更機能を追加: キーボード Esc/N/Shift のいずれか + 方向キー / ゲームパッド のボタン 0 + 方向キーで、移動せずにプレイヤーの向きを変えることができます。</li>
+                        <li><code>data-wwa-looking-around</code>属性を追加。<code>false</code>を与えることで無操作時にプレイヤーが回る仕様を回避することができます。</li>
+                        <li>マクロ<code>$imgframe</code>, <code>$imgbom</code>で指定された「枠」「ステータスアイコン」「戦闘エフェクト」の画像指定がセーブデータに保存されるように変更。</li>
+                        <li>wwaload.js を廃止し、機能を wwa.js へ統合。</li>
+                        <li>ヘルプ画面にプレイ時間を追加</li>
+                        <li>スマートフォン環境で、サウンド自動読み込み設定のマップデータの場合に「ゲームを開始します。」の表記を復活。</li>
+                        <li>存在しない効果音が指定されているパーツに触れた後にBGMが変更された場合にBGMが2重に再生される不具合を修正。</li>
+                        <li>当初 v3.4.0 として配布予定でしたが、マニュアルに不備が見つかったため 修正したバージョンを v3.4.1 として配布します。</li>
+                    </ul>
+                    <h3>v3.3.0からv3.3.1への変更点</h3>
+                    <ul>
+                        <li>F8 キー で WWA の公式サイトを開く機能が使えなくなっていたのを修正</li>
+                        <li>ヘルプの見出しにある「ショートカットキーの一覧」を「操作方法」に変更</li>
+                    </ul>
+                    <h3>v3.2.11からv3.3.0への変更点</h3>
+                    <ul>
+                        <li>Quick Saveによるセーブ枠を1つから4つに変更</li>
+                        <li>戦闘終了後のメッセージ表示までに使用型アイテムのマクロのイベントが割り込める不具合の修正</li>
+                        <li>ゲームパッドのボタン 2 を押した時にヘルプを表示する機能を実装</li>
+                        <li>戦闘時にゲームパッドが振動する機能を実装</li>
+                        <li>ゲームパッドのボタンと、アイテムボックスの特定の枠を割り当てるマクロ<code>$gamepad_button</code>の追加</li>
+                    </ul>
+                    <h3>v3.2.10からv3.2.11への変更点</h3>
+                    <ul>
+                        <li><code>$color</code>マクロで背景色が変わらない問題を修正</li>
+                    </ul>
+                    <h3>v3.2.1からv3.2.10への変更点</h3>
                     <ul>
                         <li><code>$imgframe</code>でアイテムボックスの背景を変更した後、アイテムを取得すると背景が一瞬デフォルトになる問題を修正</li>
+                        <li>その他、WWAとしての挙動を伴わない変更（CSS開発のscssへの移行, リリースフローの見直し, マニュアル訂正など）</li>
                     </ul>
                     <h3>v3.2.0からv3.2.1への変更点</h3>
                     <ul>
@@ -336,9 +387,9 @@
                 OSは不問です。
                 <ul>
                     <li>Microsoft Internet Explorer 11</li>
-                    <li>Microsoft Edge (最新版)</li>
+                    <li>Microsoft Edge (EdgeHTML 18) ※Microsoft Edge レガシ は遅くとも2021年3月9日までにサポートを終了します。今後は Chromium 版 Edge の利用を強くおすすめします。</li>
                     <li>Mozilla Firefox (最新版)</li>
-                    <li>Google Chrome/Chromium (最新版)</li>
+                    <li>Google Chrome/Chromium (最新版) ※Microsoft Edgeの最新版を含む</li>
                     <li>Safari (最新版)</li>
                 </ul>
                 <h3>スマートフォン・タブレット</h3>
@@ -347,23 +398,14 @@
                     <li>iOS 上の Safari (最新版)</li>
                 </ul>
             </section>
-            
-            <section>
-                <h2>次回予定</h2>
-                <p>本家実装が一段落したので、もう少し考えてみることにします。</p>
-                <section>
-                    <h3>遠くない未来に更新予定</h3>
-                    <ul>
-                        <li>SuperQuickSave(仮)</li>
-                        <li>超高速戦闘</li>
-                        <li>スコア表示Twitter連携機能</li>
-                        <li>スマートフォン・タブレット向けゲームパッド</li>
-                        <li>スマートフォン・タブレット向けviewport設定</li>
-                        <li>その他、提案された多数の新機能</li>
-                    </ul>
-                </section>
-            </section>
 
+            <section>
+                <h2>開発者向け情報</h2>
+                <ul>
+                    <li><a href="https://github.com/WWAWing/WWAWing/wiki/WWACustomEvents">WWA Custom Events 仕様</a>: WWA Wingと連携するアプリケーションを作るのに便利です。</li>
+                </ul>
+            </section>
+            
             <footer>
                 <h2>ライセンス情報</h2>
                 <p>WWA Wingのソースコードの使用の制限については<a href="./LICENSE">MIT License</a>とします。</p>
@@ -374,7 +416,7 @@
                 <p><a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja"><img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />
                 また、このマニュアルについては <a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja">クリエイティブ・コモンズ 表示 4.0 国際 ライセンスの下に提供されています。</a></p>
                 <p> Internet RPG &quot;<a href="http://www.wwajp.com">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
-                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2019 WWA Wing Team</p>
+                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2020 WWA Wing Team</p>
             </footer>
         </section>
     </div>
