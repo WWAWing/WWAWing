@@ -8,6 +8,15 @@ import WWASaveData from "./WWASaveData";
 import WWASaveDataDB from "./WWASaveDataDB";
 import WWASaveDataList from "./WWASaveDataList";
 
+type WWASaveDataItem = {
+    url?: string,
+    id: number,
+    hash: string,
+    image: string,
+    data: object, // TODO: object だけではよくわからないのでちゃんとした型を指定する
+    date: Date
+};
+
 export default class WWASaveDataDBList extends WWASaveDataList {
     private selectDatas: object[];
     private selectLoad: boolean = false;
@@ -130,10 +139,10 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             }
             var compressData: object = WWACompress.compress(_quickSaveData);
 
-            var addData = {
+            var addData: WWASaveDataItem = {
                 "url": location.href,
                 "id": saveID,
-                "hash": WWASave.checkOriginalMapString,
+                "hash": WWASave.checkOriginalWorldName,
                 "image": gameCvs.toDataURL(),
                 "data": compressData,
                 "date": date
@@ -182,12 +191,12 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             var saveDataResult = index.getAll(range);
 
             saveDataResult.onsuccess = (e) => {
-                var i, len, loadend, onsuccess, onerror, saveData;
+                var i, len, loadend, onsuccess, onerror, saveData: WWASaveDataItem;
                 loadend = 0;
                 var result = e.target.result;
                 len = result.length;
                 for (i = 0; i < len; i++) {
-                    var resultData = result[i];
+                    var resultData: WWASaveDataItem = result[i];
                     try {
                         saveData = {
                             id: resultData.id,
@@ -199,7 +208,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     } catch (error) {
                         continue;
                     }
-                    if (WWASave.checkOriginalMapString !== saveData.hash) {
+                    if (WWASave.checkOriginalWorldName !== saveData.hash) {
                         continue;
                     }
                     if (!this[saveData.id]) {

@@ -15,12 +15,14 @@ import WWASaveDataLogList from "./WWASaveDataLogList";
 
 export default class WWASave {
     public static checkOriginalMapString: string;
+    public static checkOriginalWorldName: string;
     private _wwaDBSaveList: WWASaveDataDBList;
     private _wwaLogSaveList: WWASaveDataLogList;
     public list: WWASaveDataList;
 
     public constructor(wwa: WWA) {
         WWASave.checkOriginalMapString = wwa.checkOriginalMapString;
+        WWASave.checkOriginalWorldName = wwa.checkOriginalWorldName;
         this._wwaDBSaveList = new WWASaveDataDBList();
         this._wwaLogSaveList = new WWASaveDataLogList();
         this.selectDBSaveDataList();

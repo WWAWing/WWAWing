@@ -101,7 +101,13 @@ export class WWA {
      * データが壊れていないかなどの検証に使います。
      * TODO: originalMapDataHash などの名前が適切だと思うが、WWADataに同じ名前のプロパティがいるので安易に変えられない。どこかで対応する。
      */
-    public checkOriginalMapString: string; 
+    public checkOriginalMapString: string;
+
+    /**
+     * マップデータのタイトルをMD5化した文字列です。
+     */
+    public checkOriginalWorldName: string;
+
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
@@ -324,7 +330,8 @@ export class WWA {
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
             this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            
+            this.checkOriginalWorldName = CryptoJS.MD5(this._wwaData.worldName).toString();
+
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 2);
