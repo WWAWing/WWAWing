@@ -1,9 +1,7 @@
 import {
-    WWAConsts,
     WWAButtonTexts,
     WWAData,
-    ChoiceCallInfo,
-    BROWSER_TYPE
+    ChoiceCallInfo
 } from "../wwa_data";
 import * as util from "../wwa_util";
 import { WWA } from "../wwa_main";
@@ -13,10 +11,22 @@ import WWASaveDataList from "./WWASaveDataList";
 import WWASaveDataDBList from "./WWASaveDataDBList";
 import WWASaveDataLogList from "./WWASaveDataLogList";
 
+/**
+ * WWA のセーブデータを管理するシステムのクラスです。
+ */
 export default class WWASave {
+    /**
+     * @see WWA.checkOriginalMapString
+     */
     public static checkOriginalMapString: string;
     public static checkOriginalWorldName: string;
+    /**
+     * Quick Save で保存されるセーブデータ領域です。
+     */
     private _wwaDBSaveList: WWASaveDataDBList;
+    /**
+     * オートセーブで保存されるセーブデータ領域です。
+     */
     private _wwaLogSaveList: WWASaveDataLogList;
     public list: WWASaveDataList;
 
@@ -42,6 +52,11 @@ export default class WWASave {
     public selectLogSaveDataList() {
         this.list = this._wwaLogSaveList;
     }
+    /**
+     * @param gameCvs セーブ時点のフィールド画面の Canvas 要素
+     * @param _quickSaveData セーブデータ本体
+     * @param id セーブしたい場所
+     */
     public save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, id: number): boolean {
         var saveData: WWASaveData = this.list[id];
         if (!saveData) {
@@ -49,7 +64,7 @@ export default class WWASave {
         }
         return saveData.save(gameCvs, _quickSaveData);
     }
-    public load(id:number): WWAData {
+    public load(id: number): WWAData {
         var saveData: WWASaveData = this.list[id];
         if (!saveData) {
             return null;
@@ -63,8 +78,7 @@ export default class WWASave {
         return this._wwaLogSaveList.setAutoSaveInterval(autoInterval);
     } 
 
-
-    public getFirstSaveChoiceCallInfo(forcePassword: boolean, usePassword: boolean): ChoiceCallInfo {
+    public getFirstSaveChoiceCallInfo(forcePassword: boolean): ChoiceCallInfo {
         if (forcePassword) {
             return ChoiceCallInfo.CALL_BY_PASSWORD_LOAD;
         }
@@ -94,7 +108,7 @@ export default class WWASave {
         this._wwaLogSaveList.setPlayer(player);
         this.quickSaveButtonUpdate(wwaData);
     }
-    public quickSaveButtonUpdate(wwaData: WWAData):void{
+    public quickSaveButtonUpdate(wwaData: WWAData): void {
         if (!wwaData.disableSaveFlag) {
             // セーブ可能
             util.$id("cell-save").textContent = WWAButtonTexts.QUICK_SAVE;

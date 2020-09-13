@@ -1266,7 +1266,7 @@ export class WWA {
         this._itemMenu.close();
         bg.classList.add("onpress");
         if (button === SidebarButton.QUICK_LOAD) {
-            this._yesNoChoiceCallInfo = this._wwaSave.getFirstSaveChoiceCallInfo(forcePassword, this._usePassword);
+            this._yesNoChoiceCallInfo = this._wwaSave.getFirstSaveChoiceCallInfo(forcePassword);
             switch (this._yesNoChoiceCallInfo) {
                 case ChoiceCallInfo.CALL_BY_QUICK_LOAD:
                 case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
@@ -3784,7 +3784,7 @@ export class WWA {
         this.setFrameCoord(new Coord(newData.imgFrameX, newData.imgFrameY));
         this.updateCSSRule();
         this.updateEffect();
-        this._wwaSave.gameStart(this._wwaData,this._player);
+        this._wwaSave.gameStart(this._wwaData, this._player);
     }
     private _mapIDTableCreate(): void {
         var pid: number;

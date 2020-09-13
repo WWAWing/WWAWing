@@ -191,8 +191,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             var saveDataResult = index.getAll(range);
 
             saveDataResult.onsuccess = (e) => {
-                var i, len, loadend, onsuccess, onerror, saveData: WWASaveDataItem;
-                loadend = 0;
+                var i: number, len: number, saveData: WWASaveDataItem;
                 var result = e.target.result;
                 len = result.length;
                 for (i = 0; i < len; i++) {
