@@ -19,7 +19,8 @@ export default class WWASave {
      * @see WWA.checkOriginalMapString
      */
     public static checkOriginalMapString: string;
-    public static checkOriginalWorldName: string;
+    public static worldName: string;
+    public static disAllowLoadOldSave: boolean;
     /**
      * Quick Save で保存されるセーブデータ領域です。
      */
@@ -30,9 +31,15 @@ export default class WWASave {
     private _wwaLogSaveList: WWASaveDataLogList;
     public list: WWASaveDataList;
 
-    public constructor(wwa: WWA) {
+    /**
+     * @param wwa WWA インスタンス本体
+     * @param worldName WWA マップデータのワールド名
+     * @param disAllowLoadOldSave アップデート前のセーブデータの読み込みを許可するか
+     */
+    public constructor(wwa: WWA, worldName: string, disAllowLoadOldSave: boolean) {
         WWASave.checkOriginalMapString = wwa.checkOriginalMapString;
-        WWASave.checkOriginalWorldName = wwa.checkOriginalWorldName;
+        WWASave.worldName = worldName;
+        WWASave.disAllowLoadOldSave = disAllowLoadOldSave;
         this._wwaDBSaveList = new WWASaveDataDBList();
         this._wwaLogSaveList = new WWASaveDataLogList();
         this.selectDBSaveDataList();

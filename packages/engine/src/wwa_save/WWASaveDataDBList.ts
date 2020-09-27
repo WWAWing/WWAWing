@@ -14,7 +14,8 @@ type WWASaveDataItem = {
     hash: string,
     image: string,
     data: object, // TODO: object だけではよくわからないのでちゃんとした型を指定する
-    date: Date
+    date: Date,
+    worldName: string,
 };
 
 export default class WWASaveDataDBList extends WWASaveDataList {
@@ -142,10 +143,11 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             var addData: WWASaveDataItem = {
                 "url": location.href,
                 "id": saveID,
-                "hash": WWASave.checkOriginalWorldName,
+                "hash": WWASave.checkOriginalMapString,
                 "image": gameCvs.toDataURL(),
                 "data": compressData,
-                "date": date
+                "date": date,
+                "worldName": WWASave.worldName,
             };
             this.selectDatas[saveID] = addData;
 
@@ -202,12 +204,14 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                             hash: resultData.hash,
                             data: resultData.data,
                             date: resultData.date,
-                            image: resultData.image
+                            image: resultData.image,
+                            worldName: resultData.worldName,
                         };
                     } catch (error) {
                         continue;
                     }
-                    if (WWASave.checkOriginalWorldName !== saveData.hash) {
+                    if ((WWASave.worldName !== saveData.worldName) ||
+                        (WWASave.disAllowLoadOldSave && WWASave.checkOriginalMapString !== saveData.hash)) {
                         continue;
                     }
                     if (!this[saveData.id]) {

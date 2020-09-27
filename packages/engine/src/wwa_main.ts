@@ -103,11 +103,6 @@ export class WWA {
      */
     public checkOriginalMapString: string;
 
-    /**
-     * マップデータのタイトルをMD5化した文字列です。
-     */
-    public checkOriginalWorldName: string;
-
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
@@ -196,7 +191,8 @@ export class WWA {
         classicModeEnabled: boolean,
         itemEffectEnabled: boolean,
         useGoToWWA: boolean,
-        audioDirectory: string = ""
+        audioDirectory: string = "",
+        disAllowLoadOldSave: boolean = false,
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -330,7 +326,6 @@ export class WWA {
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
             this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            this.checkOriginalWorldName = CryptoJS.MD5(this._wwaData.worldName).toString();
 
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
@@ -424,7 +419,7 @@ export class WWA {
             this._scoreWindow = new ScoreWindow(
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
-            this._wwaSave = new WWASave(wwa);
+            this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, disAllowLoadOldSave);
             this._messageWindow.setWWASave(this._wwaSave);
 
             WWACompress.setRestartData(this._restartData, this._wwaData);
@@ -4912,6 +4907,13 @@ function start() {
     if (useGoToWWAAttribute !== null && useGoToWWAAttribute.match(/^true$/i)) {
         useGoToWWA = true;
     }
+    const disAllowLoadOldSave = (() => {
+        const disAllowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
+        if (disAllowLoadOldSaveAttribute !== null && disAllowLoadOldSaveAttribute.match(/^true$/i)) {
+            return true;
+        }
+        return false;
+    })();
     wwa = new WWA(
         mapFileName,
         urlgateEnabled,
@@ -4919,7 +4921,8 @@ function start() {
         classicModeEnabled,
         itemEffectEnabled,
         useGoToWWA,
-        audioDirectory
+        audioDirectory,
+        disAllowLoadOldSave
     );
 }
 
