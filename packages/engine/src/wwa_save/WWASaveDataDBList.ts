@@ -198,11 +198,12 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             var index = store.index("url");
             var range = IDBKeyRange.only(location.href);
             var saveDataResult = index.getAll(range);
-            let failedLoadingSaveDataCount = 0;
 
             saveDataResult.onsuccess = (e) => {
                 var i: number, len: number, saveData: WWASaveDataItem;
                 var result = e.target.result;
+                let failedLoadingSaveDataCount = 0;
+
                 len = result.length;
                 for (i = 0; i < len; i++) {
                     var resultData: WWASaveDataItem = result[i];
@@ -229,6 +230,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     var quickSaveData = WWACompress.decompress(saveData.data);
                     this[saveData.id].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
+
                 this.selectLoad = true;
                 this.onCompleteLoadingSaveData(failedLoadingSaveDataCount > 0);
             };
