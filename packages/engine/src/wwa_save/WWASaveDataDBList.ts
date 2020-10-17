@@ -4,7 +4,6 @@ import {
 } from "../wwa_data";
 import WWACompress from "./WWACompress"; 
 import WWASave from "./WWASave";
-import WWASaveData from "./WWASaveData";
 import WWASaveDataDB from "./WWASaveDataDB";
 import WWASaveDataList from "./WWASaveDataList";
 
@@ -18,6 +17,8 @@ type WWASaveDataItem = {
     worldName: string,
 };
 
+export type OnCompleteLoadingSaveDataFunction = (hasFailedLoadingSaveData: boolean) => void;
+
 export default class WWASaveDataDBList extends WWASaveDataList {
     private selectDatas: object[];
     private selectLoad: boolean = false;
@@ -27,7 +28,12 @@ export default class WWASaveDataDBList extends WWASaveDataList {
         READ_WRITE: "readwrite",
         VERSION_CHANGE: "versionchangetransaction"
     };
-    constructor() {
+    /**
+     * @see WWASave
+     */
+    private onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction;
+
+    constructor(onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction) {
         super();
         Object.setPrototypeOf(this, Object.create(WWASaveDataDBList.prototype));
         for (var i = 0; i < WWASaveConsts.QUICK_SAVE_MAX; i++) {
@@ -54,6 +60,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
         if (!this.indexedDB) {
             return;
         }
+        this.onCompleteLoadingSaveData = onCompleteLoadingSaveData;
         this.createDataBase();
         this.selectSaveData();
     }
@@ -191,6 +198,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             var index = store.index("url");
             var range = IDBKeyRange.only(location.href);
             var saveDataResult = index.getAll(range);
+            let failedLoadingSaveDataCount = 0;
 
             saveDataResult.onsuccess = (e) => {
                 var i: number, len: number, saveData: WWASaveDataItem;
@@ -212,6 +220,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     }
                     if ((WWASave.worldName !== saveData.worldName) ||
                         (WWASave.disAllowLoadOldSave && WWASave.checkOriginalMapString !== saveData.hash)) {
+                        failedLoadingSaveDataCount++;
                         continue;
                     }
                     if (!this[saveData.id]) {
@@ -221,6 +230,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     this[saveData.id].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
                 this.selectLoad = true;
+                this.onCompleteLoadingSaveData(failedLoadingSaveDataCount > 0);
             };
             saveDataResult.onerror = (e) => {
                 this.indexedDB = null;

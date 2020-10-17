@@ -8,7 +8,7 @@ import { WWA } from "../wwa_main";
 import { Player } from "../wwa_parts_player"; 
 import WWASaveData from "./WWASaveData";
 import WWASaveDataList from "./WWASaveDataList";
-import WWASaveDataDBList from "./WWASaveDataDBList";
+import WWASaveDataDBList, { OnCompleteLoadingSaveDataFunction } from "./WWASaveDataDBList";
 import WWASaveDataLogList from "./WWASaveDataLogList";
 
 /**
@@ -35,12 +35,13 @@ export default class WWASave {
      * @param wwa WWA インスタンス本体
      * @param worldName WWA マップデータのワールド名
      * @param disAllowLoadOldSave アップデート前のセーブデータの読み込みを許可するか
+     * @param onCompleteLoadingSaveData セーブデータの読み込みが完了した際に実行される関数
      */
-    public constructor(wwa: WWA, worldName: string, disAllowLoadOldSave: boolean) {
+    public constructor(wwa: WWA, worldName: string, disAllowLoadOldSave: boolean, onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction) {
         WWASave.checkOriginalMapString = wwa.checkOriginalMapString;
         WWASave.worldName = worldName;
         WWASave.disAllowLoadOldSave = disAllowLoadOldSave;
-        this._wwaDBSaveList = new WWASaveDataDBList();
+        this._wwaDBSaveList = new WWASaveDataDBList(onCompleteLoadingSaveData);
         this._wwaLogSaveList = new WWASaveDataLogList();
         this.selectDBSaveDataList();
     }
