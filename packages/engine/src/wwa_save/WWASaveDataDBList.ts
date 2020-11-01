@@ -124,10 +124,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     objectStore.createIndex("url", "url", { unique: false });
                 }
             };
-            reqOpen.onsuccess = (e) => {
-            };
-            reqOpen.onerror = (err) => {
-            };
+            reqOpen.onsuccess = WWASaveDataDBList.DoNotAnything;
+            reqOpen.onerror = WWASaveDataDBList.DoNotAnything;
             reqOpen.onblocked = (err) => {
                 this.indexedDB = null;
             };
@@ -206,9 +204,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             return;
         }
         var reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = function (e) {
-        };
-        reqOpen.onsuccess = (e) => {
+        reqOpen.onupgradeneeded = WWASaveDataDBList.DoNotAnything;
+        reqOpen.onsuccess = () => {
             const store = this.getObjectStore(reqOpen.result);
             //var range = IDBKeyRange.bound(10);
             this.selectDatas = [];
@@ -218,9 +215,13 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             var range = IDBKeyRange.only(location.href);
             var saveDataResult = index.getAll(range);
 
-            saveDataResult.onsuccess = (e) => {
+            /**
+             * @todo e には Event が充てられていますが、 e.target.result が存在しません。
+             *       saveDataResult.result でもクエリの結果が取得できますが、 IE11 では取得できません。
+             */
+            saveDataResult.onsuccess = (e: any) => {
                 var i: number, len: number, saveData: WWASaveDataItem;
-                var result = saveDataResult.result;
+                var result = e.target.result;
                 let failedLoadingSaveDataIds = [];
 
                 len = result.length;
@@ -263,10 +264,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             };
 
         };
-        reqOpen.onerror = (e) => {
-        };
-        reqOpen.onblocked = (e) => {
-        };
+        reqOpen.onerror = WWASaveDataDBList.DoNotAnything;
+        reqOpen.onblocked = WWASaveDataDBList.DoNotAnything;
     }
 
 }
