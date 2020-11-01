@@ -136,6 +136,8 @@ export class Macro {
                 case MacroType.GAMEPAD_BUTTON:
                     this._executeGamePadButtonMacro();
                     break;
+                case MacroType.OLDMOVE:
+                    this._executeOldMoveMacro();
                 default:
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     break;
@@ -484,6 +486,11 @@ export class Macro {
             throw new Error("アイテムボックス上限を超えた数値が指定されました。");
         }
         this._wwa.setGamePadButtonItemTable(buttonID, itemNo);
+    }
+
+    private _executeOldMoveMacro(): void {
+        this._concatEmptyArgs(1);
+        const oldMoveFlag = !!this._parseInt(0);
     }
 }
 
