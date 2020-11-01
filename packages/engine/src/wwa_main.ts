@@ -420,9 +420,7 @@ export class WWA {
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
             this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, disAllowLoadOldSave, hasFailedLoadingSaveData => {
-                // TODO: 消えたセーブデータと消えなかったセーブデータが混在する場合、どのようにしてメッセージを表示するか検討する
                 if (hasFailedLoadingSaveData) {
-                    // TODO: もうちょっといいメッセージにする
                     alert("これまで保存したセーブデータはワールド名の変更やロードポリシーの変更に伴い、消えてしまいました。");
                 }
             });
