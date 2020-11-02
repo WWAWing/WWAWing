@@ -192,7 +192,7 @@ export class WWA {
         itemEffectEnabled: boolean,
         useGoToWWA: boolean,
         audioDirectory: string = "",
-        disAllowLoadOldSave: boolean = false,
+        disallowLoadOldSave: boolean = false,
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -419,7 +419,7 @@ export class WWA {
             this._scoreWindow = new ScoreWindow(
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
-            this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, disAllowLoadOldSave, hasFailedLoadingSaveData => {
+            this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, disallowLoadOldSave, hasFailedLoadingSaveData => {
                 if (hasFailedLoadingSaveData) {
                     alert("これまで保存したセーブデータはワールド名の変更やロードポリシーの変更に伴い、消えてしまいました。");
                 }
@@ -4911,9 +4911,9 @@ function start() {
     if (useGoToWWAAttribute !== null && useGoToWWAAttribute.match(/^true$/i)) {
         useGoToWWA = true;
     }
-    const disAllowLoadOldSave = (() => {
-        const disAllowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
-        if (disAllowLoadOldSaveAttribute !== null && disAllowLoadOldSaveAttribute.match(/^true$/i)) {
+    const disallowLoadOldSave = (() => {
+        const disallowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
+        if (disallowLoadOldSaveAttribute !== null && disallowLoadOldSaveAttribute.match(/^true$/i)) {
             return true;
         }
         return false;
@@ -4926,7 +4926,7 @@ function start() {
         itemEffectEnabled,
         useGoToWWA,
         audioDirectory,
-        disAllowLoadOldSave
+        disallowLoadOldSave
     );
 }
 

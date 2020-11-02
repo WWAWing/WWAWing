@@ -240,7 +240,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                         continue;
                     }
                     if ((WWASave.worldName !== saveData.worldName) ||
-                        (WWASave.disAllowLoadOldSave && WWASave.checkOriginalMapString !== saveData.hash)) {
+                        (WWASave.disallowLoadOldSave && WWASave.checkOriginalMapString !== saveData.hash)) {
                         failedLoadingSaveDataIds.push(i);
                         continue;
                     }
