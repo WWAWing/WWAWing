@@ -32,7 +32,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
-import { WWACompress, WWASave } from "./wwa_save";
+import { WWACompress, WWASave, FailedLoadingSaveDataCause } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
@@ -133,6 +133,7 @@ export class WWA {
     private _hasTitleImg: boolean;
     private _useSuspend: boolean = false;
     private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
+    private _isDisallowLoadOldSave: boolean = false;
 
     private _isActive: boolean;
 
@@ -419,11 +420,22 @@ export class WWA {
             this._scoreWindow = new ScoreWindow(
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
-            this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, disallowLoadOldSave, hasFailedLoadingSaveData => {
-                if (hasFailedLoadingSaveData) {
-                    alert("これまで保存したセーブデータはワールド名の変更やロードポリシーの変更に伴い、消えてしまいました。");
+            this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, this._checkSaveDataCompatibility.bind(this), failedLoadingSaveDataCauses => {
+                if (failedLoadingSaveDataCauses.length > 0) {
+                    let message = "これまで保存したセーブデータは、下記の理由により消えてしまいました。";
+                    failedLoadingSaveDataCauses.forEach((cause) => {
+                        switch (cause) {
+                            case "DIFFERENCE_WORLDNAME":
+                                message += "\nマップデータのワールド名の変更";
+                                break;
+                            case "DIALLOW_OLD_SAVEDATA":
+                                message += "\nマップデータ制作者が設定した仕様";
+                        }
+                    });
+                    alert(message);
                 }
             });
+            this._isDisallowLoadOldSave = disallowLoadOldSave;
             this._messageWindow.setWWASave(this._wwaSave);
 
             WWACompress.setRestartData(this._restartData, this._wwaData);
@@ -4869,6 +4881,21 @@ font-weight: bold;
         if (this._wwaData.gamePadButtonItemTable.length > buttonID) {
             this._wwaData.gamePadButtonItemTable[buttonID] = itemBoxNo;
         }
+    }
+
+    /**
+     * セーブデータの内容を確認し、現在の WWA のマップデータで互換性があるか確認します。
+     * @param saveDataWorldName セーブデータのワールド名
+     * @param saveDataHash セーブデータのハッシュ値
+     */
+    private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string): FailedLoadingSaveDataCause {
+        if (saveDataWorldName !== this._wwaData.worldName) {
+            return "DIFFERENCE_WORLDNAME";
+        }
+        if (this._isDisallowLoadOldSave && saveDataHash !== this.checkOriginalMapString) {
+            return "DIALLOW_OLD_SAVEDATA";
+        }
+        return null;
     }
 };
 
