@@ -429,7 +429,7 @@ export class WWA {
                                 message += "\nマップデータのワールド名の変更";
                                 break;
                             case "DIALLOW_OLD_SAVEDATA":
-                                message += "\nマップデータ制作者が設定した仕様";
+                                message += "\nマップデータの内容変更 (マップデータ制作者の設定により、内容が変更されるとセーブデータが消去されます)";
                         }
                     });
                     alert(message);

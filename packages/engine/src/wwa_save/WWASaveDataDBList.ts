@@ -243,9 +243,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash);
                     if (failedCause !== null) {
                         failedLoadingSaveDataIds.push(i);
-                        if (failedLoadingSaveDataCauses.indexOf(failedCause) === -1) {
-                            failedLoadingSaveDataCauses.push(failedCause)
-                        }
+                        failedLoadingSaveDataCauses.push(failedCause);
                         continue;
                     }
                     if (!this[saveData.id]) {
@@ -260,7 +258,9 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                 }
 
                 this.selectLoad = true;
-                this.onCompleteLoadingSaveData(failedLoadingSaveDataCauses);
+                this.onCompleteLoadingSaveData(failedLoadingSaveDataCauses.filter((cause, index, self) => {
+                    return self.indexOf(cause) !== index;
+                }));
             };
             saveDataResult.onerror = (e) => {
                 this.indexedDB = null;
