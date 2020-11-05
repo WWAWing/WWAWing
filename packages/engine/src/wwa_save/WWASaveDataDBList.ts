@@ -35,7 +35,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
     /**
      * 何もしません。主に IndexedDB のイベントに割り当てる際に使用します。
      */
-    private static DoNotAnything = () => {};
+    private static doNotAnything = () => {};
 
     constructor(onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction) {
         super();
@@ -124,8 +124,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     objectStore.createIndex("url", "url", { unique: false });
                 }
             };
-            reqOpen.onsuccess = WWASaveDataDBList.DoNotAnything;
-            reqOpen.onerror = WWASaveDataDBList.DoNotAnything;
+            reqOpen.onsuccess = WWASaveDataDBList.doNotAnything;
+            reqOpen.onerror = WWASaveDataDBList.doNotAnything;
             reqOpen.onblocked = (err) => {
                 this.indexedDB = null;
             };
@@ -151,7 +151,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             return;
         }
         var reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = WWASaveDataDBList.DoNotAnything;
+        reqOpen.onupgradeneeded = WWASaveDataDBList.doNotAnything;
         reqOpen.onsuccess = (e) => {
             const store = this.getObjectStore(reqOpen.result);
             var compressData: object = WWACompress.compress(_quickSaveData);
@@ -174,11 +174,11 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                 // EDGEでエラー？
                 return;
             }
-            reqAdd.onsuccess = WWASaveDataDBList.DoNotAnything;
-            reqAdd.onerror = WWASaveDataDBList.DoNotAnything;
+            reqAdd.onsuccess = WWASaveDataDBList.doNotAnything;
+            reqAdd.onerror = WWASaveDataDBList.doNotAnything;
         };
-        reqOpen.onerror = WWASaveDataDBList.DoNotAnything;
-        reqOpen.onblocked = WWASaveDataDBList.DoNotAnything;
+        reqOpen.onerror = WWASaveDataDBList.doNotAnything;
+        reqOpen.onblocked = WWASaveDataDBList.doNotAnything;
     }
     /**
      * 指定したIDのセーブデータを削除します。
@@ -189,22 +189,22 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             return;
         }
         const reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = WWASaveDataDBList.DoNotAnything;
+        reqOpen.onupgradeneeded = WWASaveDataDBList.doNotAnything;
         reqOpen.onsuccess = () => {
             const store = this.getObjectStore(reqOpen.result);
             saveIDs.forEach(saveId => {
                 store.delete([saveId, location.href]);
             });
         };
-        reqOpen.onerror = WWASaveDataDBList.DoNotAnything;
-        reqOpen.onblocked = WWASaveDataDBList.DoNotAnything;
+        reqOpen.onerror = WWASaveDataDBList.doNotAnything;
+        reqOpen.onblocked = WWASaveDataDBList.doNotAnything;
     }
     private selectSaveData(): void {
         if (!this.indexedDB) {
             return;
         }
         var reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = WWASaveDataDBList.DoNotAnything;
+        reqOpen.onupgradeneeded = WWASaveDataDBList.doNotAnything;
         reqOpen.onsuccess = () => {
             const store = this.getObjectStore(reqOpen.result);
             //var range = IDBKeyRange.bound(10);
@@ -264,8 +264,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             };
 
         };
-        reqOpen.onerror = WWASaveDataDBList.DoNotAnything;
-        reqOpen.onblocked = WWASaveDataDBList.DoNotAnything;
+        reqOpen.onerror = WWASaveDataDBList.doNotAnything;
+        reqOpen.onblocked = WWASaveDataDBList.doNotAnything;
     }
 
 }
