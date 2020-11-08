@@ -100,6 +100,7 @@ export function createDefaultWWAData(): WWAData {
         mapPartsMax: undefined,
         objPartsMax: undefined,
         isOldMap: undefined,
+        isOldMove: undefined,
         statusEnergyMax: undefined,
         statusEnergy: undefined,
         statusStrength: undefined,
