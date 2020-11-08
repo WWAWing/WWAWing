@@ -305,6 +305,7 @@ export class WWA {
         this._loadHandler = (wwaData: WWAData): void => {
             this._wwaData = wwaData;
             this._wwaData.isItemEffectEnabled = itemEffectEnabled;
+            this._wwaData.isOldMove = wwaData.version < 31;
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -3937,8 +3938,8 @@ export class WWA {
                             this._setObjectsInNextFrame(posc, yCand, leftX, topY, objectsInNextFrame, partsID);
                         } else {
                             thirdCand = this._getThirdCandidate(playerIsMoving, pos, candCoord, moveMode, objectsInNextFrame);
-                            // thirdCandを用いた第三候補の作成は WWA 3.10以降 + $oldmove=0 でのみ有効
-                            if (thirdCand !== null && this._wwaData.version >= 31 && !this._wwaData.isOldMove) {
+                            // thirdCandを用いた第三候補の作成は $oldmove=0 でのみ有効
+                            if (thirdCand !== null && !this._wwaData.isOldMove) {
                                 this._setObjectsInNextFrame(posc, thirdCand, leftX, topY, objectsInNextFrame, partsID);
                             } else {
                                 // うろうろする
@@ -4098,7 +4099,7 @@ export class WWA {
     private _getRandomMoveCoord(playerIsMoving: boolean, currentPos: Position, objectsInNextFrame: number[][]): Coord {
         var currentCoord = currentPos.getPartsCoord();
         var resultCoord: Coord = currentCoord.clone();
-        var iterNum = this._wwaData.version < 31 || this._wwaData.isOldMove
+        var iterNum = this._wwaData.isOldMove
             ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31
             : Consts.RANDOM_MOVE_ITERATION_NUM;
         for (var i = 0; i < iterNum; i++) {
