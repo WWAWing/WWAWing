@@ -79,6 +79,7 @@ export class TextLoader {
     wwaData.clickableItemSignImgPosY = WWAConsts.IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_Y;
     wwaData.disableSaveFlag = WWAConsts.DEFAULT_DISABLE_SAVE;
     wwaData.isOldMap = WWAConsts.DEFAULT_OLDMAP;
+    wwaData.isOldMove = WWAConsts.DEFAULT_OLDMOVE;
     wwaData.objectNoCollapseDefaultFlag = WWAConsts.DEFAULT_OBJECT_NO_COLLAPSE;
     wwaData.delPlayerFlag = false;
     wwaData.bgm = 0;

@@ -138,6 +138,7 @@ export class Macro {
                     break;
                 case MacroType.OLDMOVE:
                     this._executeOldMoveMacro();
+                    break;
                 default:
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     break;
@@ -491,6 +492,7 @@ export class Macro {
     private _executeOldMoveMacro(): void {
         this._concatEmptyArgs(1);
         const oldMoveFlag = !!this._parseInt(0);
+        this._wwa.setOldMove(oldMoveFlag);
     }
 }
 
