@@ -305,7 +305,6 @@ export class WWA {
         this._loadHandler = (wwaData: WWAData): void => {
             this._wwaData = wwaData;
             this._wwaData.isItemEffectEnabled = itemEffectEnabled;
-            this._wwaData.isOldMove = wwaData.version < 31;
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (

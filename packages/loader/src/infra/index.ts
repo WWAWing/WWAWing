@@ -49,7 +49,6 @@ export class WWAConsts {
 
     static DEFAULT_DISABLE_SAVE: boolean = false;
     static DEFAULT_OLDMAP: boolean = false;
-    static DEFAULT_OLDMOVE: boolean = false;
     static DEFAULT_OBJECT_NO_COLLAPSE: boolean = false;
 
     static DEFAULT_FRAME_COLOR_R = 0xff;
