@@ -174,10 +174,17 @@ export default class WWASaveDataDBList extends WWASaveDataList {
     /**
      * 現在プレイしている WWA のセーブデータを取り出します。
      */
-    protected getSaveDataResult(store: IDBObjectStore): IDBRequest<WWASaveDataItem[]> {
+    protected getSaveDataResult(store: IDBObjectStore, onsuccess: (result: WWASaveDataItem[]) => void) {
         const index = store.index("url");
         const range = IDBKeyRange.only(location.href);
-        return index.getAll(range);
+        const result = index.getAll(range);
+
+        result.onsuccess = () => {
+            onsuccess(result.result);
+        };
+        result.onerror = () => {
+            this.indexedDB = null;
+        };
     }
     public dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, date: Date): void {
         if (!this.indexedDB) {
@@ -241,11 +248,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             this.selectDatas = [];
             this.selectLoad = false;
 
-            var saveDataResult = this.getSaveDataResult(store);
-
-            saveDataResult.onsuccess = () => {
+            const onsuccess = (result: WWASaveDataItem[]) => {
                 var i: number, len: number, saveData: WWASaveDataItem;
-                var result = saveDataResult.result;
                 let failedLoadingSaveDataIds = [];
                 let failedLoadingSaveDataCauses = [];
 
@@ -286,9 +290,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     return self.indexOf(cause) !== index;
                 }));
             };
-            saveDataResult.onerror = (e) => {
-                this.indexedDB = null;
-            };
+            this.getSaveDataResult(store, onsuccess);
 
         };
         reqOpen.onerror = WWASaveDataDBList.doNotAnything;

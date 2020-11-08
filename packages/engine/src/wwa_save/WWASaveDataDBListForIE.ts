@@ -1,5 +1,6 @@
 import WWASaveDataDBList from "./WWASaveDataDBList";
-import { WWASave } from ".";
+import { WWASave, OnCompleteLoadingSaveDataFunction, OnCheckLoadingSaveDataFunction } from ".";
+import { WWASaveConsts } from "../wwa_data";
 
 /**
  * WWASaveDataDBList.WWASaveDataItem とは別です。
@@ -37,10 +38,29 @@ export default class WWASaveDataDBListForIE extends WWASaveDataDBList {
             "urlWithId": location.href + " " + saveID
         };
     }
-    /**
-     * @todo 実装する
-     */
-    protected getSaveDataResult(store: IDBObjectStore): IDBRequest<WWASaveDataItem[]> {
-        return null;
+    // FIXME: オーバーライドできてない
+    protected getSaveDataResult(store: IDBObjectStore, onsuccess: (result: WWASaveDataItem[]) => void) {
+        let results: WWASaveDataItem[] = [];
+        let gotItemCount = 0;
+
+        for (let index = 0; index < WWASaveConsts.QUICK_SAVE_MAX; index++) {
+            const saveItem: IDBRequest<WWASaveDataItem> = store.get(location.href + " " + index);
+
+            saveItem.onsuccess = function() {
+                results.push(saveItem.result);
+                gotItemCount++;
+                if (gotItemCount >= WWASaveConsts.QUICK_SAVE_MAX) {
+                    onsuccess(results);
+                }
+            };
+            saveItem.onerror = function() {
+                results.push(null);
+                gotItemCount++;
+                if (gotItemCount >= WWASaveConsts.QUICK_SAVE_MAX) {
+                    onsuccess(results);
+                }
+            };
+
+        }
     }
 }
