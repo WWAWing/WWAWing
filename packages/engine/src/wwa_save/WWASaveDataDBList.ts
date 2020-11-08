@@ -35,6 +35,12 @@ export default class WWASaveDataDBList extends WWASaveDataList {
      * 何もしません。主に IndexedDB のイベントに割り当てる際に使用します。
      */
     private static doNotAnything = () => {};
+    /**
+     * データベース作成時に指定する keyPath です。
+     * TypeScript には IDBKeyPath という専用の型が付与されていますが、 string 型しか受け付けておりません。
+     * 代わりに独自の型を定義しています。
+     */
+    protected keyPath: string | string[] = ["id", "url"];
 
     constructor(onCheckLoadingSaveData: OnCheckLoadingSaveDataFunction, onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction) {
         super();
@@ -118,7 +124,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             var reqOpen = this.indexDBOpen();
             reqOpen.onupgradeneeded = (e) => {
                 var indexedDBSystem = reqOpen.result;
-                var oDBOptions = { keyPath: ["id", "url"] };
+                var oDBOptions = { keyPath: this.keyPath };
                 if (!indexedDBSystem.objectStoreNames.contains(WWASaveConsts.INDEXEDDB_TABLE_NAME)) {
                     var objectStore = indexedDBSystem.createObjectStore(WWASaveConsts.INDEXEDDB_TABLE_NAME, oDBOptions);
                     objectStore.createIndex("url", "url", { unique: false });
@@ -146,6 +152,33 @@ export default class WWASaveDataDBList extends WWASaveDataList {
         }
         return store;
     }
+    /**
+     * セーブデータの1項目を作成します。
+     * @param saveID ID
+     * @param gameCvs ゲーム画面の Canvas 要素
+     * @param compressedData 圧縮済みの WWA セーブデータ
+     * @param date 日付
+     * @returns 作成したセーブデータの1項目
+     */
+    protected makeSaveDataItem(saveID: number, gameCvs: HTMLCanvasElement, compressedData: object, date: Date): WWASaveDataItem {
+        return {
+            "url": location.href,
+            "id": saveID,
+            "hash": WWASave.checkOriginalMapString,
+            "image": gameCvs.toDataURL(),
+            "data": compressedData,
+            "date": date,
+            "worldName": WWASave.worldName,
+        };
+    }
+    /**
+     * 現在プレイしている WWA のセーブデータを取り出します。
+     */
+    protected getSaveDataResult(store: IDBObjectStore): IDBRequest<WWASaveDataItem[]> {
+        const index = store.index("url");
+        const range = IDBKeyRange.only(location.href);
+        return index.getAll(range);
+    }
     public dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, date: Date): void {
         if (!this.indexedDB) {
             return;
@@ -156,15 +189,12 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             const store = this.getObjectStore(reqOpen.result);
             var compressData: object = WWACompress.compress(_quickSaveData);
 
-            var addData: WWASaveDataItem = {
-                "url": location.href,
-                "id": saveID,
-                "hash": WWASave.checkOriginalMapString,
-                "image": gameCvs.toDataURL(),
-                "data": compressData,
-                "date": date,
-                "worldName": WWASave.worldName,
-            };
+            var addData: WWASaveDataItem = this.makeSaveDataItem(
+                saveID,
+                gameCvs,
+                compressData,
+                date
+            );
             this.selectDatas[saveID] = addData;
 
             try {
@@ -211,17 +241,11 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             this.selectDatas = [];
             this.selectLoad = false;
 
-            var index = store.index("url");
-            var range = IDBKeyRange.only(location.href);
-            var saveDataResult = index.getAll(range);
+            var saveDataResult = this.getSaveDataResult(store);
 
-            /**
-             * @todo e には Event が充てられていますが、 e.target.result が存在しません。
-             *       saveDataResult.result でもクエリの結果が取得できますが、 IE11 では取得できません。
-             */
-            saveDataResult.onsuccess = (e: any) => {
+            saveDataResult.onsuccess = () => {
                 var i: number, len: number, saveData: WWASaveDataItem;
-                var result = e.target.result;
+                var result = saveDataResult.result;
                 let failedLoadingSaveDataIds = [];
                 let failedLoadingSaveDataCauses = [];
 
