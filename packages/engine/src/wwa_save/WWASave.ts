@@ -9,7 +9,7 @@ import { WWA } from "../wwa_main";
 import { Player } from "../wwa_parts_player"; 
 import WWASaveData from "./WWASaveData";
 import WWASaveDataList from "./WWASaveDataList";
-import WWASaveDataDBList, { OnCompleteLoadingSaveDataFunction } from "./WWASaveDataDBList";
+import WWASaveDataDBList from "./WWASaveDataDBList";
 import WWASaveDataLogList from "./WWASaveDataLogList";
 import WWASaveDataDBListForIE from "./WWASaveDataDBListForIE";
 
@@ -21,6 +21,10 @@ import WWASaveDataDBListForIE from "./WWASaveDataDBListForIE";
  */
 type CommonWWASaveDataDBList = WWASaveDataDBList | WWASaveDataDBListForIE;
 
+export type FailedLoadingSaveDataCause = "DIFFERENCE_WORLDNAME" | "DIALLOW_OLD_SAVEDATA";
+export type OnCompleteLoadingSaveDataFunction = (hasFailedLoadingSaveData: FailedLoadingSaveDataCause[]) => void;
+export type OnCheckLoadingSaveDataFunction = (saveDataWorldName: string, saveDataHash: string) => FailedLoadingSaveDataCause | null;
+
 /**
  * WWA のセーブデータを管理するシステムのクラスです。
  */
@@ -29,8 +33,10 @@ export default class WWASave {
      * @see WWA.checkOriginalMapString
      */
     public static checkOriginalMapString: string;
+    /**
+     * マップデータのワールド名です。セーブ時に記録されます。
+     */
     public static worldName: string;
-    public static disAllowLoadOldSave: boolean;
     /**
      * Quick Save で保存されるセーブデータ領域です。
      */
@@ -44,17 +50,21 @@ export default class WWASave {
     /**
      * @param wwa WWA インスタンス本体
      * @param worldName WWA マップデータのワールド名
-     * @param disAllowLoadOldSave アップデート前のセーブデータの読み込みを許可するか
+     * @param onCheckLoadingSaveData セーブデータ読み込みの互換性チェック時に実行される関数
      * @param onCompleteLoadingSaveData セーブデータの読み込みが完了した際に実行される関数
      */
-    public constructor(wwa: WWA, worldName: string, disAllowLoadOldSave: boolean, onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction) {
+    public constructor(
+        wwa: WWA,
+        worldName: string,
+        onCheckLoadingSaveData: OnCheckLoadingSaveDataFunction,
+        onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction
+    ) {
         WWASave.checkOriginalMapString = wwa.checkOriginalMapString;
         WWASave.worldName = worldName;
-        WWASave.disAllowLoadOldSave = disAllowLoadOldSave;
         if (wwa.userDevice.browser === BROWSER_TYPE.INTERNET_EXPLORER) {
-            this._wwaDBSaveList = new WWASaveDataDBListForIE(onCompleteLoadingSaveData);
+            this._wwaDBSaveList = new WWASaveDataDBListForIE(onCheckLoadingSaveData, onCompleteLoadingSaveData);
         } else {
-            this._wwaDBSaveList = new WWASaveDataDBList(onCompleteLoadingSaveData);
+            this._wwaDBSaveList = new WWASaveDataDBList(onCheckLoadingSaveData, onCompleteLoadingSaveData);
         }
         this._wwaLogSaveList = new WWASaveDataLogList();
         this.selectDBSaveDataList();
