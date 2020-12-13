@@ -430,6 +430,7 @@ export class WWA {
                                 break;
                             case "DIALLOW_OLD_SAVEDATA":
                                 message += "\nマップデータの内容変更 (マップデータ制作者の設定により、内容が変更されるとセーブデータが消去されます)";
+                                break;
                         }
                     });
                     alert(message);
