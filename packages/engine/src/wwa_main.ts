@@ -422,7 +422,7 @@ export class WWA {
 
             this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, this._checkSaveDataCompatibility.bind(this), failedLoadingSaveDataCauses => {
                 if (failedLoadingSaveDataCauses.length > 0) {
-                    let message = "これまで保存したセーブデータは、下記の理由により消えてしまいました。";
+                    let message = "これまでに保存されていたセーブデータは、下記の理由により消えてしまいました。";
                     failedLoadingSaveDataCauses.forEach((cause) => {
                         switch (cause) {
                             case "DIFFERENCE_WORLDNAME":
