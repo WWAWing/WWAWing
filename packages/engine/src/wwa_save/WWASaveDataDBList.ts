@@ -267,7 +267,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                 this.selectLoad = true;
                 const failedLoadingCauses = failedLoadingSaveData.map(data => data.cause).filter((cause, index, self) => {
                     // 重複したロード失敗要因を削除
-                    return self.indexOf(cause) !== index;
+                    return self.indexOf(cause) === index;
                 });
                 this.onCompleteLoadingSaveData(failedLoadingCauses);
             };
