@@ -18,6 +18,7 @@ export interface WWAData {
     objPartsMax: number;
 
     isOldMap: boolean;
+    isOldMove: boolean;
 
     statusEnergyMax: number;
     statusEnergy: number;

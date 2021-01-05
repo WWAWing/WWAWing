@@ -6,6 +6,7 @@ import WWACompress from "./WWACompress";
 import WWASave, { OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./WWASave";
 import WWASaveDataDB from "./WWASaveDataDB";
 import WWASaveDataList from "./WWASaveDataList";
+import { FailedLoadingSaveDataCause } from ".";
 
 type WWASaveDataItem = {
     url?: string,
@@ -15,6 +16,11 @@ type WWASaveDataItem = {
     data: object, // TODO: object だけではよくわからないのでちゃんとした型を指定する
     date: Date,
     worldName: string,
+};
+
+type FailedLoadingSaveDataInformation = {
+    id: number,
+    cause: FailedLoadingSaveDataCause
 };
 
 export default class WWASaveDataDBList extends WWASaveDataList {
@@ -250,8 +256,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
 
             const onsuccess = (result: WWASaveDataItem[]) => {
                 var i: number, len: number, saveData: WWASaveDataItem;
-                let failedLoadingSaveDataIds = [];
-                let failedLoadingSaveDataCauses = [];
+                let failedLoadingSaveData: FailedLoadingSaveDataInformation[] = [];
 
                 len = result.length;
                 for (i = 0; i < len; i++) {
@@ -270,8 +275,10 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     }
                     const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash);
                     if (failedCause !== null) {
-                        failedLoadingSaveDataIds.push(i);
-                        failedLoadingSaveDataCauses.push(failedCause);
+                        failedLoadingSaveData.push({
+                            id: i,
+                            cause: failedCause
+                        });
                         continue;
                     }
                     if (!this[saveData.id]) {
@@ -281,14 +288,16 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     this[saveData.id].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
 
-                if (failedLoadingSaveDataIds.length > 0) {
-                    this.dbDeleteSaveData(failedLoadingSaveDataIds);
+                if (failedLoadingSaveData.length > 0) {
+                    this.dbDeleteSaveData(failedLoadingSaveData.map(data => data.id));
                 }
 
                 this.selectLoad = true;
-                this.onCompleteLoadingSaveData(failedLoadingSaveDataCauses.filter((cause, index, self) => {
-                    return self.indexOf(cause) !== index;
-                }));
+                const failedLoadingCauses = failedLoadingSaveData.map(data => data.cause).filter((cause, index, self) => {
+                    // 重複したロード失敗要因を削除
+                    return self.indexOf(cause) === index;
+                });
+                this.onCompleteLoadingSaveData(failedLoadingCauses);
             };
             this.getSaveDataResult(store, onsuccess);
 

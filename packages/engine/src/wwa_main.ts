@@ -422,14 +422,15 @@ export class WWA {
 
             this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, this._checkSaveDataCompatibility.bind(this), failedLoadingSaveDataCauses => {
                 if (failedLoadingSaveDataCauses.length > 0) {
-                    let message = "これまで保存したセーブデータは、下記の理由により消えてしまいました。";
+                    let message = "これまでに保存されていたセーブデータは、下記の理由により消えてしまいました。";
                     failedLoadingSaveDataCauses.forEach((cause) => {
                         switch (cause) {
                             case "DIFFERENCE_WORLDNAME":
-                                message += "\nマップデータのワールド名の変更";
+                                message += "\n・制作者によるマップデータのワールド名の変更";
                                 break;
                             case "DIALLOW_OLD_SAVEDATA":
-                                message += "\nマップデータの内容変更 (マップデータ制作者の設定により、内容が変更されるとセーブデータが消去されます)";
+                                message += "\n・制作者によるマップデータの内容変更 (マップデータ制作者の設定により、内容が変更されるとセーブデータが消去されます)";
+                                break;
                         }
                     });
                     alert(message);
@@ -3955,8 +3956,8 @@ export class WWA {
                             this._setObjectsInNextFrame(posc, yCand, leftX, topY, objectsInNextFrame, partsID);
                         } else {
                             thirdCand = this._getThirdCandidate(playerIsMoving, pos, candCoord, moveMode, objectsInNextFrame);
-                            // thirdCandを用いた第三候補の作成は WWA 3.10以降のみで有効
-                            if (thirdCand !== null && this._wwaData.version >= 31) {
+                            // thirdCandを用いた第三候補の作成は $oldmove=0 でのみ有効
+                            if (thirdCand !== null && !this._wwaData.isOldMove) {
                                 this._setObjectsInNextFrame(posc, thirdCand, leftX, topY, objectsInNextFrame, partsID);
                             } else {
                                 // うろうろする
@@ -4116,7 +4117,9 @@ export class WWA {
     private _getRandomMoveCoord(playerIsMoving: boolean, currentPos: Position, objectsInNextFrame: number[][]): Coord {
         var currentCoord = currentPos.getPartsCoord();
         var resultCoord: Coord = currentCoord.clone();
-        var iterNum = this._wwaData.version < 31 ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31 : Consts.RANDOM_MOVE_ITERATION_NUM;
+        var iterNum = this._wwaData.isOldMove
+            ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31
+            : Consts.RANDOM_MOVE_ITERATION_NUM;
         for (var i = 0; i < iterNum; i++) {
             var rand = Math.floor(Math.random() * 8);
             resultCoord.x = currentCoord.x + vx[rand];
@@ -4721,6 +4724,10 @@ export class WWA {
 
     public updateItemEffectEnabled(isEnabled: boolean): void {
         this._wwaData.isItemEffectEnabled = isEnabled;
+    }
+
+    public setOldMove(flag: boolean) {
+        this._wwaData.isOldMove = flag;
     }
 
     private _stylePos: number[]; // w
