@@ -25,6 +25,11 @@ export default class WWACompress {
     private static _restartData: WWAData = void 0;
     private static _mapByteLength: number = 0;
     private static _firstRandomMapObjectUtf8Table: FirstChangedMapUint8Table = new FirstChangedMapUint8Table();
+    /**
+     * セーブデータを圧縮し、圧縮後のオブジェクトデータを返します。
+     * @param wwaData
+     * @todo 圧縮データの型情報を作成する
+     */
     public static compress(wwaData: WWAData): object {
         var saveObject: object = {};
         var key: string, value;
@@ -64,8 +69,9 @@ export default class WWACompress {
         return saveObject;
     }
     private static compressObject(key: string, wwaObject: object, restartObject: object): object {
-        var saveObject: object, mapY: object, restartMapY: object, writeMapY: object;
+        var saveObject: object, mapY: number[], restartMapY: number[], writeMapY: object;
         switch (key) {
+            // マップ (2次元配列)
             case SAVE_COMPRESS_ID.MAP:
             case SAVE_COMPRESS_ID.MAP_OBJECT:
                 var newValue: number, oldValue: number, addValue: number, x: string, y: string, x_number: number, id: number, allIdTableX: object, allIdTableY: object, idTableX: number[][], idTableY: number[][], idText: string, xList: number[], yList: number[];
@@ -78,8 +84,8 @@ export default class WWACompress {
                     restartMapY = restartObject[y];
                     writeMapY = {};
                     oldValue = -1;
-                    //物体・背景IDごとにテーブルを作り、そこに座標情報を保存する。
-                    //Y座標を添え字にしてX座標を配列に格納。同じY座標に存在するX座標を抽出。
+                    // 物体・背景IDごとにテーブルを作り、そこに座標情報を保存する。
+                    // Y座標を添え字にしてX座標を配列に格納。同じY座標に存在するX座標を抽出。
                     for (x in mapY) {
                         id = mapY[x];
                         if (id !== restartMapY[x]) {
@@ -97,7 +103,7 @@ export default class WWACompress {
                         }
                     }
                 }
-                //Y座標情報の整理
+                // Y座標情報の整理
                 for (idText in allIdTableY) {
                     idTableY = allIdTableY[idText];
                     if (allIdTableX[idText] === undefined) {
@@ -112,8 +118,8 @@ export default class WWACompress {
 
                         xList = idTableY[y];
                         if ((xList.length === 1)) {
-                            //Y座標に対し、X座標が一つしか存在しないため、
-                            //X座標を添え字にしてY座標を配列に格納。同じX座標に存在するY座標を抽出。
+                            // Y座標に対し、X座標が一つしか存在しないため、
+                            // X座標を添え字にしてY座標を配列に格納。同じX座標に存在するY座標を抽出。
                             x_number = xList[0];
                             if (idTableX[x_number] === undefined) {
                                 idTableX[x_number] = [];
@@ -122,19 +128,19 @@ export default class WWACompress {
                             yList = idTableX[x_number];
                             yList.push(Number(y));
                         } else {
-                            //Y座標に存在する座標が複数あったため、データの格納を行う
+                            // Y座標に存在する座標が複数あったため、データの格納を行う
 
-                            //一つ前のY座標と比較し、Y座標の相対数値を抽出
+                            // 一つ前のY座標と比較し、Y座標の相対数値を抽出
                             newValue = Number(y);
-                            addValue = newValue - oldValue - 1;//変動値に0は使われないため、1で減算して無駄を削除
+                            addValue = newValue - oldValue - 1; // 変動値に0は使われないため、1で減算して無駄を削除
                             oldValue = newValue;
 
-                            //X座標の配列を相対座標の配列に変換して格納
+                            // X座標の配列を相対座標の配列に変換して格納
                             saveObject[idText].push(this.getCompressArray(xList), addValue);
                         }
                     }
                 }
-                //X座標情報の整理
+                // X座標情報の整理
                 for (idText in allIdTableX) {
                     id = Number(idText);
                     idTableX = allIdTableX[idText];
@@ -143,16 +149,16 @@ export default class WWACompress {
                     for (x in idTableX) {
                         yList = idTableX[x];
 
-                        //一つ前のX座標と比較し、X座標の相対数値を抽出
+                        // 一つ前のX座標と比較し、X座標の相対数値を抽出
                         newValue = Number(x);
-                        addValue = newValue - oldValue - 1;//変動値に0は使われないため、1で減算して無駄を削除
+                        addValue = newValue - oldValue - 1; // 変動値に0は使われないため、1で減算して無駄を削除
                         oldValue = newValue;
                         if ((yList.length === 1)) {
-                            //X座標とY座標それぞれ独立していて重複なし。
+                            // X座標とY座標それぞれ独立していて重複なし。
                             saveObject[idText].push(addValue, yList[0]);
                         } else {
-                            //Y座標に存在する座標が複数あったため、データの格納を行う
-                            //Y座標の配列を相対座標の配列に変換して格納
+                            // Y座標に存在する座標が複数あったため、データの格納を行う
+                            // Y座標の配列を相対座標の配列に変換して格納
                             saveObject[idText].push(addValue, this.getCompressArray(yList));
                         }
                     }
@@ -160,7 +166,7 @@ export default class WWACompress {
                 var saveList = [];
                 oldValue = -1;
 
-                //テーブル情報を配列情報に変換
+                // テーブル情報を配列情報に変換
                 for (idText in saveObject) {
                     newValue = Number(idText);
                     addValue = newValue - oldValue - 1;
@@ -224,22 +230,22 @@ export default class WWACompress {
                 if (id !== restartObject[y][x]) {
 
                     if (startIndex === -1) {
-                        //0ではないバイト開始位置を取得
+                        // 0ではないバイト開始位置を取得
                         startIndex = position;
                     }
 
-                    //ビット単位で座標が存在するかを記録
+                    // ビット単位で座標が存在するかを記録
                     uint8Array[position] = uint8Array[position] | (1 << bit);
 
-                    //最後のビットとして設定
+                    // 最後のビットとして設定
                     lastPosition = position;
 
-                    //その座標のIDを取得
+                    // その座標のIDを取得
                     if (idClassTable[id] === undefined) {
                         idClassTable[id] = new WWACompressIndexTable(id, indexCount++);
                     }
 
-                    //その座標のIDの利用回数を加算
+                    // その座標のIDの利用回数を加算
                     idClassTable[id].count++;
                 }
                 bit++;
@@ -249,17 +255,17 @@ export default class WWACompress {
                 }
             }
         }
-        //テーブルを配列に変換
+        // テーブルを配列に変換
         for (idText in idClassTable) {
             index = idClassTable[idText].index;
             compressClassList[index] = idClassTable[idText];
         }
 
-        //IDごとの利用回数順に並び替え
+        // IDごとの利用回数順に並び替え
         compressClassList.sort(this.idSort);
 
         indexTable = {};
-        //Index配列を生成する。使用回数が多い順に格納する
+        // Index配列を生成する。使用回数が多い順に格納する
         for (indexText in compressClassList) {
             id = compressClassList[indexText].id;
             indexTable[id] = Number(indexText);
@@ -284,15 +290,15 @@ export default class WWACompress {
                 uint8Array[position] = uint8Array[position] & (~firstRandomMapObjectUtf8Array[position]);
                 if (uint8Array[position] !== 0) {
                     if (startIndex === -1) {
-                        //0ではないバイト開始位置を取得
+                        // 0ではないバイト開始位置を取得
                         startIndex = position;
                     }
-                    //最後のビットとして設定
+                    // 最後のビットとして設定
                     lastPosition = position;
                 }
             }
             if (startIndex === -1) {
-                //データなし
+                // データなし
                 startIndex = 0;
                 lastPosition = 0;
             }
@@ -346,8 +352,8 @@ export default class WWACompress {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
         var k: number, loopCount: number, n: number;
-        //0は連続値のフラグとして使用するため、初期値を-1にして
-        //0座標のaddValueを1になるようにする
+        // 0は連続値のフラグとして使用するため、初期値を-1にして
+        // 0座標のaddValueを1になるようにする
         oldValue = -1;
         len = list.length;
         for (k = 0, i = 0; i < len; i++) {
@@ -356,19 +362,19 @@ export default class WWACompress {
             loopCount = 0;
             n = i;
             while ((n < len - 1) && (list[n] + 1 === list[n + 1])) {
-                //連続して値が1ずつ増えている数を取得
+                // 連続して値が1ずつ増えている数を取得
                 n++;
                 loopCount++;
             }
             if (loopCount < this.MIN_LOOP_COUNT) {
-                //連続して値が1ずつ増えている回数が最低ループ回数以下の場合、
-                //1変数で保持した方が軽いため1つづつ格納
+                // 連続して値が1ずつ増えている回数が最低ループ回数以下の場合、
+                // 1変数で保持した方が軽いため1つづつ格納
                 newList[k++] = addValue;
             } else {
                 i = n;
                 newValue += loopCount;
-                //最初の数値をフラグ判定用に0にして、ループ回数を格納。
-                //ループ回数は3回未満にならないため、値から最低ループ回数を引く
+                // 最初の数値をフラグ判定用に0にして、ループ回数を格納。
+                // ループ回数は3回未満にならないため、値から最低ループ回数を引く
                 newList[k++] = 0;
                 newList[k++] = addValue;
                 newList[k++] = loopCount - this.MIN_LOOP_COUNT;
@@ -385,22 +391,22 @@ export default class WWACompress {
         var newList: number[] = [];
         var oldValue: number, addValue: number, newValue: number, i: number, len: number;
         var lastValue: number, k: number;
-        oldValue = -1;//初期値を-1にすることで、0座標でも値が0にならないようにする
+        oldValue = -1;// 初期値を-1にすることで、0座標でも値が0にならないようにする
         len = list.length;
         for (i = 0, k = 0; i < len; i++) {
             addValue = list[i];
             if (addValue === 0) {
-                //連続して1ずつ増える配列が存在
+                // 連続して1ずつ増える配列が存在
                 addValue = list[++i];
-                newValue = oldValue + addValue;//増加数値から絶対数値を算出
-                lastValue = newValue + list[++i] + this.MIN_LOOP_COUNT;//変数から最低ループ回数を加算し、ループ回数を算出
+                newValue = oldValue + addValue; // 増加数値から絶対数値を算出
+                lastValue = newValue + list[++i] + this.MIN_LOOP_COUNT; // 変数から最低ループ回数を加算し、ループ回数を算出
                 for (; newValue <= lastValue; newValue++) {
                     newList[k++] = newValue;
                 }
                 oldValue = lastValue;
             } else {
-                //その数値を格納
-                newValue = oldValue + addValue;//増加数値から絶対数値を算出
+                // その数値を格納
+                newValue = oldValue + addValue; // 増加数値から絶対数値を算出
                 newList[k++] = newValue;
                 oldValue = newValue;
             }
@@ -454,10 +460,10 @@ export default class WWACompress {
                         return newObject;
                     }
                 }
-                //配列から物体ID・背景IDテーブルに変換
+                // 配列から物体ID・背景IDテーブルに変換
                 for (i = 0; i < len; i += 2) {
                     addValue = Number(loadArray[i]);
-                    newValue = oldValue + addValue + 1;//変動値に0は使われないため、1で加算して無駄を削除
+                    newValue = oldValue + addValue + 1; // 変動値に0は使われないため、1で加算して無駄を削除
                     oldValue = newValue;
 
                     id = newValue;
@@ -473,43 +479,42 @@ export default class WWACompress {
                     idTableX = [];
                     idTableY = [];
 
-                    //配列からX、Y配列を抽出
+                    // 配列からX、Y配列を抽出
                     for (i = 0; i < len; i += 2) {
 
                         var xData = loadArray[i];
                         var yData = loadArray[i + 1];
-                        var newData;
                         if (xData instanceof Array) {
-                            //X座標配列の場合、配列を相対配列から絶対配列に変換
+                            // X座標配列の場合、配列を相対配列から絶対配列に変換
                             xData = this.getDecompressArray(xData);
                         }
                         if (yData instanceof Array) {
-                            //X座標配列の場合、配列を絶対配列から相対配列に変換
+                            // X座標配列の場合、配列を絶対配列から相対配列に変換
                             yData = this.getDecompressArray(yData);
                         }
                         if (typeof xData === "object") {
-                            //X配列として処理
+                            // X配列として処理
                             idTableX.push({ x: xData, y: yData });
                         } else {
-                            //Y配列として処理
+                            // Y配列として処理
                             idTableY.push({ x: xData, y: yData });
                         }
                     }
 
                     var code: string;
 
-                    //X座標情報をベースとした配列を探索
+                    // X座標情報をベースとした配列を探索
                     oldValue = -1;
                     for (code in idTableX) {
-                        //相対数値から絶対数値のY座標に変換
+                        // 相対数値から絶対数値のY座標に変換
                         addValue = Number(idTableX[code].y);
-                        newValue = oldValue + addValue + 1;//変動値に0は使われないため、1で加算して無駄を削除
+                        newValue = oldValue + addValue + 1; // 変動値に0は使われないため、1で加算して無駄を削除
                         oldValue = newValue;
                         xData = idTableX[code].x;
                         y = String(newValue);
 
                         if (xData instanceof Array) {
-                            //X座標情報が配列
+                            // X座標情報が配列
                             loadArray = <object[]>xData;
                             len = loadArray.length;
                             for (i = 0; i < len; i++) {
@@ -517,25 +522,25 @@ export default class WWACompress {
                                 newObject[y][x] = id;
                             }
                         } else {
-                            //X座標情報が数値
-                            //※本来この処理は実行されないが念のために記述
+                            // X座標情報が数値
+                            // ※本来この処理は実行されないが念のために記述
                             x = String(xData);
                             newObject[y][x] = id;
                         }
                     }
 
-                    //Y座標情報をベースとした配列を探索
+                    // Y座標情報をベースとした配列を探索
                     oldValue = -1;
                     for (code in idTableY) {
-                        //相対数値から絶対数値のX座標に変換
+                        // 相対数値から絶対数値のX座標に変換
                         addValue = Number(idTableY[code].x);
-                        newValue = oldValue + addValue + 1;//変動値に0は使われないため、1で加算して無駄を削除
+                        newValue = oldValue + addValue + 1; // 変動値に0は使われないため、1で加算して無駄を削除
                         oldValue = newValue;
                         yData = idTableY[code].y;
                         x = String(newValue);
 
                         if (yData instanceof Array) {
-                            //Y座標情報が配列
+                            // Y座標情報が配列
                             loadArray = <object[]>yData;
                             len = loadArray.length;
                             for (i = 0; i < len; i++) {
@@ -543,7 +548,7 @@ export default class WWACompress {
                                 newObject[y][x] = id;
                             }
                         } else {
-                            //Y座標情報が数値
+                            // Y座標情報が数値
                             y = String(yData);
                             newObject[y][x] = id;
                         }
@@ -616,7 +621,7 @@ export default class WWACompress {
         for (position = 0; position < len; position++) {
             for (bit = 0; bit < 8; bit++) {
                 if ((uint8Array[position] & (1 << bit)) !== 0) {
-                    //設置している
+                    // 設置している
                     index = indexList[indexCount++];
                     if (index === undefined) {
                         return false;
@@ -652,11 +657,11 @@ export default class WWACompress {
                 if (wwaObject[y][x] !== restartObject[y][x]) {
 
                     if (startIndex === -1) {
-                        //0ではないバイト開始位置を取得
+                        // 0ではないバイト開始位置を取得
                         startIndex = position;
                     }
 
-                    //ビット単位で座標が存在するかを記録
+                    // ビット単位で座標が存在するかを記録
                     uint8Array[position] = uint8Array[position] | (1 << bit);
 
                 }

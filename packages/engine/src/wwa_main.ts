@@ -32,7 +32,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
-import { WWACompress, WWASave } from "./wwa_save";
+import { WWACompress, WWASave, FailedLoadingSaveDataCause } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
@@ -101,7 +101,8 @@ export class WWA {
      * データが壊れていないかなどの検証に使います。
      * TODO: originalMapDataHash などの名前が適切だと思うが、WWADataに同じ名前のプロパティがいるので安易に変えられない。どこかで対応する。
      */
-    public checkOriginalMapString: string; 
+    public checkOriginalMapString: string;
+
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
@@ -132,6 +133,7 @@ export class WWA {
     private _hasTitleImg: boolean;
     private _useSuspend: boolean = false;
     private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
+    private _isDisallowLoadOldSave: boolean = false;
 
     private _isActive: boolean;
 
@@ -190,7 +192,8 @@ export class WWA {
         classicModeEnabled: boolean,
         itemEffectEnabled: boolean,
         useGoToWWA: boolean,
-        audioDirectory: string = ""
+        audioDirectory: string = "",
+        disallowLoadOldSave: boolean = false,
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -324,7 +327,7 @@ export class WWA {
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
             this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            
+
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 2);
@@ -417,7 +420,23 @@ export class WWA {
             this._scoreWindow = new ScoreWindow(
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
-            this._wwaSave = new WWASave(wwa);
+            this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, this._checkSaveDataCompatibility.bind(this), failedLoadingSaveDataCauses => {
+                if (failedLoadingSaveDataCauses.length > 0) {
+                    let message = "これまでに保存されていたセーブデータは、下記の理由により消えてしまいました。";
+                    failedLoadingSaveDataCauses.forEach((cause) => {
+                        switch (cause) {
+                            case "DIFFERENCE_WORLDNAME":
+                                message += "\n・制作者によるマップデータのワールド名の変更";
+                                break;
+                            case "DIALLOW_OLD_SAVEDATA":
+                                message += "\n・制作者によるマップデータの内容変更 (マップデータ制作者の設定により、内容が変更されるとセーブデータが消去されます)";
+                                break;
+                        }
+                    });
+                    alert(message);
+                }
+            });
+            this._isDisallowLoadOldSave = disallowLoadOldSave;
             this._messageWindow.setWWASave(this._wwaSave);
 
             WWACompress.setRestartData(this._restartData, this._wwaData);
@@ -1259,7 +1278,7 @@ export class WWA {
         this._itemMenu.close();
         bg.classList.add("onpress");
         if (button === SidebarButton.QUICK_LOAD) {
-            this._yesNoChoiceCallInfo = this._wwaSave.getFirstSaveChoiceCallInfo(forcePassword, this._usePassword);
+            this._yesNoChoiceCallInfo = this._wwaSave.getFirstSaveChoiceCallInfo(forcePassword);
             switch (this._yesNoChoiceCallInfo) {
                 case ChoiceCallInfo.CALL_BY_QUICK_LOAD:
                 case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
@@ -3777,7 +3796,7 @@ export class WWA {
         this.setFrameCoord(new Coord(newData.imgFrameX, newData.imgFrameY));
         this.updateCSSRule();
         this.updateEffect();
-        this._wwaSave.gameStart(this._wwaData,this._player);
+        this._wwaSave.gameStart(this._wwaData, this._player);
     }
     private _mapIDTableCreate(): void {
         var pid: number;
@@ -4870,6 +4889,21 @@ font-weight: bold;
             this._wwaData.gamePadButtonItemTable[buttonID] = itemBoxNo;
         }
     }
+
+    /**
+     * セーブデータの内容を確認し、現在の WWA のマップデータで互換性があるか確認します。
+     * @param saveDataWorldName セーブデータのワールド名
+     * @param saveDataHash セーブデータのハッシュ値
+     */
+    private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string): FailedLoadingSaveDataCause {
+        if (saveDataWorldName !== this._wwaData.worldName) {
+            return "DIFFERENCE_WORLDNAME";
+        }
+        if (this._isDisallowLoadOldSave && saveDataHash !== this.checkOriginalMapString) {
+            return "DIALLOW_OLD_SAVEDATA";
+        }
+        return null;
+    }
 };
 
 var isCopyRightClick = false;
@@ -4911,6 +4945,13 @@ function start() {
     if (useGoToWWAAttribute !== null && useGoToWWAAttribute.match(/^true$/i)) {
         useGoToWWA = true;
     }
+    const disallowLoadOldSave = (() => {
+        const disallowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
+        if (disallowLoadOldSaveAttribute !== null && disallowLoadOldSaveAttribute.match(/^true$/i)) {
+            return true;
+        }
+        return false;
+    })();
     wwa = new WWA(
         mapFileName,
         urlgateEnabled,
@@ -4918,7 +4959,8 @@ function start() {
         classicModeEnabled,
         itemEffectEnabled,
         useGoToWWA,
-        audioDirectory
+        audioDirectory,
+        disallowLoadOldSave
     );
 }
 
