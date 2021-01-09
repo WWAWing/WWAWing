@@ -3672,7 +3672,7 @@ export class WWA {
                 });
                 return CryptoJS.AES.encrypt(
                     CryptoJS.enc.Utf8.parse(s),
-                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
+                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310) + "P+>A[]"
                 ).toString();
             case ChoiceCallInfo.CALL_BY_SUSPEND:
                 this.wwaCustomEvent('wwa_suspend', {
@@ -3694,14 +3694,13 @@ export class WWA {
     }
 
     private _decodePassword(pass: string): WWAData {
-        var ori = this.checkOriginalMapString;
         try {
             var json = CryptoJS.AES.decrypt(
                 pass,
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + ori) + "P+>A[]"
+                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310) + "P+>A[]"
             ).toString(CryptoJS.enc.Utf8);
         } catch (e) {
-            throw new Error("データが破損しています。\n" + e.message)
+            throw new Error("データが破損しているか、制作者によって暗証番号が変更されたためロードに失敗しました。\n" + e.message)
         }
         var obj: any;
         var decodeWWAData: WWAData;
@@ -3744,13 +3743,14 @@ export class WWA {
         delete newData.mapObjectCompressed;
 
         if (password !== null) {
-            var checkString = this._generateSaveDataHash(newData);
-            if (newData.checkString !== checkString) {
-                throw new Error("データが壊れているようです。\nInvalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
+            if (newData.worldName !== this._wwaData.worldName) {
+                console.error("Invalid title", `(password)=${newData.worldName} (current map)=${this._wwaData.worldName}`);
+                throw new Error("前回パスワード取得時から、制作者によってワールド名が変更されたためロードできませんでした。\n予めご了承ください。")
             }
-            var checkOriginalMapString = this.checkOriginalMapString;
-            if (newData.checkOriginalMapString !== checkOriginalMapString) {
-                throw new Error("管理者によってマップが変更されたようです。\nInvalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
+            const checkOriginalMapString = this.checkOriginalMapString;
+            if (this._isDisallowLoadOldSave && newData.checkOriginalMapString !== checkOriginalMapString) {
+                console.error("Invalid hash", `(password)=${newData.checkOriginalMapString} (current map)=${checkOriginalMapString}`);
+                throw new Error("前回パスワード取得時から、制作者によってマップが変更されたためロードできませんでした。\n(マップデータ制作者の設定により、内容が変更されると以前のパスワードは利用できなくなります。)\n予めご了承ください。");
             }
             console.log("Valid Password!");
         }
