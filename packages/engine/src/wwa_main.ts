@@ -32,7 +32,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
-import { WWACompress, WWASave, FailedLoadingSaveDataCause } from "./wwa_save";
+import { WWACompress, WWASave, LoadErrorCode, generateMajorRevision } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
@@ -420,15 +420,18 @@ export class WWA {
             this._scoreWindow = new ScoreWindow(
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
-            this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, this._checkSaveDataCompatibility.bind(this), failedLoadingSaveDataCauses => {
+            this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, wwa._wwaData.worldPassNumber, this._checkSaveDataCompatibility.bind(this), failedLoadingSaveDataCauses => {
                 if (failedLoadingSaveDataCauses.length > 0) {
-                    let message = "これまでに保存されていたセーブデータは、下記の理由により消えてしまいました。";
+                    let message = "これまでに保存されていたセーブデータは、下記の理由により消えたものがあります。";
                     failedLoadingSaveDataCauses.forEach((cause) => {
                         switch (cause) {
-                            case "DIFFERENCE_WORLDNAME":
+                            case LoadErrorCode.UNMATCHED_WORLD_NAME:
                                 message += "\n・制作者によるマップデータのワールド名の変更";
                                 break;
-                            case "DIALLOW_OLD_SAVEDATA":
+                            case LoadErrorCode.UNMATCHED_WORLD_PASS_NUMBER:
+                                message += "\n・制作者によるマップデータの暗証番号の変更";
+                                break;
+                            case LoadErrorCode.DISALLOW_OLD_REVISION_WORLD_SAVE_DATA:
                                 message += "\n・制作者によるマップデータの内容変更 (マップデータ制作者の設定により、内容が変更されるとセーブデータが消去されます)";
                                 break;
                         }
@@ -4892,15 +4895,21 @@ font-weight: bold;
 
     /**
      * セーブデータの内容を確認し、現在の WWA のマップデータで互換性があるか確認します。
+     * エラーがある場合はエラーコードを、エラーがない場合は null を返します
      * @param saveDataWorldName セーブデータのワールド名
-     * @param saveDataHash セーブデータのハッシュ値
+     * @param saveDataHash セーブデータのハッシュ値 （マップデータから生成されるMD5ハッシュ値）
+     * @param saveDataMajorRevision セーブデータのメジャーリビジョン（ワールド名と暗証番号から生成されるMD5ハッシュ値）
      */
-    private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string): FailedLoadingSaveDataCause {
+    private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string, saveDataMajorRevision: string): LoadErrorCode | null {
         if (saveDataWorldName !== this._wwaData.worldName) {
-            return "DIFFERENCE_WORLDNAME";
+            return LoadErrorCode.UNMATCHED_WORLD_NAME;
+        }
+        if (saveDataMajorRevision !== generateMajorRevision(this._wwaData.worldName, this._wwaData.worldPassNumber))  {
+            // majorRevision が不一致だが、前段の if 文よりタイトルは一致しているので、暗証番号が不一致である。
+            return LoadErrorCode.UNMATCHED_WORLD_PASS_NUMBER;
         }
         if (this._isDisallowLoadOldSave && saveDataHash !== this.checkOriginalMapString) {
-            return "DIALLOW_OLD_SAVEDATA";
+            return LoadErrorCode.DISALLOW_OLD_REVISION_WORLD_SAVE_DATA;
         }
         return null;
     }

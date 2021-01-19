@@ -3,10 +3,10 @@ import {
     WWAData
 } from "../wwa_data";
 import WWACompress from "./WWACompress"; 
-import WWASave, { OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./WWASave";
+import WWASave from "./WWASave";
 import WWASaveDataDB from "./WWASaveDataDB";
 import WWASaveDataList from "./WWASaveDataList";
-import { FailedLoadingSaveDataCause } from ".";
+import { LoadErrorCode, OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./common";
 
 type WWASaveDataItem = {
     url?: string,
@@ -16,11 +16,12 @@ type WWASaveDataItem = {
     data: object, // TODO: object だけではよくわからないのでちゃんとした型を指定する
     date: Date,
     worldName: string,
+    majorRevision: string,
 };
 
 type FailedLoadingSaveDataInformation = {
     id: number,
-    cause: FailedLoadingSaveDataCause
+    cause: LoadErrorCode
 };
 
 export default class WWASaveDataDBList extends WWASaveDataList {
@@ -170,6 +171,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                 "data": compressData,
                 "date": date,
                 "worldName": WWASave.worldName,
+                "majorRevision": WWASave.majorRevision
             };
             this.selectDatas[saveID] = addData;
 
@@ -241,6 +243,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                             date: resultData.date,
                             image: resultData.image,
                             worldName: resultData.worldName,
+                            majorRevision: resultData.majorRevision
                         };
                     } catch (error) {
                         continue;

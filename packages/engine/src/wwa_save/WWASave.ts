@@ -10,16 +10,14 @@ import WWASaveData from "./WWASaveData";
 import WWASaveDataList from "./WWASaveDataList";
 import WWASaveDataDBList from "./WWASaveDataDBList";
 import WWASaveDataLogList from "./WWASaveDataLogList";
-
-export type FailedLoadingSaveDataCause = "DIFFERENCE_WORLDNAME" | "DIALLOW_OLD_SAVEDATA";
-export type OnCompleteLoadingSaveDataFunction = (hasFailedLoadingSaveData: FailedLoadingSaveDataCause[]) => void;
-export type OnCheckLoadingSaveDataFunction = (saveDataWorldName: string, saveDataHash: string) => FailedLoadingSaveDataCause | null;
+import { generateMajorRevision, OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./common";
 
 /**
  * WWA のセーブデータを管理するシステムのクラスです。
  */
 export default class WWASave {
     /**
+     * マップデータの一意性を示すハッシュ値です。
      * @see WWA.checkOriginalMapString
      */
     public static checkOriginalMapString: string;
@@ -27,6 +25,10 @@ export default class WWASave {
      * マップデータのワールド名です。セーブ時に記録されます。
      */
     public static worldName: string;
+    /**
+     * ワールド名と暗証番号の組から生成されるハッシュ値です。セーブ時に記録されます。
+     */
+    public static majorRevision: string;
     /**
      * Quick Save で保存されるセーブデータ領域です。
      */
@@ -40,17 +42,20 @@ export default class WWASave {
     /**
      * @param wwa WWA インスタンス本体
      * @param worldName WWA マップデータのワールド名
+     * @param worldPassNummber WWA マップデータの暗証番号
      * @param onCheckLoadingSaveData セーブデータ読み込みの互換性チェック時に実行される関数
      * @param onCompleteLoadingSaveData セーブデータの読み込みが完了した際に実行される関数
      */
     public constructor(
         wwa: WWA,
         worldName: string,
+        worldPassNumber: number,
         onCheckLoadingSaveData: OnCheckLoadingSaveDataFunction,
         onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction
     ) {
         WWASave.checkOriginalMapString = wwa.checkOriginalMapString;
         WWASave.worldName = worldName;
+        WWASave.majorRevision = generateMajorRevision(worldName, worldPassNumber);
         this._wwaDBSaveList = new WWASaveDataDBList(onCheckLoadingSaveData, onCompleteLoadingSaveData);
         this._wwaLogSaveList = new WWASaveDataLogList();
         this.selectDBSaveDataList();
