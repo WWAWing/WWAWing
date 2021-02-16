@@ -599,7 +599,10 @@ export class Player extends PartsObject {
             const overwrittenCy = useBlank ? animationOption.itemBoxBackgroundImageCoord.y : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
             targetItemBoxElement.style.left = dx + "px";
             targetItemBoxElement.style.top = dy + "px";
-            const startItemEffectTimer = window.setTimeout(() => {
+            if (typeof this.itemEffectStartTimers[i] === "number") {
+                clearInterval(this.itemEffectStartTimers[i]);
+            }
+            this.itemEffectStartTimers[i] = window.setTimeout(() => {
                 this.itemEffectStartTimers[i] = undefined;
                 this.startItemEffect(
                     i,
@@ -612,7 +615,6 @@ export class Player extends PartsObject {
                     durationMs
                 );
             }, Consts.DEFAULT_FRAME_INTERVAL);
-            this.itemEffectStartTimers[i] = startItemEffectTimer;
         }
     }
 
