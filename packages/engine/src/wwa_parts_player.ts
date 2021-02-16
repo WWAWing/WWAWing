@@ -545,7 +545,11 @@ export class Player extends PartsObject {
     readonly itemTransitioningClassName = "item-transitioning";
     readonly overwittenItemClassName = "item-overwritten";
     readonly overwittenItemSelector = `.${this.overwittenItemClassName}`;
-
+    /**
+     * アイテムエフェクト開始の setTimeout のタイマーを保持する配列
+     * 添字はアイテムボックス位置 (0-11)
+     */
+    readonly itemEffectStartTimers: (number | undefined)[] = new Array(Consts.ITEMBOX_SIZE);
     /**
      * 全アイテムボックスのDOMの更新を行います。
      * アイテムボックスの内部状態の変更後に呼ぶことでアイテムボックスの見た目が更新されます。
@@ -573,7 +577,7 @@ export class Player extends PartsObject {
             // 該当位置がアイテムなしの場合
             if (this._itemBox[i] === 0) {
                 targetItemBoxElement.style.backgroundPosition = "-40px 0px";
-                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
+                this.disposeItemEffect(i, this._itemBoxElement[i], parentElement);
                 continue;
             }
             const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
@@ -582,7 +586,7 @@ export class Player extends PartsObject {
             // 該当位置がアニメーション対象アイテムでない場合
             if (!animationOption || i !== animationOption.insertPos - 1) {
                 targetItemBoxElement.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
+                this.disposeItemEffect(i, this._itemBoxElement[i], parentElement);
                 continue;
             }
 
@@ -595,26 +599,33 @@ export class Player extends PartsObject {
             const overwrittenCy = useBlank ? animationOption.itemBoxBackgroundImageCoord.y : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
             targetItemBoxElement.style.left = dx + "px";
             targetItemBoxElement.style.top = dy + "px";
-            window.setTimeout(() => this.startItemEffect(
-                targetItemBoxElement,
-                parentElement,
-                {
-                    target: { x: cx, y: cy },
-                    overwritten: { x: overwrittenCx, y: overwrittenCy },
-                },
-                durationMs
-            ), Consts.DEFAULT_FRAME_INTERVAL);
+            const startItemEffectTimer = window.setTimeout(() => {
+                this.itemEffectStartTimers[i] = undefined;
+                this.startItemEffect(
+                    i,
+                    targetItemBoxElement,
+                    parentElement,
+                    {
+                        target: { x: cx, y: cy },
+                        overwritten: { x: overwrittenCx, y: overwrittenCy },
+                    },
+                    durationMs
+                );
+            }, Consts.DEFAULT_FRAME_INTERVAL);
+            this.itemEffectStartTimers[i] = startItemEffectTimer;
         }
     }
 
     /**
      * アイテムエフェクトを開始します。
+     * @param index アイテムボックス番号 0-11
      * @param targetItemBoxElement 動かすアイテムのdiv要素
      * @param parentElement 動かすアイテムの親のdiv要素
      * @param crops target: 動かすアイテムの画像上のxy座標, overwritten: 上書きされるアイテムの画像上のxy座標
      * @param durationMs エフェクトにかかる時間
      */
     private startItemEffect(
+        index: number,
         targetItemBoxElement: HTMLDivElement,
         parentElement: HTMLDivElement,
         crops: {
@@ -640,16 +651,21 @@ export class Player extends PartsObject {
         targetItemBoxElement.style.top = "0";
         parentElement.classList.add(this.itemTransitioningClassName);
         targetItemBoxElement.addEventListener("transitionend", () => {
-            this.disposeItemEffect(targetItemBoxElement, parentElement);
+            this.disposeItemEffect(index, targetItemBoxElement, parentElement);
         }, { once: true });
     }
  
     /**
      * アイテムエフェクトを破棄します。アイテムエフェクトが動いていない時は何も起きません。
+     * @param index アイテムボックス番号 0-11
      * @param itemBoxElement 破棄するエフェクトの対象のアイテムのdiv要素
      * @param parentElement 破棄するエフェクト対象アイテムの親のdiv要素
      */
-    private disposeItemEffect(itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
+    private disposeItemEffect(index: number, itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
+        if (typeof this.itemEffectStartTimers[index] === "number") {
+            clearInterval(this.itemEffectStartTimers[index]);
+            this.itemEffectStartTimers[index] = undefined;
+        }
         itemBoxElement.style.transitionDuration = "0s";
         itemBoxElement.style.transitionProperty = "";
         itemBoxElement.style.left = "0";
