@@ -243,7 +243,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                             date: resultData.date,
                             image: resultData.image,
                             worldName: resultData.worldName,
-                            majorRevision: resultData.majorRevision
+                            majorRevision: resultData.majorRevision // v3.5.4 以下でセーブされたデータの場合 undefined
                         };
                     } catch (error) {
                         continue;

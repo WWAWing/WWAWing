@@ -17,4 +17,4 @@ export enum LoadErrorCode {
 }
 
 export type OnCompleteLoadingSaveDataFunction = (hasFailedLoadingSaveData: LoadErrorCode[]) => void;
-export type OnCheckLoadingSaveDataFunction = (saveDataWorldName: string, saveDataHash: string, saveDataMajorRevision: string) => LoadErrorCode | null;
+export type OnCheckLoadingSaveDataFunction = (saveDataWorldName: string, saveDataHash: string, saveDataMajorRevision: string | undefined) => LoadErrorCode | null;

@@ -4898,13 +4898,14 @@ font-weight: bold;
      * エラーがある場合はエラーコードを、エラーがない場合は null を返します
      * @param saveDataWorldName セーブデータのワールド名
      * @param saveDataHash セーブデータのハッシュ値 （マップデータから生成されるMD5ハッシュ値）
-     * @param saveDataMajorRevision セーブデータのメジャーリビジョン（ワールド名と暗証番号から生成されるMD5ハッシュ値）
+     * @param saveDataMajorRevision セーブデータのメジャーリビジョン（ワールド名と暗証番号から生成されるMD5ハッシュ値） v3.5.4 以下の WWA では存在しないので undefined
      */
-    private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string, saveDataMajorRevision: string): LoadErrorCode | null {
+    private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string, saveDataMajorRevision: string | undefined): LoadErrorCode | null {
         if (saveDataWorldName !== this._wwaData.worldName) {
             return LoadErrorCode.UNMATCHED_WORLD_NAME;
         }
-        if (saveDataMajorRevision !== generateMajorRevision(this._wwaData.worldName, this._wwaData.worldPassNumber))  {
+        // v3.5.4 以下より WWA Wing をアップデートした場合にセーブデータが無効になるのを防ぐため、 メジャーリビジョンがない場合はエラーとしない。
+        if (saveDataMajorRevision && saveDataMajorRevision !== generateMajorRevision(this._wwaData.worldName, this._wwaData.worldPassNumber)) {
             // majorRevision が不一致だが、前段の if 文よりタイトルは一致しているので、暗証番号が不一致である。
             return LoadErrorCode.UNMATCHED_WORLD_PASS_NUMBER;
         }
