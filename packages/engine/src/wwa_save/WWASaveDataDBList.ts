@@ -248,7 +248,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     } catch (error) {
                         continue;
                     }
-                    const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash);
+                    const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash, saveData.majorRevision);
                     if (failedCause !== null) {
                         failedLoadingSaveData.push({
                             id: i,
