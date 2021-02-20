@@ -3697,18 +3697,21 @@ export class WWA {
     }
 
     private _decodePassword(pass: string): WWAData {
-        try {
-            var json = CryptoJS.AES.decrypt(
-                pass,
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310) + "P+>A[]"
-            ).toString(CryptoJS.enc.Utf8);
-        } catch (e) {
-            throw new Error("データが破損しているか、制作者によって暗証番号が変更されたためロードに失敗しました。\n" + e.message)
+        const decodedPassword = CryptoJS.AES.decrypt(
+            pass,
+            "^ /" + (this._wwaData.worldPassNumber * 231 + 8310) + "P+>A[]"
+        ).toString(CryptoJS.enc.Utf8) || CryptoJS.AES.decrypt(
+            pass,
+            "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + this.checkOriginalMapString) + "P+>A[]"
+        ).toString(CryptoJS.enc.Utf8); // 現在の暗号化キーで復号に失敗した場合は v3.5.4 以前の暗号化キーを使う
+
+        if (!decodedPassword) {
+            throw new Error("データが破損しているか、制作者によって暗証番号が変更されたためロードに失敗しました。");
         }
         var obj: any;
         var decodeWWAData: WWAData;
         try {
-            obj = JSON.parse(json);
+            obj = JSON.parse(decodedPassword);
         } catch (e) {
             throw new Error("マップデータ以外のものが暗号化されたか、マップデータに何かが不足しているようです。\nJSON PARSE FAILED");
         }
