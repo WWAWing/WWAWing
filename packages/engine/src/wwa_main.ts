@@ -3696,6 +3696,12 @@ export class WWA {
         this.wwaCustomEventEmitter.dispatch(eventName, data);
     }
 
+    /**
+     * 与えられたパスワードセーブの暗号化を解除して、配列の0要素目で返します。
+     * 与えられたパスワードセーブの暗号化データ内にワールド名が含まれる(v3.5.6以下の WWA Wingで保存されている)かを配列の1要素目で返します。
+     * 暗号化の解除に失敗した場合は、エラー内容をメッセージとする Error オブジェクトがスローされます。
+     * @param pass パスワードセーブの文字列
+     */
     private _decodePassword(pass: string): [WWAData, { isWorldNameEmpty: boolean }] {
         let decodedPassword: string = "";
         let error: any = undefined;

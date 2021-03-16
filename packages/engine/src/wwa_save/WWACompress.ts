@@ -414,6 +414,13 @@ export default class WWACompress {
         }
         return newList;
     }
+    /**
+     * restartData (初期データ) に 圧縮状態のセーブデータ差分を適用した結果と、
+     * 与えられた圧縮状態のセーブデータ差分にワールド名が含まれる(v3.5.6以下の WWA Wingで保存されている)かを
+     * 返します。
+     * 前者が配列の先頭 (0要素目)で、後者が末尾 (1要素目)です。
+     * @param saveObject 圧縮状態のセーブデータ差分
+     */
     public static decompress(saveObject: object): [WWAData, {isWorldNameEmpty: boolean}] {
         var newData: WWAData;
 
