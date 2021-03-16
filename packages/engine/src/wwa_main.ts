@@ -3703,7 +3703,7 @@ export class WWA {
         ).toString(CryptoJS.enc.Utf8) || CryptoJS.AES.decrypt(
             pass,
             "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + this.checkOriginalMapString) + "P+>A[]"
-        ).toString(CryptoJS.enc.Utf8); // 現在の暗号化キーで復号に失敗した場合は v3.5.4 以前の暗号化キーを使う
+        ).toString(CryptoJS.enc.Utf8); // 現在の暗号化キーで復号に失敗した場合は v3.5.6 以前の暗号化キーを使う
 
         if (!decodedPassword) {
             throw new Error("データが破損しているか、制作者によって暗証番号が変更されたためロードに失敗しました。");
@@ -4901,13 +4901,13 @@ font-weight: bold;
      * エラーがある場合はエラーコードを、エラーがない場合は null を返します
      * @param saveDataWorldName セーブデータのワールド名
      * @param saveDataHash セーブデータのハッシュ値 （マップデータから生成されるMD5ハッシュ値）
-     * @param saveDataMajorRevision セーブデータのメジャーリビジョン（ワールド名と暗証番号から生成されるMD5ハッシュ値） v3.5.4 以下の WWA では存在しないので undefined
+     * @param saveDataMajorRevision セーブデータのメジャーリビジョン（ワールド名と暗証番号から生成されるMD5ハッシュ値） v3.5.6 以下の WWA では存在しないので undefined
      */
     private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string, saveDataMajorRevision: string | undefined): LoadErrorCode | null {
         if (saveDataWorldName !== this._wwaData.worldName) {
             return LoadErrorCode.UNMATCHED_WORLD_NAME;
         }
-        // v3.5.4 以下より WWA Wing をアップデートした場合にセーブデータが無効になるのを防ぐため、 メジャーリビジョンがない場合はエラーとしない。
+        // v3.5.6 以下より WWA Wing をアップデートした場合にセーブデータが無効になるのを防ぐため、 メジャーリビジョンがない場合はエラーとしない。
         if (saveDataMajorRevision && saveDataMajorRevision !== generateMajorRevision(this._wwaData.worldName, this._wwaData.worldPassNumber)) {
             // majorRevision が不一致だが、前段の if 文よりタイトルは一致しているので、暗証番号が不一致である。
             return LoadErrorCode.UNMATCHED_WORLD_PASS_NUMBER;

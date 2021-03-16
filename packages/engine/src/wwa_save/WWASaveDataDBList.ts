@@ -243,7 +243,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                             date: resultData.date,
                             image: resultData.image,
                             worldName: resultData.worldName,
-                            majorRevision: resultData.majorRevision // v3.5.4 以下でセーブされたデータの場合 undefined
+                            majorRevision: resultData.majorRevision // v3.5.6 以下でセーブされたデータの場合 undefined
                         };
                     } catch (error) {
                         continue;
@@ -251,7 +251,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash, saveData.majorRevision);
                     if (failedCause !== null) {
                         failedLoadingSaveData.push({
-                            id: i,
+                            id: saveData.id,
                             cause: failedCause
                         });
                         continue;
