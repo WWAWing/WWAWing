@@ -3696,7 +3696,7 @@ export class WWA {
         this.wwaCustomEventEmitter.dispatch(eventName, data);
     }
 
-    private _decodePassword(pass: string): WWAData {
+    private _decodePassword(pass: string): [WWAData, { isWorldNameEmpty: boolean }] {
         const decodedPassword = CryptoJS.AES.decrypt(
             pass,
             "^ /" + (this._wwaData.worldPassNumber * 231 + 8310) + "P+>A[]"
@@ -3706,10 +3706,9 @@ export class WWA {
         ).toString(CryptoJS.enc.Utf8); // 現在の暗号化キーで復号に失敗した場合は v3.5.6 以前の暗号化キーを使う
 
         if (!decodedPassword) {
-            throw new Error("データが破損しているか、制作者によって暗証番号が変更されたためロードに失敗しました。");
+            throw new Error("正常にパスワードセーブが復元できませんでした。");
         }
         var obj: any;
-        var decodeWWAData: WWAData;
         try {
             obj = JSON.parse(decodedPassword);
         } catch (e) {
@@ -3717,21 +3716,22 @@ export class WWA {
         }
         if (obj.isCompress) {
             delete obj.isCompress;
-            decodeWWAData = WWACompress.decompress(obj);
+            return WWACompress.decompress(obj);
         } else {
-            decodeWWAData = <WWAData>obj;
-        }
-        
-        return decodeWWAData;
+            return [<WWAData>obj, { isWorldNameEmpty: false }];
+        };
     }
 
     private _quickLoad(restart: boolean = false, password: string = null, apply: boolean = true): WWAData {
         if (!restart && this._wwaSave.hasSaveData() === void 0 && password === null) {
             throw new Error("セーブデータがありません。");
         }
-        var newData: WWAData;
+        let newData: WWAData;
+        let isWorldNameEmpty: boolean = false;
         if (password !== null) {
-            newData = this._decodePassword(password);
+            const result = this._decodePassword(password);
+            newData = result[0];
+            isWorldNameEmpty = result[1].isWorldNameEmpty;
         } else {
             newData = <WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._messageWindow.load()));
         }
@@ -3749,7 +3749,8 @@ export class WWA {
         delete newData.mapObjectCompressed;
 
         if (password !== null) {
-            if (newData.worldName !== this._wwaData.worldName) {
+            // v3.5.6 以前のセーブデータはワールド名がないので素通しする
+            if (!isWorldNameEmpty && newData.worldName !== this._wwaData.worldName) {
                 console.error("Invalid title", `(password)=${newData.worldName} (current map)=${this._wwaData.worldName}`);
                 throw new Error("前回パスワード取得時から、制作者によってワールド名が変更されたためロードできませんでした。\n予めご了承ください。")
             }
@@ -4250,7 +4251,7 @@ export class WWA {
         } catch (e) {
             this._player.clearPasswordWindowWaiting();
             // 読み込み失敗
-            alert("パスワードが正常ではありません。\nエラー詳細:\n" + e.message);
+            alert("パスワードが正常でないか、マップ製作者によってマップの暗証番号が変更されたためロードできませんでした。\nエラー詳細:\n" + e.message);
             return;
         }
         this._passwordLoadExecInNextFrame = true;

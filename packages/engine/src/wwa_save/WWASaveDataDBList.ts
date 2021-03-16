@@ -259,7 +259,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     if (!this[saveData.id]) {
                         continue;
                     }
-                    var quickSaveData = WWACompress.decompress(saveData.data);
+                    const [quickSaveData] = WWACompress.decompress(saveData.data);
                     this[saveData.id].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
 

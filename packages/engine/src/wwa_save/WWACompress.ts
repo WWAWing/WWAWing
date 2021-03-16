@@ -42,7 +42,8 @@ export default class WWACompress {
                 case "number":
                 case "string":
                 case "boolean":
-                    if (this._restartData[key] === value) {
+                    // 通常、初期データと変化のない値は保存対象外だが、ワールド名はロード可能判定に使うので保存対象
+                    if (this._restartData[key] === value && key !== "worldName") {
                         continue;
                     }
                     break;
@@ -413,7 +414,7 @@ export default class WWACompress {
         }
         return newList;
     }
-    public static decompress(saveObject: object): WWAData {
+    public static decompress(saveObject: object): [WWAData, {isWorldNameEmpty: boolean}] {
         var newData: WWAData;
 
         newData = <WWAData>JSON.parse(JSON.stringify(this._restartData));
@@ -438,7 +439,7 @@ export default class WWACompress {
             }
             newData[key] = value;
         }
-        return newData;
+        return [newData, {isWorldNameEmpty: (saveObject as WWAData).worldName === undefined}];
     }
     private static decompressObject(key: string, loadObject: object, newObject: object): object {
         var saveObject: object;
@@ -687,7 +688,7 @@ export default class WWACompress {
         if (resumeSaveData) {
             var wwaData: WWAData;
             try {
-                wwaData = this.decompress(resumeSaveData);
+                [wwaData] = this.decompress(resumeSaveData);
                 if (wwaData) {
                     return wwaData;
                 }
