@@ -3700,17 +3700,26 @@ export class WWA {
         let decodedPassword: string = "";
         let error: any = undefined;
         try {
-             decodedPassword = CryptoJS.AES.decrypt(
+            decodedPassword = CryptoJS.AES.decrypt(
                 pass,
                 "^ /" + (this._wwaData.worldPassNumber * 231 + 8310) + "P+>A[]"
-            ).toString(CryptoJS.enc.Utf8) || CryptoJS.AES.decrypt(
-                pass,
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + this.checkOriginalMapString) + "P+>A[]"
-            ).toString(CryptoJS.enc.Utf8); // 現在の暗号化キーで復号に失敗した場合は v3.5.6 以前の暗号化キーを使う
+            ).toString(CryptoJS.enc.Utf8);
         } catch (caught) {
             error = caught;
         }
         if (!decodedPassword) {
+            console.warn("新方式でのパスワード暗号化解除失敗:", error);
+            try {
+                decodedPassword = CryptoJS.AES.decrypt(
+                    pass,
+                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + this.checkOriginalMapString) + "P+>A[]"
+                ).toString(CryptoJS.enc.Utf8); // 現在の暗号化キーで復号に失敗した場合は v3.5.6 以前の暗号化キーを使う
+            } catch (caught) {
+                error = caught;
+            }
+        }
+        if (!decodedPassword) {
+            console.warn("旧方式でのパスワード暗号化解除失敗:", error);
             const errorMessage = error && error.message ? error.message : "";
             throw new Error("パスワード取得時からワールド制作者によってマップの暗証番号が変更されたか、\nパスワードが壊れているために正常にセーブデータが復元できませんでした。\n" + errorMessage);
         }
