@@ -17,9 +17,8 @@ npm install
 OSは不問です。
 
 - Microsoft Internet Explorer 11
-- Microsoft Edge (EdgeHTML 18) ※Microsoft Edge レガシ は遅くとも2021年3月9日までにサポートを終了します。今後は Chromium 版 Edge の利用を強くおすすめします。
 - Mozilla Firefox (最新版)
-- Google Chrome/Chromium (最新版) ※Microsoft Edgeの最新版を含む
+- Google Chrome/Chromium (最新版) ※ Microsoft Edge の最新版など Chromium ベースのブラウザを含む
 - Safari (最新版)
 
 ### スマートフォン・タブレット
