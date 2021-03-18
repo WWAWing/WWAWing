@@ -3699,6 +3699,7 @@ export class WWA {
      * 与えられたパスワードセーブの暗号化データ内にワールド名が含まれる(v3.5.6以下の WWA Wingで保存されている)かを配列の1要素目で返します。
      * 暗号化の解除に失敗した場合は、エラー内容をメッセージとする Error オブジェクトがスローされます。
      * @param pass パスワードセーブの文字列
+     * @returns 2要素配列: [パスワードセーブの暗号化解除結果, 付加情報オブジェクト(復号化結果にワールド名が含まれないなら isWorldName が true)]
      */
     private _decodePassword(pass: string): [WWAData, { isWorldNameEmpty: boolean }] {
         let decodedPassword: string = "";

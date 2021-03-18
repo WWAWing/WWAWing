@@ -420,6 +420,7 @@ export default class WWACompress {
      * 返します。
      * 前者が配列の先頭 (0要素目)で、後者が末尾 (1要素目)です。
      * @param saveObject 圧縮状態のセーブデータ差分
+     * @returns 2要素配列: [パスワードセーブの圧縮差分適用結果, 付加情報オブジェクト(復号化結果にワールド名が含まれないなら isWorldName が true)]
      */
     public static decompress(saveObject: object): [WWAData, {isWorldNameEmpty: boolean}] {
         var newData: WWAData;
