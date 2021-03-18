@@ -32,6 +32,7 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
+import { encodeSaveData, decodeSaveDataV0, decodeSaveDataV1, generateMD5 } from "./wwa_encryption";
 import { WWACompress, WWASave, LoadErrorCode, generateMajorRevision } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
@@ -3588,7 +3589,7 @@ export class WWA {
         }
         text += "Z";
         //            console.log( "C = " + chksum );
-        return CryptoJS.MD5(text).toString();
+        return generateMD5(text);
     }
 
     private _generateSaveDataHash(data: WWAData): string {
@@ -3610,7 +3611,7 @@ export class WWA {
             text += util.arr2str4save(data[keyArray[i]]);
         }
 
-        return CryptoJS.MD5(text).toString();
+        return generateMD5(text);
     }
     private _saveDataList = []
 
@@ -3673,10 +3674,7 @@ export class WWA {
                     data: qd,
                     compress: compressQD
                 });
-                return CryptoJS.AES.encrypt(
-                    CryptoJS.enc.Utf8.parse(s),
-                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310) + "P+>A[]"
-                ).toString();
+                return encodeSaveData(s, this._wwaData.worldPassNumber);
             case ChoiceCallInfo.CALL_BY_SUSPEND:
                 this.wwaCustomEvent('wwa_suspend', {
                     data: qd,
@@ -3706,20 +3704,15 @@ export class WWA {
         let decodedPassword: string = "";
         let error: any = undefined;
         try {
-            decodedPassword = CryptoJS.AES.decrypt(
-                pass,
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310) + "P+>A[]"
-            ).toString(CryptoJS.enc.Utf8);
+            decodedPassword = decodeSaveDataV1(pass, this._wwaData.worldPassNumber);
         } catch (caught) {
             error = caught;
         }
         if (!decodedPassword) {
             console.warn("新方式でのパスワード暗号化解除失敗:", error);
             try {
-                decodedPassword = CryptoJS.AES.decrypt(
-                    pass,
-                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + this.checkOriginalMapString) + "P+>A[]"
-                ).toString(CryptoJS.enc.Utf8); // 現在の暗号化キーで復号に失敗した場合は v3.5.6 以前の暗号化キーを使う
+                // 現在の暗号化キーで復号に失敗した場合は v3.5.6 以前の暗号化キーを使う
+                decodedPassword = decodeSaveDataV0(pass, this._wwaData.worldPassNumber, this._wwaData.checkOriginalMapString);
             } catch (caught) {
                 error = caught;
             }
