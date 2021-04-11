@@ -1,0 +1,62 @@
+{
+    // IntelliSense を使用して利用可能な属性を学べます。
+    // 既存の属性の説明をホバーして表示します。
+    // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch wwawing-dev-server",
+            "request": "launch",
+            "runtimeArgs": [
+                "run-script",
+                "start"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "pwa-node"
+        },
+        {
+            "name": "Launch wwawing-dev on Firefox",
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": true,
+            "url": "http://localhost:3000/wwamap.html",
+            "webRoot": "${workspaceFolder}/packages/engine/lib",
+            "pathMappings": [
+                {
+                    "url": "webpack:///src/",
+                    "path": "${workspaceFolder}/packages/engine/src/"
+                }
+            ]
+        },
+        {
+            "name": "Launch wwawing-dev on Chrome",
+            "request": "launch",
+            "type": "pwa-chrome",
+            "url": "http://localhost:3000/wwamap.html",
+            "sourceMaps": true,
+            "webRoot": "${workspaceFolder}/packages/engine/lib",
+            "pathMapping": {
+                "webpack:///src/": "${workspaceFolder}/packages/engine/src/"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch WWAWing on Firefox",
+            "configurations": [
+                "Launch wwawing-dev-server",
+                "Launch wwawing-dev on Firefox"
+            ]
+        },
+        {
+            "name": "Launch WWAWing on Chrome",
+            "configurations": [
+                "Launch wwawing-dev-server",
+                "Launch wwawing-dev on Chrome"
+            ]
+        }
+    ]
+}
