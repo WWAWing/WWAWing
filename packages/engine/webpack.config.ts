@@ -42,7 +42,8 @@ const config: webpack.Configuration = {
     ],
     watchOptions: {
         ignored: ["node_modules", 'lib/**/*.js']
-    }
+    },
+    devtool: "source-map"
 };
 
 export default config;
