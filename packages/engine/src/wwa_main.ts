@@ -33,7 +33,7 @@ import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { encodeSaveData, decodeSaveDataV0, decodeSaveDataV1, generateMD5 } from "./wwa_encryption";
-import { WWACompress, WWASave, LoadErrorCode, generateMajorRevision } from "./wwa_save";
+import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADataWithWorldNameStatus } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
@@ -3701,7 +3701,7 @@ export class WWA {
      * @param pass パスワードセーブの文字列
      * @returns 2要素配列: [パスワードセーブの暗号化解除結果, 付加情報オブジェクト(復号化結果にワールド名が含まれないなら isWorldName が true)]
      */
-    private _decodePassword(pass: string): [WWAData, { isWorldNameEmpty: boolean }] {
+    private _decodePassword(pass: string): WWADataWithWorldNameStatus {
         let decodedPassword: string = "";
         let error: any = undefined;
         try {
@@ -4917,15 +4917,15 @@ font-weight: bold;
      * エラーがある場合はエラーコードを、エラーがない場合は null を返します
      * @param saveDataWorldName セーブデータのワールド名
      * @param saveDataHash セーブデータのハッシュ値 （マップデータから生成されるMD5ハッシュ値）
-     * @param saveDataMajorRevision セーブデータのメジャーリビジョン（ワールド名と暗証番号から生成されるMD5ハッシュ値） v3.5.6 以下の WWA では存在しないので undefined
+     * @param mapDataRevisionKey セーブデータのリビジョン（ワールド名と暗証番号から生成されるMD5ハッシュ値） v3.5.6 以下の WWA では存在しないので undefined
      */
-    private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string, saveDataMajorRevision: string | undefined): LoadErrorCode | null {
+    private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string, mapDataRevisionKey: string | undefined): LoadErrorCode | null {
         if (saveDataWorldName !== this._wwaData.worldName) {
             return LoadErrorCode.UNMATCHED_WORLD_NAME;
         }
         // v3.5.6 以下より WWA Wing をアップデートした場合にセーブデータが無効になるのを防ぐため、 メジャーリビジョンがない場合はエラーとしない。
-        if (saveDataMajorRevision && saveDataMajorRevision !== generateMajorRevision(this._wwaData.worldName, this._wwaData.worldPassNumber)) {
-            // majorRevision が不一致だが、前段の if 文よりタイトルは一致しているので、暗証番号が不一致である。
+        if (mapDataRevisionKey && mapDataRevisionKey !== generateMapDataRevisionKey(this._wwaData.worldName, this._wwaData.worldPassNumber)) {
+            // リビジョン が不一致だが、前段の if 文よりタイトルは一致しているので、暗証番号が不一致である。
             return LoadErrorCode.UNMATCHED_WORLD_PASS_NUMBER;
         }
         if (this._isDisallowLoadOldSave && saveDataHash !== this.checkOriginalMapString) {

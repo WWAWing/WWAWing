@@ -10,7 +10,7 @@ import WWASaveData from "./WWASaveData";
 import WWASaveDataList from "./WWASaveDataList";
 import WWASaveDataDBList from "./WWASaveDataDBList";
 import WWASaveDataLogList from "./WWASaveDataLogList";
-import { generateMajorRevision, OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./common";
+import { generateMapDataRevisionKey, OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./common";
 
 /**
  * WWA のセーブデータを管理するシステムのクラスです。
@@ -28,7 +28,7 @@ export default class WWASave {
     /**
      * ワールド名と暗証番号の組から生成されるハッシュ値です。セーブ時に記録されます。
      */
-    public static majorRevision: string;
+    public static mapDataRevisionKey: string;
     /**
      * Quick Save で保存されるセーブデータ領域です。
      */
@@ -55,7 +55,7 @@ export default class WWASave {
     ) {
         WWASave.checkOriginalMapString = wwa.checkOriginalMapString;
         WWASave.worldName = worldName;
-        WWASave.majorRevision = generateMajorRevision(worldName, worldPassNumber);
+        WWASave.mapDataRevisionKey = generateMapDataRevisionKey(worldName, worldPassNumber);
         this._wwaDBSaveList = new WWASaveDataDBList(onCheckLoadingSaveData, onCompleteLoadingSaveData);
         this._wwaLogSaveList = new WWASaveDataLogList();
         this.selectDBSaveDataList();

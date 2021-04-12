@@ -1,6 +1,7 @@
 import {
     WWAData
 } from "../wwa_data";
+import { WWADataWithWorldNameStatus } from "./common";
 
 var SAVE_COMPRESS_ID = {
     MAP: "map",
@@ -422,7 +423,7 @@ export default class WWACompress {
      * @param saveObject 圧縮状態のセーブデータ差分
      * @returns 2要素配列: [パスワードセーブの圧縮差分適用結果, 付加情報オブジェクト(復号化結果にワールド名が含まれないなら isWorldName が true)]
      */
-    public static decompress(saveObject: object): [WWAData, {isWorldNameEmpty: boolean}] {
+    public static decompress(saveObject: object): WWADataWithWorldNameStatus {
         var newData: WWAData;
 
         newData = <WWAData>JSON.parse(JSON.stringify(this._restartData));

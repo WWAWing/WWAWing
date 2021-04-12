@@ -1,3 +1,5 @@
+import { WWAData } from "../../wwa_data";
+
 /**
  * ロード失敗時のエラーコード
  */
@@ -17,4 +19,10 @@ export enum LoadErrorCode {
 }
 
 export type OnCompleteLoadingSaveDataFunction = (hasFailedLoadingSaveData: LoadErrorCode[]) => void;
-export type OnCheckLoadingSaveDataFunction = (saveDataWorldName: string, saveDataHash: string, saveDataMajorRevision: string | undefined) => LoadErrorCode | null;
+export type OnCheckLoadingSaveDataFunction = (saveDataWorldName: string, saveDataHash: string, mapDataRevisionKey: string | undefined) => LoadErrorCode | null;
+
+/**
+ * WWAData と、ワールド名の読み込み結果を表すオブジェクトのペアです。
+ * 主に、パスワードセーブなどに使われる容量が削減されたセーブデータにワールド名が含まれるかどうかの判定で使います。
+ */
+export type WWADataWithWorldNameStatus = [WWAData, { isWorldNameEmpty: boolean }];

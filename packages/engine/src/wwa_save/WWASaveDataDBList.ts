@@ -16,7 +16,7 @@ type WWASaveDataItem = {
     data: object, // TODO: object だけではよくわからないのでちゃんとした型を指定する
     date: Date,
     worldName: string,
-    majorRevision: string,
+    mapDataRevisionKey: string,
 };
 
 type FailedLoadingSaveDataInformation = {
@@ -171,7 +171,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                 "data": compressData,
                 "date": date,
                 "worldName": WWASave.worldName,
-                "majorRevision": WWASave.majorRevision
+                "mapDataRevisionKey": WWASave.mapDataRevisionKey
             };
             this.selectDatas[saveID] = addData;
 
@@ -243,12 +243,12 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                             date: resultData.date,
                             image: resultData.image,
                             worldName: resultData.worldName,
-                            majorRevision: resultData.majorRevision // v3.5.6 以下でセーブされたデータの場合 undefined
+                            mapDataRevisionKey: resultData.mapDataRevisionKey // v3.5.6 以下でセーブされたデータの場合 undefined
                         };
                     } catch (error) {
                         continue;
                     }
-                    const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash, saveData.majorRevision);
+                    const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash, saveData.mapDataRevisionKey);
                     if (failedCause !== null) {
                         failedLoadingSaveData.push({
                             id: saveData.id,

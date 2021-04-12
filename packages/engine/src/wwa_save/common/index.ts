@@ -1,3 +1,3 @@
-export * from "./majorRevision";
+export * from "./mapDataRevisionKey";
 export * from "./definitions";
 
