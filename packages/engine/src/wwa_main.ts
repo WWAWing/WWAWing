@@ -4922,13 +4922,11 @@ font-weight: bold;
     private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string, mapDataRevisionKey: string | undefined): LoadErrorCode | null {
         if (saveDataWorldName !== this._wwaData.worldName) {
             return LoadErrorCode.UNMATCHED_WORLD_NAME;
-        }
-        // v3.5.6 以下より WWA Wing をアップデートした場合にセーブデータが無効になるのを防ぐため、 メジャーリビジョンがない場合はエラーとしない。
-        if (mapDataRevisionKey && mapDataRevisionKey !== generateMapDataRevisionKey(this._wwaData.worldName, this._wwaData.worldPassNumber)) {
+          // v3.5.6 以下より WWA Wing をアップデートした場合にセーブデータが無効になるのを防ぐため、 メジャーリビジョンがない場合はエラーとしない。
+        } else if (mapDataRevisionKey && mapDataRevisionKey !== generateMapDataRevisionKey(this._wwaData.worldName, this._wwaData.worldPassNumber)) {
             // リビジョン が不一致だが、前段の if 文よりタイトルは一致しているので、暗証番号が不一致である。
             return LoadErrorCode.UNMATCHED_WORLD_PASS_NUMBER;
-        }
-        if (this._isDisallowLoadOldSave && saveDataHash !== this.checkOriginalMapString) {
+        } else if (this._isDisallowLoadOldSave && saveDataHash !== this.checkOriginalMapString) {
             return LoadErrorCode.DISALLOW_OLD_REVISION_WORLD_SAVE_DATA;
         }
         return null;
