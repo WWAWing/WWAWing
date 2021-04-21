@@ -15,8 +15,8 @@ type WWASaveDataItem = {
     image: string,
     data: object, // TODO: object だけではよくわからないのでちゃんとした型を指定する
     date: Date,
-    worldName: string,
-    mapDataRevisionKey: string,
+    worldName: string | undefined, // v3.5.6 以下でセーブされたデータの場合 undefined
+    mapDataRevisionKey: string | undefined, // v3.5.6 以下でセーブされたデータの場合 undefined
 };
 
 type FailedLoadingSaveDataInformation = {
@@ -242,7 +242,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                             data: resultData.data,
                             date: resultData.date,
                             image: resultData.image,
-                            worldName: resultData.worldName,
+                            worldName: resultData.worldName, // v3.5.6 以下でセーブされたデータの場合 undefined
                             mapDataRevisionKey: resultData.mapDataRevisionKey // v3.5.6 以下でセーブされたデータの場合 undefined
                         };
                     } catch (error) {
