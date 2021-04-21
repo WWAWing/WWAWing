@@ -23,7 +23,7 @@ const upload = async (releaseTag: string, distZipFile: Buffer, updateZipFile: Bu
       octokit.repos.uploadReleaseAsset({
         ...REPO_CONFIG,
         release_id: releaseId,
-        data: distZipFile as unknown as string, // TODO: 型調整
+        data: updateZipFile as unknown as string, // TODO: 型調整
         name: UPDATE_FILE_NAME 
       })
     ]);
