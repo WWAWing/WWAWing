@@ -18,7 +18,6 @@ import {
     GamePadState,
     GamePadStore
 } from "./wwa_input";
-import * as CryptoJS from "crypto-js";
 import * as util from "./wwa_util";
 import { CGManager } from "./wwa_cgmanager";
 import { Camera } from "./wwa_camera";
@@ -3713,7 +3712,7 @@ export class WWA {
             console.warn("新方式でのパスワード暗号化解除失敗:", error);
             try {
                 // 現在の暗号化キーで復号に失敗した場合は v3.5.6 以前の暗号化キーを使う
-                decodedPassword = decodeSaveDataV0(pass, this._wwaData.worldPassNumber, this._wwaData.checkOriginalMapString);
+                decodedPassword = decodeSaveDataV0(pass, this._wwaData.worldPassNumber, this.checkOriginalMapString);
             } catch (caught) {
                 error = caught;
             }
