@@ -4914,12 +4914,12 @@ font-weight: bold;
     /**
      * セーブデータの内容を確認し、現在の WWA のマップデータで互換性があるか確認します。
      * エラーがある場合はエラーコードを、エラーがない場合は null を返します
-     * @param saveDataWorldName セーブデータのワールド名
+     * @param saveDataWorldName セーブデータのワールド名 v3.5.6 以下の WWA では存在しないので undefined
      * @param saveDataHash セーブデータのハッシュ値 （マップデータから生成されるMD5ハッシュ値）
      * @param mapDataRevisionKey セーブデータのリビジョン（ワールド名と暗証番号から生成されるMD5ハッシュ値） v3.5.6 以下の WWA では存在しないので undefined
      */
-    private _checkSaveDataCompatibility(saveDataWorldName: string, saveDataHash: string, mapDataRevisionKey: string | undefined): LoadErrorCode | null {
-        if (saveDataWorldName !== this._wwaData.worldName) {
+    private _checkSaveDataCompatibility(saveDataWorldName: string | undefined, saveDataHash: string, mapDataRevisionKey: string | undefined): LoadErrorCode | null {
+        if (saveDataWorldName !== undefined && saveDataWorldName !== this._wwaData.worldName) {
             return LoadErrorCode.UNMATCHED_WORLD_NAME;
           // v3.5.6 以下より WWA Wing をアップデートした場合にセーブデータが無効になるのを防ぐため、 メジャーリビジョンがない場合はエラーとしない。
         } else if (mapDataRevisionKey && mapDataRevisionKey !== generateMapDataRevisionKey(this._wwaData.worldName, this._wwaData.worldPassNumber)) {
