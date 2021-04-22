@@ -19,7 +19,7 @@ export enum LoadErrorCode {
 }
 
 export type OnCompleteLoadingSaveDataFunction = (hasFailedLoadingSaveData: LoadErrorCode[]) => void;
-export type OnCheckLoadingSaveDataFunction = (saveDataWorldName: string, saveDataHash: string, mapDataRevisionKey: string | undefined) => LoadErrorCode | null;
+export type OnCheckLoadingSaveDataFunction = (saveDataWorldName: string | undefined, saveDataHash: string, mapDataRevisionKey: string | undefined) => LoadErrorCode | null;
 
 /**
  * WWAData と、ワールド名の読み込み結果を表すオブジェクトのペアです。
