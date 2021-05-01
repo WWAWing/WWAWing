@@ -1,8 +1,7 @@
 #!/bin/sh
 
-# all ディレクトリ外からの実行は想定していません
-# 実行例 GH_TOKEN=(略) WWAWING_VERSION=3.4.2 ./scripts/update-sites.sh
-# 環境変数 GH_TOKEN に GitHub の Personal Access Token が必要です
+# GitHub Actions 以外からの実行 (特に, all パッケージ以外からの実行)は想定していません
+# 環境変数 WWA_WING_RELEASE_TOKEN に GitHub の Personal Access Token が必要です
 # 環境変数 WWA_WING_VERSION にリリースするバージョン名 (vなし) が必要です
 
 # 配布物 ZIP 生成
@@ -31,6 +30,7 @@ cd sites
 # sites で配布しているバージョンリストに リリースしようとしているバージョンを追記 して Push
 npm i && npx ts-node ./scripts/append-version.ts $WWA_WING_VERSION
 cp ../../assets/html/manual.html ./wwawing.com/wing # マニュアルのコピー
+cp ../../assets/mapdata/wwamap.dat ./wwawing.com/wing # スタンダードマップのコピー
 export BRANCH_NAME="feature/update-to-v$WWA_WING_VERSION"
 git checkout -b $BRANCH_NAME
 git add -u
