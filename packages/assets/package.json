@@ -3,6 +3,14 @@
   "version": "3.5.7",
   "description": "WWA Wing asset files",
   "main": "index.js",
+  "files": [
+    "audio",
+    "html",
+    "images",
+    "mapdata",
+    "style",
+    "wwamk310"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
