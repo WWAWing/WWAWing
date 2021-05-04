@@ -8,9 +8,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "run-p build:dev deploy:dev server",
-    "version_up:patch": "npm version patch && npm run build",
-    "version_up:minor": "npm version minor && npm run build",
-    "version_up:major": "npm version major && npm run build",
     "build": "npm-run-all clean build:prod",
     "build:prod": "webpack --config webpack.config.prod.ts",
     "build:dev": "webpack -w",
@@ -43,8 +40,8 @@
   "devDependencies": {
     "@types/crypto-js": "^4.0.1",
     "@types/pug": "^2.0.4",
-    "@types/terser-webpack-plugin": "^2.2.0",
-    "@types/webpack": "^4.39.1",
+    "@types/terser-webpack-plugin": "^5.0.3",
+    "@types/webpack": "^5.28.0",
     "@wwawing/assets": "^3.5.7",
     "@wwawing/common-interface": "^3.5.7",
     "@wwawing/debug-server": "^3.5.7",
@@ -57,12 +54,12 @@
     "pug": "^3.0.2",
     "shelljs": "^0.8.4",
     "shx": "^0.3.3",
-    "terser-webpack-plugin": "^2.3.5",
+    "terser-webpack-plugin": "^5.1.1",
     "ts-loader": "^4.3.0",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.4",
-    "webpack": "^4.40.2",
-    "webpack-cli": "^3.3.9"
+    "webpack": "^5.36.2",
+    "webpack-cli": "^4.6.0"
   },
   "publishConfig": {
     "access": "public"
