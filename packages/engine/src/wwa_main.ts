@@ -809,7 +809,7 @@ export class WWA {
                 this, this._wwaData.mapCGName, util.$id("wwa-wrapper"));
 
             this._passwordWindow = new PasswordWindow(
-                this, <HTMLDivElement>util.$id("wwa-wrapper"));
+                this, <HTMLDivElement>util.$id("wwa-wrapper"), disallowLoadOldSave);
 
             this._monsterWindow = new MonsterWindow(
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
