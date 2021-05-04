@@ -13,12 +13,18 @@ const wwaWingEngineLicenseComment = `WWA Wing Engine\
 const config: webpack.Configuration = {
     mode: "development",
     entry: "./src/wwa_main.ts",
+    target: "browserslist:last 2 versions or IE 11",
     output: {
         filename: "wwa.long.js",
         path: path.resolve(__dirname, "lib")
     },
     resolve: {
-        extensions: [".ts", ".js"]
+        extensions: [".ts", ".js"],
+        fallback: {
+            // CryptoJS 内で node コアモジュールの crypto を require する問題 (nodeでの実行時に使用される) の対応
+            // webpack した後の生成物はブラウザでしか実行されないので、ポリフィルは含めずに空のモジュールをバンドルする。
+            crypto: false
+        }
     },
     module: {
         rules: [
