@@ -24,12 +24,12 @@
     "@types/node": "^12.12.6",
     "@types/pug": "^2.0.4",
     "pug-cli": "^1.0.0-alpha6",
-    "shelljs": "^0.8.3",
-    "shx": "^0.3.2",
-    "typescript": "^3.7.2"
+    "shelljs": "^0.8.4",
+    "shx": "^0.3.3",
+    "typescript": "^4.2.4"
   },
   "dependencies": {
-    "pug": "^3.0.1"
+    "pug": "^3.0.2"
   },
   "publishConfig": {
     "access": "public"
