@@ -21,7 +21,20 @@
         p.important {
             background-color:#ffd4d6;
             font-weight: bold;
+            border-width: 0 0 0 4px;
+            border-color: red;
+            border-style: solid;
+            padding: 0 0 0 4px;
             color: red;
+        }
+        p.information {
+            background-color:#d4f1ff;
+            font-weight: bold;
+            border-width: 0 0 0 4px;
+            border-color: blue;
+            border-style: solid;
+            padding: 0 0 0 4px;
+            color: blue;
         }
         .require {
             font-weight: bold;
@@ -141,8 +154,13 @@
             <section>
                 <h2>更新情報</h2>
                 <section>
+                    <h3>v3.5.7からv3.5.8への変更点</h3>
+                    <p class="information">セーブデータの互換性: v3.5.1～v3.5.7 からアップデートしても、Quick Save / パスワード は引き続きロードできます。</p>
+                    <ul>
+                        <li>パスワードロードの画面で、パスワードを受け付ける条件の文言が間違っていたので修正</li>
+                    </ul>
                     <h3>v3.5.6からv3.5.7への変更点</h3>
-                    <p class="important">セーブデータ(Quick Save/パスワード)の互換性: v3.5.1～v3.5.6 からアップデートしてもセーブデータは引き続きロードできます。</p>
+                    <p class="information">セーブデータの互換性: v3.5.1～v3.5.6 からアップデートしても、Quick Save / パスワード は引き続きロードできます。</p>
                     <p class="important">ただし、上記のアップデートと同時にマップデータを改変した場合はセーブデータが無効となります。(Quick Saveは、無効となったセーブデータをロードしようとすると削除されます。)</p>
                     <ul>
                         <li>セーブデータが無効になる条件を「マップデータが変更された時」から「『タイトル』『暗証番号』のいずれかが変更された時」に変更</li>
