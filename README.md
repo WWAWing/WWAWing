@@ -64,3 +64,8 @@ WWA Wing 本体のソースは `packages/engine/src` 下にあります。
 ## ライセンス
 - ソースコード: MIT (Expat) 
 - ドキュメント・画像・音源: CC-BY 4.0
+
+## 行動規範
+- Contributer Covenant Code of Conduct に従います。
+  - [原文(英語)](./CODE_OF_CONDUCT.md)
+  - [日本語訳](./CODE_OF_CONDUCT_ja.md)
