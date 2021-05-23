@@ -1,8 +1,8 @@
-import { new2DArray } from "../../infra/util";
-import { checkMapDataBroken } from "./checksum";
-import { BytePosition } from "./constants";
+import { new2DArray } from "../../infra/index.js";
+import { checkMapDataBroken } from "./checksum.js";
+import { BytePosition } from "./constants.js";
 import { WWAData } from "@wwawing/common-interface";
-import { WWAConsts, PartsType, LoadStage, createDefaultWWAData, WWALoaderEventEmitter } from "../../infra";
+import { WWAConsts, PartsType, LoadStage, createDefaultWWAData, WWALoaderEventEmitter } from "../../infra/index.js";
 
 export class WWADataExtractor {
   private wwaData: WWAData;

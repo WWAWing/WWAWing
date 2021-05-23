@@ -1,4 +1,4 @@
-import { LoadStage, WWAConsts, WWALoaderEventEmitter } from "../../infra";
+import { LoadStage, WWAConsts, WWALoaderEventEmitter } from "../../infra/index.js";
 import { WWAData } from "@wwawing/common-interface";
 
 export class TextLoader {

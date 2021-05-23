@@ -1,5 +1,6 @@
 import { WWAData } from "@wwawing/common-interface";
 import { IEventEmitter } from "@wwawing/event-emitter";
+export * from "./util.js"
 
 export class WWAConsts {
     // TODO: WWA本体のものと共通化して common-interface におく

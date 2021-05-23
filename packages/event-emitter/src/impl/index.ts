@@ -1,2 +1,2 @@
-export * from "./browser";
-export * from "./node";
+export * from "./browser/index.js";
+export * from "./node/index.js";

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/loader",
-  "version": "3.5.8",
+  "version": "3.5.9-typemodule.0",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/index.js",
   "typings": "./lib/index.d.ts",
@@ -11,6 +11,7 @@
   "files": [
     "lib"
   ],
+  "type": "module",
   "scripts": {
     "start": "run-p watch:* start:deploy server",
     "start:deploy": "shx mkdir -p lib && shx cp -R resources/* lib",

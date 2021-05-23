@@ -1,9 +1,9 @@
 ﻿import { WWAData } from "@wwawing/common-interface";
-import { WWADataExtractor } from "./extractor";
-import { WWALoaderEventEmitter } from "../infra";
-import { decompressMapData } from "./decompressor";
-import { TextLoader } from "./text-loader";
-import { MapDataClient } from "./map-data-client";
+import { WWADataExtractor } from "./extractor/index.js";
+import { WWALoaderEventEmitter } from "../infra/index.js";
+import { decompressMapData } from "./decompressor/index.js";
+import { TextLoader } from "./text-loader/index.js";
+import { MapDataClient } from "./map-data-client/index.js";
 
 export class WWALoader {
   public constructor(

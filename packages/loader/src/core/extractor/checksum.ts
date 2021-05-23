@@ -1,5 +1,5 @@
-import { signedByte } from "../../infra/util";
-import { BytePosition } from "./constants";
+import { signedByte } from "../../infra/index.js";
+import { BytePosition } from "./constants.js";
 
 function calculateCorrectCheckSum(mapData: Uint8Array): number {
   return mapData[BytePosition.CHECK] + mapData[BytePosition.CHECK + 1] * 0x100;
