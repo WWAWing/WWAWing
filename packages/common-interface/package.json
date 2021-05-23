@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "3.5.8",
+  "version": "3.5.9-module-test.0",
   "description": "",
   "sideEffects": false,
   "type": "module",

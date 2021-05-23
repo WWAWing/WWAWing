@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/page-generator",
-  "version": "3.5.8",
+  "version": "3.5.9-module-test.0",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
