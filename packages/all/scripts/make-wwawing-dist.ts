@@ -109,7 +109,7 @@ export default async function makeDistribution(
         ).then(contents =>
             contents.map(
                 prop =>
-                    new Promise((resolve, reject) =>
+                    new Promise<void>((resolve, reject) =>
                         fs.writeFile(prop.target, prop.content, err => {
                             if (err) {
                                 console.error(err);

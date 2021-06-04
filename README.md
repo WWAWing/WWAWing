@@ -4,6 +4,11 @@
 このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna により自動化されています。
 
 ## 準備
+- Node.js 14系
+- npm 6系
+
+を準備してください。
+
 この `README.md` があるディレクトリで、
 
 ``` sh
@@ -37,6 +42,7 @@ OSは不問です。
      ├── common-interface ===================== ## WWA Wing で使用するデータ構造を定義したソースコードパッケージ
      ├── debug-server ========================= ## wwa-server (WWA作者向けのHTTPサーバ)
      ├── engine =============================== ## WWA Wing本体
+     ├── event-emitter ======================== ## Node.js でもブラウザでも動作する EventEmitter ライブラリ
      ├── loader =============================== ## WWALoader (WWAのマップデータを WWA Wing のデータに変換するプログラム)
      ├── page-generator ======================= ## WWA のHTMLファイルを生成するプログラム
      └── styles =============================== ## sassスタイルシートのファイル (scss形式)
@@ -58,3 +64,8 @@ WWA Wing 本体のソースは `packages/engine/src` 下にあります。
 ## ライセンス
 - ソースコード: MIT (Expat) 
 - ドキュメント・画像・音源: CC-BY 4.0
+
+## 行動規範
+- Contributer Covenant Code of Conduct に従います。
+  - [原文(英語)](./CODE_OF_CONDUCT.md)
+  - [日本語訳](./CODE_OF_CONDUCT_ja.md)
