@@ -3,7 +3,16 @@ import { WWADataExtractor } from "./extractor";
 import { WWALoaderEventEmitter } from "../infra";
 import { decompressMapData } from "./decompressor";
 import { TextLoader } from "./text-loader";
-import { MapDataClient } from "./map-data-client";
+import { BaseMapDataClient, BrowserMapDataClient, NodeLocalMapDataClient } from "./map-data-client";
+
+const isBrowser = (): boolean => {
+  try {
+    window;
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
 
 export class WWALoader {
   public constructor(
@@ -12,7 +21,7 @@ export class WWALoader {
   ) { }
 
   public requestAndLoadMapData() {
-    const client = new MapDataClient(this.fileName);
+    const client: BaseMapDataClient = isBrowser() ? new BrowserMapDataClient(this.fileName) : new NodeLocalMapDataClient(this.fileName);
     client.request((error, data) => {
       if (error) {
         const name = error.name || "";

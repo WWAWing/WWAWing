@@ -7,13 +7,16 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
  */
 const config: webpack.Configuration = {
     mode: "development",
-    entry: ["./src/index.ts", "./src/___debug-resources___/test.ts", "./src/___debug-resources___/index.html"],
+    entry: ["./src/index.ts", "./src/___debug-resources___/demo-browser.ts", "./src/___debug-resources___/index.html"],
     output: {
         filename: "wwaload-debug.js",
-        path: path.resolve(__dirname, "debug")
+        path: path.resolve(__dirname, "debug", "browser")
     },
     resolve: {
-        extensions: [".ts", ".js"]
+        extensions: [".ts", ".js"],
+        fallback: {
+            "fs": false
+        }
     },
     module: {
         rules: [
