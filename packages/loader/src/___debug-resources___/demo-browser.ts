@@ -37,6 +37,6 @@ const main = () => {
    loader.requestAndLoadMapData();
 };
 
-if (window) {
+if (typeof window !== undefined) {
     window.addEventListener("load", main);
 }

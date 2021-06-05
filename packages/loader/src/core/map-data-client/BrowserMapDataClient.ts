@@ -1,5 +1,8 @@
-import { BaseMapDataClient} from "./BaseMapDataClient";
+import { BaseMapDataClient } from "./BaseMapDataClient";
 
+/**
+ * ブラウザで使うマップデータを取得するクライアント
+ */
 export class BrowserMapDataClient extends BaseMapDataClient {
   constructor(fileName: string) {
     super(fileName);

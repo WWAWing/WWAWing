@@ -28,8 +28,7 @@ const main = () => {
    loader.requestAndLoadMapData();
 };
 
-try {
-    window;
-} catch (error) {
+
+if (typeof window !== undefined) {
     main();
 }
