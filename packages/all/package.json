@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/all",
-  "version": "3.5.11-loader-node-impl.0",
+  "version": "3.5.10",
   "description": "World Wide Adventure: an RPG Engine.",
   "author": "WWA Wing Team",
   "license": "MIT",
@@ -25,8 +25,8 @@
     "@wwawing/assets": "^3.5.10",
     "@wwawing/common-interface": "^3.5.9",
     "@wwawing/debug-server": "^3.5.10",
-    "@wwawing/engine": "^3.5.11-loader-node-impl.0",
-    "@wwawing/loader": "^3.5.11-loader-node-impl.0",
+    "@wwawing/engine": "^3.5.10",
+    "@wwawing/loader": "^3.5.9",
     "@wwawing/page-generator": "^3.5.9",
     "@wwawing/styles": "^3.5.9",
     "jszip": "^3.6.0",
