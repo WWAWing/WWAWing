@@ -8,6 +8,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 const config: webpack.Configuration = {
     mode: "development",
     entry: ["./src/index.ts", "./src/___debug-resources___/demo-browser.ts", "./src/___debug-resources___/index.html"],
+    target: "browserslist:last 2 versions or IE 11",
     output: {
         filename: "wwaload-debug.js",
         path: path.resolve(__dirname, "debug", "browser")

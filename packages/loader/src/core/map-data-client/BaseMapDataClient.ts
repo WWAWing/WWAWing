@@ -1,5 +1,7 @@
-export abstract class BaseMapDataClient {
-  constructor(protected fileName: string) {}
+export type MapDataClientCallback = (error?: any, data?: any) => any;
 
-  public abstract request(callback: (error?: any, data?: any) => any): void;
+export abstract class BaseMapDataClient {
+  constructor() {}
+
+  public abstract request(callback: MapDataClientCallback): void;
 }

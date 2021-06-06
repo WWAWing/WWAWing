@@ -22,7 +22,7 @@
     "start:node": "run-s debug:build:node debug:start:node",
     "debug:build": "run-p debug:build:*",
     "debug:build:browser": "run-s clean:debug:browser && cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack && shx cp ./src/___debug-resources___/wwamap.dat ./debug/browser",
-    "debug:build:node": "run-s clean:debug:node && tsc -p tsconfig-for-node.json && shx cp ./src/___debug-resources___/wwamap.dat ./debug/node/___debug-resources___/",
+    "debug:build:node": "run-s clean:debug:node && tsc -p tsconfig-debug-for-node.json && shx cp ./src/___debug-resources___/wwamap.dat ./debug/node/___debug-resources___/",
     "debug:start:browser": "http-server ./debug/browser -o",
     "debug:start:node": "node ./debug/node/___debug-resources___/demo-node.js",
     "clean": "run-p clean:*",
