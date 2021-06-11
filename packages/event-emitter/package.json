@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/event-emitter",
-  "version": "3.5.0",
+  "version": "3.5.8",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "files": [
     "lib"
@@ -15,9 +15,13 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^3.7.2"
+    "typescript": "^4.2.4"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "engines": {
+    "node": ">=14",
+    "npm": ">=6"
   }
 }

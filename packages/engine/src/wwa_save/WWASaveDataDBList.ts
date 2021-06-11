@@ -3,10 +3,10 @@ import {
     WWAData
 } from "../wwa_data";
 import WWACompress from "./WWACompress"; 
-import WWASave, { OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./WWASave";
+import WWASave from "./WWASave";
 import WWASaveDataDB from "./WWASaveDataDB";
 import WWASaveDataList from "./WWASaveDataList";
-import { FailedLoadingSaveDataCause } from ".";
+import { LoadErrorCode, OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./common";
 
 type WWASaveDataItem = {
     url?: string,
@@ -15,12 +15,13 @@ type WWASaveDataItem = {
     image: string,
     data: object, // TODO: object だけではよくわからないのでちゃんとした型を指定する
     date: Date,
-    worldName: string,
+    worldName: string | undefined, // v3.5.6 以下でセーブされたデータの場合 undefined
+    mapDataRevisionKey: string | undefined, // v3.5.6 以下でセーブされたデータの場合 undefined
 };
 
 type FailedLoadingSaveDataInformation = {
     id: number,
-    cause: FailedLoadingSaveDataCause
+    cause: LoadErrorCode
 };
 
 export default class WWASaveDataDBList extends WWASaveDataList {
@@ -175,6 +176,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             "data": compressedData,
             "date": date,
             "worldName": WWASave.worldName,
+            "mapDataRevisionKey": WWASave.mapDataRevisionKey
         };
     }
     /**
@@ -268,15 +270,16 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                             data: resultData.data,
                             date: resultData.date,
                             image: resultData.image,
-                            worldName: resultData.worldName,
+                            worldName: resultData.worldName, // v3.5.6 以下でセーブされたデータの場合 undefined
+                            mapDataRevisionKey: resultData.mapDataRevisionKey // v3.5.6 以下でセーブされたデータの場合 undefined
                         };
                     } catch (error) {
                         continue;
                     }
-                    const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash);
+                    const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash, saveData.mapDataRevisionKey);
                     if (failedCause !== null) {
                         failedLoadingSaveData.push({
-                            id: i,
+                            id: saveData.id,
                             cause: failedCause
                         });
                         continue;
@@ -284,7 +287,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     if (!this[saveData.id]) {
                         continue;
                     }
-                    var quickSaveData = WWACompress.decompress(saveData.data);
+                    const [quickSaveData] = WWACompress.decompress(saveData.data);
                     this[saveData.id].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
 

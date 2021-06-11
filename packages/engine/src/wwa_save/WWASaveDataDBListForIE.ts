@@ -14,6 +14,7 @@ type WWASaveDataItem = {
     date: Date,
     worldName: string,
     urlWithId: string, // URL と ID を組み合わせた値
+    mapDataRevisionKey: string
 };
 
 /**
@@ -35,7 +36,8 @@ export default class WWASaveDataDBListForIE extends WWASaveDataDBList {
             "data": compressedData,
             "date": date,
             "worldName": WWASave.worldName,
-            "urlWithId": location.href + " " + saveID
+            "urlWithId": location.href + " " + saveID,
+            "mapDataRevisionKey": WWASave.mapDataRevisionKey
         };
     }
     // FIXME: オーバーライドできてない

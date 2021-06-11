@@ -1,6 +1,7 @@
 import {
     WWAData
 } from "../wwa_data";
+import { WWADataWithWorldNameStatus } from "./common";
 
 var SAVE_COMPRESS_ID = {
     MAP: "map",
@@ -42,7 +43,8 @@ export default class WWACompress {
                 case "number":
                 case "string":
                 case "boolean":
-                    if (this._restartData[key] === value) {
+                    // 通常、初期データと変化のない値は保存対象外だが、ワールド名はロード可能判定に使うので保存対象
+                    if (this._restartData[key] === value && key !== "worldName") {
                         continue;
                     }
                     break;
@@ -413,7 +415,15 @@ export default class WWACompress {
         }
         return newList;
     }
-    public static decompress(saveObject: object): WWAData {
+    /**
+     * restartData (初期データ) に 圧縮状態のセーブデータ差分を適用した結果と、
+     * 与えられた圧縮状態のセーブデータ差分にワールド名が含まれる(v3.5.6以下の WWA Wingで保存されている)かを
+     * 返します。
+     * 前者が配列の先頭 (0要素目)で、後者が末尾 (1要素目)です。
+     * @param saveObject 圧縮状態のセーブデータ差分
+     * @returns 2要素配列: [パスワードセーブの圧縮差分適用結果, 付加情報オブジェクト(復号化結果にワールド名が含まれないなら isWorldName が true)]
+     */
+    public static decompress(saveObject: object): WWADataWithWorldNameStatus {
         var newData: WWAData;
 
         newData = <WWAData>JSON.parse(JSON.stringify(this._restartData));
@@ -438,7 +448,7 @@ export default class WWACompress {
             }
             newData[key] = value;
         }
-        return newData;
+        return [newData, {isWorldNameEmpty: (saveObject as WWAData).worldName === undefined}];
     }
     private static decompressObject(key: string, loadObject: object, newObject: object): object {
         var saveObject: object;
@@ -687,7 +697,7 @@ export default class WWACompress {
         if (resumeSaveData) {
             var wwaData: WWAData;
             try {
-                wwaData = this.decompress(resumeSaveData);
+                [wwaData] = this.decompress(resumeSaveData);
                 if (wwaData) {
                     return wwaData;
                 }
