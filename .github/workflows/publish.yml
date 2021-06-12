@@ -5,9 +5,11 @@ on:
     inputs:
       version:
         description: "バージョンを入力 (patch/minor/major/X.X.X-hogehoge.X)"
+        required: true
         default: "patch"
       tag:
-        description: "publish に使うタグを入力 (空欄=latest)"
+        description: "publish に使うタグを入力 (普通にリリースしたい場合:latest)"
+        required: true
         default: "latest"
 
 jobs:
