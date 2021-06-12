@@ -24,17 +24,15 @@ jobs:
           node-version: '14.x'
           registry-url: 'https://registry.npmjs.org'
       
-      - name: "Install SSH Key for WWAWing/sites"
-        uses: "shimataro/ssh-key-action@v2"
-        with:
-          key: ${{ secrets.SSH_KEY }}
-          name: id_ed25519
-          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+      - name: "Configure"
+        run: |
+          git config user.name "[Automatically Released] Matsuyuki"
+          git config user.email "matsuyuki.eca@gmail.com"
 
       - name: "Install"
         run: "npm install"
       
-      - name: "publish"
+      - name: "Publish"
         run: "npm run publish:all -- ${{ github.event.inputs.version }} --dist-tag ${{ github.event.inputs.tag }} --yes"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
