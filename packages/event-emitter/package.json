@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/event-emitter",
-  "version": "3.5.9",
+  "version": "3.5.11-publishtest.1",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "files": [
     "lib",
