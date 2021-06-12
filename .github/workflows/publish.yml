@@ -1,0 +1,39 @@
+name: "WWA Wing Publish"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "バージョンを入力 (patch/minor/major/X.X.X-hogehoge.X)"
+        default: "patch"
+      tag:
+        description: "publish に使うタグを入力 (空欄=latest)"
+        default: "latest"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: "Install SSH Key for WWAWing/sites"
+        uses: "shimataro/ssh-key-action@v2"
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          name: id_ed25519
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+      - name: "Install"
+        run: "npm install"
+      
+      - name: "publish"
+        run: "npm run publish:all -- ${{ github.event.inputs.version }} --dist-tag ${{ github.event.inputs.tag }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
