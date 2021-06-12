@@ -33,9 +33,7 @@ jobs:
         run: "npm install"
       
       - name: "Publish"
-        run: |
-         "npm login"
-         "npm run publish:all -- ${{ github.event.inputs.version }} --dist-tag ${{ github.event.inputs.tag }} --yes"
+        run: "npm run publish:all -- ${{ github.event.inputs.version }} --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
