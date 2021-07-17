@@ -1,39 +1,19 @@
 import { BrowserEventEmitter } from "@wwawing/event-emitter";
 import { WWALoader, WWALoaderEventEmitter } from "..";
 import { WWAData } from "@wwawing/common-interface";
-
-const EXTRACTING_MAPDATA_FILENAME = "wwamap.dat"; // 吸い出すファイル名
+import { EXTRACTING_MAPDATA_FILENAME, targetKeys} from "./demo-common";
 
 const $id = (id: string) => document.getElementById(id) as HTMLInputElement;
 
 const display = (data: WWAData) => {
-    const ids = [
-       "playerX",
-       "playerY",
-       "gameoverX",
-       "gameoverY",
-       "mapPartsMax",
-       "objPartsMax",
-       "statusEnergyMax",
-       "statusEnergy",
-       "statusStrength",
-       "statusDefence",
-       "statusGold",
-       "mapWidth",
-       "messageNum",
-       "worldName",
-       "mapCGName"
-    ];
-    
-    for (let i in ids) {
-        const key = ids[i];
+    targetKeys.forEach(key => {
         try {
-            ($id(key)).value = data[key];
+            ($id(key)).value = `${data[key]}`;
         } catch (e) {
             alert("Display Error!! index: " + key);
         }
-    }
-}
+    })
+};
 
 const main = () => {
     const eventEmitter = new BrowserEventEmitter() as WWALoaderEventEmitter;
@@ -57,4 +37,6 @@ const main = () => {
    loader.requestAndLoadMapData();
 };
 
-window.addEventListener("load", main);
+if (typeof window !== undefined) {
+    window.addEventListener("load", main);
+}

@@ -1,17 +1,23 @@
 {
   "name": "@wwawing/page-generator",
-  "version": "3.5.8",
+  "version": "3.5.11-publishtest.1",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && shx cp ./src/wwa.pug ./lib/wwa.pug",
     "start": "npm run build && shx mkdir -p output && node debug/debug.js",
+    "build": "run-p build:*",
+    "build:lib": "tsc && shx cp ./src/wwa.pug ./lib/wwa.pug",
+    "build:module": "tsc -p ./tsconfig.module.json && shx cp ./src/wwa.pug ./module/wwa.pug",
+    "clean": "run-s clean:*",
+    "clean:lib": "shx rm -rf ./lib",
+    "clean:module": "shx rm -rf ./module",
     "prepare": "npm run build"
   },
   "files": [
     "lib",
+    "module",
     "template",
     "config"
   ],
@@ -23,6 +29,7 @@
   "devDependencies": {
     "@types/node": "^12.12.6",
     "@types/pug": "^2.0.4",
+    "npm-run-all": "^4.1.5",
     "pug-cli": "^1.0.0-alpha6",
     "shelljs": "^0.8.4",
     "shx": "^0.3.3",

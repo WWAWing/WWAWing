@@ -1,0 +1,39 @@
+name: "WWA Wing Publish"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "バージョンを入力 (patch/minor/major/X.X.X-hogehoge.X)"
+        required: true
+        default: "patch"
+      tag:
+        description: "publish に使うタグを入力 (普通にリリースしたい場合:latest)"
+        required: true
+        default: "latest"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: "Configure"
+        run: |
+          git config user.name "[Automatically Released] Matsuyuki"
+          git config user.email "matsuyuki.eca@gmail.com"
+
+      - name: "Install"
+        run: "npm install"
+      
+      - name: "Publish"
+        run: "npm run publish:all -- ${{ github.event.inputs.version }} --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+

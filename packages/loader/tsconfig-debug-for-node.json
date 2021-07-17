@@ -3,13 +3,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./lib",
+    "outDir": "./debug/node",
     "module": "commonjs",
   },
   "include": [
-    "src/**/*.ts", "core/loader_core.ts"
+    "src/**/*.ts"
   ],
-  "exclude": [
-    "node_modules", "src/___debug-resources___"
-  ]
 }
