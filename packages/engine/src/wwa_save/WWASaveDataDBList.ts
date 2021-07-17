@@ -49,9 +49,13 @@ export default class WWASaveDataDBList extends WWASaveDataList {
      */
     protected keyPath: string | string[] = ["id", "url"];
 
-    constructor(onCheckLoadingSaveData: OnCheckLoadingSaveDataFunction, onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction) {
+    constructor(
+        onCheckLoadingSaveData: OnCheckLoadingSaveDataFunction,
+        onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction,
+        prototype: WWASaveDataDBList = WWASaveDataDBList.prototype
+    ) {
         super();
-        Object.setPrototypeOf(this, Object.create(WWASaveDataDBList.prototype));
+        Object.setPrototypeOf(this, Object.create(prototype));
         for (var i = 0; i < WWASaveConsts.QUICK_SAVE_MAX; i++) {
             this[i] = new WWASaveDataDB(i, this);
         }

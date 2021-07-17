@@ -21,6 +21,10 @@ type WWASaveDataItem = {
  * WWASaveDataDBList の IE 専用版です。
  */
 export default class WWASaveDataDBListForIE extends WWASaveDataDBList {
+    constructor(onCheckLoadingSaveData: OnCheckLoadingSaveDataFunction, onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction) {
+        super(onCheckLoadingSaveData, onCompleteLoadingSaveData, WWASaveDataDBListForIE.prototype);
+    }
+    
     /**
      * IE では keyPath を配列で指定することができません。
      * 代わりにセーブデータにURLとセーブデータ番号を付与した文字列を keyPath に指定します。
@@ -40,7 +44,6 @@ export default class WWASaveDataDBListForIE extends WWASaveDataDBList {
             "mapDataRevisionKey": WWASave.mapDataRevisionKey
         };
     }
-    // FIXME: オーバーライドできてない
     protected getSaveDataResult(store: IDBObjectStore, onsuccess: (result: WWASaveDataItem[]) => void) {
         let results: WWASaveDataItem[] = [];
         let gotItemCount = 0;
