@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/styles",
-  "version": "3.5.9",
+  "version": "3.5.11",
   "description": "WWA Wing stylesheet files",
   "main": "index.js",
   "files": [
