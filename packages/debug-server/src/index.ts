@@ -4,11 +4,15 @@ const baseDir = process.argv.length < 3 ? "." : process.argv[2];
 
 const DEFAULT_PORT = 3000;
 
-function parseServerPort(port: unknown): number {
-    if (Number.isNaN(port) || typeof port !== 'number') {
+function parseServerPort(port: string | undefined): number {
+    if (!port) {
+        return DEFAULT_PORT;
+    }
+    const parsedPort = parseInt(port, 10);
+    if (Number.isNaN(parsedPort)) {
       return DEFAULT_PORT;
     }
-    return port;
+    return parsedPort;
 }
 
 const app = express();
