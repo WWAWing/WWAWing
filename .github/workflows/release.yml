@@ -2,7 +2,7 @@ name: "WWA Wing Release"
 
 on:
   push:
-    branches: [ master, feat/sites-workflow-sepration ] # 動作確認できたら master だけにする
+    branches: [ master, feat/site-workflow-sepration ] # 動作確認できたら master だけにする
 
   workflow_dispatch:
 
@@ -26,8 +26,8 @@ jobs:
       - name: "Print version"
         run: "echo $WWA_WING_VERSION"
 
-      - name: "Install"
-        run: "npm install"
+#      - name: "Install"
+#        run: "npm install"
 
 #      - name: "Upload distributions"
 #        env:
