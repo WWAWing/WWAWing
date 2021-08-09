@@ -7,7 +7,6 @@
   "scripts": {
     "make-zip": "npm run clean && ts-node ./scripts",
     "upload-zip": "ts-node ./scripts/upload-zip",
-    "create-pr": "ts-node ./scripts/create-pr",
     "clean": "shx rm -rf dist",
     "prepare": "npm run make-zip"
   },

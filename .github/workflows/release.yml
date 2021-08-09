@@ -2,7 +2,7 @@ name: "WWA Wing Release"
 
 on:
   push:
-    branches: [ master, feat/site-workflow-sepration ] # 動作確認できたら master だけにする
+    branches: [ master ]
 
   workflow_dispatch:
 
@@ -26,15 +26,16 @@ jobs:
       - name: "Print version"
         run: "echo $WWA_WING_VERSION"
 
-#      - name: "Install"
-#        run: "npm install"
+      - name: "Install"
+        run: "npm install"
 
-#      - name: "Upload distributions"
-#        env:
-#          WWA_WING_RELEASE_TOKEN: ${{ secrets.WWA_WING_RELEASE_TOKEN }}
-#        run: "cd packages/all && ./scripts/upload-dist.sh && cd ../.."
+      - name: "Upload distributions"
+        env:
+          WWA_WING_RELEASE_TOKEN: ${{ secrets.WWA_WING_RELEASE_TOKEN }}
+        run: "cd packages/all && ./scripts/upload-dist.sh && cd ../.."
 
-      - name: "Create pull request to WWAWing/Sites respoitory"
+      # WWAWing/sites リポジトリ側にある、新バージョンの公開を行うワークフローを呼び出す
+      - name: "Create pull request to WWAWing/sites respoitory"
         uses: peter-evans/repository-dispatch@v1
         with:
           token: ${{ secrets.WWA_WING_RELEASE_TOKEN }}
