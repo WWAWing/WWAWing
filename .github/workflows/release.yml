@@ -29,7 +29,16 @@ jobs:
       - name: "Install"
         run: "npm install"
 
-      - name: "Create pull request to WWAWing/Sites respoitory"
+      - name: "Upload distributions"
         env:
           WWA_WING_RELEASE_TOKEN: ${{ secrets.WWA_WING_RELEASE_TOKEN }}
-        run: "cd packages/all && ./scripts/update-sites.sh && cd ../.."
+        run: "cd packages/all && ./scripts/upload-dist.sh && cd ../.."
+
+      # WWAWing/sites リポジトリ側にある、新バージョンの公開を行うワークフローを呼び出す
+      - name: "Create pull request to WWAWing/sites respoitory"
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.WWA_WING_RELEASE_TOKEN }}
+          repository: WWAWing/sites
+          event-type: wwa-wing-release
+          client-payload: '{"targetVersion": "${{ env.WWA_WING_VERSION }}"}'
