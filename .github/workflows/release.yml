@@ -16,15 +16,12 @@ jobs:
       - name: "Set Env"
         run: "echo \"WWA_WING_VERSION=$(node -e \"console.log(require('./packages/engine/package.json').version)\")\" >> $GITHUB_ENV"
 
-      - name: "Print version"
-        run: "echo $WWA_WING_VERSION"
-
       - name: "Install"
         run: "npm install"
 
       - name: "Upload distributions"
         env:
-          WWA_WING_RELEASE_TOKEN: ${{ secrets.WWA_WING_RELEASE_TOKEN }}
+          WWA_WING_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: "cd packages/all && ./scripts/upload-dist.sh && cd ../.."
 
       # WWAWing/sites リポジトリ側にある、新バージョンの公開を行うワークフローを呼び出す
