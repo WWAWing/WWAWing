@@ -21,14 +21,14 @@ jobs:
 
       - name: "Upload distributions"
         env:
-          WWA_WING_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: "cd packages/all && ./scripts/upload-dist.sh && cd ../.."
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: "cd packages/all && npm run release && cd ../.."
 
       # WWAWing/sites リポジトリ側にある、新バージョンの公開を行うワークフローを呼び出す
       - name: "Create pull request to WWAWing/sites respoitory"
         uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.WWA_WING_RELEASE_TOKEN }}
+          token: ${{ secrets.WWA_WING_CALL_WORKFLOW_TOKEN }}
           repository: WWAWing/sites
           event-type: wwa-wing-release
           client-payload: '{"targetVersion": "${{ env.WWA_WING_VERSION }}"}'
