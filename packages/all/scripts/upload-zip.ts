@@ -10,7 +10,6 @@ const UPDATE_FILE_NAME = "wwawing-update.zip";
 
 const upload = async (releaseTag: string, distZipFile: Buffer, updateZipFile: Buffer) => {
   try {
-    // TODO: create-pr と設定共通化
     const octokit = new Octokit({ auth: WWA_WING_RELEASE_TOKEN, baseUrl: "https://api.github.com", request: { timeout: 30000 } });
     const releaseResponse = await octokit.repos.getReleaseByTag({ ...REPO_CONFIG, tag: releaseTag });
     const releaseId = releaseResponse.data.id;
