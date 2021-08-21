@@ -2,7 +2,7 @@ import { Octokit } from "@octokit/rest";
 import fs from "fs";
 import path from "path";
 
-const WWA_WING_RELEASE_TOKEN = process.env.WWA_WING_RELEASE_TOKEN;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const WWA_WING_VERSION = process.env.WWA_WING_VERSION;
 const REPO_CONFIG = { owner: "WWAWing", repo: "WWAWing" };
 const DIST_FILE_NAME = "wwawing-dist.zip";
@@ -10,7 +10,7 @@ const UPDATE_FILE_NAME = "wwawing-update.zip";
 
 const upload = async (releaseTag: string, distZipFile: Buffer, updateZipFile: Buffer) => {
   try {
-    const octokit = new Octokit({ auth: WWA_WING_RELEASE_TOKEN, baseUrl: "https://api.github.com", request: { timeout: 30000 } });
+    const octokit = new Octokit({ auth: GITHUB_TOKEN, baseUrl: "https://api.github.com", request: { timeout: 30000 } });
     const releaseResponse = await octokit.repos.getReleaseByTag({ ...REPO_CONFIG, tag: releaseTag });
     const releaseId = releaseResponse.data.id;
     await Promise.all([
@@ -50,8 +50,8 @@ const main = async () => {
   }
 };
 
-if (!WWA_WING_RELEASE_TOKEN) {
-  console.error("GitHub Token がありません. 環境変数 WWA_WING_RELEASE_TOKEN を与えてください.");
+if (!GITHUB_TOKEN) {
+  console.error("GitHub Token がありません. 環境変数 GITHUB_TOKEN を与えてください.");
   process.exit(1);
 }
 if (!WWA_WING_VERSION) {
