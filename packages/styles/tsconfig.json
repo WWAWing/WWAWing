@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./scripts",
+    "module": "commonjs",
+  },
+  "include": [
+      "scripts/*.ts"
+  ],
+  "exclude": [
+      "src/*.scss"
+  ]
+}

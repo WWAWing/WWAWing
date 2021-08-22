@@ -1,0 +1,34 @@
+name: "WWA Wing Release"
+
+on:
+  push:
+    branches: [ master ]
+
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "Set Env"
+        run: "echo \"WWA_WING_VERSION=$(node -e \"console.log(require('./packages/engine/package.json').version)\")\" >> $GITHUB_ENV"
+
+      - name: "Install"
+        run: "npm install"
+
+      - name: "Upload distributions"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: "cd packages/all && npm run release && cd ../.."
+
+      # WWAWing/sites リポジトリ側にある、新バージョンの公開を行うワークフローを呼び出す
+      - name: "Create pull request to WWAWing/sites respoitory"
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.WWA_WING_CALL_WORKFLOW_TOKEN }}
+          repository: WWAWing/sites
+          event-type: wwa-wing-release
+          client-payload: '{"targetVersion": "${{ env.WWA_WING_VERSION }}"}'

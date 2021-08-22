@@ -1,0 +1,83 @@
+$wwa_screen_width: 560px !default;
+$wwa_screen_height: 440px !default;
+$wwa_canvas_width: 440px !default;
+// プログレスバーや1文字を収める1行分の高さ
+$wwa_cover_row_height: 16px !default;
+
+
+canvas.wwa-canvas {
+    display: block;
+    position: absolute;
+}
+
+@mixin cover_message($line: 1) {
+    position: absolute;
+    bottom: $line * $wwa_cover_row_height;
+    height: $wwa_cover_row_height;
+    text-align: left;
+    padding-left: 4px;
+}
+
+@mixin progress_bar($width: $wwa_screen_width, $color: transparent) {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: $width;
+    height: $wwa_cover_row_height;
+    background-color: $color;
+}
+
+#wwa-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: $wwa_screen_width;
+    height: $wwa_screen_height;
+    line-height: $wwa_cover_row_height;
+    font-size: 12px;
+    background-color: #FFFFFF;
+
+    > #version {
+        @include cover_message(2);
+        color: #000000;
+    }
+    > #progress-message-container {
+        @include cover_message(1);
+        color: #000000;
+    }
+    > #progress-bar {
+        @include progress_bar(auto, #00ff90);
+        &-bg {
+            @include progress_bar(560px, #808080);
+        }
+        &-audio {
+            @include progress_bar(auto, #008aff);
+        }
+    }
+    > #progress-disp {
+        $wwa_progress_disp_width: 120px;
+
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: $wwa_progress_disp_width;
+        height: $wwa_cover_row_height;
+        background-color: #FF6A00;
+        color: #FFFFFF;
+        text-align: center;
+        font-weight: bold;
+        overflow: hidden;
+    }
+}
+
+#wwa-fader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 440px;
+    height: 440px;
+    border-width: 0;
+    border-color: #808080;
+    border-style: solid;
+    display: none;
+}

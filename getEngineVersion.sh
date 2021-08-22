@@ -1,4 +1,4 @@
 #!/bin/sh
 
-npx lerna ls 2> /dev/null | grep "engine" | awk '{ print $2 }'
+node -e "console.log('v'+require('./packages/engine/package.json').version)"
 

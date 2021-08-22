@@ -1,0 +1,27 @@
+{
+  "name": "@wwawing/common-interface",
+  "version": "3.5.12",
+  "description": "",
+  "sideEffects": false,
+  "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -p .",
+    "prepare": "npm run build"
+  },
+  "author": "WWA Wing Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.2.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=14",
+    "npm": ">=6"
+  }
+}

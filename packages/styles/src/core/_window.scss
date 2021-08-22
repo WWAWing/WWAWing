@@ -1,0 +1,197 @@
+$wwa_icon_width-scale_up: 100px !default;
+
+%wwa_window {
+    background-color: rgba( 255, 255, 255, 0.9 ); // システムで指定することになりました。$colorで。
+    border: 2px solid #000;
+    border-radius: 10px;
+    box-sizing: border-box;
+    overflow: auto;
+    user-select: none;
+}
+
+%wwa_full_window {
+    @extend %wwa_window;
+    
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 20px;
+    width: 400px;
+    height: 400px;
+    cursor: pointer;
+}
+
+#wwa-text-message-window,
+.wwa-message-window {
+    @extend %wwa_window;
+    position: absolute;
+}
+
+#wwa-password-window {
+    @extend %wwa_full_window;
+    font-size: 12px;
+
+    > div.wwa-password-description {
+        text-align: left;
+        padding: 8px;
+    }
+    > textarea {
+        font-size: inherit;
+    }
+    > div.wwa-password-submit {
+        padding: 4px;
+        box-sizing: border-box;
+
+        button {
+            display: inline;
+            margin: 0 4px;
+        }
+    }
+}
+
+#wwa-battle-estimate {
+    @extend %wwa_full_window;
+    font-size: 16px;
+
+    > .est {
+        width: 100%;
+        height: 50px;
+        
+        > .est-img-wrapper {
+            width: $wwa_icon_width;
+            height: $wwa_icon_width;
+            margin: 5px;
+            float: left;
+        }
+        > .est-status-wrapper {
+            $item_width: 140px;
+            $item_height: 20px;
+
+            height: $wwa_icon_width;
+            margin: 5px;
+            float: left;
+            text-align: left;
+            position: relative;
+    
+            > div {
+                width: $item_width;
+                height: $item_height;
+                line-height: $item_height;
+                position: absolute;
+            }
+            > .est-energy {
+                top: 0;
+                left: 0;
+            }
+            > .est-strength {
+                top: 0;
+                left: $item_width;
+            }
+            > .est-defence {
+                top: $item_height;
+                left: 0;
+            }
+            > .est-damage{
+                top: $item_height;
+                left: $item_width;
+                color: #FF0000;
+                white-space: nowrap; // ダメージは桁数が多いので横幅から出てもいいようにする
+            }
+        }
+        &:after {
+            content: '';
+            clear: left;
+            display: block;
+            height: 0;
+            visibility: hidden;
+        }
+    }
+}
+
+.wwa-yesno-wrapper {
+    margin: 0 0 10px 246px;
+    width: $wwa_icon_width * 2;
+    height: $wwa_icon_width;
+    cursor: pointer;
+}
+
+.wwa-yes-button,
+.wwa-no-button {
+    padding: 0;
+    margin: 0;
+    float: left;
+    width: $wwa_icon_width;
+    height: $wwa_icon_width;
+}
+
+#wwa-wrapper.useScaleUp #wwa-text-message-window {
+    overflow: hidden; // translate によるはみ出し対策
+    
+    .wwa-yesno-wrapper {
+        transform: scale(1.5, 1.5) translate(-30px, 20px);
+        image-rendering: pixelated;
+        width: $wwa_icon_width-scale_up;
+        height: $wwa_icon_width * 2 !important;
+        .wwa-yes-button,
+        .wwa-no-button {
+            margin: 0 5px !important;
+        }
+    }
+}
+
+div.savedata {
+    display: inline-block;
+    text-align: center;
+    padding: 2px 17px;
+    vertical-align: middle;
+    font-size: 0;
+    border-width: 3px;
+    border-style: dotted;
+    border-color: transparent;
+    border-radius:7px;
+
+    &.select {
+        border-color: #FF0000;
+    }
+    > div.wide-cell-row {
+        // TODO: _sidebar にいる %wide-cell と共通化できる部分を共通化したい
+        @extend %wide_cell;
+        position: relative;
+        pointer-events: none;
+
+        > div.status-icon {
+            @extend %item_cell;
+
+            top: 0;
+            left: 6px; // $wwa_status_x_offset
+
+            padding: 0;
+            margin: 0;
+        }
+    }
+    > div.ss {
+        display: inline-block;
+        padding: 0;
+        margin: 0px 4px 3px 4px;
+        position: relative;
+        pointer-events: none;
+        &:empty {
+            background-color: rgba(0, 0, 0, 0.2);
+            width: 99px;
+            height: 99px;
+        }
+        > canvas {
+            display: inline-block;
+        }
+        > span {
+            display: inline-block;
+            font-size: 7px;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: rgba(255, 255, 255, 1);
+            padding: 3px 7px; 
+        }
+    }
+}

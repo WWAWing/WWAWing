@@ -1,7 +1,1 @@
-.idea/
-closure/compiler.jar
-closure/README.md
-closure/COPYING
-node_modules/
-build-tmp/
-lib/
+debug
