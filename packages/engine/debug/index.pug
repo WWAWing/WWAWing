@@ -1,0 +1,22 @@
+doctype html
+html(lang="ja")
+    head
+        meta(charset="UTF-8")
+        title @wwawing/engine 開発メニュー
+
+    body
+    h1 @wwawing/engine 開発メニュー
+
+    ul
+        each map in page.maps
+            li
+                a(href=(map.outputPageName || map.fileName) + ".html") #{map.title}
+
+    p
+        | Internet RPG &quot;
+        a(href="http://www.wwajp.com") World Wide Adventure
+        | &quot; &copy; 1996-2016 NAO
+    p
+        | &quot;
+        a(href="http://wwawing.com") WWA Wing
+        | &quot; &copy; 2013-#{page.thisYear} WWA Wing Team

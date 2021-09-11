@@ -11,7 +11,9 @@ import {
     SystemMessage2,
     SystemSound,
     AppearanceTriggerType,
-    Coord
+    Coord,
+    DEVICE_TYPE,
+    OS_TYPE
 } from "./wwa_data";
 import { Camera } from "./wwa_camera";
 import { Monster } from "./wwa_monster";
@@ -84,6 +86,7 @@ export class Player extends PartsObject {
 
     protected _enemy: Monster;
     protected _moves: number;
+    protected _frameCount: number;
 
     protected _moveMacroWaitingRemainMoves: number;
     protected _moveObjectAutoExecTimer: number;
@@ -97,9 +100,11 @@ export class Player extends PartsObject {
 
     protected _speedIndex: number;
 
+    protected _messageDelayFrameCount: number;
+
     // ステータス表示の有無
-    // WWAWingXE追加部分
     protected _hideStatus: boolean[];
+
 
     public move(): void {
         if (this.isControllable()) {
@@ -183,6 +188,11 @@ export class Player extends PartsObject {
             }
 
         }
+    }
+
+    public setDir(newDir: Direction): void {
+        this._isPreparedForLookingAround = false;
+        this._dir = newDir;
     }
 
 
@@ -322,6 +332,16 @@ export class Player extends PartsObject {
         return this._state === PlayerState.MESSAGE_WAITING;
     }
 
+    public isDelayFrame(): boolean {
+        return this._messageDelayFrameCount > 0;
+    }
+    public updateDelayFrame(): void {
+        this._messageDelayFrameCount--;
+    }
+
+    public setDelayFrame(): void {
+        this._messageDelayFrameCount = 1;
+    }
 
     public clearMessageWaiting(): void {
         if (this._state === PlayerState.MESSAGE_WAITING) {
@@ -533,7 +553,11 @@ export class Player extends PartsObject {
     readonly itemTransitioningClassName = "item-transitioning";
     readonly overwittenItemClassName = "item-overwritten";
     readonly overwittenItemSelector = `.${this.overwittenItemClassName}`;
-
+    /**
+     * アイテムエフェクト開始の setTimeout のタイマーを保持する配列
+     * 添字はアイテムボックス位置 (0-11)
+     */
+    readonly itemEffectStartTimers: (number | undefined)[] = new Array(Consts.ITEMBOX_SIZE);
     /**
      * 全アイテムボックスのDOMの更新を行います。
      * アイテムボックスの内部状態の変更後に呼ぶことでアイテムボックスの見た目が更新されます。
@@ -542,6 +566,7 @@ export class Player extends PartsObject {
      * - insertPos: アニメーションが走るアイテムボックスを指定します。 1以上12以下です。
      * - itemScreenPixelCoord: アニメーションの起点になる画面座標(フィールド上のアイテム地点)です。
      * - itemBoxScreenPixelCoord: アニメーションの終点になる画面座標(アイテムボックス)です。
+     * - itemBoxBackgroundImageCoord: アイテムボックスの背景画像の画像内座標(px単位)です。
      * - overwrittenObjectId: 上書きされる物体パーツのIDを指定すると、上書き演出になります。
      * 
      * @param animationOption オブジェクトがあるとアニメーションが走ります。
@@ -550,6 +575,7 @@ export class Player extends PartsObject {
         insertPos: number/*1-12*/,
         itemScreenPixelCoord: Coord,
         itemBoxScreenPixelCoord: Coord,
+        itemBoxBackgroundImageCoord: Coord,
         overwrittenObjectId?: number
     }): void {
         for (let i = 0; i < this._itemBoxElement.length; i++) {
@@ -559,7 +585,7 @@ export class Player extends PartsObject {
             // 該当位置がアイテムなしの場合
             if (this._itemBox[i] === 0) {
                 targetItemBoxElement.style.backgroundPosition = "-40px 0px";
-                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
+                this.disposeItemEffect(i, this._itemBoxElement[i], parentElement);
                 continue;
             }
             const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
@@ -568,7 +594,7 @@ export class Player extends PartsObject {
             // 該当位置がアニメーション対象アイテムでない場合
             if (!animationOption || i !== animationOption.insertPos - 1) {
                 targetItemBoxElement.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
+                this.disposeItemEffect(i, this._itemBoxElement[i], parentElement);
                 continue;
             }
 
@@ -577,30 +603,39 @@ export class Player extends PartsObject {
             const dy = animationOption.itemScreenPixelCoord.y - animationOption.itemBoxScreenPixelCoord.y;
             const durationMs = (-dx) * Consts.DEFAULT_FRAME_INTERVAL / Consts.ITEM_EFFECT_SPEED_PIXEL_PER_FRAME;
             const useBlank = animationOption.overwrittenObjectId === 0 || animationOption.overwrittenObjectId === undefined;
-            const overwrittenCx = useBlank ? 40 : this._wwa.getObjectCropXById(animationOption.overwrittenObjectId);
-            const overwrittenCy = useBlank ? 80 : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
+            const overwrittenCx = useBlank ? animationOption.itemBoxBackgroundImageCoord.x : this._wwa.getObjectCropXById(animationOption.overwrittenObjectId);
+            const overwrittenCy = useBlank ? animationOption.itemBoxBackgroundImageCoord.y : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
             targetItemBoxElement.style.left = dx + "px";
             targetItemBoxElement.style.top = dy + "px";
-            window.setTimeout(() => this.startItemEffect(
-                targetItemBoxElement,
-                parentElement,
-                {
-                    target: { x: cx, y: cy },
-                    overwritten: { x: overwrittenCx, y: overwrittenCy },
-                },
-                durationMs
-            ), Consts.DEFAULT_FRAME_INTERVAL);
+            if (typeof this.itemEffectStartTimers[i] === "number") {
+                clearInterval(this.itemEffectStartTimers[i]);
+            }
+            this.itemEffectStartTimers[i] = window.setTimeout(() => {
+                this.itemEffectStartTimers[i] = undefined;
+                this.startItemEffect(
+                    i,
+                    targetItemBoxElement,
+                    parentElement,
+                    {
+                        target: { x: cx, y: cy },
+                        overwritten: { x: overwrittenCx, y: overwrittenCy },
+                    },
+                    durationMs
+                );
+            }, Consts.DEFAULT_FRAME_INTERVAL);
         }
     }
 
     /**
      * アイテムエフェクトを開始します。
+     * @param index アイテムボックス番号 0-11
      * @param targetItemBoxElement 動かすアイテムのdiv要素
      * @param parentElement 動かすアイテムの親のdiv要素
      * @param crops target: 動かすアイテムの画像上のxy座標, overwritten: 上書きされるアイテムの画像上のxy座標
      * @param durationMs エフェクトにかかる時間
      */
     private startItemEffect(
+        index: number,
         targetItemBoxElement: HTMLDivElement,
         parentElement: HTMLDivElement,
         crops: {
@@ -626,16 +661,21 @@ export class Player extends PartsObject {
         targetItemBoxElement.style.top = "0";
         parentElement.classList.add(this.itemTransitioningClassName);
         targetItemBoxElement.addEventListener("transitionend", () => {
-            this.disposeItemEffect(targetItemBoxElement, parentElement);
+            this.disposeItemEffect(index, targetItemBoxElement, parentElement);
         }, { once: true });
     }
  
     /**
      * アイテムエフェクトを破棄します。アイテムエフェクトが動いていない時は何も起きません。
+     * @param index アイテムボックス番号 0-11
      * @param itemBoxElement 破棄するエフェクトの対象のアイテムのdiv要素
      * @param parentElement 破棄するエフェクト対象アイテムの親のdiv要素
      */
-    private disposeItemEffect(itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
+    private disposeItemEffect(index: number, itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
+        if (typeof this.itemEffectStartTimers[index] === "number") {
+            clearInterval(this.itemEffectStartTimers[index]);
+            this.itemEffectStartTimers[index] = undefined;
+        }
         itemBoxElement.style.transitionDuration = "0s";
         itemBoxElement.style.transitionProperty = "";
         itemBoxElement.style.left = "0";
@@ -670,9 +710,12 @@ export class Player extends PartsObject {
      * @param objID 持たせる物体パーツの番号
      * @param itemPos アイテムボックス格納位置 
      * @param isOverwrite itemPosが0でない場合に使用される上書き設定。詳しくはdoc本文を参照
-     * @param animationOption オブジェクトが与えられる場合は 画面座標 screenPixelCoord からアイテムボックスまでのアニメーションが発生します。
+     * @param animationOption オブジェクトが与えられる場合は 画面座標 screenPixelCoord からアイテムボックスまでのアニメーションが発生します。また、itemBoxBackgroundImageCoord をアイテムボックス背景画像のゲーム使用画像内座標[px]として利用します。
      */
-    public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false, animationOption?: { screenPixelCoord: Coord }): void {
+    public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false, animationOption?: {
+            screenPixelCoord: Coord,
+            itemBoxBackgroundImageCoord: Coord
+        }): void {
         var insertPos: number;
         var oldInsertPos: number;
         var oldObjID: number;
@@ -724,13 +767,13 @@ export class Player extends PartsObject {
         this.updateItemBox(animationOption ? {
             insertPos,
             itemScreenPixelCoord: animationOption.screenPixelCoord,
+            itemBoxBackgroundImageCoord: animationOption.itemBoxBackgroundImageCoord,
             itemBoxScreenPixelCoord: new Coord(
                 Consts.MAP_WINDOW_WIDTH + (insertPos - 1) % 3 * Consts.CHIP_SIZE,
                 Consts.ITEMBOX_TOP_Y + Math.floor((insertPos - 1) / 3) * Consts.CHIP_SIZE),
             overwrittenObjectId
         } : undefined);
     }
-
     private _forceSetItemBox(pos: number, id: number): void {
         var self = this;
         var border = util.$qsh("#item" + (pos - 1) + ">.item-click-border");
@@ -741,10 +784,38 @@ export class Player extends PartsObject {
             var mes = this._wwa.getSystemMessageById(SystemMessage2.CLICKABLE_ITEM);
             if (!this._isClickableItemGot) {
                 if (mes !== "BLANK") {
-                    this._wwa.setMessageQueue(mes === "" ?
-                        "このアイテムは右のボックスをクリックすることで使用できます。\n" +
-                        "使用できるアイテムは色枠で囲まれます。" : mes, false, true
-                    );
+                    var deviceMessage: string = "";
+                    switch (this._wwa.userDevice.device) {
+                        case DEVICE_TYPE.PC:
+                            deviceMessage = "このアイテムは右のボックスを選択することで使用できます。\n" +
+                                "使用できるアイテムは色枠で囲まれます。";
+                            break;
+                        case DEVICE_TYPE.VR:
+                            deviceMessage = "このアイテムは右のボックスをクリックすることで使用できます。\n" +
+                                "使用できるアイテムは色枠で囲まれます。";
+                            break;
+                        case DEVICE_TYPE.SP:
+                            deviceMessage = "このアイテムは右のボックスをタップすることで使用できます。\n" +
+                                "使用できるアイテムは色枠で囲まれます。";
+                            break;
+                        case DEVICE_TYPE.GAME:
+                            switch (this._wwa.userDevice.os) {
+                                case OS_TYPE.NINTENDO:
+                                    deviceMessage = "このアイテムはＸボタンを押すか、右のボックスをタップすることで使用できます。\n" +
+                                        "使用できるアイテムは色枠で囲まれます。";
+                                    break;
+                                case OS_TYPE.PLAY_STATION:
+                                    deviceMessage = "このアイテムは△ボタンを押すことで使用できます。\n" +
+                                        "使用できるアイテムは色枠で囲まれます。";
+                                    break;
+                                case OS_TYPE.XBOX:
+                                    deviceMessage = "このアイテムはＹボタンを押すことで使用できます。\n" +
+                                        "使用できるアイテムは色枠で囲まれます。";
+                                    break;
+                            }
+                            break;
+                    }
+                    this._wwa.setMessageQueue(mes === "" ? deviceMessage : mes, false, true);
                 }
                 this._isClickableItemGot = true;
             }
@@ -944,11 +1015,13 @@ export class Player extends PartsObject {
         if (this._speedIndex === Consts.MAX_SPEED_INDEX || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
             if (this._battleTurnNum === 1) {
                 this._wwa.playSound(SystemSound.ATTACK);
+                this._wwa.vibration(false);
             }
             this._battleFrameCounter = 1;
         } else {
             this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
             this._wwa.playSound(SystemSound.ATTACK);
+            this._wwa.vibration(true);
         }
 
         var playerStatus = this.getStatus();
@@ -1045,6 +1118,35 @@ export class Player extends PartsObject {
         return new Coord(targetX, targetY);
     }
 
+    /**
+     * ゲーム開始から経過したフレーム数を基に、 HHHH:MM:SS 形式のプレイ時間文字列を返します。
+     */
+    public getPlayTimeText(): string {
+        const seconds = Math.floor(this._frameCount / 60);
+        // FIY: 0とのビットOR( | ) は 小数点以下切り捨て
+        return seconds >= 60 * 60 * 10000 ?
+            "9999:99:99" :
+            ("000" + ((seconds / 60 / 60) | 0)).slice(-4) +
+            ":" + ("0" + (((seconds / 60) | 0) % 60)).slice(-2) +
+            ":" + ("0" + (seconds % 60)).slice(-2);
+    }
+
+    //プレイ時間を計測
+    public mainFrameCount(): void {
+        this._frameCount++;
+    }
+
+    public getFrameCount(): number {
+        return this._frameCount;
+    }
+
+    public setFrameCount(count: number): number {
+        if (typeof count !== "number") {
+            count = 0;
+        }
+        return this._frameCount = count;
+    }
+
     public getMoveCount(): number {
         return this._moves;
     }
@@ -1114,7 +1216,7 @@ export class Player extends PartsObject {
         this._hideStatus[no] = isHide;
     }
 
-    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number) {
+    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number) {
         super(pos);
         // どっかで定数化させたい
         var statusNum = 4;
@@ -1147,7 +1249,8 @@ export class Player extends PartsObject {
         this._goldValueElement = util.$qsh("#disp-gold>.status-value-box");
         this._isReadyToUseItem = false;
         this._isClickableItemGot = false;
-        this._moves = 0;
+        this._moves = moves;
+        this._frameCount = 0;
         this._moveMacroWaitingRemainMoves = 0;
         this._moveObjectAutoExecTimer = 0;
         this.updateStatusValueBox();
@@ -1156,6 +1259,7 @@ export class Player extends PartsObject {
         this._isPreparedForLookingAround = true;
         this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         this._speedIndex = Consts.DEFAULT_SPEED_INDEX;
+        this._messageDelayFrameCount = 0;
     }
 
 }

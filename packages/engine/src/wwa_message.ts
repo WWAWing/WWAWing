@@ -1,6 +1,7 @@
 import { WWA } from "./wwa_main";
 import {
     WWAConsts,
+    WWASaveConsts,
     Coord,
     PartsType,
     Face,
@@ -8,7 +9,9 @@ import {
     MacroImgFrameIndex,
     macrotable,
     YesNoState,
-    Position
+    Position,
+    DEVICE_TYPE,
+    Direction
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -16,7 +19,13 @@ import {
 import {
     Monster
 } from "./wwa_monster";
-import * as util from "./wwa_util";
+import {
+    WWAData
+} from "./wwa_data";
+import {
+    WWASave,
+    WWASaveData
+} from "./wwa_save";
 
 export class MessageInfo {
     constructor(
@@ -51,180 +60,209 @@ export class Macro {
     ) { }
     public execute(): void {
         try {
-            if (this.macroType === MacroType.IMGPLAYER) {
-                this._executeImgPlayerMacro();
-            } else if (this.macroType === MacroType.IMGYESNO) {
-                this._executeImgYesNoMacro();
-            } else if (this.macroType === MacroType.HPMAX) {
-                this._executeHPMaxMacro();
-            } else if (this.macroType === MacroType.SAVE) {
-                this._executeSaveMacro();
-            } else if (this.macroType === MacroType.PASS_SAVE) {
-                this._executePassSaveMacro();
-            } else if (this.macroType === MacroType.ITEM) {
-                this._executeItemMacro();
-            } else if (this.macroType === MacroType.DEFAULT) {
-                this._executeDefaultMacro();
-            } else if (this.macroType === MacroType.OLDMAP) {
-                this._executeOldMapMacro();
-            } else if (this.macroType === MacroType.PARTS) {
-                this._executePartsMacro();
-            } else if (this.macroType === MacroType.MOVE) {
-                this._executeMoveMacro();
-            } else if (this.macroType === MacroType.MAP) {
-                this._executeMapMacro();
-            } else if (this.macroType === MacroType.DIRMAP) {
-                this._executeDirMapMacro();
-            } else if (this.macroType === MacroType.IMGFRAME) {
-                this._executeImgFrameMacro();
-            } else if (this.macroType === MacroType.IMGBOM) {
-                this._executeImgBomMacro();
-            } else if (this.macroType === MacroType.DELPLAYER) {
-                this._executeDelPlayerMacro();
-            } else if (this.macroType === MacroType.FACE) {
-                this._executeFaceMacro();
-            } else if (this.macroType === MacroType.EFFECT) {
-                this._executeEffectMacro();
-            } else if (this.macroType === MacroType.GAMEOVER) {
-                this._executeGameOverMacro();
-            } else if (this.macroType === MacroType.IMGCLICK) {
-                this._executeImgClickMacro();
-            } else if (this.macroType === MacroType.STATUS) {
-                this._executeStatusMacro();
-            } else if(this.macroType === MacroType.EFFITEM) {
-                this._executeEffItemMacro();
-            } else if (this.macroType === MacroType.COLOR) {
-                this._executeColorMacro();
-            } else if (this.macroType === MacroType.WAIT) {
-                this._executeWaitMacro();
-            } else if (this.macroType === MacroType.SOUND) {
-                this._executeSoundMacro();
+            switch (this.macroType) {
+                case MacroType.IMGPLAYER:
+                    this._executeImgPlayerMacro();
+                    break;
+                case MacroType.IMGYESNO:
+                    this._executeImgYesNoMacro();
+                    break;
+                case MacroType.HPMAX:
+                    this._executeHPMaxMacro();
+                    break;
+                case MacroType.SAVE:
+                    this._executeSaveMacro();
+                    break;
+                case MacroType.ITEM:
+                    this._executeItemMacro();
+                    break;
+                case MacroType.DEFAULT:
+                    this._executeDefaultMacro();
+                    break;
+                case MacroType.OLDMAP:
+                    this._executeOldMapMacro();
+                    break;
+                case MacroType.PARTS:
+                    this._executePartsMacro();
+                    break;
+                case MacroType.MOVE:
+                    this._executeMoveMacro();
+                    break;
+                case MacroType.MAP:
+                    this._executeMapMacro();
+                    break;
+                case MacroType.DIRMAP:
+                    this._executeDirMapMacro();
+                    break;
+                case MacroType.IMGFRAME:
+                    this._executeImgFrameMacro();
+                    break;
+                case MacroType.IMGBOM:
+                    this._executeImgBomMacro();
+                    break;
+                case MacroType.DELPLAYER:
+                    this._executeDelPlayerMacro();
+                    break;
+                case MacroType.FACE:
+                    this._executeFaceMacro();
+                    break;
+                case MacroType.EFFECT:
+                    this._executeEffectMacro();
+                    break;
+                case MacroType.GAMEOVER:
+                    this._executeGameOverMacro();
+                    break;
+                case MacroType.IMGCLICK:
+                    this._executeImgClickMacro();
+                    break;
+                case MacroType.STATUS:
+                    this._executeStatusMacro();
+                    break;
+                case MacroType.EFFITEM:
+                    this._executeEffItemMacro();
+                    break;
+                case MacroType.COLOR:
+                    this._executeColorMacro();
+                    break;
+                case MacroType.WAIT:
+                    this._executeWaitMacro();
+                    break;
+                case MacroType.SOUND:
+                    this._executeSoundMacro();
+                    break;
+                case MacroType.GAMEPAD_BUTTON:
+                    this._executeGamePadButtonMacro();
+                    break;
+                case MacroType.OLDMOVE:
+                    this._executeOldMoveMacro();
+                    break;
+                case MacroType.JUMPGATE:
+                    this._executeJumpGateMacro();
+                    break;
+                // 現在の座標を記憶
+                case MacroType.RECPOSITION:
+                    this._executeRecPositionMacro();
+                    break;
+                // 記憶していた座標にジャンプ
+                case MacroType.JUMPRECPOSITION:
+                    this._executeJumpRecPositionMacro();
+                    break;
+                // 変数デバッグ出力
+                case MacroType.CONSOLE_LOG:
+                    this._executeConsoleLogMacro();
+                    break;
+                // 変数 <- HP
+                case MacroType.COPY_HP_TO:
+                    this._executeCopyHpToMacro();
+                    break;
+                // HP <- 変数
+                case MacroType.SET_HP:
+                    this._executeSetHPMacro();
+                    break;
+                // 変数 <- HPMAX
+                case MacroType.COPY_HPMAX_TO:
+                    this._executeCopyHpMaxToMacro();
+                    break;
+                // HPMAX <- 変数
+                case MacroType.SET_HPMAX:
+                    this._executeSetHpMaxMacro();
+                    break;
+                // 変数 <- AT
+                case MacroType.COPY_AT_TO:
+                    this._executeCopyAtToMacro();
+                    break;
+                // AT <- 変数
+                case MacroType.SET_AT:
+                    this._executeSetAtMacro();
+                    break;
+                // 変数 <- DF
+                case MacroType.COPY_DF_TO:
+                    this._executeCopyDfToMacro();
+                    break;
+                // DF <- 変数
+                case MacroType.SET_DF:
+                    this._executeSetDfMacro();
+                    break;
+                // 変数 <- MONEY
+                case MacroType.COPY_MONEY_TO:
+                    this._executeCopyMoneyToMacro();
+                    break;
+                // MONEY <- 変数
+                case MacroType.SET_MOENEY:
+                    this._executeSetMoneyMacro();
+                    break;
+                // HW3.16.4 より実装
+                // 歩数カウント代入
+                case MacroType.COPY_STEP_COUNT_TO:
+                    this._executeSetStepCountMacro();
+                    break;
+                // 変数に定数代入
+                case MacroType.VAR_SET_VAL:
+                    this._executeVarSetValMacro();
+                    break;
+                // 変数に変数代入
+                case MacroType.VAR_SET:
+                    this._executeVarSetMacro();
+                    break;
+                // 足し算代入
+                case MacroType.VAR_ADD:
+                    this._executeVarAddMacro();
+                    break;
+                // 引き算代入
+                case MacroType.VAR_SUB:
+                    this._executeVarSubMacro();
+                    break;
+                // 掛け算代入
+                case MacroType.VAR_MUL:
+                    this._executeVarMulMacro();
+                    break;
+                // 割り算代入
+                case MacroType.VAR_DIV:
+                    this._executeVarDivMacro();
+                    break;
+                // 変数Xに1からYまでの乱数を代入
+                case MacroType.VAR_SET_RAND:
+                    this._executeVarSetRandMacro();
+                    break;
+                // 速度変更禁止マクロ
+                case MacroType.GAME_SPEED:
+                    this._executeGameSpeedMacro();
+                    break;
+                // 変数付きのメッセージ表示
+                case MacroType.SHOW_STR:
+                    this._executeShowStrMacro();
+                    break;
+                // 強制クイックセーブ
+                case MacroType.AUTO_SAVE:
+                    this._executeAutoSaveMacro();
+                    break;
+                // IF文
+                case MacroType.IF:
+                    this._executeIfMacro();
+                    break;
+                // 速度設定
+                case MacroType.SET_SPEED:
+                    this._executeSetSpeedMacro();
+                    break;
+                // HW3.16.5 より実装
+                // プレイ時間変数代入
+                case MacroType.COPY_TIME_TO:
+                    this._executeCopyTimeToMacro();
+                    break;
+                // HW3.18.0 より実装
+                // ステータスを隠す
+                case MacroType.HIDE_STATUS:
+                    this._hideStatusMacro();
+                    break;
+                // HW3.19.0 より実装
+                // $map の変数対応版
+                case MacroType.VAR_MAP:
+                    this._varMapMacro();
+                    break;
+                default:
+                    console.log("不明なマクロIDが実行されました:" + this.macroType);
+                    break;
             }
-            // JUMPGATEマクロ受け取り
-            else if (this.macroType === MacroType.JUMPGATE) {
-                this._executeJumpGateMacro();
-            }
-            // 現在の座標を記憶
-            else if (this.macroType === MacroType.RECPOSITION) {
-                this._executeRecPositionMacro();
-            }
-            // 記憶していた座標にジャンプ
-            else if (this.macroType === MacroType.JUMPRECPOSITION) {
-                this._executeJumpRecPositionMacro();
-            }
-            // 変数デバッグ出力
-            else if (this.macroType === MacroType.CONSOLE_LOG) {
-                this._executeConsoleLogMacro();
-            }
-            // 変数 <- HP
-            else if (this.macroType === MacroType.COPY_HP_TO) {
-                this._executeCopyHpToMacro();
-            }
-            // HP <- 変数
-            else if (this.macroType === MacroType.SET_HP) {
-                this._executeSetHPMacro();
-            }
-            // 変数 <- HPMAX
-            else if (this.macroType === MacroType.COPY_HPMAX_TO) {
-                this._executeCopyHpMaxToMacro();
-            }
-            // HPMAX <- 変数
-            else if (this.macroType === MacroType.SET_HPMAX) {
-                this._executeSetHpMaxMacro();
-            }
-            // 変数 <- AT
-            else if (this.macroType === MacroType.COPY_AT_TO) {
-                this._executeCopyAtToMacro();
-            }
-            // AT <- 変数
-            else if (this.macroType === MacroType.SET_AT) {
-                this._executeSetAtMacro();
-            }
-            // 変数 <- DF
-            else if (this.macroType === MacroType.COPY_DF_TO) {
-                this._executeCopyDfToMacro();
-            }
-            // DF <- 変数
-            else if (this.macroType === MacroType.SET_DF) {
-                this._executeSetDfMacro();
-            }
-            // 変数 <- MONEY
-            else if (this.macroType === MacroType.COPY_MONEY_TO) {
-                this._executeCopyMoneyToMacro();
-            }
-            // MONEY <- 変数
-            else if (this.macroType === MacroType.SET_MOENEY) {
-                this._executeSetMoneyMacro();
-            }
-            // HW3.16.4 より実装
-            // 歩数カウント代入
-            else if (this.macroType === MacroType.COPY_STEP_COUNT_TO) {
-                this._executeSetStepCountMacro();
-            }
-            // 変数に定数代入
-            else if (this.macroType === MacroType.VAR_SET_VAL) {
-                this._executeVarSetValMacro();
-            }
-            // 変数に変数代入
-            else if (this.macroType === MacroType.VAR_SET) {
-                this._executeVarSetMacro();
-            }
-            // 足し算代入
-            else if (this.macroType === MacroType.VAR_ADD) {
-                this._executeVarAddMacro();
-            }
-            // 引き算代入
-            else if (this.macroType === MacroType.VAR_SUB) {
-                this._executeVarSubMacro();
-            }
-            // 掛け算代入
-            else if (this.macroType === MacroType.VAR_MUL) {
-                this._executeVarMulMacro();
-            }
-            // 割り算代入
-            else if (this.macroType === MacroType.VAR_DIV) {
-                this._executeVarDivMacro();
-            }
-            // 変数Xに1からYまでの乱数を代入
-            else if (this.macroType === MacroType.VAR_SET_RAND) {
-                this._executeVarSetRandMacro();
-            }
-            // 速度変更禁止マクロ
-            else if (this.macroType === MacroType.GAME_SPEED) {
-                this._executeGameSpeedMacro();
-            }
-            // 変数付きのメッセージ表示
-            else if (this.macroType === MacroType.SHOW_STR) {
-                this._executeShowStrMacro();
-            }
-            // 強制クイックセーブ
-            else if (this.macroType === MacroType.AUTO_SAVE) {
-                this._executeAutoSaveMacro();
-            }
-            // IF文
-            else if (this.macroType === MacroType.IF) {
-                this._executeIfMacro();
-            }
-            // 速度設定
-            else if (this.macroType === MacroType.SET_SPEED) {
-                this._executeSetSpeedMacro();
-            }
-            // HW3.16.5 より実装
-            // プレイ時間変数代入
-            else if (this.macroType === MacroType.COPY_TIME_TO) {
-                this._executeCopyTimeToMacro();
-            }
-            // HW3.18.0 より実装
-            // ステータスを隠す
-            else if (this.macroType === MacroType.HIDE_STATUS) {
-                this._hideStatusMacro();
-            }
-            // HW3.19.0 より実装
-            // $map の変数対応版
-            else if (this.macroType === MacroType.VAR_MAP) {
-                this._varMapMacro();
-            }
- 
         } catch (e) {
             // デベロッパーモードならエラーを吐くとかしたいね
         }
@@ -405,7 +443,8 @@ export class Macro {
     }
     // autoSaveマクロ実行部
     private _executeAutoSaveMacro(): void {
-        this._wwa.autoSave();
+        // WWA Wing XE にあった autoSave マクロは廃止予定です。
+        // TODO: develop マージまでに関連実装はすべて削除する
     }
     // IFマクロ実行部
     private _executeIfMacro(): void {
@@ -588,34 +627,24 @@ export class Macro {
         var posX = this._parseInt(1);
         var posY = this._parseInt(2);
 
-        var x = posX * WWAConsts.CHIP_SIZE;
-        var y = posY * WWAConsts.CHIP_SIZE
-
         if (posX < 0 || posY < 0) {
             throw new Error("座標は正でなければなりません。");
         }
-        if (type === MacroImgFrameIndex.ENERGY) {
-            var iconNode_energy = util.$qsh("#disp-energy>.status-icon");
-            iconNode_energy.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.STRENGTH) {
-            var iconNode_strength = util.$qsh("#disp-strength>.status-icon");
-            iconNode_strength.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.DEFENCE) {
-            var iconNode_defence = util.$qsh("#disp-defence>.status-icon");
-            iconNode_defence.style.backgroundPosition = "-" + x + "px -" + y + "px";
-        } else if (type === MacroImgFrameIndex.GOLD) {
-            var iconNode_gold = util.$qsh("#disp-gold>.status-icon");
-            iconNode_gold.style.backgroundPosition = "-" + x + "px -" + y + "px";
+        if (type === MacroImgFrameIndex.ENERGY ||
+            type === MacroImgFrameIndex.STRENGTH ||
+            type === MacroImgFrameIndex.DEFENCE ||
+            type === MacroImgFrameIndex.GOLD) {
+            this._wwa.setStatusIconCoord(type, new Coord(posX, posY));
+
         } else if (type === MacroImgFrameIndex.WIDE_CELL_ROW) {
-            Array.prototype.forEach.call(util.$qsAll("div.wide-cell-row"), (node: HTMLElement) => {
-                node.style.backgroundPosition = "-" + x + "px -" + y + "px";
-            });
+            this._wwa.setWideCellCoord(new Coord(posX, posY));
+
         } else if (type === MacroImgFrameIndex.ITEM_BG) {
-            Array.prototype.forEach.call(util.$qsAll("div.item-cell"), (node: HTMLElement) => {
-                node.style.backgroundPosition = "-" + x + "px -" + y + "px";
-            });
+            this._wwa.setItemboxBackgroundPosition({ x: posX, y: posY });
+
         } else if (type === MacroImgFrameIndex.MAIN_FRAME) {
             this._wwa.setFrameCoord(new Coord(posX, posY));
+
         } else {
             throw new Error("種別が不正です。");
         }
@@ -669,6 +698,7 @@ export class Macro {
         }
         if (waitTime === 0) {
             this._wwa.stopEffect();
+            return;
         }
         var coords: Coord[] = [];
         for (var i = 1; i < this.macroArgs.length; i += 2) {
@@ -774,6 +804,26 @@ export class Macro {
         var id = parseInt(this.macroArgs[0]);
         this._wwa.playSound(id);
     }
+    private _executeGamePadButtonMacro(): void {
+        this._concatEmptyArgs(2);
+        var buttonID: number = this._parseInt(0);
+        var itemNo: number = this._parseInt(1);
+
+        if (buttonID < 0 || itemNo < 0) {
+            throw new Error("各引数は0以上の整数でなければなりません。");
+        }
+
+        if (itemNo > WWAConsts.ITEMBOX_SIZE) {
+            throw new Error("アイテムボックス上限を超えた数値が指定されました。");
+        }
+        this._wwa.setGamePadButtonItemTable(buttonID, itemNo);
+    }
+
+    private _executeOldMoveMacro(): void {
+        this._concatEmptyArgs(1);
+        const oldMoveFlag = !!this._parseInt(0);
+        this._wwa.setOldMove(oldMoveFlag);
+    }
 }
 
 export function parseMacro(
@@ -838,18 +888,28 @@ export class TextWindow {
         this._isVisible = true;
         this._element.style.display = "block";
         this.update();
+        this._wwa.wwaCustomEvent('wwa_window_show', {
+            name: this.windowName,
+            element: this._element,
+            text: this._element.textContent
+        });
     }
     public hide(): void {
         this._isVisible = false;
         this._element.style.display = "none";
         this.update();
+        this._wwa.wwaCustomEvent('wwa_window_hide', { name: this.windowName });
     }
     public isVisible(): boolean {
         return this._isVisible;
     }
+
+    protected get windowName(): string {
+        return "TextWindow";
+    }
 }
 
-export class MosterWindow extends TextWindow {
+export class MonsterWindow extends TextWindow {
     protected _monsterBox: HTMLDivElement;
     protected _energyBox: HTMLDivElement;
     protected _strengthBox: HTMLDivElement;
@@ -916,9 +976,13 @@ export class MosterWindow extends TextWindow {
 
     }
 
+    protected get windowName(): string {
+        return "MonsterWindow";
+    }
 }
 
 export class ScoreWindow extends TextWindow {
+    protected static WINDOW_NAME: string = "ScoreWindow";
     constructor(
         wwa: WWA,
         coord: Coord,
@@ -949,6 +1013,10 @@ export class ScoreWindow extends TextWindow {
             this._element.textContent = "Score: " + score;
         }
     }
+
+    protected get windowName(): string {
+        return "ScoreWindow";
+    }
 }
 
 export enum Positioning {
@@ -970,17 +1038,24 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _cgFileName: string;
     private _isVisible: boolean;
     private _isYesno: boolean;
+    private _isSave: boolean;
     private _isItemMenu: boolean;
     private _isInputDisable: boolean;
 
     private _element: HTMLElement;
     private _msgWrapperElement: HTMLElement;
+
     private _dummyElement: HTMLElement;
+    private _saveElement: HTMLElement;
     private _ynWrapperElement: HTMLElement;
 
     private _divYesElement: HTMLElement;
     private _divNoElement: HTMLElement;
     private _parentElement: HTMLElement;
+    private _wwaSave: WWASave = void 0;
+    private _save_select_id: number = 0;
+    private _save_counter: number = 0;
+    private _save_close: boolean = false;
 
     constructor(
         wwa: WWA,
@@ -1008,28 +1083,21 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._isVisible = isVisible;
         this._isYesno = isYesno;
         this._isItemMenu = isItemMenu;
+
         this._element = document.createElement("div");
         this._element.id = "wwa-text-message-window";
-        this._element.style.position = "absolute";
-        this._element.style.borderWidth = "2px";
-        this._element.style.borderStyle = "solid";
-        if (wwa.isClassicMode()) {
-            this._element.style.borderRadius = "15px";
-        } else {
-            this._element.style.borderRadius = "10px";
-        }
         this._element.classList.add("wwa-message-window");
-        this._element.style.zIndex = "400";
+
         this._msgWrapperElement = document.createElement("div");
         this._msgWrapperElement.style.textAlign = "left";
         this._msgWrapperElement.style.wordWrap = "break-word";
-        if (wwa.isClassicMode()) {
-            this._msgWrapperElement.style.margin = "8px 0 8px 16px";
-        } else {
-            this._msgWrapperElement.style.margin = "0";
-            this._msgWrapperElement.style.padding = "7px";
-        }
+        this._msgWrapperElement.style.margin = wwa.isClassicMode() ? "8px 0 8px 16px" : "0";
+        this._msgWrapperElement.style.padding = wwa.isClassicMode() ? "0" : "7px";
         this._element.appendChild(this._msgWrapperElement);
+        this._saveElement = document.createElement("div");
+        this._saveElement.style.padding = "0";
+        this._saveElement.style.margin = "0";
+        this._element.appendChild(this._saveElement);
         this._dummyElement = document.createElement("div");
         this._dummyElement.style.display = "none";
         this._dummyElement.style.padding = "0";
@@ -1037,23 +1105,17 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._dummyElement.style.height = "55px";
         this._element.appendChild(this._dummyElement);
         this._ynWrapperElement = document.createElement("div");
-        this._ynWrapperElement.style.padding = "0";
-        this._ynWrapperElement.style.margin = "0";
-        this._ynWrapperElement.style.position = "absolute";
-        this._ynWrapperElement.style.left = "246px";
-        this._ynWrapperElement.style.bottom = "10px";
-        this._ynWrapperElement.style.width = "80px";
-        this._ynWrapperElement.style.height = "40px";
-        this._ynWrapperElement.style.zIndex = "10";
+        this._ynWrapperElement.classList.add("wwa-yesno-wrapper");
         this._element.appendChild(this._ynWrapperElement);
+
         this._parentElement = parentElement;
         this._parentElement.appendChild(this._element);
+
+        /**
+         * @todo YesNo ボタンは可能であればCSSに収めたい
+         */
         this._divYesElement = document.createElement("div");
-        this._divYesElement.style.padding = "0";
-        this._divYesElement.style.margin = "0";
-        this._divYesElement.style.cssFloat = "left";
-        this._divYesElement.style.width = "40px";
-        this._divYesElement.style.height = "40px";
+        this._divYesElement.classList.add("wwa-yes-button");
         this._divYesElement.style.background =
             "url(" + escapedFilename + ")";
         this._divYesElement.onclick = function () {
@@ -1064,11 +1126,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         };
         this._divYesElement.style.cursor = "pointer";
         this._divNoElement = document.createElement("div");
-        this._divNoElement.style.padding = "0";
-        this._divNoElement.style.margin = "0";
-        this._divNoElement.style.cssFloat = "left";
-        this._divNoElement.style.width = "40px";
-        this._divNoElement.style.height = "40px";
+        this._divNoElement.classList.add("wwa-no-button");
         this._divNoElement.style.background =
             "url(" + escapedFilename + ")";
         this._divNoElement.onclick = function () {
@@ -1077,10 +1135,17 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 thisA.update();
             }
         };
-        this._divNoElement.style.cursor = "pointer";
         this._ynWrapperElement.appendChild(this._divYesElement);
         this._ynWrapperElement.appendChild(this._divNoElement);
+
         thisA._isInputDisable = false;
+        switch (wwa.userDevice.device) {
+            case DEVICE_TYPE.SP:
+            case DEVICE_TYPE.VR:
+                //スマートフォン用に拡大
+                this._parentElement.classList.add("useScaleUp");
+                break;
+        }
         this.update();
     }
 
@@ -1154,6 +1219,9 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     public isYesNoChoice(): boolean {
         return this._isYesno;
     }
+    public isSaveChoice(): boolean {
+        return this._isSave;
+    }
     public setItemMenuChoice(isItemMenu: boolean): boolean {
         this._isInputDisable = false;
         this._isItemMenu = isItemMenu;
@@ -1182,6 +1250,39 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     }
     private isWideChar(char: string): boolean {
         return (char.match(/^[^\x01-\x7E\xA1-\xDF]+$/) !== null);
+    }
+    /**
+     * クラシックモード用: 1行分のテキストを表示する要素を構築します。
+     * @param message 挿入したいメッセージ
+     * @returns {HTMLSpanElement} 1行分のテキストが含まれている span 要素
+     */
+    private createClassicTextElement(message: string): HTMLSpanElement {
+        var lsp = document.createElement("span");
+        let count = 0;
+        let lineStr = "";
+
+        for (let j = 0; j < message.length || count != 0; j++) { // 1文字
+            if (this.isWideChar(message.charAt(j))) {
+                count += 2; // 全角の場合
+            } else {
+                count += 1; // 半角の場合
+            }
+            lineStr += message.charAt(j);
+            if (count + 1 > WWAConsts.MSG_STR_WIDTH * 2) {
+                if (message.charAt(j + 1) === "。" || message.charAt(j + 1) === "、") {
+                    lineStr += message.charAt(j + 1); // 句読点の場合は行末に入れる
+                    j++;
+                }
+                var vsp = document.createElement("span"); // View SPan
+                vsp.style.display = "inline-block";
+                vsp.style.width = "100%";
+                vsp.textContent = lineStr;
+                lsp.appendChild(vsp);
+                count = 0;
+                lineStr = "";
+            }
+        }
+        return lsp;
     }
     public update(): void {
         var base = this._wwa.getYesNoImgCoord();
@@ -1215,36 +1316,17 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._msgWrapperElement.textContent = "";
         var mesArray = this._message.split("\n");
         mesArray.forEach((line, i) => {
-            var lsp = document.createElement("span"); // Logical SPan
+            let lsp: HTMLSpanElement; // Logical SPan
             if (this._wwa.isClassicMode()) {
-                var count = 0, lineStr = "";
-                for (var j = 0; j < mesArray[i].length || count != 0; j++) { // 1文字
-                    if (this.isWideChar(mesArray[i].charAt(j))) {
-                        count += 2; // 全角の場合
-                    } else {
-                        count += 1; // 半角の場合
-                    }
-                    lineStr += mesArray[i].charAt(j);
-                    if (count + 1 > WWAConsts.MSG_STR_WIDTH * 2) {
-                        if (mesArray[i].charAt(j + 1) === "。" || mesArray[i].charAt(j + 1) === "、") {
-                            lineStr += mesArray[i].charAt(j + 1); // 句読点の場合は行末に入れる
-                            j++;
-                        }
-                        var vsp = document.createElement("span"); // View SPan
-                        vsp.style.display = "inline-block";
-                        vsp.style.width = "100%";
-                        vsp.textContent = lineStr;
-                        lsp.appendChild(vsp);
-                        count = 0;
-                        lineStr = "";
-                    }
-                }
+                lsp = this.createClassicTextElement(line);
             } else {
+                lsp = document.createElement("span");
                 lsp.textContent = mesArray[i];
             }
             this._msgWrapperElement.appendChild(lsp);
             this._msgWrapperElement.appendChild(document.createElement("br"));
         });
+
         if (this._isVisible) {
             this._element.style.left = this._x + "px";
             this._element.style.top = this._y + "px";
@@ -1254,12 +1336,147 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
             this._element.style.left = "-999999px";
             this._element.style.top = "-999999px";
         }
+        if (this._isSave) {
+            this._saveElement.style.display = "block";
+        } else {
+            this._saveElement.style.display = "none";
+        }
         this._element.style.width = this._width + "px";
         this._element.style.minHeight = this._height + "px"; // minなのでoverflowしても安心!!!
-        this._dummyElement.style.display = this._isYesno ? "block" : "none";
-        //            this._element.style.display = this._isVisible ? "block" : "none";
+    }
+    setWWASave(wwaSave: WWASave) {
+        this._wwaSave = wwaSave;
+    }
+
+    createSaveDom(): void {
+        var loadWWAData: WWASaveData;
+        var owner_div, savedata_main_div, ss_div, energy_div, span, energy_icon_div, energy_original_dom, energy_status_value_div, backgroundPositionText, backgroundImageText;
+        owner_div = document.createElement("div");
+        energy_original_dom = document.getElementById("disp-energy");
+        backgroundPositionText = energy_original_dom.style["backgroundPosition"];
+        backgroundImageText = energy_original_dom.style["backgroundImage"];
+        var len: number = this._wwaSave.list.length;
+        for (var i = 0; i < len; i++) {
+            loadWWAData = this._wwaSave.list[i];
+
+            savedata_main_div = document.createElement("div");
+            savedata_main_div.classList.add("savedata");
+            savedata_main_div.setAttribute("save_id", i);
+            savedata_main_div.addEventListener("click", (e): void => {
+                this.setSaveID(e.currentTarget.getAttribute("save_id") | 0);
+                this._save_close = true;
+                e.preventDefault();
+            });
+
+            ss_div = document.createElement("div");
+            ss_div.classList.add("ss");
+            savedata_main_div.appendChild(ss_div);
+
+            energy_div = document.createElement("div");
+            energy_div.classList.add("wide-cell-row");
+            energy_div.style["backgroundPosition"] = backgroundPositionText;
+            energy_div.style["backgroundImage"] = backgroundImageText;
+            savedata_main_div.appendChild(energy_div);
+            owner_div.appendChild(savedata_main_div);
+
+
+            if (loadWWAData.flag) {
+                //セーブデータあり
+                ss_div.appendChild(loadWWAData.cvs);
+
+                span = document.createElement("span");
+                span.textContent = loadWWAData.getDateText();//時刻の表示
+                if (loadWWAData.isLastSaveData()) {
+                    span.style.color = WWASaveConsts.DATE_LAST_SAVE_TEXT_COLOR;//最後にセーブした箇所の色を変更
+                }
+
+                ss_div.appendChild(span);
+
+                energy_icon_div = document.createElement("div");
+                energy_icon_div.classList.add("status-icon");
+                energy_icon_div.style["backgroundImage"] = backgroundImageText;
+                energy_icon_div.style["backgroundPosition"] = "-120px -80px";
+                energy_div.appendChild(energy_icon_div);
+
+                energy_status_value_div = document.createElement("div");
+                energy_status_value_div.classList.add("status-value-box");
+                energy_status_value_div.textContent = loadWWAData.getStatusEnergy();
+                energy_div.appendChild(energy_status_value_div);
+            }
+        }
+        this._saveElement.textContent = "";
+        this._saveElement.appendChild(owner_div);
+        this.setSaveID(this._save_select_id);
+        this._isSave = true;
+        this._save_counter = 0;
+        this._save_close = false;
+    }
+    deleteSaveDom(): void {
+        this._saveElement.textContent = "";
+        this._isSave = false;
+    }
+    setSaveID(save_select_id: number): void {
+        this._save_select_id = save_select_id;
+        var domList = document.querySelectorAll(".savedata");
+        var dom;
+        var len: number = domList.length;
+        for (var i = 0; i < len; i++) {
+            dom = domList[i];
+            if (save_select_id === i) {
+                dom.classList.add("select");
+            } else {
+                dom.classList.remove("select");
+            }
+
+        }
+    }
+    save(gameCvs: HTMLCanvasElement, _quickSaveData: WWAData): boolean {
+        return this._wwaSave.save(gameCvs, _quickSaveData, this._save_select_id);
+    }
+    load(): WWAData {
+        return this._wwaSave.load(this._save_select_id);
+    }
+    public saveUpdate(): void {
+        if (this._save_counter > 0) {
+            this._save_counter--;
+        }
+    }
+    public isSaveClose(): boolean {
+        return this._save_close;
+    }
+    private cursor_wait() {
+        this._save_counter = WWAConsts.CONTROLL_WAIT_FRAME;
+    }
+    public saveControll(moveDir: Direction): void {
+        if (this._save_counter > 0) {
+            //カーソルリピート待機
+            return;
+        }
+        if (this._isInputDisable) {
+            //受付しないタイミング
+            return;
+        }
+        switch (moveDir) {
+            case Direction.DOWN:
+                this._save_select_id -= 2;
+                this.cursor_wait();
+                break;
+            case Direction.UP:
+                this._save_select_id += 2;
+                this.cursor_wait();
+                break;
+            case Direction.LEFT:
+                this._save_select_id--;
+                this.cursor_wait();
+                break;
+            case Direction.RIGHT:
+                this._save_select_id++;
+                this.cursor_wait();
+                break;
+        }
+        this.setSaveID((this._save_select_id + WWASaveConsts.QUICK_SAVE_MAX) % WWASaveConsts.QUICK_SAVE_MAX);
+    }
+    protected get windowName(): string {
+        return "MessageWindow";
     }
 }
-
-
-

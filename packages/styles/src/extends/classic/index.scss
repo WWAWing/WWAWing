@@ -1,0 +1,51 @@
+$monospace_font: 'ＭＳ ゴシック', 'Osaka-mono', monospace;
+$sans-serif_font: 'ＭＳ Ｐゴシック', 'Osaka', sans-serif;
+
+$wwa_font_size: 18px;
+$wwa_wide_cell_font_size: 18px;
+
+@import "../../core/index";
+
+.wwa-size-box {
+    text-shadow: 1px 0px 0 gray;
+}
+
+div#wwa-sidebar {
+    text-shadow: 1px 1px 0 gray;
+    #cell-restart,
+    #cell-gotowwa {
+        font-size: 16px;
+        letter-spacing: -0.3px;
+    }
+}
+
+%wwa_window {
+    background-color: #ffffff;
+    box-sizing: border-box;
+    border-radius: 15px;
+}
+
+%wwa_full_window {
+    margin: 0;
+    padding: 18px;
+    width: 440px;
+    height: 440px;
+    border-radius: 0;
+}
+
+#wwa-password-window {
+    > div.wwa-password-description {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
+#wwa-battle-estimate {
+    > .est {
+        > .est-status-wrapper {
+            > .est-damage {
+                text-shadow: 1px 0px 0px #FF8080;
+            }
+        }
+    }
+}

@@ -1,7 +1,13 @@
 {
-  "lerna": "2.11.0",
+  "lerna": "3.22.1",
+  "npmClient": "npm",
   "packages": [
     "packages/*"
   ],
-  "version": "independent"
+  "command": {
+    "publish": {
+      "graphType": "all"
+    }
+  },
+  "version": "3.5.12"
 }

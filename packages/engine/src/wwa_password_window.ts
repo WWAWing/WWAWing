@@ -4,22 +4,19 @@ export enum Mode {
     SAVE,
     LOAD
 }
-var DESCRIPTION_LOAD = (
-    "下のボックスに前回のプレイで取得した\n" +
-    "復帰用パスワードを入力してください。\n" +
-    "テキストは、Ctrl+Cでコピー、Ctrl+Vで貼り付けできます。\n" +
-    "現在、Java版WWAで取得したパスワードはご利用になれません。\n" +
-    //        "テキストの先頭に「Ａ」最後尾に「Ｚ」の文字があることを確認してください。\n" +
-    "作成者がマップの内容を変更した場合は\n" +
-    "それ以前に取得したパスワードは使えなくなります。"
-);
+function generatePasswordLoadWindowwDescription(isDisallowedOldSave: boolean) {
+    return `下のボックスに前回のプレイで取得した
+復帰用パスワードを貼り付けてください。
+Java 版 WWA で取得したパスワードはご利用になれません。
+作成者が ${isDisallowedOldSave ? "マップの内容" : "ワールド名 か マップの暗証番号"} を変更した場合は
+それ以前に取得したパスワードは使えなくなります。`;
+};
 
-var DESCRIPTION_SAVE = (
+
+const DESCRIPTION_SAVE = (
     "下記テキストがデータ復帰用のパスワードになっています。\n" +
     "コピーしてメモ帳などのテキストエディタに貼り付けて\n" +
-    "保存してください。ボックスをクリックで全体を選択、\n" +
-    "「Ctrl+C」でコピー、「Ctrl+V」で貼り付けできます。\n" +
-    "通常数万文字程度ありますので、ご注意ください。"
+    "保存してください。"
 );
 
 export class PasswordWindow {
@@ -32,7 +29,8 @@ export class PasswordWindow {
     private _isVisible: boolean;
 
     private _mode: Mode;
-    public constructor(private _wwa: WWA, private _parent: HTMLDivElement) {
+    public constructor(private _wwa: WWA, private _parent: HTMLDivElement, private _isDisallowLoadOldSave: boolean) {
+
         this._element = document.createElement("div");
         this._element.setAttribute("id", "wwa-password-window");
         this._element.style.display = "none";
@@ -48,6 +46,7 @@ export class PasswordWindow {
         });
 
         this._buttonWrapperElement = document.createElement("div");
+        this._buttonWrapperElement.classList.add("wwa-password-submit");
 
         this._okButtonElement = document.createElement("button");
         this._okButtonElement.textContent = "OK";
@@ -105,7 +104,7 @@ export class PasswordWindow {
     public update() {
         var msg = "";
         if (this._mode === Mode.LOAD) {
-            msg = DESCRIPTION_LOAD;
+            msg = generatePasswordLoadWindowwDescription(this._isDisallowLoadOldSave);
             try {
                 this._passwordBoxElement.removeAttribute("readonly");
             } catch (e) { }

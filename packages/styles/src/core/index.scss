@@ -1,0 +1,16 @@
+@charset "UTF-8";
+
+/**
+    wwa.css
+    @author Matsuyuki(rmn.)
+    このファイルは、WWAの起動時に必要です。
+    フォントやフォントサイズは自由に変更できます。
+*/
+
+@import 'main';
+@import 'common';
+@import 'sidebar';
+@import 'canvas';
+@import 'window';
+@import 'virtualpad';
+@import 'z-index';
