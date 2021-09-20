@@ -119,6 +119,7 @@ export class TextLoader {
     wwaData.statusColorB = WWAConsts.DEFAULT_STATUS_COLOR_B;
 
     wwaData.moves = WWAConsts.DEFAULT_MOVES;
+    wwaData.gameSpeedIndex = WWAConsts.DEFAULT_SPEED_INDEX;
 
     return wwaData;
   }

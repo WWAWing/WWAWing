@@ -1216,7 +1216,7 @@ export class Player extends PartsObject {
         this._hideStatus[no] = isHide;
     }
 
-    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number) {
+    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number, gameSpeedIndex: number) {
         super(pos);
         // どっかで定数化させたい
         var statusNum = 4;
@@ -1258,7 +1258,7 @@ export class Player extends PartsObject {
         this._afterMoveMacroFlag = false;
         this._isPreparedForLookingAround = true;
         this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
-        this._speedIndex = Consts.DEFAULT_SPEED_INDEX;
+        this._speedIndex = gameSpeedIndex;
         this._messageDelayFrameCount = 0;
     }
 

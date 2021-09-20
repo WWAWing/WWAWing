@@ -65,6 +65,7 @@ export class WWAConsts {
     static DEFAULT_STATUS_COLOR_B = 0x0;
 
     static DEFAULT_MOVES = 0;
+    static DEFAULT_SPEED_INDEX = 3;
 }
 
 export class LoaderError implements Error {
@@ -172,8 +173,8 @@ export function createDefaultWWAData(): WWAData {
         frameCount: undefined,
         gamePadButtonItemTable: undefined,
         userVar: undefined,
-        permitGameSpeed: undefined,
-        gameSpeed: undefined,
+        permitChangeGameSpeed: undefined,
+        gameSpeedIndex: undefined,
         playTime: undefined,
         disablePassSaveFlag: undefined
     };

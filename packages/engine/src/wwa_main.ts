@@ -334,12 +334,11 @@ export class WWA {
 
             /* WWAWing XE 拡張部分 */
             //
-            this._wwaData.permitGameSpeed = true;
+            this._wwaData.permitChangeGameSpeed = true;
             this._wwaData.userVar = new Array(Consts.USER_VAR_NUM);
             for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
                 this._wwaData.userVar[i] = 0;
             }
-            this._wwaData.gameSpeed = 3;
             // プレイ時間関連
             this._wwaData.playTime = 0;
             var _nowTime: any;
@@ -422,7 +421,7 @@ export class WWA {
             var status = new Status(
                 this._wwaData.statusEnergy, this._wwaData.statusStrength,
                 this._wwaData.statusDefence, this._wwaData.statusGold);
-            this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax, this._wwaData.moves);
+            this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax, this._wwaData.moves, this._wwaData.gameSpeedIndex);
             this._objectMovingDataManager = new ObjectMovingDataManager(this, this._player);
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
@@ -1426,7 +1425,7 @@ export class WWA {
     }
 
     public onchangespeed(type: SpeedChange) {
-        if (this._wwaData.permitGameSpeed) {
+        if (this._wwaData.permitChangeGameSpeed) {
             var speedIndex: number, speedMessage: string;
             if (type === SpeedChange.UP) {
                 speedIndex = this._player.speedUp();
@@ -3667,7 +3666,7 @@ export class WWA {
         qd.statusGold = st.gold;
         qd.moves = this._player.getMoveCount();
         qd.frameCount = this._player.getFrameCount();
-        qd.gameSpeed =  speedList[this._player.getSpeedIndex()];
+        qd.gameSpeedIndex = this._player.getSpeedIndex();
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
@@ -3850,7 +3849,7 @@ export class WWA {
         this.setWideCellCoord(new Coord(newData.imgWideCellX, newData.imgWideCellY));
         this.setItemboxBackgroundPosition({ x: newData.imgItemboxX, y: newData.imgItemboxY });
         this.setFrameCoord(new Coord(newData.imgFrameX, newData.imgFrameY));
-        this.setPlayerSpeed(newData.gameSpeed);
+        this.setPlayerSpeedIndex(newData.gameSpeedIndex);
 
         this.updateCSSRule();
         this.updateEffect();
@@ -4993,7 +4992,7 @@ font-weight: bold;
     }
     // 速度変更禁止
     public speedChangeJudge(speedChangeFlag: boolean): void {
-        this._wwaData.permitGameSpeed = speedChangeFlag;
+        this._wwaData.permitChangeGameSpeed = speedChangeFlag;
     }
     // ユーザ変数 IFElse
     public userVarUserIf(_triggerPartsPosition: Coord, str: string[]): void {
@@ -5034,16 +5033,15 @@ font-weight: bold;
         }
     }
     // プレイヤー速度設定
-    public setPlayerSpeed(num: number): void {
-        var speedIndex: number;
-        if (num > 6 && num < 1) {
-            throw new Error("#set_speed の引数が異常です:" + num);
+    public setPlayerSpeedIndex(speedIndex: number): void {
+        if (speedIndex >= speedList.length && speedIndex < 0) {
+            throw new Error("#set_speed の引数が異常です:" + speedIndex);
         }
-        for (var i = 0; i < 6; i++) {
-            this._wwaData.gameSpeed = this._player.speedDown();
+        for (var i = 0; i < speedList.length; i++) {
+            this._wwaData.gameSpeedIndex = this._player.speedDown();
         }
-        for (var i = 1; i < num; i++) {
-            this._wwaData.gameSpeed = this._player.speedUp();
+        for (var i = 0; i < speedIndex; i++) {
+            this._wwaData.gameSpeedIndex = this._player.speedUp();
         }
         /*
         this.setMessageQueue(
