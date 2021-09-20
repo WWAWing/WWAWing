@@ -459,7 +459,8 @@ export class Macro {
     private _executeSetSpeedMacro(): void {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
-        this._wwa.setPlayerSpeed(num);
+        // マクロのスピードは 1...6 だが、内部では 0...5 なので変換
+        this._wwa.setPlayerSpeedIndex(num - 1);
     }
     // COPY_TO_TIMEマクロ実行部
     private _executeCopyTimeToMacro(): void {
