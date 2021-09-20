@@ -7,6 +7,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
+    speedList
 } from "./wwa_data";
 
 import {
@@ -3666,6 +3667,7 @@ export class WWA {
         qd.statusGold = st.gold;
         qd.moves = this._player.getMoveCount();
         qd.frameCount = this._player.getFrameCount();
+        qd.gameSpeed =  speedList[this._player.getSpeedIndex()];
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
@@ -3812,9 +3814,6 @@ export class WWA {
         if (apply) {
             this._applyQuickLoad(newData);
         }
-        /* WWAWingXE */
-        this.setPlayerSpeed(newData.gameSpeed);
-        /* WWAWingXE */
         return newData;
     }
 
@@ -3851,6 +3850,8 @@ export class WWA {
         this.setWideCellCoord(new Coord(newData.imgWideCellX, newData.imgWideCellY));
         this.setItemboxBackgroundPosition({ x: newData.imgItemboxX, y: newData.imgItemboxY });
         this.setFrameCoord(new Coord(newData.imgFrameX, newData.imgFrameY));
+        this.setPlayerSpeed(newData.gameSpeed);
+
         this.updateCSSRule();
         this.updateEffect();
         this._wwaSave.gameStart(this._wwaData, this._player);
