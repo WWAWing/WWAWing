@@ -10,5 +10,6 @@ export default [
     { fileName: "caves01", title: "Cave Dungeon I" },
     { fileName: "caves02", title: "Cave Dungeon II" },
     { fileName: "g002-302", title: "追尾属性テスト (マップデータバージョン 3.0)" },
-    { fileName: "g002-310", title: "追尾属性テスト (マップデータバージョン 3.1)" }
+    { fileName: "g002-310", title: "追尾属性テスト (マップデータバージョン 3.1)" },
+    { fileName: "wingxemap", title: "WWAWingXEテスト" }
 ];
