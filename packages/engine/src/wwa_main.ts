@@ -3653,9 +3653,11 @@ export class WWA {
 
     private _quickSave(callInfo: number): string {
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
-
+        
         var pc = this._player.getPosition().getPartsCoord();
         var st = this._player.getStatusWithoutEquipments();
+        qd.itemBox = this._player.getCopyOfItemBox();
+        qd.playerX = pc.x;
         qd.playerY = pc.y;
         qd.statusEnergyMax = this._player.getEnergyMax();
         qd.statusEnergy = st.energy;
