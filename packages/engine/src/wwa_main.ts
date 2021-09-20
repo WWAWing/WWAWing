@@ -332,20 +332,8 @@ export class WWA {
             pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
 
-            /* WWAWing XE 拡張部分 */
-            //
-            this._wwaData.permitChangeGameSpeed = true;
-            this._wwaData.userVar = new Array(Consts.USER_VAR_NUM);
-            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                this._wwaData.userVar[i] = 0;
-            }
             // プレイ時間関連
-            this._wwaData.playTime = 0;
-            var _nowTime: any;
-            _nowTime = new Date();
-            this._startTime = _nowTime.getTime();
-            /* WWAWing XE 拡張部分ここまで */
-
+            this._startTime = new Date().getTime();
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
             this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
 
@@ -5057,8 +5045,7 @@ font-weight: bold;
     }
     // 現在時刻セット
     private setNowPlayTime(): void {
-        var _nowTime: any;
-        _nowTime = new Date();
+        const _nowTime = new Date();
         this._wwaData.playTime += (_nowTime.getTime() - this._startTime);
         this._startTime = _nowTime.getTime();
     }

@@ -66,6 +66,8 @@ export class WWAConsts {
 
     static DEFAULT_MOVES = 0;
     static DEFAULT_SPEED_INDEX = 3;
+
+    static USER_VAR_NUM = 256;
 }
 
 export class LoaderError implements Error {
