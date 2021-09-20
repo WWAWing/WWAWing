@@ -798,6 +798,7 @@ export class WWAConsts {
     static DEFAULT_SPEED_INDEX = 3;
     static MIN_SPEED_INDEX = 0;
     static MAX_SPEED_INDEX = speedList.length - 1;
+    static QUICK_BATTLE_SPEED_INDECIES = [speedList.length - 2, speedList.length - 1];
 
     static ANIMATION_REP_HALF_FRAME: number = 22;
     static PLAYER_LOOKING_AROUND_START_FRAME: number = WWAConsts.ANIMATION_REP_HALF_FRAME * 4;

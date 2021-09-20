@@ -1012,7 +1012,7 @@ export class Player extends PartsObject {
         }
 
         this._battleTurnNum++;
-        if (this._speedIndex === Consts.MAX_SPEED_INDEX || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
+        if (this._wwa.isbattleSpeeIndexForQuickBattle(this._speedIndex) || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
             if (this._battleTurnNum === 1) {
                 this._wwa.playSound(SystemSound.ATTACK);
                 this._wwa.vibration(false);

@@ -6,7 +6,7 @@ import {
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
 } from "./wwa_data";
 
 import {
@@ -1433,7 +1433,7 @@ export class WWA {
                 speedIndex = this._player.speedDown();
             }
             speedMessage = "移動速度を【" + speedNameList[speedIndex] + "】に切り替えました。\n" +
-                (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
+                (this.isbattleSpeeIndexForQuickBattle(speedIndex)  ? "戦闘も速くなります。\n" : "") +
                 "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "）";
             // TODO(rmn): 適切な分岐に直したい
             switch (this.userDevice.os) {
@@ -1445,6 +1445,11 @@ export class WWA {
                     break;
             }
         }
+        this.setMessageQueue(speedMessage, false, true);
+    }
+
+    public isbattleSpeeIndexForQuickBattle(battleSpeedIndex: number): boolean {
+        return Consts.QUICK_BATTLE_SPEED_INDECIES.some(index => index === battleSpeedIndex);
     }
 
     /**
