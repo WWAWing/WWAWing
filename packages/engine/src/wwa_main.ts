@@ -1413,25 +1413,27 @@ export class WWA {
     }
 
     public onchangespeed(type: SpeedChange) {
-        if (this._wwaData.permitChangeGameSpeed) {
-            var speedIndex: number, speedMessage: string;
-            if (type === SpeedChange.UP) {
-                speedIndex = this._player.speedUp();
-            } else {
-                speedIndex = this._player.speedDown();
-            }
-            speedMessage = "移動速度を【" + speedNameList[speedIndex] + "】に切り替えました。\n" +
-                (this.isbattleSpeeIndexForQuickBattle(speedIndex)  ? "戦闘も速くなります。\n" : "") +
-                "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "）";
-            // TODO(rmn): 適切な分岐に直したい
-            switch (this.userDevice.os) {
-                case OS_TYPE.NINTENDO:
-                    speedMessage += "速度を落とすには-ボタン, 速度を上げるには+ボタンを押してください。";
-                    break;
-                default:
-                    speedMessage += "速度を落とすにはIキー, 速度を上げるにはPキーを押してください。";
-                    break;
-            }
+        // TODO(rmn): スピード変更禁止メッセージも将来的には検討したい
+        if (!this._wwaData.permitChangeGameSpeed) {
+            return;
+        }
+        var speedIndex: number, speedMessage: string;
+        if (type === SpeedChange.UP) {
+            speedIndex = this._player.speedUp();
+        } else {
+            speedIndex = this._player.speedDown();
+        }
+        speedMessage = "移動速度を【" + speedNameList[speedIndex] + "】に切り替えました。\n" +
+            (this.isbattleSpeeIndexForQuickBattle(speedIndex) ? "戦闘も速くなります。\n" : "") +
+            "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "）";
+        // TODO(rmn): 適切な分岐に直したい
+        switch (this.userDevice.os) {
+            case OS_TYPE.NINTENDO:
+                speedMessage += "速度を落とすには-ボタン, 速度を上げるには+ボタンを押してください。";
+                break;
+            default:
+                speedMessage += "速度を落とすにはIキー, 速度を上げるにはPキーを押してください。";
+                break;
         }
         this.setMessageQueue(speedMessage, false, true);
     }
