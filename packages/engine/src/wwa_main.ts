@@ -1413,8 +1413,8 @@ export class WWA {
     }
 
     public onchangespeed(type: SpeedChange) {
-        // TODO(rmn): スピード変更禁止メッセージも将来的には検討したい
         if (!this._wwaData.permitChangeGameSpeed) {
+            this.setMessageQueue("ここでは移動速度を\n変更できません。", false, true);
             return;
         }
         var speedIndex: number, speedMessage: string;
