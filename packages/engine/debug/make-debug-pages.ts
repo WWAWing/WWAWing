@@ -47,6 +47,9 @@ function createPlayPageConfig(mapData: string, cssName?: string, isClassicMode?:
     return {
         page: {
             additionalCssFiles: ["style.css"],
+            varDumpElement: {
+                id: "vardump"
+            }
         },
         wwa: {
             gameOption: {
