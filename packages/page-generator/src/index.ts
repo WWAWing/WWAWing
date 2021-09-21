@@ -32,7 +32,11 @@ export interface TemplateValues {
             "data-wwa-looking-around"?: DataTypes.StringBoolean;
             "data-wwa-autosave"?: string;
             "data-wwa-resume-savedata"?: string;
+            "data-wwa-var-dump-elm"?: string;
         };
+    };
+    varDumpElement?: {
+        id: string;
     };
     footer: {
         copyrights?: DataTypes.Copyright[]
@@ -58,9 +62,11 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-use-go-to-wwa": Helper.toStringBooleanOptional(wwa.gameOption?.useGoToWWA),
                 "data-wwa-looking-around": Helper.toStringBooleanOptional(wwa.gameOption?.useLookingAround),
                 "data-wwa-autosave": `${wwa.gameOption?.autoSave?.intervalSteps ?? "0"}`,
-                "data-wwa-resume-savedata": wwa.resumeSaveData
+                "data-wwa-resume-savedata": wwa.resumeSaveData,
+                "data-wwa-var-dump-elm": page?.varDumpElement ? `#${page.varDumpElement.id}` : undefined
             }
         },
+        varDumpElement: page?.varDumpElement ? { id: page.varDumpElement.id } : undefined,
         footer: {
             copyrights: Helper.generateCopyrights(copyrights)
         }
