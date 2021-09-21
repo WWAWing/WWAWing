@@ -23,7 +23,11 @@ html(lang="ja")
                 data-wwa-looking-around=wwa.attributes["data-wwa-looking-around"]
                 data-wwa-autosave=wwa.attributes["data-wwa-autosave"]
                 data-wwa-resume-savedata=wwa.attributes["data-wwa-resume-savedata"]
+                data-wwa-var-dump-elm=wwa.attributes["data-wwa-var-dump-elm"]
             )
+        
+        if varDumpElement
+            div(id=varDumpElement.id)
     
         if footer.copyrights
             footer#copyright
