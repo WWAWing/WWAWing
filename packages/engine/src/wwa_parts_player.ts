@@ -535,7 +535,6 @@ export class Player extends PartsObject {
 
     public updateStatusValueBox(): void {
         const totalStatus = this._status.plus(this._equipStatus);
-        console.log("USVB", this._wwa.isVisibleStatus("energy"));
         this._energyValueElement.textContent = this._wwa.isVisibleStatus("energy") ? String(totalStatus.energy) : "";
         this._strengthValueElement.textContent = this._wwa.isVisibleStatus("strength") ? String(totalStatus.strength) : "";
         this._defenceValueElement.textContent = this._wwa.isVisibleStatus("defence") ? String(totalStatus.defence) : "";

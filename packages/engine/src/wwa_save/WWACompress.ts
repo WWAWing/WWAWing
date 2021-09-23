@@ -1,12 +1,14 @@
 import {
-    WWAData
+    WWAData,
+    WWAConsts
 } from "../wwa_data";
 import { WWADataWithWorldNameStatus } from "./common";
 
 var SAVE_COMPRESS_ID = {
     MAP: "map",
     MAP_OBJECT: "mapObject",
-    SYSTEM_MESSAGE: "systemMessage"
+    SYSTEM_MESSAGE: "systemMessage",
+    USER_VAR: "userVar"
 };
 
 var NOT_COMPRESS_ID = {
@@ -193,6 +195,8 @@ export default class WWACompress {
                     saveObject[key] = value;
                 }
                 break;
+            case SAVE_COMPRESS_ID.USER_VAR:
+                return this.compressUserVars(wwaObject as number[]); // 型は妥協...
             default:
                 return wwaObject;
         }
@@ -200,6 +204,17 @@ export default class WWACompress {
             return undefined;
         }
         return saveObject;
+    }
+
+    /**
+     * 0 でないユーザ変数を取り出して、添字とのペアでタプルを作る
+     * userVars[10] が 1, userVars[128] が 10 でその他が全部 0 なら
+     *  [[10, 1], [128, 10]] となる。
+     */
+    private static compressUserVars(userVars: number[]): number[][] {
+        return userVars
+            .map((value, index) => ([index, value]))
+            .filter(([_, value]) => value !== 0);
     }
     /**
      * JSON化したときの文字列の長さにより判定し、分岐する。
@@ -567,6 +582,8 @@ export default class WWACompress {
 
 
                 return newObject;
+            case SAVE_COMPRESS_ID.USER_VAR:
+                return this.decompressUserVars(loadObject as number[][]); // 型妥協
             case SAVE_COMPRESS_ID.SYSTEM_MESSAGE:
             default:
                 if (newObject) {
@@ -587,6 +604,27 @@ export default class WWACompress {
                 return newObject;
         }
     }
+
+    /** 
+     * ユーザ変数と添字とのペアからなるタプルからユーザ変数の配列に復元する。
+     * [[10, 1], [128, 10]] が与えられた場合、
+     * userVars[10] が 1, userVars[128] が 10 でその他が全部 0 の 256要素の配列となる。
+     */
+    private static decompressUserVars(compressedUserVars: number[][]): number[] {
+        return compressedUserVars.reduce((acc, [index, value]) => {
+            acc[index] = value;
+            return acc;
+        }, this.generateEmptyUserVars())
+    }
+
+    private static generateEmptyUserVars(): number[] {
+        const userVars = new Array(WWAConsts.USER_VAR_NUM);
+        for (let i = 0; i < WWAConsts.USER_VAR_NUM; i++) {
+            userVars[i] = 0;
+        }
+        return userVars;
+    }
+
     private static decompressAllMapObject(loadArray: object, newObject: object,firstRandomMapObjectUtf8Array: Uint8Array): boolean {
         var x: number, y: number, id: number, bit: number, position: number, count: number, id: number;
         var mapWidth: number = this._restartData.mapWidth;
