@@ -232,10 +232,6 @@ export class Macro {
                 case MacroType.SHOW_STR:
                     this._executeShowStrMacro();
                     break;
-                // 強制クイックセーブ
-                case MacroType.AUTO_SAVE:
-                    this._executeAutoSaveMacro();
-                    break;
                 // IF文
                 case MacroType.IF:
                     this._executeIfMacro();
@@ -441,11 +437,6 @@ export class Macro {
         this._concatEmptyArgs(max_num);
         this._wwa.showUserValString(this.macroArgs);
     }
-    // autoSaveマクロ実行部
-    private _executeAutoSaveMacro(): void {
-        // WWA Wing XE にあった autoSave マクロは廃止予定です。
-        // TODO: develop マージまでに関連実装はすべて削除する
-    }
     // IFマクロ実行部
     private _executeIfMacro(): void {
         // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
@@ -515,12 +506,6 @@ export class Macro {
         this._concatEmptyArgs(1);
         var disableSaveFlag = !!this._parseInt(0);
         this._wwa.disableSave(disableSaveFlag);
-    }
-
-    private _executePassSaveMacro(): void {
-        this._concatEmptyArgs(1);
-        var disablePassSaveFlag = !!this._parseInt(0);
-        this._wwa.disablePassSave(disablePassSaveFlag);
     }
 
     private _executeItemMacro(): void {

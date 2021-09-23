@@ -1382,7 +1382,7 @@ export class WWA {
     public onpasswordsavecalled() {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
         bg.classList.add("onpress");
-        if (!this._wwaData.disableSaveFlag && !this._wwaData.disablePassSaveFlag) {
+        if (!this._wwaData.disableSaveFlag) {
             if (this._useSuspend) {//中断モード
                 this.setMessageQueue("ゲームを中断しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
@@ -4602,10 +4602,6 @@ export class WWA {
         return flag;
     }
     
-    public disablePassSave(flag: boolean): boolean {
-        return this._wwaData.disablePassSaveFlag = flag;
-    }
-
     public isOldMap(): boolean {
         return this._wwaData.isOldMap;
     }
