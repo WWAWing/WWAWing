@@ -178,7 +178,10 @@ export function createDefaultWWAData(): WWAData {
         permitChangeGameSpeed: undefined,
         gameSpeedIndex: undefined,
         playTime: undefined,
-        disablePassSaveFlag: undefined
+        isVisibleStatusEnergy: undefined,
+        isVisibleStatusStrength: undefined,
+        isVisibleStatusDefence: undefined,
+        isVisibleStatusGold: undefined
     };
 }
 

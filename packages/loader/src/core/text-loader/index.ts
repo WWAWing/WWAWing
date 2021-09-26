@@ -127,6 +127,10 @@ export class TextLoader {
     }
     wwaData.playTime = 0;
 
+    wwaData.isVisibleStatusEnergy = true;
+    wwaData.isVisibleStatusStrength = true;
+    wwaData.isVisibleStatusDefence = true;
+    wwaData.isVisibleStatusGold = true;
 
     return wwaData;
   }

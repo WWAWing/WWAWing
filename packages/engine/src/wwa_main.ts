@@ -7,7 +7,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList
+    speedList, StatusKind
 } from "./wwa_data";
 
 import {
@@ -1382,7 +1382,7 @@ export class WWA {
     public onpasswordsavecalled() {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
         bg.classList.add("onpress");
-        if (!this._wwaData.disableSaveFlag && !this._wwaData.disablePassSaveFlag) {
+        if (!this._wwaData.disableSaveFlag) {
             if (this._useSuspend) {//中断モード
                 this.setMessageQueue("ゲームを中断しますか？", true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
@@ -3843,8 +3843,9 @@ export class WWA {
 
         this.updateCSSRule();
         this.updateEffect();
-        this._wwaSave.gameStart(this._wwaData, this._player);
+        this._player.updateStatusValueBox();
     }
+      
     private _mapIDTableCreate(): void {
         var pid: number;
         this._mapIDTable = [];
@@ -4601,10 +4602,6 @@ export class WWA {
         return flag;
     }
     
-    public disablePassSave(flag: boolean): boolean {
-        return this._wwaData.disablePassSaveFlag = flag;
-    }
-
     public isOldMap(): boolean {
         return this._wwaData.isOldMap;
     }
@@ -5053,10 +5050,10 @@ font-weight: bold;
     }
     // 各種ステータスを非表示にする
     public hideStatus(no: number, isHide: boolean): void {
-        if (no < 0 || no > 4) {
+        if (no < 0 || no > StatusKind.length) {
             throw new Error("隠すパラメータは０から３の間で指定してください。");
         }
-        this._player.setHideStatus(no, isHide);
+        this._changeStatusVisibility(StatusKind[no], !isHide);
         this._player.updateStatusValueBox();
     }
     // 指定位置にパーツを出現を変数で行う
@@ -5188,6 +5185,36 @@ font-weight: bold;
         }
         return null;
     }
+
+    public isVisibleStatus(statusKind: StatusKind): boolean {
+        switch(statusKind) {
+            case "energy": return this._wwaData.isVisibleStatusEnergy;
+            case "strength": return this._wwaData.isVisibleStatusStrength;
+            case "defence": return this._wwaData.isVisibleStatusDefence;
+            case "gold": return this._wwaData.isVisibleStatusGold;
+            default: throw new Error("存在しないステータスが与えられました");
+        }
+    }
+
+    private _changeStatusVisibility(statusKind: StatusKind, isVisible: boolean): boolean {
+        switch(statusKind) {
+            case "energy":
+                console.log("E", isVisible);
+                this._wwaData.isVisibleStatusEnergy = isVisible;
+                return;
+            case "strength":
+                this._wwaData.isVisibleStatusStrength = isVisible;
+                return;
+            case "defence":
+                this._wwaData.isVisibleStatusDefence = isVisible;
+                return;
+            case "gold":
+                 this._wwaData.isVisibleStatusGold = isVisible;
+                 return;
+            default: throw new Error("存在しないステータスが与えられました");
+        }
+    }
+
 };
 
 var isCopyRightClick = false;

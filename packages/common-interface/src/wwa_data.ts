@@ -123,5 +123,9 @@ export interface WWAData {
     permitChangeGameSpeed: boolean;
     gameSpeedIndex: number;
     playTime: number;
-    disablePassSaveFlag: boolean;
+
+    isVisibleStatusEnergy: boolean;
+    isVisibleStatusStrength: boolean;
+    isVisibleStatusDefence: boolean;
+    isVisibleStatusGold: boolean;
 }

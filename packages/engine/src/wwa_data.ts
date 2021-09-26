@@ -600,8 +600,6 @@ export enum MacroType {
     VAR_SET_RAND = 45,
     SHOW_STR = 46,
     GAME_SPEED = 47,
-    AUTO_SAVE = 48,
-    PASS_SAVE = 49,
     IF = 50,
     SET_SPEED = 51,
     COPY_TIME_TO = 52,
@@ -660,8 +658,6 @@ export var macrotable = {
     "$var_set_rand": 45,
     "$show_str": 46,
     "$game_speed": 47,
-    "$auto_save": 48,
-    "$pass_save": 49,
     "$if": 50,
     "$set_speed": 51,
     "$copy_time_to": 52,
@@ -698,6 +694,8 @@ export enum SystemSound {
 
 export var speedList = [1, 2, 5, 8, 10, 20];
 export var speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
+export const StatusKind = ["energy", "strength", "defence", "gold"] as const;
+export type StatusKind = typeof StatusKind[number];
 export class WWAConsts {
     static WWA_HOME: string = "http://wwajp.com";
 

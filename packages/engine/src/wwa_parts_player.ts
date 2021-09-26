@@ -102,9 +102,6 @@ export class Player extends PartsObject {
 
     protected _messageDelayFrameCount: number;
 
-    // ステータス表示の有無
-    protected _hideStatus: boolean[];
-
 
     public move(): void {
         if (this.isControllable()) {
@@ -537,17 +534,11 @@ export class Player extends PartsObject {
     }
 
     public updateStatusValueBox(): void {
-        var totalStatus = this._status.plus(this._equipStatus);
-        // WWAWingXE 追加部分
-        // this._hideStatusに従って指定したステータスを非表示にする
-        var e = this._hideStatus[0] ? "" : totalStatus.energy;
-        var s = this._hideStatus[1] ? "" : totalStatus.strength;
-        var d = this._hideStatus[2] ? "" : totalStatus.defence;
-        var g = this._hideStatus[3] ? "" : totalStatus.gold;
-        this._energyValueElement.textContent = e + "";
-        this._strengthValueElement.textContent = s + "";
-        this._defenceValueElement.textContent = d + "";
-        this._goldValueElement.textContent = g + "";
+        const totalStatus = this._status.plus(this._equipStatus);
+        this._energyValueElement.textContent = this._wwa.isVisibleStatus("energy") ? String(totalStatus.energy) : "";
+        this._strengthValueElement.textContent = this._wwa.isVisibleStatus("strength") ? String(totalStatus.strength) : "";
+        this._defenceValueElement.textContent = this._wwa.isVisibleStatus("defence") ? String(totalStatus.defence) : "";
+        this._goldValueElement.textContent = this._wwa.isVisibleStatus("gold") ? String(totalStatus.gold) : "";
     }
 
     readonly itemTransitioningClassName = "item-transitioning";
@@ -1208,23 +1199,10 @@ export class Player extends PartsObject {
     public speedDown(): number {
         return this._speedIndex = Math.max(Consts.MIN_SPEED_INDEX, this._speedIndex - 1);
     }
-    // WWAWingXE 追加部分
-    public setHideStatus(no: number, isHide: boolean): void {
-        if (no < 0 || no > 4) {
-            throw new Error("隠すパラメータは０から３の間で指定してください。");
-        }
-        this._hideStatus[no] = isHide;
-    }
 
     constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number, gameSpeedIndex: number) {
         super(pos);
         // どっかで定数化させたい
-        var statusNum = 4;
-        this._hideStatus = new Array(statusNum);
-        // WWAWingXE 追加部分
-        for (var i = 0; i < statusNum; i++) {
-            this._hideStatus[i] = false;
-        }
         this._status = status;
         this._equipStatus = new EquipmentStatus(0, 0);
         this._itemBox = new Array(Consts.ITEMBOX_SIZE);
