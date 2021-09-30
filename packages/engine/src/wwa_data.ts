@@ -576,7 +576,8 @@ export enum MacroType {
     COLOR = 21,
     WAIT = 22,
     SOUND = 23,
-    GAMEPAD_BUTTON = 100
+    GAMEPAD_BUTTON = 100,
+    OLDMOVE = 101
 }
 
 export var macrotable = {
@@ -604,7 +605,8 @@ export var macrotable = {
     "$color": 21,
     "$wait": 22,
     "$sound": 23,
-    "$gamepad_button" : 100
+    "$gamepad_button" : 100,
+    "$oldmove": 101
 }
 
 export enum MacroStatusIndex {

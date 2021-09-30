@@ -4,6 +4,11 @@
 このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna により自動化されています。
 
 ## 準備
+- Node.js 14系
+- npm 6系
+
+を準備してください。
+
 この `README.md` があるディレクトリで、
 
 ``` sh
@@ -17,9 +22,8 @@ npm install
 OSは不問です。
 
 - Microsoft Internet Explorer 11
-- Microsoft Edge (最新版)
 - Mozilla Firefox (最新版)
-- Google Chrome/Chromium (最新版)
+- Google Chrome/Chromium (最新版) ※ Microsoft Edge の最新版など Chromium ベースのブラウザを含む
 - Safari (最新版)
 
 ### スマートフォン・タブレット
@@ -32,13 +36,13 @@ OSは不問です。
 ├── lerna.json                                  ## lerna の構成ファイル
 ├── netlify.toml                                ## Netlify によるテストファイル自動生成のための設定ファイル
 ├── tsconfig.json                               ## TypeScript のコンパイル設定ファイル
-├── keys                                        ## Travis CIによる配布物自動公開に使用するSSH公開鍵（暗号化済）
 └── packages ================================== ## このディレクトリ以下に各 npm パッケージを格納しています
      ├── all ================================== ## WWA Wing の配布物すべてを含むパッケージ
      ├── assets =============================== ## 開発時や配布物の生成時に使う静的なファイル
      ├── common-interface ===================== ## WWA Wing で使用するデータ構造を定義したソースコードパッケージ
      ├── debug-server ========================= ## wwa-server (WWA作者向けのHTTPサーバ)
      ├── engine =============================== ## WWA Wing本体
+     ├── event-emitter ======================== ## Node.js でもブラウザでも動作する EventEmitter ライブラリ
      ├── loader =============================== ## WWALoader (WWAのマップデータを WWA Wing のデータに変換するプログラム)
      ├── page-generator ======================= ## WWA のHTMLファイルを生成するプログラム
      └── styles =============================== ## sassスタイルシートのファイル (scss形式)
@@ -60,3 +64,8 @@ WWA Wing 本体のソースは `packages/engine/src` 下にあります。
 ## ライセンス
 - ソースコード: MIT (Expat) 
 - ドキュメント・画像・音源: CC-BY 4.0
+
+## 行動規範
+- Contributer Covenant Code of Conduct に従います。
+  - [原文(英語)](./CODE_OF_CONDUCT.md)
+  - [日本語訳](./CODE_OF_CONDUCT_ja.md)

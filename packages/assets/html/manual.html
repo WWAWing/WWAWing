@@ -21,7 +21,20 @@
         p.important {
             background-color:#ffd4d6;
             font-weight: bold;
+            border-width: 0 0 0 4px;
+            border-color: red;
+            border-style: solid;
+            padding: 0 0 0 4px;
             color: red;
+        }
+        p.information {
+            background-color:#d4f1ff;
+            font-weight: bold;
+            border-width: 0 0 0 4px;
+            border-color: blue;
+            border-style: solid;
+            padding: 0 0 0 4px;
+            color: blue;
         }
         .require {
             font-weight: bold;
@@ -107,6 +120,8 @@
                     <dd>オートセーブは、マクロ <code>$save=1</code> により Quick Save が禁止されている時には実行されません。</dd>
                     <dd>オートセーブを無効にするには <code>0</code> を与えて下さい。値を与えなかった場合は 200歩ごとにオートセーブされます。</dd>
                     <dd>(オートセーブについては、今後あり方を見直す可能性が高いです。その際は設定方法が変更になる可能性がありますことをあらかじめご了承ください。)</dd>
+                    <dt><code>data-wwa-disallow-load-old-save</code>属性</dt>
+                    <dd><code>true</code>を指定すると、マップデータが変更された時に、プレイヤーが保存しているセーブデータ（Quick Save/パスワードセーブ)を無効にします。(v3.5.6 以前と同じ条件になります)</dd>
                     <dt><code>data-wwa-resume-savedata</code>属性【開発者向け】</dt>
                     <dd>セーブデータをパスワードセーブの形式で与えると、セーブデータをもとにゲーム内容が復元されます。
                         なお、このオプションが与えられた場合、パスワードセーブの代わりに「ゲームを中断しますか？」と聞かれるようになります。
@@ -142,7 +157,53 @@
             <section>
                 <h2>更新情報</h2>
                 <section>
-                    <h3>v3.4.2からv3.5.1への変更点</h3>
+                    <h3>v3.5.11からv3.5.14への変更点</h3>
+                    <p class="information">セーブデータの互換性: v3.5.1～v3.5.12 からアップデートしても、Quick Save / パスワード は引き続きロードできます。</p>
+                    <ul>
+                        <li>Internet Explorer 11で起動しない不具合を修正</li>
+                    </ul>
+                    <h3>v3.5.11からv3.5.12への変更点</h3>
+                    <ul>
+                        <li>(利用あされる分には何も変化ございません) WWA Wingのリリース時に使うプログラムをWWA Wing本体から除外</li>
+                    </ul>
+                    <h3>v3.5.10からv3.5.11への変更点</h3>
+                    <ul>
+                        <li>Internet Explorer 11で、画面を閉じたりページを移動したりした場合にセーブデータが失われる不具合を修正</li>
+                    </ul>
+                    <h3>v3.5.8からv3.5.10への変更点</h3>
+                    <ul>
+                        <li>(利用される分には何も変化ございません) <code>wwa-server.exe</code> で利用している Node.js のバージョンを更新</li>
+                        <li>(開発者向け) WWALoader などの npm パッケージで CommonJS と ESModules の両方を利用できるように変更</li>
+                    </ul>
+                    <h3>v3.5.7からv3.5.8への変更点</h3>
+                    <ul>
+                        <li>パスワードロードの画面で、パスワードを受け付ける条件の文言が間違っていたので修正</li>
+                    </ul>
+                    <h3>v3.5.6からv3.5.7への変更点</h3>
+                    <p class="information">セーブデータの互換性: v3.5.1～v3.5.6 からアップデートしても、Quick Save / パスワード は引き続きロードできます。</p>
+                    <p class="important">ただし、上記のアップデートと同時にマップデータを改変した場合はセーブデータが無効となります。(Quick Saveは、無効となったセーブデータをロードしようとすると削除されます。)</p>
+                    <ul>
+                        <li>セーブデータが無効になる条件を「マップデータが変更された時」から「『タイトル』『暗証番号』のいずれかが変更された時」に変更</li>
+                        <li>セーブデータが無効になる条件を v3.5.6 以前と同じにする<code>data-wwa-disallow-load-old-save</code>属性を追加</li>
+                    </ul>
+                    <h3>v3.5.5からv3.5.6への変更点</h3>
+                    <ul>
+                        <li>同梱しているスタンダードマップの通り道を、スライムが塞いでいたので削除。(WWA Wing 本体の変更はありません)</li>
+                    </ul>
+                    <h3>v3.5.4からv3.5.5への変更点</h3>
+                    <ul>
+                        <li>アイテム取得と消費がほぼ同時に行われた場合に、アイテムボックスに見かけ上、アイテムが消費されていないかのように見える不具合を修正。</li>
+                    </ul>
+                    <h3>v3.5.3からv3.5.4への変更点</h3>
+                    <ul>
+                        <li>プレイヤー追尾・逃げる属性の挙動を WWA v3.10 未満と揃えるマクロ <code>$oldmove</code> を追加。<code>$oldmove=1</code>で古い動き方になり、<code>$oldmove=0</code>で新しい方の動き方になります。</li>
+                    </ul>
+                    <h3>v3.5.2からv3.5.3への変更点</h3>
+                    <ul>
+                        <li>付属している画像のパレットが変だったのを修正</li>
+                        <li>オートセーブ無効指定 <code>data-wwa-autosave="0"</code> が効いていなかったのを修正</li>
+                    </ul>
+                    <h3>v3.4.2からv3.5.2への変更点</h3>
                     <ul>
                         <li>オートセーブ機能追加: 200歩ごとにオートセーブされます。Quick Loadでロードできます。</li>
                         <li><code>data-wwa-autosave</code>属性追加。オートセーブの無効化や歩数の変更ができます。</li>
@@ -151,6 +212,7 @@
                         <li>セーブ禁止時に Quick Save ボタン名を表示しない対応</li>
                         <li>パスワードセーブが大幅に短くなる</li>
                         <li>物体パーツを差分描画にすることにより描画を高速化</li>
+                        <li>v3.5.1 において, スタンダードマップの説明が一部誤っていましたので修正しました。現状では、Quick Saveした後にマップデータが改変された場合、セーブデータは無効となるのが正しいです。この仕様は今後変更になる可能性があります。</li>
                     </ul>
                     <h3>v3.4.1からv3.4.2への変更点</h3>
                     <ul>
@@ -387,9 +449,8 @@
                 OSは不問です。
                 <ul>
                     <li>Microsoft Internet Explorer 11</li>
-                    <li>Microsoft Edge (EdgeHTML 18) ※Microsoft Edge レガシ は遅くとも2021年3月9日までにサポートを終了します。今後は Chromium 版 Edge の利用を強くおすすめします。</li>
                     <li>Mozilla Firefox (最新版)</li>
-                    <li>Google Chrome/Chromium (最新版) ※Microsoft Edgeの最新版を含む</li>
+                    <li>Google Chrome/Chromium (最新版) ※ Microsoft Edge の最新版など Chromium ベースのブラウザを含む</li>
                     <li>Safari (最新版)</li>
                 </ul>
                 <h3>スマートフォン・タブレット</h3>
@@ -416,7 +477,7 @@
                 <p><a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja"><img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />
                 また、このマニュアルについては <a rel="license" href="http://creativecommons.org/licenses/by/4.0/deed.ja">クリエイティブ・コモンズ 表示 4.0 国際 ライセンスの下に提供されています。</a></p>
                 <p> Internet RPG &quot;<a href="http://www.wwajp.com">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
-                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2020 WWA Wing Team</p>
+                <p> &quot;<a href="http://wwawing.com/">WWA Wing</a>&quot; &copy;2013-2021 WWA Wing Team</p>
             </footer>
         </section>
     </div>

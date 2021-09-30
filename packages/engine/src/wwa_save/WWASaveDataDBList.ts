@@ -4,22 +4,58 @@ import {
 } from "../wwa_data";
 import WWACompress from "./WWACompress"; 
 import WWASave from "./WWASave";
-import WWASaveData from "./WWASaveData";
 import WWASaveDataDB from "./WWASaveDataDB";
 import WWASaveDataList from "./WWASaveDataList";
+import { LoadErrorCode, OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./common";
+
+type WWASaveDataItem = {
+    url?: string,
+    id: number,
+    hash: string,
+    image: string,
+    data: object, // TODO: object だけではよくわからないのでちゃんとした型を指定する
+    date: Date,
+    worldName: string | undefined, // v3.5.6 以下でセーブされたデータの場合 undefined
+    mapDataRevisionKey: string | undefined, // v3.5.6 以下でセーブされたデータの場合 undefined
+};
+
+type FailedLoadingSaveDataInformation = {
+    id: number,
+    cause: LoadErrorCode
+};
 
 export default class WWASaveDataDBList extends WWASaveDataList {
     private selectDatas: object[];
     private selectLoad: boolean = false;
-    private indexedDB = window["indexedDB"] || window["webkitIndexedDB"] || window["mozIndexedDB"];
+    private indexedDB: IDBFactory = window["indexedDB"] || window["webkitIndexedDB"] || window["mozIndexedDB"];
     private IDBTransaction: object = {
         READ_ONLY: "readonly",
         READ_WRITE: "readwrite",
         VERSION_CHANGE: "versionchangetransaction"
     };
-    constructor() {
+    /**
+     * @see WWASave
+     */
+    private onCheckLoadingSaveData: OnCheckLoadingSaveDataFunction;
+    private onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction;
+    /**
+     * 何もしません。主に IndexedDB のイベントに割り当てる際に使用します。
+     */
+    private static doNotAnything = () => {};
+    /**
+     * データベース作成時に指定する keyPath です。
+     * TypeScript には IDBKeyPath という専用の型が付与されていますが、 string 型しか受け付けておりません。
+     * 代わりに独自の型を定義しています。
+     */
+    protected keyPath: string | string[] = ["id", "url"];
+
+    constructor(
+        onCheckLoadingSaveData: OnCheckLoadingSaveDataFunction,
+        onCompleteLoadingSaveData: OnCompleteLoadingSaveDataFunction,
+        prototype: WWASaveDataDBList = WWASaveDataDBList.prototype
+    ) {
         super();
-        Object.setPrototypeOf(this, Object.create(WWASaveDataDBList.prototype));
+        Object.setPrototypeOf(this, Object.create(prototype));
         for (var i = 0; i < WWASaveConsts.QUICK_SAVE_MAX; i++) {
             this[i] = new WWASaveDataDB(i, this);
         }
@@ -44,6 +80,8 @@ export default class WWASaveDataDBList extends WWASaveDataList {
         if (!this.indexedDB) {
             return;
         }
+        this.onCheckLoadingSaveData = onCheckLoadingSaveData;
+        this.onCompleteLoadingSaveData = onCompleteLoadingSaveData;
         this.createDataBase();
         this.selectSaveData();
     }
@@ -88,7 +126,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             window.IDBObjectStore.prototype.getAll = getAll;
         }
     }
-    private indexDBOpen() {
+    private indexDBOpen(): IDBOpenDBRequest {
         this.getAlEmulate();
         return this.indexedDB.open(WWASaveConsts.INDEXEDDB_DB_NAME, 201205201);
     }
@@ -97,47 +135,85 @@ export default class WWASaveDataDBList extends WWASaveDataList {
             var reqOpen = this.indexDBOpen();
             reqOpen.onupgradeneeded = (e) => {
                 var indexedDBSystem = reqOpen.result;
-                var oDBOptions = { keyPath: ["id", "url"] };
+                var oDBOptions = { keyPath: this.keyPath };
                 if (!indexedDBSystem.objectStoreNames.contains(WWASaveConsts.INDEXEDDB_TABLE_NAME)) {
                     var objectStore = indexedDBSystem.createObjectStore(WWASaveConsts.INDEXEDDB_TABLE_NAME, oDBOptions);
                     objectStore.createIndex("url", "url", { unique: false });
                 }
             };
-            reqOpen.onsuccess = (e) => {
-            };
-            reqOpen.onerror = (err) => {
-            };
+            reqOpen.onsuccess = WWASaveDataDBList.doNotAnything;
+            reqOpen.onerror = WWASaveDataDBList.doNotAnything;
             reqOpen.onblocked = (err) => {
                 this.indexedDB = null;
             };
         } catch (error) {
         }
     }
+    /**
+     * IndexedDB のストアを取得します。
+     * @todo IndexedDB の型定義を追加する
+     */
+    private getObjectStore(requestResult: IDBDatabase): IDBObjectStore {
+        const indexedDBSystem = requestResult;
+        try {
+            var transaction = indexedDBSystem.transaction(WWASaveConsts.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_WRITE"]);
+            var store = transaction.objectStore(WWASaveConsts.INDEXEDDB_TABLE_NAME);
+        } catch (error) {
+            return;
+        }
+        return store;
+    }
+    /**
+     * セーブデータの1項目を作成します。
+     * @param saveID ID
+     * @param gameCvs ゲーム画面の Canvas 要素
+     * @param compressedData 圧縮済みの WWA セーブデータ
+     * @param date 日付
+     * @returns 作成したセーブデータの1項目
+     */
+    protected makeSaveDataItem(saveID: number, gameCvs: HTMLCanvasElement, compressedData: object, date: Date): WWASaveDataItem {
+        return {
+            "url": location.href,
+            "id": saveID,
+            "hash": WWASave.checkOriginalMapString,
+            "image": gameCvs.toDataURL(),
+            "data": compressedData,
+            "date": date,
+            "worldName": WWASave.worldName,
+            "mapDataRevisionKey": WWASave.mapDataRevisionKey
+        };
+    }
+    /**
+     * 現在プレイしている WWA のセーブデータを取り出します。
+     */
+    protected getSaveDataResult(store: IDBObjectStore, onsuccess: (result: WWASaveDataItem[]) => void) {
+        const index = store.index("url");
+        const range = IDBKeyRange.only(location.href);
+        const result = index.getAll(range);
+
+        result.onsuccess = () => {
+            onsuccess(result.result);
+        };
+        result.onerror = () => {
+            this.indexedDB = null;
+        };
+    }
     public dbUpdateSaveData(saveID: number, gameCvs: HTMLCanvasElement, _quickSaveData: WWAData, date: Date): void {
         if (!this.indexedDB) {
             return;
         }
         var reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = (e) => {
-        };
+        reqOpen.onupgradeneeded = WWASaveDataDBList.doNotAnything;
         reqOpen.onsuccess = (e) => {
-            var indexedDBSystem = reqOpen.result;
-            try {
-                var transaction = indexedDBSystem.transaction(WWASaveConsts.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_WRITE"]);
-                var store = transaction.objectStore(WWASaveConsts.INDEXEDDB_TABLE_NAME);
-            } catch (error) {
-                return;
-            }
+            const store = this.getObjectStore(reqOpen.result);
             var compressData: object = WWACompress.compress(_quickSaveData);
 
-            var addData = {
-                "url": location.href,
-                "id": saveID,
-                "hash": WWASave.checkOriginalMapString,
-                "image": gameCvs.toDataURL(),
-                "data": compressData,
-                "date": date
-            };
+            var addData: WWASaveDataItem = this.makeSaveDataItem(
+                saveID,
+                gameCvs,
+                compressData,
+                date
+            );
             this.selectDatas[saveID] = addData;
 
             try {
@@ -147,78 +223,94 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                 // EDGEでエラー？
                 return;
             }
-            reqAdd.onsuccess = (e) => {
-            };
-            reqAdd.onerror = (e) => {
-            };
+            reqAdd.onsuccess = WWASaveDataDBList.doNotAnything;
+            reqAdd.onerror = WWASaveDataDBList.doNotAnything;
         };
-        reqOpen.onerror = (e) => {
+        reqOpen.onerror = WWASaveDataDBList.doNotAnything;
+        reqOpen.onblocked = WWASaveDataDBList.doNotAnything;
+    }
+    /**
+     * 指定したIDのセーブデータを削除します。
+     * @param saveIDs 削除したいセーブデータのID (複数指定)
+     */
+    public dbDeleteSaveData(saveIDs: number[]): void {
+        if (!this.indexedDB) {
+            return;
+        }
+        const reqOpen = this.indexDBOpen();
+        reqOpen.onupgradeneeded = WWASaveDataDBList.doNotAnything;
+        reqOpen.onsuccess = () => {
+            const store = this.getObjectStore(reqOpen.result);
+            saveIDs.forEach(saveId => {
+                store.delete([saveId, location.href]);
+            });
         };
-        reqOpen.onblocked = (e) => {
-        };
+        reqOpen.onerror = WWASaveDataDBList.doNotAnything;
+        reqOpen.onblocked = WWASaveDataDBList.doNotAnything;
     }
     private selectSaveData(): void {
         if (!this.indexedDB) {
             return;
         }
         var reqOpen = this.indexDBOpen();
-        reqOpen.onupgradeneeded = function (e) {
-        };
-        reqOpen.onsuccess = (e) => {
-            var indexedDBSystem = reqOpen.result;
-            var transaction, store;
-            try {
-                transaction = indexedDBSystem.transaction(WWASaveConsts.INDEXEDDB_TABLE_NAME, this.IDBTransaction["READ_ONLY"]);
-                store = transaction.objectStore(WWASaveConsts.INDEXEDDB_TABLE_NAME);
-            } catch (error) {
-                return;
-            }
+        reqOpen.onupgradeneeded = WWASaveDataDBList.doNotAnything;
+        reqOpen.onsuccess = () => {
+            const store = this.getObjectStore(reqOpen.result);
             //var range = IDBKeyRange.bound(10);
             this.selectDatas = [];
             this.selectLoad = false;
 
-            var index = store.index("url");
-            var range = IDBKeyRange.only(location.href);
-            var saveDataResult = index.getAll(range);
+            const onsuccess = (result: WWASaveDataItem[]) => {
+                var i: number, len: number, saveData: WWASaveDataItem;
+                let failedLoadingSaveData: FailedLoadingSaveDataInformation[] = [];
 
-            saveDataResult.onsuccess = (e) => {
-                var i, len, loadend, onsuccess, onerror, saveData;
-                loadend = 0;
-                var result = e.target.result;
                 len = result.length;
                 for (i = 0; i < len; i++) {
-                    var resultData = result[i];
+                    var resultData: WWASaveDataItem = result[i];
                     try {
                         saveData = {
                             id: resultData.id,
                             hash: resultData.hash,
                             data: resultData.data,
                             date: resultData.date,
-                            image: resultData.image
+                            image: resultData.image,
+                            worldName: resultData.worldName, // v3.5.6 以下でセーブされたデータの場合 undefined
+                            mapDataRevisionKey: resultData.mapDataRevisionKey // v3.5.6 以下でセーブされたデータの場合 undefined
                         };
                     } catch (error) {
                         continue;
                     }
-                    if (WWASave.checkOriginalMapString !== saveData.hash) {
+                    const failedCause = this.onCheckLoadingSaveData(saveData.worldName, saveData.hash, saveData.mapDataRevisionKey);
+                    if (failedCause !== null) {
+                        failedLoadingSaveData.push({
+                            id: saveData.id,
+                            cause: failedCause
+                        });
                         continue;
                     }
                     if (!this[saveData.id]) {
                         continue;
                     }
-                    var quickSaveData = WWACompress.decompress(saveData.data);
+                    const [quickSaveData] = WWACompress.decompress(saveData.data);
                     this[saveData.id].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
+
+                if (failedLoadingSaveData.length > 0) {
+                    this.dbDeleteSaveData(failedLoadingSaveData.map(data => data.id));
+                }
+
                 this.selectLoad = true;
+                const failedLoadingCauses = failedLoadingSaveData.map(data => data.cause).filter((cause, index, self) => {
+                    // 重複したロード失敗要因を削除
+                    return self.indexOf(cause) === index;
+                });
+                this.onCompleteLoadingSaveData(failedLoadingCauses);
             };
-            saveDataResult.onerror = (e) => {
-                this.indexedDB = null;
-            };
+            this.getSaveDataResult(store, onsuccess);
 
         };
-        reqOpen.onerror = (e) => {
-        };
-        reqOpen.onblocked = (e) => {
-        };
+        reqOpen.onerror = WWASaveDataDBList.doNotAnything;
+        reqOpen.onblocked = WWASaveDataDBList.doNotAnything;
     }
 
 }

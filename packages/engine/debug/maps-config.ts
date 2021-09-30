@@ -5,7 +5,7 @@
 export default [
     { fileName: "test", title: "テストマップ" },
     { fileName: "wwamap", title: "Standard Map" },
-    { fileName: "wwamap", outputPageName: "wwamap-classic", title: "Standard Map (Classic Mode)", isClassicMode: true as const },
+    { fileName: "wwamap", outputPageName: "wwamap-classic", title: "Standard Map (Classic Mode)", cssName: "wwa_classic.css", isClassicMode: true as const },
     { fileName: "island02", title: "Fantasy Island" },
     { fileName: "caves01", title: "Cave Dungeon I" },
     { fileName: "caves02", title: "Cave Dungeon II" },

@@ -1,8 +1,16 @@
 {
   "name": "@wwawing/assets",
-  "version": "3.5.1",
+  "version": "3.5.14",
   "description": "WWA Wing asset files",
   "main": "index.js",
+  "files": [
+    "audio",
+    "html",
+    "images",
+    "mapdata",
+    "style",
+    "wwamk310"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,5 +18,9 @@
   "license": "CC-BY-4.0",
   "publishConfig": {
     "access": "public"
+  },
+  "engines": {
+    "node": ">=14",
+    "npm": ">=6"
   }
 }

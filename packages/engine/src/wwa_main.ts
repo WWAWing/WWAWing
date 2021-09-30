@@ -42,7 +42,8 @@ import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject, checkTouchDevice } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
-import { WWACompress, WWASave } from "./wwa_save";
+import { encodeSaveData, decodeSaveDataV0, decodeSaveDataV1, generateMD5 } from "./wwa_encryption";
+import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADataWithWorldNameStatus } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
@@ -113,7 +114,8 @@ export class WWA {
      * データが壊れていないかなどの検証に使います。
      * TODO: originalMapDataHash などの名前が適切だと思うが、WWADataに同じ名前のプロパティがいるので安易に変えられない。どこかで対応する。
      */
-    public checkOriginalMapString: string; 
+    public checkOriginalMapString: string;
+
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
@@ -144,6 +146,7 @@ export class WWA {
     private _hasTitleImg: boolean;
     private _useSuspend: boolean = false;
     private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
+    private _isDisallowLoadOldSave: boolean = false;
 
     private _isActive: boolean;
 
@@ -209,7 +212,8 @@ export class WWA {
         classicModeEnabled: boolean,
         itemEffectEnabled: boolean,
         useGoToWWA: boolean,
-        audioDirectory: string = ""
+        audioDirectory: string = "",
+        disallowLoadOldSave: boolean = false,
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -343,7 +347,7 @@ export class WWA {
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
             this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-            
+
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 2);
@@ -458,7 +462,26 @@ export class WWA {
             this._scoreWindow = new ScoreWindow(
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
-            this._wwaSave = new WWASave(wwa);
+            this._wwaSave = new WWASave(wwa, wwa._wwaData.worldName, wwa._wwaData.worldPassNumber, this._checkSaveDataCompatibility.bind(this), failedLoadingSaveDataCauses => {
+                if (failedLoadingSaveDataCauses.length > 0) {
+                    let message = "これまでに保存されていたセーブデータは、下記の理由により消えたものがあります。";
+                    failedLoadingSaveDataCauses.forEach((cause) => {
+                        switch (cause) {
+                            case LoadErrorCode.UNMATCHED_WORLD_NAME:
+                                message += "\n・制作者によるマップデータのワールド名の変更";
+                                break;
+                            case LoadErrorCode.UNMATCHED_WORLD_PASS_NUMBER:
+                                message += "\n・制作者によるマップデータの暗証番号の変更";
+                                break;
+                            case LoadErrorCode.DISALLOW_OLD_REVISION_WORLD_SAVE_DATA:
+                                message += "\n・制作者によるマップデータの内容変更 (マップデータ制作者の設定により、内容が変更されるとセーブデータが消去されます)";
+                                break;
+                        }
+                    });
+                    alert(message);
+                }
+            });
+            this._isDisallowLoadOldSave = disallowLoadOldSave;
             this._messageWindow.setWWASave(this._wwaSave);
 
             WWACompress.setRestartData(this._restartData, this._wwaData);
@@ -830,7 +853,7 @@ export class WWA {
                 this, this._wwaData.mapCGName, util.$id("wwa-wrapper"));
 
             this._passwordWindow = new PasswordWindow(
-                this, <HTMLDivElement>util.$id("wwa-wrapper"));
+                this, <HTMLDivElement>util.$id("wwa-wrapper"), disallowLoadOldSave);
 
             this._monsterWindow = new MonsterWindow(
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
@@ -1305,7 +1328,7 @@ export class WWA {
         this._itemMenu.close();
         bg.classList.add("onpress");
         if (button === SidebarButton.QUICK_LOAD) {
-            this._yesNoChoiceCallInfo = this._wwaSave.getFirstSaveChoiceCallInfo(forcePassword, this._usePassword);
+            this._yesNoChoiceCallInfo = this._wwaSave.getFirstSaveChoiceCallInfo(forcePassword);
             switch (this._yesNoChoiceCallInfo) {
                 case ChoiceCallInfo.CALL_BY_QUICK_LOAD:
                 case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
@@ -3662,7 +3685,7 @@ export class WWA {
         }
         text += "Z";
         //            console.log( "C = " + chksum );
-        return CryptoJS.MD5(text).toString();
+        return generateMD5(text);
     }
 
     private _generateSaveDataHash(data: WWAData): string {
@@ -3684,7 +3707,7 @@ export class WWA {
             text += util.arr2str4save(data[keyArray[i]]);
         }
 
-        return CryptoJS.MD5(text).toString();
+        return generateMD5(text);
     }
     private _saveDataList = []
 
@@ -3747,10 +3770,7 @@ export class WWA {
                     data: qd,
                     compress: compressQD
                 });
-                return CryptoJS.AES.encrypt(
-                    CryptoJS.enc.Utf8.parse(s),
-                    "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + qd.checkOriginalMapString) + "P+>A[]"
-                ).toString();
+                return encodeSaveData(s, this._wwaData.worldPassNumber);
             case ChoiceCallInfo.CALL_BY_SUSPEND:
                 this.wwaCustomEvent('wwa_suspend', {
                     data: qd,
@@ -3770,40 +3790,59 @@ export class WWA {
         this.wwaCustomEventEmitter.dispatch(eventName, data);
     }
 
-    private _decodePassword(pass: string): WWAData {
-        var ori = this.checkOriginalMapString;
+    /**
+     * 与えられたパスワードセーブの暗号化を解除して、配列の0要素目で返します。
+     * 与えられたパスワードセーブの暗号化データ内にワールド名が含まれる(v3.5.6以下の WWA Wingで保存されている)かを配列の1要素目で返します。
+     * 暗号化の解除に失敗した場合は、エラー内容をメッセージとする Error オブジェクトがスローされます。
+     * @param pass パスワードセーブの文字列
+     * @returns 2要素配列: [パスワードセーブの暗号化解除結果, 付加情報オブジェクト(復号化結果にワールド名が含まれないなら isWorldName が true)]
+     */
+    private _decodePassword(pass: string): WWADataWithWorldNameStatus {
+        let decodedPassword: string = "";
+        let error: any = undefined;
         try {
-            var json = CryptoJS.AES.decrypt(
-                pass,
-                "^ /" + (this._wwaData.worldPassNumber * 231 + 8310 + ori) + "P+>A[]"
-            ).toString(CryptoJS.enc.Utf8);
-        } catch (e) {
-            throw new Error("データが破損しています。\n" + e.message)
+            decodedPassword = decodeSaveDataV1(pass, this._wwaData.worldPassNumber);
+        } catch (caught) {
+            error = caught;
+        }
+        if (!decodedPassword) {
+            console.warn("新方式でのパスワード暗号化解除失敗:", error);
+            try {
+                // 現在の暗号化キーで復号に失敗した場合は v3.5.6 以前の暗号化キーを使う
+                decodedPassword = decodeSaveDataV0(pass, this._wwaData.worldPassNumber, this.checkOriginalMapString);
+            } catch (caught) {
+                error = caught;
+            }
+        }
+        if (!decodedPassword) {
+            console.warn("旧方式でのパスワード暗号化解除失敗:", error);
+            const errorMessage = error && error.message ? error.message : "";
+            throw new Error("パスワード取得時からワールド制作者によってマップの暗証番号が変更されたか、\nパスワードが壊れているために正常にセーブデータが復元できませんでした。\n" + errorMessage);
         }
         var obj: any;
-        var decodeWWAData: WWAData;
         try {
-            obj = JSON.parse(json);
+            obj = JSON.parse(decodedPassword);
         } catch (e) {
             throw new Error("マップデータ以外のものが暗号化されたか、マップデータに何かが不足しているようです。\nJSON PARSE FAILED");
         }
         if (obj.isCompress) {
             delete obj.isCompress;
-            decodeWWAData = WWACompress.decompress(obj);
+            return WWACompress.decompress(obj);
         } else {
-            decodeWWAData = <WWAData>obj;
-        }
-        
-        return decodeWWAData;
+            return [<WWAData>obj, { isWorldNameEmpty: false }];
+        };
     }
 
     private _quickLoad(restart: boolean = false, password: string = null, apply: boolean = true): WWAData {
         if (!restart && this._wwaSave.hasSaveData() === void 0 && password === null) {
             throw new Error("セーブデータがありません。");
         }
-        var newData: WWAData;
+        let newData: WWAData;
+        let isWorldNameEmpty: boolean = false;
         if (password !== null) {
-            newData = this._decodePassword(password);
+            const result = this._decodePassword(password);
+            newData = result[0];
+            isWorldNameEmpty = result[1].isWorldNameEmpty;
         } else {
             newData = <WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._messageWindow.load()));
         }
@@ -3821,13 +3860,15 @@ export class WWA {
         delete newData.mapObjectCompressed;
 
         if (password !== null) {
-            var checkString = this._generateSaveDataHash(newData);
-            if (newData.checkString !== checkString) {
-                throw new Error("データが壊れているようです。\nInvalid hash (ALL DATA)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
+            // v3.5.6 以前のセーブデータはワールド名がないので素通しする
+            if (!isWorldNameEmpty && newData.worldName !== this._wwaData.worldName) {
+                console.error("Invalid title", `(password)=${newData.worldName} (current map)=${this._wwaData.worldName}`);
+                throw new Error("前回パスワード取得時から、制作者によってワールド名が変更されたためロードできませんでした。\n予めご了承ください。")
             }
-            var checkOriginalMapString = this.checkOriginalMapString;
-            if (newData.checkOriginalMapString !== checkOriginalMapString) {
-                throw new Error("管理者によってマップが変更されたようです。\nInvalid hash (ORIGINAL MAP)= " + newData.checkString + " " + this._generateSaveDataHash(newData));
+            const checkOriginalMapString = this.checkOriginalMapString;
+            if (this._isDisallowLoadOldSave && newData.checkOriginalMapString !== checkOriginalMapString) {
+                console.error("Invalid hash", `(password)=${newData.checkOriginalMapString} (current map)=${checkOriginalMapString}`);
+                throw new Error("前回パスワード取得時から、制作者によってマップが変更されたためロードできませんでした。\n(マップデータ制作者の設定により、内容が変更されると以前のパスワードは利用できなくなります。)\n予めご了承ください。");
             }
             console.log("Valid Password!");
         }
@@ -3873,7 +3914,7 @@ export class WWA {
         this.setFrameCoord(new Coord(newData.imgFrameX, newData.imgFrameY));
         this.updateCSSRule();
         this.updateEffect();
-        this._wwaSave.gameStart(this._wwaData,this._player);
+        this._wwaSave.gameStart(this._wwaData, this._player);
     }
     private _mapIDTableCreate(): void {
         var pid: number;
@@ -4033,8 +4074,8 @@ export class WWA {
                             this._setObjectsInNextFrame(posc, yCand, leftX, topY, objectsInNextFrame, partsID);
                         } else {
                             thirdCand = this._getThirdCandidate(playerIsMoving, pos, candCoord, moveMode, objectsInNextFrame);
-                            // thirdCandを用いた第三候補の作成は WWA 3.10以降のみで有効
-                            if (thirdCand !== null && this._wwaData.version >= 31) {
+                            // thirdCandを用いた第三候補の作成は $oldmove=0 でのみ有効
+                            if (thirdCand !== null && !this._wwaData.isOldMove) {
                                 this._setObjectsInNextFrame(posc, thirdCand, leftX, topY, objectsInNextFrame, partsID);
                             } else {
                                 // うろうろする
@@ -4194,7 +4235,9 @@ export class WWA {
     private _getRandomMoveCoord(playerIsMoving: boolean, currentPos: Position, objectsInNextFrame: number[][]): Coord {
         var currentCoord = currentPos.getPartsCoord();
         var resultCoord: Coord = currentCoord.clone();
-        var iterNum = this._wwaData.version < 31 ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31 : Consts.RANDOM_MOVE_ITERATION_NUM;
+        var iterNum = this._wwaData.isOldMove
+            ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31
+            : Consts.RANDOM_MOVE_ITERATION_NUM;
         for (var i = 0; i < iterNum; i++) {
             var rand = Math.floor(Math.random() * 8);
             resultCoord.x = currentCoord.x + vx[rand];
@@ -4319,7 +4362,7 @@ export class WWA {
         } catch (e) {
             this._player.clearPasswordWindowWaiting();
             // 読み込み失敗
-            alert("パスワードが正常ではありません。\nエラー詳細:\n" + e.message);
+            alert("セーブデータの復元に失敗しました。\nエラー詳細:\n" + e.message);
             return;
         }
         this._passwordLoadExecInNextFrame = true;
@@ -4801,6 +4844,10 @@ export class WWA {
         this._wwaData.isItemEffectEnabled = isEnabled;
     }
 
+    public setOldMove(flag: boolean) {
+        this._wwaData.isOldMove = flag;
+    }
+
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;
     private _sheet: CSSStyleSheet;
@@ -4992,6 +5039,26 @@ font-weight: bold;
             this._wwaData.gamePadButtonItemTable[buttonID] = itemBoxNo;
         }
     }
+
+    /**
+     * セーブデータの内容を確認し、現在の WWA のマップデータで互換性があるか確認します。
+     * エラーがある場合はエラーコードを、エラーがない場合は null を返します
+     * @param saveDataWorldName セーブデータのワールド名 v3.5.6 以下の WWA では存在しないので undefined
+     * @param saveDataHash セーブデータのハッシュ値 （マップデータから生成されるMD5ハッシュ値）
+     * @param mapDataRevisionKey セーブデータのリビジョン（ワールド名と暗証番号から生成されるMD5ハッシュ値） v3.5.6 以下の WWA では存在しないので undefined
+     */
+    private _checkSaveDataCompatibility(saveDataWorldName: string | undefined, saveDataHash: string, mapDataRevisionKey: string | undefined): LoadErrorCode | null {
+        if (saveDataWorldName !== undefined && saveDataWorldName !== this._wwaData.worldName) {
+            return LoadErrorCode.UNMATCHED_WORLD_NAME;
+          // v3.5.6 以下より WWA Wing をアップデートした場合にセーブデータが無効になるのを防ぐため、 メジャーリビジョンがない場合はエラーとしない。
+        } else if (mapDataRevisionKey && mapDataRevisionKey !== generateMapDataRevisionKey(this._wwaData.worldName, this._wwaData.worldPassNumber)) {
+            // リビジョン が不一致だが、前段の if 文よりタイトルは一致しているので、暗証番号が不一致である。
+            return LoadErrorCode.UNMATCHED_WORLD_PASS_NUMBER;
+        } else if (this._isDisallowLoadOldSave && saveDataHash !== this.checkOriginalMapString) {
+            return LoadErrorCode.DISALLOW_OLD_REVISION_WORLD_SAVE_DATA;
+        }
+        return null;
+    }
 };
 
 var isCopyRightClick = false;
@@ -5038,6 +5105,13 @@ function start() {
         initializeRotate();
         window.addEventListener("resize", autoRotate);
     }
+    const disallowLoadOldSave = (() => {
+        const disallowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
+        if (disallowLoadOldSaveAttribute !== null && disallowLoadOldSaveAttribute.match(/^true$/i)) {
+            return true;
+        }
+        return false;
+    })();
     wwa = new WWA(
         mapFileName,
         urlgateEnabled,
@@ -5045,7 +5119,8 @@ function start() {
         classicModeEnabled,
         itemEffectEnabled,
         useGoToWWA,
-        audioDirectory
+        audioDirectory,
+        disallowLoadOldSave
     );
 }
 
