@@ -5018,6 +5018,11 @@ font-weight: bold;
         // 商の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
         this.setUserVar(x, y === 0 ? 0 : this._wwaData.userVar[x] / this._wwaData.userVar[y]);
     }
+    // ユーザ変数X <- ユーザ変数X % ユーザ変数Y
+    public setUserValMod(x: number, y: number): void {
+        // 剰余の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
+        this.setUserVar(x, y === 0 ? 0 : this._wwaData.userVar[x] % this._wwaData.userVar[y]);
+    }
     // ユーザ変数X <- rand
     public setUserValRandNum(x: number, num: number): void {
         this.setUserVar(x, Math.floor(Math.random() * (this.toAssignableValue(num) + 1)));

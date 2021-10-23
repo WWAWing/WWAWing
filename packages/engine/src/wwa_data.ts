@@ -605,6 +605,7 @@ export enum MacroType {
     COPY_TIME_TO = 52,
     HIDE_STATUS = 53,
     VAR_MAP = 54,
+    VAR_MOD = 55,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101
 }
@@ -663,6 +664,7 @@ export var macrotable = {
     "$copy_time_to": 52,
     "$hide_status": 53,
     "$var_map": 54,
+    "$var_mod": 55,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
