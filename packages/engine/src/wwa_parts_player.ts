@@ -533,6 +533,12 @@ export class Player extends PartsObject {
         return this._status.plus(new EquipmentStatus(0, 0));
     }
 
+    // 装備品のステータスを返す
+    public getStatusOfEquipments(): EquipmentStatus {
+        // クローンハック
+        return this._equipStatus.plus(new EquipmentStatus(0, 0));
+    }
+
     public updateStatusValueBox(): void {
         const totalStatus = this._status.plus(this._equipStatus);
         this._energyValueElement.textContent = this._wwa.isVisibleStatus("energy") ? String(totalStatus.energy) : "";

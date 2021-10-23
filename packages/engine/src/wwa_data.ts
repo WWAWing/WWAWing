@@ -995,3 +995,11 @@ export enum IDTable {
     BITSHIFT = 16,
     BITMASK = 0xFFFF
 };
+
+/**
+ * ステータスの計算方法の種類
+ * all: 素手 + 装備品
+ * bare: 素手のみ
+ * equipment 装備品のみ
+ */
+export type StatusSolutionKind = "all" | "bare" | "equipment";

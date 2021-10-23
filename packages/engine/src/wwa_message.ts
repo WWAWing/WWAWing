@@ -11,7 +11,8 @@ import {
     YesNoState,
     Position,
     DEVICE_TYPE,
-    Direction
+    Direction,
+    StatusSolutionKind
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -323,15 +324,29 @@ export class Macro {
     }
     // copy_at_toマクロ実行部
     private _executeCopyAtToMacro(): void {
-        this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
-        this._wwa.setUserVarAT(num);
+        this._concatEmptyArgs(2);
+        const num = this._parseInt(0);
+        const kind = this._parseStatusKind(this._parseInt(1));
+        this._wwa.setUserVarAT(num, kind);
     }
     // copy_df_toマクロ実行部
     private _executeCopyDfToMacro(): void {
-        this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
-        this._wwa.setUserVarDF(num);
+        this._concatEmptyArgs(2);
+        const num = this._parseInt(0);
+        const kind = this._parseStatusKind(this._parseInt(1));
+        this._wwa.setUserVarDF(num, kind);
+    }
+    private _parseStatusKind(kind: number): StatusSolutionKind {
+        switch (kind) {
+            case 0:
+                return "all";
+            case 1:
+                return "bare"
+            case 2:
+                return "equipment";
+            default:
+                return "all";
+        }
     }
     // copy_money_toマクロ実行部
     private _executeCopyMoneyToMacro(): void {
