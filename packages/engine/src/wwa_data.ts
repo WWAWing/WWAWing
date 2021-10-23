@@ -873,6 +873,16 @@ export class WWAConsts {
     static ITEMBOX_TOP_Y = 140;
 
     static USER_VAR_NUM = 256;
+    /**
+     * ユーザ変数の最大値. MAX_SAFE_INTEGER (2^53 - 1) 相当だが、IE11を考慮して数値を直接コーディングしている。
+     * @see https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+     */
+    static USER_VAR_NUM_MAX_VALUE = 9007199254740991;
+    /**
+     * ユーザ変数の最小値. MIN_SAFE_INTEGER (-(2^53 -1)) 相当だが、IE11を考慮して数値を直接コーディングしている。
+     * @see https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_SAFE_INTEGER
+     */
+    static USET_VAR_NUM_MIN_VALUE = -9007199254740991; 
     static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
 
 }

@@ -22,7 +22,7 @@ import {
 import * as util from "./wwa_util";
 import { CGManager } from "./wwa_cgmanager";
 import { Camera } from "./wwa_camera";
-import { Player } from "./wwa_parts_player";
+import { Parts, Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
@@ -4860,9 +4860,46 @@ font-weight: bold;
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
     }
     // User変数記憶
-    public setUserVar(no: number, value: number): void {
-        this._wwaData.userVar[no] = value;
+    public setUserVar(index: number, value: number): void {
+        // number 型でない変数, NaN, 範囲外の index を弾く
+        if (this.isNotNumberTypeOrNaN(index) || !this.isValidUserVarIndex(index)) {
+            throw new Error (`代入先のユーザ変数の番号 が 0 以上 ${Consts.USER_VAR_NUM - 1} 以下の数値になっていません!`)
+        }
+        this._wwaData.userVar[index] = this.toAssignableValue(value)
     }
+    /**
+     * 数値 x を代入可能な変数に変換する。
+     * 
+     * 1. x の整数部分のみを取り出す
+     * 2. 最小値未満の値なら最小値に、最大値より大きい値なら最大値に固定する。
+     * 3. 保険的に、number 型でない値 と NaN は 0 に変換する。
+     * 
+     * @param x 対象となる整数値
+     */
+    private toAssignableValue(x: number): number {
+        // 整数部分のみにする. 例) -1.1 -> -1, 1.1 -> 1
+        const intValue = x | 0;
+        const clampedValue = Math.max(Math.min(intValue, Consts.USER_VAR_NUM_MAX_VALUE), Consts.USET_VAR_NUM_MIN_VALUE);
+        return this.isNotNumberTypeOrNaN(clampedValue) ? 0 : clampedValue;
+    }
+
+    /**
+     * 数値 index が ユーザ変数の添字として妥当なら true, さもなくば false を返す。
+     * 0 以上 USER_VAR_NUM 未満 の整数が妥当。
+     * @param index 判定対象の index
+     */
+    private isValidUserVarIndex(index: unknown): boolean {
+        return typeof index === "number" && index >= 0 && index < Consts.USER_VAR_NUM && (index | 0) === index;
+    }
+
+    /**
+     * 変数 x が number 型 かつ NaN でないなら true, さもなくば false を返す。
+     * @param x 判定対象の変数
+     */
+    private isNotNumberTypeOrNaN(x: unknown): boolean {
+        return typeof x !== "number" || x !== x;
+    }
+
     // User変数取得
     public getUserVar(no: number): number {
         return this._wwaData.userVar[no];
@@ -4872,8 +4909,6 @@ font-weight: bold;
         var pos = this._player.getPosition().getPartsCoord();
         this.setUserVar(x, pos.x);
         this.setUserVar(y, pos.y);
-        // console.log("X:"+this._wwaData.userVar[x]);
-        // console.log("Y:"+this._wwaData.userVar[y]);
     }
     // 記憶していた座標にジャンプ
     public jumpRecUserPosition(x: number, y: number): void {
@@ -4885,80 +4920,107 @@ font-weight: bold;
     }
     // ユーザ変数 <= HP
     public setUserVarHP(num: number): void {
-        this._wwaData.userVar[num] = this._player.getStatus().energy;
+        this.setUserVar(num, this._player.getStatus().energy);
     }
     // ユーザ変数 <= HPMAX
     public setUserVarHPMAX(num: number): void {
-        this._wwaData.userVar[num] = this._player.getEnergyMax();
+        this.setUserVar(num, this._player.getEnergyMax());
     }
     // ユーザ変数 <= AT
     public setUserVarAT(num: number): void {
-        this._wwaData.userVar[num] = this._player.getStatus().strength;
+        this.setUserVar(num, this._player.getStatus().strength);
     }
     // ユーザ変数 <= DF
     public setUserVarDF(num: number): void {
-        this._wwaData.userVar[num] = this._player.getStatus().defence;
+        this.setUserVar(num, this._player.getStatus().defence);
     }
     // ユーザ変数 <= MONEY
     public setUserVarMONEY(num: number): void {
-        this._wwaData.userVar[num] = this._player.getStatus().gold;
+        this.setUserVar(num, this._player.getStatus().gold);
     }
+
+    // 負値, 数値でない値, NaN は 0にする。
+    // 小数部分を含む場合は、整数部分だけ取り出す。
+    private toValidStatusValue(x: number): number {
+        return this.isNotNumberTypeOrNaN(x) || x < 0 ? 0 : (x | 0);
+    }
+
     // HP <- ユーザ変数
-    public setHPUserVar(num: number): void {
-        this._player.setEnergy(this._wwaData.userVar[num]);
+    public setHPUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setEnergy(this.toValidStatusValue(this._wwaData.userVar[index]));
+        // 0 になった場合はゲームオーバー
+        if (this._player.isDead()) {
+            this.gameover();
+        }
         this._player.updateStatusValueBox();
     }
     // HPMAX <- ユーザ変数
-    public setHPMAXUserVar(num: number): void {
-        this._player.setEnergyMax(this._wwaData.userVar[num]);
+    public setHPMAXUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setEnergyMax(this.toValidStatusValue(this._wwaData.userVar[index]));
         this._player.updateStatusValueBox();
     }
-    // AT <- ユーザ変数
-    public setATUserVar(num: number): void {
-        this._player.setStrength(this._wwaData.userVar[num]);
+    // AT (装備品以外) <- ユーザ変数
+    public setATUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setStrength(this.toValidStatusValue(this._wwaData.userVar[index]));
         this._player.updateStatusValueBox();
     }
-    // DF <- ユーザ変数
-    public setDFUserVar(num: number): void {
-        this._player.setDefence(this._wwaData.userVar[num]);
+    // DF (装備品以外) <- ユーザ変数
+    public setDFUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setDefence(this.toValidStatusValue(this._wwaData.userVar[index]));
         this._player.updateStatusValueBox();
     }
     // MONEY <- ユーザ変数
-    public setMONEYUserVar(num: number): void {
-        this._player.setGold(this._wwaData.userVar[num]);
+    public setMONEYUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setGold(this.toValidStatusValue(this._wwaData.userVar[index]));
         this._player.updateStatusValueBox();
     }
     // ユーザ変数 <- 歩数
     public setUserVarStep(num: number): void {
-        this._wwaData.userVar[num] = this._player.getMoveCount();
+        this.setUserVar(num, this._player.getMoveCount());
     }
     // ユーザ変数 <- 定数
     public setUserVarVal(x: number, num: number): void {
-        this._wwaData.userVar[x] = Math.floor(num);
+        this.setUserVar(x, num);
     }
     // ユーザ変数X <- ユーザ変数Y
     public setUserValOtherUserVal(x: number, y: number): void {
-        this._wwaData.userVar[x] = this._wwaData.userVar[y];
+        this.setUserVar(x, this._wwaData.userVar[y]);
     }
     // ユーザ変数X <- ユーザ変数X + ユーザ変数Y
     public setUserValAdd(x: number, y: number): void {
-        this._wwaData.userVar[x] += this._wwaData.userVar[y];
+        this.setUserVar(x, this._wwaData.userVar[x] + this._wwaData.userVar[y])
     }
     // ユーザ変数X <- ユーザ変数X - ユーザ変数Y
     public setUserValSub(x: number, y: number): void {
-        this._wwaData.userVar[x] -= this._wwaData.userVar[y];
+        this.setUserVar(x, this._wwaData.userVar[x] - this._wwaData.userVar[y]);
     }
     // ユーザ変数X <- ユーザ変数X * ユーザ変数Y
     public setUserValMul(x: number, y: number): void {
-        this._wwaData.userVar[x] = Math.floor(this._wwaData.userVar[x] * this._wwaData.userVar[y]);
+        this.setUserVar(x, this._wwaData.userVar[x] * this._wwaData.userVar[y]);
     }
     // ユーザ変数X <- ユーザ変数X / ユーザ変数Y
     public setUserValDiv(x: number, y: number): void {
-        this._wwaData.userVar[x] = Math.floor(this._wwaData.userVar[x] / this._wwaData.userVar[y]);
+        // 商の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
+        this.setUserVar(x, y === 0 ? 0 : this._wwaData.userVar[x] / this._wwaData.userVar[y]);
     }
     // ユーザ変数X <- rand
     public setUserValRandNum(x: number, num: number): void {
-        this._wwaData.userVar[x] = Math.floor(Math.random() * (num + 1));
+        this.setUserVar(x, Math.floor(Math.random() * (this.toAssignableValue(num) + 1)));
     }
     // ユーザ変数付きの文字列を出力する。
     public showUserValString(macroArgs: string[]) {
@@ -4983,42 +5045,60 @@ font-weight: bold;
     }
     // ユーザ変数 IFElse
     public userVarUserIf(_triggerPartsPosition: Coord, str: string[]): void {
-        // 決定スイッチ
-        var judge_if: boolean;
-        if (str[5] === void 0) {
+        // true 時配置パーツの Y 座標 (必須パラメータの最後の引数) が省略されている場合は, エラーとする
+        if (str[5] === undefined) {
             throw new Error("$if の引数不足 str=" + str);
         }
-        else {
-            switch (str[1]) {
-                case "==":
-                    judge_if = (this._wwaData.userVar[Number(str[0])] == this._wwaData.userVar[Number(str[2])]);
-                    break;
-                case "!=":
-                    judge_if = (this._wwaData.userVar[Number(str[0])] != this._wwaData.userVar[Number(str[2])]);
-                    break;
-                case ">=":
-                    judge_if = (this._wwaData.userVar[Number(str[0])] >= this._wwaData.userVar[Number(str[2])]);
-                    break;
-                case ">":
-                    judge_if = (this._wwaData.userVar[Number(str[0])] > this._wwaData.userVar[Number(str[2])]);
-                    break;
-                case "<=":
-                    judge_if = (this._wwaData.userVar[Number(str[0])] <= this._wwaData.userVar[Number(str[2])]);
-                    break;
-                case "<":
-                    judge_if = (this._wwaData.userVar[Number(str[0])] < this._wwaData.userVar[Number(str[2])]);
-                    break;
+        const userVar1Index = parseInt(str[0], 10);
+        const userVar2Index = parseInt(str[2], 10);
+        if(!this.isValidUserVarIndex(userVar1Index) || !this.isValidUserVarIndex(userVar2Index)) {
+            throw new Error("判定対象のユーザ変数の添字が範囲外です!")
+        }
+        const userVar1 = this._wwaData.userVar[userVar1Index];
+        const opeCode = str[1];
+        const userVar2 = this._wwaData.userVar[userVar2Index];
 
-            }
-            if (judge_if) {
-                this.appearPartsEval(_triggerPartsPosition, str[4], str[5], Number(str[3]), Number(str[6]));
-            }
-            // undefined 判定
-            else if (str[9] !== void 0) {
-                this.appearPartsEval(_triggerPartsPosition, str[8], str[9], Number(str[7]), Number(str[10]));
-            }
+        if (this.compareUserVar(userVar1, opeCode, userVar2)) {
+            const partsId = parseInt(str[3], 10);
+            const partsX = str[4];
+            const partsY = str[5];
+            // str[6] 省略や 0 など falsy なら物体パーツ
+            const partsType = str[6] ? PartsType.MAP : PartsType.OBJECT;
+            this.appearPartsEval(_triggerPartsPosition, partsX, partsY, partsId, partsType);
+            return;
+        }
+
+        // false 時配置パーツの Y 座標が省略されている場合は, false 時の配置はしない
+        if (str[9] === undefined) {
+            return;
+        }
+        const partsId = parseInt(str[7], 10);
+        const partsX = str[8];
+        const partsY = str[9];
+        // str[10] 省略や 0 など falsy なら物体パーツ
+        const partsType = str[10] ? PartsType.MAP : PartsType.OBJECT;
+        this.appearPartsEval(_triggerPartsPosition, partsX, partsY, partsId, partsType);
+    }
+
+    private compareUserVar(userVar1: number, opecode: string, userVar2: number): boolean {
+        switch (opecode) {
+            case "==":
+                return userVar1 === userVar2;
+            case "!=":
+                return userVar1 !== userVar2;
+            case ">=":
+                return userVar1 >= userVar2;
+            case ">":
+                return userVar1 > userVar2;
+            case "<=":
+                return userVar1 <= userVar2;
+            case "<":
+                return userVar1 < userVar2;
+            default:
+                throw new Error(`未定義の演算子です: ${opecode}`)
         }
     }
+
     // プレイヤー速度設定
     public setPlayerSpeedIndex(speedIndex: number): void {
         if (speedIndex >= speedList.length && speedIndex < 0) {
@@ -5040,7 +5120,7 @@ font-weight: bold;
     // ユーザ変数にプレイ時間を代入
     public setUserVarPlayTime(num: number): void {
         this.setNowPlayTime();
-        this._wwaData.userVar[num] = this._wwaData.playTime;
+        this.setUserVar(num, this._wwaData.playTime);
     }
     // 現在時刻セット
     private setNowPlayTime(): void {
@@ -5064,21 +5144,18 @@ font-weight: bold;
         partsID: number,
         targetPartsType: PartsType
     ): void {
-        if (partsID > Consts.USER_VAR_NUM) {
-            throw new Error("入力変数が不正です");
+        if (!this.isValidUserVarIndex(partsID)) {
+            throw new Error("対象のユーザ変数の添字が範囲外です");
         }
-        var targetPartsID = this._wwaData.userVar[partsID];
+        const targetPartsID = this._wwaData.userVar[partsID];
         if (targetPartsID < 0) {
-            throw new Error("パーツ番号が不正です");
+            throw new Error("負のパーツ番号は指定できません");
         }
-        if (targetPartsType === PartsType.OBJECT) {
-            if (targetPartsID >= this.getObjectPartsNum()) {
-                throw new Error("パーツ番号が不正です");
-            }
-        } else {
-            if (targetPartsID >= this.getMapPartsNum()) {
-                throw new Error("パーツ番号が不正です");
-            }
+        if (targetPartsType === PartsType.OBJECT && targetPartsID >= this.getObjectPartsNum()) {
+            throw new Error("物体パーツ番号の最大値を超えるパーツ番号が指定されました");
+        }
+        if ( targetPartsType === PartsType.MAP && targetPartsID >= this.getMapPartsNum()) {
+            throw new Error("背景パーツ番号の最大値を超えるパーツ番号が指定されました");
         }
         this.appearPartsEval(triggerPartsPos, xstr, ystr, targetPartsID, targetPartsType);
     }
