@@ -220,6 +220,10 @@ export class Macro {
                 case MacroType.VAR_DIV:
                     this._executeVarDivMacro();
                     break;
+                // 割り算の余り代入
+                case MacroType.VAR_MOD:
+                    this._executeVarModMacro();
+                    break;
                 // 変数Xに1からYまでの乱数を代入
                 case MacroType.VAR_SET_RAND:
                     this._executeVarSetRandMacro();
@@ -416,6 +420,13 @@ export class Macro {
         var x = this._parseInt(0);
         var y = this._parseInt(1);
         this._wwa.setUserValDiv(x, y);
+    }
+    // var_modマクロ実行部
+    private _executeVarModMacro(): void {
+        this._concatEmptyArgs(2);
+        var x = this._parseInt(0);
+        var y = this._parseInt(1);
+        this._wwa.setUserValMod(x, y);
     }
     // var_set_randマクロ実行部
     private _executeVarSetRandMacro(): void {
