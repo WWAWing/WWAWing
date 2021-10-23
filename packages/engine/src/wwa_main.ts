@@ -7,7 +7,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind
+    speedList, StatusKind, StatusSolutionKind
 } from "./wwa_data";
 
 import {
@@ -4927,12 +4927,34 @@ font-weight: bold;
         this.setUserVar(num, this._player.getEnergyMax());
     }
     // ユーザ変数 <= AT
-    public setUserVarAT(num: number): void {
-        this.setUserVar(num, this._player.getStatus().strength);
+    public setUserVarAT(num: number, kind: StatusSolutionKind): void {
+        switch (kind) {
+            case "bare":
+                this.setUserVar(num, this._player.getStatusWithoutEquipments().strength);
+                return;
+            case "equipment":
+                this.setUserVar(num, this._player.getStatusOfEquipments().strength);
+                return;
+            case "all":
+            default:
+                this.setUserVar(num, this._player.getStatus().strength);
+                return;
+        }
     }
     // ユーザ変数 <= DF
-    public setUserVarDF(num: number): void {
-        this.setUserVar(num, this._player.getStatus().defence);
+    public setUserVarDF(num: number, kind: StatusSolutionKind): void {
+        switch (kind) {
+            case "bare":
+                this.setUserVar(num, this._player.getStatusWithoutEquipments().defence);
+                return;
+            case "equipment":
+                this.setUserVar(num, this._player.getStatusOfEquipments().defence);
+                return;
+            case "all":
+            default:
+                this.setUserVar(num, this._player.getStatus().defence);
+                return;
+        }
     }
     // ユーザ変数 <= MONEY
     public setUserVarMONEY(num: number): void {
