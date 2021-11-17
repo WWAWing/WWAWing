@@ -7,7 +7,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, StatusSolutionKind
+    speedList, StatusKind, MacroType, StatusSolutionKind
 } from "./wwa_data";
 
 import {
@@ -1927,7 +1927,7 @@ export class WWA {
             }
         }
 
-        if (this._passwordLoadExecInNextFrame) {
+       if (this._passwordLoadExecInNextFrame) {
             this._stopUpdateByLoadFlag = true;
             this._loadType = LoadType.PASSWORD;
             this._player.clearPasswordWindowWaiting();
@@ -3215,7 +3215,13 @@ export class WWA {
                         // マクロのエンキュー (最も左のものを対象とする。)
                         // それ以外のメッセージ、マクロは一切エンキューしない。(原作どおり)
                         // なので、「あああ$map=1,1,1」の「あああ」は表示されず、map文だけが処理される。
-                        macroQueue.push(macro);
+
+                        // $showstr マクロは、メッセージに変換されるので、変換してメッセージとして積むように処理しなければならない。
+                        if(macro.macroType === MacroType.SHOW_STR) {
+                            linesWithoutMacro.push(this.generateUserValString(macro.macroArgs));
+                        } else {
+                            macroQueue.push(macro);
+                        }
 
                         // 行頭コメントはpushしない
                     } else if (!lines[i].match(/^\$/)) {
@@ -5049,8 +5055,8 @@ font-weight: bold;
     public setUserValRandNum(x: number, num: number): void {
         this.setUserVar(x, Math.floor(Math.random() * (this.toAssignableValue(num) + 1)));
     }
-    // ユーザ変数付きの文字列を出力する。
-    public showUserValString(macroArgs: string[]) {
+    // ユーザ変数付きの文字列を組み立てる。
+    public generateUserValString(macroArgs: string[]): string {
         // 最終的に出力する文字列
         var out_str: string;
         out_str = "";
@@ -5062,9 +5068,8 @@ font-weight: bold;
                 out_str += this._wwaData.userVar[parseInt(macroArgs[i])].toString();
             }
         }
-        // 出力
         // 何故か \n が反映されない？
-        this.setMessageQueue(out_str.replace(/\\n/g, "\n"), false, true);
+        return out_str.replace(/\\n/g, "\n");
     }
     // 速度変更禁止
     public speedChangeJudge(speedChangeFlag: boolean): void {

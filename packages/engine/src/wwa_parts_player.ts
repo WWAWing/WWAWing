@@ -50,7 +50,8 @@ export enum PlayerState {
     LOCALGATE_JUMPED,
     BATTLE,
     ESTIMATE_WINDOW_WAITING,
-    PASSWORD_WINDOW_WAITING
+    PASSWORD_WINDOW_WAITING,
+    LOCALGATE_JUMPED_WITH_MESSAGE,
 }
 
 export class Player extends PartsObject {
@@ -318,7 +319,7 @@ export class Player extends PartsObject {
     }
 
     public isJumped(): boolean {
-        return this._state === PlayerState.LOCALGATE_JUMPED;
+        return this._state === PlayerState.LOCALGATE_JUMPED || this._state === PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE;
     }
 
     public setMessageWaiting(): void {
@@ -378,7 +379,6 @@ export class Player extends PartsObject {
         }
     }
 
-
     public isPartsEventExecuted(): boolean {
         return this._isPartsEventExecuted;
     }
@@ -400,11 +400,11 @@ export class Player extends PartsObject {
     }
 
     public processAfterJump(): void {
-        if (this._state !== PlayerState.LOCALGATE_JUMPED) {
+        if (this._state !== PlayerState.LOCALGATE_JUMPED && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             return;
         }
         if (--this._jumpWaitFramesRemain === 0) {
-            this._state = PlayerState.CONTROLLABLE;
+            this._state = this._state === PlayerState.LOCALGATE_JUMPED ? PlayerState.CONTROLLABLE : PlayerState.MESSAGE_WAITING;
         }
     }
 
@@ -421,7 +421,7 @@ export class Player extends PartsObject {
             this._camera.reset(pos);
         }
 
-        this._state = PlayerState.LOCALGATE_JUMPED;
+        this._state = this._state === PlayerState.MESSAGE_WAITING ? PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE : PlayerState.LOCALGATE_JUMPED;
         this._jumpWaitFramesRemain = Consts.LOCALGATE_PLAYER_WAIT_FRAME;
         this._samePosLastExecutedMapID = void 0;
         this._samePosLastExecutedObjID = void 0;

@@ -235,7 +235,7 @@ export class Macro {
                     break;
                 // 変数付きのメッセージ表示
                 case MacroType.SHOW_STR:
-                    this._executeShowStrMacro();
+                    // $show_str マクロは、キューの組み立て時に処理されていて、既に存在しないはず
                     break;
                 // IF文
                 case MacroType.IF:
@@ -456,14 +456,7 @@ export class Macro {
         var speedChangeFlag = !!this._parseInt(0);
         this._wwa.speedChangeJudge(speedChangeFlag);
     }
-    // show_strマクロ実行部
-    private _executeShowStrMacro(): void {
-        var max_num = 10;
-        var out_str = new String("");
-        this._concatEmptyArgs(max_num);
-        this._wwa.showUserValString(this.macroArgs);
-    }
-    // IFマクロ実行部
+   // IFマクロ実行部
     private _executeIfMacro(): void {
         // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
         var str: string[] = new Array(11);
