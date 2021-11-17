@@ -5076,39 +5076,47 @@ font-weight: bold;
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
     }
     // ユーザ変数 IFElse
-    public userVarUserIf(_triggerPartsPosition: Coord, str: string[]): void {
+    public userVarUserIf(_triggerPartsPosition: Coord, args: string[]): void {
         // true 時配置パーツの Y 座標 (必須パラメータの最後の引数) が省略されている場合は, エラーとする
-        if (str[5] === undefined) {
-            throw new Error("$if の引数不足 str=" + str);
+        if (args[5] === undefined) {
+            throw new Error("$if の引数不足 str=" + args);
         }
-        const userVar1Index = parseInt(str[0], 10);
-        const userVar2Index = parseInt(str[2], 10);
+        const userVar1Index = parseInt(args[0], 10);
+        const userVar2Index = parseInt(args[2], 10);
         if(!this.isValidUserVarIndex(userVar1Index) || !this.isValidUserVarIndex(userVar2Index)) {
             throw new Error("判定対象のユーザ変数の添字が範囲外です!")
         }
         const userVar1 = this._wwaData.userVar[userVar1Index];
-        const opeCode = str[1];
+        const opeCode = args[1];
         const userVar2 = this._wwaData.userVar[userVar2Index];
 
+        /**
+         *  partsTypeArgument が 0 以外の数値として解釈できるなら 背景パーツ
+         *  0 に解釈される文字列や undefined なら 物体パーツ を返す。
+         */
+        const parsePartsType = (partsTypeArgument: string | undefined): PartsType => 
+            // parseInt(undefined, 10) => NaN であり, NaN は falsy である.
+            parseInt(partsTypeArgument, 10) ? PartsType.MAP : PartsType.OBJECT
+
         if (this.compareUserVar(userVar1, opeCode, userVar2)) {
-            const partsId = parseInt(str[3], 10);
-            const partsX = str[4];
-            const partsY = str[5];
-            // str[6] 省略や 0 など falsy なら物体パーツ
-            const partsType = str[6] ? PartsType.MAP : PartsType.OBJECT;
+            const partsId = parseInt(args[3], 10);
+            const partsX = args[4];
+            const partsY = args[5];
+            // str[6] 省略や 0 など falsy なら物体パーツ.
+            const partsType = parsePartsType(args[6]);
             this.appearPartsEval(_triggerPartsPosition, partsX, partsY, partsId, partsType);
             return;
         }
 
         // false 時配置パーツの Y 座標が省略されている場合は, false 時の配置はしない
-        if (str[9] === undefined) {
+        if (args[9] === undefined) {
             return;
         }
-        const partsId = parseInt(str[7], 10);
-        const partsX = str[8];
-        const partsY = str[9];
+        const partsId = parseInt(args[7], 10);
+        const partsX = args[8];
+        const partsY = args[9];
         // str[10] 省略や 0 など falsy なら物体パーツ
-        const partsType = str[10] ? PartsType.MAP : PartsType.OBJECT;
+        const partsType = parsePartsType(args[10]);
         this.appearPartsEval(_triggerPartsPosition, partsX, partsY, partsId, partsType);
     }
 
