@@ -473,10 +473,11 @@ export class Macro {
     }
     // var_set_randマクロ実行部
     private _executeVarSetRandMacro(): void {
-        this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
-        this._wwa.setUserValRandNum(x, y);
+        this._concatEmptyArgs(3);
+        const x = this._parseInt(0);
+        const y = this._parseInt(1);
+        const n = this._parseInt(2, 0);
+        this._wwa.setUserValRandNum(x, y, n);
     }
     // game_speedマクロ実行部
     private _executeGameSpeedMacro(): void {
