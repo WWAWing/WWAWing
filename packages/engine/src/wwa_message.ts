@@ -28,26 +28,54 @@ import {
     WWASaveData
 } from "./wwa_save";
 
-export class MessageInfo {
+/**
+ * 値が更新された時に、再評価されるべき値を返す関数の型。
+ */
+export type LazyEvaluateValue = () => number;
+/**
+ * 通常のメッセージ文字列と LazyEvaluateValue が混在した配列の型。
+ * 例: ["変数 10 番の値は", () => userVar[10], "です。\n文字列中に改行も入りえます。"]
+ */
+export type MessageSegments = (string | LazyEvaluateValue)[];
+/**
+ * パース済メッセージ。
+ * 通常のメッセージの他、マクロの情報などを持ちます。
+ */
+export class ParsedMessage {
+    private messageArray: MessageSegments;
     constructor(
-        public message: string,
+        textOrMessageSegments: string | MessageSegments,
         public isSystemMessage: boolean,
         public isEndOfPartsEvent?: boolean,
         public macro?: Macro[]
     ) {
+        this.messageArray = typeof textOrMessageSegments === "string" ? [textOrMessageSegments] : textOrMessageSegments;
         if (this.macro === void 0) {
             this.macro = [];
         }
     }
 
-}
+    /**
+     * メッセージが空であれば true を返す。
+     * 空配列の他、空文字列しかない1要素の配列を空とみなす。
+     * マクロの有無は考慮しない。
+     */
+    isEmpty(): boolean {
+        return (
+            this.messageArray.length === 0 ||
+            (this.messageArray.length === 1 && this.messageArray[0] === "")
+        );
+    }
 
-export function strArrayToMessageInfoArray(strArray: string[], isSystemMessage: boolean): MessageInfo[] {
-    var newq: MessageInfo[] = [];
-    strArray.forEach((s) => {
-        newq.push(new MessageInfo(s, isSystemMessage));
-    });
-    return newq;
+    /**
+     * LazyEvaluateValue を評価して、表示可能なメッセージを生成する。
+     */
+    generatePrintableMessage(): string {
+        return this.messageArray.reduce<string>((prevMessage, item) => {
+            const evaluatedItem = typeof item === "string" ? item : item();
+            return `${prevMessage}${evaluatedItem}`;
+        }, "")
+    }
 }
 
 export class Macro {
@@ -1038,7 +1066,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _y: number;
     private _width: number;
     private _height: number;
-    private _message: string;
+    private _message: ParsedMessage;
 
     private _cgFileName: string;
     private _isVisible: boolean;
@@ -1068,7 +1096,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         y: number,
         width: number,
         height: number,
-        message: string,
         cgFileName: string,
         isVisible: boolean,
         isYesno: boolean,
@@ -1084,7 +1111,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._y = y;
         this._width = width;
         this._height = height;
-        this._message = message;
+        this._message = new ParsedMessage([], false);
         this._isVisible = isVisible;
         this._isYesno = isYesno;
         this._isItemMenu = isItemMenu;
@@ -1211,7 +1238,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
     }
 
-    public setMessage(message: string): void {
+    public setParsedMessage(message: ParsedMessage): void {
         this._message = message;
         this.update();
     }
@@ -1319,7 +1346,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
             this._ynWrapperElement.style.display = "none";
         }
         this._msgWrapperElement.textContent = "";
-        var mesArray = this._message.split("\n");
+        var mesArray = this._message.generatePrintableMessage().split("\n");
         mesArray.forEach((line, i) => {
             let lsp: HTMLSpanElement; // Logical SPan
             if (this._wwa.isClassicMode()) {
