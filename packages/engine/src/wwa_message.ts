@@ -28,8 +28,19 @@ import {
     WWASaveData
 } from "./wwa_save";
 
-export type LazyEvaluateValue = () => number
-export type MessageSegments = (string | LazyEvaluateValue)[]
+/**
+ * 値が更新された時に、再評価されるべき値を返す関数の型。
+ */
+export type LazyEvaluateValue = () => number;
+/**
+ * 通常のメッセージ文字列と LazyEvaluateValue が混在した配列の型。
+ * 例: ["変数 10 番の値は", () => userVar[10], "です。\n文字列中に改行も入りえます。"]
+ */
+export type MessageSegments = (string | LazyEvaluateValue)[];
+/**
+ * パース済メッセージ。
+ * 通常のメッセージの他、マクロの情報などを持ちます。
+ */
 export class ParsedMessage {
     private messageArray: MessageSegments;
     constructor(
