@@ -29,16 +29,16 @@ import {
 } from "./wwa_save";
 
 export type LazyEvaluateValue = () => number
-export type MessageArray = (string | LazyEvaluateValue)[]
-export class MessageInfo {
-    private messageArray: MessageArray;
+export type MessageSegments = (string | LazyEvaluateValue)[]
+export class ParsedMessage {
+    private messageArray: MessageSegments;
     constructor(
-        messageOrMessageArray: string | MessageArray,
+        textOrMessageSegments: string | MessageSegments,
         public isSystemMessage: boolean,
         public isEndOfPartsEvent?: boolean,
         public macro?: Macro[]
     ) {
-        this.messageArray = typeof messageOrMessageArray === "string" ? [messageOrMessageArray] : messageOrMessageArray;
+        this.messageArray = typeof textOrMessageSegments === "string" ? [textOrMessageSegments] : textOrMessageSegments;
         if (this.macro === void 0) {
             this.macro = [];
         }
@@ -1055,7 +1055,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _y: number;
     private _width: number;
     private _height: number;
-    private _message: MessageInfo;
+    private _message: ParsedMessage;
 
     private _cgFileName: string;
     private _isVisible: boolean;
@@ -1100,7 +1100,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._y = y;
         this._width = width;
         this._height = height;
-        this._message = new MessageInfo([], false);
+        this._message = new ParsedMessage([], false);
         this._isVisible = isVisible;
         this._isYesno = isYesno;
         this._isItemMenu = isItemMenu;
@@ -1227,7 +1227,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
     }
 
-    public setMessage(message: MessageInfo): void {
+    public setParsedMessage(message: ParsedMessage): void {
         this._message = message;
         this.update();
     }

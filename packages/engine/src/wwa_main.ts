@@ -26,7 +26,7 @@ import { Parts, Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MonsterWindow, ScoreWindow, MessageInfo, Macro, parseMacro, MessageArray
+    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -74,7 +74,7 @@ export class WWA {
     public _messageWindow: MessageWindow; // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
     private _monsterWindow: MonsterWindow;
     private _scoreWindow: ScoreWindow;
-    private _messageQueue: MessageInfo[];
+    private _messageQueue: ParsedMessage[];
     private _yesNoJudge: YesNoState;
     private _yesNoJudgeInNextFrame: YesNoState;
     private _yesNoChoicePartsCoord: Coord;
@@ -107,7 +107,7 @@ export class WWA {
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
-    private _lastMessage: MessageInfo;
+    private _lastMessage: ParsedMessage;
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
@@ -420,7 +420,7 @@ export class WWA {
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
             this._prevFrameEventExected = false;
-            this._lastMessage = new MessageInfo([], false, false, []);
+            this._lastMessage = new ParsedMessage([], false, false, []);
             this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
 
@@ -879,7 +879,7 @@ export class WWA {
                 }
 
                 if (this._usePassword) {
-                    this._messageWindow.setMessage(new MessageInfo(
+                    this._messageWindow.setParsedMessage(new ParsedMessage(
                         (
                             this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
                                 "効果音・ＢＧＭデータをロードしますか？" :
@@ -2921,7 +2921,7 @@ export class WWA {
                         } else {
                             // アイテムを持っていない
                             if (this._wwaData.message[SystemMessage1.NO_ITEM] !== "BLANK") {
-                                this._messageQueue.push(new MessageInfo(
+                                this._messageQueue.push(new ParsedMessage(
                                     this._wwaData.message[SystemMessage1.NO_ITEM] === "" ?
                                         "アイテムを持っていない。" : this._wwaData.message[SystemMessage1.NO_ITEM],
                                     true)
@@ -2969,7 +2969,7 @@ export class WWA {
                                 // アイテムをボックスがいっぱい
                                 if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
                                     this._messageQueue.push(
-                                        new MessageInfo(
+                                        new ParsedMessage(
                                             this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] === "" ?
                                                 "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[SystemMessage2.FULL_ITEM],
                                             true
@@ -2981,7 +2981,7 @@ export class WWA {
                             // 所持金が足りない
                             if (this._wwaData.message[SystemMessage1.NO_MONEY] !== "BLANK") {
                                 this._messageQueue.push(
-                                    new MessageInfo(
+                                    new ParsedMessage(
                                         this._wwaData.message[SystemMessage1.NO_MONEY] === "" ?
                                             "所持金がたりない。" : this._wwaData.message[SystemMessage1.NO_MONEY],
                                         true
@@ -3162,7 +3162,7 @@ export class WWA {
 
             // set message
             if (!topmes.isEmpty()) {
-                this._messageWindow.setMessage(topmes);
+                this._messageWindow.setParsedMessage(topmes);
                 this._messageWindow.setYesNoChoice(showChoice);
                 this._messageWindow.setPositionByPlayerPosition(
                     this._faces.length !== 0,
@@ -3190,7 +3190,7 @@ export class WWA {
         partsID: number,
         partsType: PartsType,
         partsPosition: Coord,
-        isSystemMessage: boolean = false): MessageInfo[] {
+        isSystemMessage: boolean = false): ParsedMessage[] {
 
         // コメント削除
         var messageMain = message
@@ -3201,12 +3201,12 @@ export class WWA {
             .replace(/\<p\>\n/ig, "<P>")
             .replace(/\<p\>/ig, "<P>");
 
-        var messageQueue: MessageInfo[] = [];
+        var messageQueue: ParsedMessage[] = [];
         if (messageMain !== "") {
             var rawQueue = messageMain.split(/\<p\>/ig);
             for (var j = 0; j < rawQueue.length; j++) {
                 var lines = rawQueue[j].split("\n");
-                var linesWithoutMacro: MessageArray[] = [];
+                var linesWithoutMacro: MessageSegments[] = [];
                 var macroQueue: Macro[] = [];
                 for (var i = 0; i < lines.length; i++) {
                     var matchInfo = lines[i].match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)\=(?:.*))/);
@@ -3218,7 +3218,7 @@ export class WWA {
 
                         // $showstr マクロは、メッセージに変換されるので、変換してメッセージとして積むように処理しなければならない。
                         if(macro.macroType === MacroType.SHOW_STR) {
-                            linesWithoutMacro.push(this.generateUserValString(macro.macroArgs));
+                            linesWithoutMacro.push(this._generateUserValString(macro.macroArgs));
                         } else {
                             macroQueue.push(macro);
                         }
@@ -3235,7 +3235,7 @@ export class WWA {
                     return [...acc, ...newLine, ...line];
                 }, []);
 
-                messageQueue.push(new MessageInfo(messageArray, isSystemMessage, j === rawQueue.length - 1, macroQueue));
+                messageQueue.push(new ParsedMessage(messageArray, isSystemMessage, j === rawQueue.length - 1, macroQueue));
             }
         }
         return messageQueue;
@@ -4421,19 +4421,19 @@ export class WWA {
         if (this._messageQueue.length === 0) {
             this._hideMessageWindow();
         } else {
-            var mi = this._messageQueue.shift();
-            var macro = mi.macro;
-            this._lastMessage = mi;
+            var message = this._messageQueue.shift();
+            var macro = message.macro;
+            this._lastMessage = message;
 
             for (var i = 0; i < macro.length; i++) {
                 this._execMacroListInNextFrame.push(macro[i]);
             }
 
             // empty->hide
-            if (!mi.isEmpty()) {
+            if (!message.isEmpty()) {
                 this._player.setDelayFrame();
                 this._messageWindow.hide();
-                this._messageWindow.setMessage(mi);
+                this._messageWindow.setParsedMessage(message);
                 this._messageWindow.setPositionByPlayerPosition(
                     this._faces.length !== 0,
                     this._scoreWindow.isVisible(),
@@ -5066,7 +5066,7 @@ font-weight: bold;
     }
     // ユーザ変数付きの文字列を組み立てる。
     // 変数は表示する時に評価される。
-    public generateUserValString(macroArgs: string[]): MessageArray {
+    private _generateUserValString(macroArgs: string[]): MessageSegments {
         return macroArgs.map((macroArg) => {
             if (isNaN(parseInt(macroArg, 10))) {
                 // 何故か \n が反映されない？
