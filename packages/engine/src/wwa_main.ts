@@ -5061,9 +5061,11 @@ font-weight: bold;
         this.setUserVar(x, y === 0 ? 0 : this._wwaData.userVar[x] % this._wwaData.userVar[y]);
     }
     // ユーザ変数X <- rand
-    public setUserValRandNum(x: number, num: number): void {
-        this.setUserVar(x, Math.floor(Math.random() * (this.toAssignableValue(num) + 1)));
+    public setUserValRandNum(x: number, num: number, bias: number): void {
+        // 最大値で抑える処理は setUserVar でやるのでここではしない
+        this.setUserVar(x, Math.floor(Math.random() * this.toAssignableValue(num)) + bias);
     }
+    
     // ユーザ変数付きの文字列を組み立てる。
     // 変数は表示する時に評価される。
     private _generateUserValString(macroArgs: string[]): MessageSegments {
