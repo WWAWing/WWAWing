@@ -26,7 +26,7 @@ import { Parts, Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MonsterWindow, ScoreWindow, MessageInfo, Macro, parseMacro
+    MessageWindow, MonsterWindow, ScoreWindow, MessageInfo, Macro, parseMacro, MessageArray
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -420,7 +420,7 @@ export class WWA {
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
             this._prevFrameEventExected = false;
-            this._lastMessage = new MessageInfo("", false, false, []);
+            this._lastMessage = new MessageInfo([], false, false, []);
             this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
 
@@ -1478,7 +1478,7 @@ export class WWA {
         for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
             this._execMacroListInNextFrame[i].execute();
         }
-        if (this._lastMessage.message === "" && this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
+        if (this._lastMessage.isEmpty() && this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
@@ -2883,7 +2883,7 @@ export class WWA {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
         const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
-        const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !!messageInfo.message, false);
+        const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !messageInfo.isEmpty(), false);
         if (existsMessage) {
             const score = this._player.getStatus().calculateScore({
                 energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
@@ -3161,8 +3161,8 @@ export class WWA {
             this._lastMessage = topmes;
 
             // set message
-            if (topmes.message !== "") {
-                this._messageWindow.setMessage(topmes.message);
+            if (!topmes.isEmpty()) {
+                this._messageWindow.setMessage(topmes.generatePrintableMessage());
                 this._messageWindow.setYesNoChoice(showChoice);
                 this._messageWindow.setPositionByPlayerPosition(
                     this._faces.length !== 0,
@@ -3206,7 +3206,7 @@ export class WWA {
             var rawQueue = messageMain.split(/\<p\>/ig);
             for (var j = 0; j < rawQueue.length; j++) {
                 var lines = rawQueue[j].split("\n");
-                var linesWithoutMacro: string[] = [];
+                var linesWithoutMacro: MessageArray[] = [];
                 var macroQueue: Macro[] = [];
                 for (var i = 0; i < lines.length; i++) {
                     var matchInfo = lines[i].match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)\=(?:.*))/);
@@ -3225,10 +3225,17 @@ export class WWA {
 
                         // 行頭コメントはpushしない
                     } else if (!lines[i].match(/^\$/)) {
-                        linesWithoutMacro.push(lines[i]);
+                        linesWithoutMacro.push([lines[i]]);
                     }
                 }
-                messageQueue.push(new MessageInfo(linesWithoutMacro.join("\n"), isSystemMessage, j === rawQueue.length - 1, macroQueue));
+
+                // 各行を改行で接続
+                const messageArray = linesWithoutMacro.reduce((acc, line, index) => {
+                    const newLine = index === 0 ? [] : ["\n"];
+                    return [...acc, ...newLine, ...line];
+                }, []);
+
+                messageQueue.push(new MessageInfo(messageArray, isSystemMessage, j === rawQueue.length - 1, macroQueue));
             }
         }
         return messageQueue;
@@ -4415,7 +4422,6 @@ export class WWA {
             this._hideMessageWindow();
         } else {
             var mi = this._messageQueue.shift();
-            var message = mi.message;
             var macro = mi.macro;
             this._lastMessage = mi;
 
@@ -4424,10 +4430,10 @@ export class WWA {
             }
 
             // empty->hide
-            if (message !== "") {
+            if (!mi.isEmpty()) {
                 this._player.setDelayFrame();
                 this._messageWindow.hide();
-                this._messageWindow.setMessage(message);
+                this._messageWindow.setMessage(mi.generatePrintableMessage());
                 this._messageWindow.setPositionByPlayerPosition(
                     this._faces.length !== 0,
                     this._scoreWindow.isVisible(),
@@ -5056,20 +5062,17 @@ font-weight: bold;
         this.setUserVar(x, Math.floor(Math.random() * (this.toAssignableValue(num) + 1)));
     }
     // ユーザ変数付きの文字列を組み立てる。
-    public generateUserValString(macroArgs: string[]): string {
-        // 最終的に出力する文字列
-        var out_str: string;
-        out_str = "";
-        for (var i = 0; i < macroArgs.length; i++) {
-            if (isNaN(parseInt(macroArgs[i]))) {
-                out_str += macroArgs[i];
+    // 変数は表示する時に評価される。
+    public generateUserValString(macroArgs: string[]): MessageArray {
+        return macroArgs.map((macroArg) => {
+            if (isNaN(parseInt(macroArg, 10))) {
+                // 何故か \n が反映されない？
+                return macroArg.replace(/\\n/g, "\n");
+            } else {
+                const index = parseInt(macroArg, 10);
+                return () => this._wwaData.userVar[index];
             }
-            else {
-                out_str += this._wwaData.userVar[parseInt(macroArgs[i])].toString();
-            }
-        }
-        // 何故か \n が反映されない？
-        return out_str.replace(/\\n/g, "\n");
+        });
     }
     // 速度変更禁止
     public speedChangeJudge(speedChangeFlag: boolean): void {

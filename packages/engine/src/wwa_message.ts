@@ -28,26 +28,43 @@ import {
     WWASaveData
 } from "./wwa_save";
 
+export type LazyEvaluateValue = () => number
+export type MessageArray = (string | LazyEvaluateValue)[]
 export class MessageInfo {
+    private messageArray: MessageArray;
     constructor(
-        public message: string,
+        messageOrMessageArray: string | MessageArray,
         public isSystemMessage: boolean,
         public isEndOfPartsEvent?: boolean,
         public macro?: Macro[]
     ) {
+        this.messageArray = typeof messageOrMessageArray === "string" ? [messageOrMessageArray] : messageOrMessageArray;
         if (this.macro === void 0) {
             this.macro = [];
         }
     }
 
-}
+    /**
+     * メッセージが空であれば true を返す。
+     * 空配列の他、空文字列しかない1要素の配列を空とみなす。
+     * マクロの有無は考慮しない。
+     */
+    isEmpty(): boolean {
+        return (
+            this.messageArray.length === 0 ||
+            (this.messageArray.length === 1 && this.messageArray[0] === "")
+        );
+    }
 
-export function strArrayToMessageInfoArray(strArray: string[], isSystemMessage: boolean): MessageInfo[] {
-    var newq: MessageInfo[] = [];
-    strArray.forEach((s) => {
-        newq.push(new MessageInfo(s, isSystemMessage));
-    });
-    return newq;
+    /**
+     * LazyEvaluateValue を評価して、表示可能なメッセージを生成する。
+     */
+    generatePrintableMessage(): string {
+        return this.messageArray.reduce<string>((prevMessage, item) => {
+            const evaluatedItem = typeof item === "string" ? item : item();
+            return `${prevMessage}${evaluatedItem}`;
+        }, "")
+    }
 }
 
 export class Macro {
