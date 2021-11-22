@@ -1055,7 +1055,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _y: number;
     private _width: number;
     private _height: number;
-    private _message: string;
+    private _message: MessageInfo;
 
     private _cgFileName: string;
     private _isVisible: boolean;
@@ -1085,7 +1085,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         y: number,
         width: number,
         height: number,
-        message: string,
         cgFileName: string,
         isVisible: boolean,
         isYesno: boolean,
@@ -1101,7 +1100,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._y = y;
         this._width = width;
         this._height = height;
-        this._message = message;
+        this._message = new MessageInfo([], false);
         this._isVisible = isVisible;
         this._isYesno = isYesno;
         this._isItemMenu = isItemMenu;
@@ -1228,7 +1227,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
     }
 
-    public setMessage(message: string): void {
+    public setMessage(message: MessageInfo): void {
         this._message = message;
         this.update();
     }
@@ -1336,7 +1335,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
             this._ynWrapperElement.style.display = "none";
         }
         this._msgWrapperElement.textContent = "";
-        var mesArray = this._message.split("\n");
+        var mesArray = this._message.generatePrintableMessage().split("\n");
         mesArray.forEach((line, i) => {
             let lsp: HTMLSpanElement; // Logical SPan
             if (this._wwa.isClassicMode()) {

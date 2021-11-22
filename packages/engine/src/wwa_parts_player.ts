@@ -545,6 +545,8 @@ export class Player extends PartsObject {
         this._strengthValueElement.textContent = this._wwa.isVisibleStatus("strength") ? String(totalStatus.strength) : "";
         this._defenceValueElement.textContent = this._wwa.isVisibleStatus("defence") ? String(totalStatus.defence) : "";
         this._goldValueElement.textContent = this._wwa.isVisibleStatus("gold") ? String(totalStatus.gold) : "";
+        // メッセージに表示されているステータスのアップデート
+        this._wwa._messageWindow?.update();
     }
 
     readonly itemTransitioningClassName = "item-transitioning";

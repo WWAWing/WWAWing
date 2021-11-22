@@ -426,7 +426,7 @@ export class WWA {
 
             //ロード処理の前に追加
             this._messageWindow = new MessageWindow(
-                this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
+                this, 50, 180, 340, 0, this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
             this._scoreWindow = new ScoreWindow(
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
@@ -879,12 +879,12 @@ export class WWA {
                 }
 
                 if (this._usePassword) {
-                    this._messageWindow.setMessage(
+                    this._messageWindow.setMessage(new MessageInfo(
                         (
                             this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
                                 "効果音・ＢＧＭデータをロードしますか？" :
                                 this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
-                        ));
+                        ), true));
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
@@ -3162,7 +3162,7 @@ export class WWA {
 
             // set message
             if (!topmes.isEmpty()) {
-                this._messageWindow.setMessage(topmes.generatePrintableMessage());
+                this._messageWindow.setMessage(topmes);
                 this._messageWindow.setYesNoChoice(showChoice);
                 this._messageWindow.setPositionByPlayerPosition(
                     this._faces.length !== 0,
@@ -4433,7 +4433,7 @@ export class WWA {
             if (!mi.isEmpty()) {
                 this._player.setDelayFrame();
                 this._messageWindow.hide();
-                this._messageWindow.setMessage(mi.generatePrintableMessage());
+                this._messageWindow.setMessage(mi);
                 this._messageWindow.setPositionByPlayerPosition(
                     this._faces.length !== 0,
                     this._scoreWindow.isVisible(),
@@ -4877,7 +4877,10 @@ font-weight: bold;
         if (this.isNotNumberTypeOrNaN(index) || !this.isValidUserVarIndex(index)) {
             throw new Error (`代入先のユーザ変数の番号 が 0 以上 ${Consts.USER_VAR_NUM - 1} 以下の数値になっていません!`)
         }
-        this._wwaData.userVar[index] = this.toAssignableValue(value)
+        this._wwaData.userVar[index] = this.toAssignableValue(value);
+        
+        // メッセージボックスに表示されている変数を更新
+        this._messageWindow.update();
     }
     /**
      * 数値 x を代入可能な変数に変換する。
