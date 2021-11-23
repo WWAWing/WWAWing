@@ -605,6 +605,7 @@ export enum MacroType {
     COPY_TIME_TO = 52,
     HIDE_STATUS = 53,
     VAR_MAP = 54,
+    VAR_MOD = 55,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101
 }
@@ -663,6 +664,7 @@ export var macrotable = {
     "$copy_time_to": 52,
     "$hide_status": 53,
     "$var_map": 54,
+    "$var_mod": 55,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
@@ -873,6 +875,16 @@ export class WWAConsts {
     static ITEMBOX_TOP_Y = 140;
 
     static USER_VAR_NUM = 256;
+    /**
+     * ユーザ変数の最大値. MAX_SAFE_INTEGER (2^53 - 1) 相当だが、IE11を考慮して数値を直接コーディングしている。
+     * @see https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+     */
+    static USER_VAR_NUM_MAX_VALUE = 9007199254740991;
+    /**
+     * ユーザ変数の最小値. MIN_SAFE_INTEGER (-(2^53 -1)) 相当だが、IE11を考慮して数値を直接コーディングしている。
+     * @see https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_SAFE_INTEGER
+     */
+    static USET_VAR_NUM_MIN_VALUE = -9007199254740991; 
     static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
 
 }
@@ -985,3 +997,11 @@ export enum IDTable {
     BITSHIFT = 16,
     BITMASK = 0xFFFF
 };
+
+/**
+ * ステータスの計算方法の種類
+ * all: 素手 + 装備品
+ * bare: 素手のみ
+ * equipment 装備品のみ
+ */
+export type StatusSolutionKind = "all" | "bare" | "equipment";

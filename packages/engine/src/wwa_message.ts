@@ -11,7 +11,8 @@ import {
     YesNoState,
     Position,
     DEVICE_TYPE,
-    Direction
+    Direction,
+    StatusSolutionKind
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -27,26 +28,54 @@ import {
     WWASaveData
 } from "./wwa_save";
 
-export class MessageInfo {
+/**
+ * 値が更新された時に、再評価されるべき値を返す関数の型。
+ */
+export type LazyEvaluateValue = () => number;
+/**
+ * 通常のメッセージ文字列と LazyEvaluateValue が混在した配列の型。
+ * 例: ["変数 10 番の値は", () => userVar[10], "です。\n文字列中に改行も入りえます。"]
+ */
+export type MessageSegments = (string | LazyEvaluateValue)[];
+/**
+ * パース済メッセージ。
+ * 通常のメッセージの他、マクロの情報などを持ちます。
+ */
+export class ParsedMessage {
+    private messageArray: MessageSegments;
     constructor(
-        public message: string,
+        textOrMessageSegments: string | MessageSegments,
         public isSystemMessage: boolean,
         public isEndOfPartsEvent?: boolean,
         public macro?: Macro[]
     ) {
+        this.messageArray = typeof textOrMessageSegments === "string" ? [textOrMessageSegments] : textOrMessageSegments;
         if (this.macro === void 0) {
             this.macro = [];
         }
     }
 
-}
+    /**
+     * メッセージが空であれば true を返す。
+     * 空配列の他、空文字列しかない1要素の配列を空とみなす。
+     * マクロの有無は考慮しない。
+     */
+    isEmpty(): boolean {
+        return (
+            this.messageArray.length === 0 ||
+            (this.messageArray.length === 1 && this.messageArray[0] === "")
+        );
+    }
 
-export function strArrayToMessageInfoArray(strArray: string[], isSystemMessage: boolean): MessageInfo[] {
-    var newq: MessageInfo[] = [];
-    strArray.forEach((s) => {
-        newq.push(new MessageInfo(s, isSystemMessage));
-    });
-    return newq;
+    /**
+     * LazyEvaluateValue を評価して、表示可能なメッセージを生成する。
+     */
+    generatePrintableMessage(): string {
+        return this.messageArray.reduce<string>((prevMessage, item) => {
+            const evaluatedItem = typeof item === "string" ? item : item();
+            return `${prevMessage}${evaluatedItem}`;
+        }, "")
+    }
 }
 
 export class Macro {
@@ -220,6 +249,10 @@ export class Macro {
                 case MacroType.VAR_DIV:
                     this._executeVarDivMacro();
                     break;
+                // 割り算の余り代入
+                case MacroType.VAR_MOD:
+                    this._executeVarModMacro();
+                    break;
                 // 変数Xに1からYまでの乱数を代入
                 case MacroType.VAR_SET_RAND:
                     this._executeVarSetRandMacro();
@@ -230,7 +263,7 @@ export class Macro {
                     break;
                 // 変数付きのメッセージ表示
                 case MacroType.SHOW_STR:
-                    this._executeShowStrMacro();
+                    // $show_str マクロは、キューの組み立て時に処理されていて、既に存在しないはず
                     break;
                 // IF文
                 case MacroType.IF:
@@ -323,15 +356,29 @@ export class Macro {
     }
     // copy_at_toマクロ実行部
     private _executeCopyAtToMacro(): void {
-        this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
-        this._wwa.setUserVarAT(num);
+        this._concatEmptyArgs(2);
+        const num = this._parseInt(0);
+        const kind = this._parseStatusKind(this._parseInt(1));
+        this._wwa.setUserVarAT(num, kind);
     }
     // copy_df_toマクロ実行部
     private _executeCopyDfToMacro(): void {
-        this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
-        this._wwa.setUserVarDF(num);
+        this._concatEmptyArgs(2);
+        const num = this._parseInt(0);
+        const kind = this._parseStatusKind(this._parseInt(1));
+        this._wwa.setUserVarDF(num, kind);
+    }
+    private _parseStatusKind(kind: number): StatusSolutionKind {
+        switch (kind) {
+            case 0:
+                return "all";
+            case 1:
+                return "bare"
+            case 2:
+                return "equipment";
+            default:
+                return "all";
+        }
     }
     // copy_money_toマクロ実行部
     private _executeCopyMoneyToMacro(): void {
@@ -417,12 +464,20 @@ export class Macro {
         var y = this._parseInt(1);
         this._wwa.setUserValDiv(x, y);
     }
-    // var_set_randマクロ実行部
-    private _executeVarSetRandMacro(): void {
+    // var_modマクロ実行部
+    private _executeVarModMacro(): void {
         this._concatEmptyArgs(2);
         var x = this._parseInt(0);
         var y = this._parseInt(1);
-        this._wwa.setUserValRandNum(x, y);
+        this._wwa.setUserValMod(x, y);
+    }
+    // var_set_randマクロ実行部
+    private _executeVarSetRandMacro(): void {
+        this._concatEmptyArgs(3);
+        const x = this._parseInt(0);
+        const y = this._parseInt(1);
+        const n = this._parseInt(2, 0);
+        this._wwa.setUserValRandNum(x, y, n);
     }
     // game_speedマクロ実行部
     private _executeGameSpeedMacro(): void {
@@ -430,14 +485,7 @@ export class Macro {
         var speedChangeFlag = !!this._parseInt(0);
         this._wwa.speedChangeJudge(speedChangeFlag);
     }
-    // show_strマクロ実行部
-    private _executeShowStrMacro(): void {
-        var max_num = 10;
-        var out_str = new String("");
-        this._concatEmptyArgs(max_num);
-        this._wwa.showUserValString(this.macroArgs);
-    }
-    // IFマクロ実行部
+   // IFマクロ実行部
     private _executeIfMacro(): void {
         // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
         var str: string[] = new Array(11);
@@ -1019,7 +1067,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _y: number;
     private _width: number;
     private _height: number;
-    private _message: string;
+    private _message: ParsedMessage;
 
     private _cgFileName: string;
     private _isVisible: boolean;
@@ -1049,7 +1097,6 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         y: number,
         width: number,
         height: number,
-        message: string,
         cgFileName: string,
         isVisible: boolean,
         isYesno: boolean,
@@ -1065,7 +1112,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._y = y;
         this._width = width;
         this._height = height;
-        this._message = message;
+        this._message = new ParsedMessage([], false);
         this._isVisible = isVisible;
         this._isYesno = isYesno;
         this._isItemMenu = isItemMenu;
@@ -1192,7 +1239,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
     }
 
-    public setMessage(message: string): void {
+    public setParsedMessage(message: ParsedMessage): void {
         this._message = message;
         this.update();
     }
@@ -1300,7 +1347,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
             this._ynWrapperElement.style.display = "none";
         }
         this._msgWrapperElement.textContent = "";
-        var mesArray = this._message.split("\n");
+        var mesArray = this._message.generatePrintableMessage().split("\n");
         mesArray.forEach((line, i) => {
             let lsp: HTMLSpanElement; // Logical SPan
             if (this._wwa.isClassicMode()) {
