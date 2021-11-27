@@ -28,7 +28,7 @@ export default function autoRotate() {
     let viewportValue = "user-scalable=no";
 
     if (browserWidth > browserHeight) {
-        const width = (browserWidth / browserHeight) * WWA_HEIGHT;
+        const width = Math.floor((browserWidth / browserHeight) * WWA_HEIGHT);
         viewportValue = `width=${width},${viewportValue}`;
     } else if (browserWidth <= browserHeight) {
         viewportValue = `width=${WWA_WIDTH},${viewportValue}`;

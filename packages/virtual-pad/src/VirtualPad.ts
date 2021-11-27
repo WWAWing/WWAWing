@@ -176,8 +176,9 @@ export default class VirtualPadStore {
         
         // 中央のポジションを取得
         const moveButtonRect = this._moveButtonsElement.getBoundingClientRect();
-        const centerPositionX = moveButtonRect.left + (moveButtonRect.width / 2);
-        const centerPositionY = moveButtonRect.top + (moveButtonRect.height / 2);
+        const bodyRect = document.body.getBoundingClientRect();
+        const centerPositionX = moveButtonRect.left - bodyRect.left + (moveButtonRect.width / 2);
+        const centerPositionY = moveButtonRect.top - bodyRect.top + (moveButtonRect.height / 2);
 
         const touch = event.targetTouches.item(0);
         const touchX = touch.pageX - centerPositionX;
