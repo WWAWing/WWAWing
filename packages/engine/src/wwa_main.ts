@@ -5070,13 +5070,13 @@ font-weight: bold;
     // 変数は表示する時に評価される。
     private _generateUserValString(macroArgs: string[]): MessageSegments {
         return macroArgs.map((macroArg) => {
-            if (isNaN(parseInt(macroArg, 10))) {
+            const parsedArg = parseInt(macroArg, 10);
+            return isNaN(parsedArg) ?
+                // 引数を文字列として解釈する場合
                 // 何故か \n が反映されない？
-                return macroArg.replace(/\\n/g, "\n");
-            } else {
-                const index = parseInt(macroArg, 10);
-                return () => this._wwaData.userVar[index];
-            }
+                macroArg.replace(/\\n/g, "\n") :
+                // 引数を数値として解釈する場合: ユーザ変数の値を表示する.
+                () => this._wwaData.userVar[parsedArg]
         });
     }
     // 速度変更禁止
