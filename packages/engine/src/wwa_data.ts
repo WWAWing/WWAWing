@@ -694,8 +694,8 @@ export enum SystemSound {
     NO_SOUND = 99
 }
 
-export var speedList = [1, 2, 5, 8, 10, 20];
-export var speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
+export const speedList = [1, 2, 5, 8, 10, 20];
+export const speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
 export const StatusKind = ["energy", "strength", "defence", "gold"] as const;
 export type StatusKind = typeof StatusKind[number];
 export class WWAConsts {
