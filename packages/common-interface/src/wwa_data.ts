@@ -117,4 +117,15 @@ export interface WWAData {
      * NOTE: この配列は $gamepad_button が一度でも使用されなければ、配列ではなくundefinedが入っていることに注意せよ
      */
     gamePadButtonItemTable: number[];
+
+    // XE拡張:ここから
+    userVar: number[];
+    permitChangeGameSpeed: boolean;
+    gameSpeedIndex: number;
+    playTime: number;
+
+    isVisibleStatusEnergy: boolean;
+    isVisibleStatusStrength: boolean;
+    isVisibleStatusDefence: boolean;
+    isVisibleStatusGold: boolean;
 }

@@ -50,7 +50,8 @@ export enum PlayerState {
     LOCALGATE_JUMPED,
     BATTLE,
     ESTIMATE_WINDOW_WAITING,
-    PASSWORD_WINDOW_WAITING
+    PASSWORD_WINDOW_WAITING,
+    LOCALGATE_JUMPED_WITH_MESSAGE,
 }
 
 export class Player extends PartsObject {
@@ -101,6 +102,7 @@ export class Player extends PartsObject {
     protected _speedIndex: number;
 
     protected _messageDelayFrameCount: number;
+
 
     public move(): void {
         if (this.isControllable()) {
@@ -317,7 +319,7 @@ export class Player extends PartsObject {
     }
 
     public isJumped(): boolean {
-        return this._state === PlayerState.LOCALGATE_JUMPED;
+        return this._state === PlayerState.LOCALGATE_JUMPED || this._state === PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE;
     }
 
     public setMessageWaiting(): void {
@@ -377,7 +379,6 @@ export class Player extends PartsObject {
         }
     }
 
-
     public isPartsEventExecuted(): boolean {
         return this._isPartsEventExecuted;
     }
@@ -399,11 +400,11 @@ export class Player extends PartsObject {
     }
 
     public processAfterJump(): void {
-        if (this._state !== PlayerState.LOCALGATE_JUMPED) {
+        if (this._state !== PlayerState.LOCALGATE_JUMPED && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             return;
         }
         if (--this._jumpWaitFramesRemain === 0) {
-            this._state = PlayerState.CONTROLLABLE;
+            this._state = this._state === PlayerState.LOCALGATE_JUMPED ? PlayerState.CONTROLLABLE : PlayerState.MESSAGE_WAITING;
         }
     }
 
@@ -420,7 +421,7 @@ export class Player extends PartsObject {
             this._camera.reset(pos);
         }
 
-        this._state = PlayerState.LOCALGATE_JUMPED;
+        this._state = this._state === PlayerState.MESSAGE_WAITING ? PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE : PlayerState.LOCALGATE_JUMPED;
         this._jumpWaitFramesRemain = Consts.LOCALGATE_PLAYER_WAIT_FRAME;
         this._samePosLastExecutedMapID = void 0;
         this._samePosLastExecutedObjID = void 0;
@@ -521,25 +522,31 @@ export class Player extends PartsObject {
         return g;
     }
 
+    // 装備品込みのステータスを返す
     public getStatus(): Status {
         return this._status.plus(this._equipStatus);
     }
 
+    // 装備品なしのステータスを返す
     public getStatusWithoutEquipments(): Status {
         // クローンハック
         return this._status.plus(new EquipmentStatus(0, 0));
     }
 
+    // 装備品のステータスを返す
+    public getStatusOfEquipments(): EquipmentStatus {
+        // クローンハック
+        return this._equipStatus.plus(new EquipmentStatus(0, 0));
+    }
+
     public updateStatusValueBox(): void {
-        var totalStatus = this._status.plus(this._equipStatus);
-        var e = totalStatus.energy;
-        var s = totalStatus.strength;
-        var d = totalStatus.defence;
-        var g = totalStatus.gold;
-        this._energyValueElement.textContent = e + "";
-        this._strengthValueElement.textContent = s + "";
-        this._defenceValueElement.textContent = d + "";
-        this._goldValueElement.textContent = g + "";
+        const totalStatus = this._status.plus(this._equipStatus);
+        this._energyValueElement.textContent = this._wwa.isVisibleStatus("energy") ? String(totalStatus.energy) : "";
+        this._strengthValueElement.textContent = this._wwa.isVisibleStatus("strength") ? String(totalStatus.strength) : "";
+        this._defenceValueElement.textContent = this._wwa.isVisibleStatus("defence") ? String(totalStatus.defence) : "";
+        this._goldValueElement.textContent = this._wwa.isVisibleStatus("gold") ? String(totalStatus.gold) : "";
+        // メッセージに表示されているステータスのアップデート
+        this._wwa._messageWindow?.update();
     }
 
     readonly itemTransitioningClassName = "item-transitioning";
@@ -1004,7 +1011,7 @@ export class Player extends PartsObject {
         }
 
         this._battleTurnNum++;
-        if (this._speedIndex === Consts.MAX_SPEED_INDEX || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
+        if (this._wwa.isBattleSpeedIndexForQuickBattle(this._speedIndex) || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
             if (this._battleTurnNum === 1) {
                 this._wwa.playSound(SystemSound.ATTACK);
                 this._wwa.vibration(false);
@@ -1201,8 +1208,17 @@ export class Player extends PartsObject {
         return this._speedIndex = Math.max(Consts.MIN_SPEED_INDEX, this._speedIndex - 1);
     }
 
-    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number) {
+    public setSpeedIndex(speedIndex: number): number {
+        if (speedIndex < Consts.MIN_SPEED_INDEX || Consts.MAX_SPEED_INDEX < speedIndex) {
+            throw new Error("#set_speed の引数が異常です:" + speedIndex);
+        }
+        this._speedIndex = speedIndex;
+        return this._speedIndex;
+    }
+
+    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number, gameSpeedIndex: number) {
         super(pos);
+        // どっかで定数化させたい
         this._status = status;
         this._equipStatus = new EquipmentStatus(0, 0);
         this._itemBox = new Array(Consts.ITEMBOX_SIZE);
@@ -1236,7 +1252,7 @@ export class Player extends PartsObject {
         this._afterMoveMacroFlag = false;
         this._isPreparedForLookingAround = true;
         this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
-        this._speedIndex = Consts.DEFAULT_SPEED_INDEX;
+        this._speedIndex = gameSpeedIndex;
         this._messageDelayFrameCount = 0;
     }
 

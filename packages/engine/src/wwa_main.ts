@@ -6,7 +6,8 @@ import {
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
-    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData
+    ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
+    speedList, StatusKind, MacroType, StatusSolutionKind
 } from "./wwa_data";
 
 import {
@@ -21,11 +22,11 @@ import {
 import * as util from "./wwa_util";
 import { CGManager } from "./wwa_cgmanager";
 import { Camera } from "./wwa_camera";
-import { Player } from "./wwa_parts_player";
+import { Parts, Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MonsterWindow, ScoreWindow, MessageInfo, Macro, parseMacro
+    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -73,7 +74,7 @@ export class WWA {
     public _messageWindow: MessageWindow; // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
     private _monsterWindow: MonsterWindow;
     private _scoreWindow: ScoreWindow;
-    private _messageQueue: MessageInfo[];
+    private _messageQueue: ParsedMessage[];
     private _yesNoJudge: YesNoState;
     private _yesNoJudgeInNextFrame: YesNoState;
     private _yesNoChoicePartsCoord: Coord;
@@ -106,7 +107,7 @@ export class WWA {
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
-    private _lastMessage: MessageInfo;
+    private _lastMessage: ParsedMessage;
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
@@ -182,8 +183,12 @@ export class WWA {
     public audioContext: AudioContext;
     public audioGain: GainNode;
     private audioExtension: string = "";
+
     public userDevice: UserDevice;
     private soundLoadedCheckTimer: number | undefined = undefined;
+
+    private _startTime: number;
+    private _dumpElement: HTMLElement;
 
     constructor(
         mapFileName: string,
@@ -194,6 +199,7 @@ export class WWA {
         useGoToWWA: boolean,
         audioDirectory: string = "",
         disallowLoadOldSave: boolean = false,
+        dumpElm: HTMLElement = null
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -222,7 +228,7 @@ export class WWA {
                 this._setLoadingMessage(ctxCover, 0);
             }
         } catch (e) { }
-
+        this._dumpElement = dumpElm;
         const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
         if (_AudioContext) {
             this.audioContext = new _AudioContext();
@@ -325,6 +331,9 @@ export class WWA {
             pathList.pop(); //最後のファイルを消す
             pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
+
+            // プレイ時間関連
+            this._startTime = new Date().getTime();
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
             this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
 
@@ -337,6 +346,7 @@ export class WWA {
                 this._setErrorMessage("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
                     "管理者の方へ: データがアップロードされているか、\n" +
                     "パーミッションを確かめてください。", ctxCover);
+
             });
 
             var escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
@@ -399,7 +409,7 @@ export class WWA {
             var status = new Status(
                 this._wwaData.statusEnergy, this._wwaData.statusStrength,
                 this._wwaData.statusDefence, this._wwaData.statusGold);
-            this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax, this._wwaData.moves);
+            this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax, this._wwaData.moves, this._wwaData.gameSpeedIndex);
             this._objectMovingDataManager = new ObjectMovingDataManager(this, this._player);
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
@@ -410,13 +420,13 @@ export class WWA {
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
             this._prevFrameEventExected = false;
-            this._lastMessage = new MessageInfo("", false, false, []);
+            this._lastMessage = new ParsedMessage([], false, false, []);
             this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
 
             //ロード処理の前に追加
             this._messageWindow = new MessageWindow(
-                this, 50, 180, 340, 0, "", this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
+                this, 50, 180, 340, 0, this._wwaData.mapCGName, false, true, false, util.$id("wwa-wrapper"));
             this._scoreWindow = new ScoreWindow(
                 this, new Coord(50, 50), false, util.$id("wwa-wrapper"));
 
@@ -869,12 +879,12 @@ export class WWA {
                 }
 
                 if (this._usePassword) {
-                    this._messageWindow.setMessage(
+                    this._messageWindow.setParsedMessage(new ParsedMessage(
                         (
                             this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
                                 "効果音・ＢＧＭデータをロードしますか？" :
                                 this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
-                        ));
+                        ), true));
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
@@ -1403,6 +1413,10 @@ export class WWA {
     }
 
     public onchangespeed(type: SpeedChange) {
+        if (!this._wwaData.permitChangeGameSpeed) {
+            this.setMessageQueue("ここでは移動速度を\n変更できません。", false, true);
+            return;
+        }
         var speedIndex: number, speedMessage: string;
         if (type === SpeedChange.UP) {
             speedIndex = this._player.speedUp();
@@ -1410,7 +1424,7 @@ export class WWA {
             speedIndex = this._player.speedDown();
         }
         speedMessage = "移動速度を【" + speedNameList[speedIndex] + "】に切り替えました。\n" +
-            (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n" : "") +
+            (this.isBattleSpeedIndexForQuickBattle(speedIndex) ? "戦闘も速くなります。\n" : "") +
             "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "）";
         // TODO(rmn): 適切な分岐に直したい
         switch (this.userDevice.os) {
@@ -1422,6 +1436,10 @@ export class WWA {
                 break;
         }
         this.setMessageQueue(speedMessage, false, true);
+    }
+
+    public isBattleSpeedIndexForQuickBattle(battleSpeedIndex: number): boolean {
+        return Consts.QUICK_BATTLE_SPEED_INDECIES.some(index => index === battleSpeedIndex);
     }
 
     /**
@@ -1460,7 +1478,7 @@ export class WWA {
         for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
             this._execMacroListInNextFrame[i].execute();
         }
-        if (this._lastMessage.message === "" && this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
+        if (this._lastMessage.isEmpty() && this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
@@ -1909,7 +1927,7 @@ export class WWA {
             }
         }
 
-        if (this._passwordLoadExecInNextFrame) {
+       if (this._passwordLoadExecInNextFrame) {
             this._stopUpdateByLoadFlag = true;
             this._loadType = LoadType.PASSWORD;
             this._player.clearPasswordWindowWaiting();
@@ -1964,6 +1982,11 @@ export class WWA {
                 }
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
+        }
+        if (this._dumpElement !== null) {
+            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+                this._dumpElement.querySelector(".var" + i.toString(10)).textContent = this._wwaData.userVar[i] + "";
+            }
         }
     }
     public vibration(isStrong: boolean) {
@@ -2860,7 +2883,7 @@ export class WWA {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
         const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
-        const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !!messageInfo.message, false);
+        const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !messageInfo.isEmpty(), false);
         if (existsMessage) {
             const score = this._player.getStatus().calculateScore({
                 energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
@@ -2898,7 +2921,7 @@ export class WWA {
                         } else {
                             // アイテムを持っていない
                             if (this._wwaData.message[SystemMessage1.NO_ITEM] !== "BLANK") {
-                                this._messageQueue.push(new MessageInfo(
+                                this._messageQueue.push(new ParsedMessage(
                                     this._wwaData.message[SystemMessage1.NO_ITEM] === "" ?
                                         "アイテムを持っていない。" : this._wwaData.message[SystemMessage1.NO_ITEM],
                                     true)
@@ -2946,7 +2969,7 @@ export class WWA {
                                 // アイテムをボックスがいっぱい
                                 if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
                                     this._messageQueue.push(
-                                        new MessageInfo(
+                                        new ParsedMessage(
                                             this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] === "" ?
                                                 "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[SystemMessage2.FULL_ITEM],
                                             true
@@ -2958,7 +2981,7 @@ export class WWA {
                             // 所持金が足りない
                             if (this._wwaData.message[SystemMessage1.NO_MONEY] !== "BLANK") {
                                 this._messageQueue.push(
-                                    new MessageInfo(
+                                    new ParsedMessage(
                                         this._wwaData.message[SystemMessage1.NO_MONEY] === "" ?
                                             "所持金がたりない。" : this._wwaData.message[SystemMessage1.NO_MONEY],
                                         true
@@ -3138,8 +3161,8 @@ export class WWA {
             this._lastMessage = topmes;
 
             // set message
-            if (topmes.message !== "") {
-                this._messageWindow.setMessage(topmes.message);
+            if (!topmes.isEmpty()) {
+                this._messageWindow.setParsedMessage(topmes);
                 this._messageWindow.setYesNoChoice(showChoice);
                 this._messageWindow.setPositionByPlayerPosition(
                     this._faces.length !== 0,
@@ -3167,7 +3190,7 @@ export class WWA {
         partsID: number,
         partsType: PartsType,
         partsPosition: Coord,
-        isSystemMessage: boolean = false): MessageInfo[] {
+        isSystemMessage: boolean = false): ParsedMessage[] {
 
         // コメント削除
         var messageMain = message
@@ -3178,12 +3201,12 @@ export class WWA {
             .replace(/\<p\>\n/ig, "<P>")
             .replace(/\<p\>/ig, "<P>");
 
-        var messageQueue: MessageInfo[] = [];
+        var messageQueue: ParsedMessage[] = [];
         if (messageMain !== "") {
             var rawQueue = messageMain.split(/\<p\>/ig);
             for (var j = 0; j < rawQueue.length; j++) {
                 var lines = rawQueue[j].split("\n");
-                var linesWithoutMacro: string[] = [];
+                var linesWithoutMacro: MessageSegments[] = [];
                 var macroQueue: Macro[] = [];
                 for (var i = 0; i < lines.length; i++) {
                     var matchInfo = lines[i].match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)\=(?:.*))/);
@@ -3192,14 +3215,27 @@ export class WWA {
                         // マクロのエンキュー (最も左のものを対象とする。)
                         // それ以外のメッセージ、マクロは一切エンキューしない。(原作どおり)
                         // なので、「あああ$map=1,1,1」の「あああ」は表示されず、map文だけが処理される。
-                        macroQueue.push(macro);
+
+                        // $showstr マクロは、メッセージに変換されるので、変換してメッセージとして積むように処理しなければならない。
+                        if(macro.macroType === MacroType.SHOW_STR) {
+                            linesWithoutMacro.push(this._generateUserValString(macro.macroArgs));
+                        } else {
+                            macroQueue.push(macro);
+                        }
 
                         // 行頭コメントはpushしない
                     } else if (!lines[i].match(/^\$/)) {
-                        linesWithoutMacro.push(lines[i]);
+                        linesWithoutMacro.push([lines[i]]);
                     }
                 }
-                messageQueue.push(new MessageInfo(linesWithoutMacro.join("\n"), isSystemMessage, j === rawQueue.length - 1, macroQueue));
+
+                // 各行を改行で接続
+                const messageArray = linesWithoutMacro.reduce((acc, line, index) => {
+                    const newLine = index === 0 ? [] : ["\n"];
+                    return [...acc, ...newLine, ...line];
+                }, []);
+
+                messageQueue.push(new ParsedMessage(messageArray, isSystemMessage, j === rawQueue.length - 1, macroQueue));
             }
         }
         return messageQueue;
@@ -3620,7 +3656,7 @@ export class WWA {
 
     private _quickSave(callInfo: number): string {
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
-
+        
         var pc = this._player.getPosition().getPartsCoord();
         var st = this._player.getStatusWithoutEquipments();
         qd.itemBox = this._player.getCopyOfItemBox();
@@ -3633,6 +3669,7 @@ export class WWA {
         qd.statusGold = st.gold;
         qd.moves = this._player.getMoveCount();
         qd.frameCount = this._player.getFrameCount();
+        qd.gameSpeedIndex = this._player.getSpeedIndex();
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
@@ -3815,10 +3852,13 @@ export class WWA {
         this.setWideCellCoord(new Coord(newData.imgWideCellX, newData.imgWideCellY));
         this.setItemboxBackgroundPosition({ x: newData.imgItemboxX, y: newData.imgItemboxY });
         this.setFrameCoord(new Coord(newData.imgFrameX, newData.imgFrameY));
+        this.setPlayerSpeedIndex(newData.gameSpeedIndex);
+
         this.updateCSSRule();
         this.updateEffect();
-        this._wwaSave.gameStart(this._wwaData, this._player);
+        this._player.updateStatusValueBox();
     }
+      
     private _mapIDTableCreate(): void {
         var pid: number;
         this._mapIDTable = [];
@@ -4274,6 +4314,7 @@ export class WWA {
 
     private _displayHelp(): void {
         if (this._player.isControllable()) {
+            this.setNowPlayTime();
             var helpMessage:string = "";
             switch (this.userDevice.device) {
                 case DEVICE_TYPE.GAME:
@@ -4380,20 +4421,19 @@ export class WWA {
         if (this._messageQueue.length === 0) {
             this._hideMessageWindow();
         } else {
-            var mi = this._messageQueue.shift();
-            var message = mi.message;
-            var macro = mi.macro;
-            this._lastMessage = mi;
+            var message = this._messageQueue.shift();
+            var macro = message.macro;
+            this._lastMessage = message;
 
             for (var i = 0; i < macro.length; i++) {
                 this._execMacroListInNextFrame.push(macro[i]);
             }
 
             // empty->hide
-            if (message !== "") {
+            if (!message.isEmpty()) {
                 this._player.setDelayFrame();
                 this._messageWindow.hide();
-                this._messageWindow.setMessage(message);
+                this._messageWindow.setParsedMessage(message);
                 this._messageWindow.setPositionByPlayerPosition(
                     this._faces.length !== 0,
                     this._scoreWindow.isVisible(),
@@ -4573,7 +4613,7 @@ export class WWA {
         this._wwaSave.quickSaveButtonUpdate(this._wwaData);
         return flag;
     }
-
+    
     public isOldMap(): boolean {
         return this._wwaData.isOldMap;
     }
@@ -4827,6 +4867,335 @@ font-weight: bold;
     public isConsoleOutputMode(): boolean {
         return this._useConsole;
     }
+    // JumpGateマクロ実装ポイント
+    public forcedJumpGate(jx: number, jy: number): void {
+        this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+    }
+    // User変数記憶
+    public setUserVar(index: number, value: number): void {
+        // number 型でない変数, NaN, 範囲外の index を弾く
+        if (this.isNotNumberTypeOrNaN(index) || !this.isValidUserVarIndex(index)) {
+            throw new Error (`代入先のユーザ変数の番号 が 0 以上 ${Consts.USER_VAR_NUM - 1} 以下の数値になっていません!`)
+        }
+        this._wwaData.userVar[index] = this.toAssignableValue(value);
+        
+        // メッセージボックスに表示されている変数を更新
+        this._messageWindow.update();
+    }
+    /**
+     * 数値 x を代入可能な変数に変換する。
+     * 
+     * 1. x の整数部分のみを取り出す
+     * 2. 最小値未満の値なら最小値に、最大値より大きい値なら最大値に固定する。
+     * 3. 保険的に、number 型でない値 と NaN は 0 に変換する。
+     * 
+     * @param x 対象となる整数値
+     */
+    private toAssignableValue(x: number): number {
+        // 整数部分のみにする. 例) -1.1 -> -1, 1.1 -> 1
+        const intValue = x | 0;
+        const clampedValue = Math.max(Math.min(intValue, Consts.USER_VAR_NUM_MAX_VALUE), Consts.USET_VAR_NUM_MIN_VALUE);
+        return this.isNotNumberTypeOrNaN(clampedValue) ? 0 : clampedValue;
+    }
+
+    /**
+     * 数値 index が ユーザ変数の添字として妥当なら true, さもなくば false を返す。
+     * 0 以上 USER_VAR_NUM 未満 の整数が妥当。
+     * @param index 判定対象の index
+     */
+    private isValidUserVarIndex(index: unknown): boolean {
+        return typeof index === "number" && index >= 0 && index < Consts.USER_VAR_NUM && (index | 0) === index;
+    }
+
+    /**
+     * 変数 x が number 型 かつ NaN でないなら true, さもなくば false を返す。
+     * @param x 判定対象の変数
+     */
+    private isNotNumberTypeOrNaN(x: unknown): boolean {
+        return typeof x !== "number" || x !== x;
+    }
+
+    // User変数取得
+    public getUserVar(no: number): number {
+        return this._wwaData.userVar[no];
+    }
+    // 現在の位置情報記憶
+    public recUserPosition(x: number, y: number): void {
+        var pos = this._player.getPosition().getPartsCoord();
+        this.setUserVar(x, pos.x);
+        this.setUserVar(y, pos.y);
+    }
+    // 記憶していた座標にジャンプ
+    public jumpRecUserPosition(x: number, y: number): void {
+        this.forcedJumpGate(this._wwaData.userVar[x], this._wwaData.userVar[y]);
+    }
+    // 変数デバッグ出力
+    public outputUserVar(num: number): void {
+        console.log("Var[" + num + "] = " + this._wwaData.userVar[num]);
+    }
+    // ユーザ変数 <= HP
+    public setUserVarHP(num: number): void {
+        this.setUserVar(num, this._player.getStatus().energy);
+    }
+    // ユーザ変数 <= HPMAX
+    public setUserVarHPMAX(num: number): void {
+        this.setUserVar(num, this._player.getEnergyMax());
+    }
+    // ユーザ変数 <= AT
+    public setUserVarAT(num: number, kind: StatusSolutionKind): void {
+        switch (kind) {
+            case "bare":
+                this.setUserVar(num, this._player.getStatusWithoutEquipments().strength);
+                return;
+            case "equipment":
+                this.setUserVar(num, this._player.getStatusOfEquipments().strength);
+                return;
+            case "all":
+            default:
+                this.setUserVar(num, this._player.getStatus().strength);
+                return;
+        }
+    }
+    // ユーザ変数 <= DF
+    public setUserVarDF(num: number, kind: StatusSolutionKind): void {
+        switch (kind) {
+            case "bare":
+                this.setUserVar(num, this._player.getStatusWithoutEquipments().defence);
+                return;
+            case "equipment":
+                this.setUserVar(num, this._player.getStatusOfEquipments().defence);
+                return;
+            case "all":
+            default:
+                this.setUserVar(num, this._player.getStatus().defence);
+                return;
+        }
+    }
+    // ユーザ変数 <= MONEY
+    public setUserVarMONEY(num: number): void {
+        this.setUserVar(num, this._player.getStatus().gold);
+    }
+
+    // 負値, 数値でない値, NaN は 0にする。
+    // 小数部分を含む場合は、整数部分だけ取り出す。
+    private toValidStatusValue(x: number): number {
+        return this.isNotNumberTypeOrNaN(x) || x < 0 ? 0 : (x | 0);
+    }
+
+    // HP <- ユーザ変数
+    public setHPUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setEnergy(this.toValidStatusValue(this._wwaData.userVar[index]));
+        // 0 になった場合はゲームオーバー
+        if (this._player.isDead()) {
+            this.gameover();
+        }
+        this._player.updateStatusValueBox();
+    }
+    // HPMAX <- ユーザ変数
+    public setHPMAXUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setEnergyMax(this.toValidStatusValue(this._wwaData.userVar[index]));
+        this._player.updateStatusValueBox();
+    }
+    // AT (装備品以外) <- ユーザ変数
+    public setATUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setStrength(this.toValidStatusValue(this._wwaData.userVar[index]));
+        this._player.updateStatusValueBox();
+    }
+    // DF (装備品以外) <- ユーザ変数
+    public setDFUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setDefence(this.toValidStatusValue(this._wwaData.userVar[index]));
+        this._player.updateStatusValueBox();
+    }
+    // MONEY <- ユーザ変数
+    public setMONEYUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setGold(this.toValidStatusValue(this._wwaData.userVar[index]));
+        this._player.updateStatusValueBox();
+    }
+    // ユーザ変数 <- 歩数
+    public setUserVarStep(num: number): void {
+        this.setUserVar(num, this._player.getMoveCount());
+    }
+    // ユーザ変数 <- 定数
+    public setUserVarVal(x: number, num: number): void {
+        this.setUserVar(x, num);
+    }
+    // ユーザ変数X <- ユーザ変数Y
+    public setUserValOtherUserVal(x: number, y: number): void {
+        this.setUserVar(x, this._wwaData.userVar[y]);
+    }
+    // ユーザ変数X <- ユーザ変数X + ユーザ変数Y
+    public setUserValAdd(x: number, y: number): void {
+        this.setUserVar(x, this._wwaData.userVar[x] + this._wwaData.userVar[y])
+    }
+    // ユーザ変数X <- ユーザ変数X - ユーザ変数Y
+    public setUserValSub(x: number, y: number): void {
+        this.setUserVar(x, this._wwaData.userVar[x] - this._wwaData.userVar[y]);
+    }
+    // ユーザ変数X <- ユーザ変数X * ユーザ変数Y
+    public setUserValMul(x: number, y: number): void {
+        this.setUserVar(x, this._wwaData.userVar[x] * this._wwaData.userVar[y]);
+    }
+    // ユーザ変数X <- ユーザ変数X / ユーザ変数Y
+    public setUserValDiv(x: number, y: number): void {
+        // 商の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
+        this.setUserVar(x, y === 0 ? 0 : this._wwaData.userVar[x] / this._wwaData.userVar[y]);
+    }
+    // ユーザ変数X <- ユーザ変数X % ユーザ変数Y
+    public setUserValMod(x: number, y: number): void {
+        // 剰余の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
+        this.setUserVar(x, y === 0 ? 0 : this._wwaData.userVar[x] % this._wwaData.userVar[y]);
+    }
+    // ユーザ変数X <- rand
+    public setUserValRandNum(x: number, num: number, bias: number): void {
+        // 最大値で抑える処理は setUserVar でやるのでここではしない
+        this.setUserVar(x, Math.floor(Math.random() * this.toAssignableValue(num)) + bias);
+    }
+    
+    // ユーザ変数付きの文字列を組み立てる。
+    // 変数は表示する時に評価される。
+    private _generateUserValString(macroArgs: string[]): MessageSegments {
+        return macroArgs.map((macroArg) => {
+            const parsedArg = parseInt(macroArg, 10);
+            return isNaN(parsedArg) ?
+                // 引数を文字列として解釈する場合
+                // 何故か \n が反映されない？
+                macroArg.replace(/\\n/g, "\n") :
+                // 引数を数値として解釈する場合: ユーザ変数の値を表示する.
+                () => this._wwaData.userVar[parsedArg]
+        });
+    }
+    // 速度変更禁止
+    public speedChangeJudge(speedChangeFlag: boolean): void {
+        this._wwaData.permitChangeGameSpeed = speedChangeFlag;
+    }
+    // ユーザ変数 IFElse
+    public userVarUserIf(_triggerPartsPosition: Coord, args: string[]): void {
+        // true 時配置パーツの Y 座標 (必須パラメータの最後の引数) が省略されている場合は, エラーとする
+        if (args[5] === undefined) {
+            throw new Error("$if の引数不足 str=" + args);
+        }
+        const userVar1Index = parseInt(args[0], 10);
+        const userVar2Index = parseInt(args[2], 10);
+        if(!this.isValidUserVarIndex(userVar1Index) || !this.isValidUserVarIndex(userVar2Index)) {
+            throw new Error("判定対象のユーザ変数の添字が範囲外です!")
+        }
+        const userVar1 = this._wwaData.userVar[userVar1Index];
+        const opeCode = args[1];
+        const userVar2 = this._wwaData.userVar[userVar2Index];
+
+        /**
+         *  partsTypeArgument が 0 以外の数値として解釈できるなら 背景パーツ
+         *  0 に解釈される文字列や undefined なら 物体パーツ を返す。
+         */
+        const parsePartsType = (partsTypeArgument: string | undefined): PartsType => 
+            // parseInt(undefined, 10) => NaN であり, NaN は falsy である.
+            parseInt(partsTypeArgument, 10) ? PartsType.MAP : PartsType.OBJECT
+
+        if (this.compareUserVar(userVar1, opeCode, userVar2)) {
+            const partsId = parseInt(args[3], 10);
+            const partsX = args[4];
+            const partsY = args[5];
+            // str[6] 省略や 0 など falsy なら物体パーツ.
+            const partsType = parsePartsType(args[6]);
+            this.appearPartsEval(_triggerPartsPosition, partsX, partsY, partsId, partsType);
+            return;
+        }
+
+        // false 時配置パーツの Y 座標が省略されている場合は, false 時の配置はしない
+        if (args[9] === undefined) {
+            return;
+        }
+        const partsId = parseInt(args[7], 10);
+        const partsX = args[8];
+        const partsY = args[9];
+        // str[10] 省略や 0 など falsy なら物体パーツ
+        const partsType = parsePartsType(args[10]);
+        this.appearPartsEval(_triggerPartsPosition, partsX, partsY, partsId, partsType);
+    }
+
+    private compareUserVar(userVar1: number, opecode: string, userVar2: number): boolean {
+        switch (opecode) {
+            case "==":
+                return userVar1 === userVar2;
+            case "!=":
+                return userVar1 !== userVar2;
+            case ">=":
+                return userVar1 >= userVar2;
+            case ">":
+                return userVar1 > userVar2;
+            case "<=":
+                return userVar1 <= userVar2;
+            case "<":
+                return userVar1 < userVar2;
+            default:
+                throw new Error(`未定義の演算子です: ${opecode}`)
+        }
+    }
+
+    // プレイヤー速度設定
+    public setPlayerSpeedIndex(speedIndex: number): void {
+        if (speedIndex < Consts.MIN_SPEED_INDEX || Consts.MAX_SPEED_INDEX < speedIndex) {
+            throw new Error("#set_speed の引数が異常です:" + speedIndex);
+        }
+        this._wwaData.gameSpeedIndex = this._player.setSpeedIndex(speedIndex);
+    }
+    // ユーザ変数にプレイ時間を代入
+    public setUserVarPlayTime(num: number): void {
+        this.setNowPlayTime();
+        this.setUserVar(num, this._wwaData.playTime);
+    }
+    // 現在時刻セット
+    private setNowPlayTime(): void {
+        const _nowTime = new Date();
+        this._wwaData.playTime += (_nowTime.getTime() - this._startTime);
+        this._startTime = _nowTime.getTime();
+    }
+    // 各種ステータスを非表示にする
+    public hideStatus(no: number, isHide: boolean): void {
+        if (no < 0 || no > StatusKind.length) {
+            throw new Error("隠すパラメータは０から３の間で指定してください。");
+        }
+        this._changeStatusVisibility(StatusKind[no], !isHide);
+        this._player.updateStatusValueBox();
+    }
+    // 指定位置にパーツを出現を変数で行う
+    public varMap(
+        triggerPartsPos: Coord,
+        xstr: string,
+        ystr: string,
+        partsID: number,
+        targetPartsType: PartsType
+    ): void {
+        if (!this.isValidUserVarIndex(partsID)) {
+            throw new Error("対象のユーザ変数の添字が範囲外です");
+        }
+        const targetPartsID = this._wwaData.userVar[partsID];
+        if (targetPartsID < 0) {
+            throw new Error("負のパーツ番号は指定できません");
+        }
+        if (targetPartsType === PartsType.OBJECT && targetPartsID >= this.getObjectPartsNum()) {
+            throw new Error("物体パーツ番号の最大値を超えるパーツ番号が指定されました");
+        }
+        if ( targetPartsType === PartsType.MAP && targetPartsID >= this.getMapPartsNum()) {
+            throw new Error("背景パーツ番号の最大値を超えるパーツ番号が指定されました");
+        }
+        this.appearPartsEval(triggerPartsPos, xstr, ystr, targetPartsID, targetPartsType);
+    }
 
     /**
      * アイテムボックスの背景画像を置き換えます。
@@ -4930,6 +5299,35 @@ font-weight: bold;
         }
         return null;
     }
+
+    public isVisibleStatus(statusKind: StatusKind): boolean {
+        switch(statusKind) {
+            case "energy": return this._wwaData.isVisibleStatusEnergy;
+            case "strength": return this._wwaData.isVisibleStatusStrength;
+            case "defence": return this._wwaData.isVisibleStatusDefence;
+            case "gold": return this._wwaData.isVisibleStatusGold;
+            default: throw new Error("存在しないステータスが与えられました");
+        }
+    }
+
+    private _changeStatusVisibility(statusKind: StatusKind, isVisible: boolean): boolean {
+        switch(statusKind) {
+            case "energy":
+                this._wwaData.isVisibleStatusEnergy = isVisible;
+                return;
+            case "strength":
+                this._wwaData.isVisibleStatusStrength = isVisible;
+                return;
+            case "defence":
+                this._wwaData.isVisibleStatusDefence = isVisible;
+                return;
+            case "gold":
+                this._wwaData.isVisibleStatusGold = isVisible;
+                return;
+            default: throw new Error("存在しないステータスが与えられました");
+        }
+    }
+
 };
 
 var isCopyRightClick = false;
@@ -4950,8 +5348,75 @@ function start() {
     var titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
     inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName);
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
-
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
+    var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
+    var dumpElm = null;
+    if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm")) {
+        dumpElm = util.$qs(dumpElmQuery);
+        var tableElm = document.createElement("table");
+        var headerTrElm = document.createElement("tr");
+        var headerThElm = document.createElement("th");
+        var hideButton = document.createElement("button");
+        hideButton.textContent = "隠す";
+        headerThElm.textContent = "変数一覧";
+        headerThElm.setAttribute("colspan", "10");
+        headerThElm.classList.add("varlist-header");
+        headerThElm.appendChild(hideButton);
+        headerTrElm.appendChild(headerThElm);
+        tableElm.appendChild(headerTrElm);
+        var trNumElm: HTMLElement = null;
+        var trValElm: HTMLElement = null;
+        for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+            if (i % 10 === 0) {
+                if (trNumElm !== null) {
+                    tableElm.appendChild(trNumElm);
+                    tableElm.appendChild(trValElm);
+                }
+                trNumElm = document.createElement("tr");
+                trNumElm.classList.add("var-number");
+                trValElm = document.createElement("tr");
+                trValElm.classList.add("var-val");
+            }
+            var thNumElm = document.createElement("th");
+            var tdValElm = document.createElement("td");
+            thNumElm.textContent = i + "";
+            tdValElm.classList.add("var" + i);
+            tdValElm.textContent = "-";
+            trNumElm.appendChild(thNumElm);
+            trValElm.appendChild(tdValElm);
+        }
+        if (Consts.USER_VAR_NUM % 10 !== 0) {
+            tableElm.appendChild(trNumElm);
+            tableElm.appendChild(trValElm);
+        }
+        dumpElm.appendChild(tableElm);
+        var varDispStatus = true;
+        hideButton.addEventListener("click", function (e) {
+            if (varDispStatus) {
+                this.textContent = "表示";
+                Array.prototype.forEach.call(
+                    tableElm.querySelectorAll("tr.var-number"), function (etr) {
+                        etr.style.display = "none";
+                    });
+                Array.prototype.forEach.call(
+                    tableElm.querySelectorAll("tr.var-val"), function (etr) {
+                        etr.style.display = "none";
+                    });
+                varDispStatus = false;
+            } else {
+                this.textContent = "隠す";
+                Array.prototype.forEach.call(
+                    tableElm.querySelectorAll("tr.var-number"), function (etr) {
+                        etr.style.display = "table-row";
+                    });
+                Array.prototype.forEach.call(
+                    tableElm.querySelectorAll("tr.var-val"), function (etr) {
+                        etr.style.display = "table-row";
+                    });
+                varDispStatus = true;
+            }
+        });
+    }
     var urlgateEnabled = true;
     if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
         urlgateEnabled = false;
@@ -4986,7 +5451,8 @@ function start() {
         itemEffectEnabled,
         useGoToWWA,
         audioDirectory,
-        disallowLoadOldSave
+        disallowLoadOldSave,
+        dumpElm
     );
 }
 
