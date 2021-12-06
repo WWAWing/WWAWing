@@ -5324,7 +5324,6 @@ font-weight: bold;
     private _changeStatusVisibility(statusKind: StatusKind, isVisible: boolean): boolean {
         switch(statusKind) {
             case "energy":
-                console.log("E", isVisible);
                 this._wwaData.isVisibleStatusEnergy = isVisible;
                 return;
             case "strength":
@@ -5334,8 +5333,8 @@ font-weight: bold;
                 this._wwaData.isVisibleStatusDefence = isVisible;
                 return;
             case "gold":
-                 this._wwaData.isVisibleStatusGold = isVisible;
-                 return;
+                this._wwaData.isVisibleStatusGold = isVisible;
+                return;
             default: throw new Error("存在しないステータスが与えられました");
         }
     }
