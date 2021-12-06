@@ -5149,21 +5149,10 @@ font-weight: bold;
 
     // プレイヤー速度設定
     public setPlayerSpeedIndex(speedIndex: number): void {
-        if (speedIndex >= speedList.length && speedIndex < 0) {
+        if (speedIndex < Consts.MIN_SPEED_INDEX || Consts.MAX_SPEED_INDEX < speedIndex) {
             throw new Error("#set_speed の引数が異常です:" + speedIndex);
         }
-        for (var i = 0; i < speedList.length; i++) {
-            this._wwaData.gameSpeedIndex = this._player.speedDown();
-        }
-        for (var i = 0; i < speedIndex; i++) {
-            this._wwaData.gameSpeedIndex = this._player.speedUp();
-        }
-        /*
-        this.setMessageQueue(
-            "移動速度を【" + wwa_data.speedNameList[speedIndex] + "】に切り替えました。\n" +
-            (speedIndex === Consts.MAX_SPEED_INDEX ? "戦闘も速くなります。\n":"") +
-            "(" +( Consts.MAX_SPEED_INDEX + 1 ) + "段階中" + ( speedIndex + 1 ) + "） 速度を落とすにはIキー, 速度を上げるにはPキーを押してください。", false, true);
-        */
+        this._wwaData.gameSpeedIndex = this._player.setSpeedIndex(speedIndex);
     }
     // ユーザ変数にプレイ時間を代入
     public setUserVarPlayTime(num: number): void {

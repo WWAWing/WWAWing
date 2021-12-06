@@ -1208,6 +1208,14 @@ export class Player extends PartsObject {
         return this._speedIndex = Math.max(Consts.MIN_SPEED_INDEX, this._speedIndex - 1);
     }
 
+    public setSpeedIndex(speedIndex: number): number {
+        if (speedIndex < Consts.MIN_SPEED_INDEX || Consts.MAX_SPEED_INDEX < speedIndex) {
+            throw new Error("#set_speed の引数が異常です:" + speedIndex);
+        }
+        this._speedIndex = speedIndex;
+        return this._speedIndex;
+    }
+
     constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number, gameSpeedIndex: number) {
         super(pos);
         // どっかで定数化させたい
