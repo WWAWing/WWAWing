@@ -1424,7 +1424,7 @@ export class WWA {
             speedIndex = this._player.speedDown();
         }
         speedMessage = "移動速度を【" + speedNameList[speedIndex] + "】に切り替えました。\n" +
-            (this.isbattleSpeeIndexForQuickBattle(speedIndex) ? "戦闘も速くなります。\n" : "") +
+            (this.isBattleSpeedIndexForQuickBattle(speedIndex) ? "戦闘も速くなります。\n" : "") +
             "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "）";
         // TODO(rmn): 適切な分岐に直したい
         switch (this.userDevice.os) {
@@ -1438,7 +1438,7 @@ export class WWA {
         this.setMessageQueue(speedMessage, false, true);
     }
 
-    public isbattleSpeeIndexForQuickBattle(battleSpeedIndex: number): boolean {
+    public isBattleSpeedIndexForQuickBattle(battleSpeedIndex: number): boolean {
         return Consts.QUICK_BATTLE_SPEED_INDECIES.some(index => index === battleSpeedIndex);
     }
 
