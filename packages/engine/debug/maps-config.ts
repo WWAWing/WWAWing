@@ -11,5 +11,4 @@ export default [
     { fileName: "caves02", title: "Cave Dungeon II" },
     { fileName: "g002-302", title: "追尾属性テスト (マップデータバージョン 3.0)" },
     { fileName: "g002-310", title: "追尾属性テスト (マップデータバージョン 3.1)" },
-    { fileName: "wingxemap", title: "WWA Wing XEテストマップ" } // TODO: XE向けマクロをスタンダードマップ統合時削除予定
 ];
