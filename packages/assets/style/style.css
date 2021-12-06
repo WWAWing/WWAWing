@@ -8,29 +8,3 @@ body {
 footer#copyright {
     text-align: center;
 }
-
-#vardump {
-  margin: 0 auto;
-}
-
-#vardump>table {
-  margin: 0 auto;
-  text-align: center;
-  width: 560px;
-}
-
-#vardump>table th.varlist-header {
-  background-color: orange;
-}
-
-#vardump>table tr.var-number>th {
-  background-color: #FFFF66;
-}
-
-#vardump>table tr.var-val>td {
-  background-color: #FFFFCC;
-}
-
-#vardump>table th, #vardump>table td {
-  width: 3em;
-}
