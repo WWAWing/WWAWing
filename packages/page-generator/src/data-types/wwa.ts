@@ -7,6 +7,9 @@ export interface GameOption {
         intervalSteps: number;
     };
     useLookingAround?: boolean;
+    varDump?: {
+        elementId: string
+    };
 }
 
 export interface Resources {
