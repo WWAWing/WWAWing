@@ -47,15 +47,15 @@ function createPlayPageConfig(mapData: string, cssName?: string, isClassicMode?:
     return {
         page: {
             additionalCssFiles: ["style.css"],
-            varDumpElement: {
-                id: "vardump"
-            }
         },
         wwa: {
             gameOption: {
                 isClassicMode,
                 autoSave: {
                     intervalSteps: 200
+                },
+                varDump: {
+                    elementId: "vardump"
                 }
             },
             resources: {

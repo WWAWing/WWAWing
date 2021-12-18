@@ -145,6 +145,9 @@ export default async function makeDistribution(
                 gameOption: {
                     autoSave: {
                         intervalSteps: 200,
+                    },
+                    varDump: {
+                        elementId: "varDump"
                     }
                 },
                 resources: {

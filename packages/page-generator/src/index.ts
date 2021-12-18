@@ -63,10 +63,10 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-looking-around": Helper.toStringBooleanOptional(wwa.gameOption?.useLookingAround),
                 "data-wwa-autosave": `${wwa.gameOption?.autoSave?.intervalSteps ?? "0"}`,
                 "data-wwa-resume-savedata": wwa.resumeSaveData,
-                "data-wwa-var-dump-elm": page?.varDumpElement ? `#${page.varDumpElement.id}` : undefined
+                "data-wwa-var-dump-elm": wwa.gameOption?.varDump?.elementId ? `#${wwa.gameOption.varDump.elementId}` : undefined
             }
         },
-        varDumpElement: page?.varDumpElement ? { id: page.varDumpElement.id } : undefined,
+        varDumpElement: wwa.gameOption?.varDump?.elementId ? { id: wwa.gameOption.varDump.elementId } : undefined,
         footer: {
             copyrights: Helper.generateCopyrights(copyrights)
         }
