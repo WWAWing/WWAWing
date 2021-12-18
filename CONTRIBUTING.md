@@ -46,7 +46,7 @@ WWA Wing では、下記のことに念頭して活動していただくこと�
 
 1. `develop` ブランチから `master` ブランチにマージするプルリクエストを作成します
 2. 他の WWA Wing Team のメンバーからレビューを受けます。
-3. レビュー完了後、マニュアルに今回のバージョンでの変更差分を書いてください。
+3. レビュー完了後、[マニュアル](https://www.notion.so/wwawing/7-26f484f68c974893b286f0aae17bc149)に今回のバージョンでの変更差分を書いてください。
 4. **マージする前に** パッケージのpublishを行います。下記の手順に従ってください。
 5. [WWA Wing Publish](https://github.com/WWAWing/WWAWing/actions/workflows/publish.yml) のページを開き、画面右側にある `Run workflow` を押してください。
 6. 「バージョンを入力」欄に次の文字列を入力し、「Run workflow」を押してください (ブランチ名は `develop` のままに、publishに使うタグ名は、そのまま `latest` としてください)。

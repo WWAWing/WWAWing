@@ -53,6 +53,9 @@ function createPlayPageConfig(mapData: string, cssName?: string, isClassicMode?:
                 isClassicMode,
                 autoSave: {
                     intervalSteps: 200
+                },
+                varDump: {
+                    elementId: "vardump"
                 }
             },
             resources: {
