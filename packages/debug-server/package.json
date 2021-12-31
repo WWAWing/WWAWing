@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/debug-server",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "description": "wwawing debug server",
   "main": "lib/index.js",
   "files": [
@@ -10,7 +10,7 @@
   "scripts": {
     "start": "npm run build && node lib debug",
     "build": "tsc -p .",
-    "generate": "shx mkdir -p bin && nexe --target=win32-x86-14.15.3 --cwd . --output bin/wwa-server.exe",
+    "generate": "shx mkdir -p bin && nexe --target=win32-x86-12.18.2 --cwd . --output bin/wwa-server.exe",
     "clean": "shx rm -rf debug lib bin",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "npm run build && npm run generate"
