@@ -1,25 +1,25 @@
-#vardump {
+.wwa-vardump-wrapper {
   margin: 0 auto;
 }
 
-#vardump>table {
+.wwa-vardump-wrapper>table {
   margin: 0 auto;
   text-align: center;
   width: 560px;
 }
 
-#vardump>table th.varlist-header {
+.wwa-vardump-wrapper>table th.varlist-header {
   background-color: orange;
 }
 
-#vardump>table tr.var-number>th {
+.wwa-vardump-wrapper>table tr.var-number>th {
   background-color: #FFFF66;
 }
 
-#vardump>table tr.var-val>td {
+.wwa-vardump-wrapper>table tr.var-val>td {
   background-color: #FFFFCC;
 }
 
-#vardump>table th, #vardump>table td {
+.wwa-vardump-wrapper>table th, .wwa-vardump-wrapper>table td {
   width: 3em;
 }

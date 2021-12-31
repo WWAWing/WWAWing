@@ -147,7 +147,7 @@ export default async function makeDistribution(
                         intervalSteps: 200,
                     },
                     varDump: {
-                        elementId: "varDump"
+                        elementId: "vardump"
                     }
                 },
                 resources: {
