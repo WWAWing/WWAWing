@@ -547,6 +547,8 @@ export class Player extends PartsObject {
         this._goldValueElement.textContent = this._wwa.isVisibleStatus("gold") ? String(totalStatus.gold) : "";
         // メッセージに表示されているステータスのアップデート
         this._wwa._messageWindow?.update();
+        // スコア表示のアップデート
+        this._wwa.updateScore();
     }
 
     readonly itemTransitioningClassName = "item-transitioning";

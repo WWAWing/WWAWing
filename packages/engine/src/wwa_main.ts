@@ -174,6 +174,17 @@ export class WWA {
      */
     public wwaCustomEventEmitter: IEventEmitter;
 
+    /**
+     * スコア表示に使うレート
+     * スコアが表示されていない場合は undefined.
+     */
+    private _scoreRates?: {
+        energy: number;
+        strength: number;
+        defence: number;
+        gold: number;
+    };
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -2885,18 +2896,26 @@ export class WWA {
         const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
         const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !messageInfo.isEmpty(), false);
         if (existsMessage) {
-            const score = this._player.getStatus().calculateScore({
+            this._scoreRates = {
                 energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
                 strength: this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
                 defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
                 gold: this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]
-            });
-            this._scoreWindow.update(score);
+            };
+            this.updateScore();
             this._scoreWindow.show();
         }
         this.setMessageQueue(rawMessage, false, false, partsID, PartsType.OBJECT, pos);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
 
+    }
+
+    public updateScore() {
+        if (!this._scoreRates) {
+            return;
+        }
+        const score = this._player.getStatus().calculateScore(this._scoreRates);
+        this._scoreWindow.update(score);
     }
 
     private _execChoiceWindowRunningEvent() {
@@ -4413,6 +4432,7 @@ export class WWA {
         this._clearFacesInNextFrame = true;
         if (this._scoreWindow.isVisible()) {
             this._scoreWindow.hide();
+            this._scoreRates = undefined;
         }
         if (this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
@@ -5350,9 +5370,14 @@ function start() {
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
     var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
-    var dumpElm = null;
+    var dumpElm: HTMLElement | null = null;
     if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm")) {
-        dumpElm = util.$qs(dumpElmQuery);
+        dumpElm = util.$qs(dumpElmQuery) as HTMLElement | null;
+        if (!dumpElm) {
+            // 要素がない場合は何もしない
+            return;
+        }
+        dumpElm.classList.add("wwa-vardump-wrapper")
         var tableElm = document.createElement("table");
         var headerTrElm = document.createElement("tr");
         var headerThElm = document.createElement("th");

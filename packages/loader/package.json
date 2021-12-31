@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/loader",
-  "version": "3.6.0",
+  "version": "3.6.1",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/index.js",
   "module": "./module/index.js",
@@ -45,22 +45,22 @@
   },
   "homepage": "https://github.com/WWAWing/WWALoader#readme",
   "dependencies": {
-    "@wwawing/event-emitter": "^3.6.0"
+    "@wwawing/event-emitter": "^3.6.1"
   },
   "devDependencies": {
-    "@wwawing/common-interface": "^3.6.0",
+    "@wwawing/common-interface": "^3.6.1",
     "cross-env": "^7.0.3",
     "html-loader": "^2.1.2",
-    "html-webpack-plugin": "^5.3.1",
-    "http-server": "^0.12.3",
+    "html-webpack-plugin": "^5.5.0",
+    "http-server": "^14.0.0",
     "npm-run-all": "^4.1.5",
     "shelljs": "^0.8.4",
     "shx": "^0.3.3",
     "ts-loader": "^4.3.0",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.2.4",
-    "webpack": "^5.36.2",
-    "webpack-cli": "^4.6.0"
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1"
   },
   "publishConfig": {
     "access": "public"

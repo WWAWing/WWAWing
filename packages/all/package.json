@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/all",
-  "version": "3.6.0",
+  "version": "3.6.1",
   "description": "World Wide Adventure: an RPG Engine.",
   "author": "WWA Wing Team",
   "license": "MIT",
@@ -22,19 +22,19 @@
     "@octokit/rest": "^18.5.3",
     "@types/jszip": "^3.4.1",
     "@types/shelljs": "^0.8.8",
-    "@wwawing/assets": "^3.6.0",
-    "@wwawing/common-interface": "^3.6.0",
-    "@wwawing/debug-server": "^3.6.0",
-    "@wwawing/engine": "^3.6.0",
-    "@wwawing/loader": "^3.6.0",
-    "@wwawing/page-generator": "^3.6.0",
-    "@wwawing/styles": "^3.6.0",
+    "@wwawing/assets": "^3.6.1",
+    "@wwawing/common-interface": "^3.6.1",
+    "@wwawing/debug-server": "^3.6.1",
+    "@wwawing/engine": "^3.6.1",
+    "@wwawing/loader": "^3.6.1",
+    "@wwawing/page-generator": "^3.6.1",
+    "@wwawing/styles": "^3.6.1",
     "jszip": "^3.6.0",
     "npm-run-all": "^4.1.5",
     "shelljs": "^0.8.4",
     "shx": "^0.3.3",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.2.4"
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
   },
   "publishConfig": {
     "access": "public"
