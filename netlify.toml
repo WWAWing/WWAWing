@@ -3,7 +3,6 @@
   publish = "packages/engine/lib"
   # npm i の段階で prepareスクリプトが走って production ビルドされるので、できているものをデプロイする
   command = "npm run bootstrap:netlify && npm run deploy"
-  ignore = "git diff --quiet HEAD^ HEAD packages/engine/"
 
 [build.environment]
   # node-gyp が v3.6.0 以上の Python を要求している
