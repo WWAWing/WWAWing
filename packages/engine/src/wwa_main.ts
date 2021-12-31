@@ -174,6 +174,17 @@ export class WWA {
      */
     public wwaCustomEventEmitter: IEventEmitter;
 
+    /**
+     * スコア表示に使うレート
+     * スコアが表示されていない場合は undefined.
+     */
+    private _scoreRates?: {
+        energy: number;
+        strength: number;
+        defence: number;
+        gold: number;
+    };
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -2885,18 +2896,26 @@ export class WWA {
         const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
         const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !messageInfo.isEmpty(), false);
         if (existsMessage) {
-            const score = this._player.getStatus().calculateScore({
+            this._scoreRates = {
                 energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
                 strength: this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
                 defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
                 gold: this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]
-            });
-            this._scoreWindow.update(score);
+            };
+            this.updateScore();
             this._scoreWindow.show();
         }
         this.setMessageQueue(rawMessage, false, false, partsID, PartsType.OBJECT, pos);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
 
+    }
+
+    public updateScore() {
+        if (!this._scoreRates) {
+            return;
+        }
+        const score = this._player.getStatus().calculateScore(this._scoreRates);
+        this._scoreWindow.update(score);
     }
 
     private _execChoiceWindowRunningEvent() {
@@ -4413,6 +4432,7 @@ export class WWA {
         this._clearFacesInNextFrame = true;
         if (this._scoreWindow.isVisible()) {
             this._scoreWindow.hide();
+            this._scoreRates = undefined;
         }
         if (this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
