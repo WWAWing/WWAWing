@@ -5350,9 +5350,14 @@ function start() {
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
     var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
-    var dumpElm = null;
+    var dumpElm: HTMLElement | null = null;
     if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm")) {
-        dumpElm = util.$qs(dumpElmQuery);
+        dumpElm = util.$qs(dumpElmQuery) as HTMLElement | null;
+        if (!dumpElm) {
+            // 要素がない場合は何もしない
+            return;
+        }
+        dumpElm.classList.add("wwa-vardump-wrapper")
         var tableElm = document.createElement("table");
         var headerTrElm = document.createElement("tr");
         var headerThElm = document.createElement("th");
