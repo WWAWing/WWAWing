@@ -5351,6 +5351,79 @@ font-weight: bold;
 };
 
 var isCopyRightClick = false;
+
+function setupVarDumpElement(dumpElmQuery: string) {
+    const dumpElm = util.$qs(dumpElmQuery) as HTMLElement | null;
+    if (!dumpElm) {
+        // 要素がない場合は何もしない
+        return;
+    }
+    dumpElm.classList.add("wwa-vardump-wrapper")
+    var tableElm = document.createElement("table");
+    var headerTrElm = document.createElement("tr");
+    var headerThElm = document.createElement("th");
+    var hideButton = document.createElement("button");
+    hideButton.textContent = "隠す";
+    headerThElm.textContent = "変数一覧";
+    headerThElm.setAttribute("colspan", "10");
+    headerThElm.classList.add("varlist-header");
+    headerThElm.appendChild(hideButton);
+    headerTrElm.appendChild(headerThElm);
+    tableElm.appendChild(headerTrElm);
+    var trNumElm: HTMLElement = null;
+    var trValElm: HTMLElement = null;
+    for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+        if (i % 10 === 0) {
+            if (trNumElm !== null) {
+                tableElm.appendChild(trNumElm);
+                tableElm.appendChild(trValElm);
+            }
+            trNumElm = document.createElement("tr");
+            trNumElm.classList.add("var-number");
+            trValElm = document.createElement("tr");
+            trValElm.classList.add("var-val");
+        }
+        var thNumElm = document.createElement("th");
+        var tdValElm = document.createElement("td");
+        thNumElm.textContent = i + "";
+        tdValElm.classList.add("var" + i);
+        tdValElm.textContent = "-";
+        trNumElm.appendChild(thNumElm);
+        trValElm.appendChild(tdValElm);
+    }
+    if (Consts.USER_VAR_NUM % 10 !== 0) {
+        tableElm.appendChild(trNumElm);
+        tableElm.appendChild(trValElm);
+    }
+    dumpElm.appendChild(tableElm);
+    var varDispStatus = true;
+    hideButton.addEventListener("click", function (e) {
+        if (varDispStatus) {
+            this.textContent = "表示";
+            Array.prototype.forEach.call(
+                tableElm.querySelectorAll("tr.var-number"), function (etr) {
+                    etr.style.display = "none";
+                });
+            Array.prototype.forEach.call(
+                tableElm.querySelectorAll("tr.var-val"), function (etr) {
+                    etr.style.display = "none";
+                });
+            varDispStatus = false;
+        } else {
+            this.textContent = "隠す";
+            Array.prototype.forEach.call(
+                tableElm.querySelectorAll("tr.var-number"), function (etr) {
+                    etr.style.display = "table-row";
+                });
+            Array.prototype.forEach.call(
+                tableElm.querySelectorAll("tr.var-val"), function (etr) {
+                    etr.style.display = "table-row";
+                });
+            varDispStatus = true;
+        }
+    });
+}
+
 function start() {
     Array.prototype.forEach.call(util.$qsAll("a.wwa-copyright"), (node: HTMLElement) => {
         node.addEventListener("click", (): void => {
@@ -5372,75 +5445,7 @@ function start() {
     var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
     var dumpElm: HTMLElement | null = null;
     if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm")) {
-        dumpElm = util.$qs(dumpElmQuery) as HTMLElement | null;
-        if (!dumpElm) {
-            // 要素がない場合は何もしない
-            return;
-        }
-        dumpElm.classList.add("wwa-vardump-wrapper")
-        var tableElm = document.createElement("table");
-        var headerTrElm = document.createElement("tr");
-        var headerThElm = document.createElement("th");
-        var hideButton = document.createElement("button");
-        hideButton.textContent = "隠す";
-        headerThElm.textContent = "変数一覧";
-        headerThElm.setAttribute("colspan", "10");
-        headerThElm.classList.add("varlist-header");
-        headerThElm.appendChild(hideButton);
-        headerTrElm.appendChild(headerThElm);
-        tableElm.appendChild(headerTrElm);
-        var trNumElm: HTMLElement = null;
-        var trValElm: HTMLElement = null;
-        for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-            if (i % 10 === 0) {
-                if (trNumElm !== null) {
-                    tableElm.appendChild(trNumElm);
-                    tableElm.appendChild(trValElm);
-                }
-                trNumElm = document.createElement("tr");
-                trNumElm.classList.add("var-number");
-                trValElm = document.createElement("tr");
-                trValElm.classList.add("var-val");
-            }
-            var thNumElm = document.createElement("th");
-            var tdValElm = document.createElement("td");
-            thNumElm.textContent = i + "";
-            tdValElm.classList.add("var" + i);
-            tdValElm.textContent = "-";
-            trNumElm.appendChild(thNumElm);
-            trValElm.appendChild(tdValElm);
-        }
-        if (Consts.USER_VAR_NUM % 10 !== 0) {
-            tableElm.appendChild(trNumElm);
-            tableElm.appendChild(trValElm);
-        }
-        dumpElm.appendChild(tableElm);
-        var varDispStatus = true;
-        hideButton.addEventListener("click", function (e) {
-            if (varDispStatus) {
-                this.textContent = "表示";
-                Array.prototype.forEach.call(
-                    tableElm.querySelectorAll("tr.var-number"), function (etr) {
-                        etr.style.display = "none";
-                    });
-                Array.prototype.forEach.call(
-                    tableElm.querySelectorAll("tr.var-val"), function (etr) {
-                        etr.style.display = "none";
-                    });
-                varDispStatus = false;
-            } else {
-                this.textContent = "隠す";
-                Array.prototype.forEach.call(
-                    tableElm.querySelectorAll("tr.var-number"), function (etr) {
-                        etr.style.display = "table-row";
-                    });
-                Array.prototype.forEach.call(
-                    tableElm.querySelectorAll("tr.var-val"), function (etr) {
-                        etr.style.display = "table-row";
-                    });
-                varDispStatus = true;
-            }
-        });
+        setupVarDumpElement(dumpElmQuery);
     }
     var urlgateEnabled = true;
     if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
