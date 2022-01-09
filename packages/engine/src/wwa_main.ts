@@ -5444,11 +5444,11 @@ font-weight: bold;
 
 var isCopyRightClick = false;
 
-function setupVarDumpElement(dumpElmQuery: string) {
+function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
     const dumpElm = util.$qs(dumpElmQuery) as HTMLElement | null;
     if (!dumpElm) {
         // 要素がない場合は何もしない
-        return;
+        return null;
     }
     dumpElm.classList.add("wwa-vardump-wrapper")
     var tableElm = document.createElement("table");
@@ -5514,6 +5514,7 @@ function setupVarDumpElement(dumpElmQuery: string) {
             varDispStatus = true;
         }
     });
+    return dumpElm;
 }
 
 function start() {
@@ -5537,7 +5538,7 @@ function start() {
     var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
     var dumpElm: HTMLElement | null = null;
     if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm")) {
-        setupVarDumpElement(dumpElmQuery);
+        dumpElm = setupVarDumpElement(dumpElmQuery);
     }
     var urlgateEnabled = true;
     if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
