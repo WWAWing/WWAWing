@@ -4666,6 +4666,8 @@ export class WWA {
             this._player.setGold(value);
         } else if (type === MacroStatusIndex.MOVES) {
             this._player.setMoveCount(value);
+        } else if (type === MacroStatusIndex.ENERGY_MAX) {
+            this._player.setEnergyMax(value);
         } else {
             throw new Error("未定義のステータスタイプです");
         }
@@ -5003,7 +5005,7 @@ font-weight: bold;
     }
 
     // HP <- ユーザ変数
-    public setHPUserVar(index: number): void {
+    public setEnergyByUserVar(index: number): void {
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
@@ -5015,7 +5017,7 @@ font-weight: bold;
         this._player.updateStatusValueBox();
     }
     // HPMAX <- ユーザ変数
-    public setHPMAXUserVar(index: number): void {
+    public setEnergyMaxByUserVar(index: number): void {
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
@@ -5023,7 +5025,7 @@ font-weight: bold;
         this._player.updateStatusValueBox();
     }
     // AT (装備品以外) <- ユーザ変数
-    public setATUserVar(index: number): void {
+    public setStrengthByUserVar(index: number): void {
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
@@ -5031,7 +5033,7 @@ font-weight: bold;
         this._player.updateStatusValueBox();
     }
     // DF (装備品以外) <- ユーザ変数
-    public setDFUserVar(index: number): void {
+    public setDefenceByUserVar(index: number): void {
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
@@ -5039,13 +5041,103 @@ font-weight: bold;
         this._player.updateStatusValueBox();
     }
     // MONEY <- ユーザ変数
-    public setMONEYUserVar(index: number): void {
+    public setGoldByUserVar(index: number): void {
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
         this._player.setGold(this.toValidStatusValue(this._wwaData.userVar[index]));
         this._player.updateStatusValueBox();
     }
+    // 歩数 <- ユーザ変数
+    public setMoveCountByUserVar(index: number): void {
+        if (!this.isValidUserVarIndex(index)) {
+            throw new Error("ユーザ変数の添字が範囲外です。");
+        }
+        this._player.setMoveCount(this.toValidStatusValue(this._wwaData.userVar[index]));
+        this._player.updateStatusValueBox();
+    }
+
+    /**
+     * 複数のステータスを同時に設定します。
+     * undefined の項目は代入されません。
+     * 生命力が 0 以下の場合はゲームオーバーになります。
+     * 生命力最大値 が 0 の場合は無制限になります。
+     * @param energy 生命力
+     * @param strength 攻撃力
+     * @param defence 防御力
+     * @param gold 所持金
+     * @param moves 歩数
+     * @param energyMax 生命力最大値
+     */
+    public setMultiStatus(
+            energy?: number,
+            strength?: number,
+            defence?: number,
+            gold?: number,
+            moves?: number,
+            energyMax?: number
+    ): void {
+        if (typeof energy === "number") {
+            this._player.setEnergy(energy);
+        }
+        if (typeof strength === "number") {
+            this._player.setStrength(strength);
+        }
+        if (typeof defence === "number") {
+            this._player.setDefence(defence);
+        }
+        if (typeof gold === "number") {
+            this._player.setGold(gold);
+        }
+        if (typeof moves === "number") {
+            this._player.setMoveCount(moves);
+        }
+        if (typeof energyMax === "number") {
+            this._player.setEnergyMax(energyMax)
+        }
+    }
+
+    /**
+     * 複数のステータスを、ユーザ変数の値で同時に設定します。
+     * undefined の項目は代入されません。
+     * ユーザ変数が範囲外の場合も代入されません。
+     * 生命力が 0 以下の場合はゲームオーバーになります。
+     * 生命力最大値 が 0 の場合は無制限になります。
+     * @param energy 生命力代入元のユーザ変数の添字
+     * @param strength 攻撃力代入元のユーザ変数の添字
+     * @param defence 防御力代入元のユーザ変数の添字
+     * @param gold 所持金代入元のユーザ変数の添字
+     * @param energyMax 生命力最大値代入元のユーザ変数の添字
+     */
+    public setMultiStatusByUserVarIndex(
+        energyIndex?: number,
+        strengthIndex?: number,
+        defenceIndex?: number,
+        goldIndex?: number,
+        movesIndex?: number,
+        energyMaxIndex?: number
+    ): void {
+        if (typeof energyIndex === "number") {
+            this.setEnergyByUserVar(energyIndex);
+        }
+        if (typeof strengthIndex === "number") {
+            this.setStrengthByUserVar(strengthIndex);
+        }
+        if (typeof defenceIndex === "number") {
+            this.setDefenceByUserVar(defenceIndex);
+        }
+        if (typeof goldIndex === "number") {
+            this.setGoldByUserVar(goldIndex);
+        }
+        if (typeof movesIndex === "number") {
+            this.setMoveCountByUserVar(movesIndex);
+        }
+        if (typeof energyMaxIndex === "number") {
+            this.setEnergyMaxByUserVar(energyMaxIndex);
+        }
+    }
+
+
     // ユーザ変数 <- 歩数
     public setUserVarStep(num: number): void {
         this.setUserVar(num, this._player.getMoveCount());

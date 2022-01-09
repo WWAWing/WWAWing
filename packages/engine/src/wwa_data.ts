@@ -606,6 +606,9 @@ export enum MacroType {
     HIDE_STATUS = 53,
     VAR_MAP = 54,
     VAR_MOD = 55,
+    MULTI_STATUS = 56,
+    SET_MULTI_STATUS = 57,
+    SET_MOVES = 58,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101
 }
@@ -665,6 +668,9 @@ export var macrotable = {
     "$hide_status": 53,
     "$var_map": 54,
     "$var_mod": 55,
+    "$multi_status": 56,
+    "$set_multi_status": 57,
+    "$set_moves": 58,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
@@ -674,7 +680,8 @@ export enum MacroStatusIndex {
     STRENGTH = 1,
     DEFENCE = 2,
     GOLD = 3,
-    MOVES = 4
+    MOVES = 4,
+    ENERGY_MAX = 5
 }
 
 export enum MacroImgFrameIndex {

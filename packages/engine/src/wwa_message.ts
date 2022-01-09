@@ -220,7 +220,6 @@ export class Macro {
                 case MacroType.SET_MOENEY:
                     this._executeSetMoneyMacro();
                     break;
-                // HW3.16.4 より実装
                 // 歩数カウント代入
                 case MacroType.COPY_STEP_COUNT_TO:
                     this._executeSetStepCountMacro();
@@ -273,20 +272,26 @@ export class Macro {
                 case MacroType.SET_SPEED:
                     this._executeSetSpeedMacro();
                     break;
-                // HW3.16.5 より実装
                 // プレイ時間変数代入
                 case MacroType.COPY_TIME_TO:
                     this._executeCopyTimeToMacro();
                     break;
-                // HW3.18.0 より実装
                 // ステータスを隠す
                 case MacroType.HIDE_STATUS:
-                    this._hideStatusMacro();
+                    this._executeHideStatusMacro();
                     break;
-                // HW3.19.0 より実装
                 // $map の変数対応版
                 case MacroType.VAR_MAP:
-                    this._varMapMacro();
+                    this._executeVarMapMacro();
+                    break;
+                case MacroType.MULTI_STATUS:
+                    this._executeMultiStatusMacro();
+                    break;
+                case MacroType.SET_MULTI_STATUS:
+                    this._executeSetMultiStatusMacro();
+                    break;
+                case MacroType.SET_MOVES:
+                    this._executeSetMovesMacro();
                     break;
                 default:
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
@@ -307,10 +312,10 @@ export class Macro {
         }
     }
 
-    private _parseInt(argIndex: number, fallback: number = 0): number {
-        var x = parseInt(this.macroArgs[argIndex]);
+    private _parseInt<F = never>(argIndex: number, options?: { fallback: F }): number | F {
+        const x = parseInt(this.macroArgs[argIndex], 10);
         if (isNaN(x)) {
-            return fallback;
+            return options ? options.fallback : 0;
         }
         return x;
     }
@@ -390,31 +395,31 @@ export class Macro {
     private _executeSetHPMacro(): void {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
-        this._wwa.setHPUserVar(num);
+        this._wwa.setEnergyByUserVar(num);
     }
     // set_hpmaxマクロ実行部
     private _executeSetHpMaxMacro(): void {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
-        this._wwa.setHPMAXUserVar(num);
+        this._wwa.setEnergyMaxByUserVar(num);
     }
     // set_atマクロ実行部
     private _executeSetAtMacro(): void {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
-        this._wwa.setATUserVar(num);
+        this._wwa.setStrengthByUserVar(num);
     }
     // set_dfマクロ実行部
     private _executeSetDfMacro(): void {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
-        this._wwa.setDFUserVar(num);
+        this._wwa.setDefenceByUserVar(num);
     }
     // set_moneyマクロ実行部
     private _executeSetMoneyMacro(): void {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
-        this._wwa.setMONEYUserVar(num);
+        this._wwa.setGoldByUserVar(num);
     }
     // copy_step_count_toマクロ実行部
     private _executeSetStepCountMacro(): void {
@@ -476,7 +481,7 @@ export class Macro {
         this._concatEmptyArgs(3);
         const x = this._parseInt(0);
         const y = this._parseInt(1);
-        const n = this._parseInt(2, 0);
+        const n = this._parseInt(2, { fallback: 0 });
         this._wwa.setUserValRandNum(x, y, n);
     }
     // game_speedマクロ実行部
@@ -508,7 +513,7 @@ export class Macro {
         this._wwa.setUserVarPlayTime(num);
     }
     // HIDE_STATUS マクロ実行部
-    private _hideStatusMacro(): void {
+    private _executeHideStatusMacro(): void {
         this._concatEmptyArgs(2);
         var no = this._parseInt(0);
         var isHideNumber = this._parseInt(1);
@@ -516,12 +521,12 @@ export class Macro {
         this._wwa.hideStatus(no, isHide);
     }
     // VAR_MAP マクロ実行部
-    private _varMapMacro(): void {
+    private _executeVarMapMacro(): void {
         this._concatEmptyArgs(4);
         var partsID = this._parseInt(0);
         var xstr = this.macroArgs[1];
         var ystr = this.macroArgs[2];
-        var partsType = this._parseInt(3, PartsType.OBJECT);
+        var partsType = this._parseInt(3, {fallback: PartsType.OBJECT});
 
         if (partsID < 0) {
             throw new Error("入力変数が不正です");
@@ -579,7 +584,7 @@ export class Macro {
         this._concatEmptyArgs(4);
         var srcID = this._parseInt(0);
         var destID = this._parseInt(1);
-        var partsType = this._parseInt(2, PartsType.OBJECT);
+        var partsType = this._parseInt(2, {fallback: PartsType.OBJECT});
         var onlyThisSight = this._parseInt(3);
 
         if (partsType !== PartsType.OBJECT && partsType !== PartsType.MAP) {
@@ -615,7 +620,7 @@ export class Macro {
         var partsID = this._parseInt(0);
         var xstr = this.macroArgs[1];
         var ystr = this.macroArgs[2];
-        var partsType = this._parseInt(3, PartsType.OBJECT);
+        var partsType = this._parseInt(3, { fallback: PartsType.OBJECT });
 
         if (partsID < 0) {
             throw new Error("パーツ番号が不正です");
@@ -636,7 +641,7 @@ export class Macro {
         this._concatEmptyArgs(3);
         var partsID = this._parseInt(0);
         var dist = this._parseInt(1);
-        var partsType = this._parseInt(2, PartsType.OBJECT);
+        var partsType = this._parseInt(2, { fallback: PartsType.OBJECT });
         if (isNaN(partsID) || isNaN(dist) || isNaN(partsType)) {
             throw new Error("引数が整数ではありません");
         }
@@ -791,7 +796,7 @@ export class Macro {
         var type = this._parseInt(0);
         var value = this._parseInt(1);
 
-        if (type < 0 || 4 < type) {
+        if (type < 0 || 5 < type) {
             throw new Error("ステータス種別が範囲外です。");
         }
 
@@ -857,6 +862,48 @@ export class Macro {
         this._concatEmptyArgs(1);
         const oldMoveFlag = !!this._parseInt(0);
         this._wwa.setOldMove(oldMoveFlag);
+    }
+
+    private _executeMultiStatusMacro(): void {
+        this._concatEmptyArgs(6);
+        const energy = this._parseInt<undefined>(0, { fallback: undefined });
+        const strength = this._parseInt<undefined>(1, { fallback: undefined });
+        const defence = this._parseInt<undefined>(2, { fallback: undefined});
+        const gold = this._parseInt<undefined>(3, { fallback: undefined });
+        const moves = this._parseInt<undefined>(4, { fallback: undefined });
+        const energyMax = this._parseInt<undefined>(5, { fallback: undefined });
+        this._wwa.setMultiStatus(
+            energy,
+            strength,
+            defence,
+            gold,
+            moves,
+            energyMax
+        );
+    }
+
+    private _executeSetMultiStatusMacro(): void {
+        this._concatEmptyArgs(6);
+        const energyIndex = this._parseInt<undefined>(0, {fallback: undefined});
+        const strengthIndex = this._parseInt<undefined>(1, {fallback: undefined});
+        const defenceIndex = this._parseInt<undefined>(2, {fallback: undefined});
+        const goldIndex = this._parseInt<undefined>(3, {fallback: undefined});
+        const movesIndex = this._parseInt<undefined>(4, {fallback: undefined});
+        const energyMaxIndex = this._parseInt<undefined>(5, {fallback: undefined});
+        this._wwa.setMultiStatusByUserVarIndex(
+            energyIndex,
+            strengthIndex,
+            defenceIndex,
+            goldIndex,
+            movesIndex,
+            energyMaxIndex
+        );
+    }
+
+    private _executeSetMovesMacro(): void {
+        this._concatEmptyArgs(1);
+        const num = this._parseInt(0);
+        this._wwa.setMoveCountByUserVar(num);
     }
 }
 
