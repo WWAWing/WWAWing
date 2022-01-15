@@ -608,7 +608,7 @@ export enum MacroType {
     VAR_MOD = 55,
     MULTI_STATUS = 56,
     SET_MULTI_STATUS = 57,
-    SET_MOVES = 58,
+    SET_STEP_COUNT = 58,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101
 }

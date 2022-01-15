@@ -222,7 +222,7 @@ export class Macro {
                     break;
                 // 歩数カウント代入
                 case MacroType.COPY_STEP_COUNT_TO:
-                    this._executeSetStepCountMacro();
+                    this._executeCopyStepCountToMacro();
                     break;
                 // 変数に定数代入
                 case MacroType.VAR_SET_VAL:
@@ -290,8 +290,8 @@ export class Macro {
                 case MacroType.SET_MULTI_STATUS:
                     this._executeSetMultiStatusMacro();
                     break;
-                case MacroType.SET_MOVES:
-                    this._executeSetMovesMacro();
+                case MacroType.SET_STEP_COUNT:
+                    this._executeSetStepCountMacro();
                     break;
                 default:
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
@@ -422,7 +422,7 @@ export class Macro {
         this._wwa.setGoldByUserVar(num);
     }
     // copy_step_count_toマクロ実行部
-    private _executeSetStepCountMacro(): void {
+    private _executeCopyStepCountToMacro(): void {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
         this._wwa.setUserVarStep(num);
@@ -900,7 +900,7 @@ export class Macro {
         );
     }
 
-    private _executeSetMovesMacro(): void {
+    private _executeSetStepCountMacro(): void {
         this._concatEmptyArgs(1);
         const num = this._parseInt(0);
         this._wwa.setMoveCountByUserVar(num);
