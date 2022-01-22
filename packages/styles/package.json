@@ -9,14 +9,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run clean && ts-node ./scripts/make-css.ts",
-    "clean": "shx rm -rf output && shx mkdir -p output",
-    "prepare": "npm run build"
+    "clean": "shx rm -rf output && shx mkdir -p output"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
     "@types/node-sass": "^4.11.2",
-    "node-sass": "^7.0.0",
+    "node-sass": "^7.0.1",
     "shx": "^0.3.3",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.4"

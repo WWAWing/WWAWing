@@ -9,8 +9,7 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -p .",
-    "prepare": "npm run build"
+    "build": "tsc -p ."
   },
   "author": "WWA Wing Team",
   "license": "MIT",

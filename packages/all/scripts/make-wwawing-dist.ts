@@ -6,7 +6,7 @@ import { render, InputConfig } from "@wwawing/page-generator";
 const wwawingDistDirName = "wwawing-dist";
 const wwawingUpdateDirName = "wwawing-update";
 
-const srcBasePath = path.join(".", "node_modules", "@wwawing");
+const srcBasePath = path.join("..", "..", "node_modules", "@wwawing");
 const destBasePath = path.join(".", "dist", wwawingDistDirName);
 const destUpdateBasePath = path.join(".", "dist", wwawingUpdateDirName);
 
