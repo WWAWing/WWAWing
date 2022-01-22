@@ -9,7 +9,7 @@
     "release:make-zip": "npm run clean && ts-node ./scripts",
     "release:upload-zip": "ts-node ./scripts/upload-zip",
     "clean": "shx rm -rf dist",
-    "prepare": "npm run release:make-zip"
+    "generate": "run-s release:make-zip"
   },
   "files": [
     "dist"

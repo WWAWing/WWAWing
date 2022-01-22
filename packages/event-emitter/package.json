@@ -17,8 +17,7 @@
     "build:module": "tsc -p ./tsconfig.module.json",
     "clean": "run-p clean:*",
     "clean:lib": "shx rm -rf ./lib",
-    "clean:module": "shx rm -rf ./module",
-    "prepare": "npm run build"
+    "clean:module": "shx rm -rf ./module"
   },
   "author": "WWA Wing Team",
   "license": "MIT",

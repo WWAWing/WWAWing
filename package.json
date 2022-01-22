@@ -3,19 +3,20 @@
   "version": "0.0.0",
   "description": "",
   "private": "true",
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "npm run bootstrap",
-    "bootstrap": "lerna bootstrap --hoist",
-    "bootstrap:netlify": "echo \"test\" && lerna --help && test -e ./packages/all/dist || run-s bootstrap",
-    "bootstrap:no-hoist": "lerna bootstrap",
     "clean": "lerna clean --yes",
     "start": "lerna run start --stream --scope @wwawing/engine",
     "build": "lerna run build --stream",
     "deploy": "lerna run deploy:prod --scope @wwawing/engine",
-    "generate": "lerna exec --scope @wwawing/debug-server -- npm run generate",
+    "generate": "lerna run generate --stream",
     "make-dist": "npm run build && lerna run make-dist --stream",
-    "publish:all": "lerna publish"
+    "publish:all": "run-s build generate && lerna publish"
   },
   "repository": {
     "type": "git",
