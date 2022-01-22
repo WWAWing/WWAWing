@@ -1105,6 +1105,20 @@ export class WWA {
             var idx = this._wwaData.objectAttribute[pid][Consts.ATR_SOUND];
             this.createWWAAudioInstance(idx);
         }
+        this._wwaData.message.forEach(message =>
+            message
+                .split("\n")
+                .forEach(line => {
+                    const matchResult = line.match(/^\$sound=(\d+)/);
+                    if (!matchResult || matchResult.length < 2) {
+                        return;
+                    }
+                    const id = parseInt(matchResult[1], 10);
+                    if (!isNaN(id) && 0 < id && id < SystemSound.NO_SOUND) {
+                        this.createWWAAudioInstance(id);
+                    }
+                })
+        );
         this._wwaData.bgm = 0;
         this._soundLoadSkipFlag = false;
     }
