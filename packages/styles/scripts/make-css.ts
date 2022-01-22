@@ -1,4 +1,4 @@
-import * as sass from "node-sass";
+import * as sass from "sass";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -35,6 +35,7 @@ function createWWAExtendCSSFilePromises(): Promise<void>[] {
 
 function createWWACSSFilePromise(filePath: string, outputFilePath: string): Promise<void> {
     return new Promise((resolve, reject) => 
+        // TODO: render は非推奨なので compile に乗り換える
         sass.render({
             file: filePath,
             outFile: outputFilePath,
