@@ -30,10 +30,16 @@ jobs:
           git config user.email "matsuyuki.eca@gmail.com"
 
       - name: "Install"
-        run: "npm install"
+        run: |
+          npm i -g npm@8
+          npm install
       
       - name: "Publish"
         run: "npm run publish:all -- ${{ github.event.inputs.version }} --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: "check"
+        run: "git diff"
+        if: ${{ failure() }}
 

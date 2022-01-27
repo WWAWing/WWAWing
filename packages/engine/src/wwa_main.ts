@@ -3876,6 +3876,7 @@ export class WWA {
         this.updateCSSRule();
         this.updateEffect();
         this._player.updateStatusValueBox();
+        this._wwaSave.quickSaveButtonUpdate(this._wwaData);
     }
       
     private _mapIDTableCreate(): void {
