@@ -48,7 +48,7 @@
     "@wwawing/common-interface": "3.6.6",
     "@wwawing/debug-server": "3.6.6",
     "@wwawing/event-emitter": "3.6.6",
-    "@wwawing/loader": "^3.6.6",
+    "@wwawing/loader": "3.6.6",
     "@wwawing/page-generator": "3.6.6",
     "@wwawing/styles": "3.6.6",
     "crypto-js": "4.0.0",
