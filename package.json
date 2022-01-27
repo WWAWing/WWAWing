@@ -16,7 +16,7 @@
     "deploy": "lerna run deploy:prod --scope @wwawing/engine",
     "generate": "lerna run generate --stream",
     "make-dist": "npm run build && lerna run make-dist --stream",
-    "version-up": "lerna version --no-git-tag-version",
+    "version-up": "lerna version",
     "publish:all": "run-s build generate && lerna publish from-package"
   },
   "repository": {
