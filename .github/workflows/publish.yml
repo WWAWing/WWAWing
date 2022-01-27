@@ -39,6 +39,10 @@ jobs:
         run: |
           npm run version-up -- ${{ github.event.inputs.version }} --yes
           export NEW_VERSION=$(node -e 'process.stdout.write(require("./lerna.json").version)')
+          npm install
+          git add -u package-lock.json
+          git commit -m "v$NEW_VERSION"
+          git tag "v$NEW_VERSION"
           git push origin HEAD --tags
           npm run publish:all -- --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes
         env:
