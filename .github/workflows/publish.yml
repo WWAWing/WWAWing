@@ -37,6 +37,6 @@ jobs:
       - name: "Publish"
         run: |
          npm run version-up -- ${{ github.event.inputs.version }} --yes
-         npm run publish:all --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes
+         npm run publish:all -- --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
