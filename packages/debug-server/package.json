@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/debug-server",
-  "version": "3.6.6",
+  "version": "3.6.7",
   "description": "wwawing debug server",
   "main": "lib/index.js",
   "files": [
