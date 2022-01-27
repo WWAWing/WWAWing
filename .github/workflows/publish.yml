@@ -43,3 +43,7 @@ jobs:
           npm run publish:all -- --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: "check"
+        run: git diff
+        if: ${{ failure() }}
