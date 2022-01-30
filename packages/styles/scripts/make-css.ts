@@ -34,24 +34,12 @@ function createWWAExtendCSSFilePromises(): Promise<void>[] {
 }
 
 function createWWACSSFilePromise(filePath: string, outputFilePath: string): Promise<void> {
-    return new Promise((resolve, reject) => 
-        // TODO: render は非推奨なので compile に乗り換える
-        sass.render({
-            file: filePath,
-            outFile: outputFilePath,
-            linefeed: "lf",
-            indentWidth: 4,
-            outputStyle: "expanded"
-        }, (err, result) => {
-            if (err) {
-                reject(err);
-            } else {
-                fs.writeFile(
-                    outputFilePath,
-                    result.css,
-                    err => (err ? reject(err) : resolve())
-                );
-            }
-        })
-    );
+    const result = sass.compile(filePath, { style: "expanded" });
+    return new Promise((resolve, reject) => {
+        fs.writeFile(
+            outputFilePath,
+            result.css,
+            err => (err ? reject(err) : resolve())
+        );
+    });
 }

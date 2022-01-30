@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/page-generator",
-  "version": "3.6.10",
+  "version": "3.6.11",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -42,6 +42,6 @@
   },
   "engines": {
     "node": ">=14",
-    "npm": ">=6"
+    "npm": ">=8"
   }
 }
