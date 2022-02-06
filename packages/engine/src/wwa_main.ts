@@ -4928,7 +4928,7 @@ font-weight: bold;
      */
     private toAssignableValue(x: number): number {
         // 整数部分のみにする. 例) -1.1 -> -1, 1.1 -> 1
-        const intValue = x | 0;
+        const intValue = x > 0 ? Math.floor(x) : Math.ceil(x);
         const clampedValue = Math.max(Math.min(intValue, Consts.USER_VAR_NUM_MAX_VALUE), Consts.USET_VAR_NUM_MIN_VALUE);
         return this.isNotNumberTypeOrNaN(clampedValue) ? 0 : clampedValue;
     }
@@ -5014,7 +5014,7 @@ font-weight: bold;
     // 負値, 数値でない値, NaN は 0にする。
     // 小数部分を含む場合は、整数部分だけ取り出す。
     private toValidStatusValue(x: number): number {
-        return this.isNotNumberTypeOrNaN(x) || x < 0 ? 0 : (x | 0);
+        return this.isNotNumberTypeOrNaN(x) || x < 0 ? 0 : Math.floor(x);
     }
 
     // HP <- ユーザ変数
