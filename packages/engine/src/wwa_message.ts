@@ -1243,6 +1243,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._message = message;
         this.update();
     }
+    public clear(): void {
+        this._message = new ParsedMessage([], false);
+        this.update();
+    }
     public setYesNoChoice(isYesNo: boolean): boolean {
         this._isInputDisable = false;
         this._isYesno = isYesNo;

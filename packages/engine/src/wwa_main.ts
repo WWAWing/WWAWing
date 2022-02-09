@@ -3493,17 +3493,17 @@ export class WWA {
     public gameover() {
         var jx = this._wwaData.gameoverX;
         var jy = this._wwaData.gameoverY;
-        if (this._messageWindow.isVisible()) {
-            this._yesNoJudge = YesNoState.UNSELECTED;
-            this._messageQueue = []; // force clear!!
-            this._player.setDelayFrame();
-            this._messageWindow.hide();
-            this._yesNoChoicePartsCoord = void 0;
-            this._yesNoChoicePartsID = void 0;
-            this._yesNoUseItemPos = void 0;
-            this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
-            this._messageWindow.setYesNoChoice(false);
-        }
+        this._yesNoJudge = YesNoState.UNSELECTED;
+        this._messageQueue = []; // force clear!!
+        this._player.setDelayFrame();
+        this._messageWindow.hide();
+        this._yesNoChoicePartsCoord = void 0;
+        this._yesNoChoicePartsID = void 0;
+        this._yesNoUseItemPos = void 0;
+        this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
+        this._player.clearMessageWaiting();
+        this._messageWindow.clear();
+        this._messageWindow.setYesNoChoice(false);
 
         this._waitFrame = 0;
         this._temporaryInputDisable = true;
@@ -4673,6 +4673,9 @@ export class WWA {
     public setPlayerStatus(type: MacroStatusIndex, value: number): void {
         if (type === MacroStatusIndex.ENERGY) {
             this._player.setEnergy(value);
+            if(this._player.isDead()) {
+                this.gameover();
+            }
         } else if (type === MacroStatusIndex.STRENGTH) {
             this._player.setStrength(value);
         } else if (type === MacroStatusIndex.DEFENCE) {
