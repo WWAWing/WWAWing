@@ -4670,17 +4670,24 @@ export class WWA {
         return pos;
     }
 
+    // 負値, 数値でない値, NaN は 0にする。
+    // 小数部分を含む場合は、整数部分だけ取り出す。
+    private toValidStatusValue(x: number): number {
+        return this.isNotNumberTypeOrNaN(x) || x < 0 ? 0 : Math.floor(x);
+    }
+
     public setPlayerStatus(type: MacroStatusIndex, value: number): void {
         if (type === MacroStatusIndex.ENERGY) {
+            // 生命力は setEnergy 内でマイナスの値を処理しているためこのまま続行
             this._player.setEnergy(value);
         } else if (type === MacroStatusIndex.STRENGTH) {
-            this._player.setStrength(value);
+            this._player.setStrength(this.toValidStatusValue(value));
         } else if (type === MacroStatusIndex.DEFENCE) {
-            this._player.setDefence(value);
+            this._player.setDefence(this.toValidStatusValue(value));
         } else if (type === MacroStatusIndex.GOLD) {
-            this._player.setGold(value);
+            this._player.setGold(this.toValidStatusValue(value));
         } else if (type === MacroStatusIndex.MOVES) {
-            this._player.setMoveCount(value);
+            this._player.setMoveCount(this.toValidStatusValue(value));
         } else {
             throw new Error("未定義のステータスタイプです");
         }
@@ -5009,12 +5016,6 @@ font-weight: bold;
     // ユーザ変数 <= MONEY
     public setUserVarMONEY(num: number): void {
         this.setUserVar(num, this._player.getStatus().gold);
-    }
-
-    // 負値, 数値でない値, NaN は 0にする。
-    // 小数部分を含む場合は、整数部分だけ取り出す。
-    private toValidStatusValue(x: number): number {
-        return this.isNotNumberTypeOrNaN(x) || x < 0 ? 0 : Math.floor(x);
     }
 
     // HP <- ユーザ変数
