@@ -1919,31 +1919,28 @@ export class WWA {
             // ユーザー変数表示モードの場合
             if(this._wwaData.showUserVer?.isShow) {
                 let isInputKey = false;
-                if(this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN && this._wwaData.showUserVer.start < (Consts.USER_VAR_NUM - 10)) {
+                if(this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
                     this._wwaData.showUserVer.start++;
                     isInputKey = true;
                 }
-                if(this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN && this._wwaData.showUserVer.start > 0) {
+                if(this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
                     this._wwaData.showUserVer.start--;
                     isInputKey = true;
                 }
                 if(this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
-                    if(this._wwaData.showUserVer.start <= (Consts.USER_VAR_NUM - 20)) {
-                        this._wwaData.showUserVer.start += 10;
-                    }
-                    else {
-                        this._wwaData.showUserVer.start = (Consts.USER_VAR_NUM - 10);
-                    }
+                    this._wwaData.showUserVer.start += 10;
                     isInputKey = true;
                 }
                 if(this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ) {
-                    if(this._wwaData.showUserVer.start >= 10) {
-                        this._wwaData.showUserVer.start -= 10;
-                    }
-                    else {
-                        this._wwaData.showUserVer.start = 0;
-                    }
+                    this._wwaData.showUserVer.start -= 10;
                     isInputKey = true;
+                }
+                // 0 - USER_VAR_NUMの範囲外ならループさせる
+                if(this._wwaData.showUserVer.start < 0) {
+                    this._wwaData.showUserVer.start += (Consts.USER_VAR_NUM);
+                }
+                if(this._wwaData.showUserVer.start > Consts.USER_VAR_NUM) {
+                    this._wwaData.showUserVer.start -= (Consts.USER_VAR_NUM);
                 }
                 if(isInputKey) {
                     this._setNextMessage();
@@ -4424,20 +4421,21 @@ export class WWA {
             this.setNowPlayTime();
             let helpMessage: string = '変数一覧\n';
             const SHOW_VAR_NUM = 10;
-            const show_user_ver_limit = this._wwaData.showUserVer.start + SHOW_VAR_NUM;
-            for(let i=this._wwaData.showUserVer.start; i<show_user_ver_limit; i++) {
-                if(i < Consts.USER_VAR_NUM) {
-                    const label = (()=>{
-                        if(this._wwaData.showUserVer.nameList) {
-                            const userSetName = this._wwaData.showUserVer.nameList[i.toString()]
-                            if(userSetName) {
-                                return `変数 ${i}: ${userSetName}`;
-                            }
-                        }
-                        return `変数 ${i}: 名無し`;
-                    })();
-                    helpMessage += `${label}: ${this._wwaData.userVar[i]}\n`;
+            for(let i=0; i<SHOW_VAR_NUM; i++) {
+                let current_index = this._wwaData.showUserVer.start + i;
+                if(current_index >= Consts.USER_VAR_NUM) {
+                    current_index -= Consts.USER_VAR_NUM;
                 }
+                const label = (()=>{
+                    if(this._wwaData.showUserVer.nameList) {
+                        const userSetName = this._wwaData.showUserVer.nameList[current_index.toString()]
+                        if(userSetName) {
+                            return `変数 ${current_index}: ${userSetName}`;
+                        }
+                    }
+                    return `変数 ${current_index}: 名無し`;
+                })();
+                helpMessage += `${label}: ${this._wwaData.userVar[current_index]}\n`;
             }
             helpMessage += "\n操作方法\n";
             helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
