@@ -42,6 +42,7 @@ export enum KeyCode {
     KEY_F7 = 118,
     KEY_F8 = 119,
     KEY_F9 = 120,
+    KEY_F10 = 121,
     KEY_F12 = 123
 }
 

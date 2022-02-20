@@ -1761,6 +1761,9 @@ export class WWA {
                     if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onitemmenucalled();
                     }
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F10)) {
+                    // コマンドのヘルプ 
+                    this._displayVariable();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_Y)) {
                     // コマンドのヘルプ 
@@ -4344,6 +4347,14 @@ export class WWA {
         }
         this._passwordLoadExecInNextFrame = true;
         this._passwordSaveExtractData = data;
+    }
+
+    private _displayVariable(): void {
+        if (this._player.isControllable()) {
+            this.setNowPlayTime();
+            let helpMessage:string = "テスト";
+            this.setMessageQueue(helpMessage, false, true);
+        }
     }
 
     private _displayHelp(): void {
