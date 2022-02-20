@@ -13,6 +13,7 @@
 
 ``` sh
 npm install
+npm run build
 ```
 
 することで、各パッケージが動作可能な状態になります。
