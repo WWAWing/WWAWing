@@ -1762,7 +1762,6 @@ export class WWA {
                         this.onitemmenucalled();
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_V)) {
-                    // コマンドのヘルプ 
                     this._displayVariable();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_Y)) {
@@ -1897,6 +1896,34 @@ export class WWA {
                     }
                     this._setNextMessage();
 
+                }
+            }
+
+            // ユーザー変数表示モードの場合
+            if(this._wwaData.showUserVer?.isShow) {
+                let isInputKey = false;
+                if(this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN && this._wwaData.showUserVer.start < (Consts.USER_VAR_NUM - 10)) {
+                    this._wwaData.showUserVer.start++;
+                    isInputKey = true;
+                }
+                if(this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN && this._wwaData.showUserVer.start > 0) {
+                    this._wwaData.showUserVer.start--;
+                    isInputKey = true;
+                }
+                if(this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN && this._wwaData.showUserVer.start <= (Consts.USER_VAR_NUM - 20)) {
+                    this._wwaData.showUserVer.start += 10;
+                    isInputKey = true;
+                }
+                if(this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN && this._wwaData.showUserVer.start >= 10) {
+                    this._wwaData.showUserVer.start -= 10;
+                    isInputKey = true;
+                }
+                if(isInputKey) {
+                    this._setNextMessage();
+                    this._displayVariable();
+                }
+                if(this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
+                    this._setNextMessage();
                 }
             }
         } else if (this._player.isWatingEstimateWindow()) {
@@ -4350,13 +4377,18 @@ export class WWA {
     }
 
     private _displayVariable(): void {
+        if (this._wwaData.showUserVer === undefined) {
+            this._wwaData.showUserVer = {
+                start: 0,
+                isShow: true
+            };
+        }
         if (this._player.isControllable()) {
             this.setNowPlayTime();
-            //  Consts.USER_VAR_NUM
             let helpMessage: string = '変数一覧\n';
-            const start_var = 0;
-            const show_var_num = 15;
-            for(let i=start_var; i<(start_var+show_var_num); i++) {
+            const SHOW_VAR_NUM = 10;
+            const show_user_ver_limit = this._wwaData.showUserVer.start + SHOW_VAR_NUM;
+            for(let i=this._wwaData.showUserVer.start; i<show_user_ver_limit; i++) {
                 if(i < Consts.USER_VAR_NUM) {
                     helpMessage += `変数 ${i}: ${this._wwaData.userVar[i]}\n`;
                 }
