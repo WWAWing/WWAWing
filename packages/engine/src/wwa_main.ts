@@ -35,7 +35,7 @@ import { ItemMenu } from "./wwa_item_menu";
 import { encodeSaveData, decodeSaveDataV0, decodeSaveDataV1, generateMD5 } from "./wwa_encryption";
 import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADataWithWorldNameStatus } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
-import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
+import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 let wwa: WWA
 
@@ -210,7 +210,8 @@ export class WWA {
         useGoToWWA: boolean,
         audioDirectory: string = "",
         disallowLoadOldSave: boolean = false,
-        dumpElm: HTMLElement = null
+        dumpElm: HTMLElement = null,
+        userVariableNameFile: string
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -975,6 +976,20 @@ export class WWA {
         eventEmitter.addListener("error", errorHandler )
         const loader = new WWALoader(mapFileName, eventEmitter);
         loader.requestAndLoadMapData();
+        // ユーザー変数ファイルを読み込む
+        getJSONFile(userVariableNameFile)
+        .then((userVariableNameList)=>{
+            if(userVariableNameList) {
+                this._wwaData.showUserVer = {
+                    start: 0,
+                    isShow: false,
+                    nameList: JSON.parse(<string>userVariableNameList)
+                }
+            }
+        })
+        .catch((e)=>{
+            console.error(e);
+        })
     }
 
     private _setProgressBar(progress: LoaderProgress) {
@@ -4406,7 +4421,14 @@ export class WWA {
             const show_user_ver_limit = this._wwaData.showUserVer.start + SHOW_VAR_NUM;
             for(let i=this._wwaData.showUserVer.start; i<show_user_ver_limit; i++) {
                 if(i < Consts.USER_VAR_NUM) {
-                    helpMessage += `変数 ${i}: ${this._wwaData.userVar[i]}\n`;
+                    const label = (()=>{
+                        const userSetName = this._wwaData.showUserVer.nameList[i.toString()]
+                        if(userSetName) {
+                            return userSetName;
+                        }
+                        return `変数 ${i}`;
+                    })();
+                    helpMessage += `${label}: ${this._wwaData.userVar[i]}\n`;
                 }
             }
             helpMessage += "\n操作方法\n";
@@ -5545,6 +5567,8 @@ function start() {
     if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
         classicModeEnabled = true;
     }
+    /** WWAの変数命名データを読み込む */
+    var userVariableNameFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-variable-name-file");
     var itemEffectEnabled = true;
     var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
     if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
@@ -5571,7 +5595,8 @@ function start() {
         useGoToWWA,
         audioDirectory,
         disallowLoadOldSave,
-        dumpElm
+        dumpElm,
+        userVariableNameFile
     );
 }
 
@@ -5583,3 +5608,28 @@ if (document.readyState === "complete") {
         setTimeout(start);
     });
 }
+
+// TODO: 適切な場所に移動する
+export const getJSONFile = (file: string) => {
+    return new Promise((resolve)=>{
+        const xhr: XMLHttpRequest = new XMLHttpRequest();
+        try {
+          xhr.open("GET", file, true);
+          xhr.send();
+          xhr.onreadystatechange  = () => {
+            if(xhr.readyState === 4){
+                if (xhr.status === 200 || xhr.status === 304) {
+                    resolve(xhr.response);
+                }
+                else {
+                    resolve(null);
+                }
+            }
+          }
+        }
+        catch(e) {
+          console.error(e);
+          resolve(null);
+        }
+    })
+  }
