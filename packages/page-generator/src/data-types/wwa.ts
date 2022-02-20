@@ -18,4 +18,5 @@ export interface Resources {
     wwaJs?: string;
     wwaCss?: string;
     titleImage?: string;
+    variableNameFile?: string;
 }
