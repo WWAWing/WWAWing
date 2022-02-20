@@ -5626,12 +5626,13 @@ export const getJSONFile = (file: string, callback: (result: string) => void) =>
     try {
         xhr.open("GET", file, true);
         xhr.send();
-        xhr.onreadystatechange  = () => {
-        if(xhr.readyState === 4){
-            if (xhr.status === 200 || xhr.status === 304) {
-                callback(xhr.response);
+        xhr.onreadystatechange = () => {
+            if(xhr.readyState === 4){
+                if (xhr.status === 200 || xhr.status === 304) {
+                    callback(xhr.response);
+                    return;
+                }
             }
-        }
         }
     }
     catch(e) {
