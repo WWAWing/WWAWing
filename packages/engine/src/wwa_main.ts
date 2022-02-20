@@ -1920,6 +1920,7 @@ export class WWA {
                 }
                 if(isInputKey) {
                     this._setNextMessage();
+                    this._wwaData.showUserVer.isShow = true;
                     this._displayVariable();
                 }
                 if(this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
@@ -4393,6 +4394,9 @@ export class WWA {
                     helpMessage += `変数 ${i}: ${this._wwaData.userVar[i]}\n`;
                 }
             }
+            helpMessage += "\n操作方法\n";
+            helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
+            helpMessage += "左キー：１０つ戻す　右キー：１０つ進める\n";
             this.setMessageQueue(helpMessage, false, true);
         }
     }
@@ -4536,6 +4540,9 @@ export class WWA {
                     this._setNextMessage();
                 }
             }
+        }
+        if(this._wwaData.showUserVer) {
+            this._wwaData.showUserVer.isShow = false;
         }
     }
 
