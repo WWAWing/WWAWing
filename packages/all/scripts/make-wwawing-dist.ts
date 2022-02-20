@@ -148,7 +148,8 @@ export default async function makeDistribution(
                     },
                     varDump: {
                         elementId: "vardump"
-                    }
+                    },
+                    isShowUserVariable: true
                 },
                 resources: {
                     mapData: `${mapData}.dat`,

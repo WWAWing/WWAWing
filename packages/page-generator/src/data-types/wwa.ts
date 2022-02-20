@@ -10,6 +10,7 @@ export interface GameOption {
     varDump?: {
         elementId: string
     };
+    isShowUserVariable?: boolean;
 }
 
 export interface Resources {
