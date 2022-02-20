@@ -64,7 +64,7 @@ function createPlayPageConfig(mapData: string, cssName?: string, isClassicMode?:
                 wwaJs: isDev ? "wwa.long.js" : "wwa.js",
                 wwaCss: cssName,
                 titleImage: "cover.gif",
-                variableNameFile: `${mapData}.json`
+                variableNameFile: `${mapData}-vars.json`
             },
         },
         copyrights: "official-and-wing"

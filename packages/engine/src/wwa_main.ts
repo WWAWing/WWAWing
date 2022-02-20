@@ -987,7 +987,7 @@ export class WWA {
                 this._wwaData.showUserVer = {
                     start: 0,
                     isShow: false,
-                    nameList: JSON.parse(<string>userVariableNameList),
+                    nameList: JSON.parse(userVariableNameList),
                     isAvailable: isAvailableShowUserVariable
                 }
             }
