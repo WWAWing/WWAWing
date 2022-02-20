@@ -982,13 +982,20 @@ export class WWA {
         const loader = new WWALoader(mapFileName, eventEmitter);
         loader.requestAndLoadMapData();
         // ユーザー変数ファイルを読み込む
-        getJSONFile(userVariableNameFile, (userVariableNameList: string) => {
-            if(this._wwaData && userVariableNameList) {
+        getJSONFile(userVariableNameFile, (e: any, userVariableNameList: string) => {
+            this._wwaData.showUserVer = {
+                start: 0,
+                isShow: false,
+                nameList: {},
+                isAvailable: isAvailableShowUserVariable
+            }
+            if(e !== null) {
+                console.error(e);
+            }
+            else if(this._wwaData && userVariableNameList) {
                 this._wwaData.showUserVer = {
-                    start: 0,
-                    isShow: false,
-                    nameList: JSON.parse(userVariableNameList),
-                    isAvailable: isAvailableShowUserVariable
+                    ...this._wwaData.showUserVer,
+                    nameList: JSON.parse(userVariableNameList)
                 }
             }
         })
@@ -5619,7 +5626,7 @@ if (document.readyState === "complete") {
 }
 
 // TODO: 適切な場所に移動する
-export const getJSONFile = (file: string, callback: (result: string) => void) => {
+export const getJSONFile = (file: string, callback: (error:  any, result: string) => void) => {
     const xhr: XMLHttpRequest = new XMLHttpRequest();
     try {
         xhr.open("GET", file, true);
@@ -5627,13 +5634,13 @@ export const getJSONFile = (file: string, callback: (result: string) => void) =>
         xhr.onreadystatechange = () => {
             if(xhr.readyState === 4){
                 if (xhr.status === 200 || xhr.status === 304) {
-                    callback(xhr.response);
+                    callback(null, xhr.response);
                     return;
                 }
             }
         }
     }
     catch(e) {
-        console.error(e);
+        callback(e);
     }
   }
