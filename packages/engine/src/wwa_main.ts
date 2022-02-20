@@ -1910,12 +1910,22 @@ export class WWA {
                     this._wwaData.showUserVer.start--;
                     isInputKey = true;
                 }
-                if(this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN && this._wwaData.showUserVer.start <= (Consts.USER_VAR_NUM - 20)) {
-                    this._wwaData.showUserVer.start += 10;
+                if(this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
+                    if(this._wwaData.showUserVer.start <= (Consts.USER_VAR_NUM - 20)) {
+                        this._wwaData.showUserVer.start += 10;
+                    }
+                    else {
+                        this._wwaData.showUserVer.start = (Consts.USER_VAR_NUM - 10);
+                    }
                     isInputKey = true;
                 }
-                if(this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN && this._wwaData.showUserVer.start >= 10) {
-                    this._wwaData.showUserVer.start -= 10;
+                if(this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ) {
+                    if(this._wwaData.showUserVer.start >= 10) {
+                        this._wwaData.showUserVer.start -= 10;
+                    }
+                    else {
+                        this._wwaData.showUserVer.start = 0;
+                    }
                     isInputKey = true;
                 }
                 if(isInputKey) {
