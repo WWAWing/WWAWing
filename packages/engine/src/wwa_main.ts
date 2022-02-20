@@ -977,8 +977,7 @@ export class WWA {
         const loader = new WWALoader(mapFileName, eventEmitter);
         loader.requestAndLoadMapData();
         // ユーザー変数ファイルを読み込む
-        getJSONFile(userVariableNameFile)
-        .then((userVariableNameList)=>{
+        getJSONFile(userVariableNameFile, (userVariableNameList: string) => {
             if(userVariableNameList) {
                 this._wwaData.showUserVer = {
                     start: 0,
@@ -986,9 +985,6 @@ export class WWA {
                     nameList: JSON.parse(<string>userVariableNameList)
                 }
             }
-        })
-        .catch((e)=>{
-            console.error(e);
         })
     }
 
@@ -5612,26 +5608,20 @@ if (document.readyState === "complete") {
 }
 
 // TODO: 適切な場所に移動する
-export const getJSONFile = (file: string) => {
-    return new Promise((resolve)=>{
-        const xhr: XMLHttpRequest = new XMLHttpRequest();
-        try {
-          xhr.open("GET", file, true);
-          xhr.send();
-          xhr.onreadystatechange  = () => {
-            if(xhr.readyState === 4){
-                if (xhr.status === 200 || xhr.status === 304) {
-                    resolve(xhr.response);
-                }
-                else {
-                    resolve(null);
-                }
+export const getJSONFile = (file: string, callback: (result: string) => void) => {
+    const xhr: XMLHttpRequest = new XMLHttpRequest();
+    try {
+        xhr.open("GET", file, true);
+        xhr.send();
+        xhr.onreadystatechange  = () => {
+        if(xhr.readyState === 4){
+            if (xhr.status === 200 || xhr.status === 304) {
+                callback(xhr.response);
             }
-          }
         }
-        catch(e) {
-          console.error(e);
-          resolve(null);
         }
-    })
+    }
+    catch(e) {
+        console.error(e);
+    }
   }
