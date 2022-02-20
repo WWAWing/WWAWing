@@ -1761,7 +1761,7 @@ export class WWA {
                     if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onitemmenucalled();
                     }
-                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F10)) {
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_V)) {
                     // コマンドのヘルプ 
                     this._displayVariable();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
@@ -4352,7 +4352,15 @@ export class WWA {
     private _displayVariable(): void {
         if (this._player.isControllable()) {
             this.setNowPlayTime();
-            let helpMessage:string = "テスト";
+            //  Consts.USER_VAR_NUM
+            let helpMessage: string = '変数一覧\n';
+            const start_var = 0;
+            const show_var_num = 15;
+            for(let i=start_var; i<(start_var+show_var_num); i++) {
+                if(i < Consts.USER_VAR_NUM) {
+                    helpMessage += `変数 ${i}: ${this._wwaData.userVar[i]}\n`;
+                }
+            }
             this.setMessageQueue(helpMessage, false, true);
         }
     }
