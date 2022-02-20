@@ -4427,10 +4427,10 @@ export class WWA {
                         if(this._wwaData.showUserVer.nameList) {
                             const userSetName = this._wwaData.showUserVer.nameList[i.toString()]
                             if(userSetName) {
-                                return userSetName;
+                                return `変数 ${i}: ${userSetName}`;
                             }
                         }
-                        return `変数 ${i}`;
+                        return `変数 ${i}: 名無し`;
                     })();
                     helpMessage += `${label}: ${this._wwaData.userVar[i]}\n`;
                 }
