@@ -128,7 +128,7 @@ export default async function makeDistribution(
         return mapNames
             .map(mapName => ({
                 mapName,
-                html: render(createConfig(`${mapName}.dat`))
+                html: render(createConfig(mapName))
             }))
             .map(params => createWriteFilePromise(
                 path.join(__dirname, "..", "dist", "wwawing-dist", "mapdata", `${params.mapName}.html`),
@@ -151,9 +151,10 @@ export default async function makeDistribution(
                     }
                 },
                 resources: {
-                    mapData,
+                    mapData: `${mapData}.dat`,
                     wwaJs: "wwa.js",
                     titleImage: "cover.gif",
+                    variableNameFile: `${mapData}.json`
                 },
             },
             copyrights: "official-and-wing"

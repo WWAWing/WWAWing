@@ -133,5 +133,8 @@ export interface WWAData {
 
 export interface ShowUserVarMode {
     start: number,
-    isShow: boolean
+    isShow: boolean,
+    nameList?: {
+        [key: string]: string
+    }
 }
