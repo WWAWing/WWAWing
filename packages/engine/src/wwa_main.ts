@@ -4378,11 +4378,16 @@ export class WWA {
     }
 
     private _displayVariable(): void {
+        // 定義されてない場合には初期化する
         if (this._wwaData.showUserVer === undefined) {
             this._wwaData.showUserVer = {
                 start: 0,
                 isShow: true
             };
+        }
+        else {
+            // 表示中フラグをONにする
+            this._wwaData.showUserVer.isShow = true;
         }
         if (this._player.isControllable()) {
             this.setNowPlayTime();
