@@ -5641,6 +5641,6 @@ export const getJSONFile = (file: string, callback: (error:  any, result: string
         }
     }
     catch(e) {
-        callback(e);
+        callback(e, '');
     }
   }
