@@ -892,10 +892,14 @@ export class WWA {
                 }
 
                 if (this._usePassword) {
+                    let showMessage = "効果音・ＢＧＭデータをロードしますか？";
+                    if (isAvailableShowUserVariable) {
+                        showMessage += "\n（※変数表示が有効になっています。\n公開前に必ず data-wwa-show-user-variable=false に設定してください）"
+                    }
                     this._messageWindow.setParsedMessage(new ParsedMessage(
                         (
                             this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
-                                "効果音・ＢＧＭデータをロードしますか？" :
+                            showMessage :
                                 this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
                         ), true));
                     this._messageWindow.show();
