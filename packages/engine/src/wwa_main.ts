@@ -4422,9 +4422,11 @@ export class WWA {
             for(let i=this._wwaData.showUserVer.start; i<show_user_ver_limit; i++) {
                 if(i < Consts.USER_VAR_NUM) {
                     const label = (()=>{
-                        const userSetName = this._wwaData.showUserVer.nameList[i.toString()]
-                        if(userSetName) {
-                            return userSetName;
+                        if(this._wwaData.showUserVer.nameList) {
+                            const userSetName = this._wwaData.showUserVer.nameList[i.toString()]
+                            if(userSetName) {
+                                return userSetName;
+                            }
                         }
                         return `変数 ${i}`;
                     })();
