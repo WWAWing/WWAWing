@@ -137,4 +137,5 @@ export interface ShowUserVarMode {
     nameList?: {
         [key: string]: string
     }
+    isAvailable: boolean;
 }

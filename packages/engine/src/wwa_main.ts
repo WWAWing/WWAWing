@@ -211,7 +211,8 @@ export class WWA {
         audioDirectory: string = "",
         disallowLoadOldSave: boolean = false,
         dumpElm: HTMLElement = null,
-        userVariableNameFile: string
+        userVariableNameFile: string,
+        isAvailableShowUserVariable: boolean
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -978,11 +979,12 @@ export class WWA {
         loader.requestAndLoadMapData();
         // ユーザー変数ファイルを読み込む
         getJSONFile(userVariableNameFile, (userVariableNameList: string) => {
-            if(userVariableNameList) {
+            if(this._wwaData && userVariableNameList) {
                 this._wwaData.showUserVer = {
                     start: 0,
                     isShow: false,
-                    nameList: JSON.parse(<string>userVariableNameList)
+                    nameList: JSON.parse(<string>userVariableNameList),
+                    isAvailable: isAvailableShowUserVariable
                 }
             }
         })
@@ -4401,15 +4403,19 @@ export class WWA {
     private _displayVariable(): void {
         // 定義されてない場合には初期化する
         if (this._wwaData.showUserVer === undefined) {
+            var isAvailableShowUserVariable = util.$id("wwa-wrapper").getAttribute("data-wwa-show-user-variable");
             this._wwaData.showUserVer = {
                 start: 0,
-                isShow: true
+                isShow: true,
+                isAvailable: (isAvailableShowUserVariable === 'true')
             };
         }
-        else {
-            // 表示中フラグをONにする
-            this._wwaData.showUserVer.isShow = true;
+        // 属性によって表示許可されていない場合には何もしない
+        if(!this._wwaData.showUserVer.isAvailable) {
+            return;
         }
+        // 表示中フラグをONにする
+        this._wwaData.showUserVer.isShow = true;
         if (this._player.isControllable()) {
             this.setNowPlayTime();
             let helpMessage: string = '変数一覧\n';
@@ -5567,6 +5573,8 @@ function start() {
     }
     /** WWAの変数命名データを読み込む */
     var userVariableNameFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-variable-name-file");
+    /** 変数表示システムが有効か */
+    var isAvailableShowUserVariable = util.$id("wwa-wrapper").getAttribute("data-wwa-show-user-variable");
     var itemEffectEnabled = true;
     var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
     if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
@@ -5594,7 +5602,8 @@ function start() {
         audioDirectory,
         disallowLoadOldSave,
         dumpElm,
-        userVariableNameFile
+        userVariableNameFile,
+        (isAvailableShowUserVariable === 'true')
     );
 }
 
