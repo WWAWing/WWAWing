@@ -4436,10 +4436,8 @@ export class WWA {
             let helpMessage: string = '変数一覧\n';
             const SHOW_VAR_NUM = 10;
             for(let i=0; i<SHOW_VAR_NUM; i++) {
-                let currentIndex = this._wwaData.showUserVer.start + i;
-                if(currentIndex >= Consts.USER_VAR_NUM) {
-                    currentIndex -= Consts.USER_VAR_NUM;
-                }
+                /** 終端まで行った際にはループして0番目から参照する */
+                let currentIndex = (this._wwaData.showUserVer.start + i) % Consts.USER_VAR_NUM;
                 const label = (()=>{
                     if(this._wwaData.showUserVer.nameList) {
                         const userSetName = this._wwaData.showUserVer.nameList[currentIndex.toString()]
