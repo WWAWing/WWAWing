@@ -120,7 +120,7 @@ export interface WWAData {
 
     // XE拡張:ここから
     userVar: number[];
-    showUserVer: ShowUserVarMode;
+    showUserVar: ShowUserVarMode;
     permitChangeGameSpeed: boolean;
     gameSpeedIndex: number;
     playTime: number;

@@ -983,7 +983,7 @@ export class WWA {
         loader.requestAndLoadMapData();
         // ユーザー変数ファイルを読み込む
         getJSONFile(userVariableNameFile, (e: any, userVariableNameList: string) => {
-            this._wwaData.showUserVer = {
+            this._wwaData.showUserVar = {
                 start: 0,
                 isShow: false,
                 nameList: {},
@@ -1000,8 +1000,8 @@ export class WWA {
                         delete nameList[x];
                     }
                 })
-                this._wwaData.showUserVer = {
-                    ...this._wwaData.showUserVer,
+                this._wwaData.showUserVar = {
+                    ...this._wwaData.showUserVar,
                     nameList: nameList
                 }
             }
@@ -1931,34 +1931,34 @@ export class WWA {
             }
 
             // ユーザー変数表示モードの場合
-            if(this._wwaData.showUserVer?.isShow) {
+            if(this._wwaData.showUserVar?.isShow) {
                 let isInputKey = false;
                 if(this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
-                    this._wwaData.showUserVer.start++;
+                    this._wwaData.showUserVar.start++;
                     isInputKey = true;
                 }
                 if(this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
-                    this._wwaData.showUserVer.start--;
+                    this._wwaData.showUserVar.start--;
                     isInputKey = true;
                 }
                 if(this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
-                    this._wwaData.showUserVer.start += 10;
+                    this._wwaData.showUserVar.start += 10;
                     isInputKey = true;
                 }
                 if(this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ) {
-                    this._wwaData.showUserVer.start -= 10;
+                    this._wwaData.showUserVar.start -= 10;
                     isInputKey = true;
                 }
                 // 0 - USER_VAR_NUMの範囲外ならループさせる
-                if(this._wwaData.showUserVer.start < 0) {
-                    this._wwaData.showUserVer.start += (Consts.USER_VAR_NUM);
+                if(this._wwaData.showUserVar.start < 0) {
+                    this._wwaData.showUserVar.start += (Consts.USER_VAR_NUM);
                 }
-                if(this._wwaData.showUserVer.start > Consts.USER_VAR_NUM) {
-                    this._wwaData.showUserVer.start -= (Consts.USER_VAR_NUM);
+                if(this._wwaData.showUserVar.start > Consts.USER_VAR_NUM) {
+                    this._wwaData.showUserVar.start -= (Consts.USER_VAR_NUM);
                 }
                 if(isInputKey) {
                     this._setNextMessage();
-                    this._wwaData.showUserVer.isShow = true;
+                    this._wwaData.showUserVar.isShow = true;
                     this._displayVariable();
                 }
                 if(this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
@@ -4417,30 +4417,30 @@ export class WWA {
 
     private _displayVariable(): void {
         // 定義されてない場合には初期化する
-        if (this._wwaData.showUserVer === undefined) {
+        if (this._wwaData.showUserVar === undefined) {
             var isAvailableShowUserVariable = util.$id("wwa-wrapper").getAttribute("data-wwa-show-user-variable");
-            this._wwaData.showUserVer = {
+            this._wwaData.showUserVar = {
                 start: 0,
                 isShow: true,
                 isAvailable: (isAvailableShowUserVariable === 'true')
             };
         }
         // 属性によって表示許可されていない場合には何もしない
-        if(!this._wwaData.showUserVer.isAvailable) {
+        if(!this._wwaData.showUserVar.isAvailable) {
             return;
         }
         // 表示中フラグをONにする
-        this._wwaData.showUserVer.isShow = true;
+        this._wwaData.showUserVar.isShow = true;
         if (this._player.isControllable()) {
             this.setNowPlayTime();
             let helpMessage: string = '変数一覧\n';
             const SHOW_VAR_NUM = 10;
             for(let i=0; i<SHOW_VAR_NUM; i++) {
                 /** 終端まで行った際にはループして0番目から参照する */
-                let currentIndex = (this._wwaData.showUserVer.start + i) % Consts.USER_VAR_NUM;
+                let currentIndex = (this._wwaData.showUserVar.start + i) % Consts.USER_VAR_NUM;
                 const label = (()=>{
-                    if(this._wwaData.showUserVer.nameList) {
-                        const userSetName = this._wwaData.showUserVer.nameList[currentIndex.toString()]
+                    if(this._wwaData.showUserVar.nameList) {
+                        const userSetName = this._wwaData.showUserVar.nameList[currentIndex.toString()]
                         if(userSetName) {
                             return `変数 ${currentIndex}: ${userSetName}`;
                         }
@@ -4596,8 +4596,8 @@ export class WWA {
                 }
             }
         }
-        if(this._wwaData.showUserVer) {
-            this._wwaData.showUserVer.isShow = false;
+        if(this._wwaData.showUserVar) {
+            this._wwaData.showUserVar.isShow = false;
         }
     }
 
