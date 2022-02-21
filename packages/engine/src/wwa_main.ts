@@ -894,7 +894,7 @@ export class WWA {
                 if (this._usePassword) {
                     let showMessage = "効果音・ＢＧＭデータをロードしますか？";
                     if (isAvailableShowUserVariable) {
-                        showMessage += "\n（※変数表示が有効になっています。\n公開前に必ず data-wwa-show-user-variable=false に設定してください）"
+                        showMessage += "\n\n※変数表示が有効になっています。\n公開前に必ずHTMLファイル内の\n data-wwa-show-user-variable=false \nに設定してください"
                     }
                     this._messageWindow.setParsedMessage(new ParsedMessage(
                         (
@@ -993,9 +993,16 @@ export class WWA {
                 console.error(e);
             }
             else if(this._wwaData && userVariableNameList) {
+                /** ユーザー指定変数のバリデーションチェックを行う  */
+                const nameList = JSON.parse(userVariableNameList);
+                Object.keys(nameList).forEach((x)=>{
+                    if(typeof nameList[x] !== "string") {
+                        delete nameList[x];
+                    }
+                })
                 this._wwaData.showUserVer = {
                     ...this._wwaData.showUserVer,
-                    nameList: JSON.parse(userVariableNameList)
+                    nameList: nameList
                 }
             }
         })
@@ -4429,20 +4436,20 @@ export class WWA {
             let helpMessage: string = '変数一覧\n';
             const SHOW_VAR_NUM = 10;
             for(let i=0; i<SHOW_VAR_NUM; i++) {
-                let current_index = this._wwaData.showUserVer.start + i;
-                if(current_index >= Consts.USER_VAR_NUM) {
-                    current_index -= Consts.USER_VAR_NUM;
+                let currentIndex = this._wwaData.showUserVer.start + i;
+                if(currentIndex >= Consts.USER_VAR_NUM) {
+                    currentIndex -= Consts.USER_VAR_NUM;
                 }
                 const label = (()=>{
                     if(this._wwaData.showUserVer.nameList) {
-                        const userSetName = this._wwaData.showUserVer.nameList[current_index.toString()]
+                        const userSetName = this._wwaData.showUserVer.nameList[currentIndex.toString()]
                         if(userSetName) {
-                            return `変数 ${current_index}: ${userSetName}`;
+                            return `変数 ${currentIndex}: ${userSetName}`;
                         }
                     }
-                    return `変数 ${current_index}: 名無し`;
+                    return `変数 ${currentIndex}: 名無し`;
                 })();
-                helpMessage += `${label}: ${this._wwaData.userVar[current_index]}\n`;
+                helpMessage += `${label}: ${this._wwaData.userVar[currentIndex]}\n`;
             }
             helpMessage += "\n操作方法\n";
             helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
