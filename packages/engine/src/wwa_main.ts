@@ -5641,13 +5641,24 @@ export const getJSONFile = (file: string, callback: (error:  any, result: string
         xhr.onreadystatechange = () => {
             if(xhr.readyState === 4){
                 if (xhr.status === 200 || xhr.status === 304) {
-                    callback(null, xhr.response);
-                    return;
+                    if(typeof xhr.response === "string") {
+                        callback(null, xhr.response);
+                        return;
+                    }
+                    else {
+                        callback('JSON file response is not string', '');
+                        return;
+                    }
                 }
+            }
+            else {
+                callback(xhr.status, '');
+                return;
             }
         }
     }
     catch(e) {
         callback(e, '');
+        return;
     }
   }
