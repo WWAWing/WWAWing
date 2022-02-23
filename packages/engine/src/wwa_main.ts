@@ -136,6 +136,28 @@ export class WWA {
     private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
     private _isDisallowLoadOldSave: boolean = false;
 
+    /**
+     * ゲーム内ユーザ変数ビューワの設定
+     */
+    private _inlineUserVarViewer: {
+        /**
+         * 表示されているかどうか
+         */
+        isVisible: boolean
+        /**
+         * 表示中の先頭にあるユーザ変数の添字
+         */
+        topUserVarIndex: number;
+    }
+    /**
+     * ユーザ変数の名前 (wwaData のユーザ変数と添字が対応)
+     */
+    private _userVarNameList: string[];
+    /**
+     * ユーザ変数を表示できるか
+     */
+    private _canShowUserVar: boolean;
+
     private _isActive: boolean;
 
     /**
@@ -212,7 +234,7 @@ export class WWA {
         disallowLoadOldSave: boolean = false,
         dumpElm: HTMLElement = null,
         userVariableNameFile: string,
-        isAvailableShowUserVariable: boolean
+        canShowUserVar: boolean
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -893,7 +915,7 @@ export class WWA {
 
                 if (this._usePassword) {
                     let showMessage = "効果音・ＢＧＭデータをロードしますか？";
-                    if (isAvailableShowUserVariable) {
+                    if (canShowUserVar) {
                         showMessage += "\n\n※変数表示が有効になっています。\n公開前に必ずHTMLファイル内の\n data-wwa-show-user-variable=false \nに設定してください"
                     }
                     this._messageWindow.setParsedMessage(new ParsedMessage(
@@ -982,43 +1004,47 @@ export class WWA {
         const loader = new WWALoader(mapFileName, eventEmitter);
         loader.requestAndLoadMapData();
         // ユーザー変数ファイルを読み込む
-        getJSONFile(userVariableNameFile, (error: unknown, userVariableNameList: unknown) => {
-            this._wwaData.showUserVar = {
-                start: 0,
-                isShow: false,
-                nameList: {},
-                isAvailable: isAvailableShowUserVariable
-            }
+        getJSONFile(userVariableNameFile, (error: unknown, data: unknown) => {
             if (error) {
                 console.error(error);
                 return;
             }
-            if (!this._wwaData || !userVariableNameList || typeof userVariableNameList !== "object") {
+            if (!this._wwaData || !data || typeof data !== "object") {
                 console.error();
                 return;
             }
-            this._wwaData.showUserVar = {
-                ...this._wwaData.showUserVar,
-                nameList: this.omitInvalidUserVariableNameListKey(userVariableNameList)
-            }
+            this._inlineUserVarViewer = { 
+                topUserVarIndex: 0,
+                isVisible: false
+            };
+            this._canShowUserVar = canShowUserVar;
+            this._userVarNameList = this.convertUserVariableNameListToArray(data);
         });
     }
 
     /**
-     *  ユーザー変数名前リストのバリデーションを行う.
-     *  キー, 値が想定されている値でないものは削除する
+     *  ユーザー変数名前リストのオブジェクトを、ユーザ変数の個数文の配列に変換する
+     * { "0": "hoge", "1": "fuga", "4": "foo" } => ["hoge", "fuga", undefined, undefined, "foo", undefined ... undefined]
      **/
-    private omitInvalidUserVariableNameListKey(userVariableNameList: object): Record<string, string> {
-        return Object.keys(userVariableNameList).reduce((acc, key) => {
+    private convertUserVariableNameListToArray(userVariableNameList: object): string[] {
+        const userVariableNames = new Array<string>(Consts.USER_VAR_NUM);
+        for (let i = 0; i < Consts.USER_VAR_NUM; i++) {
+            userVariableNames[i] = undefined;
+        }
+        Object.keys(userVariableNameList).forEach(key => {
             const keyNumber = parseInt(key, 10);
-            return (
+            if (
                 typeof userVariableNameList[key] !== "string" ||
                 typeof key !== "string" ||
                 isNaN(keyNumber) ||
                 keyNumber < 0 ||
                 keyNumber >= Consts.USER_VAR_NUM
-            ) ? acc : { ...acc, [key]: userVariableNameList[key] };
-        }, {});
+            ) {
+                return;
+            }
+            userVariableNames[keyNumber] = userVariableNameList[key];
+        });
+        return userVariableNames;
     }
 
     private _setProgressBar(progress: LoaderProgress) {
@@ -1944,37 +1970,37 @@ export class WWA {
             }
 
             // ユーザー変数表示モードの場合
-            if(this._wwaData.showUserVar?.isShow) {
+            if (this._inlineUserVarViewer?.isVisible) {
                 let isInputKey = false;
-                if(this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
-                    this._wwaData.showUserVar.start++;
+                if (this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
+                    this._inlineUserVarViewer.topUserVarIndex++;
                     isInputKey = true;
                 }
-                if(this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
-                    this._wwaData.showUserVar.start--;
+                if (this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
+                    this._inlineUserVarViewer.topUserVarIndex--;
                     isInputKey = true;
                 }
-                if(this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
-                    this._wwaData.showUserVar.start += 10;
+                if (this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
+                    this._inlineUserVarViewer.topUserVarIndex += 10;
                     isInputKey = true;
                 }
-                if(this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ) {
-                    this._wwaData.showUserVar.start -= 10;
+                if (this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN) {
+                    this._inlineUserVarViewer.topUserVarIndex -= 10;
                     isInputKey = true;
                 }
                 // 0 - USER_VAR_NUMの範囲外ならループさせる
-                if(this._wwaData.showUserVar.start < 0) {
-                    this._wwaData.showUserVar.start += (Consts.USER_VAR_NUM);
+                if (this._inlineUserVarViewer.topUserVarIndex < 0) {
+                    this._inlineUserVarViewer.topUserVarIndex += (Consts.USER_VAR_NUM);
                 }
-                if(this._wwaData.showUserVar.start > Consts.USER_VAR_NUM) {
-                    this._wwaData.showUserVar.start -= (Consts.USER_VAR_NUM);
+                if (this._inlineUserVarViewer.topUserVarIndex > Consts.USER_VAR_NUM) {
+                    this._inlineUserVarViewer.topUserVarIndex -= (Consts.USER_VAR_NUM);
                 }
-                if(isInputKey) {
+                if (isInputKey) {
                     this._setNextMessage();
-                    this._wwaData.showUserVar.isShow = true;
+                    this._inlineUserVarViewer.isVisible = true;
                     this._displayVariable();
                 }
-                if(this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
+                if (this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
                     this._setNextMessage();
                 }
             }
@@ -4430,37 +4456,27 @@ export class WWA {
 
     private _displayVariable(): void {
         // 定義されてない場合には初期化する
-        if (this._wwaData.showUserVar === undefined) {
-            var isAvailableShowUserVariable = util.$id("wwa-wrapper").getAttribute("data-wwa-show-user-variable");
-            this._wwaData.showUserVar = {
-                start: 0,
-                isShow: true,
-                isAvailable: (isAvailableShowUserVariable === 'true')
-            };
+        if (this._inlineUserVarViewer === undefined) {
+            this._inlineUserVarViewer.isVisible = true;
+            this._inlineUserVarViewer.topUserVarIndex = 0;
+            this._canShowUserVar = util.$id("wwa-wrapper").getAttribute("data-wwa-show-user-variable") === "true";
         }
         // 属性によって表示許可されていない場合には何もしない
-        if(!this._wwaData.showUserVar.isAvailable) {
+        if(!this._canShowUserVar) {
             return;
         }
         // 表示中フラグをONにする
-        this._wwaData.showUserVar.isShow = true;
+        this._inlineUserVarViewer.isVisible = true;
         if (this._player.isControllable()) {
             this.setNowPlayTime();
             let helpMessage: string = '変数一覧\n';
             const SHOW_VAR_NUM = 10;
-            for(let i=0; i<SHOW_VAR_NUM; i++) {
+            for (let i = 0; i < SHOW_VAR_NUM; i++) {
                 /** 終端まで行った際にはループして0番目から参照する */
-                let currentIndex = (this._wwaData.showUserVar.start + i) % Consts.USER_VAR_NUM;
-
-                const label = (()=>{
-                    if(this._wwaData.showUserVar.nameList) {
-                        const userSetName = this._wwaData.showUserVar.nameList[currentIndex.toString()]
-                        if(userSetName) {
-                            return `変数 ${currentIndex}: ${userSetName}`;
-                        }
-                    }
-                    return `変数 ${currentIndex}: 名無し`;
-                })();
+                let currentIndex = (this._inlineUserVarViewer.topUserVarIndex + i) % Consts.USER_VAR_NUM;
+                const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ?
+                    this._userVarNameList[currentIndex] : "名無し";
+                const label = `変数 ${currentIndex}: ${displayName}`;
                 helpMessage += `${label}: ${this._wwaData.userVar[currentIndex]}\n`;
             }
             helpMessage += "\n操作方法\n";
@@ -4610,8 +4626,8 @@ export class WWA {
                 }
             }
         }
-        if(this._wwaData.showUserVar) {
-            this._wwaData.showUserVar.isShow = false;
+        if (this._inlineUserVarViewer) {
+            this._inlineUserVarViewer.isVisible = false;
         }
     }
 
@@ -5667,13 +5683,14 @@ export const getJSONFile = (file: string, callback: (error: unknown, result: unk
                 callback("JSON file response is not string", '');
                 return;
             }
+            let json: unknown;
             try {
-                const json = JSON.parse(xhr.response)
-                callback(null, json);
+                json = JSON.parse(xhr.response);
             } catch(error) {
                 console.error(error);
                 callback(`Invalid JSON file ${error.message}`, "")
             }
+            callback(null, json);
         }
     } catch (e) {
         callback(e, '');
