@@ -1981,11 +1981,11 @@ export class WWA {
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex += 10;
+                    this._inlineUserVarViewer.topUserVarIndex += Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex -= 10;
+                    this._inlineUserVarViewer.topUserVarIndex -= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
                 // 0 - USER_VAR_NUMの範囲外ならループさせる
@@ -4470,8 +4470,7 @@ export class WWA {
         if (this._player.isControllable()) {
             this.setNowPlayTime();
             let helpMessage: string = '変数一覧\n';
-            const SHOW_VAR_NUM = 10;
-            for (let i = 0; i < SHOW_VAR_NUM; i++) {
+            for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
                 /** 終端まで行った際にはループして0番目から参照する */
                 let currentIndex = (this._inlineUserVarViewer.topUserVarIndex + i) % Consts.USER_VAR_NUM;
                 const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ?
