@@ -982,7 +982,7 @@ export class WWA {
         const loader = new WWALoader(mapFileName, eventEmitter);
         loader.requestAndLoadMapData();
         // ユーザー変数ファイルを読み込む
-        getJSONFile(userVariableNameFile, (error: any, userVariableNameList: string) => {
+        getJSONFile(userVariableNameFile, (error: unknown, userVariableNameList: unknown) => {
             this._wwaData.showUserVar = {
                 start: 0,
                 isShow: false,
@@ -993,28 +993,32 @@ export class WWA {
                 console.error(error);
                 return;
             }
-            if (!this._wwaData || !userVariableNameList) {
+            if (!this._wwaData || !userVariableNameList || typeof userVariableNameList !== "object") {
+                console.error();
                 return;
             }
-            /** ユーザー指定変数のバリデーションチェックを行う  */
-            const nameList = JSON.parse(userVariableNameList);
-            Object.keys(nameList).forEach((key) => {
-                const keyNumber = parseInt(key, 10);
-                if (
-                    typeof nameList[key] !== "string" ||
-                    typeof key !== "string" ||
-                    isNaN(keyNumber) ||
-                    keyNumber < 0 ||
-                    keyNumber >= Consts.USER_VAR_NUM
-                ) {
-                    delete nameList[key];
-                }
-            })
             this._wwaData.showUserVar = {
                 ...this._wwaData.showUserVar,
-                nameList
+                nameList: this.omitInvalidUserVariableNameListKey(userVariableNameList)
             }
         });
+    }
+
+    /**
+     *  ユーザー変数名前リストのバリデーションを行う.
+     *  キー, 値が想定されている値でないものは削除する
+     **/
+    private omitInvalidUserVariableNameListKey(userVariableNameList: object): Record<string, string> {
+        return Object.keys(userVariableNameList).reduce((acc, key) => {
+            const keyNumber = parseInt(key, 10);
+            return (
+                typeof userVariableNameList[key] !== "string" ||
+                typeof key !== "string" ||
+                isNaN(keyNumber) ||
+                keyNumber < 0 ||
+                keyNumber >= Consts.USER_VAR_NUM
+            ) ? acc : { ...acc, [key]: userVariableNameList[key] };
+        }, {});
     }
 
     private _setProgressBar(progress: LoaderProgress) {
@@ -4447,6 +4451,7 @@ export class WWA {
             for(let i=0; i<SHOW_VAR_NUM; i++) {
                 /** 終端まで行った際にはループして0番目から参照する */
                 let currentIndex = (this._wwaData.showUserVar.start + i) % Consts.USER_VAR_NUM;
+
                 const label = (()=>{
                     if(this._wwaData.showUserVar.nameList) {
                         const userSetName = this._wwaData.showUserVar.nameList[currentIndex.toString()]
@@ -5645,7 +5650,7 @@ if (document.readyState === "complete") {
 
 // TODO: 適切な場所に移動する
 // TODO: IE11を打ち切ったら fetch / Promise で書き換える
-export const getJSONFile = (file: string, callback: (error: any, result: string) => void) => {
+export const getJSONFile = (file: string, callback: (error: unknown, result: unknown) => void) => {
     const xhr: XMLHttpRequest = new XMLHttpRequest();
     try {
         xhr.open("GET", file, true);
@@ -5659,13 +5664,18 @@ export const getJSONFile = (file: string, callback: (error: any, result: string)
                 return;
             }
             if (typeof xhr.response !== "string") {
-                callback('JSON file response is not string', '');
+                callback("JSON file response is not string", '');
                 return;
             }
-            callback(null, xhr.response);
+            try {
+                const json = JSON.parse(xhr.response)
+                callback(null, json);
+            } catch(error) {
+                console.error(error);
+                callback(`Invalid JSON file ${error.message}`, "")
+            }
         }
-    }
-    catch (e) {
+    } catch (e) {
         callback(e, '');
         return;
     }
