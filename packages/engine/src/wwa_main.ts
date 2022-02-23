@@ -982,30 +982,39 @@ export class WWA {
         const loader = new WWALoader(mapFileName, eventEmitter);
         loader.requestAndLoadMapData();
         // ユーザー変数ファイルを読み込む
-        getJSONFile(userVariableNameFile, (e: any, userVariableNameList: string) => {
+        getJSONFile(userVariableNameFile, (error: any, userVariableNameList: string) => {
             this._wwaData.showUserVar = {
                 start: 0,
                 isShow: false,
                 nameList: {},
                 isAvailable: isAvailableShowUserVariable
             }
-            if(e !== null) {
-                console.error(e);
+            if (error) {
+                console.error(error);
+                return;
             }
-            else if(this._wwaData && userVariableNameList) {
-                /** ユーザー指定変数のバリデーションチェックを行う  */
-                const nameList = JSON.parse(userVariableNameList);
-                Object.keys(nameList).forEach((x)=>{
-                    if(typeof nameList[x] !== "string") {
-                        delete nameList[x];
-                    }
-                })
-                this._wwaData.showUserVar = {
-                    ...this._wwaData.showUserVar,
-                    nameList: nameList
+            if (!this._wwaData || !userVariableNameList) {
+                return;
+            }
+            /** ユーザー指定変数のバリデーションチェックを行う  */
+            const nameList = JSON.parse(userVariableNameList);
+            Object.keys(nameList).forEach((key) => {
+                const keyNumber = parseInt(key, 10);
+                if (
+                    typeof nameList[key] !== "string" ||
+                    typeof key !== "string" ||
+                    isNaN(keyNumber) ||
+                    keyNumber < 0 ||
+                    keyNumber >= Consts.USER_VAR_NUM
+                ) {
+                    delete nameList[key];
                 }
+            })
+            this._wwaData.showUserVar = {
+                ...this._wwaData.showUserVar,
+                nameList
             }
-        })
+        });
     }
 
     private _setProgressBar(progress: LoaderProgress) {
@@ -5635,32 +5644,29 @@ if (document.readyState === "complete") {
 }
 
 // TODO: 適切な場所に移動する
-export const getJSONFile = (file: string, callback: (error:  any, result: string) => void) => {
+// TODO: IE11を打ち切ったら fetch / Promise で書き換える
+export const getJSONFile = (file: string, callback: (error: any, result: string) => void) => {
     const xhr: XMLHttpRequest = new XMLHttpRequest();
     try {
         xhr.open("GET", file, true);
         xhr.send();
         xhr.onreadystatechange = () => {
-            if(xhr.readyState === 4){
-                if (xhr.status === 200 || xhr.status === 304) {
-                    if(typeof xhr.response === "string") {
-                        callback(null, xhr.response);
-                        return;
-                    }
-                    else {
-                        callback('JSON file response is not string', '');
-                        return;
-                    }
-                }
-            }
-            else {
-                callback(xhr.status, '');
+            if (xhr.readyState !== 4) {
                 return;
             }
+            if (xhr.status !== 200 && xhr.status !== 304) {
+                callback(`マップデータが読み込めませんでした。ステータスコード: ${xhr.status}`, "")
+                return;
+            }
+            if (typeof xhr.response !== "string") {
+                callback('JSON file response is not string', '');
+                return;
+            }
+            callback(null, xhr.response);
         }
     }
-    catch(e) {
+    catch (e) {
         callback(e, '');
         return;
     }
-  }
+}
