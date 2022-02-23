@@ -33,6 +33,8 @@ export interface TemplateValues {
             "data-wwa-autosave"?: string;
             "data-wwa-resume-savedata"?: string;
             "data-wwa-var-dump-elm"?: string;
+            "data-wwa-user-variable-name-file"?: string;
+            "data-wwa-show-user-variable"?: string;
         };
     };
     varDumpElement?: {
@@ -63,7 +65,9 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-looking-around": Helper.toStringBooleanOptional(wwa.gameOption?.useLookingAround),
                 "data-wwa-autosave": `${wwa.gameOption?.autoSave?.intervalSteps ?? "0"}`,
                 "data-wwa-resume-savedata": wwa.resumeSaveData,
-                "data-wwa-var-dump-elm": wwa.gameOption?.varDump?.elementId ? `#${wwa.gameOption.varDump.elementId}` : undefined
+                "data-wwa-var-dump-elm": wwa.gameOption?.varDump?.elementId ? `#${wwa.gameOption.varDump.elementId}` : undefined,
+                "data-wwa-user-variable-name-file": wwa.resources.variableNameFile,
+                "data-wwa-show-user-variable": Helper.toStringBooleanOptional(wwa.gameOption?.isShowUserVariable)
             }
         },
         varDumpElement: wwa.gameOption?.varDump?.elementId ? { id: wwa.gameOption.varDump.elementId } : undefined,

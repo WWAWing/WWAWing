@@ -10,6 +10,7 @@ export interface GameOption {
     varDump?: {
         elementId: string
     };
+    isShowUserVariable?: boolean;
 }
 
 export interface Resources {
@@ -18,4 +19,5 @@ export interface Resources {
     wwaJs?: string;
     wwaCss?: string;
     titleImage?: string;
+    variableNameFile?: string;
 }

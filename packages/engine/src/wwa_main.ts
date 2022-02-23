@@ -35,7 +35,7 @@ import { ItemMenu } from "./wwa_item_menu";
 import { encodeSaveData, decodeSaveDataV0, decodeSaveDataV1, generateMD5 } from "./wwa_encryption";
 import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADataWithWorldNameStatus } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
-import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError} from "@wwawing/loader";
+import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 let wwa: WWA
 
@@ -210,7 +210,9 @@ export class WWA {
         useGoToWWA: boolean,
         audioDirectory: string = "",
         disallowLoadOldSave: boolean = false,
-        dumpElm: HTMLElement = null
+        dumpElm: HTMLElement = null,
+        userVariableNameFile: string,
+        isAvailableShowUserVariable: boolean
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -890,10 +892,14 @@ export class WWA {
                 }
 
                 if (this._usePassword) {
+                    let showMessage = "効果音・ＢＧＭデータをロードしますか？";
+                    if (isAvailableShowUserVariable) {
+                        showMessage += "\n\n※変数表示が有効になっています。\n公開前に必ずHTMLファイル内の\n data-wwa-show-user-variable=false \nに設定してください"
+                    }
                     this._messageWindow.setParsedMessage(new ParsedMessage(
                         (
                             this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
-                                "効果音・ＢＧＭデータをロードしますか？" :
+                            showMessage :
                                 this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
                         ), true));
                     this._messageWindow.show();
@@ -975,6 +981,31 @@ export class WWA {
         eventEmitter.addListener("error", errorHandler )
         const loader = new WWALoader(mapFileName, eventEmitter);
         loader.requestAndLoadMapData();
+        // ユーザー変数ファイルを読み込む
+        getJSONFile(userVariableNameFile, (e: any, userVariableNameList: string) => {
+            this._wwaData.showUserVar = {
+                start: 0,
+                isShow: false,
+                nameList: {},
+                isAvailable: isAvailableShowUserVariable
+            }
+            if(e !== null) {
+                console.error(e);
+            }
+            else if(this._wwaData && userVariableNameList) {
+                /** ユーザー指定変数のバリデーションチェックを行う  */
+                const nameList = JSON.parse(userVariableNameList);
+                Object.keys(nameList).forEach((x)=>{
+                    if(typeof nameList[x] !== "string") {
+                        delete nameList[x];
+                    }
+                })
+                this._wwaData.showUserVar = {
+                    ...this._wwaData.showUserVar,
+                    nameList: nameList
+                }
+            }
+        })
     }
 
     private _setProgressBar(progress: LoaderProgress) {
@@ -1761,6 +1792,8 @@ export class WWA {
                     if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onitemmenucalled();
                     }
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_V)) {
+                    this._displayVariable();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_Y)) {
                     // コマンドのヘルプ 
@@ -1894,6 +1927,42 @@ export class WWA {
                     }
                     this._setNextMessage();
 
+                }
+            }
+
+            // ユーザー変数表示モードの場合
+            if(this._wwaData.showUserVar?.isShow) {
+                let isInputKey = false;
+                if(this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
+                    this._wwaData.showUserVar.start++;
+                    isInputKey = true;
+                }
+                if(this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
+                    this._wwaData.showUserVar.start--;
+                    isInputKey = true;
+                }
+                if(this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
+                    this._wwaData.showUserVar.start += 10;
+                    isInputKey = true;
+                }
+                if(this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN ) {
+                    this._wwaData.showUserVar.start -= 10;
+                    isInputKey = true;
+                }
+                // 0 - USER_VAR_NUMの範囲外ならループさせる
+                if(this._wwaData.showUserVar.start < 0) {
+                    this._wwaData.showUserVar.start += (Consts.USER_VAR_NUM);
+                }
+                if(this._wwaData.showUserVar.start > Consts.USER_VAR_NUM) {
+                    this._wwaData.showUserVar.start -= (Consts.USER_VAR_NUM);
+                }
+                if(isInputKey) {
+                    this._setNextMessage();
+                    this._wwaData.showUserVar.isShow = true;
+                    this._displayVariable();
+                }
+                if(this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
+                    this._setNextMessage();
                 }
             }
         } else if (this._player.isWatingEstimateWindow()) {
@@ -4346,6 +4415,47 @@ export class WWA {
         this._passwordSaveExtractData = data;
     }
 
+    private _displayVariable(): void {
+        // 定義されてない場合には初期化する
+        if (this._wwaData.showUserVar === undefined) {
+            var isAvailableShowUserVariable = util.$id("wwa-wrapper").getAttribute("data-wwa-show-user-variable");
+            this._wwaData.showUserVar = {
+                start: 0,
+                isShow: true,
+                isAvailable: (isAvailableShowUserVariable === 'true')
+            };
+        }
+        // 属性によって表示許可されていない場合には何もしない
+        if(!this._wwaData.showUserVar.isAvailable) {
+            return;
+        }
+        // 表示中フラグをONにする
+        this._wwaData.showUserVar.isShow = true;
+        if (this._player.isControllable()) {
+            this.setNowPlayTime();
+            let helpMessage: string = '変数一覧\n';
+            const SHOW_VAR_NUM = 10;
+            for(let i=0; i<SHOW_VAR_NUM; i++) {
+                /** 終端まで行った際にはループして0番目から参照する */
+                let currentIndex = (this._wwaData.showUserVar.start + i) % Consts.USER_VAR_NUM;
+                const label = (()=>{
+                    if(this._wwaData.showUserVar.nameList) {
+                        const userSetName = this._wwaData.showUserVar.nameList[currentIndex.toString()]
+                        if(userSetName) {
+                            return `変数 ${currentIndex}: ${userSetName}`;
+                        }
+                    }
+                    return `変数 ${currentIndex}: 名無し`;
+                })();
+                helpMessage += `${label}: ${this._wwaData.userVar[currentIndex]}\n`;
+            }
+            helpMessage += "\n操作方法\n";
+            helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
+            helpMessage += "左キー：１０つ戻す　右キー：１０つ進める\n";
+            this.setMessageQueue(helpMessage, false, true);
+        }
+    }
+
     private _displayHelp(): void {
         if (this._player.isControllable()) {
             this.setNowPlayTime();
@@ -4485,6 +4595,9 @@ export class WWA {
                     this._setNextMessage();
                 }
             }
+        }
+        if(this._wwaData.showUserVar) {
+            this._wwaData.showUserVar.isShow = false;
         }
     }
 
@@ -5476,6 +5589,10 @@ function start() {
     if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
         classicModeEnabled = true;
     }
+    /** WWAの変数命名データを読み込む */
+    var userVariableNameFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-variable-name-file");
+    /** 変数表示システムが有効か */
+    var isAvailableShowUserVariable = util.$id("wwa-wrapper").getAttribute("data-wwa-show-user-variable");
     var itemEffectEnabled = true;
     var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
     if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
@@ -5502,7 +5619,9 @@ function start() {
         useGoToWWA,
         audioDirectory,
         disallowLoadOldSave,
-        dumpElm
+        dumpElm,
+        userVariableNameFile,
+        (isAvailableShowUserVariable === 'true')
     );
 }
 
@@ -5514,3 +5633,34 @@ if (document.readyState === "complete") {
         setTimeout(start);
     });
 }
+
+// TODO: 適切な場所に移動する
+export const getJSONFile = (file: string, callback: (error:  any, result: string) => void) => {
+    const xhr: XMLHttpRequest = new XMLHttpRequest();
+    try {
+        xhr.open("GET", file, true);
+        xhr.send();
+        xhr.onreadystatechange = () => {
+            if(xhr.readyState === 4){
+                if (xhr.status === 200 || xhr.status === 304) {
+                    if(typeof xhr.response === "string") {
+                        callback(null, xhr.response);
+                        return;
+                    }
+                    else {
+                        callback('JSON file response is not string', '');
+                        return;
+                    }
+                }
+            }
+            else {
+                callback(xhr.status, '');
+                return;
+            }
+        }
+    }
+    catch(e) {
+        callback(e, '');
+        return;
+    }
+  }
