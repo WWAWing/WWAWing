@@ -129,3 +129,4 @@ export interface WWAData {
     isVisibleStatusDefence: boolean;
     isVisibleStatusGold: boolean;
 }
+

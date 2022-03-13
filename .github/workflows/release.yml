@@ -1,8 +1,9 @@
 name: "WWA Wing Release"
 
 on:
-  push:
-    branches: [ master ]
+  release:
+    types:
+      - created
 
   workflow_dispatch:
 
@@ -13,11 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          registry-url: 'https://registry.npmjs.org'
+
       - name: "Set Env"
         run: "echo \"WWA_WING_VERSION=$(node -e \"console.log(require('./packages/engine/package.json').version)\")\" >> $GITHUB_ENV"
 
-      - name: "Install"
-        run: "npm install"
+      - name: "Install & Build"
+        run: |
+          npm i -g npm@8
+          npm install
+          npm run build
+          npm run generate
 
       - name: "Upload distributions"
         env:

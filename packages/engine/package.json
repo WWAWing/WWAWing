@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/engine",
-  "version": "3.6.3",
+  "version": "3.6.12",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "./lib/wwa.js",
   "files": [
@@ -16,15 +16,15 @@
     "build:dev": "webpack -w",
     "deploy:prod": "shx mkdir -p lib && run-p deploy:common:* deploy:prod:*",
     "deploy:dev": "shx mkdir -p lib && run-p deploy:common:* deploy:dev:*",
-    "deploy:common:audio": "shx cp -R ./node_modules/@wwawing/assets/audio lib/",
-    "deploy:common:images": "shx cp ./node_modules/@wwawing/assets/images/*.* lib/",
-    "deploy:common:mapdata": "shx cp ./node_modules/@wwawing/assets/mapdata/*.* lib/",
-    "deploy:common:style": "shx cp ./node_modules/@wwawing/styles/output/*.* lib/ && shx cp ./node_modules/@wwawing/assets/style/*.* lib/",
+    "deploy:common:audio": "shx cp -R ../../node_modules/@wwawing/assets/audio lib/",
+    "deploy:common:images": "shx cp ../../node_modules/@wwawing/assets/images/*.* lib/",
+    "deploy:common:mapdata": "shx cp ../../node_modules/@wwawing/assets/mapdata/*.* lib/",
+    "deploy:common:vars": "shx cp ../../node_modules/@wwawing/assets/vars/*.* lib/",
+    "deploy:common:style": "shx cp ../../node_modules/@wwawing/styles/output/*.* lib/ && shx cp ../../node_modules/@wwawing/assets/style/*.* lib/",
     "deploy:prod:html": "ts-node ./debug/make-debug-pages",
     "deploy:dev:html": "ts-node ./debug/make-debug-pages dev",
     "clean": "shx rm -rf lib",
-    "server": "node ./launch-server lib",
-    "prepare": "npm run build"
+    "server": "node ./launch-server lib"
   },
   "repository": {
     "type": "git",
@@ -45,13 +45,13 @@
     "@types/pug": "^2.0.4",
     "@types/terser-webpack-plugin": "^5.0.3",
     "@types/webpack": "^5.28.0",
-    "@wwawing/assets": "^3.6.3",
-    "@wwawing/common-interface": "^3.6.3",
-    "@wwawing/debug-server": "^3.6.3",
-    "@wwawing/event-emitter": "^3.6.3",
-    "@wwawing/loader": "^3.6.3",
-    "@wwawing/page-generator": "^3.6.3",
-    "@wwawing/styles": "^3.6.3",
+    "@wwawing/assets": "file:../assets",
+    "@wwawing/common-interface": "file:../common-interface",
+    "@wwawing/debug-server": "file:../debug-server",
+    "@wwawing/event-emitter": "file:../event-emitter",
+    "@wwawing/loader": "file:../loader",
+    "@wwawing/page-generator": "file:../page-generator",
+    "@wwawing/styles": "file:../styles",
     "crypto-js": "4.0.0",
     "npm-run-all": "^4.1.5",
     "pug": "^3.0.2",
@@ -69,6 +69,6 @@
   },
   "engines": {
     "node": ">=14",
-    "npm": ">=6"
+    "npm": ">=8"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "3.6.3",
+  "version": "3.6.12",
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
@@ -9,8 +9,7 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -p .",
-    "prepare": "npm run build"
+    "build": "tsc -p ."
   },
   "author": "WWA Wing Team",
   "license": "MIT",
@@ -22,6 +21,6 @@
   },
   "engines": {
     "node": ">=14",
-    "npm": ">=6"
+    "npm": ">=8"
   }
 }

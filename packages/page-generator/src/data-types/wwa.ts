@@ -7,9 +7,10 @@ export interface GameOption {
         intervalSteps: number;
     };
     useLookingAround?: boolean;
-    varDump?: {
-        elementId: string
-    };
+    userVars?: {
+        dumpElementId: string
+        canDisplay?: boolean
+    }
 }
 
 export interface Resources {
@@ -18,4 +19,5 @@ export interface Resources {
     wwaJs?: string;
     wwaCss?: string;
     titleImage?: string;
+    userVarNamesFile?: string;
 }

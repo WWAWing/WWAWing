@@ -74,8 +74,8 @@ div.item-disp {
 
 
 // ここより位置設定 //
-$status: energy, strength, defence, gold;
-$menu_buttons: load, save, restart, gotowwa;
+$status: "energy", "strength", "defence", "gold";
+$menu_buttons: "load", "save", "restart", "gotowwa";
 
 $_y: 0;
 @each $status_name in $status {
