@@ -4,7 +4,7 @@
   command = "npm run build && npm run deploy"
 
 [build.environment]
-  NODE_VERSION = "14.18.3"
+  NODE_VERSION = "16.13.2"
   NPM_VERSION = "8"
   # node-gyp が v3.6.0 以上の Python を要求している
   PYTHON_VERSION = "3.7"
