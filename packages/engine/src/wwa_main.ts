@@ -1005,6 +1005,7 @@ export class WWA {
         loader.requestAndLoadMapData();
 
         this._canDisplayUserVars = canDisplayUserVars;
+        this._userVarNameList = [];
         if (this._canDisplayUserVars) {
             this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
             // ユーザー変数ファイルを読み込む
@@ -1019,6 +1020,23 @@ export class WWA {
                         return;
                     }
                     this._userVarNameList = this.convertUserVariableNameListToArray(data);
+                    if (this._dumpElement === null) {
+                        return;
+                    }
+                    // 以下は変数一覧に変数名を流し込む処理
+                    for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+                        const varNum = i.toString(10);
+                        if (!this._userVarNameList[i]) {
+                            continue;
+                        }
+                        const varIndexQuery = `.var-index${varNum}`;
+                        const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
+                        const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
+                        varLabelElement.textContent = this._userVarNameList[i];
+                        varIndexElement.setAttribute("data-labelled-var-index", "true");
+                        varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
+                        varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
+                    }
                 });
             } else {
                 console.error("data-wwa-user-var-names-file 属性が指定されませんでした。")
@@ -2122,7 +2140,8 @@ export class WWA {
         }
         if (this._dumpElement !== null) {
             for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                this._dumpElement.querySelector(".var" + i.toString(10)).textContent = this._wwaData.userVar[i] + "";
+                const varNum = i.toString(10);
+                this._dumpElement.querySelector(`.var${varNum}`).textContent = this._wwaData.userVar[i] + "";
             }
         }
     }
@@ -5544,9 +5563,14 @@ function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
             trValElm.classList.add("var-val");
         }
         var thNumElm = document.createElement("th");
+        const varLabelElm = document.createElement("div");
+        varLabelElm.textContent = "-";
+        varLabelElm.setAttribute("aria-hidden", "true");
+        thNumElm.classList.add(`var-index${i}`);
         var tdValElm = document.createElement("td");
         thNumElm.textContent = i + "";
-        tdValElm.classList.add("var" + i);
+        thNumElm.appendChild(varLabelElm);
+        tdValElm.classList.add(`var${i}`);
         tdValElm.textContent = "-";
         trNumElm.appendChild(thNumElm);
         trValElm.appendChild(tdValElm);
@@ -5605,7 +5629,11 @@ function start() {
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
     var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
     var dumpElm: HTMLElement | null = null;
-    if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm")) {
+    /** 変数を表示できるか */
+    var canDisplayUserVars = (util.$id("wwa-wrapper").getAttribute("data-wwa-display-user-vars") === "true");
+    /** WWAの変数命名データを読み込む */
+    var userVarNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-var-names-file");
+    if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm") && canDisplayUserVars) {
         dumpElm = setupVarDumpElement(dumpElmQuery);
     }
     var urlgateEnabled = true;
@@ -5617,10 +5645,6 @@ function start() {
     if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
         classicModeEnabled = true;
     }
-    /** WWAの変数命名データを読み込む */
-    var userVarNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-var-names-file");
-    /** 変数表示システムが有効か */
-    var canDisplayUserVars = (util.$id("wwa-wrapper").getAttribute("data-wwa-display-user-vars") === "true");
     var itemEffectEnabled = true;
     var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
     if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {

@@ -14,6 +14,28 @@
 
 .wwa-vardump-wrapper>table tr.var-number>th {
   background-color: #FFFF66;
+  position: relative;
+  &[data-labelled-var-index="true"] {
+    font-weight: bold;
+    text-decoration: underline;
+    background-color: #66FFFF;
+    cursor: pointer;
+  }
+  & > div {
+    cursor: auto;
+    position: absolute;
+    top: 15px;
+    left: 45px;
+    display: block;
+    width: max-content;
+    background-color: #000000;
+    color: #FFFFFF;
+    z-index: 100;
+    padding: 5px;
+    &[aria-hidden="true"] {
+      display: none;
+    }
+  }
 }
 
 .wwa-vardump-wrapper>table tr.var-val>td {
