@@ -41,6 +41,7 @@ export default async function makeDistribution(
             ...createHTMLFilePromises(["caves01", "caves02", "island02", "wwamap"]),
             copy("engine", path.join("LICENSE")),
             copy("assets", path.join("html", "manual.html")),
+            copy("assets", path.join("text", "*.txt")),
             copy("engine", path.join("lib", "wwa.js"), "mapdata"),
             copy("assets", path.join("style", "*.css"), "mapdata"),
             copy("assets", path.join("wwamk310", "WinWwamk.exe")),
