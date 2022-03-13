@@ -7,7 +7,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind
+    speedList, StatusKind, MacroType, StatusSolutionKind, JsonRequestError, UserVarNameListRequestErrorKind
 } from "./wwa_data";
 
 import {
@@ -153,6 +153,12 @@ export class WWA {
      * ユーザ変数の名前 (wwaData のユーザ変数と添字が対応)
      */
     private _userVarNameList: string[];
+
+    /**
+     * ユーザ変数名一覧の取得エラー
+     */
+    private _userVarNameListRequestError: JsonRequestError<UserVarNameListRequestErrorKind> | undefined;
+
     /**
      * ユーザ変数を表示できるか
      */
@@ -1005,23 +1011,51 @@ export class WWA {
         loader.requestAndLoadMapData();
 
         this._canDisplayUserVars = canDisplayUserVars;
+        this._userVarNameList = [];
         if (this._canDisplayUserVars) {
             this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
             // ユーザー変数ファイルを読み込む
             if (userVarNamesFile) {
-                getJSONFile(userVarNamesFile, (error: unknown, data: unknown) => {
+                getJSONFile(userVarNamesFile, (error: JsonRequestError, data: unknown) => {
                     if (error) {
-                        console.error(error);
+                        this._userVarNameListRequestError = error;
+                        this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
                         return;
                     }
                     if (!data || typeof data !== "object") {
-                        console.error("変数一覧ファイルが壊れています。");
+                        this._userVarNameListRequestError = {
+                            kind: "notObject",
+                            detail: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
+                        }
+                        this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
                         return;
                     }
                     this._userVarNameList = this.convertUserVariableNameListToArray(data);
+                    if (this._dumpElement === null) {
+                        return;
+                    }
+                    // 以下は変数一覧に変数名を流し込む処理
+                    for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+                        const varNum = i.toString(10);
+                        if (!this._userVarNameList[i]) {
+                            continue;
+                        }
+                        const varIndexQuery = `.var-index${varNum}`;
+                        const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
+                        const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
+                        varLabelElement.textContent = this._userVarNameList[i];
+                        varIndexElement.setAttribute("data-labelled-var-index", "true");
+                        varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
+                        varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
+                    }
                 });
             } else {
-                console.error("data-wwa-user-var-names-file 属性が指定されませんでした。")
+                this._userVarNameListRequestError = {
+                    kind: "noFileSpecified",
+                    detail: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
+                }
+                // こういうこともできますよ、という案内なのでエラーにはしない
+                this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, false);
             }
         }
     }
@@ -2122,7 +2156,8 @@ export class WWA {
         }
         if (this._dumpElement !== null) {
             for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                this._dumpElement.querySelector(".var" + i.toString(10)).textContent = this._wwaData.userVar[i] + "";
+                const varNum = i.toString(10);
+                this._dumpElement.querySelector(`.var${varNum}`).textContent = this._wwaData.userVar[i] + "";
             }
         }
     }
@@ -4469,6 +4504,15 @@ export class WWA {
         if (this._player.isControllable()) {
             this.setNowPlayTime();
             let helpMessage: string = '変数一覧\n';
+            if (this._userVarNameListRequestError) {
+                if (this._userVarNameListRequestError.kind === "noFileSpecified") {
+                    helpMessage += this._userVarNameListRequestError.detail + "\n";
+                } else {
+                    helpMessage += "【変数名取得失敗】\n";
+                    helpMessage += "  すべての変数を名無しとしています。\n";
+                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.detail}\n`
+                }
+            }
             for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
                 /** 終端まで行った際にはループして0番目から参照する */
                 let currentIndex = (this._inlineUserVarViewer.topUserVarIndex + i) % Consts.USER_VAR_NUM;
@@ -5508,6 +5552,16 @@ font-weight: bold;
         }
     }
 
+    private _updateVarDumpInformationArea(content: string, isError: boolean = false) {
+        if(!this._dumpElement) {
+            return;
+        }
+        const elm = this._dumpElement.querySelector(".varlist-information");
+        if (!elm) {
+            return;
+        }
+        elm.textContent = `${isError ? "【エラー】" : ""}${content}`;
+    }
 };
 
 var isCopyRightClick = false;
@@ -5519,19 +5573,24 @@ function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
         return null;
     }
     dumpElm.classList.add("wwa-vardump-wrapper")
-    var tableElm = document.createElement("table");
-    var headerTrElm = document.createElement("tr");
-    var headerThElm = document.createElement("th");
-    var hideButton = document.createElement("button");
+    const tableElm = document.createElement("table");
+    const headerTrElm = document.createElement("tr");
+    const headerThElm = document.createElement("th");
+    const hideButton = document.createElement("button");
+    const informationElm = document.createElement("td");
     hideButton.textContent = "隠す";
     headerThElm.textContent = "変数一覧";
     headerThElm.setAttribute("colspan", "10");
     headerThElm.classList.add("varlist-header");
     headerThElm.appendChild(hideButton);
     headerTrElm.appendChild(headerThElm);
+    informationElm.setAttribute("colspan", "10");
+    informationElm.classList.add("varlist-information");
+    informationElm.textContent = "強調されている番号にカーソルを乗せると説明が表示されます。";
     tableElm.appendChild(headerTrElm);
-    var trNumElm: HTMLElement = null;
-    var trValElm: HTMLElement = null;
+    tableElm.appendChild(informationElm);
+    let trNumElm: HTMLElement = null;
+    let trValElm: HTMLElement = null;
     for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
         if (i % 10 === 0) {
             if (trNumElm !== null) {
@@ -5543,10 +5602,15 @@ function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
             trValElm = document.createElement("tr");
             trValElm.classList.add("var-val");
         }
-        var thNumElm = document.createElement("th");
-        var tdValElm = document.createElement("td");
+        const thNumElm = document.createElement("th");
+        const varLabelElm = document.createElement("div");
+        varLabelElm.textContent = "-";
+        varLabelElm.setAttribute("aria-hidden", "true");
+        thNumElm.classList.add(`var-index${i}`);
+        const tdValElm = document.createElement("td");
         thNumElm.textContent = i + "";
-        tdValElm.classList.add("var" + i);
+        thNumElm.appendChild(varLabelElm);
+        tdValElm.classList.add(`var${i}`);
         tdValElm.textContent = "-";
         trNumElm.appendChild(thNumElm);
         trValElm.appendChild(tdValElm);
@@ -5560,6 +5624,7 @@ function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
     hideButton.addEventListener("click", function (e) {
         if (varDispStatus) {
             this.textContent = "表示";
+            informationElm.style.display = "none";
             Array.prototype.forEach.call(
                 tableElm.querySelectorAll("tr.var-number"), function (etr) {
                     etr.style.display = "none";
@@ -5571,13 +5636,14 @@ function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
             varDispStatus = false;
         } else {
             this.textContent = "隠す";
+            informationElm.style.display = "";
             Array.prototype.forEach.call(
                 tableElm.querySelectorAll("tr.var-number"), function (etr) {
-                    etr.style.display = "table-row";
+                    etr.style.display = "";
                 });
             Array.prototype.forEach.call(
                 tableElm.querySelectorAll("tr.var-val"), function (etr) {
-                    etr.style.display = "table-row";
+                    etr.style.display = "";
                 });
             varDispStatus = true;
         }
@@ -5605,7 +5671,11 @@ function start() {
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
     var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
     var dumpElm: HTMLElement | null = null;
-    if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm")) {
+    /** 変数を表示できるか */
+    var canDisplayUserVars = (util.$id("wwa-wrapper").getAttribute("data-wwa-display-user-vars") === "true");
+    /** WWAの変数命名データを読み込む */
+    var userVarNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-var-names-file");
+    if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm") && canDisplayUserVars) {
         dumpElm = setupVarDumpElement(dumpElmQuery);
     }
     var urlgateEnabled = true;
@@ -5617,10 +5687,6 @@ function start() {
     if (classicModeAttribute !== null && classicModeAttribute.match(/^true$/i)) {
         classicModeEnabled = true;
     }
-    /** WWAの変数命名データを読み込む */
-    var userVarNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-var-names-file");
-    /** 変数表示システムが有効か */
-    var canDisplayUserVars = (util.$id("wwa-wrapper").getAttribute("data-wwa-display-user-vars") === "true");
     var itemEffectEnabled = true;
     var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
     if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
@@ -5664,7 +5730,7 @@ if (document.readyState === "complete") {
 
 // TODO: 適切な場所に移動する
 // TODO: IE11を打ち切ったら fetch / Promise で書き換える
-export const getJSONFile = (fileName: string, callback: (error: unknown, result: unknown) => void) => {
+export const getJSONFile = (fileName: string, callback: (error: JsonRequestError, result: unknown) => void) => {
     const xhr: XMLHttpRequest = new XMLHttpRequest();
     try {
         xhr.open("GET", fileName, true);
@@ -5674,11 +5740,17 @@ export const getJSONFile = (fileName: string, callback: (error: unknown, result:
                 return;
             }
             if (xhr.status !== 200 && xhr.status !== 304) {
-                callback(`JSONファイル ${fileName}が読み込めませんでした。ステータスコード: ${xhr.status}`, "")
+                callback({
+                    kind: "httpError",
+                    detail: `ファイル ${fileName} が読み込めませんでした。ステータスコード: ${xhr.status}`
+                }, "")
                 return;
             }
             if (typeof xhr.response !== "string") {
-                callback("JSON file response is not string", '');
+                callback({
+                    kind: "brokenJson",
+                    detail: `ファイル ${fileName} が壊れています。`
+                }, '');
                 return;
             }
             let json: unknown;
@@ -5686,7 +5758,10 @@ export const getJSONFile = (fileName: string, callback: (error: unknown, result:
                 json = JSON.parse(xhr.response);
             } catch(error) {
                 console.error(error);
-                callback(`Invalid JSON file ${error.message}`, "")
+                callback({
+                    kind: "brokenJson",
+                    detail: `ファイル ${fileName} が壊れています。正しい JSON ではありません。`
+                }, "")
             }
             callback(null, json);
         }

@@ -43,7 +43,8 @@ function createPlayPagePromises(maps: Maps): Promise<void>[] {
             path.join(outputDirectory, `${params.outputPageName}.html`), params.html));
 }
 
-function createPlayPageConfig(mapData: string, cssName?: string, isClassicMode?: true): InputConfig {
+function createPlayPageConfig(mapDataName: string, cssName?: string, isClassicMode?: true): InputConfig {
+    const canIncludeUserVarOptions = (mapDataName === "wwamap");
     return {
         page: {
             additionalCssFiles: ["style.css"],
@@ -54,17 +55,21 @@ function createPlayPageConfig(mapData: string, cssName?: string, isClassicMode?:
                 autoSave: {
                     intervalSteps: 200
                 },
-                varDump: {
-                    elementId: "vardump"
-                },
-                isShowUserVariable: true
+                ... (canIncludeUserVarOptions ? {
+                    userVars: {
+                        dumpElementId: "vardump",
+                        canDisplay: true
+                    }
+                } : {})
             },
             resources: {
-                mapData: `${mapData}.dat`,
+                mapData: `${mapDataName}.dat`,
                 wwaJs: isDev ? "wwa.long.js" : "wwa.js",
                 wwaCss: cssName,
                 titleImage: "cover.gif",
-                userVarNamesFile: `${mapData}-vars.json`
+                ...(canIncludeUserVarOptions ? {
+                    userVarNamesFile: `${mapDataName}-vars.json`
+                } : {})
             },
         },
         copyrights: "official-and-wing"

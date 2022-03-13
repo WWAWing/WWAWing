@@ -7,10 +7,10 @@ export interface GameOption {
         intervalSteps: number;
     };
     useLookingAround?: boolean;
-    varDump?: {
-        elementId: string
-    };
-    isShowUserVariable?: boolean;
+    userVars?: {
+        dumpElementId: string
+        canDisplay?: boolean
+    }
 }
 
 export interface Resources {
