@@ -1014,7 +1014,7 @@ export class WWA {
                         console.error(error);
                         return;
                     }
-                    if (!this._wwaData || !data || typeof data !== "object") {
+                    if (!data || typeof data !== "object") {
                         console.error("変数一覧ファイルが壊れています。");
                         return;
                     }
