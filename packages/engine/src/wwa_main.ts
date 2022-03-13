@@ -233,7 +233,7 @@ export class WWA {
         audioDirectory: string = "",
         disallowLoadOldSave: boolean = false,
         dumpElm: HTMLElement = null,
-        userVarNamesFile: string,
+        userVarNamesFile: string | null,
         canDisplayUserVars: boolean
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
@@ -1008,17 +1008,21 @@ export class WWA {
         if (this._canDisplayUserVars) {
             this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
             // ユーザー変数ファイルを読み込む
-            getJSONFile(userVarNamesFile, (error: unknown, data: unknown) => {
-                if (error) {
-                    console.error(error);
-                    return;
-                }
-                if (!this._wwaData || !data || typeof data !== "object") {
-                    console.error();
-                    return;
-                }
-                this._userVarNameList = this.convertUserVariableNameListToArray(data);
-            });
+            if (userVarNamesFile) {
+                getJSONFile(userVarNamesFile, (error: unknown, data: unknown) => {
+                    if (error) {
+                        console.error(error);
+                        return;
+                    }
+                    if (!this._wwaData || !data || typeof data !== "object") {
+                        console.error("変数一覧ファイルが壊れています。");
+                        return;
+                    }
+                    this._userVarNameList = this.convertUserVariableNameListToArray(data);
+                });
+            } else {
+                console.error("data-wwa-user-var-names-file 属性が指定されませんでした。")
+            }
         }
     }
 
