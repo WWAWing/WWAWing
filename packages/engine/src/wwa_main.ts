@@ -1052,9 +1052,10 @@ export class WWA {
             } else {
                 this._userVarNameListRequestError = {
                     kind: "noFileSpecified",
-                    detail: "data-wwa-user-var-names-file 属性が指定されませんでした。"
+                    detail: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
                 }
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
+                // こういうこともできますよ、という案内なのでエラーにはしない
+                this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, false);
             }
         }
     }
@@ -4504,9 +4505,13 @@ export class WWA {
             this.setNowPlayTime();
             let helpMessage: string = '変数一覧\n';
             if (this._userVarNameListRequestError) {
-                helpMessage += "【変数名取得失敗】\n";
-                helpMessage += "  すべての変数を名無しとしています。\n";
-                helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.detail}\n`
+                if (this._userVarNameListRequestError.kind === "noFileSpecified") {
+                    helpMessage += this._userVarNameListRequestError.detail + "\n";
+                } else {
+                    helpMessage += "【変数名取得失敗】\n";
+                    helpMessage += "  すべての変数を名無しとしています。\n";
+                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.detail}\n`
+                }
             }
             for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
                 /** 終端まで行った際にはループして0番目から参照する */
