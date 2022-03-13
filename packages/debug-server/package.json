@@ -10,7 +10,7 @@
   "scripts": {
     "start": "npm run build && node lib debug",
     "build": "tsc -p .",
-    "generate": "shx mkdir -p bin && pkg -t node14.18.1-win-x64 ./lib/index.js --output bin/wwa-server.exe",
+    "generate": "shx mkdir -p bin && pkg -t node16.13.2-win-x64 ./lib/index.js --output bin/wwa-server.exe",
     "clean": "shx rm -rf debug lib bin",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -29,7 +29,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=14",
+    "node": ">=16",
     "npm": ">=8"
   }
 }
