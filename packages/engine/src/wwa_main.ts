@@ -1003,23 +1003,23 @@ export class WWA {
         eventEmitter.addListener("error", errorHandler )
         const loader = new WWALoader(mapFileName, eventEmitter);
         loader.requestAndLoadMapData();
-        // ユーザー変数ファイルを読み込む
-        getJSONFile(userVarNamesFile, (error: unknown, data: unknown) => {
-            if (error) {
-                console.error(error);
-                return;
-            }
-            if (!this._wwaData || !data || typeof data !== "object") {
-                console.error();
-                return;
-            }
-            this._inlineUserVarViewer = { 
-                topUserVarIndex: 0,
-                isVisible: false
-            };
-            this._canDisplayUserVars = canDisplayUserVars;
-            this._userVarNameList = this.convertUserVariableNameListToArray(data);
-        });
+
+        this._canDisplayUserVars = canDisplayUserVars;
+        if (this._canDisplayUserVars) {
+            this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
+            // ユーザー変数ファイルを読み込む
+            getJSONFile(userVarNamesFile, (error: unknown, data: unknown) => {
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+                if (!this._wwaData || !data || typeof data !== "object") {
+                    console.error();
+                    return;
+                }
+                this._userVarNameList = this.convertUserVariableNameListToArray(data);
+            });
+        }
     }
 
     /**
@@ -4455,16 +4455,9 @@ export class WWA {
     }
 
     private _displayUserVars(): void {
-        // 定義されてない場合には初期化する
-        if (this._inlineUserVarViewer === undefined) {
-            this._inlineUserVarViewer = {
-                isVisible: true,
-                topUserVarIndex: 0
-            }
-            this._canDisplayUserVars = util.$id("wwa-wrapper").getAttribute("data-wwa-display-user-vars") === "true";
-        }
         // 属性によって表示許可されていない場合には何もしない
-        if(!this._canDisplayUserVars) {
+        // 何らかの事情で inlineUserVarViewer が初期化されていない場合も何もしない
+        if (!this._canDisplayUserVars || !this._inlineUserVarViewer) {
             return;
         }
         // 表示中フラグをONにする
@@ -5623,7 +5616,7 @@ function start() {
     /** WWAの変数命名データを読み込む */
     var userVarNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-var-names-file");
     /** 変数表示システムが有効か */
-    var canDisplayUserVars = util.$id("wwa-wrapper").getAttribute("data-wwa-display-user-vars");
+    var canDisplayUserVars = (util.$id("wwa-wrapper").getAttribute("data-wwa-display-user-vars") === "true");
     var itemEffectEnabled = true;
     var itemEffectAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-item-effect-enable");
     if (itemEffectAttribute !== null && itemEffectAttribute.match(/^false$/i)) {
@@ -5652,7 +5645,7 @@ function start() {
         disallowLoadOldSave,
         dumpElm,
         userVarNamesFile,
-        (canDisplayUserVars === 'true')
+        canDisplayUserVars
     );
 }
 
