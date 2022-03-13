@@ -156,7 +156,7 @@ export default async function makeDistribution(
                     mapData: `${mapData}.dat`,
                     wwaJs: "wwa.js",
                     titleImage: "cover.gif",
-                    variableNameFile: `${mapData}-vars.json`
+                    userVarNamesFile: `${mapData}-vars.json`
                 },
             },
             copyrights: "official-and-wing"
