@@ -38,7 +38,8 @@
   }
 }
 
-.wwa-vardump-wrapper>table tr.var-val>td {
+.wwa-vardump-wrapper>table tr.var-val>td,
+.wwa-vardump-wrapper>table>td.varlist-information {
   background-color: #FFFFCC;
 }
 

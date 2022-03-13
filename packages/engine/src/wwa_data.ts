@@ -1010,3 +1010,12 @@ export enum IDTable {
  * equipment 装備品のみ
  */
 export type StatusSolutionKind = "all" | "bare" | "equipment";
+
+export type JsonRequestErrorKind = "brokenJson" | "httpError";
+
+export type UserVarNameListRequestErrorKind = JsonRequestErrorKind | "notObject" | "noFileSpecified";
+
+export type JsonRequestError<ErrorKind = JsonRequestErrorKind> = {
+    kind: ErrorKind;
+    detail: string;
+}
