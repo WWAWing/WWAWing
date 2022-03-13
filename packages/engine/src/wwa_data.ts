@@ -887,6 +887,11 @@ export class WWAConsts {
     static USET_VAR_NUM_MIN_VALUE = -9007199254740991; 
     static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
 
+    /**
+     * ゲーム内ユーザ変数ビューワで1度に表示できる変数の数
+     */
+    static INLINE_USER_VAR_VIEWER_DISPLAY_NUM = 10;
+
 }
 export class WWASaveConsts {
     static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数

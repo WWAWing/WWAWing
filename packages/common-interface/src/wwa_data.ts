@@ -120,7 +120,6 @@ export interface WWAData {
 
     // XE拡張:ここから
     userVar: number[];
-    showUserVar: ShowUserVarMode;
     permitChangeGameSpeed: boolean;
     gameSpeedIndex: number;
     playTime: number;
@@ -131,11 +130,3 @@ export interface WWAData {
     isVisibleStatusGold: boolean;
 }
 
-export interface ShowUserVarMode {
-    start: number,
-    isShow: boolean,
-    nameList?: {
-        [key: string]: string
-    }
-    isAvailable: boolean;
-}
