@@ -3638,6 +3638,9 @@ export class WWA {
     }
 
     public gameover() {
+        if (this._wwaData.isGameOverDisabled) {
+            return;
+        }
         var jx = this._wwaData.gameoverX;
         var jy = this._wwaData.gameoverY;
         this._yesNoJudge = YesNoState.UNSELECTED;
@@ -5020,6 +5023,10 @@ export class WWA {
     public setOldMove(flag: boolean) {
         this._wwaData.isOldMove = flag;
     }
+    public disableGameOver(isDisabled: boolean) {
+        this._wwaData.isGameOverDisabled = isDisabled;
+    }
+
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;
