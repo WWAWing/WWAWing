@@ -181,7 +181,8 @@ export function createDefaultWWAData(): WWAData {
         isVisibleStatusEnergy: undefined,
         isVisibleStatusStrength: undefined,
         isVisibleStatusDefence: undefined,
-        isVisibleStatusGold: undefined
+        isVisibleStatusGold: undefined,
+        isGameOverDisabled: undefined,
     };
 }
 
