@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/loader",
-  "version": "3.6.12",
+  "version": "3.7.0",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/index.js",
   "module": "./module/index.js",
@@ -65,7 +65,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=14",
+    "node": ">=16",
     "npm": ">=8"
   }
 }

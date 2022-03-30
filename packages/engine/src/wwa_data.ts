@@ -606,6 +606,7 @@ export enum MacroType {
     HIDE_STATUS = 53,
     VAR_MAP = 54,
     VAR_MOD = 55,
+    NO_GAMEOVER = 56,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101
 }
@@ -665,6 +666,7 @@ export var macrotable = {
     "$hide_status": 53,
     "$var_map": 54,
     "$var_mod": 55,
+    "$no_gameover": 56,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
@@ -887,6 +889,11 @@ export class WWAConsts {
     static USET_VAR_NUM_MIN_VALUE = -9007199254740991; 
     static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
 
+    /**
+     * ゲーム内ユーザ変数ビューワで1度に表示できる変数の数
+     */
+    static INLINE_USER_VAR_VIEWER_DISPLAY_NUM = 10;
+
 }
 export class WWASaveConsts {
     static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数
@@ -1005,3 +1012,12 @@ export enum IDTable {
  * equipment 装備品のみ
  */
 export type StatusSolutionKind = "all" | "bare" | "equipment";
+
+export type JsonRequestErrorKind = "brokenJson" | "httpError";
+
+export type UserVarNameListRequestErrorKind = JsonRequestErrorKind | "notObject" | "noFileSpecified";
+
+export type JsonRequestError<ErrorKind = JsonRequestErrorKind> = {
+    kind: ErrorKind;
+    detail: string;
+}

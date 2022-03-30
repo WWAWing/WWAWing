@@ -34,13 +34,14 @@ export default async function makeDistribution(
             copy("assets", path.join("html", "manual.html")),
             copy("engine", path.join("lib", "wwa.js")),
             copy("assets", path.join("style", "*.css")),
-            copy("styles", path.join("output","*.css"))
+            copy("styles", path.join("output", "*.css"))
         ];
     } else {
         tasks = [
             ...createHTMLFilePromises(["caves01", "caves02", "island02", "wwamap"]),
             copy("engine", path.join("LICENSE")),
             copy("assets", path.join("html", "manual.html")),
+            copy("assets", path.join("text", "*.txt")),
             copy("engine", path.join("lib", "wwa.js"), "mapdata"),
             copy("assets", path.join("style", "*.css"), "mapdata"),
             copy("assets", path.join("wwamk310", "WinWwamk.exe")),
@@ -50,11 +51,12 @@ export default async function makeDistribution(
             copy("assets", path.join("images", "*.gif"), "mapdata"),
             copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
             copy("debug-server", path.join("bin", "wwa-server.exe"), "mapdata"),
-            copy("styles", path.join("output","*.css"), "mapdata")
+            copy("styles", path.join("output", "*.css"), "mapdata"),
+            copy("assets", path.join("vars", "*.json"), "mapdata"),
         ];
     }
     await Promise.all(tasks);
-    if(isConvertLfToCrlf) {
+    if (isConvertLfToCrlf) {
         await convertLfToCrlfAll(isUpdate ? destUpdateBasePath : destBasePath)
     }
     console.log((isUpdate ? "update" : "full") + " version done.");
@@ -128,15 +130,16 @@ export default async function makeDistribution(
         return mapNames
             .map(mapName => ({
                 mapName,
-                html: render(createConfig(`${mapName}.dat`))
+                html: render(createConfig(mapName))
             }))
             .map(params => createWriteFilePromise(
                 path.join(__dirname, "..", "dist", "wwawing-dist", "mapdata", `${params.mapName}.html`),
                 params.html
             ));
     }
-    
-    function createConfig(mapData: string): InputConfig {
+
+    function createConfig(mapDataName: string): InputConfig {
+        const canIncludeUserVarOptions = (mapDataName === "wwamap");
         return {
             page: {
                 additionalCssFiles: ["style.css"]
@@ -146,14 +149,20 @@ export default async function makeDistribution(
                     autoSave: {
                         intervalSteps: 200,
                     },
-                    varDump: {
-                        elementId: "vardump"
-                    }
+                    ... (canIncludeUserVarOptions ? {
+                        userVars: {
+                            dumpElementId: "vardump",
+                            canDisplay: true
+                        }
+                    } : {})
                 },
                 resources: {
-                    mapData,
+                    mapData: `${mapDataName}.dat`,
                     wwaJs: "wwa.js",
                     titleImage: "cover.gif",
+                    ...(canIncludeUserVarOptions ? {
+                        userVarNamesFile: `${mapDataName}-vars.json`
+                    } : {})
                 },
             },
             copyrights: "official-and-wing"

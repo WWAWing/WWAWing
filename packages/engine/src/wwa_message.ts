@@ -220,7 +220,6 @@ export class Macro {
                 case MacroType.SET_MOENEY:
                     this._executeSetMoneyMacro();
                     break;
-                // HW3.16.4 より実装
                 // 歩数カウント代入
                 case MacroType.COPY_STEP_COUNT_TO:
                     this._executeSetStepCountMacro();
@@ -273,20 +272,20 @@ export class Macro {
                 case MacroType.SET_SPEED:
                     this._executeSetSpeedMacro();
                     break;
-                // HW3.16.5 より実装
                 // プレイ時間変数代入
                 case MacroType.COPY_TIME_TO:
                     this._executeCopyTimeToMacro();
                     break;
-                // HW3.18.0 より実装
                 // ステータスを隠す
                 case MacroType.HIDE_STATUS:
-                    this._hideStatusMacro();
+                    this._executeHideStatusMacro();
                     break;
-                // HW3.19.0 より実装
                 // $map の変数対応版
                 case MacroType.VAR_MAP:
-                    this._varMapMacro();
+                    this._executeVarMapMacro();
+                    break;
+                case MacroType.NO_GAMEOVER:
+                    this._executeNoGameOverMacro();
                     break;
                 default:
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
@@ -508,7 +507,7 @@ export class Macro {
         this._wwa.setUserVarPlayTime(num);
     }
     // HIDE_STATUS マクロ実行部
-    private _hideStatusMacro(): void {
+    private _executeHideStatusMacro(): void {
         this._concatEmptyArgs(2);
         var no = this._parseInt(0);
         var isHideNumber = this._parseInt(1);
@@ -516,7 +515,7 @@ export class Macro {
         this._wwa.hideStatus(no, isHide);
     }
     // VAR_MAP マクロ実行部
-    private _varMapMacro(): void {
+    private _executeVarMapMacro(): void {
         this._concatEmptyArgs(4);
         var partsID = this._parseInt(0);
         var xstr = this.macroArgs[1];
@@ -857,6 +856,13 @@ export class Macro {
         this._concatEmptyArgs(1);
         const oldMoveFlag = !!this._parseInt(0);
         this._wwa.setOldMove(oldMoveFlag);
+    }
+
+    private _executeNoGameOverMacro(): void {
+        this._concatEmptyArgs(1);
+        const isGameOverDisabled = Boolean(this._parseInt(0));
+        this._wwa.disableGameOver(isGameOverDisabled);
+
     }
 }
 
@@ -1241,6 +1247,10 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
     public setParsedMessage(message: ParsedMessage): void {
         this._message = message;
+        this.update();
+    }
+    public clear(): void {
+        this._message = new ParsedMessage([], false);
         this.update();
     }
     public setYesNoChoice(isYesNo: boolean): boolean {

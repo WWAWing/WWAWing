@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/event-emitter",
-  "version": "3.6.12",
+  "version": "3.7.0",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "files": [
     "lib",
@@ -31,7 +31,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=14",
+    "node": ">=16",
     "npm": ">=8"
   }
 }

@@ -118,7 +118,6 @@ export interface WWAData {
      */
     gamePadButtonItemTable: number[];
 
-    // XE拡張:ここから
     userVar: number[];
     permitChangeGameSpeed: boolean;
     gameSpeedIndex: number;
@@ -128,4 +127,7 @@ export interface WWAData {
     isVisibleStatusStrength: boolean;
     isVisibleStatusDefence: boolean;
     isVisibleStatusGold: boolean;
+
+    isGameOverDisabled: boolean
 }
+

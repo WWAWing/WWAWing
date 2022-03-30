@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/all",
-  "version": "3.6.12",
+  "version": "3.7.0",
   "description": "World Wide Adventure: an RPG Engine.",
   "author": "WWA Wing Team",
   "license": "MIT",
@@ -40,7 +40,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=14",
+    "node": ">=16",
     "npm": ">=8"
   }
 }

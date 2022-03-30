@@ -33,6 +33,8 @@ export interface TemplateValues {
             "data-wwa-autosave"?: string;
             "data-wwa-resume-savedata"?: string;
             "data-wwa-var-dump-elm"?: string;
+            "data-wwa-user-var-names-file"?: string;
+            "data-wwa-display-user-vars"?: string;
         };
     };
     varDumpElement?: {
@@ -63,10 +65,12 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-looking-around": Helper.toStringBooleanOptional(wwa.gameOption?.useLookingAround),
                 "data-wwa-autosave": `${wwa.gameOption?.autoSave?.intervalSteps ?? "0"}`,
                 "data-wwa-resume-savedata": wwa.resumeSaveData,
-                "data-wwa-var-dump-elm": wwa.gameOption?.varDump?.elementId ? `#${wwa.gameOption.varDump.elementId}` : undefined
+                "data-wwa-var-dump-elm": wwa.gameOption?.userVars?.dumpElementId ? `#${wwa.gameOption.userVars.dumpElementId}` : undefined,
+                "data-wwa-user-var-names-file": wwa.resources.userVarNamesFile,
+                "data-wwa-display-user-vars": Helper.toStringBooleanOptional(wwa.gameOption?.userVars?.canDisplay)
             }
         },
-        varDumpElement: wwa.gameOption?.varDump?.elementId ? { id: wwa.gameOption.varDump.elementId } : undefined,
+        varDumpElement: wwa.gameOption?.userVars?.dumpElementId ? { id: wwa.gameOption.userVars.dumpElementId } : undefined,
         footer: {
             copyrights: Helper.generateCopyrights(copyrights)
         }
