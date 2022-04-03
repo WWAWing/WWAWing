@@ -44,7 +44,6 @@ function createPlayPagePromises(maps: Maps): Promise<void>[] {
 }
 
 function createPlayPageConfig(mapDataName: string, cssName?: string, isClassicMode?: true): InputConfig {
-    const canIncludeUserVarOptions = (mapDataName === "wwamap");
     return {
         page: {
             additionalCssFiles: ["style.css"],
@@ -55,21 +54,17 @@ function createPlayPageConfig(mapDataName: string, cssName?: string, isClassicMo
                 autoSave: {
                     intervalSteps: 200
                 },
-                ... (canIncludeUserVarOptions ? {
-                    userVars: {
-                        dumpElementId: "vardump",
-                        canDisplay: true
-                    }
-                } : {})
+                userVars: {
+                    dumpElementId: "vardump",
+                    canDisplay: true
+                }
             },
             resources: {
                 mapData: `${mapDataName}.dat`,
                 wwaJs: isDev ? "wwa.long.js" : "wwa.js",
                 wwaCss: cssName,
                 titleImage: "cover.gif",
-                ...(canIncludeUserVarOptions ? {
-                    userVarNamesFile: `${mapDataName}-vars.json`
-                } : {})
+                userVarNamesFile: `${mapDataName}-vars.json`
             },
         },
         copyrights: "official-and-wing"

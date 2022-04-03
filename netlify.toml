@@ -1,7 +1,7 @@
 [build]
   base = "/"
   publish = "packages/engine/lib"
-  command = "npm run build && npm run deploy"
+  command = "npm i && npm run build && npm run deploy"
 
 [build.environment]
   NODE_VERSION = "16.13.2"
