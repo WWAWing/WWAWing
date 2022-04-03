@@ -389,7 +389,7 @@ export class Macro {
     private _executeSetHPMacro(): void {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
-        this._wwa.setHPUserVar(num);
+        this._wwa.setHPUserVar(num, true);
     }
     // set_hpmaxマクロ実行部
     private _executeSetHpMaxMacro(): void {
@@ -793,8 +793,7 @@ export class Macro {
         if (type < 0 || 4 < type) {
             throw new Error("ステータス種別が範囲外です。");
         }
-
-        this._wwa.setPlayerStatus(type, value);
+        this._wwa.setPlayerStatus(type, value, true);
     }
 
     private _executeColorMacro(): void {
@@ -860,9 +859,8 @@ export class Macro {
 
     private _executeNoGameOverMacro(): void {
         this._concatEmptyArgs(1);
-        const isGameOverDisabled = Boolean(this._parseInt(0));
-        this._wwa.disableGameOver(isGameOverDisabled);
-
+        const isGameOverDisabled = this._parseInt(0);
+        this._wwa.setGameOverPolicy(isGameOverDisabled);
     }
 }
 
