@@ -7,6 +7,7 @@ import WWASave from "./WWASave";
 import WWASaveDataDB from "./WWASaveDataDB";
 import WWASaveDataList from "./WWASaveDataList";
 import { LoadErrorCode, OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./common";
+import { applyAllMigrators } from "./migrators";
 
 type WWASaveDataItem = {
     url?: string,
@@ -291,7 +292,7 @@ export default class WWASaveDataDBList extends WWASaveDataList {
                     if (!this[saveData.id]) {
                         continue;
                     }
-                    const [quickSaveData] = WWACompress.decompress(saveData.data);
+                    const quickSaveData = applyAllMigrators(WWACompress.decompress(saveData.data)[0]);
                     this[saveData.id].saveDataSet(saveData.image, quickSaveData, saveData.date);
                 }
 

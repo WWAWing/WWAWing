@@ -1080,7 +1080,9 @@ export class Player extends PartsObject {
                     this._state = PlayerState.CONTROLLABLE;
                     this._battleTurnNum = 0;
                     this._enemy = null;
-                    this._wwa.gameover();
+                    if (this._wwa.shouldApplyGameOver({ isCalledByMacro: false })) {
+                        this._wwa.gameover();
+                    }
                 }
             }
 

@@ -132,7 +132,7 @@ export class TextLoader {
     wwaData.isVisibleStatusDefence = true;
     wwaData.isVisibleStatusGold = true;
 
-    wwaData.isGameOverDisabled = false;
+    wwaData.gameOverPolicy = "default";
 
     return wwaData;
   }
