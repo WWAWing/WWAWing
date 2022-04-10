@@ -183,6 +183,7 @@ export function createDefaultWWAData(): WWAData {
         isVisibleStatusDefence: undefined,
         isVisibleStatusGold: undefined,
         isGameOverDisabled: undefined,
+        gameOverPolicy: "default",
     };
 }
 

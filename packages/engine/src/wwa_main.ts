@@ -33,7 +33,7 @@ import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { encodeSaveData, decodeSaveDataV0, decodeSaveDataV1, generateMD5 } from "./wwa_encryption";
-import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADataWithWorldNameStatus } from "./wwa_save";
+import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADataWithWorldNameStatus, Migrators } from "./wwa_save";
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
@@ -2839,7 +2839,11 @@ export class WWA {
         this._player.addStatusAll(status);
         this.setStatusChangedEffect(status);
         //  ゲームオーバー
-        if (this._player.isDead() && this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY] !== 0) {
+        if (
+            this._player.isDead() &&
+            this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY] !== 0 &&
+            this.shouldApplyGameOver({ isCalledByMacro: false })
+        ) {
             this.gameover();
             return;
         }
@@ -3140,7 +3144,11 @@ export class WWA {
                                 this._player.addStatusAll(status);
 
                                 //  ゲームオーバー
-                                if (this._player.isDead() && this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY] !== 0) {
+                                if (
+                                    this._player.isDead() &&
+                                    this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY] !== 0 &&
+                                    this.shouldApplyGameOver({isCalledByMacro: false})
+                                ) {
                                     this.gameover();
                                     return;
                                 }
@@ -3638,9 +3646,6 @@ export class WWA {
     }
 
     public gameover() {
-        if (this._wwaData.isGameOverDisabled) {
-            return;
-        }
         var jx = this._wwaData.gameoverX;
         var jy = this._wwaData.gameoverY;
         this._yesNoJudge = YesNoState.UNSELECTED;
@@ -3950,7 +3955,8 @@ export class WWA {
         }
         if (obj.isCompress) {
             delete obj.isCompress;
-            return WWACompress.decompress(obj);
+            const [data, worldNameStatus] = WWACompress.decompress(obj)
+            return [Migrators.applyAllMigrators(data), worldNameStatus];
         } else {
             return [<WWAData>obj, { isWorldNameEmpty: false }];
         };
@@ -4864,11 +4870,14 @@ export class WWA {
         return this.isNotNumberTypeOrNaN(x) || x < 0 ? 0 : Math.floor(x);
     }
 
-    public setPlayerStatus(type: MacroStatusIndex, value: number): void {
+    public setPlayerStatus(type: MacroStatusIndex, value: number, isCalledByMacro: boolean): void {
         if (type === MacroStatusIndex.ENERGY) {
             // 生命力は setEnergy 内でマイナスの値を処理しているためこのまま続行
             this._player.setEnergy(value);
-            if(this._player.isDead()) {
+            if(
+                this._player.isDead() &&
+                this.shouldApplyGameOver({ isCalledByMacro })
+            ) {
                 this.gameover();
             }
         } else if (type === MacroStatusIndex.STRENGTH) {
@@ -5023,8 +5032,21 @@ export class WWA {
     public setOldMove(flag: boolean) {
         this._wwaData.isOldMove = flag;
     }
-    public disableGameOver(isDisabled: boolean) {
-        this._wwaData.isGameOverDisabled = isDisabled;
+    public setGameOverPolicy(gameOverPolicy: number) {
+        switch(gameOverPolicy) {
+            case 0:
+                this._wwaData.gameOverPolicy = "default";
+                return;
+            case 1:
+                this._wwaData.gameOverPolicy = "never";
+                return;
+            case 2:
+                this._wwaData.gameOverPolicy = "except-macro";
+                return;
+            default:
+                // 何もしない
+                return;
+        }
     }
 
 
@@ -5214,13 +5236,16 @@ font-weight: bold;
     }
 
     // HP <- ユーザ変数
-    public setHPUserVar(index: number): void {
+    public setHPUserVar(index: number, isCalledByMacro: boolean): void {
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
         this._player.setEnergy(this.toValidStatusValue(this._wwaData.userVar[index]));
         // 0 になった場合はゲームオーバー
-        if (this._player.isDead()) {
+        if (
+            this._player.isDead() && 
+            this.shouldApplyGameOver({ isCalledByMacro })
+        ) {
             this.gameover();
         }
         this._player.updateStatusValueBox();
@@ -5568,6 +5593,14 @@ font-weight: bold;
             return;
         }
         elm.textContent = `${isError ? "【エラー】" : ""}${content}`;
+    }
+
+    public shouldApplyGameOver({ isCalledByMacro }: { isCalledByMacro: boolean }) {
+        if(isCalledByMacro) {
+            return this._wwaData.gameOverPolicy === "default";
+        } else {
+            return this._wwaData.gameOverPolicy === "default" || this._wwaData.gameOverPolicy ==="except-macro";
+        }
     }
 };
 
