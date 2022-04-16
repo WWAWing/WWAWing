@@ -911,15 +911,20 @@ export function parseMacro(
 
     var matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)$/);
     if (matchInfo === null || matchInfo.length !== 3) {
-        throw new Error("マクロではありません");
+        // イコールがつかないタイプのマクロ
+        matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)/);
+        if (matchInfo === null || matchInfo.length !== 2) {
+            throw new Error("マクロではありません");
+        }
     }
     var macroType = matchInfo[1];
     var macroIndex = macrotable["$" + macroType.toLowerCase()];
+    var macroRightSide = matchInfo[2]? matchInfo[2]: "";
     if (macroIndex === void 0) {
         // undefined macro
-        return new Macro(wwa, partsID, partsType, position, MacroType.UNDEFINED, matchInfo[2].split(","));
+        return new Macro(wwa, partsID, partsType, position, MacroType.UNDEFINED, macroRightSide.split(","));
     }
-    return new Macro(wwa, partsID, partsType, position, macroIndex, matchInfo[2].split(",").map((e) => { return e.trim(); }));
+    return new Macro(wwa, partsID, partsType, position, macroIndex, macroRightSide.split(",").map((e) => { return e.trim(); }));
 }
 
 
