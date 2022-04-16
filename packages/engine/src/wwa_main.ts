@@ -1611,7 +1611,8 @@ export class WWA {
         for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
             // if-elseマクロの途中で条件を満たさない場合にはマクロを実行しない
             // IF-ELSE関連マクロの場合には無条件で実行する
-            if(this._wwaData.ifElseStatus !== 'non-exec' || this._execMacroListInNextFrame[i].isIFMacro()) {
+            console.log(this._wwaData.ifElseStatus);
+            if(this._wwaData.ifElseStatus === 'none' || this._wwaData.ifElseStatus === 'exec' || this._execMacroListInNextFrame[i].isIFMacro()) {
                 this._execMacroListInNextFrame[i].execute();
             }
         }
@@ -5347,16 +5348,23 @@ font-weight: bold;
     public execIfMacro(macroStr = ""): void {
         // 前のif文が実行状態だった場合には以降のelse文は実行しない
         if(this._wwaData.ifElseStatus === 'exec') {
-            this._wwaData.ifElseStatus = 'non-exec';
+            this._wwaData.ifElseStatus = 'execed';
         }
-        else {
-            // 非実行状態の場合にはif実行状態にする
-            if(this._wwaData.ifElseStatus === 'none') {
-                // 条件式を解釈してtrueの場合にはexecにする
+        // 非実行状態の場合にはif実行状態にする
+        else if(this._wwaData.ifElseStatus === 'none' || this._wwaData.ifElseStatus === 'non-exec') {
+            // 条件式を解釈してtrueの場合にはexecにする
+            if(macroStr === '' || this.checkCondition(macroStr)) {
                 this._wwaData.ifElseStatus = 'exec';
             }
-            console.log(macroStr);
         }
+    }
+    // 条件式を引数に取ってTrueかを判定する
+    public checkCondition(macroStr): boolean {
+        console.log(macroStr);
+        // 複数条件を処理する場合（将来用）: /(\(.+?\)(&&|\|\|)?){1,}/
+        const discriminant = macroStr.match(/\(((v\[\d{1,3}\]|\d{0})(>|<|<=|>=|==|!=)(v\[\d{1,3}\]|\d{0}))\)/)
+        console.log(discriminant);
+        return true;
     }
     // end-ifが呼ばれたときにはif文実行状態を終了させる
     public ifElseResetStatus(): void {
