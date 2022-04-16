@@ -1611,7 +1611,6 @@ export class WWA {
         for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
             // if-elseマクロの途中で条件を満たさない場合にはマクロを実行しない
             // IF-ELSE関連マクロの場合には無条件で実行する
-            console.log(this._wwaData.ifElseStatus);
             if(this._wwaData.ifElseStatus === 'none' || this._wwaData.ifElseStatus === 'exec' || this._execMacroListInNextFrame[i].isIFMacro()) {
                 this._execMacroListInNextFrame[i].execute();
             }
