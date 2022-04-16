@@ -3402,7 +3402,7 @@ export class WWA {
                 var linesWithoutMacro: MessageSegments[] = [];
                 var macroQueue: Macro[] = [];
                 for (var i = 0; i < lines.length; i++) {
-                    var matchInfo = lines[i].match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)\=(?:.*))/);
+                    var matchInfo = lines[i].match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)(?:.*))/);
                     if (matchInfo !== null && matchInfo.length >= 2) {
                         var macro = parseMacro(this, partsID, partsType, partsPosition, matchInfo[1]);
                         // マクロのエンキュー (最も左のものを対象とする。)
