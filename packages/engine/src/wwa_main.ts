@@ -1609,7 +1609,11 @@ export class WWA {
             this._clearFacesInNextFrame = false;
         }
         for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
-            this._execMacroListInNextFrame[i].execute();
+            // if-elseマクロの途中で条件を満たさない場合にはマクロを実行しない
+            // IF-ELSE関連マクロの場合には無条件で実行する
+            if(this._wwaData.ifElseStatus !== 'non-exec' || this._execMacroListInNextFrame[i].isIFMacro()) {
+                this._execMacroListInNextFrame[i].execute();
+            }
         }
         if (this._lastMessage.isEmpty() && this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
@@ -5338,6 +5342,25 @@ font-weight: bold;
     // 速度変更禁止
     public speedChangeJudge(speedChangeFlag: boolean): void {
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
+    }
+    // if文内を実行する
+    public execIfMacro(macroStr = ""): void {
+        // 前のif文が実行状態だった場合には以降のelse文は実行しない
+        if(this._wwaData.ifElseStatus === 'exec') {
+            this._wwaData.ifElseStatus = 'non-exec';
+        }
+        else {
+            // 非実行状態の場合にはif実行状態にする
+            if(this._wwaData.ifElseStatus === 'none') {
+                // 条件式を解釈してtrueの場合にはexecにする
+                this._wwaData.ifElseStatus = 'exec';
+            }
+            console.log(macroStr);
+        }
+    }
+    // end-ifが呼ばれたときにはif文実行状態を終了させる
+    public ifElseResetStatus(): void {
+        this._wwaData.ifElseStatus = 'none';
     }
     // ユーザ変数 IFElse
     public userVarUserIf(_triggerPartsPosition: Coord, args: string[]): void {

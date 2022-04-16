@@ -87,8 +87,14 @@ export class Macro {
         public macroType: MacroType,
         public macroArgs: string[]
     ) { }
+
+    // IF-ELSE関連マクロか
+    public isIFMacro(): boolean {
+        const IFElseMacroList = [MacroType.IF, MacroType.ELSE_IF, MacroType.ELSE, MacroType.END_IF];
+        return IFElseMacroList.includes(this.macroType);
+    }
+
     public execute(): void {
-        console.log(this.macroType);
         try {
             switch (this.macroType) {
                 case MacroType.IMGPLAYER:
@@ -499,25 +505,30 @@ export class Macro {
     }
     // IFマクロ実行部
     private _executeIfMacro(): void {
-        console.log("if");
-        // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
-        var str: string[] = new Array(11);
-        for (var i = 0; i < 10; i++) {
-            str[i] = this.macroArgs[i];
+        // 後方互換性を保つため、引数が1つ以外の時には旧ifマクロを実行する
+        if(this.macroArgs.length === 1) {
+            this._wwa.execIfMacro(this.macroArgs[0]);
         }
-        this._wwa.userVarUserIf(this._triggerPartsPosition, str);
+        else {
+            // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
+            var str: string[] = new Array(11);
+            for (var i = 0; i < 10; i++) {
+                str[i] = this.macroArgs[i];
+            }
+            this._wwa.userVarUserIf(this._triggerPartsPosition, str);
+        }
     }
     // IF-ELSEマクロ実行部
     private _executeIfElseMacro(): void {
-        console.log("else-if");
+        this._wwa.execIfMacro(this.macroArgs[0]);
     }
     // ELSEマクロ実行部
     private _executeElseMacro(): void {
-        console.log("else");
+        this._wwa.execIfMacro();
     }
     // END_IFマクロ実行部
     private _executeEndIfMacro(): void {
-        console.log("endif");
+        this._wwa.ifElseResetStatus();
     }
     // SET_SPEEDマクロ実行部
     private _executeSetSpeedMacro(): void {

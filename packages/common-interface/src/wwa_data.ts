@@ -4,6 +4,11 @@ export interface Coord {
 }
 
 /**
+ * if-elseマクロにて該当するマクロ文を実行するかを決める
+ */
+export type IfElseStatus = "none" | "exec" | "non-exec";
+
+/**
  * プレイヤーの生命力が 0 になった時の挙動
  * - default: 生命力が 0 になったらゲームオーバーとする
  * - never: 生命力が 0 になってもゲームオーバーにしない
@@ -145,6 +150,8 @@ export interface WWAData {
     isGameOverDisabled?: boolean;
 
     gameOverPolicy: GameOverPolicy
+
+    ifElseStatus: IfElseStatus
 
 }
 
