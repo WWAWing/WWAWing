@@ -3391,7 +3391,8 @@ export class WWA {
             .replace(/\n\<p\>\n/ig, "<P>")
             .replace(/\n\<p\>/ig, "<P>")
             .replace(/\<p\>\n/ig, "<P>")
-            .replace(/\<p\>/ig, "<P>");
+            .replace(/\<p\>/ig, "<P>")
+            .replace(/\/\/.*\n/ig, "");
 
         var messageQueue: ParsedMessage[] = [];
         if (messageMain !== "") {
