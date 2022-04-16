@@ -1611,7 +1611,7 @@ export class WWA {
         for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
             // if-elseマクロの途中で条件を満たさない場合にはマクロを実行しない
             // IF-ELSE関連マクロの場合には無条件で実行する
-            if(this._wwaData.ifElseStatus === 'none' || this._wwaData.ifElseStatus === 'exec' || this._execMacroListInNextFrame[i].isIFMacro()) {
+            if(this._wwaData.ifElseStatus === 'outside-ifelse' || this._wwaData.ifElseStatus === 'can-execute' || this._execMacroListInNextFrame[i].isIFMacro()) {
                 this._execMacroListInNextFrame[i].execute();
             }
         }
@@ -5347,14 +5347,17 @@ font-weight: bold;
     // if文内を実行する
     public execIfMacro(macroStr = ""): void {
         // 前のif文が実行状態だった場合には以降のelse文は実行しない
-        if(this._wwaData.ifElseStatus === 'exec') {
-            this._wwaData.ifElseStatus = 'execed';
+        if(this._wwaData.ifElseStatus === 'can-execute') {
+            this._wwaData.ifElseStatus = 'executed';
         }
         // 非実行状態の場合にはif実行状態にする
-        else if(this._wwaData.ifElseStatus === 'none' || this._wwaData.ifElseStatus === 'non-exec') {
+        else if(this._wwaData.ifElseStatus === 'outside-ifelse' || this._wwaData.ifElseStatus === 'cannot-execute') {
             // 条件式を解釈してtrueの場合にはexecにする
             if(macroStr === '' || this.checkCondition(macroStr)) {
-                this._wwaData.ifElseStatus = 'exec';
+                this._wwaData.ifElseStatus = 'can-execute';
+            }
+            else {
+                this._wwaData.ifElseStatus = 'cannot-execute';
             }
         }
     }
@@ -5404,7 +5407,7 @@ font-weight: bold;
     }
     // end-ifが呼ばれたときにはif文実行状態を終了させる
     public ifElseResetStatus(): void {
-        this._wwaData.ifElseStatus = 'none';
+        this._wwaData.ifElseStatus = 'outside-ifelse';
     }
     // ユーザ変数 IFElse
     public userVarUserIf(_triggerPartsPosition: Coord, args: string[]): void {

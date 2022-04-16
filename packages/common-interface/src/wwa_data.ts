@@ -5,12 +5,12 @@ export interface Coord {
 
 /**
  * if-elseマクロにて該当するマクロ文を実行するかを決める
- * none: if文の内側ではない
- * exec: 該当ブロックで処理を実行する
- * non-exec: if文の中だが、該当ブロックでは実行しない
+ * outside-ifelse: if文の内側ではない
+ * can-execute: 該当ブロックで処理を実行する
+ * cannot-execute: if文の中だが、該当ブロックでは実行しない
  * execed: if文の中で、既に実行済みのため実行しない
  */
-export type IfElseStatus = "none" | "exec" | "non-exec" | "execed";
+export type IfElseStatus = "outside-ifelse" | "can-execute" | "cannot-execute" | "executed";
 
 /**
  * プレイヤーの生命力が 0 になった時の挙動
