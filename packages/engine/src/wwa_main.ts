@@ -5360,11 +5360,47 @@ font-weight: bold;
     }
     // 条件式を引数に取ってTrueかを判定する
     public checkCondition(macroStr): boolean {
-        console.log(macroStr);
+        // 変数か定数かを判断し、該当する値を返す
+        const getValue = (v: string): number => {
+            const variable = v.match(/v\[(\d{1,3})\]/);
+            // 変数の場合
+            if(variable !== null) {
+                const varNumber = Number(variable[1]);
+                return this._wwaData.userVar[varNumber];
+            }
+            // 定数なら数値化して返す
+            else {
+                return Number(v);
+            }
+        }
         // 複数条件を処理する場合（将来用）: /(\(.+?\)(&&|\|\|)?){1,}/
-        const discriminant = macroStr.match(/\(((v\[\d{1,3}\]|\d{0})(>|<|<=|>=|==|!=)(v\[\d{1,3}\]|\d{0}))\)/)
-        console.log(discriminant);
-        return true;
+        const discriminant = macroStr.replaceAll(" ", "")
+            .match(/\((v\[\d{1,3}\]|\d{1,})(>|<|<=|>=|==|!=)(v\[\d{1,3}\]|\d{1,})\)/)
+        if(discriminant !== null && discriminant.length > 3) {
+            const left = getValue(discriminant[1]);
+            const right = getValue(discriminant[3]);
+            const operator = discriminant[2];
+            switch(operator) {
+                case '>':
+                    return left > right;
+                case '<':
+                    return left < right;
+                case '>=':
+                    return left >= right;
+                case '<=':
+                    return left <= right;
+                case '==':
+                    return left == right;
+                case '!=':
+                    return left != right;
+                default:
+                    return false;
+            }
+        }
+        else {
+            console.error(`判定式が異常です: ${macroStr}`)
+            return false;
+        }
     }
     // end-ifが呼ばれたときにはif文実行状態を終了させる
     public ifElseResetStatus(): void {
