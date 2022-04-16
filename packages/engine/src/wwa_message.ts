@@ -88,6 +88,7 @@ export class Macro {
         public macroArgs: string[]
     ) { }
     public execute(): void {
+        console.log(this.macroType);
         try {
             switch (this.macroType) {
                 case MacroType.IMGPLAYER:
@@ -267,6 +268,18 @@ export class Macro {
                 // IF文
                 case MacroType.IF:
                     this._executeIfMacro();
+                    break;
+                // ELSE-IF文
+                case MacroType.ELSE_IF:
+                    this._executeIfElseMacro();
+                    break;
+                // ELSE文
+                case MacroType.ELSE:
+                    this._executeElseMacro();
+                    break;
+                // END-IF文
+                case MacroType.END_IF:
+                    this._executeEndIfMacro();
                     break;
                 // 速度設定
                 case MacroType.SET_SPEED:
@@ -484,14 +497,27 @@ export class Macro {
         var speedChangeFlag = !!this._parseInt(0);
         this._wwa.speedChangeJudge(speedChangeFlag);
     }
-   // IFマクロ実行部
+    // IFマクロ実行部
     private _executeIfMacro(): void {
+        console.log("if");
         // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
         var str: string[] = new Array(11);
         for (var i = 0; i < 10; i++) {
             str[i] = this.macroArgs[i];
         }
         this._wwa.userVarUserIf(this._triggerPartsPosition, str);
+    }
+    // IF-ELSEマクロ実行部
+    private _executeIfElseMacro(): void {
+        console.log("else-if");
+    }
+    // ELSEマクロ実行部
+    private _executeElseMacro(): void {
+        console.log("else");
+    }
+    // END_IFマクロ実行部
+    private _executeEndIfMacro(): void {
+        console.log("endif");
     }
     // SET_SPEEDマクロ実行部
     private _executeSetSpeedMacro(): void {

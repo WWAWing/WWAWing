@@ -607,6 +607,9 @@ export enum MacroType {
     VAR_MAP = 54,
     VAR_MOD = 55,
     NO_GAMEOVER = 56,
+    ELSE_IF = 57,
+    ELSE = 58,
+    END_IF = 59,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101
 }
@@ -667,6 +670,9 @@ export var macrotable = {
     "$var_map": 54,
     "$var_mod": 55,
     "$no_gameover": 56,
+    "$else_if": 57,
+    "$else": 58,
+    "$endif": 59,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
