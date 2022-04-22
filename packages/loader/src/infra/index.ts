@@ -65,6 +65,9 @@ export class WWAConsts {
     static DEFAULT_STATUS_COLOR_B = 0x0;
 
     static DEFAULT_MOVES = 0;
+    static DEFAULT_SPEED_INDEX = 3;
+
+    static USER_VAR_NUM = 256;
 }
 
 export class LoaderError implements Error {
@@ -170,7 +173,17 @@ export function createDefaultWWAData(): WWAData {
         checkString: undefined,
         isItemEffectEnabled: undefined,
         frameCount: undefined,
-        gamePadButtonItemTable: undefined
+        gamePadButtonItemTable: undefined,
+        userVar: undefined,
+        permitChangeGameSpeed: undefined,
+        gameSpeedIndex: undefined,
+        playTime: undefined,
+        isVisibleStatusEnergy: undefined,
+        isVisibleStatusStrength: undefined,
+        isVisibleStatusDefence: undefined,
+        isVisibleStatusGold: undefined,
+        isGameOverDisabled: undefined,
+        gameOverPolicy: "default",
     };
 }
 

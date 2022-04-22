@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/assets",
-  "version": "3.5.14",
+  "version": "3.7.3",
   "description": "WWA Wing asset files",
   "main": "index.js",
   "files": [
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=14",
-    "npm": ">=6"
+    "node": ">=16",
+    "npm": ">=8"
   }
 }

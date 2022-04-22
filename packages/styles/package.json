@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/styles",
-  "version": "3.5.14",
+  "version": "3.7.3",
   "description": "WWA Wing stylesheet files",
   "main": "index.js",
   "files": [
@@ -9,16 +9,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run clean && ts-node ./scripts/make-css.ts",
-    "clean": "shx rm -rf output && shx mkdir -p output",
-    "prepare": "npm run build"
+    "clean": "shx rm -rf output && shx mkdir -p output"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/node-sass": "^3.10.32",
-    "node-sass": "^4.10.0",
+    "@types/sass": "^1.43.1",
+    "sass": "^1.49.0",
     "shx": "^0.3.3",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.2.4"
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
   }
 }

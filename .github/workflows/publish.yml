@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v2
         with:
-          node-version: '14.x'
+          node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
       
       - name: "Configure"
@@ -30,10 +30,20 @@ jobs:
           git config user.email "matsuyuki.eca@gmail.com"
 
       - name: "Install"
-        run: "npm install"
+        run: |
+          npm i -g npm@8
+          npm install
       
       - name: "Publish"
-        run: "npm run publish:all -- ${{ github.event.inputs.version }} --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes"
+        # lerna version でバージョンを上げた後、npm i をすると package-lock.json に差分が出てしまうので...
+        run: |
+          npm run version-up -- ${{ github.event.inputs.version }} --yes
+          export NEW_VERSION=$(node -e 'process.stdout.write(require("./lerna.json").version)')
+          npm install
+          git add -u package-lock.json lerna.json packages/*/package.json
+          git commit -m "v$NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          git push origin HEAD --tags
+          npm run publish:all -- --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
