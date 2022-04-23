@@ -10,7 +10,7 @@
   "scripts": {
     "start": "npm run build && node lib debug",
     "build": "tsc -p .",
-    "generate": "shx mkdir -p bin && pkg -t node16.13.2-win-x64 ./lib/index.js --output bin/wwa-server.exe",
+    "generate": "shx mkdir -p bin && pkg -t node16-win-x64 ./lib/index.js --output bin/wwa-server.exe",
     "clean": "shx rm -rf debug lib bin",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,7 +20,7 @@
     "@types/express": "4.17.11",
     "@types/node": "^12.12.6",
     "express": "^4.17.1",
-    "pkg": "^5.5.1",
+    "pkg": "^5.6.0",
     "shelljs": "^0.8.4",
     "shx": "^0.3.3",
     "typescript": "^4.5.4"
