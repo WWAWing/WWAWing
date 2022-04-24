@@ -1,7 +1,7 @@
 # WWA Wing
 インターネット RPG 「[World Wide Adventure](http://wwajp.com/)」 の TypeScript / JavaScript 実装です。
 
-このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna により自動化されています。
+このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージからなる npm workspace でされており、複数のリポジトリにまたがる操作などは turborepo を使用しています。バージョンアップ・publish 関連の操作には @lerna-lite/cli を使用しています。
 
 ## 準備
 - Node.js 16系

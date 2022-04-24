@@ -2,7 +2,7 @@
   "name": "@wwawing/wwawing",
   "version": "0.0.0",
   "description": "",
-  "private": "true",
+  "private": true,
   "workspaces": {
     "packages": [
       "packages/*"
@@ -10,12 +10,12 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "clean": "lerna clean --yes",
-    "start": "lerna run start --stream --scope @wwawing/engine",
-    "build": "lerna run build --stream",
-    "deploy": "lerna run deploy:prod --scope @wwawing/engine",
-    "generate": "lerna run generate --stream",
-    "make-dist": "npm run build && lerna run make-dist --stream",
+    "clean": "turbo run clean",
+    "start": "turbo run start --stream --filter=@wwawing/engine",
+    "build": "turbo run build --stream",
+    "deploy": "turbo run deploy:prod --filter=@wwawing/engine",
+    "generate": "turbo run generate --stream",
+    "make-dist": "npm run build && turbo run make-dist --stream",
     "version-up": "lerna version --no-git-tag-version",
     "publish:all": "run-s build generate && lerna publish from-package"
   },
@@ -33,10 +33,11 @@
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
+    "@lerna-lite/cli": "^1.0.5",
     "@types/node": "^12.12.6",
-    "lerna": "^4.0.0",
     "npm-run-all": "^4.1.5",
     "ts-node": "^10.4.0",
+    "turbo": "^1.2.5",
     "typescript": "^4.5.4"
   },
   "engines": {
