@@ -5019,6 +5019,15 @@ export class WWA {
 
     public addFace(face: Face): void {
         this._faces.push(face);
+        // 顔グラフィックがある状態では、メッセージウィンドウを下固定にする必要があるので、
+        // メッセージウィンドウの位置を変更する
+        this._messageWindow.setPositionByPlayerPosition(
+            this._faces.length !== 0,
+            this._scoreWindow.isVisible(),
+            false, // $face マクロの実行はシステムメッセージから実行されないので false 固定
+            this._player.getPosition(),
+            this._camera.getPosition()
+        );
     }
 
     public clearFaces(): void {
