@@ -50,7 +50,7 @@ $virtual-buttons-font-size-small: 25px;
 }
 
 #wwa-virtualpad-left {
-    $hole-size-half: $virtualpad-hole-size / 2;
+    $hole-size-half: calc($virtualpad-hole-size / 2);
     left: 0;
     display: grid;
     grid-template-columns: 1fr $hole-size-half $hole-size-half 1fr;
