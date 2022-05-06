@@ -5373,6 +5373,25 @@ font-weight: bold;
         }
         const normalMatch = noSpaceStr.match(regNormal);
         if(normalMatch !== null) {
+            const variable = normalMatch[1].match(/v\[(\d{1,3})\]/);
+            const varNumber = Number(variable[1]);
+            const setValue = this.parseValue(normalMatch[3]);
+            const operator = normalMatch[2];
+            switch(operator) {
+                case '=':
+                    this.setUserVar(varNumber, setValue);
+                    return;
+                case '+=':
+                    return;
+                case '-=':
+                    return;
+                case '*=':
+                    return;
+                case '/=':
+                    return;
+                case '%=':
+                    return;
+            }
             console.log("Normal:");
             console.log(normalMatch);
             return;
