@@ -306,6 +306,9 @@ export class Macro {
                 case MacroType.NO_GAMEOVER:
                     this._executeNoGameOverMacro();
                     break;
+                case MacroType.SET:
+                    this._executeSetMacro();
+                    break;
                 default:
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     break;
@@ -898,6 +901,10 @@ export class Macro {
         this._concatEmptyArgs(1);
         const isGameOverDisabled = this._parseInt(0);
         this._wwa.setGameOverPolicy(isGameOverDisabled);
+    }
+
+    private _executeSetMacro(): void {
+        this._wwa.execSetMacro(this.macroArgs[0])
     }
 }
 

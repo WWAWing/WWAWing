@@ -5361,6 +5361,9 @@ font-weight: bold;
             }
         }
     }
+    public execSetMacro(macroStr: string = ""): void {
+        console.log(macroStr)
+    }
     // 条件式を引数に取ってTrueかを判定する
     public checkCondition(macroStr): boolean {
         // 変数か定数かを判断し、該当する値を返す
