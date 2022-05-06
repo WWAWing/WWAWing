@@ -5361,17 +5361,48 @@ font-weight: bold;
             }
         }
     }
+    // Setマクロを実装
     public execSetMacro(macroStr: string = ""): void {
-        const regAdvance = /^\((v\[\d{1,3}\])(=|\+=|\-=|\*=|\/=|%=)(v\[\d{1,3}\]|\d{1,})(\+|\-|\*|\/|%)(v\[\d{1,3}\]|\d{1,})\)$/
+        const regAdvance = /^\((v\[\d{1,3}\])(=)(v\[\d{1,3}\]|\d{1,})(\+|\-|\*|\/|%)(v\[\d{1,3}\]|\d{1,})\)$/
         const regNormal = /^\((v\[\d{1,3}\])(=|\+=|\-=|\*=|\/=|%=)(v\[\d{1,3}\]|\d{1,})\)$/;
         const noSpaceStr = macroStr.replace(/\s/g, "");
         const advanceMatch = noSpaceStr.match(regAdvance);
+        /**
+         * v[x] = v[y] + v[z] のフォーマットの時
+         * 左辺値は変数のみ，中央値・右辺値は変数・定数両方受け取る
+         * 演算子は+, -, *, /, % を受け付ける
+         **/
         if(advanceMatch !== null) {
-            console.log("Advance:");
-            console.log(advanceMatch);
+            const variable = advanceMatch[1].match(/v\[(\d{1,3})\]/);
+            const varNumber = Number(variable[1]);
+            const leftValue = this.parseValue(advanceMatch[3]);
+            const rightValue = this.parseValue(advanceMatch[5]);
+            const operator = advanceMatch[4];
+            switch(operator) {
+                case '+':
+                    this.setUserVar(varNumber, leftValue + rightValue);
+                    return;
+                case '-':
+                    this.setUserVar(varNumber, leftValue - rightValue);
+                    return;
+                case '*':
+                    this.setUserVar(varNumber, leftValue * rightValue);
+                    return;
+                case '/':
+                    this.setUserVar(varNumber, leftValue / rightValue);
+                    return;
+                case '%':
+                    this.setUserVar(varNumber, leftValue % rightValue);
+                    return;
+            }
             return;
         }
         const normalMatch = noSpaceStr.match(regNormal);
+        /**
+         * v[x] = v[y] のフォーマット
+         * 左辺値は変数のみ，右辺値は変数・定数両方受け取る
+         * 演算子は=, +=, -=, *=, /=, %= を受け付ける
+         **/
         if(normalMatch !== null) {
             const variable = normalMatch[1].match(/v\[(\d{1,3})\]/);
             const varNumber = Number(variable[1]);
