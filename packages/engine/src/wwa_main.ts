@@ -5364,7 +5364,7 @@ font-weight: bold;
     // Setマクロを実装
     public execSetMacro(macroStr: string = ""): void {
         const regAdvance = /^\((v\[\d{1,3}\])(=)(v\[\d{1,3}\]|\d{1,})(\+|\-|\*|\/|%)(v\[\d{1,3}\]|\d{1,})\)$/
-        const regNormal = /^\((v\[\d{1,3}\])(=|\+=|\-=|\*=|\/=|%=)(v\[\d{1,3}\]|\d{1,})\)$/;
+        const regNormal = /\((v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD)(=|\+=|\-=|\*=|\/=|%=)(v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\((\d{1,})\))\)/;
         const noSpaceStr = macroStr.replace(/\s/g, "");
         const advanceMatch = noSpaceStr.match(regAdvance);
         /**
@@ -5409,41 +5409,61 @@ font-weight: bold;
             const leftValue = this._wwaData.userVar[varNumber];
             const rightValue = this.parseValue(normalMatch[3]);
             const operator = normalMatch[2];
+            let setValue;
             switch(operator) {
                 case '=':
-                    this.setUserVar(varNumber, rightValue);
-                    return;
+                    setValue = rightValue;
+                    break;
                 case '+=':
-                    this.setUserVar(varNumber, leftValue + rightValue);
-                    return;
+                    setValue = leftValue + rightValue;
+                    break;
                 case '-=':
-                    this.setUserVar(varNumber, leftValue - rightValue);
-                    return;
+                    setValue = leftValue - rightValue;
+                    break;
                 case '*=':
-                    this.setUserVar(varNumber, leftValue * rightValue);
-                    return;
+                    setValue = leftValue * rightValue;
+                    break;
                 case '/=':
-                    this.setUserVar(varNumber, leftValue / rightValue);
-                    return;
+                    setValue = leftValue / rightValue;
+                    break;
                 case '%=':
-                    this.setUserVar(varNumber, leftValue % rightValue);
-                    return;
+                    setValue = leftValue % rightValue;
+                    break;
             }
+            this.setUserVar(varNumber, setValue);
             return;
         }
         throw new Error('setMacroのフォーマットを満たしていません: '+macroStr)
     }
     public parseValue(str: string): number {
-        // 変数か定数かを判断し、該当する値を返す
-        const variable = str.match(/v\[(\d{1,3})\]/);
-        // 変数の場合
-        if(variable !== null) {
-            const varNumber = Number(variable[1]);
-            return this._wwaData.userVar[varNumber];
+        /** HPの場合 */
+        if(str === 'HP') {
+            return this._player.getStatus().energy;
         }
-        // 定数なら数値化して返す
+        else if(str === 'HPMAX') {
+            return this._player.getEnergyMax();
+        }
+        else if(str === 'AT') {
+            return this._player.getStatus().strength;
+        }
+        else if(str === 'DF') {
+            return this._player.getStatus().defence;
+        }
+        else if(str === 'GD') {
+            return this._player.getStatus().gold;
+        }
         else {
-            return Number(str);
+            // 変数か定数かを判断し、該当する値を返す
+            const variable = str.match(/v\[(\d{1,3})\]/);
+            // 変数の場合
+            if(variable !== null) {
+                const varNumber = Number(variable[1]);
+                return this._wwaData.userVar[varNumber];
+            }
+            // 定数なら数値化して返す
+            else {
+                return Number(str);
+            }
         }
     }
     // 条件式を引数に取ってTrueかを判定する
