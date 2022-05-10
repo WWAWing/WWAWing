@@ -5403,8 +5403,6 @@ font-weight: bold;
          * 左辺値は変数のみ，右辺値は変数・定数両方受け取る
          * 演算子は=, +=, -=, *=, /=, %= を受け付ける
          **/
-        console.log(macroStr);
-        console.log(normalMatch);
         if(normalMatch !== null) {
             const type = this.parseType(normalMatch[1]);
             const leftValue = this.parseValue(normalMatch[1]);
@@ -5491,6 +5489,12 @@ font-weight: bold;
         }
         else if(str === 'GD'){
             return 'GD';
+        }
+        else if(str === 'STEP'){
+            return 'STEP';
+        }
+        else if(str === 'TIME'){
+            return 'TIME';
         }
         else if(/^RAND\(\d{1,}\)$/.test(str)) {
             return 'RAND';
