@@ -7,7 +7,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, JsonRequestError, UserVarNameListRequestErrorKind
+    speedList, StatusKind, MacroType, StatusSolutionKind, JsonRequestError, UserVarNameListRequestErrorKind, SetMacroType
 } from "./wwa_data";
 
 import {
@@ -5403,10 +5403,11 @@ font-weight: bold;
          * 左辺値は変数のみ，右辺値は変数・定数両方受け取る
          * 演算子は=, +=, -=, *=, /=, %= を受け付ける
          **/
+        console.log(macroStr);
+        console.log(normalMatch);
         if(normalMatch !== null) {
-            const variable = normalMatch[1].match(/v\[(\d{1,3})\]/);
-            const varNumber = Number(variable[1]);
-            const leftValue = this._wwaData.userVar[varNumber];
+            const type = this.parseType(normalMatch[1]);
+            const leftValue = this.parseValue(normalMatch[1]);
             const rightValue = this.parseValue(normalMatch[3]);
             const operator = normalMatch[2];
             let setValue;
@@ -5430,42 +5431,103 @@ font-weight: bold;
                     setValue = leftValue % rightValue;
                     break;
             }
-            this.setUserVar(varNumber, setValue);
+            switch(type) {
+                case 'VARIABLE':
+                    const varNumber = normalMatch[1].match(/v\[(\d{1,3})\]/);
+                    if(varNumber !== null && varNumber[1]) {
+                        this.setUserVar(Number(varNumber[1]), setValue);
+                    }
+                    break;
+                case 'NUMBER':
+                    throw new Error('左辺値に定数は入れられません');
+                case 'HP':
+                    // TODO: 0以下になったら死亡判定を入れる
+                    this._player.setEnergy(setValue);
+                    break;
+                case 'HPMAX':
+                    this._player.setEnergyMax(setValue);
+                    break;
+                case 'AT':
+                    this._player.setStrength(setValue);
+                    break;
+                case 'DF':
+                    this._player.setDefence(setValue);
+                    break;
+                case 'GD':
+                    this._player.setGold(setValue);
+                    break;
+                case 'STEP':
+                    throw new Error('左辺値に歩数は入れられません');
+                case 'TIME':
+                    throw new Error('左辺値にプレイ時間は入れられません');
+                case 'RAND':
+                    throw new Error('左辺値に乱数は入れられません')
+            }
+            this._player.updateStatusValueBox();
             return;
         }
-        throw new Error('setMacroのフォーマットを満たしていません: '+macroStr)
-    }
-    public parseValue(str: string): number {
-        /** HPの場合 */
-        if(str === 'HP') {
-            return this._player.getStatus().energy;
-        }
-        else if(str === 'HPMAX') {
-            return this._player.getEnergyMax();
-        }
-        else if(str === 'AT') {
-            return this._player.getStatus().strength;
-        }
-        else if(str === 'DF') {
-            return this._player.getStatus().defence;
-        }
-        else if(str === 'GD') {
-            return this._player.getStatus().gold;
-        }
         else {
-            // 変数か定数かを判断し、該当する値を返す
-            const variable = str.match(/v\[(\d{1,3})\]/);
-            // 変数の場合
-            if(variable !== null) {
-                const varNumber = Number(variable[1]);
-                return this._wwaData.userVar[varNumber];
-            }
-            // 定数なら数値化して返す
-            else {
-                return Number(str);
-            }
+            throw new Error('setMacroのフォーマットを満たしていません: '+macroStr)
         }
     }
+    public parseType(str: string): SetMacroType | null {
+        if(/v\[(\d{1,3})\]/.test(str)) {
+            return 'VARIABLE';
+        }
+        else if(/^\d{1,}$/.test(str)) {
+            return 'NUMBER';
+        }
+        else if(str === 'HP'){
+            return 'HP';
+        }
+        else if(str === 'HPMAX'){
+            return 'HPMAX';
+        }
+        else if(str === 'AT'){
+            return 'AT';
+        }
+        else if(str === 'DF'){
+            return 'DF';
+        }
+        else if(str === 'GD'){
+            return 'GD';
+        }
+        else if(/^RAND\(\d{1,}\)$/.test(str)) {
+            return 'RAND';
+        }
+        return null;
+    }
+
+    public parseValue(str: string): number {
+        switch(this.parseType(str)) {
+            case 'HP':
+                return this._player.getStatus().energy;
+            case 'HPMAX':
+                return this._player.getEnergyMax();
+            case 'AT':
+                return this._player.getStatus().strength;
+            case 'DF':
+                return this._player.getStatus().defence;
+            case 'GD':
+                return this._player.getStatus().gold;
+            case 'STEP':
+                return this._player.getMoveCount();
+            case 'VARIABLE':
+                const variable = str.match(/v\[(\d{1,3})\]/);
+                if(variable !== null) {
+                    const varNumber = Number(variable[1]);
+                    return this._wwaData.userVar[varNumber];
+                }
+            case 'NUMBER':
+                return Number(str);
+            case 'TIME':        
+               this.setNowPlayTime();
+               return this._wwaData.playTime;
+            default:
+                return NaN;
+        }
+    }
+
     // 条件式を引数に取ってTrueかを判定する
     public checkCondition(macroStr): boolean {
         // 複数条件を処理する場合（将来用）: /(\(.+?\)(&&|\|\|)?){1,}/
