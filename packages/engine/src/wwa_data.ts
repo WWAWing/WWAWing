@@ -1030,4 +1030,4 @@ export type JsonRequestError<ErrorKind = JsonRequestErrorKind> = {
     detail: string;
 }
 
-export type SetMacroType = 'variable' | 'number' | 'HP' | 'HPMAX' | 'AT' | 'DF' | 'GD' | 'TIME' | 'STEP' | 'RAND';
+export type SetMacroType = 'VARIABLE' | 'NUMBER' | 'HP' | 'HPMAX' | 'AT' | 'DF' | 'GD' | 'TIME' | 'STEP' | 'RAND';
