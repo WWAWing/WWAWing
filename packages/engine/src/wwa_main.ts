@@ -5527,9 +5527,14 @@ font-weight: bold;
             case 'TIME':        
                this.setNowPlayTime();
                return this._wwaData.playTime;
+            case 'RAND':
+                const randMaxList = str.match(/^RAND\((\d{1,})\)$/);
+                const randMax = Number(randMaxList[1]);
+                return Math.floor(Math.random() * randMax);
             default:
                 return NaN;
         }
+        return NaN;
     }
 
     // 条件式を引数に取ってTrueかを判定する
