@@ -1,7 +1,7 @@
 {
   "name": "@wwawing/event-emitter",
   "version": "3.7.4",
-  "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
+  "description": "nodeでもブラウザでも使えるすごいEventEmitter",
   "files": [
     "lib",
     "module"

@@ -1,4 +1,4 @@
-import { BaseMapDataClient, MapDataClientCallback } from "./BaseMapDataClient";
+import { BaseMapDataClient } from "./BaseMapDataClient";
 
 /**
  * ブラウザで使うマップデータを取得するクライアント
@@ -7,55 +7,49 @@ export class BrowserMapDataClient extends BaseMapDataClient {
   constructor(private uri: string) {
     super();
   }
-  public request(callback: MapDataClientCallback): void {
-    const xhr: XMLHttpRequest = new XMLHttpRequest();
-    try {
-      xhr.open("GET", this.uri, true);
-      xhr.responseType = "arraybuffer";
 
-      xhr.onloadend = () => {
-        try {
-          if (xhr.status === 200 || xhr.status === 304) {
-            callback(undefined, xhr.response)
-          } else if (xhr.status === 404) {
-            throw new Error(
-              "マップデータ「" +
-              this.uri +
-              "」が見つかりませんでした。\n" +
-              "HTTPステータスコードは " +
-              xhr.status +
-              "です。"
-            );
-          } else if (xhr.status === 403) {
-            throw new Error(
-              "マップデータ「" +
-              this.uri +
-              "」を読み取る権限がないようです。\n" +
-              "管理者の方へ: マップデータのパーミッションを確認してください。\n" +
-              "HTTPステータスコードは " +
-              xhr.status +
-              "です。"
-            );
-          } else {
-            throw new Error(
-              "マップデータ「" +
-              this.uri +
-              "」の読み込みに失敗しました。\n" +
-              "HTTPステータスコードは " +
-              xhr.status +
-              "です。"
-            );
-          }
-        } catch (error) {
-          callback(error)
-        }
-      };
-      xhr.send(null);
-    } catch (e) {
-      callback(new Error(
-        "ロードエラー: ローカルテストの場合は、ブラウザが対応していない可能性があります。\n" +
-        e.message
-      ));
+  private static async fetch(uri: string): Promise<Response> {
+    try {
+      return await fetch(uri);
+    } catch (error) {
+      throw new Error(
+        `マップデータ 「${uri}」の読み込みに失敗しました。
+        通信環境の良いところで再度お試しください。
+        ローカルテストの場合は、ブラウザが対応していない可能性があります。`
+      );
     }
+  }
+
+  private static handleError(uri: string, response: Response): void {
+    const statusCodeMessage = `HTTPステータスコードは ${response.status} です。`
+    switch (response.status) {
+      case 200:
+      case 304:
+        // OK
+        return;
+      case 403:
+        throw new Error(
+          `マップデータ「${uri}」を読み取る権限がないようです。
+          管理者の方へ: マップデータのパーミッションを確認してください。
+          ${statusCodeMessage}`
+        );
+      case 404:
+        throw new Error(
+          `マップデータ「${uri}」が見つかりませんでした。
+          ${statusCodeMessage}`
+        );
+      default:
+        throw new Error(
+          `マップデータ「${uri}」の読み込みに失敗しました。
+          ${statusCodeMessage}`
+        );
+    }
+  }
+
+  public async request(): Promise<ArrayBufferLike> {
+    const response = await BrowserMapDataClient.fetch(this.uri);
+    BrowserMapDataClient.handleError(this.uri, response);
+    const buffer = await response.arrayBuffer();
+    return buffer;
   }
 }

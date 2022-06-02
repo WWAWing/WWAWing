@@ -1008,56 +1008,56 @@ export class WWA {
         eventEmitter.addListener("progress", progressHandler )
         eventEmitter.addListener("error", errorHandler )
         const loader = new WWALoader(mapFileName, eventEmitter);
-        loader.requestAndLoadMapData();
-
-        this._canDisplayUserVars = canDisplayUserVars;
-        this._userVarNameList = [];
-        if (this._canDisplayUserVars) {
-            this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
-            // ユーザー変数ファイルを読み込む
-            if (userVarNamesFile) {
-                getJSONFile(userVarNamesFile, (error: JsonRequestError, data: unknown) => {
-                    if (error) {
-                        this._userVarNameListRequestError = error;
-                        this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
-                        return;
-                    }
-                    if (!data || typeof data !== "object") {
-                        this._userVarNameListRequestError = {
-                            kind: "notObject",
-                            detail: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
+        loader.requestAndLoadMapData().then(() => {
+            this._canDisplayUserVars = canDisplayUserVars;
+            this._userVarNameList = [];
+            if (this._canDisplayUserVars) {
+                this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
+                // ユーザー変数ファイルを読み込む
+                if (userVarNamesFile) {
+                    getJSONFile(userVarNamesFile, (error: JsonRequestError, data: unknown) => {
+                        if (error) {
+                            this._userVarNameListRequestError = error;
+                            this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
+                            return;
                         }
-                        this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
-                        return;
-                    }
-                    this._userVarNameList = this.convertUserVariableNameListToArray(data);
-                    if (this._dumpElement === null) {
-                        return;
-                    }
-                    // 以下は変数一覧に変数名を流し込む処理
-                    for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                        const varNum = i.toString(10);
-                        if (!this._userVarNameList[i]) {
-                            continue;
+                        if (!data || typeof data !== "object") {
+                            this._userVarNameListRequestError = {
+                                kind: "notObject",
+                                detail: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
+                            }
+                            this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
+                            return;
                         }
-                        const varIndexQuery = `.var-index${varNum}`;
-                        const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
-                        const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
-                        varLabelElement.textContent = this._userVarNameList[i];
-                        varIndexElement.setAttribute("data-labelled-var-index", "true");
-                        varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
-                        varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
+                        this._userVarNameList = this.convertUserVariableNameListToArray(data);
+                        if (this._dumpElement === null) {
+                            return;
+                        }
+                        // 以下は変数一覧に変数名を流し込む処理
+                        for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+                            const varNum = i.toString(10);
+                            if (!this._userVarNameList[i]) {
+                                continue;
+                            }
+                            const varIndexQuery = `.var-index${varNum}`;
+                            const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
+                            const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
+                            varLabelElement.textContent = this._userVarNameList[i];
+                            varIndexElement.setAttribute("data-labelled-var-index", "true");
+                            varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
+                            varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
+                        }
+                    });
+                } else {
+                    this._userVarNameListRequestError = {
+                        kind: "noFileSpecified",
+                        detail: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
                     }
-                });
-            } else {
-                this._userVarNameListRequestError = {
-                    kind: "noFileSpecified",
-                    detail: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
+                    // こういうこともできますよ、という案内なのでエラーにはしない
+                    this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, false);
                 }
-                // こういうこともできますよ、という案内なのでエラーにはしない
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, false);
             }
-        }
+        });
     }
 
     /**
