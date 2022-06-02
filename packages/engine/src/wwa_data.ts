@@ -1013,11 +1013,13 @@ export enum IDTable {
  */
 export type StatusSolutionKind = "all" | "bare" | "equipment";
 
-export type JsonRequestErrorKind = "brokenJson" | "httpError";
+export type JsonRequestErrorKind = "brokenJson" | "httpError" | "connectionError" 
+
+export type JsonRequestStatusKind = JsonRequestErrorKind | "data";
 
 export type UserVarNameListRequestErrorKind = JsonRequestErrorKind | "notObject" | "noFileSpecified";
 
-export type JsonRequestError<ErrorKind = JsonRequestErrorKind> = {
+export type JsonRequestStatus<ErrorKind = JsonRequestStatusKind> = {
     kind: ErrorKind;
     detail: string;
 }
