@@ -22,43 +22,60 @@ export default class WWAWebAudio extends WWAAudio {
 
         this.isLoaded = false;
         this.pos = 0;
-        this._load(idx, file);
+        // floating promise だが仕方ない
+        this._load(idx, file)
     }
 
-    private _load(idx: number, file: string): void {
-        const audioContext = this.audioContext;
-        
-        let req = new XMLHttpRequest();
-        let errorCount = 0;
-        req.responseType = 'arraybuffer';
+    private async fetch(idx: number, file: string): Promise<Response | undefined> {
+        try {
+            return await fetch(file);
+        } catch(error) {
+            console.warn(`サウンド ${idx} 番の音声ファイルの取得失敗 (fetch)`);
+            return undefined;
+        }
+    }
 
-        req.addEventListener("load", event => {
-            const statusCode = req.status;
+    private async getArrayBuffer(idx: number, response: Response): Promise<ArrayBuffer | undefined> {
+        try {
+            return await response.arrayBuffer();
+        } catch(error) {
+            console.warn(`サウンド ${idx} 番の音声ファイルの取得失敗 (arrayBuffer)`);
+            return undefined;
+        }
+    }
 
-            if (statusCode !== 0 && statusCode !== 200) {
-                console.warn(`サウンド ${idx} 番の音声ファイルが見つかりません！ HTTPエラー番号: ${statusCode}`);
-                this._cancelLoad();
+    private async _load(idx: number, file: string, errorCount: number = 0): Promise<void> {
+        if (errorCount >= 10) {
+            console.log(`サウンド ${file} 番の音声ファイルの取得失敗 (最大リトライ回数超過)`);
+            return;
+        }
+        const response = await this.fetch(idx, file);
+        if (!response) {
+            this._retry(idx, file, errorCount);
+            return;
+        }
+        if (response.status !== 0 && response.status !== 200) {
+            console.warn(`サウンド ${idx} 番の音声ファイルが見つかりません！ HTTPエラー番号: ${response.status}`);
+            this._cancelLoad();
+            return;
+        }
+        const buffer = await this.getArrayBuffer(idx, response);
+         if (!buffer) {
+            this._retry(idx, file, errorCount);
+            return;
+        }
+        this.audioContext.decodeAudioData(buffer, buffer => {
+            if (buffer.length === 0) {
+                console.log(`サウンド ${idx} 番の音声ファイルのバッファサイズが 0 です `);
+                this._retry(idx, file, errorCount);
                 return;
             }
-            
-            audioContext.decodeAudioData(req.response, buffer => {
-                if (buffer.length === 0) {
-                    if (errorCount > 10) {
-                        console.log(`error audio file!  ${file} buffer size ${buffer.length}`);
-                    } else {
-                        setTimeout(() => {
-                            this._load(idx, file);
-                        }, 100);
-                        errorCount++;
-                        return;
-                    }
-                }
-                this._setData(buffer);
-            });
-
+            this._setData(buffer);
         });
-        req.open('GET', file, true);
-        req.send('');
+    }
+
+    private _retry(idx: number, file: string, errorCount: number) {
+        setTimeout(async () => { await this._load(idx, file, errorCount + 1); }, 100)
     }
 
     private _setData(data: AudioBuffer): void {
