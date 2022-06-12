@@ -5,14 +5,13 @@ export class Sound {
     private bufferSources: AudioBufferSourceNode[];
     private isLoaded: boolean;
     private isExceededMaxRetryCount?: true;
-    private pos: number;
 
     public constructor(
         /**
-         * 音声ファイルのIDです
+         * サウンド番号
          */
-        private idx: number,
-        file: string,
+        private id: number,
+        private fileName: string,
         private audioContext: AudioContext,
         private audioGain: GainNode
     ) {
@@ -22,70 +21,69 @@ export class Sound {
         this.bufferSources = [];
 
         this.isLoaded = false;
-        this.pos = 0;
         // floating promise だが仕方ない
-        this._load(idx, file)
+        this.load()
     }
 
-    private async fetch(idx: number, file: string): Promise<Response | undefined> {
+    private async fetchSoundFile(): Promise<Response | undefined> {
         try {
-            return await fetch(file);
+            return await fetch(this.fileName);
         } catch(error) {
-            console.warn(`サウンド ${idx} 番の音声ファイルの取得失敗 (fetch)`);
+            console.warn(`サウンド ${this.id} 番の音声ファイルの取得失敗 (fetch)`);
             return undefined;
         }
     }
 
-    private async getArrayBuffer(idx: number, response: Response): Promise<ArrayBuffer | undefined> {
+    private async getArrayBuffer(response: Response): Promise<ArrayBuffer | undefined> {
         try {
             return await response.arrayBuffer();
         } catch(error) {
-            console.warn(`サウンド ${idx} 番の音声ファイルの取得失敗 (arrayBuffer)`);
+            console.warn(`サウンド ${this.id} 番の音声ファイルの取得失敗 (arrayBuffer)`);
             return undefined;
         }
     }
 
-    private async _load(idx: number, file: string, errorCount: number = 0): Promise<void> {
+    private async load(errorCount: number = 0): Promise<void> {
         if (errorCount >= 10) {
-            console.log(`サウンド ${file} 番の音声ファイルの取得失敗 (最大リトライ回数超過)`);
+            console.log(`サウンド ${this.id} 番の音声ファイルの取得失敗 (最大リトライ回数超過)`);
             this.isExceededMaxRetryCount = true;
             return;
         }
-        const response = await this.fetch(idx, file);
+        const response = await this.fetchSoundFile();
         if (!response) {
-            this._retry(idx, file, errorCount);
+            this.retry(errorCount);
             return;
         }
         if (response.status !== 0 && response.status !== 200) {
-            console.warn(`サウンド ${idx} 番の音声ファイルが見つかりません！ HTTPエラー番号: ${response.status}`);
-            this._cancelLoad();
+            console.warn(`サウンド ${this.id} 番の音声ファイルが見つかりません！ HTTPエラー番号: ${response.status}`);
+            this.cancelLoad();
             return;
         }
-        const buffer = await this.getArrayBuffer(idx, response);
+        const buffer = await this.getArrayBuffer(response);
          if (!buffer) {
-            this._retry(idx, file, errorCount);
+            this.retry(errorCount);
             return;
         }
         this.audioContext.decodeAudioData(buffer, buffer => {
             if (buffer.length === 0) {
-                console.log(`サウンド ${idx} 番の音声ファイルのバッファサイズが 0 です `);
-                this._retry(idx, file, errorCount);
+                console.log(`サウンド ${this.id} 番の音声ファイルのバッファサイズが 0 です `);
+                this.retry(errorCount);
                 return;
             }
-            this._setData(buffer);
+            this.setData(buffer);
         });
     }
 
-    private _retry(idx: number, file: string, errorCount: number) {
-        setTimeout(async () => { await this._load(idx, file, errorCount + 1); }, 100)
+    private retry(errorCount: number) {
+        setTimeout(async () => { await this.load(errorCount + 1); }, 100)
     }
 
-    private _setData(data: AudioBuffer): void {
+    private setData(data: AudioBuffer): void {
         this.audioBuffer = data;
         this.isLoaded = true;
     }
 
-    private _cancelLoad(): void {
+    private cancelLoad(): void {
         this.audioBuffer = null;
         this.isLoaded = true;
     }
@@ -95,9 +93,7 @@ export class Sound {
      * 一時停止した場合でも、最初から再生します。
      */
     public play(): void {
-        this.pos = 0;
-
-        let bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
+        const bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
         this.bufferSources.push(bufferSource);
 
         bufferSource.buffer = this.audioBuffer;
@@ -112,23 +108,14 @@ export class Sound {
             duration = 0;
         }
 
-        bufferSource.start(0, this.pos * duration);
+        bufferSource.start();
         bufferSource.onended = () => {
-            const id: number = this.bufferSources.indexOf(bufferSource);
+            const id = this.bufferSources.indexOf(bufferSource);
             if (id !== -1) {
                 this.bufferSources.splice(id, 1);
             }
-            try {
-                bufferSource.stop();
-                //メモリ解放
-                bufferSource.disconnect(this.audioGain);
-
-                bufferSource.buffer = null;//Chromeのメモリ解放　EDGEではエラーでる場合あり
-            } catch (e) {
-                
-            }
-            bufferSource.onended = null;
-        }
+            this.disposeBufferSource(bufferSource);
+       }
 
         this.audioGain.connect(this.audioContext.destination);
     }
@@ -138,18 +125,7 @@ export class Sound {
      * 主にBGMを99番指定で止める場合に利用します。
      */
     public pause(): void {
-        this.bufferSources.forEach(bufferSource => {
-            try {
-                bufferSource.stop();
-                //メモリ解放
-                bufferSource.disconnect(this.audioGain);
-
-                bufferSource.buffer = null;//Chromeのメモリ解放　EDGEではエラーでる場合あり
-            } catch (e) {
-
-            }
-            bufferSource.onended = null;
-        });
+        this.bufferSources.forEach(this.disposeBufferSource)
         this.bufferSources.length = 0;
     }
     
@@ -158,7 +134,7 @@ export class Sound {
      * @see SystemSound.BGM_LB
      */
     public isBgm(): boolean {
-        return this.idx >= SystemSound.BGM_LB;
+        return this.id >= SystemSound.BGM_LB;
     }
     /**
      * データが取得できたかを確認します。
@@ -181,5 +157,16 @@ export class Sound {
      */
     public isError(): boolean {
         return this.isExceededMaxRetryCount || this.isLoaded && this.audioBuffer === null;
+    }
+
+    private disposeBufferSource = (bufferSource: AudioBufferSourceNode): void => {
+        try {
+            bufferSource.stop();
+            // メモリ解放
+            bufferSource.disconnect(this.audioGain);
+
+            bufferSource.buffer = null; // Chromeのメモリ解放
+        } catch (e) {}
+        bufferSource.onended = null;
     }
 }

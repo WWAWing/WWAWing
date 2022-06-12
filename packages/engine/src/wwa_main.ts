@@ -1184,35 +1184,32 @@ export class WWA {
         }
     }
 
-    public createWWAAudioInstance(idx: number): void {
-        if (idx === 0 || idx === SystemSound.NO_SOUND) {
+    public createSoundInstance(soundId: number): void {
+        if (soundId === 0 || soundId === SystemSound.NO_SOUND || this.sounds[soundId]) {
             return;
         }
-        const audioContext = this.audioContext;
-        if (this.sounds[idx] !== void 0) {
-            return;
-        }
-        const file = this._audioDirectory + idx + "." + this.audioExtension;
-        this.sounds[idx] = new Sound(idx, file, this.audioContext, this.audioGain);
+        const filePath = `${this._audioDirectory}${soundId}.${this.audioExtension}`;
+        this.sounds[soundId] = new Sound(soundId, filePath, this.audioContext, this.audioGain);
     }
 
     public loadSound(): void {
         this.sounds = new Array(Consts.SOUND_MAX + 1);
 
-        this.createWWAAudioInstance(SystemSound.DECISION);
-        this.createWWAAudioInstance(SystemSound.ATTACK);
+        this.createSoundInstance(SystemSound.DECISION);
+        this.createSoundInstance(SystemSound.ATTACK);
 
-        for (var pid = 1; pid < this._wwaData.mapPartsMax; pid++) {
-            var idx = this._wwaData.mapAttribute[pid][Consts.ATR_SOUND];
-            this.createWWAAudioInstance(idx);
+        for (let partsId = 1; partsId < this._wwaData.mapPartsMax; partsId++) {
+            const soundId = this._wwaData.mapAttribute[partsId][Consts.ATR_SOUND];
+            this.createSoundInstance(soundId);
         }
-        for (var pid = 1; pid < this._wwaData.objPartsMax; pid++) {
-            if (this._wwaData.objectAttribute[pid][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
+        for (let partsId = 1; partsId < this._wwaData.objPartsMax; partsId++) {
+            if (this._wwaData.objectAttribute[partsId][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
                 continue;
             }
-            var idx = this._wwaData.objectAttribute[pid][Consts.ATR_SOUND];
-            this.createWWAAudioInstance(idx);
+            const soundId = this._wwaData.objectAttribute[partsId][Consts.ATR_SOUND];
+            this.createSoundInstance(soundId);
         }
+        // 全メッセージを解析し、$sound マクロのパラメータからロードすべきサウンド番号を全取得し、ロードする。
         this._wwaData.message.forEach(message =>
             message
                 .split("\n")
@@ -1223,7 +1220,7 @@ export class WWA {
                     }
                     const id = parseInt(matchResult[1], 10);
                     if (!isNaN(id) && 0 < id && id < SystemSound.NO_SOUND) {
-                        this.createWWAAudioInstance(id);
+                        this.createSoundInstance(id);
                     }
                 })
         );
