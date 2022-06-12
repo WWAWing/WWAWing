@@ -1,5 +1,6 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
+import type { JsonResponseError } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
@@ -7,7 +8,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, JsonRequestStatus, UserVarNameListRequestErrorKind
+    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind,
 } from "./wwa_data";
 
 import {
@@ -37,7 +38,7 @@ import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADat
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
-import { defaultMaxListeners } from "stream";
+import { fetchJsonFile } from "./json_api_client";
 let wwa: WWA
 
 /**
@@ -158,7 +159,7 @@ export class WWA {
     /**
      * ユーザ変数名一覧の取得エラー
      */
-    private _userVarNameListRequestError: JsonRequestStatus<UserVarNameListRequestErrorKind> | undefined;
+    private _userVarNameListRequestError: JsonResponseError<UserVarNameListRequestErrorKind> | undefined;
 
     /**
      * ユーザ変数を表示できるか
@@ -1017,30 +1018,33 @@ export class WWA {
             }
             this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
             // ユーザー変数ファイルを読み込む
-            return userVarNamesFile ? getJSONFile(userVarNamesFile) : {
+            return userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
                 kind: "noFileSpecified" as const,
-                detail: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
+                errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
             }
         }).then(status => {
             if (!status) {
                 return;
             }
-            if (status.kind !== "data") {
-                this._userVarNameListRequestError.kind = status.kind;
-                this._userVarNameListRequestError.detail = status.detail;
+            if (status.kind === "noFileSpecified") {
                 // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, status.kind !== "noFileSpecified");
+                this._updateVarDumpInformationArea(status.errorMessage, false);
                 return;
             }
-            if (!status.detail || typeof status.detail !== "object") {
+            if(status.kind !== "data") {
+                this._userVarNameListRequestError = status;
+                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+                return;
+            }
+            if (!status.data || typeof status.data !== "object") {
                 this._userVarNameListRequestError = {
                     kind: "notObject",
-                    detail: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
+                    errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
                 }
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
+                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
                 return;
             }
-            this._userVarNameList = this.convertUserVariableNameListToArray(status.detail);
+            this._userVarNameList = this.convertUserVariableNameListToArray(status.data);
             if (this._dumpElement === null) {
                 return;
             }
@@ -1381,12 +1385,8 @@ export class WWA {
 
     }
 
-    /**
-    何でこんなことしてるの?
-    requestAnimationFrame で関数を呼んだ時, this が window になることを防ぐため!
-    */
-    public mainCaller = (() => this._main());
-    public soundCheckCaller = (() => this.checkAllSoundLoaded());
+    public mainCaller = () => this._main();
+    public soundCheckCaller = () => this.checkAllSoundLoaded();
 
     /**
      * アイテムを使用。
@@ -4516,11 +4516,11 @@ export class WWA {
             let helpMessage: string = '変数一覧\n';
             if (this._userVarNameListRequestError) {
                 if (this._userVarNameListRequestError.kind === "noFileSpecified") {
-                    helpMessage += this._userVarNameListRequestError.detail + "\n";
+                    helpMessage += this._userVarNameListRequestError.errorMessage + "\n";
                 } else {
                     helpMessage += "【変数名取得失敗】\n";
                     helpMessage += "  すべての変数を名無しとしています。\n";
-                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.detail}\n`
+                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.errorMessage}\n`
                 }
             }
             for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
@@ -5777,23 +5777,3 @@ if (document.readyState === "complete") {
         setTimeout(start);
     });
 }
-
-const getJSONFile = async (fileName: string): Promise<JsonRequestStatus> => fetch(fileName).then(response =>
-    (response.status === 200 || response.status === 304 ? {
-        kind: "data" as const,
-        detail: response
-    } : {
-        kind: "httpError" as const,
-        detail: `ファイル ${fileName} が読み込めませんでした。ステータスコード: ${response.status}`
-    })).catch(_error => ({
-        kind: "connectionError" as const,
-        detail: `ファイル ${fileName} が読み込めませんでした。通信状態がいい場所で再度お試しください。`
-    })).then(async (result) => (
-        result.kind === "data" && typeof result.detail !== "string" ? {
-        kind: "data" as const,
-        detail: await result.detail.json()
-    } : result
-    )).catch(_error => ({
-        kind: "brokenJson" as const,
-        detail: `ファイル ${fileName} が壊れています。`
-    }));

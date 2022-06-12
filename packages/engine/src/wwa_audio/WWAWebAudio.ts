@@ -11,6 +11,7 @@ export default class WWAWebAudio extends WWAAudio {
     private audioBuffer: AudioBuffer;
     private bufferSources: AudioBufferSourceNode[];
     private isLoaded: boolean;
+    private isExceededMaxRetryCount?: true;
     private pos: number;
 
     public constructor(idx: number, file: string, audioContext: AudioContext, audioGain: GainNode) {
@@ -47,6 +48,7 @@ export default class WWAWebAudio extends WWAAudio {
     private async _load(idx: number, file: string, errorCount: number = 0): Promise<void> {
         if (errorCount >= 10) {
             console.log(`サウンド ${file} 番の音声ファイルの取得失敗 (最大リトライ回数超過)`);
+            this.isExceededMaxRetryCount = true;
             return;
         }
         const response = await this.fetch(idx, file);
@@ -152,6 +154,6 @@ export default class WWAWebAudio extends WWAAudio {
     }
 
     public isError(): boolean {
-        return this.isLoaded && this.audioBuffer === null;
+        return this.isExceededMaxRetryCount || this.isLoaded && this.audioBuffer === null;
     }
 }
