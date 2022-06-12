@@ -35,7 +35,7 @@ import { inject } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { encodeSaveData, decodeSaveDataV0, decodeSaveDataV1, generateMD5 } from "./wwa_encryption";
 import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADataWithWorldNameStatus, Migrators } from "./wwa_save";
-import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
+import { Sound } from "./wwa_sound";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
@@ -113,7 +113,7 @@ export class WWA {
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
-    private _audioInstances: WWAAudio[];
+    private sounds: Sound[];
 
     private _temporaryInputDisable: boolean;
 
@@ -1189,20 +1189,15 @@ export class WWA {
             return;
         }
         const audioContext = this.audioContext;
-        if (this._audioInstances[idx] !== void 0) {
+        if (this.sounds[idx] !== void 0) {
             return;
         }
         const file = this._audioDirectory + idx + "." + this.audioExtension;
-        // WebAudio
-        if (audioContext) {
-            this._audioInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
-        } else {
-            this._audioInstances[idx] = new WWAAudioElement(idx, file, util.$id("wwa-audio-wrapper"));
-        }
+        this.sounds[idx] = new Sound(idx, file, this.audioContext, this.audioGain);
     }
 
     public loadSound(): void {
-        this._audioInstances = new Array(Consts.SOUND_MAX + 1);
+        this.sounds = new Array(Consts.SOUND_MAX + 1);
 
         this.createWWAAudioInstance(SystemSound.DECISION);
         this.createWWAAudioInstance(SystemSound.ATTACK);
@@ -1237,8 +1232,8 @@ export class WWA {
     }
 
     public checkAllSoundLoaded(): void {
-        var loadedNum = 0;
-        var total = 0;
+        let loadedNum = 0;
+        let total = 0;
         if (!this._hasTitleImg) {
             var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
         } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
@@ -1246,8 +1241,8 @@ export class WWA {
         if (this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
             this._soundLoadSkipFlag = true;
         }
-        for (var i = 1; i <= Consts.SOUND_MAX; i++) {
-            const instance = this._audioInstances[i];
+        for (let i = 1; i <= Consts.SOUND_MAX; i++) {
+            const instance = this.sounds[i];
             if (instance === void 0 || instance.isError()) {
                 continue;
             }
@@ -1275,7 +1270,7 @@ export class WWA {
      * @param targetSoundId 確認する音楽ファイルのサウンド番号
      */
     private _setSoundLoadedCheckTimer(targetSoundId: number): void {
-        const targetAudio = this._audioInstances[targetSoundId];
+        const targetAudio = this.sounds[targetSoundId];
         // 対象音源が存在しないなど、エラーの場合は何度確認しても無駄なので何もせず終了
         if (targetAudio.isError()) {
             return;
@@ -1325,8 +1320,8 @@ export class WWA {
         }
 
         if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
-            if (this._audioInstances[this._wwaData.bgm].hasData()) {
-                this._audioInstances[this._wwaData.bgm].pause();
+            if (this.sounds[this._wwaData.bgm].hasData()) {
+                this.sounds[this._wwaData.bgm].pause();
             }
             this._wwaData.bgm = 0;
         }
@@ -1334,7 +1329,7 @@ export class WWA {
         if (id === 0 || id === SystemSound.NO_SOUND) {
             return;
         }
-        const audioInstance = this._audioInstances[id];
+        const audioInstance = this.sounds[id];
         if (!audioInstance.hasData()) {
             if (id >= SystemSound.BGM_LB) {
                /* 
@@ -1346,10 +1341,10 @@ export class WWA {
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
-                this._audioInstances[id].play();
+                this.sounds[id].play();
                 this._wwaData.bgm = id;
             } else {
-                this._audioInstances[id].play();
+                this.sounds[id].play();
             }
         }
 

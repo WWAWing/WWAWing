@@ -1,21 +1,21 @@
-import WWAAudio from './WWAAudio';
+import { SystemSound } from './wwa_data';
 
-/**
- * WWAWebAudio は Web Audio API を利用した方式です。
- * Web Audio API が利用できる環境であれば、原則こちらを利用します。
- * (ただし、スマートフォンのブラウザでは特性上、考慮が必要な箇所があるかもしれません。)
- */
-export default class WWAWebAudio extends WWAAudio {
-    private audioContext: AudioContext;
-    private audioGain: GainNode;
+export class Sound {
     private audioBuffer: AudioBuffer;
     private bufferSources: AudioBufferSourceNode[];
     private isLoaded: boolean;
     private isExceededMaxRetryCount?: true;
     private pos: number;
 
-    public constructor(idx: number, file: string, audioContext: AudioContext, audioGain: GainNode) {
-        super(idx);
+    public constructor(
+        /**
+         * 音声ファイルのIDです
+         */
+        private idx: number,
+        file: string,
+        private audioContext: AudioContext,
+        private audioGain: GainNode
+    ) {
         this.audioContext = audioContext;
         this.audioGain = audioGain;
         this.audioBuffer = null;
@@ -90,6 +90,10 @@ export default class WWAWebAudio extends WWAAudio {
         this.isLoaded = true;
     }
 
+    /**
+     * 音声を再生します。
+     * 一時停止した場合でも、最初から再生します。
+     */
     public play(): void {
         this.pos = 0;
 
@@ -129,6 +133,10 @@ export default class WWAWebAudio extends WWAAudio {
         this.audioGain.connect(this.audioContext.destination);
     }
 
+    /**
+     * 音声を止めます。
+     * 主にBGMを99番指定で止める場合に利用します。
+     */
     public pause(): void {
         this.bufferSources.forEach(bufferSource => {
             try {
@@ -144,7 +152,21 @@ export default class WWAWebAudio extends WWAAudio {
         });
         this.bufferSources.length = 0;
     }
-
+    
+    /**
+     * BGMがどうかを確認します。
+     * @see SystemSound.BGM_LB
+     */
+    public isBgm(): boolean {
+        return this.idx >= SystemSound.BGM_LB;
+    }
+    /**
+     * データが取得できたかを確認します。
+     * - hasData も isError も false だった場合 -> まだ読み込み中です。
+     * - hasData は false だけど isError が true だった場合 -> 読込に失敗しています。
+     * - hasData は true だけど isError が false だった場合 -> 正常に読み込まれています。
+     * TODO: isErrorと統合して 名前を getLoadingStatus にして 出力値を "LOADING" | "DONE" | "ERROR" にする
+     */
     public hasData(): boolean {
         return this.audioBuffer !== null;
     }
@@ -153,6 +175,10 @@ export default class WWAWebAudio extends WWAAudio {
         return !this.isLoaded;
     }
 
+    /**
+     * データの取得に失敗したか確認します。
+     * hasData メソッドと組み合わせることが多いです。詳細は hasData メソッドのコメントをご確認ください。
+     */
     public isError(): boolean {
         return this.isExceededMaxRetryCount || this.isLoaded && this.audioBuffer === null;
     }

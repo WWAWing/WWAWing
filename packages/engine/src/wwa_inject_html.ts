@@ -47,8 +47,7 @@ function makeInjectHtml(hasTitleImg: boolean): string {
         </div>
         <div id="wwa-controller"></div>
         <div id="wwa-fader"></div>
-${coverHtml}
-        <div id="wwa-audio-wrapper"></div>`;
+${coverHtml}`;
 }
 
 export function inject(parent: HTMLDivElement, titleImgName: string): void {
