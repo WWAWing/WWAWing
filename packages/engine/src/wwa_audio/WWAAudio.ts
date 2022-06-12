@@ -48,7 +48,6 @@ export default abstract class WWAAudio {
     /**
      * データの取得に失敗したか確認します。
      * hasData メソッドと組み合わせることが多いです。詳細は hasData メソッドのコメントをご確認ください。
-     * @see WWAAudio.hasData
      */
     public isError(): boolean {
         return true;

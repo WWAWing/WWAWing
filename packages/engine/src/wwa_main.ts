@@ -1,5 +1,6 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
+import type { JsonResponseError } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
@@ -7,7 +8,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, JsonRequestError, UserVarNameListRequestErrorKind
+    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind,
 } from "./wwa_data";
 
 import {
@@ -37,6 +38,7 @@ import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADat
 import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
+import { fetchJsonFile } from "./json_api_client";
 let wwa: WWA
 
 /**
@@ -157,7 +159,7 @@ export class WWA {
     /**
      * ユーザ変数名一覧の取得エラー
      */
-    private _userVarNameListRequestError: JsonRequestError<UserVarNameListRequestErrorKind> | undefined;
+    private _userVarNameListRequestError: JsonResponseError<UserVarNameListRequestErrorKind> | undefined;
 
     /**
      * ユーザ変数を表示できるか
@@ -1008,56 +1010,59 @@ export class WWA {
         eventEmitter.addListener("progress", progressHandler )
         eventEmitter.addListener("error", errorHandler )
         const loader = new WWALoader(mapFileName, eventEmitter);
-        loader.requestAndLoadMapData();
-
-        this._canDisplayUserVars = canDisplayUserVars;
-        this._userVarNameList = [];
-        if (this._canDisplayUserVars) {
+        loader.requestAndLoadMapData().then(async () => {
+            this._canDisplayUserVars = canDisplayUserVars;
+            this._userVarNameList = [];
+            if (!this._canDisplayUserVars) {
+                return undefined;;
+            }
             this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
             // ユーザー変数ファイルを読み込む
-            if (userVarNamesFile) {
-                getJSONFile(userVarNamesFile, (error: JsonRequestError, data: unknown) => {
-                    if (error) {
-                        this._userVarNameListRequestError = error;
-                        this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
-                        return;
-                    }
-                    if (!data || typeof data !== "object") {
-                        this._userVarNameListRequestError = {
-                            kind: "notObject",
-                            detail: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
-                        }
-                        this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
-                        return;
-                    }
-                    this._userVarNameList = this.convertUserVariableNameListToArray(data);
-                    if (this._dumpElement === null) {
-                        return;
-                    }
-                    // 以下は変数一覧に変数名を流し込む処理
-                    for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                        const varNum = i.toString(10);
-                        if (!this._userVarNameList[i]) {
-                            continue;
-                        }
-                        const varIndexQuery = `.var-index${varNum}`;
-                        const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
-                        const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
-                        varLabelElement.textContent = this._userVarNameList[i];
-                        varIndexElement.setAttribute("data-labelled-var-index", "true");
-                        varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
-                        varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
-                    }
-                });
-            } else {
-                this._userVarNameListRequestError = {
-                    kind: "noFileSpecified",
-                    detail: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
-                }
-                // こういうこともできますよ、という案内なのでエラーにはしない
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, false);
+            return userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
+                kind: "noFileSpecified" as const,
+                errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
             }
-        }
+        }).then(status => {
+            if (!status) {
+                return;
+            }
+            if (status.kind === "noFileSpecified") {
+                // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
+                this._updateVarDumpInformationArea(status.errorMessage, false);
+                return;
+            }
+            if(status.kind !== "data") {
+                this._userVarNameListRequestError = status;
+                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+                return;
+            }
+            if (!status.data || typeof status.data !== "object") {
+                this._userVarNameListRequestError = {
+                    kind: "notObject",
+                    errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
+                }
+                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+                return;
+            }
+            this._userVarNameList = this.convertUserVariableNameListToArray(status.data);
+            if (this._dumpElement === null) {
+                return;
+            }
+            // 以下は変数一覧に変数名を流し込む処理
+            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+                const varNum = i.toString(10);
+                if (!this._userVarNameList[i]) {
+                    continue;
+                }
+                const varIndexQuery = `.var-index${varNum}`;
+                const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
+                const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
+                varLabelElement.textContent = this._userVarNameList[i];
+                varIndexElement.setAttribute("data-labelled-var-index", "true");
+                varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
+                varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
+            }
+        });
     }
 
     /**
@@ -1380,12 +1385,8 @@ export class WWA {
 
     }
 
-    /**
-    何でこんなことしてるの?
-    requestAnimationFrame で関数を呼んだ時, this が window になることを防ぐため!
-    */
-    public mainCaller = (() => this._main());
-    public soundCheckCaller = (() => this.checkAllSoundLoaded());
+    public mainCaller = () => this._main();
+    public soundCheckCaller = () => this.checkAllSoundLoaded();
 
     /**
      * アイテムを使用。
@@ -4515,11 +4516,11 @@ export class WWA {
             let helpMessage: string = '変数一覧\n';
             if (this._userVarNameListRequestError) {
                 if (this._userVarNameListRequestError.kind === "noFileSpecified") {
-                    helpMessage += this._userVarNameListRequestError.detail + "\n";
+                    helpMessage += this._userVarNameListRequestError.errorMessage + "\n";
                 } else {
                     helpMessage += "【変数名取得失敗】\n";
                     helpMessage += "  すべての変数を名無しとしています。\n";
-                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.detail}\n`
+                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.errorMessage}\n`
                 }
             }
             for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
@@ -5775,47 +5776,4 @@ if (document.readyState === "complete") {
     window.addEventListener("load", function () {
         setTimeout(start);
     });
-}
-
-// TODO: 適切な場所に移動する
-// TODO: IE11を打ち切ったら fetch / Promise で書き換える
-export const getJSONFile = (fileName: string, callback: (error: JsonRequestError, result: unknown) => void) => {
-    const xhr: XMLHttpRequest = new XMLHttpRequest();
-    try {
-        xhr.open("GET", fileName, true);
-        xhr.send();
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState !== 4) {
-                return;
-            }
-            if (xhr.status !== 200 && xhr.status !== 304) {
-                callback({
-                    kind: "httpError",
-                    detail: `ファイル ${fileName} が読み込めませんでした。ステータスコード: ${xhr.status}`
-                }, "")
-                return;
-            }
-            if (typeof xhr.response !== "string") {
-                callback({
-                    kind: "brokenJson",
-                    detail: `ファイル ${fileName} が壊れています。`
-                }, '');
-                return;
-            }
-            let json: unknown;
-            try {
-                json = JSON.parse(xhr.response);
-            } catch(error) {
-                console.error(error);
-                callback({
-                    kind: "brokenJson",
-                    detail: `ファイル ${fileName} が壊れています。正しい JSON ではありません。`
-                }, "")
-            }
-            callback(null, json);
-        }
-    } catch (e) {
-        callback(e, '');
-        return;
-    }
 }

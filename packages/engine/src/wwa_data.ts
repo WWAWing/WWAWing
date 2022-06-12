@@ -2,6 +2,8 @@ import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import { KeyCode } from "./wwa_input";
 import { WWAData } from "@wwawing/common-interface";
+import type { JsonResponseErrorKind } from "./json_api_client";
+
 export { WWAData };
 
 export class EquipmentStatus {
@@ -1013,11 +1015,5 @@ export enum IDTable {
  */
 export type StatusSolutionKind = "all" | "bare" | "equipment";
 
-export type JsonRequestErrorKind = "brokenJson" | "httpError";
+export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject" | "noFileSpecified";
 
-export type UserVarNameListRequestErrorKind = JsonRequestErrorKind | "notObject" | "noFileSpecified";
-
-export type JsonRequestError<ErrorKind = JsonRequestErrorKind> = {
-    kind: ErrorKind;
-    detail: string;
-}
