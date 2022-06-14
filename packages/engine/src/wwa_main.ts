@@ -5694,6 +5694,19 @@ function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
 }
 
 function start() {
+    if (
+      // Internet Explorer
+      navigator.userAgent.match(/(?:msie|trident)/i) ||
+      // Microsoft Edge レガシ (Chromium Edge の UA に含まれるのは「Edg」なので問題ない)
+      navigator.userAgent.match(/edge/i)
+    ) {
+      alert(`
+        このゲームをプレイするには、Google Chrome や Mozilla Firefox などの最新のブラウザでこのページを開いてください。
+        ご利用の環境のサポートは、既に終了しています。
+        `);
+      return;
+    }
+
     Array.prototype.forEach.call(util.$qsAll("a.wwa-copyright"), (node: HTMLElement) => {
         node.addEventListener("click", (): void => {
             isCopyRightClick = true;
