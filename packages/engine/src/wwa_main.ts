@@ -5700,10 +5700,8 @@ function start() {
       // Microsoft Edge レガシ (Chromium Edge の UA に含まれるのは「Edg」なので問題ない)
       navigator.userAgent.match(/edge/i)
     ) {
-      alert(`
-        このゲームをプレイするには、Google Chrome や Mozilla Firefox などの最新のブラウザでこのページを開いてください。
-        ご利用の環境のサポートは、既に終了しています。
-        `);
+      alert(`このゲームをプレイするには、Google Chrome や Mozilla Firefox などの最新のブラウザでこのページを開いてください。
+ご利用の環境のサポートは、既に終了しています。`);
       return;
     }
 
