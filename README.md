@@ -22,8 +22,6 @@ npm run build
 ### PC
 OSは不問です。
 
-※ develop ブランチ における Internet Explorer 11 のサポートは終了しています。リリースされているものについても 2022年6月16日をもってサポートを終了します。
-
 - Mozilla Firefox (最新版)
 - Google Chrome/Chromium (最新版) ※ Microsoft Edge の最新版など Chromium ベースのブラウザを含む
 - Safari (最新版)
