@@ -19,20 +19,21 @@ export class WWALoader {
     private eventEmitter: WWALoaderEventEmitter
   ) { }
 
-  public requestAndLoadMapData() {
+  public async requestAndLoadMapData() {
     const client: BaseMapDataClient = createMapDataClient(this.fileName);
-    client.request((error, data) => {
-      if (error) {
+    try {
+      const responseBuffer = await client.request();
+      if(!responseBuffer) {
+        this.eventEmitter.dispatch("error", { name: "マップデータ取得に失敗しました", message: "mapdata is empty" });
+        return;
+      }
+      const wwaData = this.loadMapData(responseBuffer);
+      this.eventEmitter.dispatch("mapData", wwaData);
+    } catch(error) {
         const name = error.name || "";
         const message = error.message || "";
         this.eventEmitter.dispatch("error", { name, message });
-      } else if (!data) {
-        this.eventEmitter.dispatch("error", { name: "マップデータ取得に失敗しました", message: "mapdata is empty" });
-      } else {
-        const wwaData = this.loadMapData(data);
-        this.eventEmitter.dispatch("mapData", wwaData);
-      }
-    });
+    }
   }
 
   private loadMapData(data: any): WWAData {

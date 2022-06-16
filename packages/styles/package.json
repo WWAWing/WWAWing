@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/styles",
-  "version": "3.7.4",
+  "version": "3.8.0",
   "description": "WWA Wing stylesheet files",
   "main": "index.js",
   "files": [
@@ -15,9 +15,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/sass": "^1.43.1",
-    "sass": "^1.49.0",
+    "sass": "^1.52.3",
     "shx": "^0.3.3",
-    "ts-node": "^10.4.0",
-    "typescript": "^4.5.4"
+    "ts-node": "^10.8.1",
+    "typescript": "^4.7.3"
   }
 }
