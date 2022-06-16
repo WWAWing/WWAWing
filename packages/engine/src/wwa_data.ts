@@ -2,6 +2,8 @@ import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import { KeyCode } from "./wwa_input";
 import { WWAData } from "@wwawing/common-interface";
+import type { JsonResponseErrorKind } from "./json_api_client";
+
 export { WWAData };
 
 export class EquipmentStatus {
@@ -411,23 +413,9 @@ export class UserDevice {
         }
         return OS_TYPE.OTHERS;
     }
-    /**
-     * ユーザエージェントの文字列を受け取り、該当するユーザエージェントに相当する列挙を返す。
-     * @see BROWSER_TYPE
-     * FYI: EdgeのUAには「Chrome」「Safari」の文字列が含まれており、Chrome判定の前にEdge判定を実行する必要がある。
-     * @see https://github.com/WWAWing/WWAWing/pull/123#issuecomment-493747626
-     * @see https://qiita.com/tonkotsuboy_com/items/7b36bdfc3a9a0970d23b
-     * また、ChromiumバージョンのEdgeはChromeとして扱うが、ChromiumバージョンのUA(2019-05-19現在)には「Edge」は含まれていないので、
-     * ここでは特殊な処理は行わない。（代わりに「Edg」の文字列がある）
-     * @see https://www.ka-net.org/blog/?p=11457
-     */
-    private getBrowser(ua: string): number{
-        if (ua.match(/(?:msie|trident)/i)) {
-            return BROWSER_TYPE.INTERNET_EXPLORER;
-        }
-        if (ua.match(/edge/i)) {
-            return BROWSER_TYPE.EDGE;
-        }
+
+   private getBrowser(ua: string): number{
+        // 現行 Edge は Chromium なので、 Chrome 扱いする。
         if (ua.match(/chrome/i)) {
             return BROWSER_TYPE.CHROME;
         }
@@ -484,8 +472,6 @@ export enum BROWSER_TYPE {
     CHROME = 1,
     FIREFOX = 2,
     SAFARI = 3,
-    EDGE = 4,
-    INTERNET_EXPLORER = 5,
     OTHERS = 9999
 }
 
@@ -1019,11 +1005,5 @@ export enum IDTable {
  */
 export type StatusSolutionKind = "all" | "bare" | "equipment";
 
-export type JsonRequestErrorKind = "brokenJson" | "httpError";
+export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject" | "noFileSpecified";
 
-export type UserVarNameListRequestErrorKind = JsonRequestErrorKind | "notObject" | "noFileSpecified";
-
-export type JsonRequestError<ErrorKind = JsonRequestErrorKind> = {
-    kind: ErrorKind;
-    detail: string;
-}
