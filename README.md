@@ -22,7 +22,6 @@ npm run build
 ### PC
 OSは不問です。
 
-- Microsoft Internet Explorer 11
 - Mozilla Firefox (最新版)
 - Google Chrome/Chromium (最新版) ※ Microsoft Edge の最新版など Chromium ベースのブラウザを含む
 - Safari (最新版)
