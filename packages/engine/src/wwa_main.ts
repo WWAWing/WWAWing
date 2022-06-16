@@ -1,5 +1,6 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
+import type { JsonResponseError } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
@@ -7,7 +8,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, JsonRequestError, UserVarNameListRequestErrorKind
+    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind,
 } from "./wwa_data";
 
 import {
@@ -45,9 +46,10 @@ import { inject, checkTouchDevice } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { encodeSaveData, decodeSaveDataV0, decodeSaveDataV1, generateMD5 } from "./wwa_encryption";
 import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADataWithWorldNameStatus, Migrators } from "./wwa_save";
-import { WWAWebAudio, WWAAudioElement, WWAAudio } from "./wwa_audio";
+import { Sound } from "./wwa_sound";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
+import { fetchJsonFile } from "./json_api_client";
 let wwa: WWA
 
 /**
@@ -124,7 +126,7 @@ export class WWA {
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
-    private _audioInstances: WWAAudio[];
+    private sounds: Sound[];
 
     private _temporaryInputDisable: boolean;
 
@@ -170,7 +172,7 @@ export class WWA {
     /**
      * ユーザ変数名一覧の取得エラー
      */
-    private _userVarNameListRequestError: JsonRequestError<UserVarNameListRequestErrorKind> | undefined;
+    private _userVarNameListRequestError: JsonResponseError<UserVarNameListRequestErrorKind> | undefined;
 
     /**
      * ユーザ変数を表示できるか
@@ -1055,56 +1057,59 @@ export class WWA {
         eventEmitter.addListener("progress", progressHandler)
         eventEmitter.addListener("error", errorHandler)
         const loader = new WWALoader(mapFileName, eventEmitter);
-        loader.requestAndLoadMapData();
-
-        this._canDisplayUserVars = canDisplayUserVars;
-        this._userVarNameList = [];
-        if (this._canDisplayUserVars) {
+        loader.requestAndLoadMapData().then(async () => {
+            this._canDisplayUserVars = canDisplayUserVars;
+            this._userVarNameList = [];
+            if (!this._canDisplayUserVars) {
+                return undefined;;
+            }
             this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
             // ユーザー変数ファイルを読み込む
-            if (userVarNamesFile) {
-                getJSONFile(userVarNamesFile, (error: JsonRequestError, data: unknown) => {
-                    if (error) {
-                        this._userVarNameListRequestError = error;
-                        this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
-                        return;
-                    }
-                    if (!data || typeof data !== "object") {
-                        this._userVarNameListRequestError = {
-                            kind: "notObject",
-                            detail: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
-                        }
-                        this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, true);
-                        return;
-                    }
-                    this._userVarNameList = this.convertUserVariableNameListToArray(data);
-                    if (this._dumpElement === null) {
-                        return;
-                    }
-                    // 以下は変数一覧に変数名を流し込む処理
-                    for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                        const varNum = i.toString(10);
-                        if (!this._userVarNameList[i]) {
-                            continue;
-                        }
-                        const varIndexQuery = `.var-index${varNum}`;
-                        const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
-                        const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
-                        varLabelElement.textContent = this._userVarNameList[i];
-                        varIndexElement.setAttribute("data-labelled-var-index", "true");
-                        varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
-                        varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
-                    }
-                });
-            } else {
-                this._userVarNameListRequestError = {
-                    kind: "noFileSpecified",
-                    detail: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
-                }
-                // こういうこともできますよ、という案内なのでエラーにはしない
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.detail, false);
+            return userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
+                kind: "noFileSpecified" as const,
+                errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
             }
-        }
+        }).then(status => {
+            if (!status) {
+                return;
+            }
+            if (status.kind === "noFileSpecified") {
+                // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
+                this._updateVarDumpInformationArea(status.errorMessage, false);
+                return;
+            }
+            if(status.kind !== "data") {
+                this._userVarNameListRequestError = status;
+                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+                return;
+            }
+            if (!status.data || typeof status.data !== "object") {
+                this._userVarNameListRequestError = {
+                    kind: "notObject",
+                    errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
+                }
+                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+                return;
+            }
+            this._userVarNameList = this.convertUserVariableNameListToArray(status.data);
+            if (this._dumpElement === null) {
+                return;
+            }
+            // 以下は変数一覧に変数名を流し込む処理
+            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+                const varNum = i.toString(10);
+                if (!this._userVarNameList[i]) {
+                    continue;
+                }
+                const varIndexQuery = `.var-index${varNum}`;
+                const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
+                const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
+                varLabelElement.textContent = this._userVarNameList[i];
+                varIndexElement.setAttribute("data-labelled-var-index", "true");
+                varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
+                varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
+            }
+        });
     }
 
     /**
@@ -1226,40 +1231,32 @@ export class WWA {
         }
     }
 
-    public createWWAAudioInstance(idx: number): void {
-        if (idx === 0 || idx === SystemSound.NO_SOUND) {
+    public createSoundInstance(soundId: number): void {
+        if (soundId === 0 || soundId === SystemSound.NO_SOUND || this.sounds[soundId]) {
             return;
         }
-        const audioContext = this.audioContext;
-        if (this._audioInstances[idx] !== void 0) {
-            return;
-        }
-        const file = this._audioDirectory + idx + "." + this.audioExtension;
-        // WebAudio
-        if (audioContext) {
-            this._audioInstances[idx] = new WWAWebAudio(idx, file, this.audioContext, this.audioGain);
-        } else {
-            this._audioInstances[idx] = new WWAAudioElement(idx, file, util.$id("wwa-audio-wrapper"));
-        }
+        const filePath = `${this._audioDirectory}${soundId}.${this.audioExtension}`;
+        this.sounds[soundId] = new Sound(soundId, filePath, this.audioContext, this.audioGain);
     }
 
     public loadSound(): void {
-        this._audioInstances = new Array(Consts.SOUND_MAX + 1);
+        this.sounds = new Array(Consts.SOUND_MAX + 1);
 
-        this.createWWAAudioInstance(SystemSound.DECISION);
-        this.createWWAAudioInstance(SystemSound.ATTACK);
+        this.createSoundInstance(SystemSound.DECISION);
+        this.createSoundInstance(SystemSound.ATTACK);
 
-        for (var pid = 1; pid < this._wwaData.mapPartsMax; pid++) {
-            var idx = this._wwaData.mapAttribute[pid][Consts.ATR_SOUND];
-            this.createWWAAudioInstance(idx);
+        for (let partsId = 1; partsId < this._wwaData.mapPartsMax; partsId++) {
+            const soundId = this._wwaData.mapAttribute[partsId][Consts.ATR_SOUND];
+            this.createSoundInstance(soundId);
         }
-        for (var pid = 1; pid < this._wwaData.objPartsMax; pid++) {
-            if (this._wwaData.objectAttribute[pid][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
+        for (let partsId = 1; partsId < this._wwaData.objPartsMax; partsId++) {
+            if (this._wwaData.objectAttribute[partsId][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
                 continue;
             }
-            var idx = this._wwaData.objectAttribute[pid][Consts.ATR_SOUND];
-            this.createWWAAudioInstance(idx);
+            const soundId = this._wwaData.objectAttribute[partsId][Consts.ATR_SOUND];
+            this.createSoundInstance(soundId);
         }
+        // 全メッセージを解析し、$sound マクロのパラメータからロードすべきサウンド番号を全取得し、ロードする。
         this._wwaData.message.forEach(message =>
             message
                 .split("\n")
@@ -1270,7 +1267,7 @@ export class WWA {
                     }
                     const id = parseInt(matchResult[1], 10);
                     if (!isNaN(id) && 0 < id && id < SystemSound.NO_SOUND) {
-                        this.createWWAAudioInstance(id);
+                        this.createSoundInstance(id);
                     }
                 })
         );
@@ -1279,8 +1276,8 @@ export class WWA {
     }
 
     public checkAllSoundLoaded(): void {
-        var loadedNum = 0;
-        var total = 0;
+        let loadedNum = 0;
+        let total = 0;
         if (!this._hasTitleImg) {
             var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
         } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
@@ -1288,8 +1285,8 @@ export class WWA {
         if (this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
             this._soundLoadSkipFlag = true;
         }
-        for (var i = 1; i <= Consts.SOUND_MAX; i++) {
-            const instance = this._audioInstances[i];
+        for (let i = 1; i <= Consts.SOUND_MAX; i++) {
+            const instance = this.sounds[i];
             if (instance === void 0 || instance.isError()) {
                 continue;
             }
@@ -1317,7 +1314,7 @@ export class WWA {
      * @param targetSoundId 確認する音楽ファイルのサウンド番号
      */
     private _setSoundLoadedCheckTimer(targetSoundId: number): void {
-        const targetAudio = this._audioInstances[targetSoundId];
+        const targetAudio = this.sounds[targetSoundId];
         // 対象音源が存在しないなど、エラーの場合は何度確認しても無駄なので何もせず終了
         if (targetAudio.isError()) {
             return;
@@ -1367,8 +1364,8 @@ export class WWA {
         }
 
         if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
-            if (this._audioInstances[this._wwaData.bgm].hasData()) {
-                this._audioInstances[this._wwaData.bgm].pause();
+            if (this.sounds[this._wwaData.bgm].hasData()) {
+                this.sounds[this._wwaData.bgm].pause();
             }
             this._wwaData.bgm = 0;
         }
@@ -1376,7 +1373,7 @@ export class WWA {
         if (id === 0 || id === SystemSound.NO_SOUND) {
             return;
         }
-        const audioInstance = this._audioInstances[id];
+        const audioInstance = this.sounds[id];
         if (!audioInstance.hasData()) {
             if (id >= SystemSound.BGM_LB) {
                /* 
@@ -1388,10 +1385,10 @@ export class WWA {
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
-                this._audioInstances[id].play();
+                this.sounds[id].play();
                 this._wwaData.bgm = id;
             } else {
-                this._audioInstances[id].play();
+                this.sounds[id].play();
             }
         }
 
@@ -1427,12 +1424,8 @@ export class WWA {
 
     }
 
-    /**
-    何でこんなことしてるの?
-    requestAnimationFrame で関数を呼んだ時, this が window になることを防ぐため!
-    */
-    public mainCaller = (() => this._main());
-    public soundCheckCaller = (() => this.checkAllSoundLoaded());
+    public mainCaller = () => this._main();
+    public soundCheckCaller = () => this.checkAllSoundLoaded();
 
     /**
      * アイテムを使用。
@@ -4612,11 +4605,11 @@ export class WWA {
             let helpMessage: string = '変数一覧\n';
             if (this._userVarNameListRequestError) {
                 if (this._userVarNameListRequestError.kind === "noFileSpecified") {
-                    helpMessage += this._userVarNameListRequestError.detail + "\n";
+                    helpMessage += this._userVarNameListRequestError.errorMessage + "\n";
                 } else {
                     helpMessage += "【変数名取得失敗】\n";
                     helpMessage += "  すべての変数を名無しとしています。\n";
-                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.detail}\n`
+                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.errorMessage}\n`
                 }
             }
             for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
@@ -5116,6 +5109,15 @@ export class WWA {
 
     public addFace(face: Face): void {
         this._faces.push(face);
+        // 顔グラフィックがある状態では、メッセージウィンドウを下固定にする必要があるので、
+        // メッセージウィンドウの位置を変更する
+        this._messageWindow.setPositionByPlayerPosition(
+            this._faces.length !== 0,
+            this._scoreWindow.isVisible(),
+            false, // $face マクロの実行はシステムメッセージから実行されないので false 固定
+            this._player.getPosition(),
+            this._camera.getPosition()
+        );
     }
 
     public clearFaces(): void {
@@ -5821,6 +5823,17 @@ function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
 }
 
 function start() {
+    if (
+      // Internet Explorer
+      navigator.userAgent.match(/(?:msie|trident)/i) ||
+      // Microsoft Edge レガシ (Chromium Edge の UA に含まれるのは「Edg」なので問題ない)
+      navigator.userAgent.match(/edge/i)
+    ) {
+      alert(`このゲームをプレイするには、Google Chrome や Mozilla Firefox などの最新のブラウザでこのページを開いてください。
+ご利用の環境のサポートは、既に終了しています。`);
+      return;
+    }
+
     Array.prototype.forEach.call(util.$qsAll("a.wwa-copyright"), (node: HTMLElement) => {
         node.addEventListener("click", (): void => {
             isCopyRightClick = true;
@@ -5900,47 +5913,4 @@ if (document.readyState === "complete") {
     window.addEventListener("load", function () {
         setTimeout(start);
     });
-}
-
-// TODO: 適切な場所に移動する
-// TODO: IE11を打ち切ったら fetch / Promise で書き換える
-export const getJSONFile = (fileName: string, callback: (error: JsonRequestError, result: unknown) => void) => {
-    const xhr: XMLHttpRequest = new XMLHttpRequest();
-    try {
-        xhr.open("GET", fileName, true);
-        xhr.send();
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState !== 4) {
-                return;
-            }
-            if (xhr.status !== 200 && xhr.status !== 304) {
-                callback({
-                    kind: "httpError",
-                    detail: `ファイル ${fileName} が読み込めませんでした。ステータスコード: ${xhr.status}`
-                }, "")
-                return;
-            }
-            if (typeof xhr.response !== "string") {
-                callback({
-                    kind: "brokenJson",
-                    detail: `ファイル ${fileName} が壊れています。`
-                }, '');
-                return;
-            }
-            let json: unknown;
-            try {
-                json = JSON.parse(xhr.response);
-            } catch(error) {
-                console.error(error);
-                callback({
-                    kind: "brokenJson",
-                    detail: `ファイル ${fileName} が壊れています。正しい JSON ではありません。`
-                }, "")
-            }
-            callback(null, json);
-        }
-    } catch (e) {
-        callback(e, '');
-        return;
-    }
 }

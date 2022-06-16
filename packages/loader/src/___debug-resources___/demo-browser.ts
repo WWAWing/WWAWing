@@ -15,7 +15,7 @@ const display = (data: WWAData) => {
     })
 };
 
-const main = () => {
+const main = async () => {
     const eventEmitter = new BrowserEventEmitter() as WWALoaderEventEmitter;
     const loader = new WWALoader(EXTRACTING_MAPDATA_FILENAME, eventEmitter);
     const startedLoadAt = new Date();
@@ -34,7 +34,7 @@ const main = () => {
         ($id("progressStage")).value = `${progress.stage}`;
    });
    const errorListener = eventEmitter.addListener("error", (error) => alert(error.message));
-   loader.requestAndLoadMapData();
+   await loader.requestAndLoadMapData();
 };
 
 if (typeof window !== undefined) {
