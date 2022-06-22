@@ -34,9 +34,3 @@ div#wwa-wrapper {
 #wwa-controller {
     @extend %wwa_canvas;
 }
-
-#wwa-audio-wrapper {
-    @extend %wwa_canvas;
-    display: none;
-    overflow: hidden;
-}
