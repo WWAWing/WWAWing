@@ -8,7 +8,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind,
+    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ConditionalMacroExecStatus,
 } from "./wwa_data";
 
 import {
@@ -214,6 +214,8 @@ export class WWA {
         defence: number;
         gold: number;
     };
+
+    private _conditionalMacroExecStatus: ConditionalMacroExecStatus;
 
     ////////////////////////
     public debug: boolean;
@@ -466,6 +468,7 @@ export class WWA {
             this._lastMessage = new ParsedMessage([], false, false, []);
             this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
+            this._conditionalMacroExecStatus = "outside-ifelse";
 
             //ロード処理の前に追加
             this._messageWindow = new MessageWindow(
@@ -1604,7 +1607,7 @@ export class WWA {
         for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
             // if-elseマクロの途中で条件を満たさない場合にはマクロを実行しない
             // IF-ELSE関連マクロの場合には無条件で実行する
-            if(this._wwaData.ifElseStatus === 'outside-ifelse' || this._wwaData.ifElseStatus === 'can-execute' || this._execMacroListInNextFrame[i].isIFMacro()) {
+            if(this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'can-execute' || this._execMacroListInNextFrame[i].isIFMacro()) {
                 this._execMacroListInNextFrame[i].execute();
             }
         }
@@ -5347,69 +5350,70 @@ font-weight: bold;
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
     }
     // if文内を実行する
-    public execIfMacro(macroStr = ""): void {
+    public switchConditionalExecutionStatus(descriminant: string = ""): void {
         // 前のif文が実行状態だった場合には以降のelse文は実行しない
-        if(this._wwaData.ifElseStatus === 'can-execute') {
-            this._wwaData.ifElseStatus = 'executed';
+        if (this._conditionalMacroExecStatus === 'can-execute') {
+            this._conditionalMacroExecStatus = 'executed';
+            return;
         }
         // 非実行状態の場合にはif実行状態にする
-        else if(this._wwaData.ifElseStatus === 'outside-ifelse' || this._wwaData.ifElseStatus === 'cannot-execute') {
+        if (this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'cannot-execute') {
             // 条件式を解釈してtrueの場合にはexecにする
-            if(macroStr === '' || this.checkCondition(macroStr)) {
-                this._wwaData.ifElseStatus = 'can-execute';
-            }
-            else {
-                this._wwaData.ifElseStatus = 'cannot-execute';
-            }
+            const canExecute = descriminant === '' || this.checkCondition(descriminant);
+            this._conditionalMacroExecStatus = canExecute ? 'can-execute' : 'cannot-execute';
+            return;
         }
     }
     // 条件式を引数に取ってTrueかを判定する
-    public checkCondition(macroStr): boolean {
+    public checkCondition(descriminant: string): boolean {
         // 変数か定数かを判断し、該当する値を返す
-        const getValue = (v: string): number => {
-            const variable = v.match(/v\[(\d{1,3})\]/);
+        const parseValue = (value: string): number => {
+            const variable = value.match(/v\[(\d+)\]/);
             // 変数の場合
-            if(variable !== null) {
-                const varNumber = Number(variable[1]);
-                return this._wwaData.userVar[varNumber];
+            if (variable !== null) {
+                const index = parseInt(variable[1], 10);
+                if (!this.isValidUserVarIndex(index)) {
+                    throw new Error("ユーザ変数の添字が範囲外です。");
+                }
+                return this._wwaData.userVar[index];
             }
             // 定数なら数値化して返す
-            else {
-                return Number(v);
+            const parsedValue = parseInt(value, 10);
+            if (isNaN(parsedValue)) {
+                throw new Error(`数値として解釈できません: ${value}`)
             }
+            return parsedValue;
         }
         // 複数条件を処理する場合（将来用）: /(\(.+?\)(&&|\|\|)?){1,}/
-        const discriminant = macroStr.replaceAll(" ", "")
-            .match(/\((v\[\d{1,3}\]|\d{1,})(>|<|<=|>=|==|!=)(v\[\d{1,3}\]|\d{1,})\)/)
-        if(discriminant !== null && discriminant.length > 3) {
-            const left = getValue(discriminant[1]);
-            const right = getValue(discriminant[3]);
-            const operator = discriminant[2];
-            switch(operator) {
-                case '>':
-                    return left > right;
-                case '<':
-                    return left < right;
-                case '>=':
-                    return left >= right;
-                case '<=':
-                    return left <= right;
-                case '==':
-                    return left == right;
-                case '!=':
-                    return left != right;
-                default:
-                    return false;
-            }
-        }
-        else {
-            console.error(`判定式が異常です: ${macroStr}`)
+        const parsedDescriminant = descriminant.replaceAll(" ", "")
+            .match(/\((v\[\d+\]|\d+)(>|<|<=|>=|==|!=)(v\[\d+\]|\d+)\)/)
+        if (parsedDescriminant === null || parsedDescriminant.length <= 3) {
+            console.error(`判定式が異常です: ${descriminant}`)
             return false;
+        }
+        const left = parseValue(parsedDescriminant[1]);
+        const right = parseValue(parsedDescriminant[3]);
+        const operator = parsedDescriminant[2];
+        switch(operator) {
+            case '>':
+                return left > right;
+            case '<':
+                return left < right;
+            case '>=':
+                return left >= right;
+            case '<=':
+                return left <= right;
+            case '==':
+                return left === right;
+            case '!=':
+                return left !== right;
+            default:
+                return false;
         }
     }
     // end-ifが呼ばれたときにはif文実行状態を終了させる
-    public ifElseResetStatus(): void {
-        this._wwaData.ifElseStatus = 'outside-ifelse';
+    public resetConditionalMacroExecStaus(): void {
+        this._conditionalMacroExecStatus = 'outside-ifelse';
     }
     // ユーザ変数 IFElse
     public userVarUserIf(_triggerPartsPosition: Coord, args: string[]): void {
