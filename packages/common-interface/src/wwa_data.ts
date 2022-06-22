@@ -155,7 +155,5 @@ export interface WWAData {
 
     gameOverPolicy: GameOverPolicy
 
-    ifElseStatus: IfElseStatus
-
 }
 
