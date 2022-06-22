@@ -5468,6 +5468,13 @@ font-weight: bold;
         });
     }
 
+    public execEvalMacro(macroStr: string = ''): void {
+        const matchStr = macroStr.match(/^\((.*?)\)$/);
+        if(matchStr && matchStr[1]) {
+            eval(matchStr[1]);
+        }
+    }
+
     private _actionGamePadButtonItemMacro(): boolean{
         if(!this._wwaData.gamePadButtonItemTable) {
             return false;

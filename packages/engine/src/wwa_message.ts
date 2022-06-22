@@ -284,6 +284,10 @@ export class Macro {
                 case MacroType.VAR_MAP:
                     this._executeVarMapMacro();
                     break;
+                // evalマクロ
+                case MacroType.EVAL:
+                    this._executeEvalMacro();
+                    break;
                 case MacroType.NO_GAMEOVER:
                     this._executeNoGameOverMacro();
                     break;
@@ -527,6 +531,10 @@ export class Macro {
         }
         this._wwa.varMap(this._triggerPartsPosition, xstr, ystr, partsID, partsType);
         // this._wwa.appearPartsEval( this._triggerPartsPosition, xstr, ystr, partsID, partsType);
+    }
+    // EVALマクロ実行部
+    private _executeEvalMacro(): void {
+        this._wwa.execEvalMacro(this.macroArgs[0])
     }
     // executeImgPlayerMacro
     private _executeImgPlayerMacro(): void {
