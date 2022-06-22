@@ -5468,9 +5468,22 @@ font-weight: bold;
         });
     }
 
-    public execEvalMacro(macroStr: string = ''): void {
+    public execEvalMacro(macroStrList: string[] = []): void {
+        const macroStr = macroStrList.reduce((a, x) => { return `${a},${x}`; });
         const matchStr = macroStr.match(/^\((.*?)\)$/);
         if(matchStr && matchStr[1]) {
+            // evalで実行しやすいよう簡易関数を定義
+            const userVar = this._wwaData.userVar;
+            const moveCount = this._player.getMoveCount();
+            const allAt = this._player.getStatus().strength;
+            const allDf = this._player.getStatus().defence;
+            const gold = this._player.getStatus().gold;
+            const hp = this._player.getStatus().energy;
+            const hpMax = this._player.getEnergyMax();
+            const getPlayTime = ()=>{
+                this.setNowPlayTime();
+                return this._wwaData.playTime;
+            };
             eval(matchStr[1]);
         }
     }

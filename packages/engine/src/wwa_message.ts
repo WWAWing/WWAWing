@@ -534,7 +534,7 @@ export class Macro {
     }
     // EVALマクロ実行部
     private _executeEvalMacro(): void {
-        this._wwa.execEvalMacro(this.macroArgs[0])
+        this._wwa.execEvalMacro(this.macroArgs)
     }
     // executeImgPlayerMacro
     private _executeImgPlayerMacro(): void {
