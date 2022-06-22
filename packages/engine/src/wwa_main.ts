@@ -5363,8 +5363,8 @@ font-weight: bold;
     }
     // Setマクロを実装
     public execSetMacro(macroStr: string = ""): void {
-        const regAdvance = /^\((v\[\d{1,3}\])(=)(v\[\d{1,3}\]|\d{1,})(\+|\-|\*|\/|%)(v\[\d{1,3}\]|\d{1,})\)$/
-        const regNormal = /\((v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD)(=|\+=|\-=|\*=|\/=|%=)(v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\((\d{1,})\))\)/;
+        const regAdvance = /^\((v\[\d{1,3}\]|HP|HPMAX|AT|DF|GD)=(v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\(\d{1,}\))(\+|\-|\*|\/|%)(v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\(\d{1,}\))\)$/
+        const regNormal = /^\((v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD)(=|\+=|\-=|\*=|\/=|%=)(v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\((\d{1,})\))\)$/;
         const noSpaceStr = macroStr.replace(/\s/g, "");
         const advanceMatch = noSpaceStr.match(regAdvance);
         /**
@@ -5373,28 +5373,63 @@ font-weight: bold;
          * 演算子は+, -, *, /, % を受け付ける
          **/
         if(advanceMatch !== null) {
-            const variable = advanceMatch[1].match(/v\[(\d{1,3})\]/);
-            const varNumber = Number(variable[1]);
-            const leftValue = this.parseValue(advanceMatch[3]);
-            const rightValue = this.parseValue(advanceMatch[5]);
-            const operator = advanceMatch[4];
+            const targetType = this.parseType(advanceMatch[1]);
+            const leftValue = this.parseValue(advanceMatch[2]);
+            const rightValue = this.parseValue(advanceMatch[4]);
+            const operator = advanceMatch[3];
+            let setValue = 0;
             switch(operator) {
                 case '+':
-                    this.setUserVar(varNumber, leftValue + rightValue);
-                    return;
+                    setValue = leftValue + rightValue;
+                    break;
                 case '-':
-                    this.setUserVar(varNumber, leftValue - rightValue);
-                    return;
+                    setValue = leftValue - rightValue;
+                    break;
                 case '*':
-                    this.setUserVar(varNumber, leftValue * rightValue);
-                    return;
+                    setValue = leftValue * rightValue;
+                    break;
                 case '/':
-                    this.setUserVar(varNumber, leftValue / rightValue);
-                    return;
+                    setValue = leftValue / rightValue;
+                    break;
                 case '%':
-                    this.setUserVar(varNumber, leftValue % rightValue);
-                    return;
+                    setValue = leftValue % rightValue;
+                    break;
             }
+            
+            switch(targetType) {
+                case 'VARIABLE':
+                    const variable = advanceMatch[1].match(/v\[(\d{1,3})\]/);
+                    const varNumber = Number(variable[1]);
+                    if(varNumber !== null) {
+                        this.setUserVar(varNumber, setValue);
+                    }
+                    break;
+                case 'NUMBER':
+                    throw new Error('左辺値に定数は入れられません');
+                case 'HP':
+                    // TODO: 0以下になったら死亡判定を入れる
+                    this._player.setEnergy(setValue);
+                    break;
+                case 'HPMAX':
+                    this._player.setEnergyMax(setValue);
+                    break;
+                case 'AT':
+                    this._player.setStrength(setValue);
+                    break;
+                case 'DF':
+                    this._player.setDefence(setValue);
+                    break;
+                case 'GD':
+                    this._player.setGold(setValue);
+                    break;
+                case 'STEP':
+                    throw new Error('左辺値に歩数は入れられません');
+                case 'TIME':
+                    throw new Error('左辺値にプレイ時間は入れられません');
+                case 'RAND':
+                    throw new Error('左辺値に乱数は入れられません')
+            }
+            this._player.updateStatusValueBox();
             return;
         }
         const normalMatch = noSpaceStr.match(regNormal);
