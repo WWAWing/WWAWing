@@ -507,7 +507,7 @@ export class Macro {
     private _executeIfMacro(): void {
         // 後方互換性を保つため、引数が1つ以外の時には旧ifマクロを実行する
         if(this.macroArgs.length === 1) {
-            this._wwa.execIfMacro(this.macroArgs[0]);
+            this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
         }
         else {
             // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
@@ -520,15 +520,15 @@ export class Macro {
     }
     // IF-ELSEマクロ実行部
     private _executeIfElseMacro(): void {
-        this._wwa.execIfMacro(this.macroArgs[0]);
+        this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
     }
     // ELSEマクロ実行部
     private _executeElseMacro(): void {
-        this._wwa.execIfMacro();
+        this._wwa.switchConditionalExecutionStatus();
     }
     // END_IFマクロ実行部
     private _executeEndIfMacro(): void {
-        this._wwa.ifElseResetStatus();
+        this._wwa.resetConditionalMacroExecStaus();
     }
     // SET_SPEEDマクロ実行部
     private _executeSetSpeedMacro(): void {
