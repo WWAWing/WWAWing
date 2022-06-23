@@ -489,6 +489,7 @@ export class WWA {
                 };
                 this._virtualPadStore = new VirtualPadStore(
                     this._virtualPadButtonElements,
+                    util.$id("wwa-virtualpad-right"),
                     util.$id("wwa-virtualpad-left"),
                     this._setVirtualPadTouch.bind(this),
                     this._setVirtualPadLeave.bind(this)

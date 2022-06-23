@@ -65,6 +65,8 @@ export default class VirtualPadStore {
      */
     private _enabled: boolean;
 
+    private _visible: boolean;
+
     private _onTouchStart: VirtualPadEventFunction | null;
     private _onTouchEnd: VirtualPadEventFunction | null;
 
@@ -84,13 +86,20 @@ export default class VirtualPadStore {
     private _moveButtonsElement: HTMLElement;
 
     /**
+     * 操作ボタン群の親要素です。 {@code _moveButtonsElement} と併せて表示や非表示の切り替えに使用します。
+     */
+    private _buttonWrapperElement: HTMLElement;
+
+    /**
      * @param buttons 仮想パッドの各要素
+     * @param buttonWrapper 仮想パッドのボタン (主に右側) を覆う親要素
      * @param moveButtons 仮想パッドの移動ボタンの要素
      * @param onTouchStart 仮想パッドを押下した場合に発生するコールバック関数
      * @param onTouchEnd 仮想パッドを話した場合に発生するコールバック関数
      */
     constructor(
         buttons: VirtualPadButtons | {},
+        buttonWrapper: HTMLElement = null,
         moveButtons: HTMLElement = null,
         onTouchStart: VirtualPadEventFunction = null,
         onTouchEnd: VirtualPadEventFunction = null
@@ -101,6 +110,7 @@ export default class VirtualPadStore {
         this._availableButtons = [];
         this._isTouchingButtons = {};
         this._moveButtonsElement = moveButtons;
+        this._buttonWrapperElement = buttonWrapper;
 
         for (let buttonTypeString in buttons) {
             /**
@@ -163,6 +173,10 @@ export default class VirtualPadStore {
         }
         if (moveButtons !== null) {
             moveButtons.addEventListener("touchmove", this._detectMovingMoveButton.bind(this));
+            moveButtons.style.display = "block";
+        }
+        if (buttonWrapper !== null) {
+            buttonWrapper.style.display = "block";
         }
     }
 
@@ -322,5 +336,15 @@ export default class VirtualPadStore {
                     break;
             }
         });
+    }
+
+    public toggleVisible() {
+        if (this._moveButtonsElement !== null) {
+            this._moveButtonsElement.style.display = this._visible ? "none" : "block";
+        }
+        if (this._moveButtonsElement !== null) {
+            this._buttonWrapperElement.style.display = this._visible ? "none" : "block";
+        }
+        this._visible = !this._visible;
     }
 }
