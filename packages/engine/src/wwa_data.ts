@@ -1010,3 +1010,11 @@ export type StatusSolutionKind = "all" | "bare" | "equipment";
 export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject" | "noFileSpecified";
 
 export type SetMacroType = 'VARIABLE' | 'NUMBER' | 'HP' | 'HPMAX' | 'AT' | 'DF' | 'GD' | 'TIME' | 'STEP' | 'RAND';
+/**
+ * if-elseマクロにて該当するマクロ文を実行するかを決める
+ * outside-ifelse: if文の内側ではない
+ * can-execute: 該当ブロックで処理を実行する
+ * cannot-execute: if文の中だが、該当ブロックでは実行しない
+ * execed: if文の中で、既に実行済みのため実行しない
+ */
+export type ConditionalMacroExecStatus = "outside-ifelse" | "can-execute" | "cannot-execute" | "executed";
