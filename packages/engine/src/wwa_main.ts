@@ -1607,10 +1607,12 @@ export class WWA {
         for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
             // if-elseマクロの途中で条件を満たさない場合にはマクロを実行しない
             // IF-ELSE関連マクロの場合には無条件で実行する
-            if(this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'can-execute' || this._execMacroListInNextFrame[i].isIFMacro()) {
+            if(this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'can-execute' || this._execMacroListInNextFrame[i].isJunction()) {
                 this._execMacroListInNextFrame[i].execute();
             }
         }
+        // $endif が呼ばれなかった時に状態が異常にならないようにリセットしておく
+        this.resetConditionalMacroExecStaus();
         if (this._lastMessage.isEmpty() && this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
@@ -5364,11 +5366,17 @@ font-weight: bold;
             return;
         }
     }
-    // 条件式を引数に取ってTrueかを判定する
+    /** 
+     * 条件式を引数に取って true かを判定する
+     * @param descriminant 判別式 1 == 1, v[100] !== 10, v[12] > v[23] など
+     */
     public checkCondition(descriminant: string): boolean {
-        // 変数か定数かを判断し、該当する値を返す
+        /**
+         * 変数か定数かを判断し、該当する値を返す
+         * @param value 変数か定数を表す文字列 1, 10, v[100] など
+         */
         const parseValue = (value: string): number => {
-            const variable = value.match(/v\[(\d+)\]/);
+            const variable = value.match(/^v\[(\d+)\]$/);
             // 変数の場合
             if (variable !== null) {
                 const index = parseInt(variable[1], 10);
@@ -5386,7 +5394,7 @@ font-weight: bold;
         }
         // 複数条件を処理する場合（将来用）: /(\(.+?\)(&&|\|\|)?){1,}/
         const parsedDescriminant = descriminant.replaceAll(" ", "")
-            .match(/\((v\[\d+\]|\d+)(>|<|<=|>=|==|!=)(v\[\d+\]|\d+)\)/)
+            .match(/^\((v\[\d+\]|\d+)(>|<|<=|>=|==|!=)(v\[\d+\]|\d+)\)$/)
         if (parsedDescriminant === null || parsedDescriminant.length <= 3) {
             console.error(`判定式が異常です: ${descriminant}`)
             return false;

@@ -88,8 +88,8 @@ export class Macro {
         public macroArgs: string[]
     ) { }
 
-    // IF-ELSE関連マクロか
-    public isIFMacro(): boolean {
+    // 分岐関連マクロか ($if, $elseif, $else, $endif)
+    public isJunction(): boolean {
         const IFElseMacroList = [MacroType.IF, MacroType.ELSE_IF, MacroType.ELSE, MacroType.END_IF];
         return IFElseMacroList.includes(this.macroType);
     }
