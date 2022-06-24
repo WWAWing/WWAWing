@@ -593,6 +593,9 @@ export enum MacroType {
     VAR_MAP = 54,
     VAR_MOD = 55,
     NO_GAMEOVER = 56,
+    ELSE_IF = 57,
+    ELSE = 58,
+    END_IF = 59,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101
 }
@@ -653,6 +656,9 @@ export var macrotable = {
     "$var_map": 54,
     "$var_mod": 55,
     "$no_gameover": 56,
+    "$else_if": 57,
+    "$else": 58,
+    "$endif": 59,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
@@ -1001,3 +1007,11 @@ export type StatusSolutionKind = "all" | "bare" | "equipment";
 
 export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject" | "noFileSpecified";
 
+/**
+ * if-elseマクロにて該当するマクロ文を実行するかを決める
+ * outside-ifelse: if文の内側ではない
+ * can-execute: 該当ブロックで処理を実行する
+ * cannot-execute: if文の中だが、該当ブロックでは実行しない
+ * execed: if文の中で、既に実行済みのため実行しない
+ */
+export type ConditionalMacroExecStatus = "outside-ifelse" | "can-execute" | "cannot-execute" | "executed";
