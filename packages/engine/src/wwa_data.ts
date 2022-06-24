@@ -1009,7 +1009,6 @@ export type StatusSolutionKind = "all" | "bare" | "equipment";
 
 export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject" | "noFileSpecified";
 
-export type SetMacroType = 'VARIABLE' | 'NUMBER' | 'HP' | 'HPMAX' | 'AT' | 'DF' | 'GD' | 'TIME' | 'STEP' | 'RAND';
 /**
  * if-elseマクロにて該当するマクロ文を実行するかを決める
  * outside-ifelse: if文の内側ではない
