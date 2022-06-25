@@ -23,6 +23,7 @@ export class PasswordWindow {
     private _element: HTMLDivElement;
     private _okButtonElement: HTMLButtonElement;
     private _cancelButtonElement: HTMLButtonElement;
+    private _copyButtonElement: HTMLButtonElement;
     private _descriptionElement: HTMLDivElement;
     private _passwordBoxElement: HTMLTextAreaElement;
     private _buttonWrapperElement: HTMLDivElement;
@@ -59,8 +60,15 @@ export class PasswordWindow {
             this._wwa.hidePasswordWindow(true);
         });
 
+        this._copyButtonElement = document.createElement("button");
+        this._copyButtonElement.textContent = "コピー";
+        this._copyButtonElement.addEventListener("click", () => {
+            navigator.clipboard.writeText(this.password);
+        });
+
         this._buttonWrapperElement.appendChild(this._okButtonElement);
         this._buttonWrapperElement.appendChild(this._cancelButtonElement);
+        this._buttonWrapperElement.appendChild(this._copyButtonElement);
         this._mode = Mode.LOAD;
 
         this._element.appendChild(this._descriptionElement);
@@ -109,10 +117,12 @@ export class PasswordWindow {
                 this._passwordBoxElement.removeAttribute("readonly");
             } catch (e) { }
             this._cancelButtonElement.style.display = "inline";
+            this._copyButtonElement.style.display = "none";
         } else {
             msg = DESCRIPTION_SAVE;
             this._passwordBoxElement.setAttribute("readonly", "readonly");
             this._cancelButtonElement.style.display = "none";
+            this._copyButtonElement.style.display = "inline";
         }
         var mesArray = msg.split("\n");
         this._descriptionElement.textContent = "";
