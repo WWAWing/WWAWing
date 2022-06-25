@@ -51,7 +51,6 @@ function makeInjectHtml(hasTitleImg: boolean): string {
         <div id="wwa-controller"></div>
         <div id="wwa-fader"></div>
 ${coverHtml}
-        <div id="wwa-audio-wrapper"></div>
 ${virtualPadHtml}
 `;
 }

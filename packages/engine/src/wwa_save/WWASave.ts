@@ -2,7 +2,6 @@ import {
     WWAButtonTexts,
     WWAData,
     ChoiceCallInfo,
-    BROWSER_TYPE
 } from "../wwa_data";
 import * as util from "../wwa_util";
 import { WWA } from "../wwa_main";
@@ -11,15 +10,6 @@ import WWASaveData from "./WWASaveData";
 import WWASaveDataList from "./WWASaveDataList";
 import WWASaveDataDBList from "./WWASaveDataDBList";
 import WWASaveDataLogList from "./WWASaveDataLogList";
-import WWASaveDataDBListForIE from "./WWASaveDataDBListForIE";
-
-/**
- * WWASaveDataDBList は IE と IE 以外で実装がだいぶ異なります。
- *
- * IE サポート終了後、 CommonWWASaveDataDBList は WWASaveDataDBList に差し替え、
- * WWASaveDataDBListForIE は削除してください。
- */
-type CommonWWASaveDataDBList = WWASaveDataDBList | WWASaveDataDBListForIE;
 
 import { generateMapDataRevisionKey, OnCheckLoadingSaveDataFunction, OnCompleteLoadingSaveDataFunction } from "./common";
 
@@ -43,7 +33,7 @@ export default class WWASave {
     /**
      * Quick Save で保存されるセーブデータ領域です。
      */
-    private _wwaDBSaveList: CommonWWASaveDataDBList;
+    private _wwaDBSaveList: WWASaveDataDBList;
     /**
      * オートセーブで保存されるセーブデータ領域です。
      */
@@ -67,11 +57,7 @@ export default class WWASave {
         WWASave.checkOriginalMapString = wwa.checkOriginalMapString;
         WWASave.worldName = worldName;
         WWASave.mapDataRevisionKey = generateMapDataRevisionKey(worldName, worldPassNumber);
-        if (wwa.userDevice.browser === BROWSER_TYPE.INTERNET_EXPLORER) {
-            this._wwaDBSaveList = new WWASaveDataDBListForIE(onCheckLoadingSaveData, onCompleteLoadingSaveData);
-        } else {
-            this._wwaDBSaveList = new WWASaveDataDBList(onCheckLoadingSaveData, onCompleteLoadingSaveData);
-        }
+        this._wwaDBSaveList = new WWASaveDataDBList(onCheckLoadingSaveData, onCompleteLoadingSaveData);
         this._wwaLogSaveList = new WWASaveDataLogList();
         this.selectDBSaveDataList();
     }
