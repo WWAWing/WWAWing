@@ -20,6 +20,7 @@ const DESCRIPTION_SAVE = (
 );
 
 export class PasswordWindow {
+    private readonly COPIED_MESSAGE_DISPLAY_MS = 1000;
     private _element: HTMLDivElement;
     private _okButtonElement: HTMLButtonElement;
     private _cancelButtonElement: HTMLButtonElement;
@@ -62,8 +63,16 @@ export class PasswordWindow {
 
         this._copyButtonElement = document.createElement("button");
         this._copyButtonElement.textContent = "コピー";
-        this._copyButtonElement.addEventListener("click", () => {
-            navigator.clipboard.writeText(this.password);
+        this._copyButtonElement.addEventListener("click", async () => {
+            await navigator.clipboard.writeText(this.password);
+            this._copyButtonElement.textContent = "コピーしました";
+            this._copyButtonElement.disabled = true;
+            setTimeout(() => {
+                if (this._copyButtonElement) {
+                    this._copyButtonElement.textContent = "コピー";
+                    this._copyButtonElement.disabled = false;
+                }
+            }, this.COPIED_MESSAGE_DISPLAY_MS);
         });
 
         this._buttonWrapperElement.appendChild(this._okButtonElement);
