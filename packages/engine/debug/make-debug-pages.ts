@@ -57,6 +57,9 @@ function createPlayPageConfig(mapDataName: string, cssName?: string, isClassicMo
                 userVars: {
                     dumpElementId: "vardump",
                     canDisplay: true
+                },
+                virtualPad: {
+                    controllerId: "virtualpad-controller"
                 }
             },
             resources: {

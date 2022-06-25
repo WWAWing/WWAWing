@@ -10,7 +10,10 @@ export interface GameOption {
     userVars?: {
         dumpElementId: string
         canDisplay?: boolean
-    }
+    },
+    virtualPad?: {
+        controllerId: string;
+    },
 }
 
 export interface Resources {

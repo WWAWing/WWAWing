@@ -260,7 +260,8 @@ export class WWA {
         disallowLoadOldSave: boolean = false,
         dumpElm: HTMLElement = null,
         userVarNamesFile: string | null,
-        canDisplayUserVars: boolean
+        canDisplayUserVars: boolean,
+        virtualpadControllerElm: HTMLElement = null,
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -494,6 +495,9 @@ export class WWA {
                     this._setVirtualPadTouch.bind(this),
                     this._setVirtualPadLeave.bind(this)
                 );
+                setUpVirtualPadController(virtualpadControllerElm, () => {
+                    this._virtualPadStore.toggleVisible();
+                });
             } else {
                 this._virtualPadButtonElements = {};
                 this._virtualPadStore = new VirtualPadStore({});
@@ -5821,6 +5825,17 @@ function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
     return dumpElm;
 }
 
+function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHander: VoidFunction) {
+    if (controllerElm === null) {
+        return;
+    }
+    const toggleButtonElement = document.createElement("button");
+    toggleButtonElement.classList.add("wwa-virtualpad-toggle-button");
+    toggleButtonElement.textContent = "仮想パッド表示切り替え";
+    toggleButtonElement.addEventListener("click", clickHander);
+    controllerElm.appendChild(toggleButtonElement);
+}
+
 function start() {
     Array.prototype.forEach.call(util.$qsAll("a.wwa-copyright"), (node: HTMLElement) => {
         node.addEventListener("click", (): void => {
@@ -5868,10 +5883,12 @@ function start() {
         useGoToWWA = true;
     }
     const useAutoRotateAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-auto-rotate-enable");
-    if (useAutoRotateAttribute === null || useAutoRotateAttribute.match(/^true$/i)) {
+    if (checkTouchDevice() && (useAutoRotateAttribute === null || useAutoRotateAttribute.match(/^true$/i))) {
         initializeRotate();
         window.addEventListener("resize", autoRotate);
     }
+    const virtualPadContollerQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-controller-elm");
+    const virtualPadControllerElm: HTMLElement | null = virtualPadContollerQuery ? util.$qsh(virtualPadContollerQuery) : null;
     const disallowLoadOldSave = (() => {
         const disallowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
         if (disallowLoadOldSaveAttribute !== null && disallowLoadOldSaveAttribute.match(/^true$/i)) {
@@ -5890,7 +5907,8 @@ function start() {
         disallowLoadOldSave,
         dumpElm,
         userVarNamesFile,
-        canDisplayUserVars
+        canDisplayUserVars,
+        virtualPadControllerElm
     );
 }
 
