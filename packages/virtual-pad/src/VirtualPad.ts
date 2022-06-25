@@ -173,10 +173,10 @@ export default class VirtualPadStore {
         }
         if (moveButtons !== null) {
             moveButtons.addEventListener("touchmove", this._detectMovingMoveButton.bind(this));
-            moveButtons.style.display = "block";
+            moveButtons.style.display = "grid";
         }
         if (buttonWrapper !== null) {
-            buttonWrapper.style.display = "block";
+            buttonWrapper.style.display = "grid";
         }
     }
 
@@ -340,10 +340,10 @@ export default class VirtualPadStore {
 
     public toggleVisible() {
         if (this._moveButtonsElement !== null) {
-            this._moveButtonsElement.style.display = this._visible ? "none" : "block";
+            this._moveButtonsElement.style.display = this._visible ? "none" : "grid";
         }
         if (this._moveButtonsElement !== null) {
-            this._buttonWrapperElement.style.display = this._visible ? "none" : "block";
+            this._buttonWrapperElement.style.display = this._visible ? "none" : "grid";
         }
         this._visible = !this._visible;
     }
