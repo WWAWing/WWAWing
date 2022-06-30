@@ -596,6 +596,7 @@ export enum MacroType {
     ELSE_IF = 57,
     ELSE = 58,
     END_IF = 59,
+    SET = 60,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101
 }
@@ -659,6 +660,7 @@ export var macrotable = {
     "$else_if": 57,
     "$else": 58,
     "$endif": 59,
+    "$set": 60,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
