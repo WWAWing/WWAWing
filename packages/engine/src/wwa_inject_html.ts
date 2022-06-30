@@ -19,7 +19,7 @@ function makeInjectHtml(hasTitleImg: boolean): string {
             <canvas id="progress-panel" width="${WWAConsts.SCREEN_WIDTH}" height="${WWAConsts.SCREEN_HEIGHT}"></canvas>
         </div>`;
 
-    const virtualPadHtml = checkTouchDevice() ? makeInjectVirtualPad() : "";
+    const virtualPadHtml = makeInjectVirtualPad();
 
     return `
         <canvas id="wwa-map" class="wwa-canvas" width="440" height="440">

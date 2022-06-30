@@ -481,7 +481,7 @@ export class WWA {
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
-            if (checkTouchDevice() && enableVirtualPad) {
+            if (enableVirtualPad) {
                 this._virtualPadButtonElements = {
                     [VirtualPadButtonCode.BUTTON_ENTER]: <HTMLButtonElement>util.$id("wwa-enter-button"),
                     [VirtualPadButtonCode.BUTTON_ESC]: <HTMLButtonElement>util.$id("wwa-esc-button"),
@@ -495,6 +495,7 @@ export class WWA {
                 };
                 this._virtualPadStore = new VirtualPadStore(
                     this._virtualPadButtonElements,
+                    checkTouchDevice(),
                     util.$id("wwa-virtualpad-right"),
                     util.$id("wwa-virtualpad-left"),
                     this._setVirtualPadTouch.bind(this),
@@ -5979,12 +5980,13 @@ function start() {
         useGoToWWA = true;
     }
     const virtualPadAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad");
+    const virtualPadEnable = virtualPadAttribute === "fixed" || virtualPadAttribute === "auto-rotate";
     if (checkTouchDevice() && (virtualPadAttribute !== null && virtualPadAttribute === "auto-rotate")) {
         initializeRotate();
         window.addEventListener("resize", autoRotate);
     }
     const virtualPadContollerQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-controller-elm");
-    const virtualPadControllerElm: HTMLElement | null = virtualPadContollerQuery ? util.$qsh(virtualPadContollerQuery) : null;
+    const virtualPadControllerElm: HTMLElement | null = virtualPadEnable && virtualPadContollerQuery ? util.$qsh(virtualPadContollerQuery) : null;
     const disallowLoadOldSave = (() => {
         const disallowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
         if (disallowLoadOldSaveAttribute !== null && disallowLoadOldSaveAttribute.match(/^true$/i)) {
@@ -6004,7 +6006,7 @@ function start() {
         dumpElm,
         userVarNamesFile,
         canDisplayUserVars,
-        virtualPadAttribute === "fixed" || virtualPadAttribute === "auto-rotate",
+        virtualPadEnable,
         virtualPadControllerElm
     );
 }

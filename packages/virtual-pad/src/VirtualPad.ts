@@ -92,6 +92,7 @@ export default class VirtualPadStore {
 
     /**
      * @param buttons 仮想パッドの各要素
+     * @param firstVisible インスタンス化時点で仮想パッドを表示するか
      * @param buttonWrapper 仮想パッドのボタン (主に右側) を覆う親要素
      * @param moveButtons 仮想パッドの移動ボタンの要素
      * @param onTouchStart 仮想パッドを押下した場合に発生するコールバック関数
@@ -99,18 +100,22 @@ export default class VirtualPadStore {
      */
     constructor(
         buttons: VirtualPadButtons | {},
+        firstVisible: boolean = false,
         buttonWrapper: HTMLElement = null,
         moveButtons: HTMLElement = null,
         onTouchStart: VirtualPadEventFunction = null,
-        onTouchEnd: VirtualPadEventFunction = null
+        onTouchEnd: VirtualPadEventFunction = null,
     ) {
         this._enabled = Object.keys(buttons).length > 0;
+        this._visible = firstVisible;
         this._onTouchStart = onTouchStart || null;
         this._onTouchEnd = onTouchEnd || null;
         this._availableButtons = [];
         this._isTouchingButtons = {};
         this._moveButtonsElement = moveButtons;
         this._buttonWrapperElement = buttonWrapper;
+
+        this._setVisible(firstVisible);
 
         for (let buttonTypeString in buttons) {
             /**
@@ -173,10 +178,6 @@ export default class VirtualPadStore {
         }
         if (moveButtons !== null) {
             moveButtons.addEventListener("touchmove", this._detectMovingMoveButton.bind(this));
-            moveButtons.style.display = "grid";
-        }
-        if (buttonWrapper !== null) {
-            buttonWrapper.style.display = "grid";
         }
     }
 
@@ -214,6 +215,16 @@ export default class VirtualPadStore {
                 this.setTouchInfo(VirtualPadButtonCode.BUTTON_LEFT);
             }
         }
+    }
+
+    private _setVisible(visible: boolean) {
+        if (this._moveButtonsElement !== null) {
+            this._moveButtonsElement.style.display = visible ? "grid" : "none";
+        }
+        if (this._moveButtonsElement !== null) {
+            this._buttonWrapperElement.style.display = visible ? "grid" : "none";
+        }
+        this._visible = visible;
     }
 
     /**
@@ -339,12 +350,6 @@ export default class VirtualPadStore {
     }
 
     public toggleVisible() {
-        if (this._moveButtonsElement !== null) {
-            this._moveButtonsElement.style.display = this._visible ? "none" : "grid";
-        }
-        if (this._moveButtonsElement !== null) {
-            this._buttonWrapperElement.style.display = this._visible ? "none" : "grid";
-        }
-        this._visible = !this._visible;
+        this._setVisible(!this._visible);
     }
 }
