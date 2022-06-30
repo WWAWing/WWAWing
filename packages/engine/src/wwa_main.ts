@@ -265,6 +265,7 @@ export class WWA {
         dumpElm: HTMLElement = null,
         userVarNamesFile: string | null,
         canDisplayUserVars: boolean,
+        enableVirtualPad: boolean = false,
         virtualpadControllerElm: HTMLElement = null,
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
@@ -480,7 +481,7 @@ export class WWA {
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
-            if (checkTouchDevice()) {
+            if (checkTouchDevice() && enableVirtualPad) {
                 this._virtualPadButtonElements = {
                     [VirtualPadButtonCode.BUTTON_ENTER]: <HTMLButtonElement>util.$id("wwa-enter-button"),
                     [VirtualPadButtonCode.BUTTON_ESC]: <HTMLButtonElement>util.$id("wwa-esc-button"),
@@ -5977,8 +5978,8 @@ function start() {
     if (useGoToWWAAttribute !== null && useGoToWWAAttribute.match(/^true$/i)) {
         useGoToWWA = true;
     }
-    const useAutoRotateAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-auto-rotate-enable");
-    if (checkTouchDevice() && (useAutoRotateAttribute === null || useAutoRotateAttribute.match(/^true$/i))) {
+    const virtualPadAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad");
+    if (checkTouchDevice() && (virtualPadAttribute !== null && virtualPadAttribute === "auto-rotate")) {
         initializeRotate();
         window.addEventListener("resize", autoRotate);
     }
@@ -6003,6 +6004,7 @@ function start() {
         dumpElm,
         userVarNamesFile,
         canDisplayUserVars,
+        virtualPadAttribute === "fixed" || virtualPadAttribute === "auto-rotate",
         virtualPadControllerElm
     );
 }

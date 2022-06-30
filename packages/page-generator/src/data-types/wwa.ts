@@ -12,6 +12,8 @@ export interface GameOption {
         canDisplay?: boolean
     },
     virtualPad?: {
+        enable?: boolean,
+        autoRotateEnable?: boolean,
         controllerId: string;
     },
 }

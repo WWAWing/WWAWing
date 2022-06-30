@@ -59,6 +59,8 @@ function createPlayPageConfig(mapDataName: string, cssName?: string, isClassicMo
                     canDisplay: true
                 },
                 virtualPad: {
+                    enable: true,
+                    autoRotateEnable: true,
                     controllerId: "virtualpad-controller"
                 }
             },

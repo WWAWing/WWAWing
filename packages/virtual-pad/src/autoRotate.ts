@@ -17,6 +17,8 @@ export function initializeRotate() {
 export default function autoRotate() {
     const WWA_WIDTH = 560;
     const WWA_HEIGHT = 440;
+    // ブラウザーCSSをここから取得することはできないようなのでここで仮の値を設定しておく
+    const BROWSER_MARGIN = 8;
 
     const viewportElement = document.querySelector("meta[name='viewport']");
     const browserWidth = window.innerWidth;
@@ -28,10 +30,10 @@ export default function autoRotate() {
     let viewportValue = "user-scalable=no";
 
     if (browserWidth > browserHeight) {
-        const width = Math.floor((browserWidth / browserHeight) * WWA_HEIGHT);
+        const width = Math.floor((browserWidth / browserHeight) * (WWA_HEIGHT + (BROWSER_MARGIN) * 2));
         viewportValue = `width=${width},${viewportValue}`;
     } else if (browserWidth <= browserHeight) {
-        viewportValue = `width=${WWA_WIDTH},${viewportValue}`;
+        viewportValue = `width=${WWA_WIDTH + (BROWSER_MARGIN * 2)},${viewportValue}`;
     }
     viewportElement.setAttribute("content", `${viewportValue}`);
 }

@@ -35,6 +35,7 @@ export interface TemplateValues {
             "data-wwa-var-dump-elm"?: string;
             "data-wwa-user-var-names-file"?: string;
             "data-wwa-display-user-vars"?: string;
+            "data-wwa-virtualpad"?: string;
             "data-wwa-virtualpad-controller-elm"?: string;
         };
     };
@@ -72,6 +73,7 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-var-dump-elm": wwa.gameOption?.userVars?.dumpElementId ? `#${wwa.gameOption.userVars.dumpElementId}` : undefined,
                 "data-wwa-user-var-names-file": wwa.resources.userVarNamesFile,
                 "data-wwa-display-user-vars": Helper.toStringBooleanOptional(wwa.gameOption?.userVars?.canDisplay),
+                "data-wwa-virtualpad": wwa.gameOption?.virtualPad?.enable ? wwa.gameOption?.virtualPad.autoRotateEnable ? "auto-rotate" : "fixed" : "none",
                 "data-wwa-virtualpad-controller-elm": wwa.gameOption?.virtualPad?.controllerId ? `#${wwa.gameOption.virtualPad.controllerId}` : undefined,
             }
         },
