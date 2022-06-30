@@ -8,7 +8,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ConditionalMacroExecStatus, SetMacroType
+    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ConditionalMacroExecStatus,
 } from "./wwa_data";
 
 import {
@@ -39,6 +39,8 @@ import { Sound } from "./wwa_sound";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
+import * as SymbolParser from "./wwa_symbol_parser";
+
 let wwa: WWA
 
 /**
@@ -5361,268 +5363,60 @@ font-weight: bold;
         // 非実行状態の場合にはif実行状態にする
         if (this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'cannot-execute') {
             // 条件式を解釈してtrueの場合にはexecにする
-            const canExecute = descriminant === '' || this.checkCondition(descriminant);
+            const canExecute = descriminant === '' || SymbolParser.checkCondition(descriminant, this._generateTokenValues());
             this._conditionalMacroExecStatus = canExecute ? 'can-execute' : 'cannot-execute';
             return;
         }
     }
-    // Setマクロを実装
+
     public execSetMacro(macroStr: string = ""): void {
-        const regAdvance = /^\((v\[\d{1,3}\]|HP|HPMAX|AT|DF|GD)=(v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\(\d{1,}\))(\+|\-|\*|\/|%)(v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\(\d{1,}\))\)$/
-        const regNormal = /^\((v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD)(=|\+=|\-=|\*=|\/=|%=)(v\[\d{1,3}\]|\d{1,}|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\((\d{1,})\))\)$/;
-        const noSpaceStr = macroStr.replace(/\s/g, "");
-        const advanceMatch = noSpaceStr.match(regAdvance);
-        /**
-         * v[x] = v[y] + v[z] のフォーマットの時
-         * 左辺値は変数のみ，中央値・右辺値は変数・定数両方受け取る
-         * 演算子は+, -, *, /, % を受け付ける
-         **/
-        if(advanceMatch !== null) {
-            const targetType = this.parseType(advanceMatch[1]);
-            const leftValue = this.parseValue(advanceMatch[2]);
-            const rightValue = this.parseValue(advanceMatch[4]);
-            const operator = advanceMatch[3];
-            let setValue = 0;
-            switch(operator) {
-                case '+':
-                    setValue = leftValue + rightValue;
-                    break;
-                case '-':
-                    setValue = leftValue - rightValue;
-                    break;
-                case '*':
-                    setValue = leftValue * rightValue;
-                    break;
-                case '/':
-                    setValue = leftValue / rightValue;
-                    break;
-                case '%':
-                    setValue = leftValue % rightValue;
-                    break;
-            }
-            
-            switch(targetType) {
-                case 'VARIABLE':
-                    const variable = advanceMatch[1].match(/v\[(\d{1,3})\]/);
-                    const varNumber = Number(variable[1]);
-                    if(varNumber !== null) {
-                        this.setUserVar(varNumber, setValue);
-                    }
-                    break;
-                case 'NUMBER':
-                    throw new Error('左辺値に定数は入れられません');
-                case 'HP':
-                    // TODO: 0以下になったら死亡判定を入れる
-                    this._player.setEnergy(setValue);
-                    break;
-                case 'HPMAX':
-                    this._player.setEnergyMax(setValue);
-                    break;
-                case 'AT':
-                    this._player.setStrength(setValue);
-                    break;
-                case 'DF':
-                    this._player.setDefence(setValue);
-                    break;
-                case 'GD':
-                    this._player.setGold(setValue);
-                    break;
-                case 'STEP':
-                    throw new Error('左辺値に歩数は入れられません');
-                case 'TIME':
-                    throw new Error('左辺値にプレイ時間は入れられません');
-                case 'RAND':
-                    throw new Error('左辺値に乱数は入れられません')
-            }
-            this._player.updateStatusValueBox();
-            return;
-        }
-        const normalMatch = noSpaceStr.match(regNormal);
-        /**
-         * v[x] = v[y] のフォーマット
-         * 左辺値は変数のみ，右辺値は変数・定数両方受け取る
-         * 演算子は=, +=, -=, *=, /=, %= を受け付ける
-         **/
-        if(normalMatch !== null) {
-            const type = this.parseType(normalMatch[1]);
-            const leftValue = this.parseValue(normalMatch[1]);
-            const rightValue = this.parseValue(normalMatch[3]);
-            const operator = normalMatch[2];
-            let setValue;
-            switch(operator) {
-                case '=':
-                    setValue = rightValue;
-                    break;
-                case '+=':
-                    setValue = leftValue + rightValue;
-                    break;
-                case '-=':
-                    setValue = leftValue - rightValue;
-                    break;
-                case '*=':
-                    setValue = leftValue * rightValue;
-                    break;
-                case '/=':
-                    setValue = leftValue / rightValue;
-                    break;
-                case '%=':
-                    setValue = leftValue % rightValue;
-                    break;
-            }
-            switch(type) {
-                case 'VARIABLE':
-                    const varNumber = normalMatch[1].match(/v\[(\d{1,3})\]/);
-                    if(varNumber !== null && varNumber[1]) {
-                        this.setUserVar(Number(varNumber[1]), setValue);
-                    }
-                    break;
-                case 'NUMBER':
-                    throw new Error('左辺値に定数は入れられません');
-                case 'HP':
-                    // TODO: 0以下になったら死亡判定を入れる
-                    this._player.setEnergy(setValue);
-                    break;
-                case 'HPMAX':
-                    this._player.setEnergyMax(setValue);
-                    break;
-                case 'AT':
-                    this._player.setStrength(setValue);
-                    break;
-                case 'DF':
-                    this._player.setDefence(setValue);
-                    break;
-                case 'GD':
-                    this._player.setGold(setValue);
-                    break;
-                case 'STEP':
-                    throw new Error('左辺値に歩数は入れられません');
-                case 'TIME':
-                    throw new Error('左辺値にプレイ時間は入れられません');
-                case 'RAND':
-                    throw new Error('左辺値に乱数は入れられません')
-            }
-            this._player.updateStatusValueBox();
-            return;
-        }
-        else {
-            throw new Error('setMacroのフォーマットを満たしていません: '+macroStr)
-        }
-    }
-    public parseType(str: string): SetMacroType | null {
-        if(/v\[(\d{1,3})\]/.test(str)) {
-            return 'VARIABLE';
-        }
-        else if(/^\d{1,}$/.test(str)) {
-            return 'NUMBER';
-        }
-        else if(str === 'HP'){
-            return 'HP';
-        }
-        else if(str === 'HPMAX'){
-            return 'HPMAX';
-        }
-        else if(str === 'AT'){
-            return 'AT';
-       }
-        else if(str === 'DF'){
-            return 'DF';
-        }
-        else if(str === 'GD'){
-            return 'GD';
-        }
-        else if(str === 'STEP'){
-            return 'STEP';
-        }
-        else if(str === 'TIME'){
-            return 'TIME';
-        }
-        else if(/^RAND\(\d{1,}\)$/.test(str)) {
-            return 'RAND';
-        }
-        return null;
-    }
-    /**
-     * 変数か定数かを判断し、該当する値を返す
-     * @param value 変数か定数を表す文字列 1, 10, v[100] など
-     */
-    public parseValue(value: string): number {
-        switch (this.parseType(value)) {
-            case 'HP':
-                return this._player.getStatus().energy;
-            case 'HPMAX':
-                return this._player.getEnergyMax();
-            case 'AT':
-                return this._player.getStatus().strength;
-            case 'DF':
-                return this._player.getStatus().defence;
-            case 'GD':
-                return this._player.getStatus().gold;
-            case 'STEP':
-                return this._player.getMoveCount();
-            case 'VARIABLE':
-                return this._parseVariable(value);
-            case 'NUMBER':
-                return this._parseNumber(value);
-            case 'TIME':
-                this.setNowPlayTime();
-                return this._wwaData.playTime;
-            case 'RAND':
-                const randMaxList = value.match(/^RAND\((\d{1,})\)$/);
-                const randMax = Number(randMaxList[1]);
-                return Math.floor(Math.random() * randMax);
+        const { asignee, rawValue } = SymbolParser.parseSetMacroExpression(
+            macroStr, this._generateTokenValues()
+        );
+        switch(asignee) {
+            case "energy":
+                this._player.setEnergy(this.toValidStatusValue(rawValue));
+                if (
+                    this._player.isDead() &&
+                    this.shouldApplyGameOver({ isCalledByMacro: true })
+                ) {
+                    this.gameover();
+                }
+                break;
+            case "energyMax":
+                this._player.setEnergyMax(this.toValidStatusValue(rawValue));
+                break;
+            case "strength":
+                this._player.setStrength(this.toValidStatusValue(rawValue));
+                break;
+            case "defence":
+                this._player.setDefence(this.toValidStatusValue(rawValue));
+                break;
+            case "gold":
+                this._player.setGold(this.toValidStatusValue(rawValue));
+                break;
             default:
-                return NaN;
+                if (isNaN(asignee) || !this.isValidUserVarIndex(asignee)) {
+                    throw new Error("ユーザ変数の添字が範囲外です。");
+                }
+                this.setUserVar(asignee, this.toAssignableValue(rawValue));
+                break;
+        }
+        this._player.updateStatusValueBox();
+    }
+
+    private _generateTokenValues(): SymbolParser.TokenValues {
+        // TODO: これ呼ぶ以外の方法ないのかな
+        this.setNowPlayTime();
+        return {
+            status: this._player.getStatus(),
+            energyMax: this._player.getEnergyMax(),
+            moveCount: this._player.getMoveCount(),
+            playTime: this._wwaData.playTime,
+            userVars: this._wwaData.userVar
         }
     }
 
-    private _parseVariable(value: string): number {
-        const variable = value.match(/^v\[(\d+)\]$/);
-        if (variable === null) {
-            throw new Error("変数のフォーマットではありません。")
-        }
-        const index = parseInt(variable[1], 10);
-        if (!this.isValidUserVarIndex(index)) {
-            throw new Error("ユーザ変数の添字が範囲外です。");
-        }
-        return this._wwaData.userVar[index];
-    }
-
-    private _parseNumber(value: string): number {
-        const parsedValue = parseInt(value, 10);
-        if (isNaN(parsedValue)) {
-            throw new Error(`数値として解釈できません: ${value}`)
-        }
-        return parsedValue;
-    }
-
-    // 条件式を引数に取ってTrueかを判定する
-    public checkCondition(descriminant: string): boolean {
-       const parsedDescriminant = descriminant.replaceAll(" ", "")
-            .match(/^\((v\[\d+\]|\d+)(>|<|<=|>=|==|!=)(v\[\d+\]|\d+)\)$/)
-        if (parsedDescriminant === null || parsedDescriminant.length <= 3) {
-            console.error(`判定式が異常です: ${descriminant}`)
-            return false;
-        }
-        const left = this.parseValue(parsedDescriminant[1]);
-        const right = this.parseValue(parsedDescriminant[3]);
-        const operator = parsedDescriminant[2];
-        switch(operator) {
-            case '>':
-                return left > right;
-            case '<':
-                return left < right;
-            case '>=':
-                return left >= right;
-            case '<=':
-                return left <= right;
-            case '==':
-                return left === right;
-            case '!=':
-                return left !== right;
-            default:
-                return false;
-        }
-    }
     // end-ifが呼ばれたときにはif文実行状態を終了させる
     public resetConditionalMacroExecStaus(): void {
         this._conditionalMacroExecStatus = 'outside-ifelse';
