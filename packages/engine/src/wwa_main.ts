@@ -5946,7 +5946,10 @@ function start() {
         }
     });
     var titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
-    inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName);
+    const virtualPadAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad");
+    const virtualPadEnable = virtualPadAttribute === "fixed" || virtualPadAttribute === "auto-rotate";
+    inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName, virtualPadEnable);
+
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
     var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
@@ -5977,8 +5980,7 @@ function start() {
     if (useGoToWWAAttribute !== null && useGoToWWAAttribute.match(/^true$/i)) {
         useGoToWWA = true;
     }
-    const virtualPadAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad");
-    const virtualPadEnable = virtualPadAttribute === "fixed" || virtualPadAttribute === "auto-rotate";
+
     if (checkTouchDevice() && (virtualPadAttribute !== null && virtualPadAttribute === "auto-rotate")) {
         initializeRotate();
         window.addEventListener("resize", autoRotate);
