@@ -50,6 +50,8 @@ import { Sound } from "./wwa_sound";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
+import * as SymbolParser from "./wwa_symbol_parser";
+
 let wwa: WWA
 
 /**
@@ -5465,64 +5467,60 @@ font-weight: bold;
         // 非実行状態の場合にはif実行状態にする
         if (this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'cannot-execute') {
             // 条件式を解釈してtrueの場合にはexecにする
-            const canExecute = descriminant === '' || this.checkCondition(descriminant);
+            const canExecute = descriminant === '' || SymbolParser.checkCondition(descriminant, this._generateTokenValues());
             this._conditionalMacroExecStatus = canExecute ? 'can-execute' : 'cannot-execute';
             return;
         }
     }
-    /** 
-     * 条件式を引数に取って true かを判定する
-     * @param descriminant 判別式 1 == 1, v[100] !== 10, v[12] > v[23] など
-     */
-    public checkCondition(descriminant: string): boolean {
-        /**
-         * 変数か定数かを判断し、該当する値を返す
-         * @param value 変数か定数を表す文字列 1, 10, v[100] など
-         */
-        const parseValue = (value: string): number => {
-            const variable = value.match(/^v\[(\d+)\]$/);
-            // 変数の場合
-            if (variable !== null) {
-                const index = parseInt(variable[1], 10);
-                if (!this.isValidUserVarIndex(index)) {
+
+    public execSetMacro(macroStr: string = ""): void {
+        const { asignee, rawValue } = SymbolParser.parseSetMacroExpression(
+            macroStr, this._generateTokenValues()
+        );
+        switch(asignee) {
+            case "energy":
+                this._player.setEnergy(this.toValidStatusValue(rawValue));
+                if (
+                    this._player.isDead() &&
+                    this.shouldApplyGameOver({ isCalledByMacro: true })
+                ) {
+                    this.gameover();
+                }
+                break;
+            case "energyMax":
+                this._player.setEnergyMax(this.toValidStatusValue(rawValue));
+                break;
+            case "strength":
+                this._player.setStrength(this.toValidStatusValue(rawValue));
+                break;
+            case "defence":
+                this._player.setDefence(this.toValidStatusValue(rawValue));
+                break;
+            case "gold":
+                this._player.setGold(this.toValidStatusValue(rawValue));
+                break;
+            default:
+                if (isNaN(asignee) || !this.isValidUserVarIndex(asignee)) {
                     throw new Error("ユーザ変数の添字が範囲外です。");
                 }
-                return this._wwaData.userVar[index];
-            }
-            // 定数なら数値化して返す
-            const parsedValue = parseInt(value, 10);
-            if (isNaN(parsedValue)) {
-                throw new Error(`数値として解釈できません: ${value}`)
-            }
-            return parsedValue;
+                this.setUserVar(asignee, this.toAssignableValue(rawValue));
+                break;
         }
-        // 複数条件を処理する場合（将来用）: /(\(.+?\)(&&|\|\|)?){1,}/
-        const parsedDescriminant = descriminant.replaceAll(" ", "")
-            .match(/^\((v\[\d+\]|\d+)(>|<|<=|>=|==|!=)(v\[\d+\]|\d+)\)$/)
-        if (parsedDescriminant === null || parsedDescriminant.length <= 3) {
-            console.error(`判定式が異常です: ${descriminant}`)
-            return false;
-        }
-        const left = parseValue(parsedDescriminant[1]);
-        const right = parseValue(parsedDescriminant[3]);
-        const operator = parsedDescriminant[2];
-        switch(operator) {
-            case '>':
-                return left > right;
-            case '<':
-                return left < right;
-            case '>=':
-                return left >= right;
-            case '<=':
-                return left <= right;
-            case '==':
-                return left === right;
-            case '!=':
-                return left !== right;
-            default:
-                return false;
+        this._player.updateStatusValueBox();
+    }
+
+    private _generateTokenValues(): SymbolParser.TokenValues {
+        // TODO: これ呼ぶ以外の方法ないのかな
+        this.setNowPlayTime();
+        return {
+            status: this._player.getStatus(),
+            energyMax: this._player.getEnergyMax(),
+            moveCount: this._player.getMoveCount(),
+            playTime: this._wwaData.playTime,
+            userVars: this._wwaData.userVar
         }
     }
+
     // end-ifが呼ばれたときにはif文実行状態を終了させる
     public resetConditionalMacroExecStaus(): void {
         this._conditionalMacroExecStatus = 'outside-ifelse';
