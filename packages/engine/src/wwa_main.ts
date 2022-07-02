@@ -30,7 +30,6 @@ import {
     initializeRotate
 } from "@wwawing/virtual-pad";
 
-import * as CryptoJS from "crypto-js";
 import * as util from "./wwa_util";
 import { CGManager } from "./wwa_cgmanager";
 import { Camera } from "./wwa_camera";
@@ -182,13 +181,6 @@ export class WWA {
     private _canDisplayUserVars: boolean;
 
     private _isActive: boolean;
-
-    /**
-     *   $imgframe で変更可能なアイテムボックスの画像位置（チップ単位）
-     *   TODO: 将来はセーブデータに含まれるようになるので、 WWADataに移す。
-     *   @see https://github.com/WWAWing/WWAWing/issues/156
-     */
-    private _itemboxBackgroundPos: { x: number, y: number };
 
     /**
      * 背景パーツ番号として添字を与えると
@@ -1966,7 +1958,7 @@ export class WWA {
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_Y)) {
                     // コマンドのヘルプ 
-                    this._displayHelp()
+                    this._displayHelp();
                 }
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
@@ -2110,7 +2102,6 @@ export class WWA {
                     this._setNextMessage();
 
                 }
-
             }
 
             // ユーザー変数表示モードの場合

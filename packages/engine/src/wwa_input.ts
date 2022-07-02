@@ -256,6 +256,7 @@ export class MouseStore {
         this._mouseState = false;
         this._nextMouseState = false;
     }
+
 }
 
 export enum GamePadState {

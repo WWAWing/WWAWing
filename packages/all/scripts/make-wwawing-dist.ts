@@ -150,7 +150,7 @@ export default async function makeDistribution(
                         intervalSteps: 200,
                     },
                     virtualPad: {
-                        controllerId: "virtualpad-controller",
+                        enable: false,
                     },
                     ...(canIncludeUserVarOptions ? {
                         userVars: {
