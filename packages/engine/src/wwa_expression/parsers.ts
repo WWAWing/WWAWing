@@ -1,4 +1,5 @@
 import { EquipmentStatus, Status } from "../wwa_data";
+import { regNumber, regRand, regRandCapture, regUserVar, regUserVarCapture } from "./regexp";
 
 export interface TokenValues {
   totalStatus: Status;
@@ -18,30 +19,6 @@ export interface TokenValues {
  */
 export type SetMacroType = 'VARIABLE' | 'NUMBER' | 'HP' | 'HPMAX' | 'AT' | 'AT_TOTAL' | 'AT_ITEMS' | 'DF' | 'DF_TOTAL' | 'DF_ITEMS' | 'GD' | 'TIME' | 'STEP' | 'RAND';
 
-export function calc(operator: string, leftValue: number, rightValue: number) {
-  switch (operator) {
-    case "=":
-      return rightValue;
-    case '+':
-    case '+=':
-      return leftValue + rightValue;
-    case '-':
-    case '-=':
-      return leftValue - rightValue;
-    case '*':
-    case '*=':
-      return leftValue * rightValue;
-    case '/':
-    case '/=':
-      return rightValue === 0 ? 0 : (leftValue / rightValue);
-    case '%':
-    case '%=':
-      return rightValue === 0 ? 0 : (leftValue % rightValue);
-    default:
-      throw new Error("未定義の演算子です");
-  }
-}
-
 export function parseType(str: string): SetMacroType | null {
   switch (str) {
     case "HP":
@@ -57,11 +34,11 @@ export function parseType(str: string): SetMacroType | null {
     case "TIME":
       return str;
     default:
-      if (/v\[(\d+)\]/.test(str)) {
+      if (regUserVar.test(str)) {
         return 'VARIABLE';
-      } else if (/^\d+$/.test(str)) {
+      } else if (regNumber.test(str)) {
         return 'NUMBER';
-      } else if (/^RAND\(\d+\)$/.test(str)) {
+      } else if (regRand.test(str)) {
         return 'RAND';
       } else {
         return null;
@@ -102,7 +79,7 @@ export function parseValue(value: string, tokenValues: TokenValues): number {
     case 'TIME':
       return tokenValues.playTime;
     case 'RAND':
-      const randMaxList = value.match(/^RAND\((\d+)\)$/);
+      const randMaxList = value.match(regRandCapture);
       const randMax = parseInt(randMaxList[1], 10);
       return Math.floor(Math.random() * randMax);
     default:
@@ -111,7 +88,7 @@ export function parseValue(value: string, tokenValues: TokenValues): number {
 }
 
 export function parseVariable(value: string, tokenValues: TokenValues): number {
-  const variable = value.match(/^v\[(\d+)\]$/);
+  const variable = value.match(regUserVarCapture);
   if (variable === null) {
     throw new Error("変数のフォーマットではありません。");
   }

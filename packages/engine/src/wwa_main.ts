@@ -39,7 +39,7 @@ import { Sound } from "./wwa_sound";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
-import * as SymbolParser from "./wwa_symbol_parser";
+import * as ExpressionParser from "./wwa_expression";
 
 let wwa: WWA
 
@@ -5363,14 +5363,14 @@ font-weight: bold;
         // 非実行状態の場合にはif実行状態にする
         if (this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'cannot-execute') {
             // 条件式を解釈してtrueの場合にはexecにする
-            const canExecute = descriminant === '' || SymbolParser.checkCondition(descriminant, this._generateTokenValues());
+            const canExecute = descriminant === '' || ExpressionParser.evaluateIfMacroExpression(descriminant, this._generateTokenValues());
             this._conditionalMacroExecStatus = canExecute ? 'can-execute' : 'cannot-execute';
             return;
         }
     }
 
     public execSetMacro(macroStr: string = ""): void {
-        const { asignee, rawValue } = SymbolParser.parseSetMacroExpression(
+        const { asignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
             macroStr, this._generateTokenValues()
         );
         switch(asignee) {
@@ -5405,7 +5405,7 @@ font-weight: bold;
         this._player.updateStatusValueBox();
     }
 
-    private _generateTokenValues(): SymbolParser.TokenValues {
+    private _generateTokenValues(): ExpressionParser.TokenValues {
         // TODO: これ呼ぶ以外の方法ないのかな
         this.setNowPlayTime();
         return {
