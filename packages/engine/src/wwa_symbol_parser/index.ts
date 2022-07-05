@@ -42,7 +42,7 @@ export function parseSetMacroExpression(macroStr: string, tokenValues: TokenValu
 // 条件式を引数に取ってtrueかを判定する
 export function checkCondition(descriminant: string, tokenValues: TokenValues): boolean {
   const parsedDescriminant = descriminant.replace(/\s/g, "")
-    .match(/^\((v\[\d+\]|\d+)(>|<|<=|>=|==|!=)(v\[\d+\]|\d+)\)$/);
+    .match(/^\((v\[\d+\]|\d+|HP|HPMAX|AT|AT_TOTAL|AT_ITEMS|DF|DF_TOTAL|DF_ITEMS|GD|STEP|TIME|RAND\((\d+)\))(>|<|<=|>=|==|!=)(v\[\d+\]|\d+|HP|HPMAX|AT|AT_TOTAL|AT_ITEMS|DF|DF_TOTAL|DF_ITEMS|GD|STEP|TIME|RAND\((\d+)\))\)$/);
   if (parsedDescriminant === null || parsedDescriminant.length <= 3) {
     console.error(`判定式が異常です: ${descriminant}`)
     return false;
