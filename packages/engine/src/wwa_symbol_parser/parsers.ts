@@ -33,10 +33,10 @@ export function calc(operator: string, leftValue: number, rightValue: number) {
       return leftValue * rightValue;
     case '/':
     case '/=':
-      return leftValue / rightValue;
+      return rightValue === 0 ? 0 : (leftValue / rightValue);
     case '%':
     case '%=':
-      return leftValue % rightValue;
+      return rightValue === 0 ? 0 : (leftValue % rightValue);
     default:
       throw new Error("未定義の演算子です");
   }
