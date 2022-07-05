@@ -35,8 +35,16 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
       return { asignee: "energyMax", rawValue: calcResult };
     case 'AT':
       return { asignee: "strength", rawValue: calcResult };
+    case 'AT_TOTAL':
+      throw new Error('左辺値に合計攻撃力は入れられません');
+    case 'AT_ITEMS':
+      throw new Error('左辺値にアイテム攻撃力は入れられません');
     case 'DF':
       return { asignee: "defence", rawValue: calcResult };
+    case 'DF_TOTAL':
+      throw new Error('左辺値に合計防御力は入れられません');
+    case 'DF_ITEMS':
+      throw new Error('左辺値にアイテム防御力は入れられません');
     case 'GD':
       return { asignee: "gold", rawValue: calcResult };
     case 'STEP':

@@ -5409,7 +5409,9 @@ font-weight: bold;
         // TODO: これ呼ぶ以外の方法ないのかな
         this.setNowPlayTime();
         return {
-            status: this._player.getStatus(),
+            totalStatus: this._player.getStatus(),
+            bareStatus: this._player.getStatusWithoutEquipments(),
+            itemStatus: this._player.getStatusOfEquipments(),
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
             playTime: this._wwaData.playTime,

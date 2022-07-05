@@ -11,7 +11,7 @@ export function parseSetMacroExpression(macroStr: string, tokenValues: TokenValu
     * 左辺値は変数のみ，中央値・右辺値は変数・定数両方受け取る
     * 演算子は+, -, *, /, % を受け付ける
     **/
-  const regAdvance = /^\((v\[\d+\]|HP|HPMAX|AT|DF|GD)=(v\[\d+\]|\d+|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\(\d+\))(\+|\-|\*|\/|%)(v\[\d+\]|\d+|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\(\d+\))\)$/
+  const regAdvance = /^\((v\[\d+\]|HP|HPMAX|AT|DF|GD)=(v\[\d+\]|\d+|HP|HPMAX|AT|AT_TOTAL|AT_ITEMS|DF|DF_TOTAL|DF_ITEMS|GD|STEP|TIME|RAND\(\d+\))(\+|\-|\*|\/|%)(v\[\d+\]|\d+|HP|HPMAX|AT|AT_TOTAL|AT_ITEMS|DF|DF_TOTAL|DF_ITEMS|GD|STEP|TIME|RAND\(\d+\))\)$/
   const advanceMatch = noSpaceStr.match(regAdvance);
   if (advanceMatch !== null) {
     const leftValue = parseValue(advanceMatch[2], tokenValues);
@@ -26,7 +26,7 @@ export function parseSetMacroExpression(macroStr: string, tokenValues: TokenValu
    * 左辺値は変数のみ，右辺値は変数・定数両方受け取る
    * 演算子は=, +=, -=, *=, /=, %= を受け付ける
    **/
-  const regNormal = /^\((v\[\d+\]|\d+|HP|HPMAX|AT|DF|GD)(=|\+=|\-=|\*=|\/=|%=)(v\[\d+\]|\d+|HP|HPMAX|AT|DF|GD|STEP|TIME|RAND\((\d+)\))\)$/;
+  const regNormal = /^\((v\[\d+\]|\d+|HP|HPMAX|AT|DF|GD)(=|\+=|\-=|\*=|\/=|%=)(v\[\d+\]|\d+|HP|HPMAX|AT|AT_TOTAL|AT_ITEMS|DF|DF_TOTAL|DF_ITEMS|GD|STEP|TIME|RAND\((\d+)\))\)$/;
   const normalMatch = noSpaceStr.match(regNormal);
   if (normalMatch !== null) {
     const leftValue = parseValue(normalMatch[1], tokenValues);
