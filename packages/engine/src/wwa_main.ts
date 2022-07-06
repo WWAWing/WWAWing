@@ -5370,10 +5370,10 @@ font-weight: bold;
     }
 
     public execSetMacro(macroStr: string = ""): void {
-        const { asignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
+        const { assignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
             macroStr, this._generateTokenValues()
         );
-        switch(asignee) {
+        switch(assignee) {
             case "energy":
                 this._player.setEnergy(this.toValidStatusValue(rawValue));
                 if (
@@ -5396,10 +5396,10 @@ font-weight: bold;
                 this._player.setGold(this.toValidStatusValue(rawValue));
                 break;
             default:
-                if (isNaN(asignee) || !this.isValidUserVarIndex(asignee)) {
+                if (isNaN(assignee) || !this.isValidUserVarIndex(assignee)) {
                     throw new Error("ユーザ変数の添字が範囲外です。");
                 }
-                this.setUserVar(asignee, this.toAssignableValue(rawValue));
+                this.setUserVar(assignee, this.toAssignableValue(rawValue));
                 break;
         }
         this._player.updateStatusValueBox();
@@ -5415,7 +5415,8 @@ font-weight: bold;
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
             playTime: this._wwaData.playTime,
-            userVars: this._wwaData.userVar
+            userVars: this._wwaData.userVar,
+            playerCoord: this._player.getPosition().getPartsCoord(),
         }
     }
 

@@ -1,4 +1,4 @@
-import { EquipmentStatus, Status } from "../wwa_data";
+import { EquipmentStatus, Status, Coord } from "../wwa_data";
 import { regNumber, regRand, regRandCapture, regUserVar, regUserVarCapture } from "./regexp";
 
 export interface TokenValues {
@@ -9,6 +9,7 @@ export interface TokenValues {
   moveCount: number;
   playTime: number;
   userVars: number[];
+  playerCoord: Coord;
 }
 
 /**
@@ -17,7 +18,7 @@ export interface TokenValues {
  * AT_ITEMS: 所持アイテム攻撃力の合計
  * DF_ITEMS: 所持アイテム防御力の合計
  */
-export type SetMacroType = 'VARIABLE' | 'NUMBER' | 'HP' | 'HPMAX' | 'AT' | 'AT_TOTAL' | 'AT_ITEMS' | 'DF' | 'DF_TOTAL' | 'DF_ITEMS' | 'GD' | 'TIME' | 'STEP' | 'RAND';
+export type SetMacroType = 'VARIABLE' | 'NUMBER' | 'HP' | 'HPMAX' | 'AT' | 'AT_TOTAL' | 'AT_ITEMS' | 'DF' | 'DF_TOTAL' | 'DF_ITEMS' | 'GD' | 'TIME' | 'STEP' | 'PX' | 'PY' |'RAND';
 
 export function parseType(str: string): SetMacroType | null {
   switch (str) {
@@ -32,6 +33,8 @@ export function parseType(str: string): SetMacroType | null {
     case "GD":
     case "STEP":
     case "TIME":
+    case "PX":
+    case "PY":
       return str;
     default:
       if (regUserVar.test(str)) {
@@ -78,6 +81,10 @@ export function parseValue(value: string, tokenValues: TokenValues): number {
       return parseNumber(value);
     case 'TIME':
       return tokenValues.playTime;
+    case 'PX':
+      return tokenValues.playerCoord.x;
+    case 'PY':
+      return tokenValues.playerCoord.y;
     case 'RAND':
       const randMaxList = value.match(regRandCapture);
       const target = randMaxList[1];

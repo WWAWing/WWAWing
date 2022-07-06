@@ -1,7 +1,7 @@
 const NUMBER = "\\d+";
 const USER_VAR = `v\\[${NUMBER}\\]`;
 const USER_VAR_CAPTURE = `v\\[(${NUMBER})\\]`;
-const READ_ONLY_VALUE = `AT_TOTAL|AT_ITEMS|DF_TOTAL|DF_ITEMS|STEP|TIME`;
+const READ_ONLY_VALUE = `AT_TOTAL|AT_ITEMS|DF_TOTAL|DF_ITEMS|STEP|TIME|PX|PY`;
 const WRITABLE_VALUE = "HP|HPMAX|AT|DF|GD"
 const ASSIGNEE = `${USER_VAR}|${WRITABLE_VALUE}`
 const VALUE = `${NUMBER}|${USER_VAR}|${READ_ONLY_VALUE}|${WRITABLE_VALUE}`;
@@ -45,4 +45,4 @@ export const regNormal = new RegExp(`${START}(${ASSIGNEE})(${ASSIGNMENT_OPERATOR
 /**
  * ifマクロのフォーマット
  */
-export const regIf = new RegExp(`${START}(${VALUE_OR_FUNCTION})(${COMPARISON_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);
+ export const regIf = new RegExp(`${START}(${VALUE_OR_FUNCTION})(${COMPARISON_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);
