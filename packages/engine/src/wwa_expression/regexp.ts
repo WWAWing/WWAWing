@@ -1,12 +1,16 @@
 const NUMBER = "\\d+";
 const USER_VAR = `v\\[${NUMBER}\\]`;
 const USER_VAR_CAPTURE = `v\\[(${NUMBER})\\]`;
-const RAND = `RAND\\(${NUMBER}\\)`;
-const RAND_CAPTURE = `RAND\\((${NUMBER})\\)`;
-const READ_ONLY_VALUE = `AT_TOTAL|AT_ITEMS|DF_TOTAL|DF_ITEMS|STEP|TIME|${RAND}`;
+const READ_ONLY_VALUE = `AT_TOTAL|AT_ITEMS|DF_TOTAL|DF_ITEMS|STEP|TIME`;
 const WRITABLE_VALUE = "HP|HPMAX|AT|DF|GD"
 const ASSIGNEE = `${USER_VAR}|${WRITABLE_VALUE}`
 const VALUE = `${NUMBER}|${USER_VAR}|${READ_ONLY_VALUE}|${WRITABLE_VALUE}`;
+
+const RAND = `RAND\\((?:${VALUE})\\)`;
+const RAND_CAPTURE = `RAND\\((${VALUE})\\)`;
+
+const FUNCTION = `${RAND}`;
+const VALUE_OR_FUNCTION = `${VALUE}|${FUNCTION}`
 
 const CALC_OPERATOR = "\\+|\\-|\\*|\\/|%";
 const ASSIGN = "=";
@@ -28,7 +32,7 @@ export const regRandCapture = new RegExp(`^${RAND_CAPTURE}\$`);
  * 演算子は+, -, *, /, % を受け付ける
  *
  */
-export const regAdvance = new RegExp(`${START}(${ASSIGNEE})${ASSIGN}(${VALUE})(${CALC_OPERATOR})(${VALUE})${END}`);
+export const regAdvance = new RegExp(`${START}(${ASSIGNEE})${ASSIGN}(${VALUE_OR_FUNCTION})(${CALC_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);
 
 /**
  * v[x] = v[y] のフォーマット
@@ -36,9 +40,9 @@ export const regAdvance = new RegExp(`${START}(${ASSIGNEE})${ASSIGN}(${VALUE})($
  * 演算子は=, +=, -=, *=, /=, %= を受け付ける
  *
 */
-export const regNormal = new RegExp(`${START}(${ASSIGNEE})(${ASSIGNMENT_OPERATOR})(${VALUE})${END}`);
+export const regNormal = new RegExp(`${START}(${ASSIGNEE})(${ASSIGNMENT_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);
 
 /**
  * ifマクロのフォーマット
  */
-export const regIf = new RegExp(`${START}(${VALUE})(${COMPARISON_OPERATOR})(${VALUE})${END}`);
+export const regIf = new RegExp(`${START}(${VALUE_OR_FUNCTION})(${COMPARISON_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);

@@ -80,10 +80,12 @@ export function parseValue(value: string, tokenValues: TokenValues): number {
       return tokenValues.playTime;
     case 'RAND':
       const randMaxList = value.match(regRandCapture);
-      const randMax = parseInt(randMaxList[1], 10);
+      const target = randMaxList[1];
+      const randMax = parseValue(target, tokenValues);
       return Math.floor(Math.random() * randMax);
     default:
-      return NaN;
+      // 未定義は 0 とする
+      return 0;
   }
 }
 
