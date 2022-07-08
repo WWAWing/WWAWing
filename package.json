@@ -34,7 +34,7 @@
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
     "@types/node": "^16.11.41",
-    "lerna": "^5.1.7",
+    "lerna": "^5.1.8",
     "npm-run-all": "^4.1.5",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.3"
