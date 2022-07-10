@@ -87,6 +87,13 @@ export class Macro {
         public macroType: MacroType,
         public macroArgs: string[]
     ) { }
+
+    // 分岐関連マクロか ($if, $elseif, $else, $endif)
+    public isJunction(): boolean {
+        const IFElseMacroList = [MacroType.IF, MacroType.ELSE_IF, MacroType.ELSE, MacroType.END_IF];
+        return IFElseMacroList.includes(this.macroType);
+    }
+
     public execute(): void {
         try {
             switch (this.macroType) {
@@ -268,6 +275,18 @@ export class Macro {
                 case MacroType.IF:
                     this._executeIfMacro();
                     break;
+                // ELSE-IF文
+                case MacroType.ELSE_IF:
+                    this._executeIfElseMacro();
+                    break;
+                // ELSE文
+                case MacroType.ELSE:
+                    this._executeElseMacro();
+                    break;
+                // END-IF文
+                case MacroType.END_IF:
+                    this._executeEndIfMacro();
+                    break;
                 // 速度設定
                 case MacroType.SET_SPEED:
                     this._executeSetSpeedMacro();
@@ -286,6 +305,9 @@ export class Macro {
                     break;
                 case MacroType.NO_GAMEOVER:
                     this._executeNoGameOverMacro();
+                    break;
+                case MacroType.SET:
+                    this._executeSetMacro();
                     break;
                 default:
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
@@ -484,14 +506,32 @@ export class Macro {
         var speedChangeFlag = !!this._parseInt(0);
         this._wwa.speedChangeJudge(speedChangeFlag);
     }
-   // IFマクロ実行部
+    // IFマクロ実行部
     private _executeIfMacro(): void {
-        // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
-        var str: string[] = new Array(11);
-        for (var i = 0; i < 10; i++) {
-            str[i] = this.macroArgs[i];
+        // 後方互換性を保つため、引数が1つ以外の時には旧ifマクロを実行する
+        if(this.macroArgs.length === 1) {
+            this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
         }
-        this._wwa.userVarUserIf(this._triggerPartsPosition, str);
+        else {
+            // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
+            var str: string[] = new Array(11);
+            for (var i = 0; i < 10; i++) {
+                str[i] = this.macroArgs[i];
+            }
+            this._wwa.userVarUserIf(this._triggerPartsPosition, str);
+        }
+    }
+    // IF-ELSEマクロ実行部
+    private _executeIfElseMacro(): void {
+        this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
+    }
+    // ELSEマクロ実行部
+    private _executeElseMacro(): void {
+        this._wwa.switchConditionalExecutionStatus();
+    }
+    // END_IFマクロ実行部
+    private _executeEndIfMacro(): void {
+        this._wwa.resetConditionalMacroExecStaus();
     }
     // SET_SPEEDマクロ実行部
     private _executeSetSpeedMacro(): void {
@@ -862,6 +902,10 @@ export class Macro {
         const isGameOverDisabled = this._parseInt(0);
         this._wwa.setGameOverPolicy(isGameOverDisabled);
     }
+
+    private _executeSetMacro(): void {
+        this._wwa.execSetMacro(this.macroArgs[0])
+    }
 }
 
 export function parseMacro(
@@ -874,15 +918,20 @@ export function parseMacro(
 
     var matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)$/);
     if (matchInfo === null || matchInfo.length !== 3) {
-        throw new Error("マクロではありません");
+        // イコールがつかないタイプのマクロ
+        matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)/);
+        if (matchInfo === null || matchInfo.length !== 2) {
+            throw new Error("マクロではありません");
+        }
     }
     var macroType = matchInfo[1];
     var macroIndex = macrotable["$" + macroType.toLowerCase()];
+    var macroRightSide = matchInfo[2]? matchInfo[2]: "";
     if (macroIndex === void 0) {
         // undefined macro
-        return new Macro(wwa, partsID, partsType, position, MacroType.UNDEFINED, matchInfo[2].split(","));
+        return new Macro(wwa, partsID, partsType, position, MacroType.UNDEFINED, macroRightSide.split(","));
     }
-    return new Macro(wwa, partsID, partsType, position, macroIndex, matchInfo[2].split(",").map((e) => { return e.trim(); }));
+    return new Macro(wwa, partsID, partsType, position, macroIndex, macroRightSide.split(",").map((e) => { return e.trim(); }));
 }
 
 

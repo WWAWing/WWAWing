@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/engine",
-  "version": "3.8.0",
+  "version": "3.9.0",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "./lib/wwa.js",
   "files": [
@@ -41,9 +41,9 @@
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
-    "@types/crypto-js": "^4.0.1",
-    "@types/pug": "^2.0.4",
-    "@types/terser-webpack-plugin": "^5.0.3",
+    "@types/crypto-js": "^4.1.1",
+    "@types/pug": "^2.0.6",
+    "@types/terser-webpack-plugin": "^5.2.0",
     "@types/webpack": "^5.28.0",
     "@wwawing/assets": "file:../assets",
     "@wwawing/common-interface": "file:../common-interface",
@@ -52,17 +52,17 @@
     "@wwawing/loader": "file:../loader",
     "@wwawing/page-generator": "file:../page-generator",
     "@wwawing/styles": "file:../styles",
-    "crypto-js": "4.0.0",
+    "crypto-js": "^4.1.1",
     "npm-run-all": "^4.1.5",
     "pug": "^3.0.2",
-    "shelljs": "^0.8.4",
-    "shx": "^0.3.3",
-    "terser-webpack-plugin": "^5.3.0",
-    "ts-loader": "^4.3.0",
+    "shelljs": "^0.8.5",
+    "shx": "^0.3.4",
+    "terser-webpack-plugin": "^5.3.3",
+    "ts-loader": "^9.3.0",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.3",
-    "webpack": "^5.65.0",
-    "webpack-cli": "^4.9.1"
+    "webpack": "^5.73.0",
+    "webpack-cli": "^4.10.0"
   },
   "publishConfig": {
     "access": "public"

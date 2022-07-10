@@ -8,7 +8,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind,
+    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ConditionalMacroExecStatus,
 } from "./wwa_data";
 
 import {
@@ -39,6 +39,8 @@ import { Sound } from "./wwa_sound";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
+import * as ExpressionParser from "./wwa_expression";
+
 let wwa: WWA
 
 /**
@@ -214,6 +216,8 @@ export class WWA {
         defence: number;
         gold: number;
     };
+
+    private _conditionalMacroExecStatus: ConditionalMacroExecStatus;
 
     ////////////////////////
     public debug: boolean;
@@ -466,6 +470,7 @@ export class WWA {
             this._lastMessage = new ParsedMessage([], false, false, []);
             this._execMacroListInNextFrame = [];
             this._passwordLoadExecInNextFrame = false;
+            this._conditionalMacroExecStatus = "outside-ifelse";
 
             //ロード処理の前に追加
             this._messageWindow = new MessageWindow(
@@ -1602,8 +1607,14 @@ export class WWA {
             this._clearFacesInNextFrame = false;
         }
         for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
-            this._execMacroListInNextFrame[i].execute();
+            // if-elseマクロの途中で条件を満たさない場合にはマクロを実行しない
+            // IF-ELSE関連マクロの場合には無条件で実行する
+            if(this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'can-execute' || this._execMacroListInNextFrame[i].isJunction()) {
+                this._execMacroListInNextFrame[i].execute();
+            }
         }
+        // $endif が呼ばれなかった時に状態が異常にならないようにリセットしておく
+        this.resetConditionalMacroExecStaus();
         if (this._lastMessage.isEmpty() && this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
@@ -3380,7 +3391,8 @@ export class WWA {
             .replace(/\n\<p\>\n/ig, "<P>")
             .replace(/\n\<p\>/ig, "<P>")
             .replace(/\<p\>\n/ig, "<P>")
-            .replace(/\<p\>/ig, "<P>");
+            .replace(/\<p\>/ig, "<P>")
+            .replace(/\/\/.*\n/ig, "");
 
         var messageQueue: ParsedMessage[] = [];
         if (messageMain !== "") {
@@ -3390,7 +3402,7 @@ export class WWA {
                 var linesWithoutMacro: MessageSegments[] = [];
                 var macroQueue: Macro[] = [];
                 for (var i = 0; i < lines.length; i++) {
-                    var matchInfo = lines[i].match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)\=(?:.*))/);
+                    var matchInfo = lines[i].match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)(?:.*))/);
                     if (matchInfo !== null && matchInfo.length >= 2) {
                         var macro = parseMacro(this, partsID, partsType, partsPosition, matchInfo[1]);
                         // マクロのエンキュー (最も左のものを対象とする。)
@@ -5340,6 +5352,77 @@ font-weight: bold;
     // 速度変更禁止
     public speedChangeJudge(speedChangeFlag: boolean): void {
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
+    }
+    // if文内を実行する
+    public switchConditionalExecutionStatus(descriminant: string = ""): void {
+        // 前のif文が実行状態だった場合には以降のelse文は実行しない
+        if (this._conditionalMacroExecStatus === 'can-execute') {
+            this._conditionalMacroExecStatus = 'executed';
+            return;
+        }
+        // 非実行状態の場合にはif実行状態にする
+        if (this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'cannot-execute') {
+            // 条件式を解釈してtrueの場合にはexecにする
+            const canExecute = descriminant === '' || ExpressionParser.evaluateIfMacroExpression(descriminant, this._generateTokenValues());
+            this._conditionalMacroExecStatus = canExecute ? 'can-execute' : 'cannot-execute';
+            return;
+        }
+    }
+
+    public execSetMacro(macroStr: string = ""): void {
+        const { assignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
+            macroStr, this._generateTokenValues()
+        );
+        switch(assignee) {
+            case "energy":
+                this._player.setEnergy(this.toValidStatusValue(rawValue));
+                if (
+                    this._player.isDead() &&
+                    this.shouldApplyGameOver({ isCalledByMacro: true })
+                ) {
+                    this.gameover();
+                }
+                break;
+            case "energyMax":
+                this._player.setEnergyMax(this.toValidStatusValue(rawValue));
+                break;
+            case "strength":
+                this._player.setStrength(this.toValidStatusValue(rawValue));
+                break;
+            case "defence":
+                this._player.setDefence(this.toValidStatusValue(rawValue));
+                break;
+            case "gold":
+                this._player.setGold(this.toValidStatusValue(rawValue));
+                break;
+            default:
+                if (isNaN(assignee) || !this.isValidUserVarIndex(assignee)) {
+                    throw new Error("ユーザ変数の添字が範囲外です。");
+                }
+                this.setUserVar(assignee, this.toAssignableValue(rawValue));
+                break;
+        }
+        this._player.updateStatusValueBox();
+    }
+
+    private _generateTokenValues(): ExpressionParser.TokenValues {
+        // TODO: これ呼ぶ以外の方法ないのかな
+        this.setNowPlayTime();
+        return {
+            totalStatus: this._player.getStatus(),
+            bareStatus: this._player.getStatusWithoutEquipments(),
+            itemStatus: this._player.getStatusOfEquipments(),
+            energyMax: this._player.getEnergyMax(),
+            moveCount: this._player.getMoveCount(),
+            playTime: this._wwaData.playTime,
+            userVars: this._wwaData.userVar,
+            playerCoord: this._player.getPosition().getPartsCoord(),
+        }
+    }
+
+    // end-ifが呼ばれたときにはif文実行状態を終了させる
+    public resetConditionalMacroExecStaus(): void {
+        this._conditionalMacroExecStatus = 'outside-ifelse';
     }
     // ユーザ変数 IFElse
     public userVarUserIf(_triggerPartsPosition: Coord, args: string[]): void {
