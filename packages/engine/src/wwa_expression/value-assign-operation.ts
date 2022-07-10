@@ -7,7 +7,7 @@ export interface ValueAssignOperation {
    * ユーザ変数の添字は、最低限 NaN でないことしかバリデーションされていないので、
    * 代入先としてふさわしいかどうか受け取り側でバリデーションする必要があります。
    */
-  asignee: "energy" | "energyMax" | "strength" | "defence" | "gold" | number;
+  assignee: "energy" | "energyMax" | "strength" | "defence" | "gold" | number;
 
   /**
    * 代入する値
@@ -26,23 +26,35 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
       if (varNumber === null || isNaN(varNumber)) {
         throw new Error("ユーザ変数の添字のパースに失敗しました");
       }
-      return { asignee: varNumber, rawValue: calcResult };
+      return { assignee: varNumber, rawValue: calcResult };
     case 'NUMBER':
       throw new Error('左辺値に定数は入れられません');
     case 'HP':
-      return { asignee: "energy", rawValue: calcResult };
+      return { assignee: "energy", rawValue: calcResult };
     case 'HPMAX':
-      return { asignee: "energyMax", rawValue: calcResult };
+      return { assignee: "energyMax", rawValue: calcResult };
     case 'AT':
-      return { asignee: "strength", rawValue: calcResult };
+      return { assignee: "strength", rawValue: calcResult };
+    case 'AT_TOTAL':
+      throw new Error('左辺値に合計攻撃力は入れられません');
+    case 'AT_ITEMS':
+      throw new Error('左辺値にアイテム攻撃力は入れられません');
     case 'DF':
-      return { asignee: "defence", rawValue: calcResult };
+      return { assignee: "defence", rawValue: calcResult };
+    case 'DF_TOTAL':
+      throw new Error('左辺値に合計防御力は入れられません');
+    case 'DF_ITEMS':
+      throw new Error('左辺値にアイテム防御力は入れられません');
     case 'GD':
-      return { asignee: "gold", rawValue: calcResult };
+      return { assignee: "gold", rawValue: calcResult };
     case 'STEP':
       throw new Error('左辺値に歩数は入れられません');
     case 'TIME':
       throw new Error('左辺値にプレイ時間は入れられません');
+    case 'PX':
+      throw new Error('左辺値にプレイヤーX座標は入れられません');
+    case 'PY':
+      throw new Error('左辺値にプレイヤーY座標は入れられません');
     case 'RAND':
       throw new Error('左辺値に乱数は入れられません');
   }

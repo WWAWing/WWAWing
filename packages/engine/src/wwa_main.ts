@@ -49,7 +49,7 @@ import { Sound } from "./wwa_sound";
 import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawing/loader";
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
-import * as SymbolParser from "./wwa_symbol_parser";
+import * as ExpressionParser from "./wwa_expression";
 
 let wwa: WWA
 
@@ -5458,17 +5458,17 @@ font-weight: bold;
         // 非実行状態の場合にはif実行状態にする
         if (this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'cannot-execute') {
             // 条件式を解釈してtrueの場合にはexecにする
-            const canExecute = descriminant === '' || SymbolParser.checkCondition(descriminant, this._generateTokenValues());
+            const canExecute = descriminant === '' || ExpressionParser.evaluateIfMacroExpression(descriminant, this._generateTokenValues());
             this._conditionalMacroExecStatus = canExecute ? 'can-execute' : 'cannot-execute';
             return;
         }
     }
 
     public execSetMacro(macroStr: string = ""): void {
-        const { asignee, rawValue } = SymbolParser.parseSetMacroExpression(
+        const { assignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
             macroStr, this._generateTokenValues()
         );
-        switch(asignee) {
+        switch(assignee) {
             case "energy":
                 this._player.setEnergy(this.toValidStatusValue(rawValue));
                 if (
@@ -5491,24 +5491,27 @@ font-weight: bold;
                 this._player.setGold(this.toValidStatusValue(rawValue));
                 break;
             default:
-                if (isNaN(asignee) || !this.isValidUserVarIndex(asignee)) {
+                if (isNaN(assignee) || !this.isValidUserVarIndex(assignee)) {
                     throw new Error("ユーザ変数の添字が範囲外です。");
                 }
-                this.setUserVar(asignee, this.toAssignableValue(rawValue));
+                this.setUserVar(assignee, this.toAssignableValue(rawValue));
                 break;
         }
         this._player.updateStatusValueBox();
     }
 
-    private _generateTokenValues(): SymbolParser.TokenValues {
+    private _generateTokenValues(): ExpressionParser.TokenValues {
         // TODO: これ呼ぶ以外の方法ないのかな
         this.setNowPlayTime();
         return {
-            status: this._player.getStatus(),
+            totalStatus: this._player.getStatus(),
+            bareStatus: this._player.getStatusWithoutEquipments(),
+            itemStatus: this._player.getStatusOfEquipments(),
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
             playTime: this._wwaData.playTime,
-            userVars: this._wwaData.userVar
+            userVars: this._wwaData.userVar,
+            playerCoord: this._player.getPosition().getPartsCoord(),
         }
     }
 
