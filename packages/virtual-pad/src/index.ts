@@ -1,5 +1,5 @@
 import VirtualPadStore, { VirtualPadState, VirtualPadButtonCode, VirtualPadButtons } from './VirtualPad';
-import autoRotate, { initializeRotate } from './autoRotate';
+import viewportFit, { initializeViewport } from './viewportFit';
 import makeInject from './makeInject';
 
 export {
@@ -7,7 +7,7 @@ export {
   VirtualPadState,
   VirtualPadButtonCode,
   VirtualPadButtons,
-  autoRotate,
-  initializeRotate,
+  viewportFit,
+  initializeViewport,
   makeInject
 }

@@ -26,8 +26,8 @@ import {
     VirtualPadButtonCode,
     VirtualPadStore,
     VirtualPadButtons,
-    autoRotate,
-    initializeRotate
+    viewportFit,
+    initializeViewport
 } from "@wwawing/virtual-pad";
 
 import * as util from "./wwa_util";
@@ -5937,8 +5937,8 @@ function start() {
         }
     });
     var titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
-    const virtualPadAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad");
-    const virtualPadEnable = virtualPadAttribute === "fixed" || virtualPadAttribute === "auto-rotate";
+    const virtualPadAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-enable");
+    const virtualPadEnable = virtualPadAttribute !== null && virtualPadAttribute.match(/^true$/i) !== null;
     inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName, virtualPadEnable);
 
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
@@ -5972,9 +5972,10 @@ function start() {
         useGoToWWA = true;
     }
 
-    if (checkTouchDevice() && (virtualPadAttribute !== null && virtualPadAttribute === "auto-rotate")) {
-        initializeRotate();
-        window.addEventListener("resize", autoRotate);
+    const viewportFitAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-viewport-fit-enable");
+    if (checkTouchDevice() && viewportFitAttribute !== null && viewportFitAttribute.match(/^true$/i)) {
+        initializeViewport();
+        window.addEventListener("resize", viewportFit);
     }
     const virtualPadContollerQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-controller-elm");
     const virtualPadControllerElm: HTMLElement | null = virtualPadEnable && virtualPadContollerQuery ? util.$qsh(virtualPadContollerQuery) : null;

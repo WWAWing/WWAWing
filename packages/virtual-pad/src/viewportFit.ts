@@ -1,20 +1,20 @@
 /**
- * 自動回転制御の初期化を行うメソッドです。
+ * ビューポート制御の初期化を行うメソッドです。
  */
-export function initializeRotate() {
+export function initializeViewport() {
     const headElement = document.getElementsByTagName('head')[0];
     let viewportElement = document.createElement('meta');
 
     viewportElement.setAttribute('name', 'viewport');
     headElement.appendChild(viewportElement);
-    autoRotate();
+    viewportFit();
 }
 
 /**
- * 回転の自動制御メソッドです。 "resize" イベントと併せてご利用ください。
- * @example window.addEventListener("resize", autoRotate);
+ * 画面の向きやサイズに合わせて自動的に画面のビューポートを調整する機能のメソッドです。 "resize" イベントと併せてご利用ください。
+ * @example window.addEventListener("resize", viewportFit);
  */
-export default function autoRotate() {
+export default function viewportFit() {
     const WWA_WIDTH = 560;
     const WWA_HEIGHT = 440;
     // ブラウザーCSSをここから取得することはできないようなのでここで仮の値を設定しておく
@@ -24,7 +24,7 @@ export default function autoRotate() {
     const browserWidth = window.innerWidth;
     const browserHeight = window.innerHeight;
     /**
-     * autoRotate を有効化すると、誤動作を防ぐため、拡大操作が無効になります。
+     * viewportFit を有効化すると、誤動作を防ぐため、拡大操作が無効になります。
      *     Webページの中に設置する場合は、特にご注意ください。
      */
     let viewportValue = "user-scalable=no";

@@ -13,7 +13,7 @@ export interface GameOption {
     },
     virtualPad?: {
         enable: boolean,
-        autoRotateEnable?: boolean,
+        viewportFitEnable?: boolean,
         controllerId?: string;
     },
 }
