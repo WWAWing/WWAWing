@@ -6,7 +6,7 @@ import { render, InputConfig } from "@wwawing/page-generator";
 const wwawingDistDirName = "wwawing-dist";
 const wwawingUpdateDirName = "wwawing-update";
 
-const srcBasePath = path.join(".", "node_modules", "@wwawing");
+const srcBasePath = path.join("..", "..", "node_modules", "@wwawing");
 const destBasePath = path.join(".", "dist", wwawingDistDirName);
 const destUpdateBasePath = path.join(".", "dist", wwawingUpdateDirName);
 
@@ -34,13 +34,14 @@ export default async function makeDistribution(
             copy("assets", path.join("html", "manual.html")),
             copy("engine", path.join("lib", "wwa.js")),
             copy("assets", path.join("style", "*.css")),
-            copy("styles", path.join("output","*.css"))
+            copy("styles", path.join("output", "*.css"))
         ];
     } else {
         tasks = [
             ...createHTMLFilePromises(["caves01", "caves02", "island02", "wwamap"]),
             copy("engine", path.join("LICENSE")),
             copy("assets", path.join("html", "manual.html")),
+            copy("assets", path.join("text", "*.txt")),
             copy("engine", path.join("lib", "wwa.js"), "mapdata"),
             copy("assets", path.join("style", "*.css"), "mapdata"),
             copy("assets", path.join("wwamk310", "WinWwamk.exe")),
@@ -50,11 +51,12 @@ export default async function makeDistribution(
             copy("assets", path.join("images", "*.gif"), "mapdata"),
             copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
             copy("debug-server", path.join("bin", "wwa-server.exe"), "mapdata"),
-            copy("styles", path.join("output","*.css"), "mapdata")
+            copy("styles", path.join("output", "*.css"), "mapdata"),
+            copy("assets", path.join("vars", "*.json"), "mapdata"),
         ];
     }
     await Promise.all(tasks);
-    if(isConvertLfToCrlf) {
+    if (isConvertLfToCrlf) {
         await convertLfToCrlfAll(isUpdate ? destUpdateBasePath : destBasePath)
     }
     console.log((isUpdate ? "update" : "full") + " version done.");
@@ -109,7 +111,7 @@ export default async function makeDistribution(
         ).then(contents =>
             contents.map(
                 prop =>
-                    new Promise((resolve, reject) =>
+                    new Promise<void>((resolve, reject) =>
                         fs.writeFile(prop.target, prop.content, err => {
                             if (err) {
                                 console.error(err);
@@ -128,15 +130,16 @@ export default async function makeDistribution(
         return mapNames
             .map(mapName => ({
                 mapName,
-                html: render(createConfig(`${mapName}.dat`))
+                html: render(createConfig(mapName))
             }))
             .map(params => createWriteFilePromise(
                 path.join(__dirname, "..", "dist", "wwawing-dist", "mapdata", `${params.mapName}.html`),
                 params.html
             ));
     }
-    
-    function createConfig(mapData: string): InputConfig {
+
+    function createConfig(mapDataName: string): InputConfig {
+        const canIncludeUserVarOptions = (mapDataName === "wwamap");
         return {
             page: {
                 additionalCssFiles: ["style.css"]
@@ -145,12 +148,21 @@ export default async function makeDistribution(
                 gameOption: {
                     autoSave: {
                         intervalSteps: 200,
-                    }
+                    },
+                    ... (canIncludeUserVarOptions ? {
+                        userVars: {
+                            dumpElementId: "vardump",
+                            canDisplay: true
+                        }
+                    } : {})
                 },
                 resources: {
-                    mapData,
+                    mapData: `${mapDataName}.dat`,
                     wwaJs: "wwa.js",
                     titleImage: "cover.gif",
+                    ...(canIncludeUserVarOptions ? {
+                        userVarNamesFile: `${mapDataName}-vars.json`
+                    } : {})
                 },
             },
             copyrights: "official-and-wing"

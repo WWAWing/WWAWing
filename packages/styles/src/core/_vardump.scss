@@ -1,0 +1,48 @@
+.wwa-vardump-wrapper {
+  margin: 0 auto;
+}
+
+.wwa-vardump-wrapper>table {
+  margin: 0 auto;
+  text-align: center;
+  width: 560px;
+}
+
+.wwa-vardump-wrapper>table th.varlist-header {
+  background-color: orange;
+}
+
+.wwa-vardump-wrapper>table tr.var-number>th {
+  background-color: #FFFF66;
+  position: relative;
+  &[data-labelled-var-index="true"] {
+    font-weight: bold;
+    text-decoration: underline;
+    background-color: #66FFFF;
+    cursor: pointer;
+  }
+  & > div {
+    cursor: auto;
+    position: absolute;
+    top: 15px;
+    left: 45px;
+    display: block;
+    width: max-content;
+    background-color: #000000;
+    color: #FFFFFF;
+    z-index: 100;
+    padding: 5px;
+    &[aria-hidden="true"] {
+      display: none;
+    }
+  }
+}
+
+.wwa-vardump-wrapper>table tr.var-val>td,
+.wwa-vardump-wrapper>table>td.varlist-information {
+  background-color: #FFFFCC;
+}
+
+.wwa-vardump-wrapper>table th, .wwa-vardump-wrapper>table td {
+  width: 3em;
+}

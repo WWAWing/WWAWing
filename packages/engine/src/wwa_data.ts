@@ -2,6 +2,8 @@ import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import { KeyCode } from "./wwa_input";
 import { WWAData } from "@wwawing/common-interface";
+import type { JsonResponseErrorKind } from "./json_api_client";
+
 export { WWAData };
 
 export class EquipmentStatus {
@@ -411,23 +413,9 @@ export class UserDevice {
         }
         return OS_TYPE.OTHERS;
     }
-    /**
-     * ユーザエージェントの文字列を受け取り、該当するユーザエージェントに相当する列挙を返す。
-     * @see BROWSER_TYPE
-     * FYI: EdgeのUAには「Chrome」「Safari」の文字列が含まれており、Chrome判定の前にEdge判定を実行する必要がある。
-     * @see https://github.com/WWAWing/WWAWing/pull/123#issuecomment-493747626
-     * @see https://qiita.com/tonkotsuboy_com/items/7b36bdfc3a9a0970d23b
-     * また、ChromiumバージョンのEdgeはChromeとして扱うが、ChromiumバージョンのUA(2019-05-19現在)には「Edge」は含まれていないので、
-     * ここでは特殊な処理は行わない。（代わりに「Edg」の文字列がある）
-     * @see https://www.ka-net.org/blog/?p=11457
-     */
-    private getBrowser(ua: string): number{
-        if (ua.match(/(?:msie|trident)/i)) {
-            return BROWSER_TYPE.INTERNET_EXPLORER;
-        }
-        if (ua.match(/edge/i)) {
-            return BROWSER_TYPE.EDGE;
-        }
+
+   private getBrowser(ua: string): number{
+        // 現行 Edge は Chromium なので、 Chrome 扱いする。
         if (ua.match(/chrome/i)) {
             return BROWSER_TYPE.CHROME;
         }
@@ -484,8 +472,6 @@ export enum BROWSER_TYPE {
     CHROME = 1,
     FIREFOX = 2,
     SAFARI = 3,
-    EDGE = 4,
-    INTERNET_EXPLORER = 5,
     OTHERS = 9999
 }
 
@@ -576,6 +562,41 @@ export enum MacroType {
     COLOR = 21,
     WAIT = 22,
     SOUND = 23,
+    JUMPGATE = 24,
+    RECPOSITION = 25,
+    JUMPRECPOSITION = 26,
+    CONSOLE_LOG = 27,
+    COPY_HP_TO = 28,
+    SET_HP = 29,
+    COPY_HPMAX_TO = 30,
+    SET_HPMAX = 31,
+    COPY_AT_TO = 32,
+    SET_AT = 33,
+    COPY_DF_TO = 34,
+    SET_DF = 35,
+    COPY_MONEY_TO = 36,
+    SET_MOENEY = 37,
+    COPY_STEP_COUNT_TO = 38,
+    VAR_SET_VAL = 39,
+    VAR_SET = 40,
+    VAR_ADD = 41,
+    VAR_SUB = 42,
+    VAR_MUL = 43,
+    VAR_DIV = 44,
+    VAR_SET_RAND = 45,
+    SHOW_STR = 46,
+    GAME_SPEED = 47,
+    IF = 50,
+    SET_SPEED = 51,
+    COPY_TIME_TO = 52,
+    HIDE_STATUS = 53,
+    VAR_MAP = 54,
+    VAR_MOD = 55,
+    NO_GAMEOVER = 56,
+    ELSE_IF = 57,
+    ELSE = 58,
+    END_IF = 59,
+    SET = 60,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101
 }
@@ -605,6 +626,41 @@ export var macrotable = {
     "$color": 21,
     "$wait": 22,
     "$sound": 23,
+    "$jumpgate": 24,
+    "$rec_pos": 25,
+    "$jump_rec_pos": 26,
+    "$console_log": 27,
+    "$copy_hp_to": 28,
+    "$set_hp": 29,
+    "$copy_hpmax_to": 30,
+    "$set_hpmax": 31,
+    "$copy_at_to": 32,
+    "$set_at": 33,
+    "$copy_df_to": 34,
+    "$set_df": 35,
+    "$copy_money_to": 36,
+    "$set_money": 37,
+    "$copy_step_count_to": 38,
+    "$var_set_val": 39,
+    "$var_set": 40,
+    "$var_add": 41,
+    "$var_sub": 42,
+    "$var_mul": 43,
+    "$var_div": 44,
+    "$var_set_rand": 45,
+    "$show_str": 46,
+    "$game_speed": 47,
+    "$if": 50,
+    "$set_speed": 51,
+    "$copy_time_to": 52,
+    "$hide_status": 53,
+    "$var_map": 54,
+    "$var_mod": 55,
+    "$no_gameover": 56,
+    "$else_if": 57,
+    "$else": 58,
+    "$endif": 59,
+    "$set": 60,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
@@ -634,10 +690,11 @@ export enum SystemSound {
     NO_SOUND = 99
 }
 
-export var speedList = [2, 5, 8, 10];
-export var speedNameList = ["低速", "準低速", "中速", "高速"];
+export const speedList = [1, 2, 5, 8, 10, 20];
+export const speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
+export const StatusKind = ["energy", "strength", "defence", "gold"] as const;
+export type StatusKind = typeof StatusKind[number];
 export class WWAConsts {
-
     static WWA_HOME: string = "http://wwajp.com";
 
     static ITEMBOX_SIZE: number = 12;
@@ -734,9 +791,9 @@ export class WWAConsts {
     static H_PARTS_NUM_IN_WINDOW: number = WWAConsts.MAP_WINDOW_WIDTH / WWAConsts.CHIP_SIZE;
     static V_PARTS_NUM_IN_WINDOW: number = WWAConsts.MAP_WINDOW_HEIGHT / WWAConsts.CHIP_SIZE;
 
-    static DEFAULT_SPEED_INDEX = 2;
     static MIN_SPEED_INDEX = 0;
     static MAX_SPEED_INDEX = speedList.length - 1;
+    static QUICK_BATTLE_SPEED_INDECIES = [speedList.length - 2, speedList.length - 1];
 
     static ANIMATION_REP_HALF_FRAME: number = 22;
     static PLAYER_LOOKING_AROUND_START_FRAME: number = WWAConsts.ANIMATION_REP_HALF_FRAME * 4;
@@ -812,7 +869,24 @@ export class WWAConsts {
     static ITEM_EFFECT_SPEED_PIXEL_PER_FRAME = 20;
 
     static ITEMBOX_TOP_Y = 140;
+
+    static USER_VAR_NUM = 256;
+    /**
+     * ユーザ変数の最大値. MAX_SAFE_INTEGER (2^53 - 1) 相当だが、IE11を考慮して数値を直接コーディングしている。
+     * @see https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+     */
+    static USER_VAR_NUM_MAX_VALUE = 9007199254740991;
+    /**
+     * ユーザ変数の最小値. MIN_SAFE_INTEGER (-(2^53 -1)) 相当だが、IE11を考慮して数値を直接コーディングしている。
+     * @see https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_SAFE_INTEGER
+     */
+    static USET_VAR_NUM_MIN_VALUE = -9007199254740991; 
     static CONTROLL_WAIT_FRAME: number = 6;//メニューでのキー入力待機フレーム数
+
+    /**
+     * ゲーム内ユーザ変数ビューワで1度に表示できる変数の数
+     */
+    static INLINE_USER_VAR_VIEWER_DISPLAY_NUM = 10;
 
 }
 export class WWASaveConsts {
@@ -924,3 +998,22 @@ export enum IDTable {
     BITSHIFT = 16,
     BITMASK = 0xFFFF
 };
+
+/**
+ * ステータスの計算方法の種類
+ * all: 素手 + 装備品
+ * bare: 素手のみ
+ * equipment 装備品のみ
+ */
+export type StatusSolutionKind = "all" | "bare" | "equipment";
+
+export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject" | "noFileSpecified";
+
+/**
+ * if-elseマクロにて該当するマクロ文を実行するかを決める
+ * outside-ifelse: if文の内側ではない
+ * can-execute: 該当ブロックで処理を実行する
+ * cannot-execute: if文の中だが、該当ブロックでは実行しない
+ * execed: if文の中で、既に実行済みのため実行しない
+ */
+export type ConditionalMacroExecStatus = "outside-ifelse" | "can-execute" | "cannot-execute" | "executed";
