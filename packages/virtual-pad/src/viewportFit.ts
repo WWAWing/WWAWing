@@ -35,5 +35,5 @@ export default function viewportFit() {
     } else if (browserWidth <= browserHeight) {
         viewportValue = `width=${WWA_WIDTH + (BROWSER_MARGIN * 2)},${viewportValue}`;
     }
-    viewportElement.setAttribute("content", `${viewportValue}`);
+    viewportElement?.setAttribute("content", `${viewportValue}`);
 }

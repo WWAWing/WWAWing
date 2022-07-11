@@ -1,15 +1,17 @@
-export enum VirtualPadButtonCode {
-    BUTTON_ENTER,
-    BUTTON_ESC,
-    BUTTON_SIDEBAR,
-    BUTTON_ESTIMATE,
-    BUTTON_FAST,
-    BUTTON_SLOW,
-    BUTTON_LEFT,
-    BUTTON_UP,
-    BUTTON_RIGHT,
-    BUTTON_DOWN
-}
+export const VirtualPadButtonCodes = [
+    "BUTTON_ENTER",
+    "BUTTON_ESC",
+    "BUTTON_SIDEBAR",
+    "BUTTON_ESTIMATE",
+    "BUTTON_FAST",
+    "BUTTON_SLOW",
+    "BUTTON_LEFT",
+    "BUTTON_UP",
+    "BUTTON_RIGHT",
+    "BUTTON_DOWN"
+] as const;
+
+export type VirtualPadButtonCode = typeof VirtualPadButtonCodes[number];
 
 /**
  * NONE: ボタンに一切触れていません
@@ -17,25 +19,9 @@ export enum VirtualPadButtonCode {
  * TOUCHING: ボタンに触れています
  * LEAVE: ボタンから離れました
  */
-export enum VirtualPadState {
-    NONE,
-    TOUCH,
-    TOUCHING,
-    LEAVE
-}
+export type VirtualPadState = "NONE" | "TOUCH" | "TOUCHING" | "LEAVE";
 
-export type VirtualPadButtons = {
-    [VirtualPadButtonCode.BUTTON_ENTER]: HTMLButtonElement,
-    [VirtualPadButtonCode.BUTTON_ESC]: HTMLButtonElement,
-    [VirtualPadButtonCode.BUTTON_SIDEBAR]?: HTMLButtonElement,
-    [VirtualPadButtonCode.BUTTON_ESTIMATE]: HTMLButtonElement,
-    [VirtualPadButtonCode.BUTTON_FAST]: HTMLButtonElement,
-    [VirtualPadButtonCode.BUTTON_SLOW]: HTMLButtonElement,
-    [VirtualPadButtonCode.BUTTON_LEFT]: HTMLButtonElement,
-    [VirtualPadButtonCode.BUTTON_UP]: HTMLButtonElement,
-    [VirtualPadButtonCode.BUTTON_RIGHT]: HTMLButtonElement,
-    [VirtualPadButtonCode.BUTTON_DOWN]: HTMLButtonElement
-};
+export type VirtualPadButtons = { [key in string]: HTMLButtonElement };
 
 type VirtualPadButtonTouching = {
     prev: boolean,
@@ -46,10 +32,10 @@ type VirtualPadButtonTouching = {
 type VirtualPadEventFunction = (buttonCode: VirtualPadButtonCode) => void;
 
 const VirtualPadMoveButtonCodes = [
-    VirtualPadButtonCode.BUTTON_LEFT,
-    VirtualPadButtonCode.BUTTON_UP,
-    VirtualPadButtonCode.BUTTON_RIGHT,
-    VirtualPadButtonCode.BUTTON_DOWN
+    "BUTTON_LEFT",
+    "BUTTON_UP",
+    "BUTTON_RIGHT",
+    "BUTTON_DOWN"
 ];
 
 /**
@@ -83,12 +69,12 @@ export default class VirtualPadStore {
      * 移動ボタンの要素自体です。主に移動ボタンで指を動かす際に使用します。
      * @property
      */
-    private _moveButtonsElement: HTMLElement;
+    private _moveButtonsElement: HTMLElement | null;
 
     /**
      * 操作ボタン群の親要素です。 {@code _moveButtonsElement} と併せて表示や非表示の切り替えに使用します。
      */
-    private _buttonWrapperElement: HTMLElement;
+    private _buttonWrapperElement: HTMLElement | null;
 
     /**
      * @param buttons 仮想パッドの各要素
@@ -99,14 +85,14 @@ export default class VirtualPadStore {
      * @param onTouchEnd 仮想パッドを話した場合に発生するコールバック関数
      */
     constructor(
-        buttons: VirtualPadButtons | {},
+        buttons: VirtualPadButtons | null,
         firstVisible: boolean = false,
-        buttonWrapper: HTMLElement = null,
-        moveButtons: HTMLElement = null,
-        onTouchStart: VirtualPadEventFunction = null,
-        onTouchEnd: VirtualPadEventFunction = null,
+        buttonWrapper: HTMLElement | null = null,
+        moveButtons: HTMLElement | null = null,
+        onTouchStart: VirtualPadEventFunction | null = null,
+        onTouchEnd: VirtualPadEventFunction | null = null,
     ) {
-        this._enabled = Object.keys(buttons).length > 0;
+        this._enabled = buttons !== null;
         this._visible = firstVisible;
         this._onTouchStart = onTouchStart || null;
         this._onTouchEnd = onTouchEnd || null;
@@ -117,14 +103,16 @@ export default class VirtualPadStore {
 
         this._setVisible(firstVisible);
 
-        for (let buttonTypeString in buttons) {
-            /**
-             * for in ... で渡される buttonTypeString は必ず文字列型になります。
-             *     このまま buttons の配列のキーに渡すと、正しく要素が受け取れません。
-             *     このため、一度 parseInt で数字に変換した上で渡しています。
-             */
-            let buttonCode = parseInt(buttonTypeString);
-            let button: HTMLButtonElement = buttons[buttonCode];
+        if (buttons === null) {
+            return;
+        }
+        for (const buttonTypeString in buttons) {
+            const button = buttons[buttonTypeString];
+            if (!button) {
+                continue;
+            }
+            // ここまでくれば buttonTypeString は VirtualPadButtonCode になる
+            const buttonCode = buttonTypeString  as VirtualPadButtonCode;
             this._availableButtons.push(buttonCode);
 
             /**
@@ -160,7 +148,7 @@ export default class VirtualPadStore {
                 this.setTouchInfo(buttonCode);
             });
 
-            button.addEventListener("cancel", cancelVirtualPad);
+            // button.addEventListener("cancel", cancelVirtualPad);
             button.addEventListener("touchcancel", cancelVirtualPad);
 
             /**
@@ -188,6 +176,11 @@ export default class VirtualPadStore {
     private _detectMovingMoveButton(event: TouchEvent) {
         event.preventDefault();
         this.allMoveClear();
+
+        const touch = event.targetTouches.item(0);
+        if (!this._moveButtonsElement || touch === null) {
+            return;
+        }
         
         // 中央のポジションを取得
         const moveButtonRect = this._moveButtonsElement.getBoundingClientRect();
@@ -195,7 +188,6 @@ export default class VirtualPadStore {
         const centerPositionX = moveButtonRect.left - bodyRect.left + (moveButtonRect.width / 2);
         const centerPositionY = moveButtonRect.top - bodyRect.top + (moveButtonRect.height / 2);
 
-        const touch = event.targetTouches.item(0);
         const touchX = touch.pageX - centerPositionX;
         const touchY = touch.pageY - centerPositionY;
 
@@ -204,15 +196,15 @@ export default class VirtualPadStore {
              * touchY をマイナスにして、グラフの空間上で擬似的に表現します。
              */
             if (touchX <= -touchY) { // 上
-                this.setTouchInfo(VirtualPadButtonCode.BUTTON_UP);
+                this.setTouchInfo("BUTTON_UP");
             } else { // 右
-                this.setTouchInfo(VirtualPadButtonCode.BUTTON_RIGHT);
+                this.setTouchInfo("BUTTON_RIGHT");
             }
         } else { // 左と下
             if (touchX >= -touchY) { // 下
-                this.setTouchInfo(VirtualPadButtonCode.BUTTON_DOWN);
+                this.setTouchInfo("BUTTON_DOWN");
             } else { // 左
-                this.setTouchInfo(VirtualPadButtonCode.BUTTON_LEFT);
+                this.setTouchInfo("BUTTON_LEFT");
             }
         }
     }
@@ -221,7 +213,7 @@ export default class VirtualPadStore {
         if (this._moveButtonsElement !== null) {
             this._moveButtonsElement.style.display = visible ? "grid" : "none";
         }
-        if (this._moveButtonsElement !== null) {
+        if (this._buttonWrapperElement !== null) {
             this._buttonWrapperElement.style.display = visible ? "grid" : "none";
         }
         this._visible = visible;
@@ -237,7 +229,7 @@ export default class VirtualPadStore {
             return false;
         }
         const state = this.getButtonState(buttonType);
-        return state === VirtualPadState.TOUCH;
+        return state === "TOUCH";
     }
 
     /**
@@ -250,7 +242,7 @@ export default class VirtualPadStore {
             return false;
         }
         const state = this.getButtonState(buttonType);
-        return state === VirtualPadState.TOUCH || state === VirtualPadState.TOUCHING;
+        return state === "TOUCH" || state === "TOUCHING";
     }
 
     /**
@@ -258,20 +250,21 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public getButtonState(buttonType: VirtualPadButtonCode): VirtualPadState {
-        if (!this._enabled) {
-            return VirtualPadState.NONE;
+        const button = this._isTouchingButtons[buttonType];
+        if (!this._enabled || button === undefined) {
+            return "NONE";
         }
 
-        const touched = this._isTouchingButtons[buttonType].prev;
-        const isTouching = this._isTouchingButtons[buttonType].current;
+        const touched = button.prev;
+        const isTouching = button.current;
         if (touched && isTouching) {
-            return VirtualPadState.TOUCHING;
+            return "TOUCHING";
         } else if (isTouching) {
-            return VirtualPadState.TOUCH;
+            return "TOUCH";
         } else if (touched) {
-            return VirtualPadState.LEAVE;
+            return "LEAVE";
         }
-        return VirtualPadState.NONE;
+        return "NONE";
     }
 
     /**
@@ -279,11 +272,11 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public setTouchInfo(buttonType: VirtualPadButtonCode) {
-        if (!this._enabled) {
+        if (!this._enabled || this._isTouchingButtons[buttonType] === undefined) {
             return;
         }
 
-        this._isTouchingButtons[buttonType].next = true;
+        (this._isTouchingButtons[buttonType] as VirtualPadButtonTouching).next = true;
     }
 
     /**
@@ -291,11 +284,11 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public clearTouchInfo(buttonType: VirtualPadButtonCode) {
-        if (!this._enabled) {
+        if (!this._enabled || this._isTouchingButtons[buttonType] === undefined) {
             return;
         }
 
-        this._isTouchingButtons[buttonType].next = false;
+        (this._isTouchingButtons[buttonType] as VirtualPadButtonTouching).next = false;
     }
 
     /**
@@ -303,8 +296,8 @@ export default class VirtualPadStore {
      */
     public allMoveClear(): void {
         VirtualPadMoveButtonCodes.forEach((buttonCode) => {
-            if (this._availableButtons.includes(buttonCode)) {
-                this.clearTouchInfo(buttonCode);
+            if (this._availableButtons.includes(buttonCode as VirtualPadButtonCode)) {
+                this.clearTouchInfo(buttonCode as VirtualPadButtonCode);
             }
         });
     }
@@ -314,7 +307,9 @@ export default class VirtualPadStore {
      */
     public allClear(): void {
         this._availableButtons.forEach((buttonCode) => {
-            this._isTouchingButtons[buttonCode].next = false;
+            if (buttonCode !== undefined && this._isTouchingButtons[buttonCode] !== undefined) {
+                (this._isTouchingButtons[buttonCode] as VirtualPadButtonTouching).next = false;
+            }
         });
     }
 
@@ -331,19 +326,25 @@ export default class VirtualPadStore {
      */
     public update() {
         this._availableButtons.forEach((buttonCode) => {
-            let currentButtonTouching = this._isTouchingButtons[buttonCode];
-            this._isTouchingButtons[buttonCode].prev = currentButtonTouching.current;
-            this._isTouchingButtons[buttonCode].current = currentButtonTouching.next;
+            if (buttonCode === undefined) {
+                return;
+            }
+            const currentButtonTouching = this._isTouchingButtons[buttonCode];
+            if (currentButtonTouching === undefined) {
+                return;
+            }
+            (this._isTouchingButtons[buttonCode] as VirtualPadButtonTouching).prev = currentButtonTouching.current;
+            (this._isTouchingButtons[buttonCode] as VirtualPadButtonTouching).current = currentButtonTouching.next;
 
             /**
              * ボタンの状態に応じて、コールバック関数を実行
              */
             switch (this.getButtonState(buttonCode)) {
-                case VirtualPadState.TOUCH:
-                    this._onTouchStart(buttonCode);
+                case "TOUCH":
+                    this._onTouchStart?.(buttonCode);
                     break;
-                case VirtualPadState.LEAVE:
-                    this._onTouchEnd(buttonCode);
+                case "LEAVE":
+                    this._onTouchEnd?.(buttonCode);
                     break;
             }
         });
