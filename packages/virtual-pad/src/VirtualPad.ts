@@ -2,7 +2,6 @@ export const VirtualPadButtonCodes = [
     "BUTTON_ENTER",
     "BUTTON_ESC",
     "BUTTON_SIDEBAR",
-    "BUTTON_ESTIMATE",
     "BUTTON_FAST",
     "BUTTON_SLOW",
     "BUTTON_LEFT",

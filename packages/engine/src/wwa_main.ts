@@ -479,7 +479,6 @@ export class WWA {
                 this._virtualPadButtonElements = {
                     ["BUTTON_ENTER"]: <HTMLButtonElement>util.$id("wwa-enter-button"),
                     ["BUTTON_ESC"]: <HTMLButtonElement>util.$id("wwa-esc-button"),
-                    ["BUTTON_ESTIMATE"]: <HTMLButtonElement>util.$id("wwa-estimate-button"),
                     ["BUTTON_FAST"]: <HTMLButtonElement>util.$id("wwa-fast-button"),
                     ["BUTTON_SLOW"]: <HTMLButtonElement>util.$id("wwa-slow-button"),
                     ["BUTTON_LEFT"]: <HTMLButtonElement>util.$id("wwa-left-button"),
@@ -1923,7 +1922,7 @@ export class WWA {
                     this._keyStore.getKeyState(KeyCode.KEY_F1) === KeyState.KEYDOWN ||
                     this._keyStore.getKeyState(KeyCode.KEY_M) === KeyState.KEYDOWN ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A) ||
-                    this._virtualPadStore.checkTouchButton("BUTTON_ESTIMATE")) {
+                    this._virtualPadStore.checkTouchButton("BUTTON_ENTER")) {
                     // 戦闘結果予測 
                     if (this.launchBattleEstimateWindow()) {
                     }
@@ -1949,7 +1948,8 @@ export class WWA {
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
                     this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
-                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X)) {
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X) ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_ESC")) {
                     if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onitemmenucalled();
                     }
