@@ -101,6 +101,14 @@ export default class VirtualPadStore {
         this._buttonWrapperElement = buttonWrapper;
 
         this._setVisible(firstVisible);
+        // PC でアクセスする場合、 VirtualPadStore が生成されるまでの間一瞬表示されてしまう
+        // そうならないようにするために、 CSS 側で visibility: hidden を付与し、インラインスタイルシートで解除している
+        if (this._moveButtonsElement) {
+            this._moveButtonsElement.style.visibility = "visible";
+        }
+        if (this._buttonWrapperElement) {
+            this._buttonWrapperElement.style.visibility = "visible";
+        }
 
         if (buttons === null) {
             return;

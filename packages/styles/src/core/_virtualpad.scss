@@ -66,6 +66,8 @@ $virtual-buttons-font-size-small: 25px;
 
 #wwa-virtualpad-left,
 #wwa-virtualpad-right {
+    // 後で JavaScript 側で表示を制御する
+    visibility: hidden;
     @media (orientation: portrait) {
         bottom: $virtualpad-margin-y-portrait;
     }
