@@ -16,6 +16,18 @@ $virtual-buttons-font-size: 35px;
 $virtual-buttons-font-size-small: 25px;
 
 
+@mixin orientation-size($portrait-value, $landscape-value) {
+    @media (orientation: portrait) {
+        width: $portrait-value;
+        height: $portrait-value;
+    }
+    @media (orientation: landscape) {
+        width: $landscape-value;
+        height: $landscape-value;
+    }
+}
+
+
 %virtualpad_button {
     background-color: #c0c0c0;
     border: 0;
@@ -31,27 +43,13 @@ $virtual-buttons-font-size-small: 25px;
 
 %virtualpad_button-large {
     font-size: $virtual-buttons-font-size;
-    @media (orientation: portrait) {
-        height: $virtual-buttons-size-portrait;
-        width: $virtual-buttons-size-portrait;
-    }
-    @media (orientation: landscape) {
-        height: $virtual-buttons-size-landscape;
-        width: $virtual-buttons-size-landscape;
-    }
+    @include orientation-size($virtual-buttons-size-portrait, $virtual-buttons-size-landscape);
     border-radius: 50%;
 }
 
 %virtualpad_button-move {
     font-size: $virtual-buttons-font-size;
-    @media (orientation: portrait) {
-        height: $virtual-buttons-move-size-portrait;
-        width: $virtual-buttons-move-size-portrait;
-    }
-    @media (orientation: landscape) {
-        height: $virtual-buttons-move-size-landscape;
-        width: $virtual-buttons-move-size-landscape;
-    }
+    @include orientation-size($virtual-buttons-move-size-portrait, $virtual-buttons-move-size-landscape);
 }
 
 %virtualpad_button-small {
@@ -84,14 +82,7 @@ $virtual-buttons-font-size-small: 25px;
     display: grid;
     grid-template-columns: 1fr $hole-size-half $hole-size-half 1fr;
     grid-template-rows:    1fr $hole-size-half $hole-size-half 1fr;
-    @media (orientation: portrait) {
-        width: $virtual-buttons-move-size-portrait * 2;
-        width: $virtual-buttons-move-size-portrait * 2;
-    }
-    @media (orientation: landscape) {
-        height: $virtual-buttons-move-size-landscape * 2;
-        height: $virtual-buttons-move-size-landscape * 2;
-    }
+    @include orientation-size($virtual-buttons-move-size-portrait * 2, $virtual-buttons-move-size-landscape * 2);
     transform: rotate(45deg);
     gap: 4px;
     margin-left: $virtualpad-margin-x;
