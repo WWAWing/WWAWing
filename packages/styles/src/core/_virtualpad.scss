@@ -1,6 +1,7 @@
 $virtualpad-margin-x: 6vmin;
 $virtualpad-margin-y-portrait: 30vh;
-$virtualpad-margin-y-landscape: 10vh;
+// アドレスバーの高さ分下にずれるので、高めにしておく
+$virtualpad-margin-y-landscape: 20vh;
 $virtualpad-spacing: 1vmin;
 $virtualpad-hole-size: 15vmin;
 $virtual-buttons-size-portrait: 21vmin;
