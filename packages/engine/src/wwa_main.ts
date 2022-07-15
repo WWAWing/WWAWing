@@ -27,7 +27,7 @@ import { Parts, Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments
+    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -78,7 +78,7 @@ export class WWA {
     public _messageWindow: MessageWindow; // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
     private _monsterWindow: MonsterWindow;
     private _scoreWindow: ScoreWindow;
-    private _messageQueue: ParsedMessage[];
+    private _messageQueue: Node | undefined;
     private _yesNoJudge: YesNoState;
     private _yesNoJudgeInNextFrame: YesNoState;
     private _yesNoChoicePartsCoord: Coord;
@@ -462,7 +462,7 @@ export class WWA {
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
             this._gamePadStore = new GamePadStore();
-            this._messageQueue = [];
+            this._messageQueue = undefined;
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
@@ -3062,8 +3062,8 @@ export class WWA {
     private _execObjectScoreEvent(pos: Coord, partsID: number, mapAttr: number): void {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
-        const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
-        const existsMessage = messageQueue.reduce((existsMessageBefore, messageInfo) => existsMessageBefore || !messageInfo.isEmpty(), false);
+        const firstMessage = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
+        const existsMessage = isEmptyMessageTree(firstMessage) ;
         if (existsMessage) {
             this._scoreRates = {
                 energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
@@ -3337,17 +3337,19 @@ export class WWA {
         partsPosition: Coord = new Coord(0, 0),
         messageDisplayed: boolean = false
     ): boolean {
-        this._messageQueue = this._messageQueue.concat(this.getMessageQueueByRawMessage(message, partsID, partsType, partsPosition));
+        concatMessage(this._messageQueue, this.getMessageQueueByRawMessage(message, partsID, partsType, partsPosition))
 
         if (this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
 
-        if (this._messageQueue.length !== 0) {
-            var topmes = this._messageQueue.shift();
-            for (var i = 0; i < topmes.macro.length; i++) {
-                this._execMacroListInNextFrame.push(topmes.macro[i]);
+        if (this._messageQueue) {
+            const topmes = this._messageQueue.next;
+            if (topmes instanceof ParsedMessage) {
+                for (var i = 0; i < topmes.macro.length; i++) {
+                    this._execMacroListInNextFrame.push(topmes.macro[i]);
+                }
             }
 
             this._lastMessage = topmes;
@@ -3366,7 +3368,7 @@ export class WWA {
                 this._player.setMessageWaiting();
                 return true;
             } else {
-                if (this._messageQueue.length === 0) {
+                if (!this._messageQueue) {
                     this._hideMessageWindow(messageDisplayed);
                 } else {
                     this._setNextMessage();
@@ -3382,7 +3384,7 @@ export class WWA {
         partsID: number,
         partsType: PartsType,
         partsPosition: Coord,
-        isSystemMessage: boolean = false): ParsedMessage[] {
+        isSystemMessage: boolean = false): ParsedMessage {
 
         // コメント削除
         var messageMain = message
@@ -3394,7 +3396,8 @@ export class WWA {
             .replace(/\<p\>/ig, "<P>")
             .replace(/\/\/.*\n/ig, "");
 
-        var messageQueue: ParsedMessage[] = [];
+        let firstMessage: ParsedMessage | undefined = undefined;
+        const lastMessage: ParsedMessage | undefined = undefined;
         if (messageMain !== "") {
             var rawQueue = messageMain.split(/\<p\>/ig);
             for (var j = 0; j < rawQueue.length; j++) {
@@ -3428,10 +3431,15 @@ export class WWA {
                     return [...acc, ...newLine, ...line];
                 }, []);
 
-                messageQueue.push(new ParsedMessage(messageArray, isSystemMessage, j === rawQueue.length - 1, macroQueue));
+                const message = new ParsedMessage(messageArray, isSystemMessage, j === rawQueue.length - 1, macroQueue);
+                if (lastMessage) {
+                    lastMessage.next = message;
+                } else {
+                    firstMessage = message;
+                }
             }
         }
-        return messageQueue;
+        return firstMessage;
     }
 
     public appearParts(pos: Coord, triggerType: AppearanceTriggerType, triggerPartsID: number = 0): void {
@@ -3654,7 +3662,7 @@ export class WWA {
         var jx = this._wwaData.gameoverX;
         var jy = this._wwaData.gameoverY;
         this._yesNoJudge = YesNoState.UNSELECTED;
-        this._messageQueue = []; // force clear!!
+        this._messageQueue = undefined; // force clear!!
         this._player.setDelayFrame();
         this._messageWindow.hide();
         this._yesNoChoicePartsCoord = void 0;
@@ -4649,16 +4657,23 @@ export class WWA {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
-        if (this._messageQueue.length === 0) {
+        if (!this._messageQueue) {
             this._hideMessageWindow();
         } else {
-            var message = this._messageQueue.shift();
-            var macro = message.macro;
-            this._lastMessage = message;
-
+            const message = this._messageQueue;
+            if( message instanceof Junction ) {
+                // TODO: 判別式を評価して、次のメッセージをセットする
+                return;
+            }
+            if (!(message instanceof ParsedMessage)) {
+                return;
+            }
+            this._messageQueue = message.next;
+            const macro = message.macro;
             for (var i = 0; i < macro.length; i++) {
                 this._execMacroListInNextFrame.push(macro[i]);
             }
+            this._lastMessage = message;
 
             // empty->hide
             if (!message.isEmpty()) {
@@ -4675,7 +4690,7 @@ export class WWA {
                 this._messageWindow.show();
                 this._player.setMessageWaiting();
             } else {
-                if (this._messageQueue.length === 0) {
+                if (!this._messageQueue) {
                     this._hideMessageWindow();
                 } else {
                     this._setNextMessage();

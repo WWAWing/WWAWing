@@ -15,9 +15,6 @@ import {
     StatusSolutionKind
 } from "./wwa_data";
 import {
-    Positioning as MPositioning
-} from "./wwa_message";
-import {
     Monster
 } from "./wwa_monster";
 import {
@@ -37,18 +34,49 @@ export type LazyEvaluateValue = () => number;
  * 例: ["変数 10 番の値は", () => userVar[10], "です。\n文字列中に改行も入りえます。"]
  */
 export type MessageSegments = (string | LazyEvaluateValue)[];
+
+
+export interface Descriminant {
+    // TODO: 数値だけでなく変数やステータスも扱える必要があるが、一旦簡単のため数値のみとしている。
+    left: number; 
+    // TODO: 数値だけでなく変数やステータスも扱える必要があるが、一旦簡単のため数値のみとしている。
+    right: number;
+
+    operator: "<" | ">" | "<=" | ">=" | "==" | "!=";
+}
+
+
+export abstract class Node {
+    constructor() {
+    }
+}
+
+/**
+ * メッセージ中の分岐ノード
+ */
+export class Junction extends Node {
+    constructor(
+        public next: { onTrue?: Node; onFalse?: Node },
+        public descriminant: Descriminant
+    ){
+        super();        
+    }
+}
+
 /**
  * パース済メッセージ。
  * 通常のメッセージの他、マクロの情報などを持ちます。
  */
-export class ParsedMessage {
+export class ParsedMessage extends Node {
     private messageArray: MessageSegments;
     constructor(
         textOrMessageSegments: string | MessageSegments,
         public isSystemMessage: boolean,
-        public isEndOfPartsEvent?: boolean,
-        public macro?: Macro[]
+        public isEndOfPartsEvent?: boolean, // next === undefined で代用できそう。不要説ある。
+        public macro?: Macro[],
+        public next?: Node
     ) {
+        super();
         this.messageArray = typeof textOrMessageSegments === "string" ? [textOrMessageSegments] : textOrMessageSegments;
         if (this.macro === void 0) {
             this.macro = [];
@@ -75,6 +103,39 @@ export class ParsedMessage {
             const evaluatedItem = typeof item === "string" ? item : item();
             return `${prevMessage}${evaluatedItem}`;
         }, "")
+    }
+}
+
+export function isEmptyMessageTree(node: Node | undefined): boolean {
+    if (node === undefined) {
+        return true;
+    } else if (node instanceof Junction) {
+        return isEmptyMessageTree(node.next.onTrue) && isEmptyMessageTree(node.next.onFalse);
+    } else if (node instanceof ParsedMessage) {
+        return node.isEmpty() && isEmptyMessageTree(node.next);
+    }
+}
+
+export function getLastMessage(node: undefined): undefined;
+export function getLastMessage(node: Node): Node;
+export function getLastMessage(node: Node | undefined): Node | undefined {
+    if (node === undefined) {
+        return undefined;
+    } else if (node instanceof Junction) {
+        throw new Error("分岐が含まれているため、最後のメッセージを取得することができません。");
+    } else if (node instanceof ParsedMessage) {
+        return node.next === undefined ? node : getLastMessage(node.next);
+    }
+}
+
+export function concatMessage(node1: Node | undefined, node2: Node | undefined): Node | undefined {
+    if (node1 === undefined) {
+        return node2;
+    } else {
+        const lastMessage = getLastMessage(node1);
+        if (lastMessage instanceof ParsedMessage) {
+            lastMessage.next = node2;
+        }
     }
 }
 
@@ -1245,17 +1306,17 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
     public setPositionByPlayerPosition(existsFaces: boolean, existsScoreWindow: boolean, displayCenter: boolean, playerPos: Position, cameraPos: Position) {
         var playerInScreenY = playerPos.getPartsCoord().substract(cameraPos.getPartsCoord()).y;
-        var pos: MPositioning;
+        var pos: Positioning;
         if (existsFaces) {
-            pos = MPositioning.BOTTOM;
+            pos = Positioning.BOTTOM;
         } else if (existsScoreWindow) {
-            pos = MPositioning.SCORE;
+            pos = Positioning.SCORE;
         } else if (displayCenter) {
-            pos = MPositioning.CENTER;
+            pos = Positioning.CENTER;
         } else if (playerInScreenY >= Math.ceil(WWAConsts.V_PARTS_NUM_IN_WINDOW / 2)) {
-            pos = MPositioning.TOP;
+            pos = Positioning.TOP;
         } else {
-            pos = MPositioning.BOTTOM;
+            pos = Positioning.BOTTOM;
         }
         this.setPositionEasy(pos);
     }
