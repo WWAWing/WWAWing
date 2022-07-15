@@ -3337,7 +3337,10 @@ export class WWA {
         partsPosition: Coord = new Coord(0, 0),
         messageDisplayed: boolean = false
     ): boolean {
-        this._messageQueue = this._messageQueue.concat(this.getMessageQueueByRawMessage(message, partsID, partsType, partsPosition));
+        if (this._messageQueue.length > 0) {
+            throw new Error("既に messageQueue が積まれているため、新たにメッセージを設定できません。")
+        }
+        this._messageQueue = this.getMessageQueueByRawMessage(message, partsID, partsType, partsPosition);
 
         if (this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
@@ -3352,8 +3355,8 @@ export class WWA {
 
             this._lastMessage = topmes;
 
-            // set message
             if (!topmes.isEmpty()) {
+                // 現ページで表示すべき文字列があるので、表示する
                 this._messageWindow.setParsedMessage(topmes);
                 this._messageWindow.setYesNoChoice(showChoice);
                 this._messageWindow.setPositionByPlayerPosition(
@@ -3367,8 +3370,10 @@ export class WWA {
                 return true;
             } else {
                 if (this._messageQueue.length === 0) {
+                    // 現ページで表示すべき文字列がなく、最後のページまで到達した
                     this._hideMessageWindow(messageDisplayed);
                 } else {
+                    // 現ページで表示すべき文字列はないが、次のページがある
                     this._setNextMessage();
                 }
             }
@@ -4639,7 +4644,7 @@ export class WWA {
         }
     }
 
-    public _setNextMessage(displayCenter: boolean = false): void {  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
+    public _setNextMessage(): void {  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
         this._clearFacesInNextFrame = true;
         if (this._scoreWindow.isVisible()) {
             this._scoreWindow.hide();
@@ -4660,15 +4665,15 @@ export class WWA {
                 this._execMacroListInNextFrame.push(macro[i]);
             }
 
-            // empty->hide
             if (!message.isEmpty()) {
+                // 現ページで表示すべき文字列があるので、表示する
                 this._player.setDelayFrame();
                 this._messageWindow.hide();
                 this._messageWindow.setParsedMessage(message);
                 this._messageWindow.setPositionByPlayerPosition(
                     this._faces.length !== 0,
                     this._scoreWindow.isVisible(),
-                    displayCenter,
+                    false,
                     this._player.getPosition(),
                     this._camera.getPosition()
                 );
@@ -4676,8 +4681,10 @@ export class WWA {
                 this._player.setMessageWaiting();
             } else {
                 if (this._messageQueue.length === 0) {
+                    // 現ページで表示すべき文字列がなく、最後のページまで到達した
                     this._hideMessageWindow();
                 } else {
+                    // 現ページで表示すべき文字列はないが、次のページがある
                     this._setNextMessage();
                 }
             }
