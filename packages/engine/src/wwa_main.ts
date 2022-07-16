@@ -3390,7 +3390,7 @@ export class WWA {
     ): Page[] {
 
         // コメント削除
-        var messageMain = message
+        const messageMain = message
             .split(/\n\<c\>/i)[0]
             .split(/\<c\>/i)[0]
             .replace(/\n\<p\>\n/ig, "<P>")
@@ -3399,52 +3399,156 @@ export class WWA {
             .replace(/\<p\>/ig, "<P>")
             .replace(/\/\/.*\n/ig, "");
 
-        var messageQueue: Page[] = [];
-        if (messageMain !== "") {
-            var rawQueue = messageMain.split(/\<p\>/ig);
-            for (var j = 0; j < rawQueue.length; j++) {
-                var lines = rawQueue[j].split("\n");
-                var linesWithoutMacro: MessageSegments[] = [];
-                var macroQueue: Macro[] = [];
-                for (var i = 0; i < lines.length; i++) {
-                    var matchInfo = lines[i].match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)(?:.*))/);
-                    if (matchInfo !== null && matchInfo.length >= 2) {
-                        var macro = parseMacro(this, partsID, partsType, partsPosition, matchInfo[1]);
-                        // マクロのエンキュー (最も左のものを対象とする。)
-                        // それ以外のメッセージ、マクロは一切エンキューしない。(原作どおり)
-                        // なので、「あああ$map=1,1,1」の「あああ」は表示されず、map文だけが処理される。
-
-                        // $showstr マクロは、メッセージに変換されるので、変換してメッセージとして積むように処理しなければならない。
-                        if(macro.macroType === MacroType.SHOW_STR) {
-                            linesWithoutMacro.push(this._generateUserValString(macro.macroArgs));
-                        } else {
-                            macroQueue.push(macro);
-                        }
-
-                        // 行頭コメントはpushしない
-                    } else if (!lines[i].match(/^\$/)) {
-                        linesWithoutMacro.push([lines[i]]);
-                    }
-                }
-
-                // 各行を改行で接続
-                const messageArray = linesWithoutMacro.reduce((acc, line, index) => {
-                    const newLine = index === 0 ? [] : ["\n"];
-                    return [...acc, ...newLine, ...line];
-                }, []);
-
-                messageQueue.push(
-                    new Page(
-                        new ParsedMessage(messageArray, macroQueue),
-                        j === rawQueue.length - 1,
-                        j === 0 ? showChoice : false,
-                        isSystemMessage
-                    )
-                );
-            }
+        const pages: Page[] = [];
+        if (messageMain === "") {
+            return [];
         }
-        return messageQueue;
-    }
+        const pageStr = messageMain.split(/\<p\>/ig);
+        for (let pageId = 0; pageId < pageStr.length; pageId++) {
+            const lines = pageStr[pageId].split("\n").map(line => {
+                const matchInfo = line.match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)(?:.*))/);
+                if (!matchInfo || matchInfo.length < 2 && !line.startsWith("$")) {
+                    return { type: "text" as const, text: line };
+                }
+                const macro = parseMacro(this, partsID, partsType, partsPosition, matchInfo[1]);
+                switch (macro.macroType) {
+                    case MacroType.IF:
+                    case MacroType.ELSE_IF:
+                    case MacroType.ELSE:
+                    case MacroType.END_IF:
+                    case MacroType.SHOW_STR:
+                        return { type: macro.macroType, text: line, macro }
+                    default:
+                        return { type: "normalMacro" as const, text: line, macro }
+                }
+            });
+            let tree: Node | undefined = undefined;
+            let current: Node | undefined = undefined;
+            let prev: Node | undefined = undefined;
+            const junctionNodeStack: Junction[] = [];
+
+            lines.forEach((line, index) => {
+                if (current) {
+                    prev = current;
+                }
+                const previousLineType = index === 0 ? undefined : lines[index - 1].type;
+                switch (line.type) {
+                    case MacroType.IF:
+                        // TODO: descriminant のパース処理
+                        const j = new Junction({}, { left: 0, right: 0, operator: "==" });
+                        junctionNodeStack.push(j);
+                        current = j;
+                        break;
+                    case MacroType.ELSE_IF:
+                        // TODO
+                       break;
+                    case MacroType.ELSE:
+                        if (tree === undefined) {
+                            throw new Error("syntax error: レベル0 で else は使えません")
+                        }
+                        // else の行は無視する (次の行で処理するため)
+                        break;
+
+                    case MacroType.END_IF:
+                        if (tree === undefined) {
+                            throw new Error("syntax error: レベル0 で endif は使えません")
+                        }
+                        break;
+                    case MacroType.SHOW_STR:
+                        if (
+                            previousLineType !== MacroType.SHOW_STR &&
+                            previousLineType !== "text" &&
+                            previousLineType !== "normalMacro"
+                        ) { 
+                            current = new ParsedMessage(this._generateUserValString(line.macro.macroArgs));
+                        }
+                        break;
+                    case "text":
+                        if (
+                            previousLineType !== MacroType.SHOW_STR &&
+                            previousLineType !== "text" &&
+                            previousLineType !== "normalMacro"
+                        ) { 
+                            current = new ParsedMessage(line.text);
+                        }
+                        break;
+                    case "normalMacro":
+                        if (
+                            previousLineType !== MacroType.SHOW_STR &&
+                            previousLineType !== "text" &&
+                            previousLineType !== "normalMacro"
+                        ) { 
+                            current = new ParsedMessage("", [line.macro]);
+                        }
+                        break;
+                }
+                if (previousLineType === MacroType.IF) {
+                    if(!current || !(prev instanceof Junction)) {
+                        return;
+                    }
+                    prev.next = { onTrue: current };
+                } else if (previousLineType === MacroType.ELSE_IF) {
+                    // 難しいので後回し
+                } else if (previousLineType === MacroType.ELSE) {
+                    if(!current || !(prev instanceof Junction)) {
+                        return;
+                    }
+                    prev.next.onFalse = current;
+                } else if (previousLineType === MacroType.END_IF) {
+                    if(!current || !(prev instanceof Junction)) {
+                        return;
+                    }
+                    const junctionNode = junctionNodeStack.pop();
+                    let onTrueFinalNode: Node = junctionNode.next.onTrue;
+                    while (true) {
+                        if (!(onTrueFinalNode instanceof ParsedMessage)) {
+                            throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
+                        }
+                        if(onTrueFinalNode.next === undefined) {
+                            break;
+                        }
+                    }
+                    onTrueFinalNode.next = current;
+                    let onFalseFinalNode: Node = junctionNode.next.onFalse;
+                    while (true) {
+                        if (!(onFalseFinalNode instanceof ParsedMessage)) {
+                            throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
+                        }
+                        if(onFalseFinalNode.next === undefined) {
+                            break;
+                        }
+                    }
+                    onFalseFinalNode.next = current;
+                } else if (
+                    previousLineType === MacroType.SHOW_STR ||
+                    previousLineType === "text" ||
+                    previousLineType === "normalMacro"
+                ) {
+                    if (!(prev instanceof ParsedMessage)) {
+                        return;
+                    }
+                    if (line.type === MacroType.SHOW_STR) {
+                        prev.appendMessageWithNewLine(this._generateUserValString(line.macro.macroArgs));
+                    } else if (line.type === "text") {
+                        prev.appendMessageWithNewLine(line.text);
+                    } else if (line.type === "normalMacro") {
+                        prev.macro.push(line.macro);
+                    }
+                } else if (previousLineType === undefined) {
+                    tree = current;
+                }
+            });
+            pages.push(
+                new Page(
+                    tree,
+                    pageId === pageStr.length - 1,
+                    pageId === 0 && showChoice,
+                    isSystemMessage
+                )
+            );
+        };
+        return pages;
+   }
 
     public appearParts(pos: Coord, triggerType: AppearanceTriggerType, triggerPartsID: number = 0): void {
         var triggerPartsType: PartsType;

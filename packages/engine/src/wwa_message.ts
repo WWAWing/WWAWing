@@ -90,7 +90,7 @@ export class ParsedMessage extends Node {
         public next?: Node
     ) {
         super();
-        this.messageArray = typeof textOrMessageSegments === "string" ? [textOrMessageSegments] : textOrMessageSegments;
+        this.messageArray = this.parseMessage(textOrMessageSegments);
         if (this.macro === void 0) {
             this.macro = [];
         }
@@ -116,6 +116,14 @@ export class ParsedMessage extends Node {
             const evaluatedItem = typeof item === "string" ? item : item();
             return `${prevMessage}${evaluatedItem}`;
         }, "")
+    }
+
+    appendMessageWithNewLine(message: string | MessageSegments): void {
+        this.messageArray = this.messageArray.concat(["\n"], this.parseMessage(message));
+    }
+
+    private parseMessage(message: string | MessageSegments): MessageSegments {
+        return typeof message === "string" ? [message] : message; 
     }
 }
 
