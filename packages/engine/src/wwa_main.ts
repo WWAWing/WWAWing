@@ -1616,35 +1616,41 @@ export class WWA {
             this.clearFaces();
             this._clearFacesInNextFrame = false;
         }
+        if (this._execPageInNextFrame) {
+            const messageLines = this._executeNode(this._execPageInNextFrame.firstNode);
 
-        const messageLines = this._executeNode(this._execPageInNextFrame);
+            // executeNode の結果、ゲームオーバーになるなどして、execPageInNextFrame がクリアされた場合は以下の処理は実行しない
+            if (this._execPageInNextFrame) {
+                // TODO: isEmptyを消していいか動作確認する
+                if (/*this._lastPage.isEmpty() &&*/ this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
+                    this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
+                    this._reservedMoveMacroTurn = void 0;
+                }
 
-        // TODO: isEmptyを消していいか動作確認する
-        if (/*this._lastPage.isEmpty() &&*/ this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
-            this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
-            this._reservedMoveMacroTurn = void 0;
-        }
-
-        // set message
-        if (messageLines.length > 0) {
-            this._messageWindow.setMessage(messageLines.join("\n"));
-            this._messageWindow.setYesNoChoice(this._execPageInNextFrame.showChoice);
-            this._messageWindow.setPositionByPlayerPosition(
-                this._faces.length !== 0,
-                this._scoreWindow.isVisible(),
-                this._execPageInNextFrame.isSystemMessage,
-                this._player.getPosition(),
-                this._camera.getPosition()
-            );
-            this._player.setMessageWaiting();
-        } else {
-            if (this._messageQueue.length === 0) {
-                this._hideMessageWindow();
-            } else {
-                this._setNextPage();
+                const messageDisplayed = messageLines.length > 0 && messageLines.reduce((prev, line) => prev || !line.isEmpty(), false);
+                // set message
+                if (messageDisplayed) {
+                    const message = messageLines.map(line => line.generatePrintableMessage()).join("\n");
+                    this._messageWindow.setMessage(message);
+                    this._messageWindow.setYesNoChoice(this._execPageInNextFrame.showChoice);
+                    this._messageWindow.setPositionByPlayerPosition(
+                        this._faces.length !== 0,
+                        this._scoreWindow.isVisible(),
+                        this._execPageInNextFrame.isSystemMessage,
+                        this._player.getPosition(),
+                        this._camera.getPosition()
+                    );
+                    this._player.setMessageWaiting();
+                } else {
+                    if (this._messageQueue.length === 0) {
+                        this._hideMessageWindow(messageDisplayed);
+                    } else {
+                        this._setNextPage();
+                    }
+                }
+                this._execPageInNextFrame = undefined;
             }
         }
-        this._execPageInNextFrame = undefined;
 
         // キー入力とプレイヤー移動
         ////////////// DEBUG IMPLEMENTATION //////////////////////
@@ -3770,7 +3776,7 @@ export class WWA {
         var jx = this._wwaData.gameoverX;
         var jy = this._wwaData.gameoverY;
         this._yesNoJudge = YesNoState.UNSELECTED;
-        this._messageQueue = undefined; // force clear!!
+        this._messageQueue = []; // force clear!!
         this._player.setDelayFrame();
         this._messageWindow.hide();
         this._yesNoChoicePartsCoord = void 0;
