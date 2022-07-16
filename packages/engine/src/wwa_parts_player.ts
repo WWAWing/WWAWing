@@ -825,7 +825,7 @@ export class Player extends PartsObject {
                 self._itemUsingEvent[pos - 1] = () => {
                     if (self.isControllable() || (self._wwa._messageWindow.isItemMenuChoice())) {
                         self._wwa._itemMenu.close();
-                        self._wwa._setNextMessage();
+                        self._wwa._setNextPage();
                         self._wwa.onselectitem(pos);
                     }
                 };

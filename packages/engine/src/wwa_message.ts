@@ -45,6 +45,17 @@ export interface Descriminant {
     operator: "<" | ">" | "<=" | ">=" | "==" | "!=";
 }
 
+export class Page {
+    constructor(
+        public firstNode?: Node,
+        public isLastPage?: boolean, // 旧 endOfPartsEvent相当
+        public showChoice?: boolean,
+        public isSystemMessage?: boolean
+    ) {
+
+    }
+}
+
 
 export abstract class Node {
     constructor() {
@@ -61,6 +72,10 @@ export class Junction extends Node {
     ){
         super();        
     }
+    evaluate() {
+        // TODO descriminant を評価
+        return true;
+    }
 }
 
 /**
@@ -71,8 +86,6 @@ export class ParsedMessage extends Node {
     private messageArray: MessageSegments;
     constructor(
         textOrMessageSegments: string | MessageSegments,
-        public isSystemMessage: boolean,
-        public isEndOfPartsEvent?: boolean, // next === undefined で代用できそう。不要説ある。
         public macro?: Macro[],
         public next?: Node
     ) {
@@ -571,7 +584,7 @@ export class Macro {
     private _executeIfMacro(): void {
         // 後方互換性を保つため、引数が1つ以外の時には旧ifマクロを実行する
         if(this.macroArgs.length === 1) {
-            this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
+            // 何も実行しない
         }
         else {
             // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
@@ -584,15 +597,15 @@ export class Macro {
     }
     // IF-ELSEマクロ実行部
     private _executeIfElseMacro(): void {
-        this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
+        // 何も実行しない
     }
     // ELSEマクロ実行部
     private _executeElseMacro(): void {
-        this._wwa.switchConditionalExecutionStatus();
+        // 何も実行しない
     }
     // END_IFマクロ実行部
     private _executeEndIfMacro(): void {
-        this._wwa.resetConditionalMacroExecStaus();
+        // 何も実行しない
     }
     // SET_SPEEDマクロ実行部
     private _executeSetSpeedMacro(): void {
@@ -1181,7 +1194,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _y: number;
     private _width: number;
     private _height: number;
-    private _message: ParsedMessage;
+    private _message: string;
 
     private _cgFileName: string;
     private _isVisible: boolean;
@@ -1226,7 +1239,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._y = y;
         this._width = width;
         this._height = height;
-        this._message = new ParsedMessage([], false);
+        this._message = "";
         this._isVisible = isVisible;
         this._isYesno = isYesno;
         this._isItemMenu = isItemMenu;
@@ -1353,12 +1366,12 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
     }
 
-    public setParsedMessage(message: ParsedMessage): void {
+    public setMessage(message: string): void {
         this._message = message;
         this.update();
     }
     public clear(): void {
-        this._message = new ParsedMessage([], false);
+        this._message = "";
         this.update();
     }
     public setYesNoChoice(isYesNo: boolean): boolean {
@@ -1465,7 +1478,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
             this._ynWrapperElement.style.display = "none";
         }
         this._msgWrapperElement.textContent = "";
-        var mesArray = this._message.generatePrintableMessage().split("\n");
+        var mesArray = this._message.split("\n");
         mesArray.forEach((line, i) => {
             let lsp: HTMLSpanElement; // Logical SPan
             if (this._wwa.isClassicMode()) {

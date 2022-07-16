@@ -27,7 +27,7 @@ import { Parts, Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction
+    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction, Page
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -78,7 +78,7 @@ export class WWA {
     public _messageWindow: MessageWindow; // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
     private _monsterWindow: MonsterWindow;
     private _scoreWindow: ScoreWindow;
-    private _messageQueue: Node | undefined;
+    private _messageQueue: Page[];
     private _yesNoJudge: YesNoState;
     private _yesNoJudgeInNextFrame: YesNoState;
     private _yesNoChoicePartsCoord: Coord;
@@ -111,7 +111,7 @@ export class WWA {
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
-    private _lastMessage: ParsedMessage;
+    private _lastPage: Page;
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
@@ -128,7 +128,7 @@ export class WWA {
     private _passwordSaveExtractData: WWAData;
 
     private _faces: Face[];
-    private _execMacroListInNextFrame: Macro[];
+    private _execPageInNextFrame?: Page;
     private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
@@ -216,8 +216,6 @@ export class WWA {
         defence: number;
         gold: number;
     };
-
-    private _conditionalMacroExecStatus: ConditionalMacroExecStatus;
 
     ////////////////////////
     public debug: boolean;
@@ -462,15 +460,14 @@ export class WWA {
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
             this._gamePadStore = new GamePadStore();
-            this._messageQueue = undefined;
+            this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
             this._prevFrameEventExected = false;
-            this._lastMessage = new ParsedMessage([], false, false, []);
-            this._execMacroListInNextFrame = [];
+            this._lastPage = new Page();
+            this._execPageInNextFrame = undefined;
             this._passwordLoadExecInNextFrame = false;
-            this._conditionalMacroExecStatus = "outside-ifelse";
 
             //ロード処理の前に追加
             this._messageWindow = new MessageWindow(
@@ -931,12 +928,12 @@ export class WWA {
                     if (canDisplayUserVars) {
                         showMessage += "\n\n※変数表示が有効になっています。\n公開前に必ずHTMLファイル内の\n data-wwa-display-user-vars=\"true\" \nを消してください。"
                     }
-                    this._messageWindow.setParsedMessage(new ParsedMessage(
-                        (
-                            this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
+                    this._messageWindow.setMessage(
+                        this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
                             showMessage :
-                                this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
-                        ), true));
+                            this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
+                    );
+                    // TODO: システムメッセージなのでメッセージウィンドウの中央配置が必要かも
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
                     var timer = setInterval((): void => {
@@ -1582,6 +1579,19 @@ export class WWA {
         this._keyStore.checkHitKey(KeyCode.KEY_N)
     );
 
+
+    private _executeNode(node: Node | undefined): ParsedMessage[] {
+        if (node instanceof ParsedMessage) {
+            node.macro?.forEach(macro => macro.execute());
+            return [node, ...this._executeNode(node.next)];
+        } else if (node instanceof Junction) {
+            const compareResult = node.evaluate();
+            return this._executeNode(compareResult ? node.next.onTrue : node.next.onFalse);
+        }
+        // node === undefined
+        return [];
+    }
+
     private _main(): void {
         this._temporaryInputDisable = false;
         this._stopUpdateByLoadFlag = false;
@@ -1606,20 +1616,35 @@ export class WWA {
             this.clearFaces();
             this._clearFacesInNextFrame = false;
         }
-        for (var i = 0; i < this._execMacroListInNextFrame.length; i++) {
-            // if-elseマクロの途中で条件を満たさない場合にはマクロを実行しない
-            // IF-ELSE関連マクロの場合には無条件で実行する
-            if(this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'can-execute' || this._execMacroListInNextFrame[i].isJunction()) {
-                this._execMacroListInNextFrame[i].execute();
-            }
-        }
-        // $endif が呼ばれなかった時に状態が異常にならないようにリセットしておく
-        this.resetConditionalMacroExecStaus();
-        if (this._lastMessage.isEmpty() && this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
+
+        const messageLines = this._executeNode(this._execPageInNextFrame);
+
+        // TODO: isEmptyを消していいか動作確認する
+        if (/*this._lastPage.isEmpty() &&*/ this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
-        this._execMacroListInNextFrame = [];
+
+        // set message
+        if (messageLines.length > 0) {
+            this._messageWindow.setMessage(messageLines.join("\n"));
+            this._messageWindow.setYesNoChoice(this._execPageInNextFrame.showChoice);
+            this._messageWindow.setPositionByPlayerPosition(
+                this._faces.length !== 0,
+                this._scoreWindow.isVisible(),
+                this._execPageInNextFrame.isSystemMessage,
+                this._player.getPosition(),
+                this._camera.getPosition()
+            );
+            this._player.setMessageWaiting();
+        } else {
+            if (this._messageQueue.length === 0) {
+                this._hideMessageWindow();
+            } else {
+                this._setNextPage();
+            }
+        }
+        this._execPageInNextFrame = undefined;
 
         // キー入力とプレイヤー移動
         ////////////// DEBUG IMPLEMENTATION //////////////////////
@@ -1967,7 +1992,7 @@ export class WWA {
                     this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)
                 ) {
-                    this._setNextMessage();
+                    this._setNextPage();
                     this._messageWindow.setItemMenuChoice(false);
                     this._itemMenu.ok();
                 } else if (
@@ -1986,7 +2011,7 @@ export class WWA {
                         }
                     }
                     this._itemMenu.ng();
-                    this._setNextMessage();
+                    this._setNextPage();
                     this.playSound(SystemSound.DECISION);
                     this._messageWindow.setItemMenuChoice(false);
                 }
@@ -2006,7 +2031,7 @@ export class WWA {
                             elm.classList.remove("onpress");
                         }
                     }
-                    this._setNextMessage();
+                    this._setNextPage();
 
                 }
             }
@@ -2038,12 +2063,12 @@ export class WWA {
                     this._inlineUserVarViewer.topUserVarIndex -= (Consts.USER_VAR_NUM);
                 }
                 if (isInputKey) {
-                    this._setNextMessage();
+                    this._setNextPage();
                     this._inlineUserVarViewer.isVisible = true;
                     this._displayUserVars();
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
-                    this._setNextMessage();
+                    this._setNextPage();
                 }
             }
         } else if (this._player.isWatingEstimateWindow()) {
@@ -3062,8 +3087,12 @@ export class WWA {
     private _execObjectScoreEvent(pos: Coord, partsID: number, mapAttr: number): void {
         var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
         const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
-        const firstMessage = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos);
-        const existsMessage = isEmptyMessageTree(firstMessage) ;
+        const messageQueue = this.getMessageQueueByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos, false, false);
+        // TODO: スコア表示は仕様変更されるべき
+        // メッセージの有無に関わらず、スコア表示ウィンドウは決定ボタンなどで閉じられるべきなので
+        // マクロのみや空メッセージの場合であっても、スコア表示は決定ボタンで閉じられるようにする
+        // <P> による改ページがある場合は、全ページの表示が終わるまでスコアは表示されるべき。
+        const existsMessage = messageQueue.reduce((existsMessageBefore, node) => existsMessageBefore || isEmptyMessageTree(node), false);
         if (existsMessage) {
             this._scoreRates = {
                 energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
@@ -3109,11 +3138,11 @@ export class WWA {
                         } else {
                             // アイテムを持っていない
                             if (this._wwaData.message[SystemMessage1.NO_ITEM] !== "BLANK") {
-                                this._messageQueue.push(new ParsedMessage(
+                                this._execPageInNextFrame = new Page((new ParsedMessage(
                                     this._wwaData.message[SystemMessage1.NO_ITEM] === "" ?
                                         "アイテムを持っていない。" : this._wwaData.message[SystemMessage1.NO_ITEM],
-                                    true)
-                                );
+                                )
+                                ), true, false, true);
                             };
                         }
                     } else if (partsType === Consts.OBJECT_SELL) {
@@ -3160,24 +3189,21 @@ export class WWA {
                             } else {
                                 // アイテムをボックスがいっぱい
                                 if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
-                                    this._messageQueue.push(
+                                    this._execPageInNextFrame = new Page(
                                         new ParsedMessage(
                                             this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] === "" ?
                                                 "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[SystemMessage2.FULL_ITEM],
-                                            true
-                                        )
-                                    );
+                                        ), true, false, true)
                                 }
                             }
                         } else {
                             // 所持金が足りない
                             if (this._wwaData.message[SystemMessage1.NO_MONEY] !== "BLANK") {
-                                this._messageQueue.push(
+                                this._execPageInNextFrame = new Page(
                                     new ParsedMessage(
                                         this._wwaData.message[SystemMessage1.NO_MONEY] === "" ?
                                             "所持金がたりない。" : this._wwaData.message[SystemMessage1.NO_MONEY],
-                                        true
-                                    )
+                                    ), true, false, true
                                 );
                             }
                         }
@@ -3227,7 +3253,7 @@ export class WWA {
                     this._quickSave(ChoiceCallInfo.CALL_BY_SUSPEND);
                 }
                 this._yesNoJudge = YesNoState.UNSELECTED;
-                this._setNextMessage();
+                this._setNextPage();
 
                 this._yesNoChoicePartsCoord = void 0;
                 this._yesNoChoicePartsID = void 0;
@@ -3318,7 +3344,7 @@ export class WWA {
                 }
 
                 this._yesNoJudge = YesNoState.UNSELECTED;
-                this._setNextMessage();
+                this._setNextPage();
                 this._yesNoChoicePartsCoord = void 0;
                 this._yesNoChoicePartsID = void 0;
                 this._yesNoUseItemPos = void 0;
@@ -3335,45 +3361,20 @@ export class WWA {
         partsID: number = 0,
         partsType: PartsType = PartsType.OBJECT,
         partsPosition: Coord = new Coord(0, 0),
-        messageDisplayed: boolean = false
     ): boolean {
-        concatMessage(this._messageQueue, this.getMessageQueueByRawMessage(message, partsID, partsType, partsPosition))
+        this._messageQueue = this._messageQueue.concat(
+            this.getMessageQueueByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice
+        ));
 
-        if (this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
+        if (this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
 
-        if (this._messageQueue) {
-            const topmes = this._messageQueue.next;
-            if (topmes instanceof ParsedMessage) {
-                for (var i = 0; i < topmes.macro.length; i++) {
-                    this._execMacroListInNextFrame.push(topmes.macro[i]);
-                }
-            }
-
-            this._lastMessage = topmes;
-
-            // set message
-            if (!topmes.isEmpty()) {
-                this._messageWindow.setParsedMessage(topmes);
-                this._messageWindow.setYesNoChoice(showChoice);
-                this._messageWindow.setPositionByPlayerPosition(
-                    this._faces.length !== 0,
-                    this._scoreWindow.isVisible(),
-                    isSystemMessage,
-                    this._player.getPosition(),
-                    this._camera.getPosition()
-                );
-                this._player.setMessageWaiting();
-                return true;
-            } else {
-                if (!this._messageQueue) {
-                    this._hideMessageWindow(messageDisplayed);
-                } else {
-                    this._setNextMessage();
-                }
-            }
+        if (this._messageQueue.length !== 0) {
+            var topmes = this._messageQueue.shift();
+            this._execPageInNextFrame = topmes;
+            this._lastPage = topmes;
         }
         return false;
     }
@@ -3384,7 +3385,9 @@ export class WWA {
         partsID: number,
         partsType: PartsType,
         partsPosition: Coord,
-        isSystemMessage: boolean = false): ParsedMessage {
+        isSystemMessage: boolean,
+        showChoice: boolean
+    ): Page[] {
 
         // コメント削除
         var messageMain = message
@@ -3396,8 +3399,7 @@ export class WWA {
             .replace(/\<p\>/ig, "<P>")
             .replace(/\/\/.*\n/ig, "");
 
-        let firstMessage: ParsedMessage | undefined = undefined;
-        const lastMessage: ParsedMessage | undefined = undefined;
+        var messageQueue: Page[] = [];
         if (messageMain !== "") {
             var rawQueue = messageMain.split(/\<p\>/ig);
             for (var j = 0; j < rawQueue.length; j++) {
@@ -3431,15 +3433,17 @@ export class WWA {
                     return [...acc, ...newLine, ...line];
                 }, []);
 
-                const message = new ParsedMessage(messageArray, isSystemMessage, j === rawQueue.length - 1, macroQueue);
-                if (lastMessage) {
-                    lastMessage.next = message;
-                } else {
-                    firstMessage = message;
-                }
+                messageQueue.push(
+                    new Page(
+                        new ParsedMessage(messageArray, macroQueue),
+                        j === rawQueue.length - 1,
+                        j === 0 ? showChoice : false,
+                        isSystemMessage
+                    )
+                );
             }
         }
-        return firstMessage;
+        return messageQueue;
     }
 
     public appearParts(pos: Coord, triggerType: AppearanceTriggerType, triggerPartsID: number = 0): void {
@@ -3675,7 +3679,7 @@ export class WWA {
 
         this._waitFrame = 0;
         this._temporaryInputDisable = true;
-        this._execMacroListInNextFrame = [];
+        this._execPageInNextFrame = undefined;
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
     }
 
@@ -4647,56 +4651,21 @@ export class WWA {
         }
     }
 
-    public _setNextMessage(displayCenter: boolean = false): void {  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
+    public _setNextPage(): void {  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
         this._clearFacesInNextFrame = true;
         if (this._scoreWindow.isVisible()) {
             this._scoreWindow.hide();
             this._scoreRates = undefined;
         }
-        if (this._lastMessage.isEndOfPartsEvent && this._reservedMoveMacroTurn !== void 0) {
+        if (this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
-        if (!this._messageQueue) {
+        if (this._messageQueue.length === 0) {
             this._hideMessageWindow();
         } else {
-            const message = this._messageQueue;
-            if( message instanceof Junction ) {
-                // TODO: 判別式を評価して、次のメッセージをセットする
-                return;
-            }
-            if (!(message instanceof ParsedMessage)) {
-                return;
-            }
-            this._messageQueue = message.next;
-            const macro = message.macro;
-            for (var i = 0; i < macro.length; i++) {
-                this._execMacroListInNextFrame.push(macro[i]);
-            }
-            this._lastMessage = message;
-
-            // empty->hide
-            if (!message.isEmpty()) {
-                this._player.setDelayFrame();
-                this._messageWindow.hide();
-                this._messageWindow.setParsedMessage(message);
-                this._messageWindow.setPositionByPlayerPosition(
-                    this._faces.length !== 0,
-                    this._scoreWindow.isVisible(),
-                    displayCenter,
-                    this._player.getPosition(),
-                    this._camera.getPosition()
-                );
-                this._messageWindow.show();
-                this._player.setMessageWaiting();
-            } else {
-                if (!this._messageQueue) {
-                    this._hideMessageWindow();
-                } else {
-                    this._setNextMessage();
-                }
-            }
-        }
+            this._execPageInNextFrame = this._messageQueue.shift();
+       }
         if (this._inlineUserVarViewer) {
             this._inlineUserVarViewer.isVisible = false;
         }
@@ -4721,7 +4690,7 @@ export class WWA {
             this.setMessageQueue(
                 this.getMessageById(mesID),
                 false, false, itemID, PartsType.OBJECT,
-                this._player.getPosition().getPartsCoord(), true);
+                this._player.getPosition().getPartsCoord());
         }
 
     }
@@ -5368,21 +5337,6 @@ font-weight: bold;
     public speedChangeJudge(speedChangeFlag: boolean): void {
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
     }
-    // if文内を実行する
-    public switchConditionalExecutionStatus(descriminant: string = ""): void {
-        // 前のif文が実行状態だった場合には以降のelse文は実行しない
-        if (this._conditionalMacroExecStatus === 'can-execute') {
-            this._conditionalMacroExecStatus = 'executed';
-            return;
-        }
-        // 非実行状態の場合にはif実行状態にする
-        if (this._conditionalMacroExecStatus === 'outside-ifelse' || this._conditionalMacroExecStatus === 'cannot-execute') {
-            // 条件式を解釈してtrueの場合にはexecにする
-            const canExecute = descriminant === '' || ExpressionParser.evaluateIfMacroExpression(descriminant, this._generateTokenValues());
-            this._conditionalMacroExecStatus = canExecute ? 'can-execute' : 'cannot-execute';
-            return;
-        }
-    }
 
     public execSetMacro(macroStr: string = ""): void {
         const { assignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
@@ -5435,10 +5389,6 @@ font-weight: bold;
         }
     }
 
-    // end-ifが呼ばれたときにはif文実行状態を終了させる
-    public resetConditionalMacroExecStaus(): void {
-        this._conditionalMacroExecStatus = 'outside-ifelse';
-    }
     // ユーザ変数 IFElse
     public userVarUserIf(_triggerPartsPosition: Coord, args: string[]): void {
         // true 時配置パーツの Y 座標 (必須パラメータの最後の引数) が省略されている場合は, エラーとする
