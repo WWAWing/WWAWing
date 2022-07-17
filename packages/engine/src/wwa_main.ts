@@ -1585,8 +1585,7 @@ export class WWA {
             node.macro?.forEach(macro => macro.execute());
             return [node, ...this._executeNode(node.next)];
         } else if (node instanceof Junction) {
-            const compareResult = node.evaluate();
-            return this._executeNode(compareResult ? node.next.onTrue : node.next.onFalse);
+            return this._executeNode(node.evaluateAndGetNextNode());
         }
         // node === undefined
         return [];
@@ -3441,20 +3440,21 @@ export class WWA {
                 switch (line.type) {
                     case MacroType.IF:
                         // TODO: descriminant のパース処理
-                        const j = new Junction({}, { left: 0, right: 0, operator: "==" });
-                        junctionNodeStack.push(j);
-                        current = j;
+                        current = new Junction([{ descriminant: { left: 0, right: 0, operator: "==" } }]);
                         break;
                     case MacroType.ELSE_IF:
-                        // TODO
+                        if (tree === undefined) {
+                            throw new Error("syntax error: レベル0 で else_if は使えません")
+                        }
+                        // TODO: descriminant のパース処理
+                        junctionNodeStack[junctionNodeStack.length - 1].appendBranch({ descriminant: { left: 0, right: 0, operator: "==" } })
                        break;
                     case MacroType.ELSE:
                         if (tree === undefined) {
                             throw new Error("syntax error: レベル0 で else は使えません")
                         }
-                        // else の行は無視する (次の行で処理するため)
+                        junctionNodeStack[junctionNodeStack.length - 1].appendBranch()
                         break;
-
                     case MacroType.END_IF:
                         if (tree === undefined) {
                             throw new Error("syntax error: レベル0 で endif は使えません")
@@ -3492,40 +3492,35 @@ export class WWA {
                     if(!current || !(prev instanceof Junction)) {
                         return;
                     }
-                    prev.next = { onTrue: current };
+                    prev.getLastUnconnectedBranch().next = current;
                 } else if (previousLineType === MacroType.ELSE_IF) {
-                    // 難しいので後回し
+                    if(!current || !(prev instanceof Junction)) {
+                        return;
+                    }
+                    prev.getLastUnconnectedBranch().next = current;
                 } else if (previousLineType === MacroType.ELSE) {
                     if(!current || !(prev instanceof Junction)) {
                         return;
                     }
-                    prev.next.onFalse = current;
+                    prev.getLastUnconnectedBranch().next = current;
                 } else if (previousLineType === MacroType.END_IF) {
                     if(!current || !(prev instanceof Junction)) {
                         return;
                     }
                     const junctionNode = junctionNodeStack.pop();
-                    let onTrueFinalNode: Node = junctionNode.next.onTrue;
-                    while (true) {
-                        if (!(onTrueFinalNode instanceof ParsedMessage)) {
-                            throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
-                        }
-                        if(onTrueFinalNode.next === undefined) {
-                            break;
-                        }
-                    }
-                    onTrueFinalNode.next = current;
-                    let onFalseFinalNode: Node = junctionNode.next.onFalse;
-                    while (true) {
-                        if (!(onFalseFinalNode instanceof ParsedMessage)) {
-                            throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
-                        }
-                        if(onFalseFinalNode.next === undefined) {
-                            break;
+                    for (let branch of junctionNode.branches) {
+                        let finalNode: Node = branch;
+                        while (true) {
+                            if (!(finalNode instanceof ParsedMessage)) {
+                                throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
+                            }
+                            if(finalNode.next === undefined) {
+                                finalNode.next = current;
+                                break;
+                            }
                         }
                     }
-                    onFalseFinalNode.next = current;
-                } else if (
+               } else if (
                     previousLineType === MacroType.SHOW_STR ||
                     previousLineType === "text" ||
                     previousLineType === "normalMacro"

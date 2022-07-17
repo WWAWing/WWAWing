@@ -45,6 +45,25 @@ export interface Descriminant {
     operator: "<" | ">" | "<=" | ">=" | "==" | "!=";
 }
 
+export function evaluateDescriminant(d: Descriminant): boolean {
+    switch (d.operator) {
+        case "<":
+            return d.left < d.right;
+        case ">":
+            return d.left > d.right;
+        case "<=":
+            return d.left <= d.right;
+        case ">=":
+            return d.left >= d.right;
+        case "==":
+            return d.left === d.right;
+        case "!=":
+            return d.left !== d.right;
+        default:
+            throw new Error("存在しない演算子です");
+    }
+}
+
 export class Page {
     constructor(
         public firstNode?: Node,
@@ -62,19 +81,39 @@ export abstract class Node {
     }
 }
 
+export interface Branch {
+    descriminant?: Descriminant
+    next?: Node
+}
+
 /**
  * メッセージ中の分岐ノード
  */
 export class Junction extends Node {
     constructor(
-        public next: { onTrue?: Node; onFalse?: Node },
-        public descriminant: Descriminant
+        public branches: Branch[] = [],
     ){
         super();        
     }
-    evaluate() {
-        // TODO descriminant を評価
-        return true;
+    appendBranch(branch: Branch = {}): void {
+        this.branches.push(branch);
+    }
+    getLastUnconnectedBranch(): Branch | undefined {
+        for (let branch of this.branches) {
+            if (!branch.next) {
+                return branch;
+            }
+        }
+        return undefined;
+    }
+    evaluateAndGetNextNode(): Node {
+        for (let branch of this.branches) {
+            // 判別式がない場合は $else 節に相当するのでそのまま次の Node を返す
+            if (!branch.descriminant || evaluateDescriminant(branch.descriminant)) {
+                return branch.next;
+            }
+        }
+        throw new Error("実行時エラー: Junction ノードの分岐が正しい形をしていません");
     }
 }
 
@@ -131,7 +170,7 @@ export function isEmptyMessageTree(node: Node | undefined): boolean {
     if (node === undefined) {
         return true;
     } else if (node instanceof Junction) {
-        return isEmptyMessageTree(node.next.onTrue) && isEmptyMessageTree(node.next.onFalse);
+        return node.branches.reduce((prev, branch) => prev && isEmptyMessageTree(branch.next), true)
     } else if (node instanceof ParsedMessage) {
         return node.isEmpty() && isEmptyMessageTree(node.next);
     }
