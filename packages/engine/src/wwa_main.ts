@@ -3431,12 +3431,16 @@ export class WWA {
             let current: Node | undefined = undefined;
             let prev: Node | undefined = undefined;
             const junctionNodeStack: Junction[] = [];
+            type LineType = typeof lines[number]["type"];
+            const lineIsText = (lineType: LineType) => lineType === MacroType.SHOW_STR || lineType === "text" || lineType !== "normalMacro";
 
             lines.forEach((line, index) => {
                 if (current) {
                     prev = current;
                 }
                 const previousLineType = index === 0 ? undefined : lines[index - 1].type;
+                const prevLineIsText = lineIsText(previousLineType);
+                const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
                 switch (line.type) {
                     case MacroType.IF:
                         // TODO: descriminant のパース処理
@@ -3447,13 +3451,13 @@ export class WWA {
                             throw new Error("syntax error: レベル0 で else_if は使えません")
                         }
                         // TODO: descriminant のパース処理
-                        junctionNodeStack[junctionNodeStack.length - 1].appendBranch({ descriminant: { left: 0, right: 0, operator: "==" } })
+                        parentJunction.appendBranch({ descriminant: { left: 0, right: 0, operator: "==" } })
                        break;
                     case MacroType.ELSE:
                         if (tree === undefined) {
                             throw new Error("syntax error: レベル0 で else は使えません")
                         }
-                        junctionNodeStack[junctionNodeStack.length - 1].appendBranch()
+                        parentJunction.appendBranch()
                         break;
                     case MacroType.END_IF:
                         if (tree === undefined) {
@@ -3461,44 +3465,26 @@ export class WWA {
                         }
                         break;
                     case MacroType.SHOW_STR:
-                        if (
-                            previousLineType !== MacroType.SHOW_STR &&
-                            previousLineType !== "text" &&
-                            previousLineType !== "normalMacro"
-                        ) { 
+                        if (!prevLineIsText) { 
                             current = new ParsedMessage(this._generateUserValString(line.macro.macroArgs));
                         }
                         break;
                     case "text":
-                        if (
-                            previousLineType !== MacroType.SHOW_STR &&
-                            previousLineType !== "text" &&
-                            previousLineType !== "normalMacro"
-                        ) { 
+                        if (!prevLineIsText) { 
                             current = new ParsedMessage(line.text);
                         }
                         break;
                     case "normalMacro":
-                        if (
-                            previousLineType !== MacroType.SHOW_STR &&
-                            previousLineType !== "text" &&
-                            previousLineType !== "normalMacro"
-                        ) { 
+                        if (!prevLineIsText) { 
                             current = new ParsedMessage("", [line.macro]);
                         }
                         break;
                 }
-                if (previousLineType === MacroType.IF) {
-                    if(!current || !(prev instanceof Junction)) {
-                        return;
-                    }
-                    prev.getLastUnconnectedBranch().next = current;
-                } else if (previousLineType === MacroType.ELSE_IF) {
-                    if(!current || !(prev instanceof Junction)) {
-                        return;
-                    }
-                    prev.getLastUnconnectedBranch().next = current;
-                } else if (previousLineType === MacroType.ELSE) {
+                if (
+                    previousLineType === MacroType.IF ||
+                    previousLineType === MacroType.ELSE_IF ||
+                    previousLineType === MacroType.ELSE
+                ) {
                     if(!current || !(prev instanceof Junction)) {
                         return;
                     }
@@ -3514,17 +3500,13 @@ export class WWA {
                             if (!(finalNode instanceof ParsedMessage)) {
                                 throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
                             }
-                            if(finalNode.next === undefined) {
+                            if (!finalNode.next) {
                                 finalNode.next = current;
                                 break;
                             }
                         }
                     }
-               } else if (
-                    previousLineType === MacroType.SHOW_STR ||
-                    previousLineType === "text" ||
-                    previousLineType === "normalMacro"
-                ) {
+                } else if (prevLineIsText) {
                     if (!(prev instanceof ParsedMessage)) {
                         return;
                     }
@@ -3540,12 +3522,7 @@ export class WWA {
                 }
             });
             pages.push(
-                new Page(
-                    tree,
-                    pageId === pageStr.length - 1,
-                    pageId === 0 && showChoice,
-                    isSystemMessage
-                )
+                new Page(tree, pageId === pageStr.length - 1, pageId === 0 && showChoice, isSystemMessage)
             );
         };
         return pages;
