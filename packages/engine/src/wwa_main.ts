@@ -3427,56 +3427,56 @@ export class WWA {
                         return { type: "normalMacro" as const, text: line, macro }
                 }
             });
-            let tree: Node | undefined = undefined;
-            let current: Node | undefined = undefined;
-            let prev: Node | undefined = undefined;
+            let firstNode: Node | undefined = undefined;
+            let nodeByPrevLine: Node | undefined = undefined;
             const junctionNodeStack: Junction[] = [];
             type LineType = typeof lines[number]["type"];
-            const lineIsText = (lineType: LineType) => lineType === MacroType.SHOW_STR || lineType === "text" || lineType !== "normalMacro";
+            const lineIsText = (lineType: LineType) => lineType === MacroType.SHOW_STR || lineType === "text" || lineType === "normalMacro";
 
             lines.forEach((line, index) => {
-                if (current) {
-                    prev = current;
-                }
+                let newNode: Node | undefined = undefined;
                 const previousLineType = index === 0 ? undefined : lines[index - 1].type;
                 const prevLineIsText = lineIsText(previousLineType);
                 const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
+                const isTopLevel = junctionNodeStack.length === 0;
                 switch (line.type) {
                     case MacroType.IF:
                         // TODO: descriminant のパース処理
-                        current = new Junction([{ descriminant: { left: 0, right: 0, operator: "==" } }]);
+                        const junction = new Junction([{ descriminant: { left: 0, right: 0, operator: "==" } }]);
+                        newNode = junction;
+                        junctionNodeStack.push(junction);
                         break;
                     case MacroType.ELSE_IF:
-                        if (tree === undefined) {
-                            throw new Error("syntax error: レベル0 で else_if は使えません")
+                        if (isTopLevel) {
+                            throw new Error("構文エラー: $if を呼ぶ前に $else_if は呼べません")
                         }
                         // TODO: descriminant のパース処理
                         parentJunction.appendBranch({ descriminant: { left: 0, right: 0, operator: "==" } })
                        break;
                     case MacroType.ELSE:
-                        if (tree === undefined) {
-                            throw new Error("syntax error: レベル0 で else は使えません")
+                        if (isTopLevel) {
+                            throw new Error("構文エラー: $if を呼ぶ前に $else は呼べません")
                         }
                         parentJunction.appendBranch()
                         break;
                     case MacroType.END_IF:
-                        if (tree === undefined) {
-                            throw new Error("syntax error: レベル0 で endif は使えません")
+                        if (isTopLevel) {
+                            throw new Error("構文エラー: $if を呼ぶ前に $endif は呼べません")
                         }
                         break;
                     case MacroType.SHOW_STR:
-                        if (!prevLineIsText) { 
-                            current = new ParsedMessage(this._generateUserValString(line.macro.macroArgs));
+                        if (!firstNode || !prevLineIsText) { 
+                            newNode = new ParsedMessage(this._generateUserValString(line.macro.macroArgs));
                         }
                         break;
                     case "text":
-                        if (!prevLineIsText) { 
-                            current = new ParsedMessage(line.text);
+                        if (!firstNode || !prevLineIsText) { 
+                            newNode = new ParsedMessage(line.text);
                         }
                         break;
                     case "normalMacro":
-                        if (!prevLineIsText) { 
-                            current = new ParsedMessage("", [line.macro]);
+                        if (!firstNode || !prevLineIsText) { 
+                            newNode = new ParsedMessage("", [line.macro]);
                         }
                         break;
                 }
@@ -3485,12 +3485,12 @@ export class WWA {
                     previousLineType === MacroType.ELSE_IF ||
                     previousLineType === MacroType.ELSE
                 ) {
-                    if(!current || !(prev instanceof Junction)) {
+                    if(!newNode || !(nodeByPrevLine instanceof Junction)) {
                         return;
                     }
-                    prev.getLastUnconnectedBranch().next = current;
+                    nodeByPrevLine.getLastUnconnectedBranch().next = newNode;
                 } else if (previousLineType === MacroType.END_IF) {
-                    if(!current || !(prev instanceof Junction)) {
+                    if(!newNode || !(nodeByPrevLine instanceof Junction)) {
                         return;
                     }
                     const junctionNode = junctionNodeStack.pop();
@@ -3501,28 +3501,34 @@ export class WWA {
                                 throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
                             }
                             if (!finalNode.next) {
-                                finalNode.next = current;
+                                finalNode.next = newNode;
                                 break;
                             }
                         }
                     }
                 } else if (prevLineIsText) {
-                    if (!(prev instanceof ParsedMessage)) {
+                    if (!(nodeByPrevLine instanceof ParsedMessage)) {
                         return;
                     }
+                    // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
                     if (line.type === MacroType.SHOW_STR) {
-                        prev.appendMessageWithNewLine(this._generateUserValString(line.macro.macroArgs));
+                        nodeByPrevLine.appendMessageWithNewLine(this._generateUserValString(line.macro.macroArgs));
                     } else if (line.type === "text") {
-                        prev.appendMessageWithNewLine(line.text);
+                        nodeByPrevLine.appendMessageWithNewLine(line.text);
                     } else if (line.type === "normalMacro") {
-                        prev.macro.push(line.macro);
+                        nodeByPrevLine.macro.push(line.macro);
+                    } else { // if などの場合は単純に接続する
+                        nodeByPrevLine.next = newNode;
                     }
-                } else if (previousLineType === undefined) {
-                    tree = current;
+                } else if (!previousLineType) {
+                    firstNode = newNode;
+                }
+                if (newNode) {
+                    nodeByPrevLine = newNode;
                 }
             });
             pages.push(
-                new Page(tree, pageId === pageStr.length - 1, pageId === 0 && showChoice, isSystemMessage)
+                new Page(firstNode, pageId === pageStr.length - 1, pageId === 0 && showChoice, isSystemMessage)
             );
         };
         return pages;
