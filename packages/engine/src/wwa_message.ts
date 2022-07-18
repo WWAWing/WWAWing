@@ -157,8 +157,8 @@ export class ParsedMessage extends Node {
         }, "")
     }
 
-    appendMessageWithNewLine(message: string | MessageSegments): void {
-        this.messageArray = this.messageArray.concat(["\n"], this.parseMessage(message));
+    appendMessage(message: string | MessageSegments, withNewLine: boolean = false): void {
+        this.messageArray = this.messageArray.concat(withNewLine ? ["\n"] : [], this.parseMessage(message));
     }
 
     private parseMessage(message: string | MessageSegments): MessageSegments {

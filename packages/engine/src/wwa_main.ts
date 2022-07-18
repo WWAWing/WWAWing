@@ -3523,11 +3523,13 @@ export class WWA {
                     if (!(nodeByPrevLine instanceof ParsedMessage)) {
                         return;
                     }
+                    // 前の行までのメッセージ表示内容がない場合は、改行を挿入しない
+                    const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
                     // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
                     if (line.type === MacroType.SHOW_STR) {
-                        nodeByPrevLine.appendMessageWithNewLine(this._generateUserValString(line.macro.macroArgs));
+                        nodeByPrevLine.appendMessage(this._generateUserValString(line.macro.macroArgs), shouldInsertNewLine);
                     } else if (line.type === "text") {
-                        nodeByPrevLine.appendMessageWithNewLine(line.text);
+                        nodeByPrevLine.appendMessage(line.text, shouldInsertNewLine);
                     } else if (line.type === "normalMacro") {
                         nodeByPrevLine.macro.push(line.macro);
                     } else { // if などの場合は単純に接続する
