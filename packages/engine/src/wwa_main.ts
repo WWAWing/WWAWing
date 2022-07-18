@@ -59,6 +59,12 @@ export function getProgress(current: number, total: number, stage: LoadStage): L
     return progress;
 }
 
+interface PartsAppearance {
+    pos: Coord;
+    triggerType: AppearanceTriggerType;
+    triggerPartsId: number;
+}
+
 export class WWA {
     private _cvs: HTMLCanvasElement;
     private _cvsSub: HTMLCanvasElement;
@@ -111,7 +117,11 @@ export class WWA {
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
-    private _lastPage: Page;
+    private _lastPage: {
+        isLastPage: boolean;
+        isEmpty: boolean;
+    } | undefined;
+    private _reservedPartsAppearance: PartsAppearance | undefined;
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
@@ -465,7 +475,8 @@ export class WWA {
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
             this._prevFrameEventExected = false;
-            this._lastPage = new Page();
+            this._lastPage = undefined;
+            this._reservedPartsAppearance = undefined;
             this._execPageInNextFrame = undefined;
             this._passwordLoadExecInNextFrame = false;
 
@@ -1615,13 +1626,16 @@ export class WWA {
             this.clearFaces();
             this._clearFacesInNextFrame = false;
         }
+        if (this._reservedPartsAppearance) {
+            this.appearParts(this._reservedPartsAppearance);
+            this._reservedPartsAppearance = undefined;
+        }
         if (this._execPageInNextFrame) {
             const messageLines = this._executeNode(this._execPageInNextFrame.firstNode);
 
             // executeNode の結果、ゲームオーバーになるなどして、execPageInNextFrame がクリアされた場合は以下の処理は実行しない
             if (this._execPageInNextFrame) {
-                // TODO: isEmptyを消していいか動作確認する
-                if (/*this._lastPage.isEmpty() &&*/ this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
+                if (this._lastPage?.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
                     this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                     this._reservedMoveMacroTurn = void 0;
                 }
@@ -1647,7 +1661,13 @@ export class WWA {
                         this._setNextPage();
                     }
                 }
+                this._lastPage = {
+                    isEmpty: messageDisplayed,
+                    isLastPage: this._execPageInNextFrame.isLastPage
+                }
                 this._execPageInNextFrame = undefined;
+            } else {
+                this._lastPage = undefined;
             }
         }
 
@@ -2729,7 +2749,7 @@ export class WWA {
             return false;
         }
 
-        this.appearParts(pos, AppearanceTriggerType.MAP);
+        this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP);
         var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
         var message = this._wwaData.message[messageID];
         // 待ち時間
@@ -2751,7 +2771,7 @@ export class WWA {
                 !this._player.hasItem(this.getObjectAttributeById(objID, Consts.ATR_ITEM)) ||
                 this.getObjectAttributeById(objType, Consts.ATR_MODE) === Consts.PASSABLE_OBJECT)) {
 
-            this.appearParts(pos, AppearanceTriggerType.MAP);
+            this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP);
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             var message = this._wwaData.message[messageID];
 
@@ -2774,7 +2794,7 @@ export class WWA {
         if (jy > Consts.RELATIVE_COORD_LOWER) {
             jy = pos.y + jy - Consts.RELATIVE_COORD_BIAS;
         }
-        this.appearParts(pos, AppearanceTriggerType.MAP);
+        this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP);
         if (
             0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth &&
             (jx !== playerPos.x || jy !== playerPos.y)
@@ -2828,7 +2848,7 @@ export class WWA {
         //this._waitTimeInCurrentFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * 100;
         this._waitFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
         this._temporaryInputDisable = true;
-        this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+        this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
 
         this.playSound(soundID);
     }
@@ -2887,7 +2907,7 @@ export class WWA {
 
         //this._wwaData.mapObject[pos.y][pos.x] = 0;
         this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
-        this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+        this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
     }
 
@@ -2976,7 +2996,7 @@ export class WWA {
                 // 使用型アイテム の場合は、処理は使用時です。
             } else {
                 this.setMessageQueue(message, false, false, partsID, PartsType.OBJECT, pos.clone());
-                this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+                this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
             }
         } catch (e) {
             // これ以上、アイテムを持てません
@@ -3003,7 +3023,7 @@ export class WWA {
             this.setMessageQueue(message, false, false, partsID, PartsType.OBJECT, pos.clone());
             //this._wwaData.mapObject[pos.y][pos.x] = 0;
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
-            this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+            this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
             this._paintSkipByDoorOpen = true;
         }
 
@@ -3044,7 +3064,7 @@ export class WWA {
         if (jy > Consts.RELATIVE_COORD_LOWER) {
             jy = playerPos.y + jy - Consts.RELATIVE_COORD_BIAS;
         }
-        this.appearParts(pos, AppearanceTriggerType.OBJECT, partsID);
+        this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
         if (
             0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth &&
             (jx !== playerPos.x || jy !== playerPos.y)
@@ -3139,7 +3159,7 @@ export class WWA {
                             gold = this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD];
                             this._player.earnGold(gold);
                             this.setStatusChangedEffect(new Status(0, 0, 0, gold));
-                            this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
+                            this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                         } else {
                             // アイテムを持っていない
                             if (this._wwaData.message[SystemMessage1.NO_ITEM] !== "BLANK") {
@@ -3190,7 +3210,7 @@ export class WWA {
                                     this.gameover();
                                     return;
                                 }
-                                this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
+                                this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                             } else {
                                 // アイテムをボックスがいっぱい
                                 if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
@@ -3214,7 +3234,7 @@ export class WWA {
                         }
 
                     } else if (partsType === Consts.OBJECT_SELECT) {
-                        this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_YES, this._yesNoChoicePartsID);
+                        this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_YES, this._yesNoChoicePartsID);
                     } else if (partsType === Consts.OBJECT_URLGATE) {
                         location.href = util.$escapedURI(this._yesNoURL);
                     }
@@ -3280,7 +3300,7 @@ export class WWA {
                     } else if (partsType === Consts.OBJECT_SELL) {
 
                     } else if (partsType === Consts.OBJECT_SELECT) {
-                        this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_NO, this._yesNoChoicePartsID);
+                        this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_NO, this._yesNoChoicePartsID);
                     } else if (partsType === Consts.OBJECT_URLGATE) {
 
                     }
@@ -3370,16 +3390,9 @@ export class WWA {
         this._messageQueue = this._messageQueue.concat(
             this.getMessageQueueByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice
         ));
-
-        if (this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
-            this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
-            this._reservedMoveMacroTurn = void 0;
-        }
-
         if (this._messageQueue.length !== 0) {
             var topmes = this._messageQueue.shift();
             this._execPageInNextFrame = topmes;
-            this._lastPage = topmes;
         }
         return false;
     }
@@ -3533,8 +3546,7 @@ export class WWA {
         };
         return pages;
    }
-
-    public appearParts(pos: Coord, triggerType: AppearanceTriggerType, triggerPartsID: number = 0): void {
+    public appearParts({ pos, triggerType, triggerPartsId }: PartsAppearance): void {
         var triggerPartsType: PartsType;
         var rangeMin: number = (triggerType === AppearanceTriggerType.CHOICE_NO) ?
             Consts.APPERANCE_PARTS_MIN_INDEX_NO : Consts.APPERANCE_PARTS_MIN_INDEX;
@@ -3548,10 +3560,10 @@ export class WWA {
         var i: number;
 
         if (triggerType === AppearanceTriggerType.MAP) {
-            triggerPartsID = (triggerPartsID === 0) ? this._wwaData.map[pos.y][pos.x] : triggerPartsID;
+            triggerPartsId = (triggerPartsId === 0) ? this._wwaData.map[pos.y][pos.x] : triggerPartsId;
             triggerPartsType = PartsType.MAP;
         } else {
-            triggerPartsID = (triggerPartsID === 0) ? this._wwaData.mapObject[pos.y][pos.x] : triggerPartsID;
+            triggerPartsId = (triggerPartsId === 0) ? this._wwaData.mapObject[pos.y][pos.x] : triggerPartsId;
             triggerPartsType = PartsType.OBJECT;
         }
 
@@ -3563,17 +3575,17 @@ export class WWA {
             var idxType = base + Consts.REL_ATR_APPERANCE_TYPE;
 
             targetPartsID = (triggerPartsType === PartsType.MAP) ?
-                this._wwaData.mapAttribute[triggerPartsID][idxID] :
-                this._wwaData.objectAttribute[triggerPartsID][idxID];
+                this._wwaData.mapAttribute[triggerPartsId][idxID] :
+                this._wwaData.objectAttribute[triggerPartsId][idxID];
             targetPartsType = (triggerPartsType === PartsType.MAP) ?
-                this._wwaData.mapAttribute[triggerPartsID][idxType] :
-                this._wwaData.objectAttribute[triggerPartsID][idxType];
+                this._wwaData.mapAttribute[triggerPartsId][idxType] :
+                this._wwaData.objectAttribute[triggerPartsId][idxType];
             targetX = (triggerPartsType === PartsType.MAP) ?
-                this._wwaData.mapAttribute[triggerPartsID][idxX] :
-                this._wwaData.objectAttribute[triggerPartsID][idxX];
+                this._wwaData.mapAttribute[triggerPartsId][idxX] :
+                this._wwaData.objectAttribute[triggerPartsId][idxX];
             targetY = (triggerPartsType === PartsType.MAP) ?
-                this._wwaData.mapAttribute[triggerPartsID][idxY] :
-                this._wwaData.objectAttribute[triggerPartsID][idxY];
+                this._wwaData.mapAttribute[triggerPartsId][idxY] :
+                this._wwaData.objectAttribute[triggerPartsId][idxY];
 
             if (targetX === Consts.PLAYER_COORD) {
                 targetX = this._player.getPosition().getPartsCoord().x
@@ -3619,6 +3631,15 @@ export class WWA {
         }
 
     }
+
+    public reserveAppearPartsInNextFrame(pos: Coord, triggerType: AppearanceTriggerType, triggerPartsId: number = 0): void {
+        this._reservedPartsAppearance = {
+            pos,
+            triggerType,
+            triggerPartsId
+        }
+    }
+
     public appearPartsByDirection(
         distance: number,
         targetPartsID: number,

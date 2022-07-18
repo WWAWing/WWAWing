@@ -1053,7 +1053,7 @@ export class Player extends PartsObject {
                         this._wwa.setPartsOnPosition(PartsType.OBJECT, 0, this._enemy.position);
                     }
                     // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
-                    this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
+                    this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
                     this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
                     this._wwa.setMessageQueue(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
                     this._enemy.battleEndProcess();
@@ -1100,7 +1100,7 @@ export class Player extends PartsObject {
         itemID = this._itemBox[itemPos - 1];
         messageID = this._wwa.getObjectAttributeById(itemID, Consts.ATR_STRING);
         //            this._wwa.setMessageQueue(this._wwa.getMessageById(messageID), false, itemID, PartsType.OBJECT, this._position.getPartsCoord());
-        this._wwa.appearParts(this._position.getPartsCoord(), AppearanceTriggerType.OBJECT, itemID);
+        this._wwa.reserveAppearPartsInNextFrame(this._position.getPartsCoord(), AppearanceTriggerType.OBJECT, itemID);
         this._readyToUseItemPos = itemPos;
         this._isReadyToUseItem = true;
     }
