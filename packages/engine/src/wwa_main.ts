@@ -1591,12 +1591,13 @@ export class WWA {
     );
 
 
-    private _executeNode(node: Node | undefined): ParsedMessage[] {
+    private _executeNode(node: Node | undefined, tokenValues: ExpressionParser.TokenValues): ParsedMessage[] {
         if (node instanceof ParsedMessage) {
             node.macro?.forEach(macro => macro.execute());
-            return [node, ...this._executeNode(node.next)];
+            return [node, ...this._executeNode(node.next, tokenValues)];
         } else if (node instanceof Junction) {
-            return this._executeNode(node.evaluateAndGetNextNode());
+            const next = node.evaluateAndGetNextNode(tokenValues);
+            return next ? this._executeNode(next, tokenValues) : [];
         }
         // node === undefined
         return [];
@@ -1631,7 +1632,7 @@ export class WWA {
             this._reservedPartsAppearance = undefined;
         }
         if (this._execPageInNextFrame) {
-            const messageLines = this._executeNode(this._execPageInNextFrame.firstNode);
+            const messageLines = this._executeNode(this._execPageInNextFrame.firstNode, this._generateTokenValues());
 
             // executeNode の結果、ゲームオーバーになるなどして、execPageInNextFrame がクリアされた場合は以下の処理は実行しない
             if (this._execPageInNextFrame) {
@@ -3454,8 +3455,7 @@ export class WWA {
                 const isTopLevel = junctionNodeStack.length === 0;
                 switch (line.type) {
                     case MacroType.IF:
-                        // TODO: descriminant のパース処理
-                        const junction = new Junction([{ descriminant: { left: 0, right: 0, operator: "==" } }]);
+                        const junction = new Junction([{ descriminant: ExpressionParser.parseDescriminant(line.macro.macroArgs[0]) }]);
                         newNode = junction;
                         junctionNodeStack.push(junction);
                         break;
@@ -3463,14 +3463,14 @@ export class WWA {
                         if (isTopLevel) {
                             throw new Error("構文エラー: $if を呼ぶ前に $else_if は呼べません")
                         }
-                        // TODO: descriminant のパース処理
-                        parentJunction.appendBranch({ descriminant: { left: 0, right: 0, operator: "==" } })
+                        parentJunction.appendBranch({ descriminant: ExpressionParser.parseDescriminant(line.macro.macroArgs[0]) })
                        break;
                     case MacroType.ELSE:
                         if (isTopLevel) {
                             throw new Error("構文エラー: $if を呼ぶ前に $else は呼べません")
                         }
-                        parentJunction.appendBranch()
+                        // else の場合、該当する分岐は必ず実行されるべき
+                        parentJunction.appendBranch({ descriminant: true })
                         break;
                     case MacroType.END_IF:
                         if (isTopLevel) {

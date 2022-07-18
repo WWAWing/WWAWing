@@ -24,6 +24,8 @@ import {
     WWASave,
     WWASaveData
 } from "./wwa_save";
+import type { TokenValues, Descriminant } from "./wwa_expression";
+import { parseValue2 } from "./wwa_expression/parsers";
 
 /**
  * 値が更新された時に、再評価されるべき値を返す関数の型。
@@ -36,29 +38,25 @@ export type LazyEvaluateValue = () => number;
 export type MessageSegments = (string | LazyEvaluateValue)[];
 
 
-export interface Descriminant {
-    // TODO: 数値だけでなく変数やステータスも扱える必要があるが、一旦簡単のため数値のみとしている。
-    left: number; 
-    // TODO: 数値だけでなく変数やステータスも扱える必要があるが、一旦簡単のため数値のみとしている。
-    right: number;
-
-    operator: "<" | ">" | "<=" | ">=" | "==" | "!=";
-}
-
-export function evaluateDescriminant(d: Descriminant): boolean {
+export function evaluateDescriminant(d: Descriminant | boolean, tokenValues: TokenValues): boolean {
+    if (typeof d === "boolean") {
+        return d;
+    }
+    const left = parseValue2(d.left, tokenValues);
+    const right = parseValue2(d.right, tokenValues);
     switch (d.operator) {
         case "<":
-            return d.left < d.right;
+            return left < right;
         case ">":
-            return d.left > d.right;
+            return left > right;
         case "<=":
-            return d.left <= d.right;
+            return left <= right;
         case ">=":
-            return d.left >= d.right;
+            return left >= right;
         case "==":
-            return d.left === d.right;
+            return left === right;
         case "!=":
-            return d.left !== d.right;
+            return left !== right;
         default:
             throw new Error("存在しない演算子です");
     }
@@ -82,7 +80,11 @@ export abstract class Node {
 }
 
 export interface Branch {
-    descriminant?: Descriminant
+    /**
+     * 判別式
+     * 構文エラーの場合は undefined (false と同等扱い) になります。
+     */
+    descriminant?: Descriminant;
     next?: Node
 }
 
@@ -95,7 +97,7 @@ export class Junction extends Node {
     ){
         super();        
     }
-    appendBranch(branch: Branch = {}): void {
+    appendBranch(branch: Branch): void {
         this.branches.push(branch);
     }
     getLastUnconnectedBranch(): Branch | undefined {
@@ -106,14 +108,15 @@ export class Junction extends Node {
         }
         return undefined;
     }
-    evaluateAndGetNextNode(): Node {
+    evaluateAndGetNextNode(tokenValues: TokenValues): Node | undefined {
         for (let branch of this.branches) {
-            // 判別式がない場合は $else 節に相当するのでそのまま次の Node を返す
-            if (!branch.descriminant || evaluateDescriminant(branch.descriminant)) {
+            // 判別式が undefined の場合は $else 節に相当するのでそのまま次の Node を返す
+            // 判別式が null の場合はエラーなので、仕方なく次の Node を返す
+            if (!branch.descriminant || evaluateDescriminant(branch.descriminant, tokenValues)) {
                 return branch.next;
             }
         }
-        throw new Error("実行時エラー: Junction ノードの分岐が正しい形をしていません");
+        return undefined;
     }
 }
 
