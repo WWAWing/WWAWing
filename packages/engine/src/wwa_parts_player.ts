@@ -816,7 +816,7 @@ export class Player extends PartsObject {
                             }
                             break;
                     }
-                    this._wwa.setMessageQueue(mes === "" ? deviceMessage : mes, false, true);
+                    this._wwa.generatePageAndReserveExecution(mes === "" ? deviceMessage : mes, false, true);
                 }
                 this._isClickableItemGot = true;
             }
@@ -1055,7 +1055,7 @@ export class Player extends PartsObject {
                     // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
                     this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
                     this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-                    this._wwa.setMessageQueue(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
+                    this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
                     this._enemy.battleEndProcess();
                     this._battleTurnNum = 0;
                     this._enemy = null;
@@ -1064,7 +1064,7 @@ export class Player extends PartsObject {
                 return;
             }
             this._enemy.battleEndProcess();
-            this._wwa.setMessageQueue("相手の防御能力が高すぎる！", false, true);
+            this._wwa.generatePageAndReserveExecution("相手の防御能力が高すぎる！", false, true);
             this._battleTurnNum = 0;
             this._enemy = null;
         } else {
@@ -1099,7 +1099,6 @@ export class Player extends PartsObject {
         }
         itemID = this._itemBox[itemPos - 1];
         messageID = this._wwa.getObjectAttributeById(itemID, Consts.ATR_STRING);
-        //            this._wwa.setMessageQueue(this._wwa.getMessageById(messageID), false, itemID, PartsType.OBJECT, this._position.getPartsCoord());
         this._wwa.reserveAppearPartsInNextFrame(this._position.getPartsCoord(), AppearanceTriggerType.OBJECT, itemID);
         this._readyToUseItemPos = itemPos;
         this._isReadyToUseItem = true;
