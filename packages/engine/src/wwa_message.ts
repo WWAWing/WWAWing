@@ -24,8 +24,7 @@ import {
     WWASave,
     WWASaveData
 } from "./wwa_save";
-import type { TokenValues, Descriminant } from "./wwa_expression";
-import { parseValue2 } from "./wwa_expression/parsers";
+import { type TokenValues, type Descriminant, evaluateDescriminant } from "./wwa_expression";
 
 /**
  * 値が更新された時に、再評価されるべき値を返す関数の型。
@@ -37,30 +36,6 @@ export type LazyEvaluateValue = () => number;
  */
 export type MessageSegments = (string | LazyEvaluateValue)[];
 
-
-export function evaluateDescriminant(d: Descriminant | boolean, tokenValues: TokenValues): boolean {
-    if (typeof d === "boolean") {
-        return d;
-    }
-    const left = parseValue2(d.left, tokenValues);
-    const right = parseValue2(d.right, tokenValues);
-    switch (d.operator) {
-        case "<":
-            return left < right;
-        case ">":
-            return left > right;
-        case "<=":
-            return left <= right;
-        case ">=":
-            return left >= right;
-        case "==":
-            return left === right;
-        case "!=":
-            return left !== right;
-        default:
-            throw new Error("存在しない演算子です");
-    }
-}
 
 export class Page {
     constructor(

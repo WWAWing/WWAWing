@@ -1,12 +1,20 @@
-import { parseValue, parseType2, type TokenValues, type Descriminant, ComparisionOperatorKind } from "./parsers";
-import { calc, compare } from "./eval";
+import type { TokenValues, Descriminant, ComparisionOperatorKind } from "./typedef";
+import { parseType } from "./parsers";
+import { evaluateValue, calc } from "./eval";
 import { regAdvance, regNormal, regIf } from "./regexp";
 import { generateValueAssignOperation, type ValueAssignOperation } from "./value-assign-operation";
 
-export { TokenValues, ValueAssignOperation, Descriminant };
+export * from "./typedef";
+export * from "./parsers";
+export * from "./eval";
+export * from "./regexp";
 
 function removeSpaces(rawString: string): string {
   return rawString.replace(/\s/g, "");
+}
+
+function parseAndEvaluateValue(value: string, tokenValues: TokenValues): number {
+  return evaluateValue(parseType(value), tokenValues);
 }
 
 /** 
@@ -16,8 +24,8 @@ export function evaluateSetMacroExpression(expression: string, tokenValues: Toke
   const noSpaceStr = removeSpaces(expression);
   const advanceMatch = noSpaceStr.match(regAdvance);
   if (advanceMatch !== null) {
-    const leftValue = parseValue(advanceMatch[2], tokenValues);
-    const rightValue = parseValue(advanceMatch[4], tokenValues);
+    const leftValue = parseAndEvaluateValue(advanceMatch[2], tokenValues);
+    const rightValue = parseAndEvaluateValue(advanceMatch[4], tokenValues);
     const operator = advanceMatch[3];
     const calcResult = calc(operator, leftValue, rightValue);
     return generateValueAssignOperation(calcResult, advanceMatch[1]);
@@ -25,8 +33,8 @@ export function evaluateSetMacroExpression(expression: string, tokenValues: Toke
 
   const normalMatch = noSpaceStr.match(regNormal);
   if (normalMatch !== null) {
-    const leftValue = parseValue(normalMatch[1], tokenValues);
-    const rightValue = parseValue(normalMatch[3], tokenValues);
+    const leftValue = parseAndEvaluateValue(normalMatch[1], tokenValues);
+    const rightValue = parseAndEvaluateValue(normalMatch[3], tokenValues);
     const operator = normalMatch[2];
     const calcResult = calc(operator, leftValue, rightValue);
     return generateValueAssignOperation(calcResult, normalMatch[1])
@@ -36,23 +44,7 @@ export function evaluateSetMacroExpression(expression: string, tokenValues: Toke
 }
 
 /**
- * if マクロ式を評価して、結果を返します。
- */
-export function evaluateIfMacroExpression(expression: string, tokenValues: TokenValues): boolean {
-  const descriminant = removeSpaces(expression).match(regIf);
-  if (descriminant === null || descriminant.length <= 3) {
-    console.error(`判定式が異常です: ${expression}`)
-    return false;
-  }
-  const left = parseValue(descriminant[1], tokenValues);
-  const right = parseValue(descriminant[3], tokenValues);
-  const operator = descriminant[2];
-  return compare(operator, left, right)
-}
-
-/**
- * if 判別式をパースします。
- * evaluateIfmacroExpression と異なり、評価は行いません。
+ * if 判別式をパースします。 (評価は行いません)
  */
 export function parseDescriminant(expression: string): Descriminant | undefined {
   const descriminant = removeSpaces(expression).match(regIf);
@@ -60,8 +52,8 @@ export function parseDescriminant(expression: string): Descriminant | undefined 
     console.error(`判定式が異常です: ${expression}`)
     return undefined;
   }
-  const left = parseType2(descriminant[1]);
-  const right = parseType2(descriminant[3]);
+  const left = parseType(descriminant[1]);
+  const right = parseType(descriminant[3]);
   if (!left || !right) {
     console.error(`判定式が異常です: ${expression}`)
     return undefined;
