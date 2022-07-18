@@ -3498,24 +3498,29 @@ export class WWA {
                     previousLineType === MacroType.ELSE_IF ||
                     previousLineType === MacroType.ELSE
                 ) {
-                    if(!newNode || !(nodeByPrevLine instanceof Junction)) {
+                    if(!newNode) {
                         return;
                     }
-                    nodeByPrevLine.getLastUnconnectedBranch().next = newNode;
+                    parentJunction.getLastUnconnectedBranch().next = newNode;
                 } else if (previousLineType === MacroType.END_IF) {
-                    if(!newNode || !(nodeByPrevLine instanceof Junction)) {
+                    if (!newNode) {
                         return;
                     }
                     const junctionNode = junctionNodeStack.pop();
-                    for (let branch of junctionNode.branches) {
-                        let finalNode: Node = branch;
-                        while (true) {
-                            if (!(finalNode instanceof ParsedMessage)) {
-                                throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
-                            }
-                            if (!finalNode.next) {
-                                finalNode.next = newNode;
-                                break;
+                    for (let i = 0; i < junctionNode.branches.length; i++ ) {
+                        let finalNode: Node | undefined = junctionNode.branches[i].next;
+                        if (!finalNode) {
+                            junctionNode.branches[i] = newNode;
+                        } else {
+                            // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
+                            while (true) {
+                                if (!(finalNode instanceof ParsedMessage)) {
+                                    throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
+                                }
+                                if (!finalNode.next) {
+                                    finalNode.next = newNode;
+                                    break;
+                                }
                             }
                         }
                     }
