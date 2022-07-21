@@ -3547,16 +3547,22 @@ export class WWA {
                 let finalNode: Node | undefined = endIfTargetJunction.branches[i].next;
                 if (!finalNode) {
                     endIfTargetJunction.branches[i] = newNode;
-                } else {
-                    // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
-                    while (true) {
-                        if (!(finalNode instanceof ParsedMessage)) {
-                            throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
-                        }
+                    continue;
+                } 
+                // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
+                while (true) {
+                    if (finalNode instanceof Junction) {
+                        // どの分岐を選んでも最終的には同じ結果になるので、確実に存在する分岐を選ぶ。
+                        // 理想を言えば Junction ノードは合流地点のノードを覚えていれば処理が高速化されるが
+                        // WWAのメッセージで何百行も書くことは想定しないので、処理を簡単にする。必要なら今後考える。
+                        finalNode = finalNode.branches[0].next;
+                    } 
+                    if (finalNode instanceof ParsedMessage) {
                         if (!finalNode.next) {
                             finalNode.next = newNode;
                             break;
                         }
+                        finalNode = finalNode.next;
                     }
                 }
             }
