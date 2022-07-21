@@ -3419,12 +3419,12 @@ export class WWA {
             .replace(/\<p\>/ig, "<P>")
             .replace(/\/\/.*\n/ig, "");
 
-        const pages: Page[] = [];
         if (messageMain === "") {
             return [];
         }
         const pageContents = messageMain.split(/\<p\>/ig);
-        pageContents.forEach((pageContent, pageId) => {
+
+        return pageContents.map((pageContent, pageId) => {
             let firstNode: Node | undefined = undefined;
             let nodeByPrevLine: Node | undefined = undefined;
             let lastPoppedJunction: Junction | undefined = undefined;
@@ -3441,7 +3441,7 @@ export class WWA {
                         lastPoppedJunction = endIfPoppedJunction;
                     }
                     if (previousLineType) {
-                        this.connectToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction, lastPoppedJunction);
+                        this.connectOrMergeToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction, lastPoppedJunction);
                     } else {
                         firstNode = newNode;
                     }
@@ -3453,13 +3453,14 @@ export class WWA {
                     console.error(error);
                 }
             });
-            pages.push(
-                new Page(firstNode, pageId === pageContents.length - 1, pageId === 0 && showChoice, isSystemMessage)
-            );
+
+            return new Page(firstNode, pageId === pageContents.length - 1, pageId === 0 && showChoice, isSystemMessage);
         });
-        return pages;
    }
 
+   /**
+    * メッセージ行をパースして, テキスト, プリプロセスマクロ, その他のマクロに分類する。
+    */
     private parseMessageLines(pageContent: string, partsID: number, partsType: PartsType, partsPosition: Coord): MessageLine[] {
         return pageContent.split("\n").map(line => {
             const matchInfo = line.match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)(?:.*))/);
@@ -3480,12 +3481,14 @@ export class WWA {
         });
     }
 
+    /**
+     * メッセージ行に対するノードを生成する。 
+     */
     private createNewNode(currentLine: MessageLine, shouldCreateParsedMessage: boolean): Node | undefined {
         switch (currentLine.type) {
             case MacroType.IF:
-                const junction = new Junction([{ descriminant: ExpressionParser.parseDescriminant(currentLine.macro.macroArgs[0]) }]);
-                return junction;
-           case MacroType.SHOW_STR:
+                return new Junction([{ descriminant: ExpressionParser.parseDescriminant(currentLine.macro.macroArgs[0]) }]);
+            case MacroType.SHOW_STR:
                 return shouldCreateParsedMessage ? new ParsedMessage(this._generateUserValString(currentLine.macro.macroArgs)) : undefined;
             case "text":
                 return shouldCreateParsedMessage ? new ParsedMessage(currentLine.text) : undefined;
@@ -3497,7 +3500,8 @@ export class WWA {
     }
 
     /**
-     * END_IF の場合は junctionNodeStack の先頭を pop し、返します。 
+     * 条件実行系マクロの行を読んだ時の処理を実行
+     * END_IF の場合は junctionNodeStack の先頭を pop し、返す。 
      */
     private processConditionalExecuteMacroLine(
         newNode: Node,
@@ -3532,7 +3536,10 @@ export class WWA {
 
     }
 
-    private connectToPreviousNode(
+    /**
+     * ノードをこれまでのメッセージの適切な箇所に連結する。
+     */
+    private connectOrMergeToPreviousNode(
         currentLine: MessageLine,
         previousLineType: MessageLineType,
         nodeByPrevLine: Node | undefined,
@@ -3541,71 +3548,78 @@ export class WWA {
         endIfTargetJunction: Junction | undefined
     ) {
         const prevLineIsText = messagLineIsText(previousLineType);
-        if (
-            previousLineType === MacroType.IF ||
-            previousLineType === MacroType.ELSE_IF ||
-            previousLineType === MacroType.ELSE
-        ) {
-            if (!newNode || !parentJunction) {
-                return;
-            }
-            const target = parentJunction.getLastUnconnectedBranch();
-            if (target) {
-                target.next = newNode;
-            } else {
-                throw new Error("lastUnconnectedBranchが見つかりませんでした。")
-            }
-            return;
-        }
-        if (previousLineType === MacroType.END_IF) {
-            if (!newNode || !(endIfTargetJunction instanceof Junction)) {
-                return;
-            }
-            for (let i = 0; i < endIfTargetJunction.branches.length; i++) {
-                let finalNode: Node | undefined = endIfTargetJunction.branches[i].next;
-                if (!finalNode) {
-                    endIfTargetJunction.branches[i] = newNode;
-                    continue;
-                } 
-                // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
-                while (true) {
-                    if (finalNode instanceof Junction) {
-                        // どの分岐を選んでも最終的には同じ結果になるので、確実に存在する分岐を選ぶ。
-                        // 理想を言えば Junction ノードは合流地点のノードを覚えていれば処理が高速化されるが
-                        // WWAのメッセージで何百行も書くことは想定しないので、処理を簡単にする。必要なら今後考える。
-                        finalNode = finalNode.branches[0].next;
-                    } 
-                    if (finalNode instanceof ParsedMessage) {
-                        if (!finalNode.next) {
-                            finalNode.next = newNode;
-                            break;
-                        }
-                        finalNode = finalNode.next;
-                    }
+        switch (previousLineType) {
+            case MacroType.IF:
+            case MacroType.ELSE_IF:
+            case MacroType.ELSE:
+                if (!newNode || !parentJunction) {
+                    return;
                 }
-            }
-            return;
-        }
-        if (prevLineIsText) {
-            if (!(nodeByPrevLine instanceof ParsedMessage)) {
+                const target = parentJunction.getLastUnconnectedBranch();
+                if (target) {
+                    target.next = newNode;
+                } else {
+                    throw new Error("lastUnconnectedBranchが見つかりませんでした。")
+                }
                 return;
+            case MacroType.END_IF:
+                if (!newNode || !(endIfTargetJunction instanceof Junction)) {
+                    return;
+                }
+                for (let i = 0; i < endIfTargetJunction.branches.length; i++) {
+                    let node: Node | undefined = endIfTargetJunction.branches[i].next;
+                    if (!node) {
+                        endIfTargetJunction.branches[i] = newNode;
+                        continue;
+                    }
+                    this.connectToFinalNode(node, newNode);
+                }
+                return;
+            default:
+                if (!prevLineIsText || !(nodeByPrevLine instanceof ParsedMessage)) {
+                    return;
+                }
+                // 前の行までのメッセージ表示内容がない場合は、改行を挿入しない
+                const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
+                // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
+                if (currentLine.type === MacroType.SHOW_STR) {
+                    nodeByPrevLine.appendMessage(this._generateUserValString(currentLine.macro.macroArgs), shouldInsertNewLine);
+                } else if (currentLine.type === "text") {
+                    nodeByPrevLine.appendMessage(currentLine.text, shouldInsertNewLine);
+                } else if (currentLine.type === "normalMacro") {
+                    nodeByPrevLine.macro.push(currentLine.macro);
+                } else { // if などの場合は単純に接続する
+                    nodeByPrevLine.next = newNode;
+                }
+        }
+   }
+
+    /**
+     * targetNode を firstNode から続く最後のノードに連結する。
+     * 途中にJunctionが含まれる場合は、どの分岐を辿ったときも同じノードにたどり着くことが前提。
+     */
+    private connectToFinalNode(firstNode: Node, targetNode: Node) {
+        let finalNode: Node | undefined = firstNode;
+       // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
+       // TODO: 規定回数のループを超えたら止めるとかした方がいい
+        while (true) {
+            if (finalNode instanceof Junction) {
+                // どの分岐を選んでも最終的には同じ結果になるので、確実に存在する分岐を選ぶ。
+                // 理想を言えば Junction ノードは合流地点のノードを覚えていれば処理が高速化されるが
+                // WWAのメッセージで何百行も書くことは想定しないので、処理を簡単にする。必要なら今後考える。
+                finalNode = finalNode.branches[0].next;
             }
-            // 前の行までのメッセージ表示内容がない場合は、改行を挿入しない
-            const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
-            // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
-            if (currentLine.type === MacroType.SHOW_STR) {
-                nodeByPrevLine.appendMessage(this._generateUserValString(currentLine.macro.macroArgs), shouldInsertNewLine);
-            } else if (currentLine.type === "text") {
-                nodeByPrevLine.appendMessage(currentLine.text, shouldInsertNewLine);
-            } else if (currentLine.type === "normalMacro") {
-                nodeByPrevLine.macro.push(currentLine.macro);
-            } else { // if などの場合は単純に接続する
-                nodeByPrevLine.next = newNode;
+            if (finalNode instanceof ParsedMessage) {
+                if (!finalNode.next) {
+                    finalNode.next = targetNode;
+                    return;
+                }
+                finalNode = finalNode.next;
             }
         }
     }
     // TODO: ここまで別クラスに切り出し予定
-    
+
     public appearParts({ pos, triggerType, triggerPartsId }: PartsAppearance): void {
         var triggerPartsType: PartsType;
         var rangeMin: number = (triggerType === AppearanceTriggerType.CHOICE_NO) ?
