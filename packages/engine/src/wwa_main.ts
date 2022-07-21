@@ -3443,6 +3443,7 @@ export class WWA {
             });
             let firstNode: Node | undefined = undefined;
             let nodeByPrevLine: Node | undefined = undefined;
+            let lastPoppedJunctionNode: Junction | undefined = undefined;
             const junctionNodeStack: Junction[] = [];
 
             lines.forEach((line, index) => {
@@ -3475,7 +3476,7 @@ export class WWA {
                             if (isTopLevel) {
                                 throw new Error("構文エラー: $if を呼ぶ前に $endif は呼べません")
                             }
-                            junctionNodeStack.pop();
+                            lastPoppedJunctionNode = junctionNodeStack.pop();
                             break;
                         case MacroType.SHOW_STR:
                             if (!firstNode || !prevLineIsText) { 
@@ -3494,7 +3495,7 @@ export class WWA {
                             break;
                     }
                     if (previousLineType) {
-                        this.connectToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction);
+                        this.connectToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction, lastPoppedJunctionNode);
                     } else {
                         firstNode = newNode;
                     }
@@ -3518,7 +3519,8 @@ export class WWA {
         previousLineType: MessageLineType,
         nodeByPrevLine: Node | undefined,
         newNode: Node | undefined,
-        parentJunction: Junction
+        parentJunction: Junction,
+        endIfTargetJunction: Junction | undefined
     ) {
         const prevLineIsText = messagLineIsText(previousLineType);
         if (
@@ -3538,13 +3540,13 @@ export class WWA {
             return;
         }
         if (previousLineType === MacroType.END_IF) {
-            if (!newNode || !(nodeByPrevLine instanceof Junction)) {
+            if (!newNode || !(endIfTargetJunction instanceof Junction)) {
                 return;
             }
-            for (let i = 0; i < nodeByPrevLine.branches.length; i++) {
-                let finalNode: Node | undefined = nodeByPrevLine.branches[i].next;
+            for (let i = 0; i < endIfTargetJunction.branches.length; i++) {
+                let finalNode: Node | undefined = endIfTargetJunction.branches[i].next;
                 if (!finalNode) {
-                    nodeByPrevLine.branches[i] = newNode;
+                    endIfTargetJunction.branches[i] = newNode;
                 } else {
                     // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
                     while (true) {
