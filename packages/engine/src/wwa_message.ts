@@ -13,6 +13,8 @@ import {
     DEVICE_TYPE,
     Direction,
     StatusSolutionKind,
+    ConditionalExecuteMacroType,
+    PreprocessMacroType,
 } from "./wwa_data";
 import {
     Monster
@@ -176,6 +178,16 @@ export function concatMessage(node1: Node | undefined, node2: Node | undefined):
         }
     }
 }
+
+export type MessageLineType = PreprocessMacroType | "text" | "normalMacro";
+export const messagLineIsText = (lineType: MessageLineType) => lineType === MacroType.SHOW_STR || lineType === "text" || lineType === "normalMacro";
+export type MessageLine = (
+    { type: PreprocessMacroType; text: string; macro: Macro; } |
+    { type: "normalMacro"; text: string; macro: Macro; } |
+    { type: "text"; text: string; macro?: undefined }
+);
+
+
 
 export class Macro {
     constructor(

@@ -602,6 +602,9 @@ export enum MacroType {
     LEGACY_IF = 10050
 }
 
+export type ConditionalExecuteMacroType = MacroType.IF | MacroType.ELSE_IF | MacroType.ELSE | MacroType.END_IF;
+export type PreprocessMacroType = ConditionalExecuteMacroType | MacroType.SHOW_STR;
+
 export var macrotable = {
     "": 0,
     "$imgplayer": 1,

@@ -27,7 +27,7 @@ import { Parts, Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction, Page
+    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -3424,7 +3424,7 @@ export class WWA {
         }
         const pageStr = messageMain.split(/\<p\>/ig);
         for (let pageId = 0; pageId < pageStr.length; pageId++) {
-            const lines = pageStr[pageId].split("\n").map(line => {
+            const lines: MessageLine[] = pageStr[pageId].split("\n").map(line => {
                 const matchInfo = line.match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)(?:.*))/);
                 if (!matchInfo || matchInfo.length < 2 && !line.startsWith("$")) {
                     return { type: "text" as const, text: line };
@@ -3444,13 +3444,11 @@ export class WWA {
             let firstNode: Node | undefined = undefined;
             let nodeByPrevLine: Node | undefined = undefined;
             const junctionNodeStack: Junction[] = [];
-            type LineType = typeof lines[number]["type"];
-            const lineIsText = (lineType: LineType) => lineType === MacroType.SHOW_STR || lineType === "text" || lineType === "normalMacro";
 
             lines.forEach((line, index) => {
                 let newNode: Node | undefined = undefined;
                 const previousLineType = index === 0 ? undefined : lines[index - 1].type;
-                const prevLineIsText = lineIsText(previousLineType);
+                const prevLineIsText = messagLineIsText(previousLineType);
                 const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
                 const isTopLevel = junctionNodeStack.length === 0;
                 try {
@@ -3495,58 +3493,9 @@ export class WWA {
                             }
                             break;
                     }
-                    if (
-                        previousLineType === MacroType.IF ||
-                        previousLineType === MacroType.ELSE_IF ||
-                        previousLineType === MacroType.ELSE
-                    ) {
-                        if(!newNode || !parentJunction) {
-                            return;
-                        }
-                        const target = parentJunction.getLastUnconnectedBranch();
-                        if (target) {
-                            target.next = newNode;
-                        } else {
-                            throw new Error("lastUnconnectedBranchが見つかりませんでした。")
-                        }
-                    } else if (previousLineType === MacroType.END_IF) {
-                        if (!newNode || !(nodeByPrevLine instanceof Junction)) {
-                            return;
-                        }
-                        for (let i = 0; i < nodeByPrevLine.branches.length; i++ ) {
-                            let finalNode: Node | undefined = nodeByPrevLine.branches[i].next;
-                            if (!finalNode) {
-                                nodeByPrevLine.branches[i] = newNode;
-                            } else {
-                                // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
-                                while (true) {
-                                    if (!(finalNode instanceof ParsedMessage)) {
-                                        throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
-                                    }
-                                    if (!finalNode.next) {
-                                        finalNode.next = newNode;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    } else if (prevLineIsText) {
-                        if (!(nodeByPrevLine instanceof ParsedMessage)) {
-                            return;
-                        }
-                        // 前の行までのメッセージ表示内容がない場合は、改行を挿入しない
-                        const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
-                        // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
-                        if (line.type === MacroType.SHOW_STR) {
-                            nodeByPrevLine.appendMessage(this._generateUserValString(line.macro.macroArgs), shouldInsertNewLine);
-                        } else if (line.type === "text") {
-                            nodeByPrevLine.appendMessage(line.text, shouldInsertNewLine);
-                        } else if (line.type === "normalMacro") {
-                            nodeByPrevLine.macro.push(line.macro);
-                        } else { // if などの場合は単純に接続する
-                            nodeByPrevLine.next = newNode;
-                        }
-                    } else if (!previousLineType) {
+                    if (previousLineType) {
+                        this.connectToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction);
+                    } else {
                         firstNode = newNode;
                     }
                     if (newNode) {
@@ -3563,6 +3512,72 @@ export class WWA {
         };
         return pages;
    }
+
+    private connectToPreviousNode(
+        currentLine: MessageLine,
+        previousLineType: MessageLineType,
+        nodeByPrevLine: Node | undefined,
+        newNode: Node | undefined,
+        parentJunction: Junction
+    ) {
+        const prevLineIsText = messagLineIsText(previousLineType);
+        if (
+            previousLineType === MacroType.IF ||
+            previousLineType === MacroType.ELSE_IF ||
+            previousLineType === MacroType.ELSE
+        ) {
+            if (!newNode || !parentJunction) {
+                return;
+            }
+            const target = parentJunction.getLastUnconnectedBranch();
+            if (target) {
+                target.next = newNode;
+            } else {
+                throw new Error("lastUnconnectedBranchが見つかりませんでした。")
+            }
+            return;
+        }
+        if (previousLineType === MacroType.END_IF) {
+            if (!newNode || !(nodeByPrevLine instanceof Junction)) {
+                return;
+            }
+            for (let i = 0; i < nodeByPrevLine.branches.length; i++) {
+                let finalNode: Node | undefined = nodeByPrevLine.branches[i].next;
+                if (!finalNode) {
+                    nodeByPrevLine.branches[i] = newNode;
+                } else {
+                    // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
+                    while (true) {
+                        if (!(finalNode instanceof ParsedMessage)) {
+                            throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
+                        }
+                        if (!finalNode.next) {
+                            finalNode.next = newNode;
+                            break;
+                        }
+                    }
+                }
+            }
+            return;
+        }
+        if (prevLineIsText) {
+            if (!(nodeByPrevLine instanceof ParsedMessage)) {
+                return;
+            }
+            // 前の行までのメッセージ表示内容がない場合は、改行を挿入しない
+            const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
+            // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
+            if (currentLine.type === MacroType.SHOW_STR) {
+                nodeByPrevLine.appendMessage(this._generateUserValString(currentLine.macro.macroArgs), shouldInsertNewLine);
+            } else if (currentLine.type === "text") {
+                nodeByPrevLine.appendMessage(currentLine.text, shouldInsertNewLine);
+            } else if (currentLine.type === "normalMacro") {
+                nodeByPrevLine.macro.push(currentLine.macro);
+            } else { // if などの場合は単純に接続する
+                nodeByPrevLine.next = newNode;
+            }
+        }
+    }
     public appearParts({ pos, triggerType, triggerPartsId }: PartsAppearance): void {
         var triggerPartsType: PartsType;
         var rangeMin: number = (triggerType === AppearanceTriggerType.CHOICE_NO) ?
