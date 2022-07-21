@@ -3399,10 +3399,10 @@ export class WWA {
         return false;
     }
 
-
+    // TODO: ここから別クラスへ切り出し予定
     public generatePagesByRawMessage(
         message: string,
-        partsID: number,
+        partsId: number,
         partsType: PartsType,
         partsPosition: Coord,
         isSystemMessage: boolean,
@@ -3423,80 +3423,25 @@ export class WWA {
         if (messageMain === "") {
             return [];
         }
-        const pageStr = messageMain.split(/\<p\>/ig);
-        for (let pageId = 0; pageId < pageStr.length; pageId++) {
-            const lines: MessageLine[] = pageStr[pageId].split("\n").map(line => {
-                const matchInfo = line.match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)(?:.*))/);
-                if (!matchInfo || matchInfo.length < 2 && !line.startsWith("$")) {
-                    return { type: "text" as const, text: line };
-                }
-                const macro = parseMacro(this, partsID, partsType, partsPosition, matchInfo[1]);
-                switch (macro.macroType) {
-                    case MacroType.IF:
-                    case MacroType.ELSE_IF:
-                    case MacroType.ELSE:
-                    case MacroType.END_IF:
-                    case MacroType.SHOW_STR:
-                        return { type: macro.macroType, text: line, macro }
-                    default:
-                        return { type: "normalMacro" as const, text: line, macro }
-                }
-            });
+        const pageContents = messageMain.split(/\<p\>/ig);
+        pageContents.forEach((pageContent, pageId) => {
             let firstNode: Node | undefined = undefined;
             let nodeByPrevLine: Node | undefined = undefined;
-            let lastPoppedJunctionNode: Junction | undefined = undefined;
+            let lastPoppedJunction: Junction | undefined = undefined;
+            const lines = this.parseMessageLines(pageContent, partsId, partsType, partsPosition)
             const junctionNodeStack: Junction[] = [];
 
             lines.forEach((line, index) => {
-                let newNode: Node | undefined = undefined;
-                const previousLineType = index === 0 ? undefined : lines[index - 1].type;
-                const prevLineIsText = messagLineIsText(previousLineType);
-                const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
-                const isTopLevel = junctionNodeStack.length === 0;
                 try {
-                    switch (line.type) {
-                        case MacroType.IF:
-                            const junction = new Junction([{ descriminant: ExpressionParser.parseDescriminant(line.macro.macroArgs[0]) }]);
-                            newNode = junction;
-                            junctionNodeStack.push(junction);
-                            break;
-                        case MacroType.ELSE_IF:
-                            if (isTopLevel) {
-                                throw new Error("構文エラー: $if を呼ぶ前に $else_if は呼べません")
-                            }
-                            parentJunction.appendBranch({ descriminant: ExpressionParser.parseDescriminant(line.macro.macroArgs[0]) })
-                        break;
-                        case MacroType.ELSE:
-                            if (isTopLevel) {
-                                throw new Error("構文エラー: $if を呼ぶ前に $else は呼べません")
-                            }
-                            // else の場合、該当する分岐は必ず実行されるべき
-                            parentJunction.appendBranch({ descriminant: true })
-                            break;
-                        case MacroType.END_IF:
-                            if (isTopLevel) {
-                                throw new Error("構文エラー: $if を呼ぶ前に $endif は呼べません")
-                            }
-                            lastPoppedJunctionNode = junctionNodeStack.pop();
-                            break;
-                        case MacroType.SHOW_STR:
-                            if (!firstNode || !prevLineIsText) { 
-                                newNode = new ParsedMessage(this._generateUserValString(line.macro.macroArgs));
-                            }
-                            break;
-                        case "text":
-                            if (!firstNode || !prevLineIsText) { 
-                                newNode = new ParsedMessage(line.text);
-                            }
-                            break;
-                        case "normalMacro":
-                            if (!firstNode || !prevLineIsText) { 
-                                newNode = new ParsedMessage("", [line.macro]);
-                            }
-                            break;
+                    const previousLineType = index === 0 ? undefined : lines[index - 1].type;
+                    const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
+                    const newNode = this.createNewNode(line, !firstNode || !messagLineIsText(previousLineType));
+                    const endIfPoppedJunction = this.processConditionalExecuteMacroLine(newNode, line, parentJunction, junctionNodeStack);
+                    if (endIfPoppedJunction) {
+                        lastPoppedJunction = endIfPoppedJunction;
                     }
                     if (previousLineType) {
-                        this.connectToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction, lastPoppedJunctionNode);
+                        this.connectToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction, lastPoppedJunction);
                     } else {
                         firstNode = newNode;
                     }
@@ -3509,11 +3454,83 @@ export class WWA {
                 }
             });
             pages.push(
-                new Page(firstNode, pageId === pageStr.length - 1, pageId === 0 && showChoice, isSystemMessage)
+                new Page(firstNode, pageId === pageContents.length - 1, pageId === 0 && showChoice, isSystemMessage)
             );
-        };
+        });
         return pages;
    }
+
+    private parseMessageLines(pageContent: string, partsID: number, partsType: PartsType, partsPosition: Coord): MessageLine[] {
+        return pageContent.split("\n").map(line => {
+            const matchInfo = line.match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)(?:.*))/);
+            if (!matchInfo || matchInfo.length < 2 && !line.startsWith("$")) {
+                return { type: "text" as const, text: line };
+            }
+            const macro = parseMacro(this, partsID, partsType, partsPosition, matchInfo[1]);
+            switch (macro.macroType) {
+                case MacroType.IF:
+                case MacroType.ELSE_IF:
+                case MacroType.ELSE:
+                case MacroType.END_IF:
+                case MacroType.SHOW_STR:
+                    return { type: macro.macroType, text: line, macro }
+                default:
+                    return { type: "normalMacro" as const, text: line, macro }
+            }
+        });
+    }
+
+    private createNewNode(currentLine: MessageLine, shouldCreateParsedMessage: boolean): Node | undefined {
+        switch (currentLine.type) {
+            case MacroType.IF:
+                const junction = new Junction([{ descriminant: ExpressionParser.parseDescriminant(currentLine.macro.macroArgs[0]) }]);
+                return junction;
+           case MacroType.SHOW_STR:
+                return shouldCreateParsedMessage ? new ParsedMessage(this._generateUserValString(currentLine.macro.macroArgs)) : undefined;
+            case "text":
+                return shouldCreateParsedMessage ? new ParsedMessage(currentLine.text) : undefined;
+            case "normalMacro":
+                return shouldCreateParsedMessage ? new ParsedMessage("", [currentLine.macro]) : undefined;
+            default:
+                return undefined;
+        }
+    }
+
+    /**
+     * END_IF の場合は junctionNodeStack の先頭を pop し、返します。 
+     */
+    private processConditionalExecuteMacroLine(
+        newNode: Node,
+        currentLine: MessageLine,
+        parentJunction: Junction | undefined,
+        junctionNodeStack: Junction[],
+    ): Junction | undefined {
+        const isTopLevel = junctionNodeStack.length === 0;
+        switch (currentLine.type) {
+            case MacroType.IF:
+                junctionNodeStack.push(newNode as Junction);
+                return undefined;
+            case MacroType.ELSE_IF:
+                if (isTopLevel) {
+                    throw new Error("構文エラー: $if を呼ぶ前に $else_if は呼べません")
+                }
+                parentJunction.appendBranch({ descriminant: ExpressionParser.parseDescriminant(currentLine.macro.macroArgs[0]) })
+                return undefined;
+            case MacroType.ELSE:
+                if (isTopLevel) {
+                    throw new Error("構文エラー: $if を呼ぶ前に $else は呼べません")
+                }
+                // else の場合、該当する分岐は必ず実行されるべき
+                parentJunction.appendBranch({ descriminant: true })
+                return undefined;
+            case MacroType.END_IF:
+                if (isTopLevel) {
+                    throw new Error("構文エラー: $if を呼ぶ前に $endif は呼べません")
+                }
+                return junctionNodeStack.pop();
+        }
+
+    }
 
     private connectToPreviousNode(
         currentLine: MessageLine,
@@ -3587,6 +3604,8 @@ export class WWA {
             }
         }
     }
+    // TODO: ここまで別クラスに切り出し予定
+    
     public appearParts({ pos, triggerType, triggerPartsId }: PartsAppearance): void {
         var triggerPartsType: PartsType;
         var rangeMin: number = (triggerType === AppearanceTriggerType.CHOICE_NO) ?
