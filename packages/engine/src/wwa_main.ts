@@ -3453,98 +3453,108 @@ export class WWA {
                 const prevLineIsText = lineIsText(previousLineType);
                 const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
                 const isTopLevel = junctionNodeStack.length === 0;
-                switch (line.type) {
-                    case MacroType.IF:
-                        const junction = new Junction([{ descriminant: ExpressionParser.parseDescriminant(line.macro.macroArgs[0]) }]);
-                        newNode = junction;
-                        junctionNodeStack.push(junction);
+                try {
+                    switch (line.type) {
+                        case MacroType.IF:
+                            const junction = new Junction([{ descriminant: ExpressionParser.parseDescriminant(line.macro.macroArgs[0]) }]);
+                            newNode = junction;
+                            junctionNodeStack.push(junction);
+                            break;
+                        case MacroType.ELSE_IF:
+                            if (isTopLevel) {
+                                throw new Error("構文エラー: $if を呼ぶ前に $else_if は呼べません")
+                            }
+                            parentJunction.appendBranch({ descriminant: ExpressionParser.parseDescriminant(line.macro.macroArgs[0]) })
                         break;
-                    case MacroType.ELSE_IF:
-                        if (isTopLevel) {
-                            throw new Error("構文エラー: $if を呼ぶ前に $else_if は呼べません")
-                        }
-                        parentJunction.appendBranch({ descriminant: ExpressionParser.parseDescriminant(line.macro.macroArgs[0]) })
-                       break;
-                    case MacroType.ELSE:
-                        if (isTopLevel) {
-                            throw new Error("構文エラー: $if を呼ぶ前に $else は呼べません")
-                        }
-                        // else の場合、該当する分岐は必ず実行されるべき
-                        parentJunction.appendBranch({ descriminant: true })
-                        break;
-                    case MacroType.END_IF:
-                        if (isTopLevel) {
-                            throw new Error("構文エラー: $if を呼ぶ前に $endif は呼べません")
-                        }
-                        junctionNodeStack.pop();
-                        break;
-                    case MacroType.SHOW_STR:
-                        if (!firstNode || !prevLineIsText) { 
-                            newNode = new ParsedMessage(this._generateUserValString(line.macro.macroArgs));
-                        }
-                        break;
-                    case "text":
-                        if (!firstNode || !prevLineIsText) { 
-                            newNode = new ParsedMessage(line.text);
-                        }
-                        break;
-                    case "normalMacro":
-                        if (!firstNode || !prevLineIsText) { 
-                            newNode = new ParsedMessage("", [line.macro]);
-                        }
-                        break;
-                }
-                if (
-                    previousLineType === MacroType.IF ||
-                    previousLineType === MacroType.ELSE_IF ||
-                    previousLineType === MacroType.ELSE
-                ) {
-                    if(!newNode) {
-                        return;
+                        case MacroType.ELSE:
+                            if (isTopLevel) {
+                                throw new Error("構文エラー: $if を呼ぶ前に $else は呼べません")
+                            }
+                            // else の場合、該当する分岐は必ず実行されるべき
+                            parentJunction.appendBranch({ descriminant: true })
+                            break;
+                        case MacroType.END_IF:
+                            if (isTopLevel) {
+                                throw new Error("構文エラー: $if を呼ぶ前に $endif は呼べません")
+                            }
+                            junctionNodeStack.pop();
+                            break;
+                        case MacroType.SHOW_STR:
+                            if (!firstNode || !prevLineIsText) { 
+                                newNode = new ParsedMessage(this._generateUserValString(line.macro.macroArgs));
+                            }
+                            break;
+                        case "text":
+                            if (!firstNode || !prevLineIsText) { 
+                                newNode = new ParsedMessage(line.text);
+                            }
+                            break;
+                        case "normalMacro":
+                            if (!firstNode || !prevLineIsText) { 
+                                newNode = new ParsedMessage("", [line.macro]);
+                            }
+                            break;
                     }
-                    parentJunction.getLastUnconnectedBranch().next = newNode;
-                } else if (previousLineType === MacroType.END_IF) {
-                    if (!newNode || !(nodeByPrevLine instanceof Junction)) {
-                        return;
-                    }
-                    for (let i = 0; i < nodeByPrevLine.branches.length; i++ ) {
-                        let finalNode: Node | undefined = nodeByPrevLine.branches[i].next;
-                        if (!finalNode) {
-                            nodeByPrevLine.branches[i] = newNode;
+                    if (
+                        previousLineType === MacroType.IF ||
+                        previousLineType === MacroType.ELSE_IF ||
+                        previousLineType === MacroType.ELSE
+                    ) {
+                        if(!newNode || !parentJunction) {
+                            return;
+                        }
+                        const target = parentJunction.getLastUnconnectedBranch();
+                        if (target) {
+                            target.next = newNode;
                         } else {
-                            // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
-                            while (true) {
-                                if (!(finalNode instanceof ParsedMessage)) {
-                                    throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
-                                }
-                                if (!finalNode.next) {
-                                    finalNode.next = newNode;
-                                    break;
+                            throw new Error("lastUnconnectedBranchが見つかりませんでした。")
+                        }
+                    } else if (previousLineType === MacroType.END_IF) {
+                        if (!newNode || !(nodeByPrevLine instanceof Junction)) {
+                            return;
+                        }
+                        for (let i = 0; i < nodeByPrevLine.branches.length; i++ ) {
+                            let finalNode: Node | undefined = nodeByPrevLine.branches[i].next;
+                            if (!finalNode) {
+                                nodeByPrevLine.branches[i] = newNode;
+                            } else {
+                                // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
+                                while (true) {
+                                    if (!(finalNode instanceof ParsedMessage)) {
+                                        throw new Error("非 ParsedMessage ノードが存在してはいけない場所にあります");
+                                    }
+                                    if (!finalNode.next) {
+                                        finalNode.next = newNode;
+                                        break;
+                                    }
                                 }
                             }
                         }
+                    } else if (prevLineIsText) {
+                        if (!(nodeByPrevLine instanceof ParsedMessage)) {
+                            return;
+                        }
+                        // 前の行までのメッセージ表示内容がない場合は、改行を挿入しない
+                        const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
+                        // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
+                        if (line.type === MacroType.SHOW_STR) {
+                            nodeByPrevLine.appendMessage(this._generateUserValString(line.macro.macroArgs), shouldInsertNewLine);
+                        } else if (line.type === "text") {
+                            nodeByPrevLine.appendMessage(line.text, shouldInsertNewLine);
+                        } else if (line.type === "normalMacro") {
+                            nodeByPrevLine.macro.push(line.macro);
+                        } else { // if などの場合は単純に接続する
+                            nodeByPrevLine.next = newNode;
+                        }
+                    } else if (!previousLineType) {
+                        firstNode = newNode;
                     }
-                } else if (prevLineIsText) {
-                    if (!(nodeByPrevLine instanceof ParsedMessage)) {
-                        return;
+                    if (newNode) {
+                        nodeByPrevLine = newNode;
                     }
-                    // 前の行までのメッセージ表示内容がない場合は、改行を挿入しない
-                    const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
-                    // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
-                    if (line.type === MacroType.SHOW_STR) {
-                        nodeByPrevLine.appendMessage(this._generateUserValString(line.macro.macroArgs), shouldInsertNewLine);
-                    } else if (line.type === "text") {
-                        nodeByPrevLine.appendMessage(line.text, shouldInsertNewLine);
-                    } else if (line.type === "normalMacro") {
-                        nodeByPrevLine.macro.push(line.macro);
-                    } else { // if などの場合は単純に接続する
-                        nodeByPrevLine.next = newNode;
-                    }
-                } else if (!previousLineType) {
-                    firstNode = newNode;
-                }
-                if (newNode) {
-                    nodeByPrevLine = newNode;
+                } catch (error) {
+                    console.error(`$if-$else_if-$else-$endif マクロの解析中にエラーが発生しました。ページ ${index}`)
+                    console.error(error);
                 }
             });
             pages.push(
