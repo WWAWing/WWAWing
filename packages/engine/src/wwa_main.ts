@@ -3476,6 +3476,7 @@ export class WWA {
                         if (isTopLevel) {
                             throw new Error("構文エラー: $if を呼ぶ前に $endif は呼べません")
                         }
+                        junctionNodeStack.pop();
                         break;
                     case MacroType.SHOW_STR:
                         if (!firstNode || !prevLineIsText) { 
@@ -3503,14 +3504,13 @@ export class WWA {
                     }
                     parentJunction.getLastUnconnectedBranch().next = newNode;
                 } else if (previousLineType === MacroType.END_IF) {
-                    if (!newNode) {
+                    if (!newNode || !(nodeByPrevLine instanceof Junction)) {
                         return;
                     }
-                    const junctionNode = junctionNodeStack.pop();
-                    for (let i = 0; i < junctionNode.branches.length; i++ ) {
-                        let finalNode: Node | undefined = junctionNode.branches[i].next;
+                    for (let i = 0; i < nodeByPrevLine.branches.length; i++ ) {
+                        let finalNode: Node | undefined = nodeByPrevLine.branches[i].next;
                         if (!finalNode) {
-                            junctionNode.branches[i] = newNode;
+                            nodeByPrevLine.branches[i] = newNode;
                         } else {
                             // 分かれた処理を合流させるために必要な終端ノードを、Junctionノードから順に走査
                             while (true) {
