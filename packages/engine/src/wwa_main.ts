@@ -1641,10 +1641,11 @@ export class WWA {
                     this._reservedMoveMacroTurn = void 0;
                 }
 
-                const messageDisplayed = messageLines.length > 0 && messageLines.reduce((prev, line) => prev || !line.isEmpty(), false);
+                const messageLinesToDisplay = messageLines.filter(line => !line.isEmpty());
+                const existsMessageToDisplay = messageLinesToDisplay.length > 0;
                 // set message
-                if (messageDisplayed) {
-                    const message = messageLines.map(line => line.generatePrintableMessage()).join("\n");
+                if (existsMessageToDisplay) {
+                    const message = messageLinesToDisplay.map(line => line.generatePrintableMessage()).join("\n");
                     this._messageWindow.setMessage(message);
                     this._messageWindow.setYesNoChoice(this._execPageInNextFrame.showChoice);
                     this._messageWindow.setPositionByPlayerPosition(
@@ -1657,13 +1658,13 @@ export class WWA {
                     this._player.setMessageWaiting();
                 } else {
                     if (this._pages.length === 0) {
-                        this._hideMessageWindow(messageDisplayed);
+                        this._hideMessageWindow(existsMessageToDisplay);
                     } else {
                         this._setNextPage();
                     }
                 }
                 this._lastPage = {
-                    isEmpty: messageDisplayed,
+                    isEmpty: !existsMessageToDisplay,
                     isLastPage: this._execPageInNextFrame.isLastPage
                 }
                 this._execPageInNextFrame = undefined;
