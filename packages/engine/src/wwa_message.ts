@@ -12,7 +12,7 @@ import {
     Position,
     DEVICE_TYPE,
     Direction,
-    StatusSolutionKind
+    StatusSolutionKind,
 } from "./wwa_data";
 import {
     Positioning as MPositioning
@@ -275,6 +275,10 @@ export class Macro {
                 case MacroType.IF:
                     this._executeIfMacro();
                     break;
+                // IF文 (旧実装)
+                case MacroType.LEGACY_IF:
+                    this._executeLegacyIfMacro();
+                    break;
                 // ELSE-IF文
                 case MacroType.ELSE_IF:
                     this._executeIfElseMacro();
@@ -506,20 +510,20 @@ export class Macro {
         var speedChangeFlag = !!this._parseInt(0);
         this._wwa.speedChangeJudge(speedChangeFlag);
     }
+
     // IFマクロ実行部
     private _executeIfMacro(): void {
-        // 後方互換性を保つため、引数が1つ以外の時には旧ifマクロを実行する
-        if(this.macroArgs.length === 1) {
-            this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
+        this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
+    }
+
+    // IFマクロ(旧実装)実行部
+    private _executeLegacyIfMacro(): void {
+        // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
+        var str: string[] = new Array(11);
+        for (var i = 0; i < 10; i++) {
+            str[i] = this.macroArgs[i];
         }
-        else {
-            // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
-            var str: string[] = new Array(11);
-            for (var i = 0; i < 10; i++) {
-                str[i] = this.macroArgs[i];
-            }
-            this._wwa.userVarUserIf(this._triggerPartsPosition, str);
-        }
+        this._wwa.userVarUserIf(this._triggerPartsPosition, str);
     }
     // IF-ELSEマクロ実行部
     private _executeIfElseMacro(): void {
@@ -916,7 +920,7 @@ export function parseMacro(
     macroStr: string
 ): Macro {
 
-    var matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)$/);
+    let matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)$/);
     if (matchInfo === null || matchInfo.length !== 3) {
         // イコールがつかないタイプのマクロ
         matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)/);
@@ -924,9 +928,11 @@ export function parseMacro(
             throw new Error("マクロではありません");
         }
     }
-    var macroType = matchInfo[1];
-    var macroIndex = macrotable["$" + macroType.toLowerCase()];
-    var macroRightSide = matchInfo[2]? matchInfo[2]: "";
+    const macroType = matchInfo[1];
+    const macroName = `$${macroType.toLowerCase()}`;
+    // カンマがある場合の $if は旧実装とみなす
+    const macroIndex = macroName === "$if" && macroStr.match(/,/) ? MacroType.LEGACY_IF : macrotable[macroName];
+    const macroRightSide = matchInfo[2]? matchInfo[2]: "";
     if (macroIndex === void 0) {
         // undefined macro
         return new Macro(wwa, partsID, partsType, position, MacroType.UNDEFINED, macroRightSide.split(","));

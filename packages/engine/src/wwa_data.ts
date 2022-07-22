@@ -598,7 +598,8 @@ export enum MacroType {
     END_IF = 59,
     SET = 60,
     GAMEPAD_BUTTON = 100,
-    OLDMOVE = 101
+    OLDMOVE = 101,
+    LEGACY_IF = 10050
 }
 
 export var macrotable = {
@@ -664,6 +665,7 @@ export var macrotable = {
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
+
 
 export enum MacroStatusIndex {
     ENERGY = 0,
