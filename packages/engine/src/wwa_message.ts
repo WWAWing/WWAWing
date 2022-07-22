@@ -13,7 +13,6 @@ import {
     DEVICE_TYPE,
     Direction,
     StatusSolutionKind,
-    ConditionalExecuteMacroType,
     PreprocessMacroType,
 } from "./wwa_data";
 import {

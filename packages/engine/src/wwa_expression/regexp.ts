@@ -1,4 +1,4 @@
-const NUMBER = "\\d+";
+const NUMBER = "-?\\d+";
 const USER_VAR = `v\\[${NUMBER}\\]`;
 const USER_VAR_CAPTURE = `v\\[(${NUMBER})\\]`;
 const READ_ONLY_VALUE = `AT_TOTAL|AT_ITEMS|DF_TOTAL|DF_ITEMS|STEP|TIME|PX|PY`;
