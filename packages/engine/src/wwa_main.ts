@@ -3635,7 +3635,7 @@ export class WWA {
         var yTop = Math.max(0, camPos.y - 1);
         var yBottom = Math.min(this._wwaData.mapWidth - 1, camPos.y + Consts.V_PARTS_NUM_IN_WINDOW);
         for (var x = xLeft; x <= xRight; x++) {
-            for (var y = yTop; y < yBottom; y++) {
+            for (var y = yTop; y <= yBottom; y++) {
                 this._replaceRandomObject(new Coord(x, y));
             }
         }
