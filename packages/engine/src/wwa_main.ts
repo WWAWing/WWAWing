@@ -3087,6 +3087,81 @@ export class WWA {
         this._scoreWindow.update(score);
     }
 
+    /**
+     * 物を売るパーツで YES を選んだ場合の処理
+     */
+    private _execChoiceWindowObjectSellEvent(): { isGameOver?: true } {
+        // 所持金が足りない
+        if (!this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
+            if (this._wwaData.message[SystemMessage1.NO_MONEY] !== "BLANK") {
+                this._messageQueue.push(
+                    new ParsedMessage(
+                        this._wwaData.message[SystemMessage1.NO_MONEY] === "" ?
+                            "所持金がたりない。" : this._wwaData.message[SystemMessage1.NO_MONEY],
+                        true
+                    )
+                );
+            }
+            return {};
+        }
+
+        // 売るアイテムが指定されている場合はアイテムを取得
+        if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] !== 0) {
+            const pos = this._yesNoChoicePartsCoord;
+            const screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
+            const screenXPixel = (pos.x - screenTopCoord.x) * Consts.CHIP_SIZE;
+            const screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
+            const itemObjectId = this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM];
+            const itemObjectItemPos = this._wwaData.objectAttribute[itemObjectId][Consts.ATR_NUMBER];
+            try {
+                // アイテムがこれ以上持てない場合はエラーが throw される
+                this._player.addItem(itemObjectId, itemObjectItemPos, false, this._wwaData.isItemEffectEnabled ? {
+                    screenPixelCoord: new Coord(screenXPixel, screenYPixel),
+                    itemBoxBackgroundImageCoord: new Coord(
+                        this._wwaData.imgItemboxX * Consts.CHIP_SIZE,
+                        this._wwaData.imgItemboxY * Consts.CHIP_SIZE
+                    )
+                } : undefined);
+            } catch (error) {
+                // アイテムボックスがいっぱい
+                if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
+                    this._messageQueue.push(
+                        new ParsedMessage(
+                            this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] === "" ?
+                                "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[SystemMessage2.FULL_ITEM],
+                            true
+                        )
+                    );
+                }
+                return {};
+            }
+        }
+        const status = new Status(
+            this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY],
+            this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_STRENGTH],
+            this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_DEFENCE],
+            - this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD] // 払うので、マイナスになります。
+        );
+
+        status.energy = status.energy > Consts.STATUS_MINUS_BORDER ?
+            Consts.STATUS_MINUS_BORDER - status.energy : status.energy;
+        this.setStatusChangedEffect(status);
+        this._player.addStatusAll(status);
+
+        //  ゲームオーバー
+        if (
+            this._player.isDead() &&
+            this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY] !== 0 &&
+            this.shouldApplyGameOver({ isCalledByMacro: false })
+        ) {
+            this.gameover();
+            return {isGameOver: true};
+        }
+
+        this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
+        return {};
+    }
+
     private _execChoiceWindowRunningEvent() {
         var partsType: number;
         var gold: number;
@@ -3117,71 +3192,10 @@ export class WWA {
                             };
                         }
                     } else if (partsType === Consts.OBJECT_SELL) {
-                        if (this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
-                            if (this._player.canHaveMoreItems() || this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] === 0) {
-                                if (this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM] !== 0) {
-                                    var pos = this._yesNoChoicePartsCoord;
-                                    var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
-                                    var screenXPixel = (pos.x - screenTopCoord.x) * Consts.CHIP_SIZE;
-                                    var screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
-                                    this._player.addItem(
-                                        this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ITEM], 0, false, this._wwaData.isItemEffectEnabled ? {
-                                            screenPixelCoord: new Coord(screenXPixel, screenYPixel),
-                                            itemBoxBackgroundImageCoord: new Coord(
-                                                this._wwaData.imgItemboxX * Consts.CHIP_SIZE,
-                                                this._wwaData.imgItemboxY * Consts.CHIP_SIZE
-                                            )
-                                        } : undefined
-                                    );
-                                }
-                                var status = new Status(
-                                    this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY],
-                                    this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_STRENGTH],
-                                    this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_DEFENCE],
-                                    - this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD] // 払うので、マイナスになります。
-                                );
-                                var pstatus = this._player.getStatusWithoutEquipments();
-
-                                status.energy = status.energy > Consts.STATUS_MINUS_BORDER ?
-                                    Consts.STATUS_MINUS_BORDER - status.energy : status.energy;
-                                this.setStatusChangedEffect(status);
-                                this._player.addStatusAll(status);
-
-                                //  ゲームオーバー
-                                if (
-                                    this._player.isDead() &&
-                                    this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_ENERGY] !== 0 &&
-                                    this.shouldApplyGameOver({isCalledByMacro: false})
-                                ) {
-                                    this.gameover();
-                                    return;
-                                }
-                                this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
-                            } else {
-                                // アイテムをボックスがいっぱい
-                                if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
-                                    this._messageQueue.push(
-                                        new ParsedMessage(
-                                            this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] === "" ?
-                                                "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[SystemMessage2.FULL_ITEM],
-                                            true
-                                        )
-                                    );
-                                }
-                            }
-                        } else {
-                            // 所持金が足りない
-                            if (this._wwaData.message[SystemMessage1.NO_MONEY] !== "BLANK") {
-                                this._messageQueue.push(
-                                    new ParsedMessage(
-                                        this._wwaData.message[SystemMessage1.NO_MONEY] === "" ?
-                                            "所持金がたりない。" : this._wwaData.message[SystemMessage1.NO_MONEY],
-                                        true
-                                    )
-                                );
-                            }
+                        const { isGameOver } = this._execChoiceWindowObjectSellEvent();
+                        if (isGameOver) {
+                            return;
                         }
-
                     } else if (partsType === Consts.OBJECT_SELECT) {
                         this.appearParts(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_YES, this._yesNoChoicePartsID);
                     } else if (partsType === Consts.OBJECT_URLGATE) {
@@ -3635,7 +3649,7 @@ export class WWA {
         var yTop = Math.max(0, camPos.y - 1);
         var yBottom = Math.min(this._wwaData.mapWidth - 1, camPos.y + Consts.V_PARTS_NUM_IN_WINDOW);
         for (var x = xLeft; x <= xRight; x++) {
-            for (var y = yTop; y < yBottom; y++) {
+            for (var y = yTop; y <= yBottom; y++) {
                 this._replaceRandomObject(new Coord(x, y));
             }
         }
