@@ -1655,9 +1655,16 @@ export class WWA {
             this._execPageInNextFrame  = undefined;
             const executedResult = this._executeNodes(executingPage.firstNode)
             if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
-                // executeNode の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
+                // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
                 this._lastPage = undefined;
             } else {
+                // executeNodes の結果、新たなメッセージが発生した場合、既に開かれているメッセージウィンドウが閉じた後に表示されるべきなので、_pages に詰め直す。
+                // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
+                // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
+                if (this._execPageInNextFrame) {
+                    this._pages.push(this._execPageInNextFrame);
+                    this._execPageInNextFrame = undefined;
+                }
                 if (this._lastPage?.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
                     this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                     this._reservedMoveMacroTurn = void 0;
