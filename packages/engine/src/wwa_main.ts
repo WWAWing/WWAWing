@@ -8,7 +8,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ConditionalMacroExecStatus,
+    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions,
 } from "./wwa_data";
 
 import {
@@ -217,15 +217,10 @@ export class WWA {
     public wwaCustomEventEmitter: IEventEmitter;
 
     /**
-     * スコア表示に使うレート
-     * スコアが表示されていない場合は undefined.
+     * 最後のスコア表示に使用されたオプション
+     * 一度も表示されていない場合は undefiuned.
      */
-    private _scoreRates?: {
-        energy: number;
-        strength: number;
-        defence: number;
-        gold: number;
-    };
+    private _lastScoreOptions?: ScoreOptions;
 
     ////////////////////////
     public debug: boolean;
@@ -1670,6 +1665,12 @@ export class WWA {
                     this._reservedMoveMacroTurn = void 0;
                 }
                 const messageLinesToDisplay = executedResult.messages.filter(line => !line.isEmpty());
+
+                // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える
+                if (executingPage.scoreOptions && messageLinesToDisplay.length === 0) {
+                    messageLinesToDisplay.push(new ParsedMessage("スコアを表示します。"));
+                }
+                
                 const existsMessageToDisplay = messageLinesToDisplay.length > 0;
                 // set message
                 if (existsMessageToDisplay) {
@@ -1683,6 +1684,11 @@ export class WWA {
                         this._player.getPosition(),
                         this._camera.getPosition()
                     );
+                    if (executingPage.scoreOptions) {
+                        this._lastScoreOptions = executingPage.scoreOptions;
+                        this.updateScore(executingPage.scoreOptions);
+                        this._scoreWindow.show();
+                    }
                     this._player.setMessageWaiting();
                 } else {
                     if (this._pages.length === 0) {
@@ -3125,46 +3131,38 @@ export class WWA {
      * 物体パーツ「スコア表示」のイベントを実行します
      * 
      * 動作仕様
+     *  - 1ページ目 (最初の `<P>` より手前) において、
+     *    - メッセージの実行結果が空の場合は「スコアを表示します。」というメッセージとともにスコア表示がされる。
+     *    - そうでない場合は通常のメッセージとスコア表示がされる。
+     *  - 2ページ目以降 (最初の `<P>` より後) ではスコアは表示されず、通常のメッセージのみが表示される。
      * 
-     *  - メッセージが空の場合は「スコアを表示します。」というメッセージとともにスコア表示がされる
-     *  - メッセージがマクロのみの場合はマクロのみが実行され、スコアが表示されない
-     *  - メッセージがある場合はそのメッセージとともにスコアが表示される
-     * 
-     * メッセージがマクロのみの場合の挙動は、Java版(v3.10)に準拠するためのものであり、将来変更される可能性があります。
+     * メッセージがマクロのみの場合でもスコアは表示され、Java版(v3.10)とは異なりますので注意してください。
      *
      * @param pos パーツの座標
      * @param partsID パーツの物体番号
      * @param mapAttr パーツの ATR_TYPE の値
      */
     private _execObjectScoreEvent(pos: Coord, partsID: number, mapAttr: number): void {
-        var messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
-        const rawMessage = messageID === 0 ? "スコアを表示します。" : this._wwaData.message[messageID];
-        const pages = this.generatePagesByRawMessage(rawMessage, partsID, PartsType.OBJECT, pos, false, false);
-        // TODO: スコア表示は仕様変更されるべき
-        // メッセージの有無に関わらず、スコア表示ウィンドウは決定ボタンなどで閉じられるべきなので
-        // マクロのみや空メッセージの場合であっても、スコア表示は決定ボタンで閉じられるようにする
-        // <P> による改ページがある場合は、全ページの表示が終わるまでスコアは表示されるべき。
-        const existsMessage = pages.reduce((existsMessageBefore, node) => existsMessageBefore || isEmptyMessageTree(node), false);
-        if (existsMessage) {
-            this._scoreRates = {
+        const messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
+        this.generatePageAndReserveExecution(this._wwaData.message[messageID], false, false, partsID, PartsType.OBJECT, pos, {
+            rates: {
                 energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
                 strength: this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
                 defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
                 gold: this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]
-            };
-            this.updateScore();
-            this._scoreWindow.show();
-        }
-        this.generatePageAndReserveExecution(rawMessage, false, false, partsID, PartsType.OBJECT, pos);
+            }
+        } )
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
-
     }
 
-    public updateScore() {
-        if (!this._scoreRates) {
+    public updateScore(scoreOption?: ScoreOptions) {
+        const option = scoreOption || this._lastScoreOptions;
+        // 一度もスコアを表示しておらず、今回スコアを新たに表示しようとしていない場合は何もしない
+        if (!option) {
             return;
         }
-        const score = this._player.getStatus().calculateScore(this._scoreRates);
+        // スコアオプションが未指定の場合は最後に使われたオプションを使用
+        const score = this._player.getStatus().calculateScore(option);
         this._scoreWindow.update(score);
     }
 
@@ -3430,9 +3428,10 @@ export class WWA {
         partsID: number = 0,
         partsType: PartsType = PartsType.OBJECT,
         partsPosition: Coord = new Coord(0, 0),
+        scoreOption: ScoreOptions | undefined =  undefined
     ): boolean {
         this._pages = this._pages.concat(
-            this.generatePagesByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice
+            this.generatePagesByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice, scoreOption
         ));
         if (this._pages.length !== 0) {
             const topPage = this._pages.shift();
@@ -3448,7 +3447,8 @@ export class WWA {
         partsType: PartsType,
         partsPosition: Coord,
         isSystemMessage: boolean,
-        showChoice: boolean
+        showChoice: boolean,
+        scoreOption: ScoreOptions
     ): Page[] {
 
         // コメント削除
@@ -3462,7 +3462,8 @@ export class WWA {
             .replace(/\/\/.*\n/ig, "");
 
         if (messageMain === "") {
-            return [];
+            // 空メッセージの場合は何も処理しないが、スコア表示の場合はメッセージを出すのでノードなしのページを生成
+            return scoreOption ? [new Page(undefined, true, false, false, scoreOption)] : [];
         }
         const pageContents = messageMain.split(/\<p\>/ig);
 
@@ -3496,7 +3497,12 @@ export class WWA {
                 }
             });
 
-            return new Page(firstNode, pageId === pageContents.length - 1, pageId === 0 && showChoice, isSystemMessage);
+            return new Page(firstNode,
+                 pageId === pageContents.length - 1,
+                 pageId === 0 && showChoice,
+                 isSystemMessage,
+                 pageId === 0 && scoreOption
+            );
         });
    }
 
@@ -4880,7 +4886,6 @@ export class WWA {
         this._clearFacesInNextFrame = true;
         if (this._scoreWindow.isVisible()) {
             this._scoreWindow.hide();
-            this._scoreRates = undefined;
         }
         if (this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);

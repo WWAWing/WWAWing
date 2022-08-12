@@ -14,6 +14,8 @@ import {
     Direction,
     StatusSolutionKind,
     PreprocessMacroType,
+    ScoreRates,
+    ScoreOptions as ScoreOptions,
 } from "./wwa_data";
 import {
     Monster
@@ -43,7 +45,9 @@ export class Page {
         public firstNode?: Node,
         public isLastPage?: boolean, // 旧 endOfPartsEvent相当
         public showChoice?: boolean,
-        public isSystemMessage?: boolean
+        public isSystemMessage?: boolean,
+        // score オブジェクトがあるときスコア表示
+        public scoreOptions?: ScoreOptions
     ) {
 
     }

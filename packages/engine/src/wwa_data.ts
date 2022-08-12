@@ -83,15 +83,10 @@ export class Status extends EquipmentStatus {
         return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
     }
 
-    public calculateScore(weight: {
-        energy: number;
-        strength: number;
-        defence: number;
-        gold: number;
-    }): number {
-        type Key = keyof typeof weight;
+    public calculateScore(scoreOption: ScoreOptions): number {
+        type Key = keyof ScoreRates;
         // TODO: this[key] など型が効いていない部分があるが、一旦目を瞑る。
-        return (Object.keys(weight) as Key[]).reduce((prev, key) =>  prev + weight[key] * this[key], 0);
+        return (Object.keys(scoreOption.rates) as Key[]).reduce((prev, key) =>  prev + scoreOption.rates[key] * this[key], 0);
     }
 
     public constructor( e: number, s: number, d: number, g: number) {
@@ -1015,10 +1010,18 @@ export type StatusSolutionKind = "all" | "bare" | "equipment";
 export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject" | "noFileSpecified";
 
 /**
- * if-elseマクロにて該当するマクロ文を実行するかを決める
- * outside-ifelse: if文の内側ではない
- * can-execute: 該当ブロックで処理を実行する
- * cannot-execute: if文の中だが、該当ブロックでは実行しない
- * execed: if文の中で、既に実行済みのため実行しない
+ * スコア表示で使用されるオプション
  */
-export type ConditionalMacroExecStatus = "outside-ifelse" | "can-execute" | "cannot-execute" | "executed";
+export interface ScoreOptions {
+    rates: ScoreRates
+}
+
+/**
+ * スコア表示で使用するレート
+ */
+export interface ScoreRates {
+    energy: number;
+    strength: number;
+    defence: number;
+    gold: number;
+}
