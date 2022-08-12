@@ -1692,7 +1692,7 @@ export class WWA {
                     this._player.setMessageWaiting();
                 } else {
                     if (this._pages.length === 0) {
-                        this._hideMessageWindow(existsMessageToDisplay);
+                        this._hideMessageWindow();
                     } else {
                         this._setNextPage();
                     }
@@ -4901,7 +4901,7 @@ export class WWA {
         }
     }
 
-    private _hideMessageWindow(messageDisplayed: boolean = true): void {
+    private _hideMessageWindow(): void {
         var itemID = 0;
         if (this._player.isReadyToUseItem()) {
             itemID = this._player.useItem();
@@ -4909,7 +4909,7 @@ export class WWA {
         var mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
         this.clearFaces();
         if (mesID === 0) {
-            if (messageDisplayed) {
+            if (this._messageWindow.isVisible()) {
                 this._player.setDelayFrame();
                 this._messageWindow.hide();
                 this._keyStore.allClear();
