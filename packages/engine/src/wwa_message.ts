@@ -204,228 +204,290 @@ export class Macro {
         return IFElseMacroList.includes(this.macroType);
     }
 
-    public execute(): void {
+    public execute(): {isGameOver?: true} {
         try {
             switch (this.macroType) {
-                case MacroType.IMGPLAYER:
+                case MacroType.IMGPLAYER: {
                     this._executeImgPlayerMacro();
-                    break;
-                case MacroType.IMGYESNO:
+                    return {};
+                }
+                case MacroType.IMGYESNO: {
                     this._executeImgYesNoMacro();
-                    break;
-                case MacroType.HPMAX:
+                    return {};
+                }
+                case MacroType.HPMAX: {
                     this._executeHPMaxMacro();
-                    break;
-                case MacroType.SAVE:
+                    return {};
+                }
+                case MacroType.SAVE: {
                     this._executeSaveMacro();
-                    break;
-                case MacroType.ITEM:
+                    return {};
+                }
+                case MacroType.ITEM: {
                     this._executeItemMacro();
-                    break;
-                case MacroType.DEFAULT:
+                    return {};
+                }
+                case MacroType.DEFAULT: {
                     this._executeDefaultMacro();
-                    break;
-                case MacroType.OLDMAP:
+                    return {};
+                }
+                case MacroType.OLDMAP: {
                     this._executeOldMapMacro();
-                    break;
-                case MacroType.PARTS:
+                    return {};
+                }
+                case MacroType.PARTS: {
                     this._executePartsMacro();
-                    break;
-                case MacroType.MOVE:
+                    return {};
+                }
+                case MacroType.MOVE: {
                     this._executeMoveMacro();
-                    break;
-                case MacroType.MAP:
+                    return {};
+                }
+                case MacroType.MAP: {
                     this._executeMapMacro();
-                    break;
-                case MacroType.DIRMAP:
+                    return {};
+                }
+                case MacroType.DIRMAP: {
                     this._executeDirMapMacro();
-                    break;
-                case MacroType.IMGFRAME:
+                    return {};
+                }
+                case MacroType.IMGFRAME: {
                     this._executeImgFrameMacro();
-                    break;
-                case MacroType.IMGBOM:
+                    return {};
+                }
+                case MacroType.IMGBOM: {
                     this._executeImgBomMacro();
-                    break;
-                case MacroType.DELPLAYER:
+                    return {};
+                }
+                case MacroType.DELPLAYER: {
                     this._executeDelPlayerMacro();
-                    break;
-                case MacroType.FACE:
+                    return {};
+                }
+                case MacroType.FACE: {
                     this._executeFaceMacro();
-                    break;
-                case MacroType.EFFECT:
+                    return {};
+                }
+                case MacroType.EFFECT: {
                     this._executeEffectMacro();
-                    break;
-                case MacroType.GAMEOVER:
+                    return {};
+                }
+                case MacroType.GAMEOVER: {
                     this._executeGameOverMacro();
-                    break;
-                case MacroType.IMGCLICK:
+                    return {};
+                }
+                case MacroType.IMGCLICK: {
                     this._executeImgClickMacro();
-                    break;
-                case MacroType.STATUS:
-                    this._executeStatusMacro();
-                    break;
-                case MacroType.EFFITEM:
+                    return {};
+                }
+                case MacroType.STATUS: {
+                    const { isGameOver } = this._executeStatusMacro();
+                    return {isGameOver};
+                }
+                case MacroType.EFFITEM: {
                     this._executeEffItemMacro();
-                    break;
-                case MacroType.COLOR:
+                    return {};
+                }
+                case MacroType.COLOR: {
                     this._executeColorMacro();
-                    break;
-                case MacroType.WAIT:
+                    return {};
+                }
+                case MacroType.WAIT: {
                     this._executeWaitMacro();
-                    break;
-                case MacroType.SOUND:
+                    return {};
+                }
+                case MacroType.SOUND: {
                     this._executeSoundMacro();
-                    break;
-                case MacroType.GAMEPAD_BUTTON:
+                    return {};
+                }
+                case MacroType.GAMEPAD_BUTTON: {
                     this._executeGamePadButtonMacro();
-                    break;
-                case MacroType.OLDMOVE:
+                    return {};
+                }
+                case MacroType.OLDMOVE: {
                     this._executeOldMoveMacro();
-                    break;
-                case MacroType.JUMPGATE:
+                    return {};
+                }
+                case MacroType.JUMPGATE: {
                     this._executeJumpGateMacro();
-                    break;
+                    return {};
+                }
                 // 現在の座標を記憶
-                case MacroType.RECPOSITION:
+                case MacroType.RECPOSITION: {
                     this._executeRecPositionMacro();
-                    break;
+                    return {};
+                }
                 // 記憶していた座標にジャンプ
-                case MacroType.JUMPRECPOSITION:
+                case MacroType.JUMPRECPOSITION: {
                     this._executeJumpRecPositionMacro();
-                    break;
+                    return {};
+                }
                 // 変数デバッグ出力
-                case MacroType.CONSOLE_LOG:
+                case MacroType.CONSOLE_LOG: {
                     this._executeConsoleLogMacro();
-                    break;
+                    return {};
+                }
                 // 変数 <- HP
-                case MacroType.COPY_HP_TO:
+                case MacroType.COPY_HP_TO: {
                     this._executeCopyHpToMacro();
-                    break;
+                    return {};
+                }
                 // HP <- 変数
-                case MacroType.SET_HP:
-                    this._executeSetHPMacro();
-                    break;
+                case MacroType.SET_HP: {
+                    const { isGameOver } = this._executeSetHPMacro();
+                    return { isGameOver };
+                }
                 // 変数 <- HPMAX
-                case MacroType.COPY_HPMAX_TO:
+                case MacroType.COPY_HPMAX_TO: {
                     this._executeCopyHpMaxToMacro();
-                    break;
+                    return {};
+                }
                 // HPMAX <- 変数
-                case MacroType.SET_HPMAX:
+                case MacroType.SET_HPMAX: {
                     this._executeSetHpMaxMacro();
-                    break;
+                    return {};
+                }
                 // 変数 <- AT
-                case MacroType.COPY_AT_TO:
+                case MacroType.COPY_AT_TO: {
                     this._executeCopyAtToMacro();
-                    break;
+                    return {};
+                }
                 // AT <- 変数
-                case MacroType.SET_AT:
+                case MacroType.SET_AT: {
                     this._executeSetAtMacro();
-                    break;
+                    return {};
+                }
                 // 変数 <- DF
-                case MacroType.COPY_DF_TO:
+                case MacroType.COPY_DF_TO: {
                     this._executeCopyDfToMacro();
-                    break;
+                    return {};
+                }
                 // DF <- 変数
-                case MacroType.SET_DF:
+                case MacroType.SET_DF: {
                     this._executeSetDfMacro();
-                    break;
+                    return {};
+                }
                 // 変数 <- MONEY
-                case MacroType.COPY_MONEY_TO:
+                case MacroType.COPY_MONEY_TO: {
                     this._executeCopyMoneyToMacro();
-                    break;
+                    return {};
+                }
                 // MONEY <- 変数
-                case MacroType.SET_MOENEY:
+                case MacroType.SET_MONEY: {
                     this._executeSetMoneyMacro();
-                    break;
+                    return {};
+                }
                 // 歩数カウント代入
-                case MacroType.COPY_STEP_COUNT_TO:
+                case MacroType.COPY_STEP_COUNT_TO: {
                     this._executeSetStepCountMacro();
-                    break;
+                    return {};
+                }
                 // 変数に定数代入
-                case MacroType.VAR_SET_VAL:
+                case MacroType.VAR_SET_VAL: {
                     this._executeVarSetValMacro();
-                    break;
+                    return {};
+                }
                 // 変数に変数代入
-                case MacroType.VAR_SET:
+                case MacroType.VAR_SET: {
                     this._executeVarSetMacro();
-                    break;
+                    return {};
+                }
                 // 足し算代入
-                case MacroType.VAR_ADD:
+                case MacroType.VAR_ADD: {
                     this._executeVarAddMacro();
-                    break;
+                    return {};
+                }
                 // 引き算代入
-                case MacroType.VAR_SUB:
+                case MacroType.VAR_SUB: {
                     this._executeVarSubMacro();
-                    break;
+                    return {};
+                }
                 // 掛け算代入
-                case MacroType.VAR_MUL:
+                case MacroType.VAR_MUL: {
                     this._executeVarMulMacro();
-                    break;
+                    return {};
+                }
                 // 割り算代入
-                case MacroType.VAR_DIV:
+                case MacroType.VAR_DIV: {
                     this._executeVarDivMacro();
-                    break;
+                    return {};
+                }
                 // 割り算の余り代入
-                case MacroType.VAR_MOD:
+                case MacroType.VAR_MOD: {
                     this._executeVarModMacro();
-                    break;
+                    return {};
+                }
                 // 変数Xに1からYまでの乱数を代入
-                case MacroType.VAR_SET_RAND:
+                case MacroType.VAR_SET_RAND: {
                     this._executeVarSetRandMacro();
-                    break;
+                    return {};
+                }
                 // 速度変更禁止マクロ
-                case MacroType.GAME_SPEED:
+                case MacroType.GAME_SPEED: {
                     this._executeGameSpeedMacro();
-                    break;
+                    return {};
+                }
                 // 変数付きのメッセージ表示
-                case MacroType.SHOW_STR:
+                case MacroType.SHOW_STR: {
                     // $show_str マクロは、キューの組み立て時に処理されていて、既に存在しないはず
-                    break;
+                    return {};
+                }
                 // IF文
-                case MacroType.IF:
+                case MacroType.IF: {
                     // $if マクロ (新実装) は、キューの組み立て時に処理されていて、既に存在しないはず
-                    break;
+                    return {};
+                }
                 // IF文 (旧実装)
-                case MacroType.LEGACY_IF:
+                case MacroType.LEGACY_IF: {
                     this._executeLegacyIfMacro();
-                    break;
+                    return {};
+                }
                 // ELSE-IF文
-                case MacroType.ELSE_IF:
+                case MacroType.ELSE_IF: {
                     // $else_if マクロは、キューの組み立て時に処理されていて、既に存在しないはず
-                    break;
+                    return {};
+                }
                 // ELSE文
-                case MacroType.ELSE:
+                case MacroType.ELSE: {
                     // $else マクロは、キューの組み立て時に処理されていて、既に存在しないはず
-                    break;
+                    return {};
+                }
                 // END-IF文
-                case MacroType.END_IF:
+                case MacroType.END_IF: {
                     // $endif マクロは、キューの組み立て時に処理されていて、既に存在しないはず
-                    break;
+                    return {};
+                }
                 // 速度設定
-                case MacroType.SET_SPEED:
+                case MacroType.SET_SPEED: {
                     this._executeSetSpeedMacro();
-                    break;
+                    return {};
+                }
                 // プレイ時間変数代入
-                case MacroType.COPY_TIME_TO:
+                case MacroType.COPY_TIME_TO: {
                     this._executeCopyTimeToMacro();
-                    break;
+                    return {};
+                }
                 // ステータスを隠す
-                case MacroType.HIDE_STATUS:
+                case MacroType.HIDE_STATUS: {
                     this._executeHideStatusMacro();
-                    break;
+                    return {};
+                }
                 // $map の変数対応版
-                case MacroType.VAR_MAP:
+                case MacroType.VAR_MAP: {
                     this._executeVarMapMacro();
-                    break;
-                case MacroType.NO_GAMEOVER:
+                    return {};
+                }
+                case MacroType.NO_GAMEOVER: {
                     this._executeNoGameOverMacro();
-                    break;
-                case MacroType.SET:
-                    this._executeSetMacro();
-                    break;
-                default:
+                    return {};
+                }
+                case MacroType.SET: {
+                    const { isGameOver } = this._executeSetMacro();
+                    return { isGameOver }
+                }
+                default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
-                    break;
+                    return {};
+                }
             }
         } catch (e) {
             // デベロッパーモードならエラーを吐くとかしたいね
@@ -522,10 +584,10 @@ export class Macro {
         this._wwa.setUserVarMONEY(num);
     }
     // set_hpマクロ実行部
-    private _executeSetHPMacro(): void {
+    private _executeSetHPMacro(): { isGameOver?: true } {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
-        this._wwa.setHPUserVar(num, true);
+        return this._wwa.setHPUserVar(num, true);
     }
     // set_hpmaxマクロ実行部
     private _executeSetHpMaxMacro(): void {
@@ -923,7 +985,7 @@ export class Macro {
         this._wwa.updateItemEffectEnabled(!!mode);
     }
 
-    private _executeStatusMacro(): void {
+    private _executeStatusMacro(): { isGameOver?: true } {
         this._concatEmptyArgs(2);
         var type = this._parseInt(0);
         var value = this._parseInt(1);
@@ -931,7 +993,7 @@ export class Macro {
         if (type < 0 || 4 < type) {
             throw new Error("ステータス種別が範囲外です。");
         }
-        this._wwa.setPlayerStatus(type, value, true);
+        return this._wwa.setPlayerStatus(type, value, true);
     }
 
     private _executeColorMacro(): void {
@@ -1001,8 +1063,8 @@ export class Macro {
         this._wwa.setGameOverPolicy(isGameOverDisabled);
     }
 
-    private _executeSetMacro(): void {
-        this._wwa.execSetMacro(this.macroArgs[0])
+    private _executeSetMacro(): { isGameOver?: true } {
+        return this._wwa.execSetMacro(this.macroArgs[0]);
     }
 }
 
