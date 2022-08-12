@@ -575,7 +575,7 @@ export enum MacroType {
     COPY_DF_TO = 34,
     SET_DF = 35,
     COPY_MONEY_TO = 36,
-    SET_MOENEY = 37,
+    SET_MONEY = 37,
     COPY_STEP_COUNT_TO = 38,
     VAR_SET_VAL = 39,
     VAR_SET = 40,

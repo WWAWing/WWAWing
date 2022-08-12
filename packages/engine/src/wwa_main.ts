@@ -1593,7 +1593,14 @@ export class WWA {
 
     private _executeNode(node: Node | undefined, tokenValues: ExpressionParser.TokenValues): ParsedMessage[] {
         if (node instanceof ParsedMessage) {
-            node.macro?.forEach(macro => macro.execute());
+            const { isGameOver } = node.macro?.reduce(
+                (prevResult, macro) => {
+                    const { isGameOver } = macro.execute();
+                    return { isGameOver: prevResult.isGameOver || isGameOver }
+                }, { isGameOver: false });
+            if (isGameOver) {
+                throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。")
+            }
             return [node, ...this._executeNode(node.next, tokenValues)];
         } else if (node instanceof Junction) {
             const next = node.evaluateAndGetNextNode(tokenValues);
@@ -1601,6 +1608,18 @@ export class WWA {
         }
         // node === undefined
         return [];
+    }
+
+    private _executeNodes(firstNode: Node | undefined): { isError: false, messages: ParsedMessage[] } | { isError: true } {
+        try {
+            return  {
+                isError: false,
+                messages: this._executeNode(firstNode, this._generateTokenValues())
+            };
+        } catch (error) {
+            // ゲームオーバーなど、ページの実行が継続できなくなった場合
+            return { isError: true }
+        }
     }
 
     private _main(): void {
@@ -1632,26 +1651,28 @@ export class WWA {
             this._reservedPartsAppearance = undefined;
         }
         if (this._execPageInNextFrame) {
-            const messageLines = this._executeNode(this._execPageInNextFrame.firstNode, this._generateTokenValues());
-
-            // executeNode の結果、ゲームオーバーになるなどして、execPageInNextFrame がクリアされた場合は以下の処理は実行しない
-            if (this._execPageInNextFrame) {
+            const executingPage = this._execPageInNextFrame;
+            this._execPageInNextFrame  = undefined;
+            const executedResult = this._executeNodes(executingPage.firstNode)
+            if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
+                // executeNode の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
+                this._lastPage = undefined;
+            } else {
                 if (this._lastPage?.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
                     this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                     this._reservedMoveMacroTurn = void 0;
                 }
-
-                const messageLinesToDisplay = messageLines.filter(line => !line.isEmpty());
+                const messageLinesToDisplay = executedResult.messages.filter(line => !line.isEmpty());
                 const existsMessageToDisplay = messageLinesToDisplay.length > 0;
                 // set message
                 if (existsMessageToDisplay) {
                     const message = messageLinesToDisplay.map(line => line.generatePrintableMessage()).join("\n");
                     this._messageWindow.setMessage(message);
-                    this._messageWindow.setYesNoChoice(this._execPageInNextFrame.showChoice);
+                    this._messageWindow.setYesNoChoice(executingPage.showChoice);
                     this._messageWindow.setPositionByPlayerPosition(
                         this._faces.length !== 0,
                         this._scoreWindow.isVisible(),
-                        this._execPageInNextFrame.isSystemMessage,
+                        executingPage.isSystemMessage,
                         this._player.getPosition(),
                         this._camera.getPosition()
                     );
@@ -1665,11 +1686,8 @@ export class WWA {
                 }
                 this._lastPage = {
                     isEmpty: !existsMessageToDisplay,
-                    isLastPage: this._execPageInNextFrame.isLastPage
+                    isLastPage: executingPage.isLastPage
                 }
-                this._execPageInNextFrame = undefined;
-            } else {
-                this._lastPage = undefined;
             }
         }
 
@@ -5042,7 +5060,7 @@ export class WWA {
         return this.isNotNumberTypeOrNaN(x) || x < 0 ? 0 : Math.floor(x);
     }
 
-    public setPlayerStatus(type: MacroStatusIndex, value: number, isCalledByMacro: boolean): void {
+    public setPlayerStatus(type: MacroStatusIndex, value: number, isCalledByMacro: boolean): { isGameOver?: true } {
         if (type === MacroStatusIndex.ENERGY) {
             // 生命力は setEnergy 内でマイナスの値を処理しているためこのまま続行
             this._player.setEnergy(value);
@@ -5051,6 +5069,7 @@ export class WWA {
                 this.shouldApplyGameOver({ isCalledByMacro })
             ) {
                 this.gameover();
+                return { isGameOver: true };
             }
         } else if (type === MacroStatusIndex.STRENGTH) {
             this._player.setStrength(this.toValidStatusValue(value));
@@ -5064,6 +5083,7 @@ export class WWA {
             throw new Error("未定義のステータスタイプです");
         }
         // ステータス変更アニメーションは対応なし (原作通り)
+        return {};
     }
 
     public setDelPlayer(flag: boolean): boolean {
@@ -5417,19 +5437,21 @@ font-weight: bold;
     }
 
     // HP <- ユーザ変数
-    public setHPUserVar(index: number, isCalledByMacro: boolean): void {
+    public setHPUserVar(index: number, isCalledByMacro: boolean): {isGameOver?: true} {
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
         this._player.setEnergy(this.toValidStatusValue(this._wwaData.userVar[index]));
+        this._player.updateStatusValueBox();
         // 0 になった場合はゲームオーバー
         if (
             this._player.isDead() && 
             this.shouldApplyGameOver({ isCalledByMacro })
         ) {
             this.gameover();
+            return { isGameOver: true }
         }
-        this._player.updateStatusValueBox();
+        return {};
     }
     // HPMAX <- ユーザ変数
     public setHPMAXUserVar(index: number): void {
@@ -5521,7 +5543,7 @@ font-weight: bold;
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
     }
 
-    public execSetMacro(macroStr: string = ""): void {
+    public execSetMacro(macroStr: string = ""): { isGameOver?: true } {
         const { assignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
             macroStr, this._generateTokenValues()
         );
@@ -5532,7 +5554,9 @@ font-weight: bold;
                     this._player.isDead() &&
                     this.shouldApplyGameOver({ isCalledByMacro: true })
                 ) {
+                    this._player.updateStatusValueBox();
                     this.gameover();
+                    return { isGameOver: true }
                 }
                 break;
             case "energyMax":
@@ -5555,6 +5579,7 @@ font-weight: bold;
                 break;
         }
         this._player.updateStatusValueBox();
+        return {};
     }
 
     private _generateTokenValues(): ExpressionParser.TokenValues {
