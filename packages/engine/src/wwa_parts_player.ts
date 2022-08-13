@@ -342,12 +342,17 @@ export class Player extends PartsObject {
     }
 
     public clearMessageWaiting(): void {
+        if (this._state !== PlayerState.MESSAGE_WAITING && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
+            return;
+        }
         if (this._state === PlayerState.MESSAGE_WAITING) {
             this._state = PlayerState.CONTROLLABLE;
-            this._isPartsEventExecuted = true;
-            if (this._isPreparedForLookingAround) {
-                this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
-            }
+        } else if (this._state === PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
+            this._state = PlayerState.LOCALGATE_JUMPED;
+        }
+        this._isPartsEventExecuted = true;
+        if (this._isPreparedForLookingAround) {
+            this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         }
     }
 
