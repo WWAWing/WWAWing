@@ -1660,7 +1660,7 @@ export class WWA {
                     this._pages.push(this._execPageInNextFrame);
                     this._execPageInNextFrame = undefined;
                 }
-                if (this._lastPage?.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
+                if (this._lastPage && this._lastPage.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
                     this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                     this._reservedMoveMacroTurn = void 0;
                 }
@@ -4887,7 +4887,7 @@ export class WWA {
         if (this._scoreWindow.isVisible()) {
             this._scoreWindow.hide();
         }
-        if (this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
+        if (this._lastPage?.isLastPage && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
