@@ -120,14 +120,14 @@ export class Junction extends Node {
  * 通常のメッセージの他、マクロの情報などを持ちます。
  */
 export class ParsedMessage extends Node {
-    private messageArray: MessageSegments;
+    private messageSegments: MessageSegments;
     constructor(
         textOrMessageSegments: string | MessageSegments,
         public macro?: Macro[],
         public next?: Node
     ) {
         super();
-        this.messageArray = this.parseMessage(textOrMessageSegments);
+        this.messageSegments = this.parseMessage(textOrMessageSegments);
         if (this.macro === void 0) {
             this.macro = [];
         }
@@ -135,28 +135,26 @@ export class ParsedMessage extends Node {
 
     /**
      * メッセージが空であれば true を返す。
-     * 空配列の他、空文字列しかない1要素の配列を空とみなす。
-     * マクロの有無は考慮しない。
      */
     isEmpty(): boolean {
-        return (
-            this.messageArray.length === 0 ||
-            (this.messageArray.length === 1 && this.messageArray[0] === "")
-        );
+        // 全 messageSegment が空文字列 なら true.
+        // HACK: 今のところユーザ変数は文字列が扱えないが、もし扱えるようになった場合、LazyEvaluateValue が 空文字列を
+        // 返す可能性があり、その場合は実行するまで本当に空かどうかわからなくなるため、メッセージの空判定方法を根本から見直す必要がある。
+        return this.messageSegments.reduce((prev, segment) => prev && segment === "", true)
     }
 
     /**
      * LazyEvaluateValue を評価して、表示可能なメッセージを生成する。
      */
     generatePrintableMessage(): string {
-        return this.messageArray.reduce<string>((prevMessage, item) => {
+        return this.messageSegments.reduce<string>((prevMessage, item) => {
             const evaluatedItem = typeof item === "string" ? item : item();
             return `${prevMessage}${evaluatedItem}`;
         }, "")
     }
 
     appendMessage(message: string | MessageSegments, withNewLine: boolean = false): void {
-        this.messageArray = this.messageArray.concat(withNewLine ? ["\n"] : [], this.parseMessage(message));
+        this.messageSegments = this.messageSegments.concat(withNewLine ? ["\n"] : [], this.parseMessage(message));
     }
 
     private parseMessage(message: string | MessageSegments): MessageSegments {
