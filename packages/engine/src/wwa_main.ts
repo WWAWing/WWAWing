@@ -3512,10 +3512,10 @@ export class WWA {
     private parseMessageLines(pageContent: string, partsID: number, partsType: PartsType, partsPosition: Coord): MessageLine[] {
         return pageContent.split("\n").map(line => {
             const matchInfo = line.match(/(\$(?:[a-zA-Z_][a-zA-Z0-9_]*)(?:.*))/);
-            if (!matchInfo || matchInfo.length < 2 && !line.startsWith("$")) {
-                return { type: "text" as const, text: line };
+            if ((!matchInfo || matchInfo.length < 2)) {
+                return line.startsWith("$") ? undefined : { type: "text" as const, text: line }
             }
-            const macro = parseMacro(this, partsID, partsType, partsPosition, matchInfo[1]);
+           const macro = parseMacro(this, partsID, partsType, partsPosition, matchInfo[1]);
             switch (macro.macroType) {
                 case MacroType.IF:
                 case MacroType.ELSE_IF:
@@ -3526,7 +3526,8 @@ export class WWA {
                 default:
                     return { type: "normalMacro" as const, text: line, macro }
             }
-        });
+        // $ 始まりのコメント行 (undefined) の除去
+        }).filter(Boolean);
     }
 
     /**
