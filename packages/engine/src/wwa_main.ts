@@ -3574,7 +3574,7 @@ export class WWA {
                     throw new Error("構文エラー: $if を呼ぶ前に $else は呼べません")
                 }
                 // else の場合、該当する分岐は必ず実行されるべき
-                parentJunction.appendBranch({ descriminant: true })
+                parentJunction.appendBranch({ descriminant: true, elseBranch: { type: "real" } })
                 return undefined;
             case MacroType.END_IF:
                 if (isTopLevel) {
@@ -3622,6 +3622,29 @@ export class WWA {
                         continue;
                     }
                     this.connectToFinalNode(node, newNode);
+                }
+                /*
+                 * $else がない $if について、実行されなかった場合の次のノードを与えるため、
+                 * 擬似的な $else 相当の分岐を作成する。
+                 * 例えば次の場合に、条件Aを満たさなかった場合に $if=(B) 相当の Juntion ノードが次に評価されるようにする。
+                 * 
+                 * ```
+                 * $if=(A)
+                 * 条件Aの処理
+                 * $endif
+                 * $if=(B)
+                 * 条件Bの処理
+                 * $endif
+                 * ```
+                 */
+                if (!endIfTargetJunction.hasElseBranch()) {
+                    endIfTargetJunction.branches.push({
+                        next: newNode,
+                        descriminant: true,
+                        elseBranch: {
+                            type: "pesudo-else"
+                        }
+                    })
                 }
                 return;
             default:

@@ -65,6 +65,17 @@ export interface Branch {
      * 構文エラーの場合は undefined (false と同等扱い) になります。
      */
     descriminant?: Descriminant;
+    /**
+     * $else によって生成される分岐相当でなければ undefined.
+     * $else によって生成される分岐か、 $else がない $if マクロで生成される else相当の分岐ならオブジェクト.
+     */
+    elseBranch?: {
+        /**
+         * $else によって生成された分岐なら "real"
+         * $else がない $if によって擬似的に生成された $else 相当の分岐なら "pesudo-else" (疑似 else)
+         */
+        type: "real" | "pesudo-else";
+    };
     next?: Node
 }
 
@@ -97,6 +108,10 @@ export class Junction extends Node {
             }
         }
         return undefined;
+    }
+
+    hasElseBranch(): boolean {
+        return this.branches.filter(branch => Boolean(branch.elseBranch)).length >= 1;
     }
 }
 
