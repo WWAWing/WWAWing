@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "3.10.0-alpha.3",
+  "version": "3.10.0-alpha.4",
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
