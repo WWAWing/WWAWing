@@ -35,7 +35,12 @@ const VirtualPadMoveButtonCodes = [
     "BUTTON_UP",
     "BUTTON_RIGHT",
     "BUTTON_DOWN"
-];
+] as const;
+
+/**
+ * 移動ボタンかどうかの判定に使用します。
+ */
+const VirtualPadMoveButtonsSet = new Set<VirtualPadButtonCode>(VirtualPadMoveButtonCodes);
 
 /**
  * 仮想パッドの状態管理を行うクラスです。
@@ -279,11 +284,12 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public setTouchInfo(buttonType: VirtualPadButtonCode) {
-        if (!this._enabled || this._isTouchingButtons[buttonType] === undefined) {
+        const button = this._isTouchingButtons[buttonType];
+        if (!this._enabled || button === undefined) {
             return;
         }
 
-        (this._isTouchingButtons[buttonType] as VirtualPadButtonTouching).next = true;
+        button.next = true;
     }
 
     /**
@@ -291,11 +297,12 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public clearTouchInfo(buttonType: VirtualPadButtonCode) {
-        if (!this._enabled || this._isTouchingButtons[buttonType] === undefined) {
+        const button = this._isTouchingButtons[buttonType];
+        if (!this._enabled || button === undefined) {
             return;
         }
 
-        (this._isTouchingButtons[buttonType] as VirtualPadButtonTouching).next = false;
+        button.next = false;
     }
 
     /**
@@ -303,8 +310,8 @@ export default class VirtualPadStore {
      */
     public allMoveClear(): void {
         VirtualPadMoveButtonCodes.forEach((buttonCode) => {
-            if (this._availableButtons.includes(buttonCode as VirtualPadButtonCode)) {
-                this.clearTouchInfo(buttonCode as VirtualPadButtonCode);
+            if (this._availableButtons.includes(buttonCode)) {
+                this.clearTouchInfo(buttonCode);
             }
         });
     }
@@ -314,8 +321,11 @@ export default class VirtualPadStore {
      */
     public allClear(): void {
         this._availableButtons.forEach((buttonCode) => {
-            if (buttonCode !== undefined && this._isTouchingButtons[buttonCode] !== undefined) {
-                (this._isTouchingButtons[buttonCode] as VirtualPadButtonTouching).next = false;
+            if (buttonCode !== undefined) {
+                const button = this._isTouchingButtons[buttonCode];
+                if (button !== undefined) {
+                    button.next = false;
+                }
             }
         });
     }
@@ -325,7 +335,7 @@ export default class VirtualPadStore {
      * @param buttonType 
      */
     public static isMoveButton(buttonType: VirtualPadButtonCode): boolean {
-        return VirtualPadMoveButtonCodes.includes(buttonType);
+        return VirtualPadMoveButtonsSet.has(buttonType);
     }
 
     /**
