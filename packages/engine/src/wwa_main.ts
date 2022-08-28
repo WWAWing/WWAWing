@@ -477,14 +477,14 @@ export class WWA {
             this._mouseStore = new MouseStore();
             if (enableVirtualPad) {
                 this._virtualPadButtonElements = {
-                    ["BUTTON_ENTER"]: <HTMLButtonElement>util.$id("wwa-enter-button"),
-                    ["BUTTON_ESC"]: <HTMLButtonElement>util.$id("wwa-esc-button"),
-                    ["BUTTON_FAST"]: <HTMLButtonElement>util.$id("wwa-fast-button"),
-                    ["BUTTON_SLOW"]: <HTMLButtonElement>util.$id("wwa-slow-button"),
-                    ["BUTTON_LEFT"]: <HTMLButtonElement>util.$id("wwa-left-button"),
-                    ["BUTTON_UP"]: <HTMLButtonElement>util.$id("wwa-up-button"),
-                    ["BUTTON_RIGHT"]: <HTMLButtonElement>util.$id("wwa-right-button"),
-                    ["BUTTON_DOWN"]: <HTMLButtonElement>util.$id("wwa-down-button")
+                    BUTTON_ENTER: <HTMLButtonElement>util.$id("wwa-enter-button"),
+                    BUTTON_ESC: <HTMLButtonElement>util.$id("wwa-esc-button"),
+                    BUTTON_FAST: <HTMLButtonElement>util.$id("wwa-fast-button"),
+                    BUTTON_SLOW: <HTMLButtonElement>util.$id("wwa-slow-button"),
+                    BUTTON_LEFT: <HTMLButtonElement>util.$id("wwa-left-button"),
+                    BUTTON_UP: <HTMLButtonElement>util.$id("wwa-up-button"),
+                    BUTTON_RIGHT: <HTMLButtonElement>util.$id("wwa-right-button"),
+                    BUTTON_DOWN: <HTMLButtonElement>util.$id("wwa-down-button")
                 };
                 this._virtualPadStore = new VirtualPadStore(
                     this._virtualPadButtonElements,
