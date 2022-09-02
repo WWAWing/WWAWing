@@ -121,7 +121,7 @@ export class WWA {
         isLastPage: boolean;
         isEmpty: boolean;
     } | undefined;
-    private _reservedPartsAppearance: PartsAppearance | undefined;
+    private _reservedPartsAppearances: PartsAppearance[];
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
@@ -471,7 +471,7 @@ export class WWA {
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
             this._prevFrameEventExected = false;
             this._lastPage = undefined;
-            this._reservedPartsAppearance = undefined;
+            this._reservedPartsAppearances = [];
             this._execPageInNextFrame = undefined;
             this._passwordLoadExecInNextFrame = false;
 
@@ -1641,10 +1641,8 @@ export class WWA {
             this.clearFaces();
             this._clearFacesInNextFrame = false;
         }
-        if (this._reservedPartsAppearance) {
-            this.appearParts(this._reservedPartsAppearance);
-            this._reservedPartsAppearance = undefined;
-        }
+        this._reservedPartsAppearances.forEach(appearance => this.appearParts(appearance));
+        this._reservedPartsAppearances = [];
         if (this._execPageInNextFrame) {
             const executingPage = this._execPageInNextFrame;
             this._execPageInNextFrame  = undefined;
@@ -2783,16 +2781,19 @@ export class WWA {
         }
 
         this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP);
-        var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
-        var message = this._wwaData.message[messageID];
+        const messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
+        const message = this._wwaData.message[messageID];
+        const additionalWaitFrameCount = this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER];
         // 待ち時間
-        //this._waitTimeInCurrentFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * 100;
-        this._waitFrame += this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
+        this._waitFrame += additionalWaitFrameCount * Consts.WAIT_TIME_FRAME_NUM;
         this._temporaryInputDisable = true;
-        var messageDisplayed = this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.MAP, pos.clone());
+        this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.MAP, pos.clone());
         this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
 
-        return messageID !== 0 && messageDisplayed;
+        // メッセージIDが 0 でない (何らかのメッセージがある), もしくは 待ち時間が 0 でなければイベントが実行されたとみなす。
+        // Java 版に合わせた仕様のため今後変更の可能性があります。
+        // （現状、指定位置にパーツを出現が実行された場合でも false が返ってくる可能性があり、混乱のもとになりうる。）
+        return messageID !== 0 || additionalWaitFrameCount !== 0;
     }
 
     private _execMapWallEvent(pos: Coord, partsID: number, mapAttr: number): boolean {
@@ -3429,15 +3430,13 @@ export class WWA {
         partsType: PartsType = PartsType.OBJECT,
         partsPosition: Coord = new Coord(0, 0),
         scoreOption: ScoreOptions | undefined =  undefined
-    ): boolean {
-        this._pages = this._pages.concat(
-            this.generatePagesByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice, scoreOption
-        ));
+    ): void {
+        const generatedPage = this.generatePagesByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice, scoreOption);
+        this._pages = this._pages.concat(generatedPage);
         if (this._pages.length !== 0) {
             const topPage = this._pages.shift();
             this._execPageInNextFrame = topPage;
         }
-        return false;
     }
 
     // TODO: ここから別クラスへ切り出し予定
@@ -3779,11 +3778,11 @@ export class WWA {
     }
 
     public reserveAppearPartsInNextFrame(pos: Coord, triggerType: AppearanceTriggerType, triggerPartsId: number = 0): void {
-        this._reservedPartsAppearance = {
+        this._reservedPartsAppearances.push({
             pos,
             triggerType,
             triggerPartsId
-        }
+        })
     }
 
     public appearPartsByDirection(
