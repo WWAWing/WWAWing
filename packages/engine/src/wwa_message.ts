@@ -99,11 +99,11 @@ export class Junction extends Node {
         }
         return undefined;
     }
-    evaluateAndGetNextNode(tokenValues: TokenValues): Node | undefined {
+    evaluateAndGetNextNode(generateTokenValues: () => TokenValues): Node | undefined {
         for (let branch of this.branches) {
             // 判別式が undefined の場合は $else 節に相当するのでそのまま次の Node を返す
             // 判別式が null の場合はエラーなので、仕方なく次の Node を返す
-            if (!branch.descriminant || evaluateDescriminant(branch.descriminant, tokenValues)) {
+            if (!branch.descriminant || evaluateDescriminant(branch.descriminant, generateTokenValues())) {
                 return branch.next;
             }
         }

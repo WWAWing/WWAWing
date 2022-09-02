@@ -1586,7 +1586,7 @@ export class WWA {
     );
 
 
-    private _executeNode(node: Node | undefined, tokenValues: ExpressionParser.TokenValues): ParsedMessage[] {
+    private _executeNode(node: Node | undefined): ParsedMessage[] {
         if (node instanceof ParsedMessage) {
             const { isGameOver } = node.macro?.reduce(
                 (prevResult, macro) => {
@@ -1596,10 +1596,10 @@ export class WWA {
             if (isGameOver) {
                 throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。")
             }
-            return [node, ...this._executeNode(node.next, tokenValues)];
+            return [node, ...this._executeNode(node.next)];
         } else if (node instanceof Junction) {
-            const next = node.evaluateAndGetNextNode(tokenValues);
-            return next ? this._executeNode(next, tokenValues) : [];
+            const next = node.evaluateAndGetNextNode(this._generateTokenValues.bind(this));
+            return next ? this._executeNode(next) : [];
         }
         // node === undefined
         return [];
@@ -1609,7 +1609,7 @@ export class WWA {
         try {
             return  {
                 isError: false,
-                messages: this._executeNode(firstNode, this._generateTokenValues())
+                messages: this._executeNode(firstNode)
             };
         } catch (error) {
             // ゲームオーバーなど、ページの実行が継続できなくなった場合
