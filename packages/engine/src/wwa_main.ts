@@ -3501,7 +3501,20 @@ export class WWA {
             .replace(/\n\<p\>/ig, "<P>")
             .replace(/\<p\>\n/ig, "<P>")
             .replace(/\<p\>/ig, "<P>")
-            .replace(/\/\/.*\n/ig, "");
+            .split("\n").map(line => {
+                if(line.startsWith("//")) {
+                    // 行の最初から // の場合はその行がなかったことにする
+                    return undefined;
+                }
+                /**
+                 * 行内の http:// https:// でない「//」以降の文字列を削除する。
+                 * http:///////// のようなケースは、http:/「//」以降が削除対象になるため「 http:/」 になる。
+                 */
+                return line.replace(/(?<!https?:)\/\/.*$/ig, "") 
+            })
+            .filter(line => line !== undefined)
+            .join("\n")
+            .replace(/\\\/\\\//ig, "//"); // エスケープ対応: 「\/\/」 を 「//」 にする。
 
         var messageQueue: ParsedMessage[] = [];
         if (messageMain !== "") {
