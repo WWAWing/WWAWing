@@ -3550,7 +3550,7 @@ export class WWA {
             case MacroType.IF:
                 return new Junction([{ descriminant: ExpressionParser.parseDescriminant(currentLine.macro.macroArgs[0]) }]);
             case MacroType.SHOW_STR:
-                return shouldCreateParsedMessage ? new ParsedMessage(this._generateUserValString(currentLine.macro.macroArgs)) : undefined;
+                return shouldCreateParsedMessage ? new ParsedMessage(this._generateShowStrString(currentLine.macro.macroArgs)) : undefined;
             case "text":
                 return shouldCreateParsedMessage ? new ParsedMessage(currentLine.text) : undefined;
             case "normalMacro":
@@ -3667,7 +3667,7 @@ export class WWA {
                 const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
                 // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
                 if (currentLine.type === MacroType.SHOW_STR) {
-                    nodeByPrevLine.appendMessage(this._generateUserValString(currentLine.macro.macroArgs), shouldInsertNewLine);
+                    nodeByPrevLine.appendMessage(this._generateShowStrString(currentLine.macro.macroArgs), shouldInsertNewLine);
                 } else if (currentLine.type === "text") {
                     nodeByPrevLine.appendMessage(currentLine.text, shouldInsertNewLine);
                 } else if (currentLine.type === "normalMacro") {
@@ -5590,19 +5590,29 @@ font-weight: bold;
         this.setUserVar(x, Math.floor(Math.random() * this.toAssignableValue(num)) + bias);
     }
     
-    // ユーザ変数付きの文字列を組み立てる。
-    // 変数は表示する時に評価される。
-    private _generateUserValString(macroArgs: string[]): MessageSegments {
+    // $show_str マクロで表示される文字列を組み立てる。
+    // 変数, ステータスは表示する時に評価される。
+    // 変数の表記は添字のみを書く方法(例: 210)と、ifなどと同じ方法(例: v[210])の両方が使える。
+    private _generateShowStrString(macroArgs: string[]): MessageSegments {
         return macroArgs.map((macroArg) => {
-            const parsedArg = parseInt(macroArg, 10);
-            return isNaN(parsedArg) ?
-                // 引数を文字列として解釈する場合
-                // 何故か \n が反映されない？
-                macroArg.replace(/\\n/g, "\n") :
-                // 引数を数値として解釈する場合: ユーザ変数の値を表示する.
-                () => this._wwaData.userVar[parsedArg]
+            // 数値の場合は、該当するユーザ変数の添字と解釈する
+            const parsedNumber = parseInt(macroArg, 10);
+            if (!isNaN(parsedNumber)) {
+                return () => this._wwaData.userVar[parsedNumber];
+            }
+            // ExpressionParser で解釈できる表現 (HPMAX, RAND(x)など)を解釈する。
+            // なお、数値の場合は前段で弾かれているので、定数になることはない。
+            const parsedType = ExpressionParser.parseType(macroArg);
+            if (parsedType) {
+                return () => ExpressionParser.parseAndEvaluateValue(macroArg, this._generateTokenValues());
+            }
+            // 引数を文字列として解釈する場合
+            // \n は改行扱いされる。 
+            return macroArg.replace(/\\n/g, "\n");
+
         });
     }
+
     // 速度変更禁止
     public speedChangeJudge(speedChangeFlag: boolean): void {
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
@@ -5635,6 +5645,9 @@ font-weight: bold;
                 break;
             case "gold":
                 this._player.setGold(this.toValidStatusValue(rawValue));
+                break;
+            case "moveCount":
+               this._player.setMoveCount(this.toValidStatusValue(rawValue));
                 break;
             default:
                 if (isNaN(assignee) || !this.isValidUserVarIndex(assignee)) {
