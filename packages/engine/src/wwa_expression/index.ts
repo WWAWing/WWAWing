@@ -1,9 +1,9 @@
-import { parseValue, type TokenValues } from "./parsers";
+import { parseValue, parseType, type TokenValues } from "./parsers";
 import { calc, compare } from "./eval";
 import { regAdvance, regNormal, regIf } from "./regexp";
 import { generateValueAssignOperation, type ValueAssignOperation } from "./value-assign-operation";
 
-export { TokenValues, ValueAssignOperation };
+export { TokenValues, ValueAssignOperation, parseType, parseValue };
 
 function removeSpaces(rawString: string): string {
   return rawString.replace(/\s/g, "");

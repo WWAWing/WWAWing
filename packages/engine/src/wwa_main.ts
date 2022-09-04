@@ -3531,9 +3531,9 @@ export class WWA {
                         // それ以外のメッセージ、マクロは一切エンキューしない。(原作どおり)
                         // なので、「あああ$map=1,1,1」の「あああ」は表示されず、map文だけが処理される。
 
-                        // $showstr マクロは、メッセージに変換されるので、変換してメッセージとして積むように処理しなければならない。
+                        // $show_str マクロは、メッセージに変換されるので、変換してメッセージとして積むように処理しなければならない。
                         if(macro.macroType === MacroType.SHOW_STR) {
-                            linesWithoutMacro.push(this._generateUserValString(macro.macroArgs));
+                            linesWithoutMacro.push(this._generateShowStrString(macro.macroArgs));
                         } else {
                             macroQueue.push(macro);
                         }
@@ -5458,19 +5458,29 @@ font-weight: bold;
         this.setUserVar(x, Math.floor(Math.random() * this.toAssignableValue(num)) + bias);
     }
     
-    // ユーザ変数付きの文字列を組み立てる。
-    // 変数は表示する時に評価される。
-    private _generateUserValString(macroArgs: string[]): MessageSegments {
+    // $show_str マクロで表示される文字列を組み立てる。
+    // 変数, ステータスは表示する時に評価される。
+    // 変数の表記は添字のみを書く方法(例: 210)と、ifなどと同じ方法(例: v[210])の両方が使える。
+    private _generateShowStrString(macroArgs: string[]): MessageSegments {
         return macroArgs.map((macroArg) => {
-            const parsedArg = parseInt(macroArg, 10);
-            return isNaN(parsedArg) ?
-                // 引数を文字列として解釈する場合
-                // 何故か \n が反映されない？
-                macroArg.replace(/\\n/g, "\n") :
-                // 引数を数値として解釈する場合: ユーザ変数の値を表示する.
-                () => this._wwaData.userVar[parsedArg]
+            // 数値の場合は、該当するユーザ変数の添字と解釈する
+            const parsedNumber = parseInt(macroArg, 10);
+            if (!isNaN(parsedNumber)) {
+                return () => this._wwaData.userVar[parsedNumber];
+            }
+            // ExpressionParser で解釈できる表現 (HPMAX, RAND(x)など)を解釈する。
+            // なお、数値の場合は前段で弾かれているので、定数になることはない。
+            const parsedType = ExpressionParser.parseType(macroArg);
+            if (parsedType) {
+                return () => ExpressionParser.parseValue(macroArg, this._generateTokenValues());
+            }
+            // 引数を文字列として解釈する場合
+            // \n は改行扱いされる。 
+            return macroArg.replace(/\\n/g, "\n");
+
         });
     }
+
     // 速度変更禁止
     public speedChangeJudge(speedChangeFlag: boolean): void {
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
@@ -5516,6 +5526,9 @@ font-weight: bold;
                 break;
             case "gold":
                 this._player.setGold(this.toValidStatusValue(rawValue));
+                break;
+            case "moveCount":
+               this._player.setMoveCount(this.toValidStatusValue(rawValue));
                 break;
             default:
                 if (isNaN(assignee) || !this.isValidUserVarIndex(assignee)) {
