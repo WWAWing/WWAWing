@@ -5422,6 +5422,9 @@ font-weight: bold;
             case "gold":
                 this._player.setGold(this.toValidStatusValue(rawValue));
                 break;
+            case "moveCount":
+               this._player.setMoveCount(this.toValidStatusValue(rawValue));
+                break;
             default:
                 if (isNaN(assignee) || !this.isValidUserVarIndex(assignee)) {
                     throw new Error("ユーザ変数の添字が範囲外です。");
