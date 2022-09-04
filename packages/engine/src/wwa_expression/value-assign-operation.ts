@@ -7,7 +7,7 @@ export interface ValueAssignOperation {
    * ユーザ変数の添字は、最低限 NaN でないことしかバリデーションされていないので、
    * 代入先としてふさわしいかどうか受け取り側でバリデーションする必要があります。
    */
-  assignee: "energy" | "energyMax" | "strength" | "defence" | "gold" | number;
+  assignee: "energy" | "energyMax" | "strength" | "defence" | "gold" | "moveCount" | number;
 
   /**
    * 代入する値
@@ -48,7 +48,7 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
     case 'GD':
       return { assignee: "gold", rawValue: calcResult };
     case 'STEP':
-      throw new Error('左辺値に歩数は入れられません');
+      return { assignee: "moveCount", rawValue: calcResult };
     case 'TIME':
       throw new Error('左辺値にプレイ時間は入れられません');
     case 'PX':

@@ -13,7 +13,7 @@ function removeSpaces(rawString: string): string {
   return rawString.replace(/\s/g, "");
 }
 
-function parseAndEvaluateValue(value: string, tokenValues: TokenValues): number {
+export function parseAndEvaluateValue(value: string, tokenValues: TokenValues): number {
   return evaluateValue(parseType(value), tokenValues);
 }
 
