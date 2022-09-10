@@ -20,6 +20,16 @@ import {
     GamePadState,
     GamePadStore
 } from "./wwa_input";
+
+import {
+    VirtualPadButtonCodes,
+    VirtualPadButtonCode,
+    VirtualPadStore,
+    VirtualPadButtons,
+    viewportFit,
+    initializeViewport
+} from "@wwawing/virtual-pad";
+
 import * as util from "./wwa_util";
 import { CGManager } from "./wwa_cgmanager";
 import { Camera } from "./wwa_camera";
@@ -31,7 +41,7 @@ import {
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
-import { inject } from "./wwa_inject_html";
+import { inject, checkTouchDevice } from "./wwa_inject_html";
 import { ItemMenu } from "./wwa_item_menu";
 import { encodeSaveData, decodeSaveDataV0, decodeSaveDataV1, generateMD5 } from "./wwa_encryption";
 import { WWACompress, WWASave, LoadErrorCode, generateMapDataRevisionKey, WWADataWithWorldNameStatus, Migrators } from "./wwa_save";
@@ -71,6 +81,8 @@ export class WWA {
     private _monster: Monster;
     private _keyStore: KeyStore;
     private _mouseStore: MouseStore;
+    private _virtualPadStore: VirtualPadStore;
+    private _virtualPadButtonElements: VirtualPadButtons | null;
     private _gamePadStore: GamePadStore;
     private _camera: Camera;
     public _itemMenu: ItemMenu;  // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
@@ -246,7 +258,9 @@ export class WWA {
         disallowLoadOldSave: boolean = false,
         dumpElm: HTMLElement = null,
         userVarNamesFile: string | null,
-        canDisplayUserVars: boolean
+        canDisplayUserVars: boolean,
+        enableVirtualPad: boolean = false,
+        virtualpadControllerElm: HTMLElement = null,
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -461,6 +475,32 @@ export class WWA {
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
+            if (enableVirtualPad) {
+                this._virtualPadButtonElements = {
+                    BUTTON_ENTER: <HTMLButtonElement>util.$id("wwa-enter-button"),
+                    BUTTON_ESC: <HTMLButtonElement>util.$id("wwa-esc-button"),
+                    BUTTON_FAST: <HTMLButtonElement>util.$id("wwa-fast-button"),
+                    BUTTON_SLOW: <HTMLButtonElement>util.$id("wwa-slow-button"),
+                    BUTTON_LEFT: <HTMLButtonElement>util.$id("wwa-left-button"),
+                    BUTTON_UP: <HTMLButtonElement>util.$id("wwa-up-button"),
+                    BUTTON_RIGHT: <HTMLButtonElement>util.$id("wwa-right-button"),
+                    BUTTON_DOWN: <HTMLButtonElement>util.$id("wwa-down-button")
+                };
+                this._virtualPadStore = new VirtualPadStore(
+                    this._virtualPadButtonElements,
+                    checkTouchDevice(),
+                    util.$id("wwa-virtualpad-right"),
+                    util.$id("wwa-virtualpad-left"),
+                    this._setVirtualPadTouch.bind(this),
+                    this._setVirtualPadLeave.bind(this)
+                );
+                setUpVirtualPadController(virtualpadControllerElm, () => {
+                    this._virtualPadStore.toggleVisible();
+                });
+            } else {
+                this._virtualPadButtonElements = null;
+                this._virtualPadStore = new VirtualPadStore({});
+            }
             this._gamePadStore = new GamePadStore();
             this._messageQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
@@ -635,10 +675,12 @@ export class WWA {
             window.addEventListener("blur", (e): void => {
                 this._keyStore.allClear();
                 this._mouseStore.clear();
+                this._virtualPadStore.allClear();
             });
             window.addEventListener("contextmenu", (e): void => {
                 this._keyStore.allClear();
                 this._mouseStore.clear();
+                this._virtualPadStore.allClear();
             });
             // IEのF1キー対策
             window.addEventListener("help", (e): void => {
@@ -942,18 +984,21 @@ export class WWA {
                     var timer = setInterval((): void => {
                         this._keyStore.update();
                         this._gamePadStore.update();
+                        this._virtualPadStore.update();
 
                         if (this._yesNoJudgeInNextFrame === YesNoState.UNSELECTED) {
                             if (
                                 this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                                 this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
-                                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)
+                                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A) ||
+                                this._virtualPadStore.checkTouchButton("BUTTON_ENTER")
                             ) {
                                 this._yesNoJudgeInNextFrame = YesNoState.YES
                             } else if (
                                 this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
                                 this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
-                                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B)
+                                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B) ||
+                                this._virtualPadStore.checkTouchButton("BUTTON_ESC")
                             ) {
                                 this._yesNoJudgeInNextFrame = YesNoState.NO
                             }
@@ -1007,13 +1052,13 @@ export class WWA {
             this.wwaCustomEvent('wwa_start');
         }
         const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
-        const mapDataHandler = (mapData: WWAData) =>  this._loadHandler(mapData);
+        const mapDataHandler = (mapData: WWAData) => this._loadHandler(mapData);
         const progressHandler = (progress: Progress) => this._setProgressBar(progress);
         const errorHandler = (error: LoaderError) => this._setErrorMessage("下記のエラーが発生しました。: \n" + error.message, ctxCover);
         // TODO removeListener
-        eventEmitter.addListener("mapData", mapDataHandler )
-        eventEmitter.addListener("progress", progressHandler )
-        eventEmitter.addListener("error", errorHandler )
+        eventEmitter.addListener("mapData", mapDataHandler)
+        eventEmitter.addListener("progress", progressHandler)
+        eventEmitter.addListener("error", errorHandler)
         const loader = new WWALoader(mapFileName, eventEmitter);
         loader.requestAndLoadMapData().then(async () => {
             this._canDisplayUserVars = canDisplayUserVars;
@@ -1306,7 +1351,7 @@ export class WWA {
     public playSound(id: number): void {
         if (!this._isLoadedSound) {
             // 音声データがロードされていなくても、次に音が流れる設定でゲーム開始したときにBGMを復元しなければならない。
-            if(id === SystemSound.NO_SOUND) {
+            if (id === SystemSound.NO_SOUND) {
                 this._wwaData.bgm = 0;
             } else if (id >= SystemSound.BGM_LB) {
                 this._wwaData.bgm = id;
@@ -1589,6 +1634,7 @@ export class WWA {
         // キー情報のアップデート
         this._keyStore.update();
         this._mouseStore.update();
+        this._virtualPadStore.update();
         this._gamePadStore.update();
         if (this._waitFrame-- > 0) {
             //待ち時間待機
@@ -1806,6 +1852,35 @@ export class WWA {
                         this._player.controll(Direction.DOWN);
                         this._objectMovingDataManager.update();
                     }
+                    // checkTouchingButton 分岐
+                } else if (this._virtualPadStore.checkTouchingButton("BUTTON_LEFT")) {
+                    if (this._virtualPadStore.checkTouchingButton("BUTTON_ESC")) {
+                        this._player.setDir(Direction.LEFT);
+                    } else {
+                        this._player.controll(Direction.LEFT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._virtualPadStore.checkTouchingButton("BUTTON_UP")) {
+                    if (this._virtualPadStore.checkTouchingButton("BUTTON_ESC")) {
+                        this._player.setDir(Direction.UP);
+                    } else {
+                        this._player.controll(Direction.UP);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._virtualPadStore.checkTouchingButton("BUTTON_RIGHT")) {
+                    if (this._virtualPadStore.checkTouchingButton("BUTTON_ESC")) {
+                        this._player.setDir(Direction.RIGHT);
+                    } else {
+                        this._player.controll(Direction.RIGHT);
+                        this._objectMovingDataManager.update();
+                    }
+                } else if (this._virtualPadStore.checkTouchingButton("BUTTON_DOWN")) {
+                    if (this._virtualPadStore.checkTouchingButton("BUTTON_ESC")) {
+                        this._player.setDir(Direction.DOWN);
+                    } else {
+                        this._player.controll(Direction.DOWN);
+                        this._objectMovingDataManager.update();
+                    }
                     //アイテムショートカット
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_1) === KeyState.KEYDOWN) {
                     this.onselectitem(1);
@@ -1833,18 +1908,22 @@ export class WWA {
                     this.onselectitem(12);
                     //移動速度
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_I) ||
-                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_MINUS)) {
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_MINUS) ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_SLOW")) {
                     this.onchangespeed(SpeedChange.DOWN);
                 } else if (
                     this._keyStore.checkHitKey(KeyCode.KEY_P) ||
                     this._keyStore.checkHitKey(KeyCode.KEY_F2) ||
-                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_PLUS)) {
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_PLUS) ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_FAST")) {
                     this.onchangespeed(SpeedChange.UP);
                     // 戦闘結果予測 
                 } else if (
                     this._keyStore.getKeyState(KeyCode.KEY_F1) === KeyState.KEYDOWN ||
                     this._keyStore.getKeyState(KeyCode.KEY_M) === KeyState.KEYDOWN ||
-                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)) {
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A) ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_ENTER")) {
+                    // 戦闘結果予測 
                     if (this.launchBattleEstimateWindow()) {
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {
@@ -1869,7 +1948,8 @@ export class WWA {
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F8)) {
                     this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F9) ||
-                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X)) {
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_X) ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_ESC")) {
                     if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                         this.onitemmenucalled();
                     }
@@ -1881,7 +1961,6 @@ export class WWA {
                     this._displayHelp();
                 }
             }
-
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
         } else if (this._player.isJumped()) {
@@ -1904,16 +1983,20 @@ export class WWA {
                     this._messageWindow.saveUpdate();
                     if (!this._messageWindow.isSaveClose()) {
                         if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT) ||
+                            this._virtualPadStore.checkTouchButton("BUTTON_LEFT")) {
                             this._messageWindow.saveControll(Direction.LEFT);
                         } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP) ||
+                            this._virtualPadStore.checkTouchButton("BUTTON_UP")) {
                             this._messageWindow.saveControll(Direction.UP);
                         } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT) ||
+                            this._virtualPadStore.checkTouchButton("BUTTON_RIGHT")) {
                             this._messageWindow.saveControll(Direction.RIGHT);
                         } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
+                            this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN) ||
+                            this._virtualPadStore.checkTouchButton("BUTTON_DOWN")) {
                             this._messageWindow.saveControll(Direction.DOWN);
                         }
                     }
@@ -1923,13 +2006,15 @@ export class WWA {
                         if (
                             this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                             this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
-                            this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)
+                            this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A) ||
+                            this._virtualPadStore.checkTouchButton("BUTTON_ENTER")
                         ) {
                             this._yesNoJudge = YesNoState.YES
                         } else if (
                             this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
                             this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
-                            this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B)
+                            this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B) ||
+                            this._virtualPadStore.checkTouchButton("BUTTON_ESC")
                         ) {
                             this._yesNoJudge = YesNoState.NO
                         }
@@ -1950,22 +2035,27 @@ export class WWA {
                 //Item Menu 選択肢
                 this._itemMenu.update();
                 if (this._keyStore.checkHitKey(KeyCode.KEY_LEFT) ||
-                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT)) {
+                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_LEFT) ||
+                    this._virtualPadStore.checkTouchingButton("BUTTON_LEFT")) {
                     this._itemMenu.controll(Direction.LEFT);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_UP) ||
-                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP)) {
+                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_UP) ||
+                    this._virtualPadStore.checkTouchingButton("BUTTON_UP")) {
                     this._itemMenu.controll(Direction.UP);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_RIGHT) ||
-                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT)) {
+                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_RIGHT) ||
+                    this._virtualPadStore.checkTouchingButton("BUTTON_RIGHT")) {
                     this._itemMenu.controll(Direction.RIGHT);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_DOWN) ||
-                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN)) {
+                    this._gamePadStore.crossPressed(GamePadState.BUTTON_CROSS_KEY_DOWN) ||
+                    this._virtualPadStore.checkTouchingButton("BUTTON_DOWN")) {
                     this._itemMenu.controll(Direction.DOWN);
                 }
                 if (
                     this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                     this._keyStore.getKeyState(KeyCode.KEY_Y) === KeyState.KEYDOWN ||
-                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A)
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A) ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_ENTER")
                 ) {
                     this._setNextMessage();
                     this._messageWindow.setItemMenuChoice(false);
@@ -1977,7 +2067,8 @@ export class WWA {
                     this._mouseStore.checkClickMouse(Direction.DOWN) ||
                     this._keyStore.getKeyState(KeyCode.KEY_N) === KeyState.KEYDOWN ||
                     this._keyStore.getKeyState(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
-                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B)
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_B) ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_ESC")
                 ) {
                     for (var i = 0; i < sidebarButtonCellElementID.length; i++) {
                         var elm = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[i]));
@@ -1999,7 +2090,9 @@ export class WWA {
                     space === KeyState.KEYDOWN || space === KeyState.KEYPRESS_MESSAGECHANGE ||
                     esc === KeyState.KEYDOWN || esc === KeyState.KEYPRESS_MESSAGECHANGE ||
                     this._mouseStore.getMouseState() === MouseState.MOUSEDOWN ||
-                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B)) {
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B) ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_ENTER") ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_ESC")) {
                     for (var i = 0; i < sidebarButtonCellElementID.length; i++) {
                         var elm = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[i]));
                         if (elm.classList.contains("onpress")) {
@@ -2049,7 +2142,9 @@ export class WWA {
         } else if (this._player.isWatingEstimateWindow()) {
             if (this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                 this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
-                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B)) {
+                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B) ||
+                this._virtualPadStore.checkTouchButton("BUTTON_ENTER") ||
+                this._virtualPadStore.checkTouchButton("BUTTON_ESC")) {
                 this.hideBattleEstimateWindow();
             }
         } else if (this._player.isFighting()) {
@@ -2929,8 +3024,8 @@ export class WWA {
         var message = this._wwaData.message[messageID];
         try {
             var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
-            var screenXPixel = ( pos.x - screenTopCoord.x ) * Consts.CHIP_SIZE;
-            var screenYPixel = ( pos.y - screenTopCoord.y ) * Consts.CHIP_SIZE;
+            var screenXPixel = (pos.x - screenTopCoord.x) * Consts.CHIP_SIZE;
+            var screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
             this._player.addItem(
                 partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false,
                 this._wwaData.isItemEffectEnabled ? {
@@ -4572,7 +4667,7 @@ export class WWA {
     private _displayHelp(): void {
         if (this._player.isControllable()) {
             this.setNowPlayTime();
-            var helpMessage:string = "";
+            var helpMessage: string = "";
             switch (this.userDevice.device) {
                 case DEVICE_TYPE.GAME:
                     switch (this.userDevice.os) {
@@ -5117,7 +5212,7 @@ export class WWA {
         const messageWindowOpacity = this._isClassicModeEnable ? 1 : 0.9;
         const messageWindowStyleRules = `
 background-color: rgba(${this._wwaData.frameColorR},  ${this._wwaData.frameColorG}, ${this._wwaData.frameColorB}, ${messageWindowOpacity});
-border-color: rgba(${this._wwaData.frameOutColorR}, ${this._wwaData.frameOutColorG}, ${this._wwaData.frameOutColorB }, 1);
+border-color: rgba(${this._wwaData.frameOutColorR}, ${this._wwaData.frameOutColorG}, ${this._wwaData.frameOutColorB}, 1);
 color: rgba(${this._wwaData.fontColorR}, ${this._wwaData.fontColorG}, ${this._wwaData.fontColorB}, 1);
 white-space: pre-wrap;
 `;
@@ -5128,7 +5223,7 @@ font-weight: bold;
 `;
 
         if (this._sheet.addRule !== void 0) {
-            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(messageWindowStyleSelector,messageWindowStyleRules);
+            this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.addRule(messageWindowStyleSelector, messageWindowStyleRules);
             this._stylePos[SelectorType.SIDEBAR] = this._sheet.addRule(sidebarStyleSelector, sidebarStyleRules);
         } else {
             this._stylePos[SelectorType.MESSAGE_WINDOW] = this._sheet.insertRule(`${messageWindowStyleSelector} { ${messageWindowStyleRules} }`, 0);
@@ -5591,8 +5686,40 @@ font-weight: bold;
         });
     }
 
-    private _actionGamePadButtonItemMacro(): boolean{
-        if(!this._wwaData.gamePadButtonItemTable) {
+    /**
+     * 仮想パッドの要素を取得します。存在しない仮想パッドが指定された場合は ReferenceError が発生します。
+     * @param buttonCode 仮想パッドのボタンの種類
+     * @returns 仮想パッドのHTML要素
+     */
+    private _getVirtualPadButton(buttonCode: VirtualPadButtonCode): HTMLButtonElement {
+        if (!VirtualPadButtonCodes.includes(buttonCode)) {
+            throw new ReferenceError(`WWAの仮想パッド ${buttonCode} は存在しません。`);
+        }
+        return this._virtualPadButtonElements[buttonCode];
+    }
+
+    /**
+     * 仮想パッドの状態を押下状態に変化させます。
+     *     主に VirtualPadState のコンストラクタに指定する onTouchStart や onTouchEnd で指定します。
+     * @param buttonCode 
+     */
+    private _setVirtualPadTouch(buttonCode: VirtualPadButtonCode) {
+        const button = this._getVirtualPadButton(buttonCode);
+        button.classList.add("wwa-virtualpad__button--pressed");
+    }
+
+    /**
+     * 仮想パッドの状態を通常状態に戻します。
+     *     基本的な扱い方は setVirtualPadLeave をご参照ください。
+     * @see WWA._setVirtualPadTouch
+     * @param buttonCode 
+     */
+    private _setVirtualPadLeave(buttonCode: VirtualPadButtonCode) {
+        const button = this._getVirtualPadButton(buttonCode);
+        button.classList.remove("wwa-virtualpad__button--pressed");
+    }
+    private _actionGamePadButtonItemMacro(): boolean {
+        if (!this._wwaData.gamePadButtonItemTable) {
             return false;
         }
         var len: number, buttonID: number, itemBoxNo: number, inputButtonFlag: boolean;
@@ -5816,6 +5943,17 @@ function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
     return dumpElm;
 }
 
+function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHander: VoidFunction) {
+    if (controllerElm === null) {
+        return;
+    }
+    const toggleButtonElement = document.createElement("button");
+    toggleButtonElement.classList.add("wwa-virtualpad-toggle-button");
+    toggleButtonElement.textContent = "仮想パッド表示切り替え";
+    toggleButtonElement.addEventListener("click", clickHander);
+    controllerElm.appendChild(toggleButtonElement);
+}
+
 function start() {
     if (
       // Internet Explorer
@@ -5842,7 +5980,10 @@ function start() {
         }
     });
     var titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
-    inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName);
+    const virtualPadAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-enable");
+    const virtualPadEnable = virtualPadAttribute !== null && virtualPadAttribute.match(/^true$/i) !== null;
+    inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName, virtualPadEnable);
+
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
     var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
@@ -5873,6 +6014,14 @@ function start() {
     if (useGoToWWAAttribute !== null && useGoToWWAAttribute.match(/^true$/i)) {
         useGoToWWA = true;
     }
+
+    const viewportFitAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-viewport-fit-enable");
+    if (checkTouchDevice() && viewportFitAttribute !== null && viewportFitAttribute.match(/^true$/i)) {
+        initializeViewport();
+        window.addEventListener("resize", viewportFit);
+    }
+    const virtualPadContollerQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-controller-elm");
+    const virtualPadControllerElm: HTMLElement | null = virtualPadEnable && virtualPadContollerQuery ? util.$qsh(virtualPadContollerQuery) : null;
     const disallowLoadOldSave = (() => {
         const disallowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
         if (disallowLoadOldSaveAttribute !== null && disallowLoadOldSaveAttribute.match(/^true$/i)) {
@@ -5891,7 +6040,9 @@ function start() {
         disallowLoadOldSave,
         dumpElm,
         userVarNamesFile,
-        canDisplayUserVars
+        canDisplayUserVars,
+        virtualPadEnable,
+        virtualPadControllerElm
     );
 }
 

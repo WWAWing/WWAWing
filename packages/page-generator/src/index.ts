@@ -35,11 +35,17 @@ export interface TemplateValues {
             "data-wwa-var-dump-elm"?: string;
             "data-wwa-user-var-names-file"?: string;
             "data-wwa-display-user-vars"?: string;
+            "data-wwa-virtualpad-enable"?: string;
+            "data-wwa-virtualpad-viewport-fit-enable"?: string;
+            "data-wwa-virtualpad-controller-elm"?: string;
         };
     };
     varDumpElement?: {
         id: string;
     };
+    virtualPadController?: {
+        id: string;
+    },
     footer: {
         copyrights?: DataTypes.Copyright[]
     }
@@ -67,10 +73,14 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-resume-savedata": wwa.resumeSaveData,
                 "data-wwa-var-dump-elm": wwa.gameOption?.userVars?.dumpElementId ? `#${wwa.gameOption.userVars.dumpElementId}` : undefined,
                 "data-wwa-user-var-names-file": wwa.resources.userVarNamesFile,
-                "data-wwa-display-user-vars": Helper.toStringBooleanOptional(wwa.gameOption?.userVars?.canDisplay)
+                "data-wwa-display-user-vars": Helper.toStringBooleanOptional(wwa.gameOption?.userVars?.canDisplay),
+                "data-wwa-virtualpad-enable": Helper.toStringBooleanOptional(wwa.gameOption?.virtualPad?.enable),
+                "data-wwa-virtualpad-viewport-fit-enable": Helper.toStringBooleanOptional(wwa.gameOption?.virtualPad?.viewportFitEnable),
+                "data-wwa-virtualpad-controller-elm": wwa.gameOption?.virtualPad?.controllerId ? `#${wwa.gameOption.virtualPad.controllerId}` : undefined,
             }
         },
         varDumpElement: wwa.gameOption?.userVars?.dumpElementId ? { id: wwa.gameOption.userVars.dumpElementId } : undefined,
+        virtualPadController: wwa.gameOption?.virtualPad?.controllerId ? { id: wwa.gameOption.virtualPad.controllerId } : undefined,
         footer: {
             copyrights: Helper.generateCopyrights(copyrights)
         }
