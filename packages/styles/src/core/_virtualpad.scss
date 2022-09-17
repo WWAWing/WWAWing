@@ -1,104 +1,202 @@
+$virtualpad-margin-x: 6vmin;
+$virtualpad-margin-y-portrait: 30vh;
+// アドレスバーの高さ分下にずれるので、高めにしておく
+$virtualpad-margin-y-landscape: 20vh;
+$virtualpad-spacing: 1vmin;
+$virtualpad-hole-size: 15vmin;
+$virtual-buttons-size-portrait: 21vmin;
+$virtual-buttons-size-landscape: 30vmin;
+// = (virtual-buttons-size-XXX / 3) * 2
+$virtual-buttons-width-small-portrait: 14vmin;
+$virtual-buttons-width-small-landscape: 20vmin;
+$virtual-buttons-height-small: 10vmin;
+$virtual-buttons-move-size-portrait: 20vmin;
+$virtual-buttons-move-size-landscape: 24vmin;
+$virtual-buttons-font-size: 35px;
+$virtual-buttons-font-size-small: 25px;
+
+
+@mixin orientation-size($portrait-value, $landscape-value) {
+    @media (orientation: portrait) {
+        width: $portrait-value;
+        height: $portrait-value;
+    }
+    @media (orientation: landscape) {
+        width: $landscape-value;
+        height: $landscape-value;
+    }
+}
+
+
+%virtualpad_button {
+    background-color: #c0c0c0;
+    border: 0;
+    color: #000;
+    font-weight: 700;
+    opacity: 0.75;
+    text-align: center;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+}
+
+%virtualpad_button-large {
+    font-size: $virtual-buttons-font-size;
+    @include orientation-size($virtual-buttons-size-portrait, $virtual-buttons-size-landscape);
+    border-radius: 50%;
+}
+
+%virtualpad_button-move {
+    font-size: $virtual-buttons-font-size;
+    @include orientation-size($virtual-buttons-move-size-portrait, $virtual-buttons-move-size-landscape);
+}
+
+%virtualpad_button-small {
+    font-size: $virtual-buttons-font-size-small;
+    height: $virtual-buttons-height-small;
+    @media (orientation: portrait) {
+        width: $virtual-buttons-width-small-portrait;
+    }
+    @media (orientation: landscape) {
+        width: $virtual-buttons-width-small-landscape;
+    }
+    border-radius: .75rem;
+}
+
 #wwa-virtualpad-left,
 #wwa-virtualpad-right {
-    bottom: 0;
+    // 後で JavaScript 側で表示を制御する
+    visibility: hidden;
+    @media (orientation: portrait) {
+        bottom: $virtualpad-margin-y-portrait;
+    }
+    @media (orientation: landscape) {
+        bottom: $virtualpad-margin-y-landscape;
+    }
     position: fixed;
+    pointer-events: none;
 }
 
 #wwa-virtualpad-left {
+    $hole-size-half: calc($virtualpad-hole-size / 2);
     left: 0;
-    .virtualpad_move button {
-        border-radius: 1rem;
+    display: grid;
+    grid-template-columns: 1fr $hole-size-half $hole-size-half 1fr;
+    grid-template-rows:    1fr $hole-size-half $hole-size-half 1fr;
+    @include orientation-size($virtual-buttons-move-size-portrait * 2, $virtual-buttons-move-size-landscape * 2);
+    transform: rotate(45deg);
+    gap: 4px;
+    margin-left: $virtualpad-margin-x;
+
+    .wwa-virtualpad__hole {
+        grid-column: 2 / 4;
+        grid-row: 2 / 4;
+        background-color: #808080;
+        border-radius: 50%;
     }
 }
 
 #wwa-virtualpad-right {
     right: 0;
-    .virtualpad_select button {
-        border-radius: 50%;
-    }
-    .virtualpad_speedcontrol button {
-        font-size: 30px;
-        height: 50px;
-        width: 90px;
-    }
-}
-
-#wwa-virtualpad-left button,
-#wwa-virtualpad-right button {
-    background-color: #c0c0c0;
-    border: 0;
-    color: #000;
-    opacity: 0.75;
-}
-
-#wwa-virtualpad-left .virtualpad_move button,
-#wwa-virtualpad-right .virtualpad_select button {
-    font-size: 50px;
-    height: 100px;
-    width: 100px;
-}
-
-#wwa-virtualpad-left .virtualpad_move,
-#wwa-virtualpad-right .virtualpad_select,
-#wwa-virtualpad-right .virtualpad_speedcontrol {
     display: grid;
+    grid-template:
+        " .   . slow slow  fast  fast "
+        " .   .   .    .     .     .  " 1vmin
+        " .   .   .  enter enter enter"
+        " .   .   .  enter enter enter"
+        "esc esc esc enter enter enter"
+        "esc esc esc   .     .     .  "
+        "esc esc esc   .     .     .  "
+        " .   .    .   .     .     .  " $virtualpad-spacing;
+    gap: $virtualpad-spacing;
+    margin-right: $virtualpad-margin-x;
 }
 
-#wwa-virtualpad-left .virtualpad_move {
-    grid-template-columns: repeat(3, 1fr);
+.wwa-virtualpad__button {
+    @extend %virtualpad_button;
+    pointer-events: auto;
+
+    &--pressed {
+        background-color: #808080;
+    }
 }
 
-#wwa-virtualpad-right .virtualpad_select,
-#wwa-virtualpad-right .virtualpad_speedcontrol {
-    grid-template-columns: repeat(2, 1fr);
+#wwa-enter-button,
+#wwa-esc-button {
+    @extend %virtualpad_button-large;
 }
 
-#wwa-virtualpad-right .virtualpad_speedcontrol {
-    margin-bottom: 16px;
+#wwa-slow-button,
+#wwa-fast-button {
+    @extend %virtualpad_button-small;
 }
 
-#wwa-top-button {
-    grid-column-start: 2;
-    grid-row-start: 1;
+#wwa-up-button,
+#wwa-right-button,
+#wwa-down-button,
+#wwa-left-button {
+    @extend %virtualpad_button-move;
+
+    &::before {
+        transform: rotate(-45deg);
+        display: block;
+    }
 }
 
-#wwa-left-button,
+#wwa-up-button {
+    grid-column: 1 / 3;
+    grid-row: 1 / 3;
+    border-radius: 100% 0 0 0;
+    &::before {
+        content: "△";
+    }
+}
+
 #wwa-right-button {
-    grid-row-start: 2;
+    grid-column: 3 / 5;
+    grid-row: 1 / 3;
+    border-radius: 0 100% 0 0;
+    &::before {
+        content: "▷";
+    }
+}
+
+#wwa-down-button {
+    grid-column: 3 / 5;
+    grid-row: 3 / 5;
+    border-radius: 0 0 100% 0;
+    &::before {
+        content: "▽";
+    }
 }
 
 #wwa-left-button {
-    grid-column-start: 1;
+    grid-column: 1 / 3;
+    grid-row: 3 / 5;
+    border-radius: 0 0 0 100%;
+    &::before {
+        content: "◁";
+    }
 }
 
-#wwa-right-button {
-    grid-column-start: 3;
+#wwa-enter-button {
+    grid-area: enter;
 }
 
-#wwa-bottom-button {
-    grid-column-start: 2;
-    grid-row-start: 3;
+#wwa-esc-button {
+    grid-area: esc;
 }
 
-#wwa-y-button {
-    grid-column-start: 2;
-    grid-row-start: 3;
+#wwa-slow-button {
+    grid-area: slow;
 }
 
-#wwa-n-button {
-    grid-column-start: 1;
-    grid-row-start: 4;
+#wwa-fast-button {
+    grid-area: fast;
 }
 
-#wwa-m-button {
-    grid-column-start: 1;
-    grid-row-start: 2;
-}
-
-#wwa-i-button {
-    border-radius: 1rem 0 0 1rem;
-}
-
-#wwa-p-button {
-    border-radius: 0 1rem 1rem 0;
+#virtualpad-controller {
+    margin: 1rem;
+    text-align: center;
 }

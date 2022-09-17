@@ -149,11 +149,14 @@ export default async function makeDistribution(
                     autoSave: {
                         intervalSteps: 200,
                     },
-                    ... (canIncludeUserVarOptions ? {
+                    virtualPad: {
+                        enable: false,
+                    },
+                    ...(canIncludeUserVarOptions ? {
                         userVars: {
                             dumpElementId: "vardump",
                             canDisplay: true
-                        }
+                        },
                     } : {})
                 },
                 resources: {
