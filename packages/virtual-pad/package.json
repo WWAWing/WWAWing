@@ -1,26 +1,19 @@
 {
-  "name": "@wwawing/common-interface",
+  "name": "@wwawing/virtual-pad",
   "version": "3.10.1",
-  "description": "",
-  "sideEffects": false,
+  "description": "WWA Wing Virtual Pad for mobile phone",
   "main": "lib/index.js",
-  "files": [
-    "lib"
-  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "prepare": "npm run build"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^4.7.3"
+    "typescript": "^4.2.4"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=16",
-    "npm": ">=8"
   }
 }
