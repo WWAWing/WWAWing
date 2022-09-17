@@ -21,10 +21,8 @@ const START = "^\\(";
 const END = "\\)$";
 
 export const regNumber = new RegExp(`^${NUMBER}\$`);
-export const regUserVar = new RegExp(`^${USER_VAR}\$`);
-export const regUserVarCapture = new RegExp(`^${USER_VAR_CAPTURE}\$`);
-export const regRand = new RegExp(`^${RAND}\$`);
-export const regRandCapture = new RegExp(`^${RAND_CAPTURE}\$`);
+export const regUserVar = new RegExp(`^${USER_VAR_CAPTURE}\$`);
+export const regRand = new RegExp(`^${RAND_CAPTURE}\$`);
 
 /**
  * v[x] = v[y] + v[z] のフォーマットの時
