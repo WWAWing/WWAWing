@@ -3506,11 +3506,18 @@ export class WWA {
                     // 行の最初から // の場合はその行がなかったことにする
                     return undefined;
                 }
+                if(!line.match(/\/\//)) {
+                    // 計算量削減のため、// を含まない列は何もせず終了
+                    return line;
+                }
                 /**
                  * 行内の http:// https:// でない「//」以降の文字列を削除する。
                  * http:///////// のようなケースは、http:/「//」以降が削除対象になるため「 http:/」 になる。
+                 * 本当は line.replace(/(?<!https?:)\/\/.*$/ig, "") と書きたいが、後読みにSafariが対応していないので、
+                 * 否定後読みを、文字列を右から左に読んだ否定先読みとして処理する。
+                 * 参考: https://qiita.com/yumarule/items/a37520974e39b25b7a6f#%E5%90%A6%E5%AE%9A%E5%BE%8C%E8%AA%AD%E3%81%BF%E3%81%AE%E4%BB%A3%E6%9B%BF-%E3%81%9D%E3%81%AE2
                  */
-                return line.replace(/(?<!https?:)\/\/.*$/ig, "") 
+                return util.reverse(util.reverse(line).replace(/^.*\/\/(?!:s?ptth)/ig, ""));
             })
             .filter(line => line !== undefined)
             .join("\n")
