@@ -16,6 +16,7 @@ import {
     PreprocessMacroType,
     ScoreRates,
     ScoreOptions as ScoreOptions,
+    AppearanceTriggerType,
 } from "./wwa_data";
 import {
     Monster
@@ -267,7 +268,7 @@ export class Macro {
                     return {};
                 }
                 case MacroType.MAP: {
-                    this._executeMapMacro();
+                    this._executeMapMacro(1);
                     return {};
                 }
                 case MacroType.DIRMAP: {
@@ -507,6 +508,10 @@ export class Macro {
                     const { isGameOver } = this._executeSetMacro();
                     return { isGameOver }
                 }
+                case MacroType.MAP2: {
+                    this._executeMapMacro(2);
+                    return {}
+                }
                 default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     return {};
@@ -528,6 +533,8 @@ export class Macro {
     }
 
     private _parseInt(argIndex: number, fallback: number = 0): number {
+        // UNDONE: _parseInt 処理内で、evaluateValue を呼び出してステータス類の解決をする
+        // _parseInt という名前は不適切になりそうなので名前は考える
         var x = parseInt(this.macroArgs[argIndex]);
         if (isNaN(x)) {
             return fallback;
@@ -832,7 +839,7 @@ export class Macro {
         this._wwa.setMoveMacroWaitingToPlayer(moveNum);
     }
 
-    private _executeMapMacro(): void {
+    private _executeMapMacro(version: 1 | 2): void {
         this._concatEmptyArgs(4);
         var partsID = this._parseInt(0);
         var xstr = this.macroArgs[1];
@@ -851,7 +858,25 @@ export class Macro {
                 throw new Error("パーツ番号が不正です");
             }
         }
-        this._wwa.appearPartsEval(this._triggerPartsPosition, xstr, ystr, partsID, partsType);
+        if (version === 1) {
+            // バージョン 1 では符号がある場合に相対指定, Pの場合にプレイヤー座標での出現が可能
+            // $map=75,+10,-10,1
+            // $map=75,P,P,1
+            this._wwa.appearPartsEval(this._triggerPartsPosition, xstr, ystr, partsID, partsType);
+        } else if (version === 2) {
+            // バージョン 2 では X, Y の絶対指定のみ対応
+            // 相対指定は下記のように行われるべき
+            // $map2=75,X+10,Y-10,1
+            // プレイヤー座標配置は下記のように行われるべき
+            // $map2=75,PX,PY,1
+            const x = parseInt(xstr, 10);
+            const y = parseInt(ystr, 10);
+            if (isNaN(x) || isNaN(y)) {
+                throw new Error("出現先座標が不正です")
+            }
+            // x, y の範囲外判定は appearPartsEval に任せる
+            this._wwa.appearPartsEval(this._triggerPartsPosition, `${x}`, `${y}`, partsID, partsType);
+        }
     }
 
     private _executeDirMapMacro(): void {
