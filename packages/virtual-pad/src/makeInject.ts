@@ -12,6 +12,5 @@ export default function makeInject() {
       <button class="wwa-virtualpad__button" id="wwa-fast-button">P</button>
       <button class="wwa-virtualpad__button" id="wwa-enter-button">Y</button>
       <button class="wwa-virtualpad__button" id="wwa-esc-button">N</button>
-      <button class="wwa-virtualpad__button" id="wwa-estimate-button">M</button>
     </div>`;
 }

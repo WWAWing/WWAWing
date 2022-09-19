@@ -1,8 +1,8 @@
-$wwa_screen_width: 560px;
-$wwa_screen_height: 440px;
-$wwa_canvas_width: 440px;
+$wwa_screen_width: 560px !default;
+$wwa_screen_height: 440px !default;
+$wwa_canvas_width: 440px !default;
 // プログレスバーや1文字を収める1行分の高さ
-$wwa_cover_row_height: 16px;
+$wwa_cover_row_height: 16px !default;
 
 
 canvas.wwa-canvas {

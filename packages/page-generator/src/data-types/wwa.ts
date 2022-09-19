@@ -7,6 +7,15 @@ export interface GameOption {
         intervalSteps: number;
     };
     useLookingAround?: boolean;
+    userVars?: {
+        dumpElementId: string
+        canDisplay?: boolean
+    },
+    virtualPad?: {
+        enable: boolean,
+        viewportFitEnable?: boolean,
+        controllerId?: string;
+    },
 }
 
 export interface Resources {
@@ -15,4 +24,5 @@ export interface Resources {
     wwaJs?: string;
     wwaCss?: string;
     titleImage?: string;
+    userVarNamesFile?: string;
 }

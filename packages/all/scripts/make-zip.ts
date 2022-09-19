@@ -22,7 +22,7 @@ async function markAllFiles(files: string[]): Promise<JSZip> {
   await Promise.all(
     files.map(
       itemPath =>
-        new Promise((resolve, reject) => {
+        new Promise<void>((resolve, reject) => {
           const itemPathFs = path.normalize(itemPath);
           const itemPathFsWithBase = path.join(baseDir, itemPathFs);
           fs.readFile(itemPathFsWithBase, (err, itemData) => {
@@ -43,7 +43,7 @@ async function markAllFiles(files: string[]): Promise<JSZip> {
 async function compress(target: string, zip: JSZip): Promise<void> {
   const dest = path.join(baseDir, `${target}.zip`);
   const content = await zip.generateAsync({ type: "nodebuffer" });
-  await new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     fs.writeFile(dest, content, err => {
       if (err) {
         reject(err);

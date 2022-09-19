@@ -1,12 +1,31 @@
 $virtualpad-margin-x: 6vmin;
-$virtualpad-margin-y: 20vmin;
+$virtualpad-margin-y-portrait: 30vh;
+// アドレスバーの高さ分下にずれるので、高めにしておく
+$virtualpad-margin-y-landscape: 20vh;
 $virtualpad-spacing: 1vmin;
 $virtualpad-hole-size: 15vmin;
-$virtual-buttons-size: 16vmin;
-$virtual-buttons-size-small: 10vmin;
-$virtual-buttons-move-size: 20vmin;
+$virtual-buttons-size-portrait: 21vmin;
+$virtual-buttons-size-landscape: 30vmin;
+// = (virtual-buttons-size-XXX / 3) * 2
+$virtual-buttons-width-small-portrait: 14vmin;
+$virtual-buttons-width-small-landscape: 20vmin;
+$virtual-buttons-height-small: 10vmin;
+$virtual-buttons-move-size-portrait: 20vmin;
+$virtual-buttons-move-size-landscape: 24vmin;
 $virtual-buttons-font-size: 35px;
 $virtual-buttons-font-size-small: 25px;
+
+
+@mixin orientation-size($portrait-value, $landscape-value) {
+    @media (orientation: portrait) {
+        width: $portrait-value;
+        height: $portrait-value;
+    }
+    @media (orientation: landscape) {
+        width: $landscape-value;
+        height: $landscape-value;
+    }
+}
 
 
 %virtualpad_button {
@@ -24,39 +43,48 @@ $virtual-buttons-font-size-small: 25px;
 
 %virtualpad_button-large {
     font-size: $virtual-buttons-font-size;
-    height: $virtual-buttons-size;
-    width: $virtual-buttons-size;
+    @include orientation-size($virtual-buttons-size-portrait, $virtual-buttons-size-landscape);
     border-radius: 50%;
 }
 
 %virtualpad_button-move {
     font-size: $virtual-buttons-font-size;
-    height: $virtual-buttons-move-size;
-    width: $virtual-buttons-move-size;
+    @include orientation-size($virtual-buttons-move-size-portrait, $virtual-buttons-move-size-landscape);
 }
 
 %virtualpad_button-small {
     font-size: $virtual-buttons-font-size-small;
-    height: $virtual-buttons-size-small;
-    width: $virtual-buttons-size;
+    height: $virtual-buttons-height-small;
+    @media (orientation: portrait) {
+        width: $virtual-buttons-width-small-portrait;
+    }
+    @media (orientation: landscape) {
+        width: $virtual-buttons-width-small-landscape;
+    }
     border-radius: .75rem;
 }
 
 #wwa-virtualpad-left,
 #wwa-virtualpad-right {
-    bottom: $virtualpad-margin-y;
+    // 後で JavaScript 側で表示を制御する
+    visibility: hidden;
+    @media (orientation: portrait) {
+        bottom: $virtualpad-margin-y-portrait;
+    }
+    @media (orientation: landscape) {
+        bottom: $virtualpad-margin-y-landscape;
+    }
     position: fixed;
     pointer-events: none;
 }
 
 #wwa-virtualpad-left {
-    $hole-size-half: $virtualpad-hole-size / 2;
+    $hole-size-half: calc($virtualpad-hole-size / 2);
     left: 0;
     display: grid;
     grid-template-columns: 1fr $hole-size-half $hole-size-half 1fr;
     grid-template-rows:    1fr $hole-size-half $hole-size-half 1fr;
-    width: $virtual-buttons-move-size * 2;
-    height: $virtual-buttons-move-size * 2;
+    @include orientation-size($virtual-buttons-move-size-portrait * 2, $virtual-buttons-move-size-landscape * 2);
     transform: rotate(45deg);
     gap: 4px;
     margin-left: $virtualpad-margin-x;
@@ -73,15 +101,14 @@ $virtual-buttons-font-size-small: 25px;
     right: 0;
     display: grid;
     grid-template:
-        " .    slow  "
-        " .    fast  "
-        " .      .   " 20px
-        " .  estimate"
-        " .  estimate"
-        " .    enter "
-        "esc   enter "
-        "esc     .   "
-        " .      .   " $virtualpad-spacing;
+        " .   . slow slow  fast  fast "
+        " .   .   .    .     .     .  " 1vmin
+        " .   .   .  enter enter enter"
+        " .   .   .  enter enter enter"
+        "esc esc esc enter enter enter"
+        "esc esc esc   .     .     .  "
+        "esc esc esc   .     .     .  "
+        " .   .    .   .     .     .  " $virtualpad-spacing;
     gap: $virtualpad-spacing;
     margin-right: $virtualpad-margin-x;
 }
@@ -96,8 +123,7 @@ $virtual-buttons-font-size-small: 25px;
 }
 
 #wwa-enter-button,
-#wwa-esc-button,
-#wwa-estimate-button {
+#wwa-esc-button {
     @extend %virtualpad_button-large;
 }
 
@@ -162,14 +188,15 @@ $virtual-buttons-font-size-small: 25px;
     grid-area: esc;
 }
 
-#wwa-estimate-button {
-    grid-area: estimate;
-}
-
 #wwa-slow-button {
     grid-area: slow;
 }
 
 #wwa-fast-button {
     grid-area: fast;
+}
+
+#virtualpad-controller {
+    margin: 1rem;
+    text-align: center;
 }

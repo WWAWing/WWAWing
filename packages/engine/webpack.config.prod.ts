@@ -17,9 +17,7 @@ export default {
             terserOptions: {
                 output: { comments: /(@license|@preserve)/i, },
             },
-            extractComments: {
-                condition: false
-            }
+            extractComments: false
         })]
 
     }

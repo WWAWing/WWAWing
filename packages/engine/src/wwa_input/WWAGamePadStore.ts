@@ -158,7 +158,8 @@ const GamePadInputTable: { [type in WWAInputType]: GamePadAvailableInput } = {
         buttons: [GamePadButtonCode.BUTTON_INDEX_R],
     },
     'GOTO_WWA': {},
-    'SOUNDLOAD_STOP': {}
+    'SOUNDLOAD_STOP': {},
+    'SHOW_VARIABLES': {}
 };
 
 /**

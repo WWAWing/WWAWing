@@ -6,14 +6,7 @@ export class BrowserEventEmitter implements IEventEmitter {
     this.target = target ?? document.createElement("div");
   }
   dispatch<D>(eventName: string, data: D) {
-   let customEvent: CustomEvent;
-    if (typeof window["CustomEvent"] === "function") {
-      customEvent = new CustomEvent(eventName, { detail: data });
-    } else {
-      // IE11 対応
-      customEvent = document.createEvent('CustomEvent');
-      customEvent.initCustomEvent(eventName, false, false, data);
-    }
+    const customEvent = new CustomEvent(eventName, { detail: data });
     this.target.dispatchEvent(customEvent);
   }
   addListener(eventName: string, callback: (...args: any[]) => any) {

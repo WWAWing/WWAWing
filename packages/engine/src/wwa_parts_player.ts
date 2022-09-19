@@ -50,7 +50,8 @@ export enum PlayerState {
     LOCALGATE_JUMPED,
     BATTLE,
     ESTIMATE_WINDOW_WAITING,
-    PASSWORD_WINDOW_WAITING
+    PASSWORD_WINDOW_WAITING,
+    LOCALGATE_JUMPED_WITH_MESSAGE,
 }
 
 export class Player extends PartsObject {
@@ -101,6 +102,7 @@ export class Player extends PartsObject {
     protected _speedIndex: number;
 
     protected _messageDelayFrameCount: number;
+
 
     public move(): void {
         if (this.isControllable()) {
@@ -317,7 +319,7 @@ export class Player extends PartsObject {
     }
 
     public isJumped(): boolean {
-        return this._state === PlayerState.LOCALGATE_JUMPED;
+        return this._state === PlayerState.LOCALGATE_JUMPED || this._state === PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE;
     }
 
     public setMessageWaiting(): void {
@@ -340,12 +342,17 @@ export class Player extends PartsObject {
     }
 
     public clearMessageWaiting(): void {
+        if (this._state !== PlayerState.MESSAGE_WAITING && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
+            return;
+        }
         if (this._state === PlayerState.MESSAGE_WAITING) {
             this._state = PlayerState.CONTROLLABLE;
-            this._isPartsEventExecuted = true;
-            if (this._isPreparedForLookingAround) {
-                this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
-            }
+        } else if (this._state === PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
+            this._state = PlayerState.LOCALGATE_JUMPED;
+        }
+        this._isPartsEventExecuted = true;
+        if (this._isPreparedForLookingAround) {
+            this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         }
     }
 
@@ -377,7 +384,6 @@ export class Player extends PartsObject {
         }
     }
 
-
     public isPartsEventExecuted(): boolean {
         return this._isPartsEventExecuted;
     }
@@ -399,11 +405,11 @@ export class Player extends PartsObject {
     }
 
     public processAfterJump(): void {
-        if (this._state !== PlayerState.LOCALGATE_JUMPED) {
+        if (this._state !== PlayerState.LOCALGATE_JUMPED && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             return;
         }
         if (--this._jumpWaitFramesRemain === 0) {
-            this._state = PlayerState.CONTROLLABLE;
+            this._state = this._state === PlayerState.LOCALGATE_JUMPED ? PlayerState.CONTROLLABLE : PlayerState.MESSAGE_WAITING;
         }
     }
 
@@ -420,7 +426,7 @@ export class Player extends PartsObject {
             this._camera.reset(pos);
         }
 
-        this._state = PlayerState.LOCALGATE_JUMPED;
+        this._state = this._state === PlayerState.MESSAGE_WAITING ? PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE : PlayerState.LOCALGATE_JUMPED;
         this._jumpWaitFramesRemain = Consts.LOCALGATE_PLAYER_WAIT_FRAME;
         this._samePosLastExecutedMapID = void 0;
         this._samePosLastExecutedObjID = void 0;
@@ -521,31 +527,43 @@ export class Player extends PartsObject {
         return g;
     }
 
+    // 装備品込みのステータスを返す
     public getStatus(): Status {
         return this._status.plus(this._equipStatus);
     }
 
+    // 装備品なしのステータスを返す
     public getStatusWithoutEquipments(): Status {
         // クローンハック
         return this._status.plus(new EquipmentStatus(0, 0));
     }
 
+    // 装備品のステータスを返す
+    public getStatusOfEquipments(): EquipmentStatus {
+        // クローンハック
+        return this._equipStatus.plus(new EquipmentStatus(0, 0));
+    }
+
     public updateStatusValueBox(): void {
-        var totalStatus = this._status.plus(this._equipStatus);
-        var e = totalStatus.energy;
-        var s = totalStatus.strength;
-        var d = totalStatus.defence;
-        var g = totalStatus.gold;
-        this._energyValueElement.textContent = e + "";
-        this._strengthValueElement.textContent = s + "";
-        this._defenceValueElement.textContent = d + "";
-        this._goldValueElement.textContent = g + "";
+        const totalStatus = this._status.plus(this._equipStatus);
+        this._energyValueElement.textContent = this._wwa.isVisibleStatus("energy") ? String(totalStatus.energy) : "";
+        this._strengthValueElement.textContent = this._wwa.isVisibleStatus("strength") ? String(totalStatus.strength) : "";
+        this._defenceValueElement.textContent = this._wwa.isVisibleStatus("defence") ? String(totalStatus.defence) : "";
+        this._goldValueElement.textContent = this._wwa.isVisibleStatus("gold") ? String(totalStatus.gold) : "";
+        // メッセージに表示されているステータスのアップデート
+        this._wwa._messageWindow?.update();
+        // スコア表示のアップデート
+        this._wwa.updateScore();
     }
 
     readonly itemTransitioningClassName = "item-transitioning";
     readonly overwittenItemClassName = "item-overwritten";
     readonly overwittenItemSelector = `.${this.overwittenItemClassName}`;
-
+    /**
+     * アイテムエフェクト開始の setTimeout のタイマーを保持する配列
+     * 添字はアイテムボックス位置 (0-11)
+     */
+    readonly itemEffectStartTimers: (number | undefined)[] = new Array(Consts.ITEMBOX_SIZE);
     /**
      * 全アイテムボックスのDOMの更新を行います。
      * アイテムボックスの内部状態の変更後に呼ぶことでアイテムボックスの見た目が更新されます。
@@ -573,7 +591,7 @@ export class Player extends PartsObject {
             // 該当位置がアイテムなしの場合
             if (this._itemBox[i] === 0) {
                 targetItemBoxElement.style.backgroundPosition = "-40px 0px";
-                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
+                this.disposeItemEffect(i, this._itemBoxElement[i], parentElement);
                 continue;
             }
             const cx = this._wwa.getObjectCropXById(this._itemBox[i]);
@@ -582,7 +600,7 @@ export class Player extends PartsObject {
             // 該当位置がアニメーション対象アイテムでない場合
             if (!animationOption || i !== animationOption.insertPos - 1) {
                 targetItemBoxElement.style.backgroundPosition = "-" + cx + "px -" + cy + "px";
-                this.disposeItemEffect(this._itemBoxElement[i], parentElement);
+                this.disposeItemEffect(i, this._itemBoxElement[i], parentElement);
                 continue;
             }
 
@@ -595,26 +613,35 @@ export class Player extends PartsObject {
             const overwrittenCy = useBlank ? animationOption.itemBoxBackgroundImageCoord.y : this._wwa.getObjectCropYById(animationOption.overwrittenObjectId);
             targetItemBoxElement.style.left = dx + "px";
             targetItemBoxElement.style.top = dy + "px";
-            window.setTimeout(() => this.startItemEffect(
-                targetItemBoxElement,
-                parentElement,
-                {
-                    target: { x: cx, y: cy },
-                    overwritten: { x: overwrittenCx, y: overwrittenCy },
-                },
-                durationMs
-            ), Consts.DEFAULT_FRAME_INTERVAL);
+            if (typeof this.itemEffectStartTimers[i] === "number") {
+                clearInterval(this.itemEffectStartTimers[i]);
+            }
+            this.itemEffectStartTimers[i] = window.setTimeout(() => {
+                this.itemEffectStartTimers[i] = undefined;
+                this.startItemEffect(
+                    i,
+                    targetItemBoxElement,
+                    parentElement,
+                    {
+                        target: { x: cx, y: cy },
+                        overwritten: { x: overwrittenCx, y: overwrittenCy },
+                    },
+                    durationMs
+                );
+            }, Consts.DEFAULT_FRAME_INTERVAL);
         }
     }
 
     /**
      * アイテムエフェクトを開始します。
+     * @param index アイテムボックス番号 0-11
      * @param targetItemBoxElement 動かすアイテムのdiv要素
      * @param parentElement 動かすアイテムの親のdiv要素
      * @param crops target: 動かすアイテムの画像上のxy座標, overwritten: 上書きされるアイテムの画像上のxy座標
      * @param durationMs エフェクトにかかる時間
      */
     private startItemEffect(
+        index: number,
         targetItemBoxElement: HTMLDivElement,
         parentElement: HTMLDivElement,
         crops: {
@@ -640,16 +667,21 @@ export class Player extends PartsObject {
         targetItemBoxElement.style.top = "0";
         parentElement.classList.add(this.itemTransitioningClassName);
         targetItemBoxElement.addEventListener("transitionend", () => {
-            this.disposeItemEffect(targetItemBoxElement, parentElement);
+            this.disposeItemEffect(index, targetItemBoxElement, parentElement);
         }, { once: true });
     }
  
     /**
      * アイテムエフェクトを破棄します。アイテムエフェクトが動いていない時は何も起きません。
+     * @param index アイテムボックス番号 0-11
      * @param itemBoxElement 破棄するエフェクトの対象のアイテムのdiv要素
      * @param parentElement 破棄するエフェクト対象アイテムの親のdiv要素
      */
-    private disposeItemEffect(itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
+    private disposeItemEffect(index: number, itemBoxElement: HTMLDivElement, parentElement: HTMLDivElement) {
+        if (typeof this.itemEffectStartTimers[index] === "number") {
+            clearInterval(this.itemEffectStartTimers[index]);
+            this.itemEffectStartTimers[index] = undefined;
+        }
         itemBoxElement.style.transitionDuration = "0s";
         itemBoxElement.style.transitionProperty = "";
         itemBoxElement.style.left = "0";
@@ -789,7 +821,7 @@ export class Player extends PartsObject {
                             }
                             break;
                     }
-                    this._wwa.setMessageQueue(mes === "" ? deviceMessage : mes, false, true);
+                    this._wwa.generatePageAndReserveExecution(mes === "" ? deviceMessage : mes, false, true);
                 }
                 this._isClickableItemGot = true;
             }
@@ -798,7 +830,7 @@ export class Player extends PartsObject {
                 self._itemUsingEvent[pos - 1] = () => {
                     if (self.isControllable() || (self._wwa._messageWindow.isItemMenuChoice())) {
                         self._wwa._itemMenu.close();
-                        self._wwa._setNextMessage();
+                        self._wwa._setNextPage();
                         self._wwa.onselectitem(pos);
                     }
                 };
@@ -986,7 +1018,7 @@ export class Player extends PartsObject {
         }
 
         this._battleTurnNum++;
-        if (this._speedIndex === Consts.MAX_SPEED_INDEX || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
+        if (this._wwa.isBattleSpeedIndexForQuickBattle(this._speedIndex) || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
             if (this._battleTurnNum === 1) {
                 this._wwa.playSound(SystemSound.ATTACK);
                 this._wwa.vibration(false);
@@ -1026,9 +1058,9 @@ export class Player extends PartsObject {
                         this._wwa.setPartsOnPosition(PartsType.OBJECT, 0, this._enemy.position);
                     }
                     // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
-                    this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
+                    this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
                     this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-                    this._wwa.setMessageQueue(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
+                    this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
                     this._enemy.battleEndProcess();
                     this._battleTurnNum = 0;
                     this._enemy = null;
@@ -1037,7 +1069,7 @@ export class Player extends PartsObject {
                 return;
             }
             this._enemy.battleEndProcess();
-            this._wwa.setMessageQueue("相手の防御能力が高すぎる！", false, true);
+            this._wwa.generatePageAndReserveExecution("相手の防御能力が高すぎる！", false, true);
             this._battleTurnNum = 0;
             this._enemy = null;
         } else {
@@ -1053,7 +1085,9 @@ export class Player extends PartsObject {
                     this._state = PlayerState.CONTROLLABLE;
                     this._battleTurnNum = 0;
                     this._enemy = null;
-                    this._wwa.gameover();
+                    if (this._wwa.shouldApplyGameOver({ isCalledByMacro: false })) {
+                        this._wwa.gameover();
+                    }
                 }
             }
 
@@ -1070,8 +1104,7 @@ export class Player extends PartsObject {
         }
         itemID = this._itemBox[itemPos - 1];
         messageID = this._wwa.getObjectAttributeById(itemID, Consts.ATR_STRING);
-        //            this._wwa.setMessageQueue(this._wwa.getMessageById(messageID), false, itemID, PartsType.OBJECT, this._position.getPartsCoord());
-        this._wwa.appearParts(this._position.getPartsCoord(), AppearanceTriggerType.OBJECT, itemID);
+        this._wwa.reserveAppearPartsInNextFrame(this._position.getPartsCoord(), AppearanceTriggerType.OBJECT, itemID);
         this._readyToUseItemPos = itemPos;
         this._isReadyToUseItem = true;
     }
@@ -1183,8 +1216,17 @@ export class Player extends PartsObject {
         return this._speedIndex = Math.max(Consts.MIN_SPEED_INDEX, this._speedIndex - 1);
     }
 
-    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number) {
+    public setSpeedIndex(speedIndex: number): number {
+        if (speedIndex < Consts.MIN_SPEED_INDEX || Consts.MAX_SPEED_INDEX < speedIndex) {
+            throw new Error("#set_speed の引数が異常です:" + speedIndex);
+        }
+        this._speedIndex = speedIndex;
+        return this._speedIndex;
+    }
+
+    constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number, gameSpeedIndex: number) {
         super(pos);
+        // どっかで定数化させたい
         this._status = status;
         this._equipStatus = new EquipmentStatus(0, 0);
         this._itemBox = new Array(Consts.ITEMBOX_SIZE);
@@ -1218,7 +1260,7 @@ export class Player extends PartsObject {
         this._afterMoveMacroFlag = false;
         this._isPreparedForLookingAround = true;
         this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
-        this._speedIndex = Consts.DEFAULT_SPEED_INDEX;
+        this._speedIndex = gameSpeedIndex;
         this._messageDelayFrameCount = 0;
     }
 

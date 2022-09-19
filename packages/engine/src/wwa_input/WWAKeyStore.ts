@@ -39,7 +39,8 @@ const InputKeyTable: {[key in WWAInputType]: Array<string>} = {
     PASSWORD_SAVE: ['F4'],
     RESTART_GAME: ['F7'],
     GOTO_WWA: ['F8'],
-    SOUNDLOAD_STOP: [' ', 'Spacebar']
+    SOUNDLOAD_STOP: [' ', 'Spacebar'],
+    SHOW_VARIABLES: ['v']
 }
 
 /**

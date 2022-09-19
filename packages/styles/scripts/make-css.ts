@@ -1,4 +1,4 @@
-import * as sass from "node-sass";
+import * as sass from "sass";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -34,23 +34,12 @@ function createWWAExtendCSSFilePromises(): Promise<void>[] {
 }
 
 function createWWACSSFilePromise(filePath: string, outputFilePath: string): Promise<void> {
-    return new Promise((resolve, reject) => 
-        sass.render({
-            file: filePath,
-            outFile: outputFilePath,
-            linefeed: "lf",
-            indentWidth: 4,
-            outputStyle: "expanded"
-        }, (err, result) => {
-            if (err) {
-                reject(err);
-            } else {
-                fs.writeFile(
-                    outputFilePath,
-                    result.css,
-                    err => (err ? reject(err) : resolve())
-                );
-            }
-        })
-    );
+    const result = sass.compile(filePath, { style: "expanded" });
+    return new Promise((resolve, reject) => {
+        fs.writeFile(
+            outputFilePath,
+            result.css,
+            err => (err ? reject(err) : resolve())
+        );
+    });
 }

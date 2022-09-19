@@ -3,6 +3,14 @@ export interface Coord {
     y: number;
 }
 
+/**
+ * プレイヤーの生命力が 0 になった時の挙動
+ * - default: 生命力が 0 になったらゲームオーバーとする
+ * - never: 生命力が 0 になってもゲームオーバーにしない
+ * - except-macro: マクロで生命力が 0 になった場合以外ではゲームオーバーにする
+ */
+export type GameOverPolicy = "default" | "never" | "except-macro";
+
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
 export interface WWAData {
@@ -18,6 +26,7 @@ export interface WWAData {
     objPartsMax: number;
 
     isOldMap: boolean;
+    isOldMove: boolean;
 
     statusEnergyMax: number;
     statusEnergy: number;
@@ -116,4 +125,26 @@ export interface WWAData {
      * NOTE: この配列は $gamepad_button が一度でも使用されなければ、配列ではなくundefinedが入っていることに注意せよ
      */
     gamePadButtonItemTable: number[];
+
+    userVar: number[];
+    permitChangeGameSpeed: boolean;
+    gameSpeedIndex: number;
+    playTime: number;
+
+    isVisibleStatusEnergy: boolean;
+    isVisibleStatusStrength: boolean;
+    isVisibleStatusDefence: boolean;
+    isVisibleStatusGold: boolean;
+
+    /**
+     * @deprecated
+     * 現在使用していません。
+     * 代わりに gameOverPolicy をご利用ください。
+     * セーブデータにこの変数があった場合はロード時に gameOverPolicy に変換されます。
+     */
+    isGameOverDisabled?: boolean;
+
+    gameOverPolicy: GameOverPolicy
+
 }
+

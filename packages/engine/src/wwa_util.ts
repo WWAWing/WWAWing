@@ -55,3 +55,6 @@ export var arr2str4save = (x: any): string => {
         return x + "";
     }
 }
+
+// 文字列を逆転
+export const reverse = (str: string) => str.split("").reverse().join("");

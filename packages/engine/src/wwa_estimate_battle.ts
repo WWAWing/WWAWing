@@ -169,4 +169,3 @@ function calc(playerStatus: Status, enemyStatus: Status): EstimateResult {
     }
 
 }
-

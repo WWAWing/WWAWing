@@ -4,7 +4,7 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./lib",
-    "module": "ESNext",
+    "module": "commonjs",
   },
   "include": [
     "src/**/*.ts", "core/loader_core.ts"

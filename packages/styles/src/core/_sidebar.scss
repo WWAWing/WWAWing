@@ -1,28 +1,10 @@
-$wwa_sidebar_font_size: 14px;
-$wwa_wide_cell_height: 35px;
-$wwa_status_x_offset: 6px;
-$wwa_icon_width: 40px;
+$wwa_status_x_offset: 6px !default;
 
 
-%wide_cell {
+%wide_cell_absolute {
+    @extend %wide_cell;
     position: absolute;
-    width: 120px;
-    height: $wwa_wide_cell_height;
-    line-height: $wwa_wide_cell_height;
 }
-
-%item_cell {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-}
-
-%button_cell_onpress {
-    $border_size: 3px;
-
-    margin: $border_size 0 0 $border_size;
-}
-
 
 div#wwa-sidebar {
     position: absolute;
@@ -30,11 +12,12 @@ div#wwa-sidebar {
     left: 440px;
     width: 120px;
     height: 440px;
-    font-size: $wwa_sidebar_font_size;
     background-color: #000000;
+    font-family: $sans-serif_font;
 
     > div.wide-cell-row {
-        @extend %wide_cell;
+        @extend %wide_cell_absolute;
+
         &.onpress /*, div#wwa-sidebar>div.wide-cell-row:hover*/ {
             @extend %button_cell_onpress;
         }
@@ -54,7 +37,7 @@ div.status-icon {
 }
 
 div.status-value-box {
-    @extend %wide_cell;
+    @extend %wide_cell_absolute;
     top: 0;
     left: 0;
     padding-left: $wwa_status_x_offset + $wwa_icon_width;
@@ -85,14 +68,14 @@ div.item-disp {
 }
 
 .wide-button {
-    @extend %wide_cell;
+    @extend %wide_cell_absolute;
     cursor: pointer;
 }
 
 
 // ここより位置設定 //
-$status: energy, strength, defence, gold;
-$menu_buttons: load, save, restart, gotowwa;
+$status: "energy", "strength", "defence", "gold";
+$menu_buttons: "load", "save", "restart", "gotowwa";
 
 $_y: 0;
 @each $status_name in $status {
