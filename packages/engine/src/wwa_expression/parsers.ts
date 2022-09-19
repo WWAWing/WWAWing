@@ -18,8 +18,12 @@ export function parseType(str: string): Comparable | null {
     case "GD":
     case "STEP":
     case "TIME":
+    case "X":
+    case "Y":
     case "PX":
     case "PY":
+    case "ID":
+    case "TYPE":
       return { type: str };
     default:
       const userVarMatch = str.match(regUserVar);

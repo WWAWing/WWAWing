@@ -1087,7 +1087,15 @@ export class Macro {
     }
 
     private _executeSetMacro(): { isGameOver?: true } {
-        return this._wwa.execSetMacro(this.macroArgs[0]);
+        return this._wwa.execSetMacro(this.macroArgs[0], 
+            {
+                triggerParts: {
+                    position: this._triggerPartsPosition,
+                    id: this._triggerPartsID,
+                    type: this._triggerPartsType
+                }
+            }
+        );
     }
 }
 

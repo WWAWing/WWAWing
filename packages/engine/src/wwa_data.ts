@@ -1025,3 +1025,12 @@ export interface ScoreRates {
     defence: number;
     gold: number;
 }
+
+/**
+ * メッセージを表示しているパーツ
+ */
+export interface TriggerParts {
+    id: number;
+    type: PartsType;
+    position: Coord;
+}

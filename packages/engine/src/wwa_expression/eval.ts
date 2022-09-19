@@ -37,10 +37,18 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues):
       return comparable.rawValue;
     case 'TIME':
       return tokenValues.playTime;
+    case 'X':
+      return tokenValues.partsPosition.x;
+    case 'Y':
+      return tokenValues.partsPosition.y;
     case 'PX':
       return tokenValues.playerCoord.x;
     case 'PY':
       return tokenValues.playerCoord.y;
+    case 'ID':
+      return tokenValues.partsId;
+    case 'TYPE':
+      return tokenValues.partsType;
     case 'RAND':
       return Math.floor(Math.random() * evaluateValue(comparable.argument, tokenValues));
     default:

@@ -8,7 +8,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
     speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions,
+    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
 } from "./wwa_data";
 
 import {
@@ -3609,6 +3609,11 @@ export class WWA {
             let firstNode: Node | undefined = undefined;
             let nodeByPrevLine: Node | undefined = undefined;
             let lastPoppedJunction: Junction | undefined = undefined;
+            const triggerParts: TriggerParts = {
+                id: partsId,
+                type: partsType,
+                position: partsPosition
+            };
             const lines = this.parseMessageLines(pageContent, partsId, partsType, partsPosition)
             const junctionNodeStack: Junction[] = [];
 
@@ -3616,13 +3621,14 @@ export class WWA {
                 try {
                     const previousLineType = index === 0 ? undefined : lines[index - 1].type;
                     const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
-                    const newNode = this.createNewNode(line, !firstNode || !messagLineIsText(previousLineType));
+                    const newNode = this.createNewNode(line, !firstNode || !messagLineIsText(previousLineType), { triggerParts });
+
                     const endIfPoppedJunction = this.processConditionalExecuteMacroLine(newNode, line, parentJunction, junctionNodeStack);
                     if (endIfPoppedJunction) {
                         lastPoppedJunction = endIfPoppedJunction;
                     }
                     if (previousLineType) {
-                        this.connectOrMergeToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction, lastPoppedJunction);
+                        this.connectOrMergeToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction, lastPoppedJunction, { triggerParts });
                     } else {
                         firstNode = newNode;
                     }
@@ -3675,12 +3681,14 @@ export class WWA {
     /**
      * メッセージ行に対するノードを生成する。 
      */
-    private createNewNode(currentLine: MessageLine, shouldCreateParsedMessage: boolean): Node | undefined {
+    private createNewNode(currentLine: MessageLine, shouldCreateParsedMessage: boolean, option: {
+        triggerParts: TriggerParts
+    }): Node | undefined {
         switch (currentLine.type) {
             case MacroType.IF:
                 return new Junction([{ descriminant: ExpressionParser.parseDescriminant(currentLine.macro.macroArgs[0]) }]);
             case MacroType.SHOW_STR:
-                return shouldCreateParsedMessage ? new ParsedMessage(this._generateShowStrString(currentLine.macro.macroArgs)) : undefined;
+                return shouldCreateParsedMessage ? new ParsedMessage(this._generateShowStrString(currentLine.macro.macroArgs, option)) : undefined;
             case "text":
                 return shouldCreateParsedMessage ? new ParsedMessage(currentLine.text) : undefined;
             case "normalMacro":
@@ -3736,7 +3744,10 @@ export class WWA {
         nodeByPrevLine: Node | undefined,
         newNode: Node | undefined,
         parentJunction: Junction,
-        endIfTargetJunction: Junction | undefined
+        endIfTargetJunction: Junction | undefined,
+        option: {
+            triggerParts: TriggerParts
+        }
     ) {
         const prevLineIsText = messagLineIsText(previousLineType);
         switch (previousLineType) {
@@ -3797,7 +3808,7 @@ export class WWA {
                 const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
                 // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
                 if (currentLine.type === MacroType.SHOW_STR) {
-                    nodeByPrevLine.appendMessage(this._generateShowStrString(currentLine.macro.macroArgs), shouldInsertNewLine);
+                    nodeByPrevLine.appendMessage(this._generateShowStrString(currentLine.macro.macroArgs, option), shouldInsertNewLine);
                 } else if (currentLine.type === "text") {
                     nodeByPrevLine.appendMessage(currentLine.text, shouldInsertNewLine);
                 } else if (currentLine.type === "normalMacro") {
@@ -5730,7 +5741,9 @@ font-weight: bold;
     // $show_str マクロで表示される文字列を組み立てる。
     // 変数, ステータスは表示する時に評価される。
     // 変数の表記は添字のみを書く方法(例: 210)と、ifなどと同じ方法(例: v[210])の両方が使える。
-    private _generateShowStrString(macroArgs: string[]): MessageSegments {
+    private _generateShowStrString(macroArgs: string[], option: {
+        triggerParts: TriggerParts
+    }): MessageSegments {
         return macroArgs.map((macroArg) => {
             // 数値の場合は、該当するユーザ変数の添字と解釈する
             const parsedNumber = parseInt(macroArg, 10);
@@ -5741,7 +5754,7 @@ font-weight: bold;
             // なお、数値の場合は前段で弾かれているので、定数になることはない。
             const parsedType = ExpressionParser.parseType(macroArg);
             if (parsedType) {
-                return () => ExpressionParser.parseAndEvaluateValue(macroArg, this._generateTokenValues());
+                return () => ExpressionParser.parseAndEvaluateValue(macroArg, this._generateTokenValues(option.triggerParts));
             }
             // 引数を文字列として解釈する場合
             // \n は改行扱いされる。 
@@ -5755,9 +5768,9 @@ font-weight: bold;
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
     }
 
-    public execSetMacro(macroStr: string = ""): { isGameOver?: true } {
+    public execSetMacro(macroStr: string = "", option: { triggerParts: TriggerParts }): { isGameOver?: true } {
         const { assignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
-            macroStr, this._generateTokenValues()
+            macroStr, this._generateTokenValues(option.triggerParts)
         );
         switch(assignee) {
             case "energy":
@@ -5797,7 +5810,7 @@ font-weight: bold;
         return {};
     }
 
-    private _generateTokenValues(): ExpressionParser.TokenValues {
+    private _generateTokenValues(triggerParts: TriggerParts): ExpressionParser.TokenValues {
         // TODO: これ呼ぶ以外の方法ないのかな
         this.setNowPlayTime();
         return {
@@ -5809,6 +5822,9 @@ font-weight: bold;
             playTime: this._wwaData.playTime,
             userVars: this._wwaData.userVar,
             playerCoord: this._player.getPosition().getPartsCoord(),
+            partsId: triggerParts.id,
+            partsType: triggerParts.type,
+            partsPosition: triggerParts.position
         }
     }
 
