@@ -79,6 +79,7 @@ export class TextLoader {
     wwaData.clickableItemSignImgPosY = WWAConsts.IMGPOS_DEFAULT_CLICKABLE_ITEM_SIGN_Y;
     wwaData.disableSaveFlag = WWAConsts.DEFAULT_DISABLE_SAVE;
     wwaData.isOldMap = WWAConsts.DEFAULT_OLDMAP;
+    wwaData.isOldMove = wwaData.version < 31;
     wwaData.objectNoCollapseDefaultFlag = WWAConsts.DEFAULT_OBJECT_NO_COLLAPSE;
     wwaData.delPlayerFlag = false;
     wwaData.bgm = 0;
@@ -118,6 +119,20 @@ export class TextLoader {
     wwaData.statusColorB = WWAConsts.DEFAULT_STATUS_COLOR_B;
 
     wwaData.moves = WWAConsts.DEFAULT_MOVES;
+    wwaData.gameSpeedIndex = WWAConsts.DEFAULT_SPEED_INDEX;
+    wwaData.permitChangeGameSpeed = true;
+    wwaData.userVar = new Array(WWAConsts.USER_VAR_NUM);
+    for (let i = 0; i < WWAConsts.USER_VAR_NUM; i++) {
+      wwaData.userVar[i] = 0;
+    }
+    wwaData.playTime = 0;
+
+    wwaData.isVisibleStatusEnergy = true;
+    wwaData.isVisibleStatusStrength = true;
+    wwaData.isVisibleStatusDefence = true;
+    wwaData.isVisibleStatusGold = true;
+
+    wwaData.gameOverPolicy = "default";
 
     return wwaData;
   }

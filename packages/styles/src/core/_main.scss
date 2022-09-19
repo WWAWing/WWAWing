@@ -1,12 +1,14 @@
-$wwa_font_size: 16px;
+$wwa_font_size: 16px !default;
+
+$font: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro', 'メイリオ', 'Meiryo', 'ＭＳ Ｐゴシック', sans-serif !default;
+$monospace_font: $font !default;
+$sans-serif_font: $font !default;
 
 .wwa-size-box {
-    $font: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro', 'メイリオ', 'Meiryo', 'ＭＳ Ｐゴシック', sans-serif;
-
     width: 560px;
     height: 440px;
     font-size: $wwa_font_size;
-    font-family: $font;
+    font-family: $monospace_font;
     line-height: 1.2;
     text-indent: 0px;
     letter-spacing: 0px;
@@ -31,10 +33,4 @@ div#wwa-wrapper {
 
 #wwa-controller {
     @extend %wwa_canvas;
-}
-
-#wwa-audio-wrapper {
-    @extend %wwa_canvas;
-    display: none;
-    overflow: hidden;
 }

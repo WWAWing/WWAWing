@@ -29,6 +29,7 @@ export enum KeyCode {
     KEY_P = 80,
     KEY_Q = 81,
     KEY_S = 83,
+    KEY_V = 86,
     KEY_W = 87,
     KEY_X = 88,
     KEY_Y = 89,
@@ -42,6 +43,7 @@ export enum KeyCode {
     KEY_F7 = 118,
     KEY_F8 = 119,
     KEY_F9 = 120,
+    KEY_F10 = 121,
     KEY_F12 = 123
 }
 
@@ -254,6 +256,7 @@ export class MouseStore {
         this._mouseState = false;
         this._nextMouseState = false;
     }
+
 }
 
 export enum GamePadState {

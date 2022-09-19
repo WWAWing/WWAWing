@@ -4,31 +4,35 @@ export enum Mode {
     SAVE,
     LOAD
 }
-var DESCRIPTION_LOAD = (
-    "下のボックスに前回のプレイで取得した\n" +
-    "復帰用パスワードを貼り付けてください。\n" +
-    "Java版WWAで取得したパスワードはご利用になれません。\n" +
-    "作成者がマップの内容を変更した場合は\n" +
-    "それ以前に取得したパスワードは使えなくなります。"
-);
+function generatePasswordLoadWindowwDescription(isDisallowedOldSave: boolean) {
+    return `下のボックスに前回のプレイで取得した
+復帰用パスワードを貼り付けてください。
+Java 版 WWA で取得したパスワードはご利用になれません。
+作成者が ${isDisallowedOldSave ? "マップの内容" : "ワールド名 か マップの暗証番号"} を変更した場合は
+それ以前に取得したパスワードは使えなくなります。`;
+};
 
-var DESCRIPTION_SAVE = (
+
+const DESCRIPTION_SAVE = (
     "下記テキストがデータ復帰用のパスワードになっています。\n" +
     "コピーしてメモ帳などのテキストエディタに貼り付けて\n" +
     "保存してください。"
 );
 
 export class PasswordWindow {
+    private readonly COPIED_MESSAGE_DISPLAY_MS = 1000;
     private _element: HTMLDivElement;
     private _okButtonElement: HTMLButtonElement;
     private _cancelButtonElement: HTMLButtonElement;
+    private _copyButtonElement: HTMLButtonElement;
     private _descriptionElement: HTMLDivElement;
     private _passwordBoxElement: HTMLTextAreaElement;
     private _buttonWrapperElement: HTMLDivElement;
     private _isVisible: boolean;
 
     private _mode: Mode;
-    public constructor(private _wwa: WWA, private _parent: HTMLDivElement) {
+    public constructor(private _wwa: WWA, private _parent: HTMLDivElement, private _isDisallowLoadOldSave: boolean) {
+
         this._element = document.createElement("div");
         this._element.setAttribute("id", "wwa-password-window");
         this._element.style.display = "none";
@@ -57,8 +61,23 @@ export class PasswordWindow {
             this._wwa.hidePasswordWindow(true);
         });
 
+        this._copyButtonElement = document.createElement("button");
+        this._copyButtonElement.textContent = "コピー";
+        this._copyButtonElement.addEventListener("click", async () => {
+            await navigator.clipboard.writeText(this.password);
+            this._copyButtonElement.textContent = "コピーしました";
+            this._copyButtonElement.disabled = true;
+            setTimeout(() => {
+                if (this._copyButtonElement) {
+                    this._copyButtonElement.textContent = "コピー";
+                    this._copyButtonElement.disabled = false;
+                }
+            }, this.COPIED_MESSAGE_DISPLAY_MS);
+        });
+
         this._buttonWrapperElement.appendChild(this._okButtonElement);
         this._buttonWrapperElement.appendChild(this._cancelButtonElement);
+        this._buttonWrapperElement.appendChild(this._copyButtonElement);
         this._mode = Mode.LOAD;
 
         this._element.appendChild(this._descriptionElement);
@@ -102,15 +121,17 @@ export class PasswordWindow {
     public update() {
         var msg = "";
         if (this._mode === Mode.LOAD) {
-            msg = DESCRIPTION_LOAD;
+            msg = generatePasswordLoadWindowwDescription(this._isDisallowLoadOldSave);
             try {
                 this._passwordBoxElement.removeAttribute("readonly");
             } catch (e) { }
             this._cancelButtonElement.style.display = "inline";
+            this._copyButtonElement.style.display = "none";
         } else {
             msg = DESCRIPTION_SAVE;
             this._passwordBoxElement.setAttribute("readonly", "readonly");
             this._cancelButtonElement.style.display = "none";
+            this._copyButtonElement.style.display = "inline";
         }
         var mesArray = msg.split("\n");
         this._descriptionElement.textContent = "";

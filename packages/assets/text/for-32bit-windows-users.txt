@@ -1,0 +1,10 @@
+32ビット版 Windows で、wwa-server.exe が起動しない方へ
+
+WWA Wing v3.7.0 以降のバージョンに同梱されている、
+WWA Wing の動作確認ツール wwa-server.exe は、 32ビット版 Windows に対応しておりません。
+
+32ビット版 Windows で WWA Wing の動作確認をされる場合には、
+下記の WWA Debugger など、他の動作確認ツールのご利用をお願いいたします。
+
+WWA Debugger (by WWA FanSquare / aruneko99)
+https://wwacontest.aruneko.net/debugger/

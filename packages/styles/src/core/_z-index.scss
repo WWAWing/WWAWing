@@ -19,10 +19,10 @@ div#wwa-sidebar {
 }
 
 @each $status, $number in (
-  energy: 0,
-  strength: 1,
-  defence: 2,
-  gold: 3
+  "energy": 0,
+  "strength": 1,
+  "defence": 2,
+  "gold": 3
   ) {
   #disp-#{$status} {
     z-index: 103 + $number;
@@ -94,9 +94,6 @@ div#wwa-sidebar {
 }
 #wwa-text-message-window {
   z-index: 400;
-}
-#wwa-audio-wrapper {
-  z-index: -9999;
 }
 #wwa-virtualpad-left {
   z-index: 500;
