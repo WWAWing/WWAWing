@@ -1640,7 +1640,7 @@ export class WWA {
             });
             return [node, ...this._executeNode(node.next)];
         } else if (node instanceof Junction) {
-            const next = node.evaluateAndGetNextNode(this._generateTokenValues.bind(this));
+            const next = node.evaluateAndGetNextNode(this.generateTokenValues.bind(this));
             return next ? this._executeNode(next) : [];
         }
         // node === undefined
@@ -5754,7 +5754,7 @@ font-weight: bold;
             // なお、数値の場合は前段で弾かれているので、定数になることはない。
             const parsedType = ExpressionParser.parseType(macroArg);
             if (parsedType) {
-                return () => ExpressionParser.parseAndEvaluateValue(macroArg, this._generateTokenValues(option.triggerParts));
+                return () => ExpressionParser.parseAndEvaluateValue(macroArg, this.generateTokenValues(option.triggerParts));
             }
             // 引数を文字列として解釈する場合
             // \n は改行扱いされる。 
@@ -5770,7 +5770,7 @@ font-weight: bold;
 
     public execSetMacro(macroStr: string = "", option: { triggerParts: TriggerParts }): { isGameOver?: true } {
         const { assignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
-            macroStr, this._generateTokenValues(option.triggerParts)
+            macroStr, this.generateTokenValues(option.triggerParts)
         );
         switch(assignee) {
             case "energy":
@@ -5810,7 +5810,7 @@ font-weight: bold;
         return {};
     }
 
-    private _generateTokenValues(triggerParts: TriggerParts): ExpressionParser.TokenValues {
+    public generateTokenValues(triggerParts: TriggerParts): ExpressionParser.TokenValues {
         // TODO: これ呼ぶ以外の方法ないのかな
         this.setNowPlayTime();
         return {

@@ -1,7 +1,7 @@
 import type { TokenValues, Descriminant, ComparisionOperatorKind } from "./typedef";
 import { parseType } from "./parsers";
 import { evaluateValue, calc } from "./eval";
-import { regAdvance, regNormal, regIf } from "./regexp";
+import { regAdvance, regNormal, regIf, regMacroArg } from "./regexp";
 import { generateValueAssignOperation, type ValueAssignOperation } from "./value-assign-operation";
 
 export * from "./typedef";
@@ -13,8 +13,8 @@ function removeSpaces(rawString: string): string {
   return rawString.replace(/\s/g, "");
 }
 
-export function parseAndEvaluateValue(value: string, tokenValues: TokenValues): number {
-  return evaluateValue(parseType(value), tokenValues);
+export function parseAndEvaluateValue(value: string, tokenValues: TokenValues, fallbackValue = 0): number {
+  return evaluateValue(parseType(value), tokenValues, fallbackValue);
 }
 
 /** 
@@ -42,6 +42,22 @@ export function evaluateSetMacroExpression(expression: string, tokenValues: Toke
 
   throw new Error('setMacroのフォーマットを満たしていません: ' + expression)
 }
+
+/** 
+  マクロ引数の式を評価して、結果を返します。
+*/
+export function evaluateMacroArgExpression(expression: string, tokenValues: TokenValues, fallbackValue: number = 0): number {
+  const noSpaceStr = removeSpaces(expression);
+  const normalMatch = noSpaceStr.match(regMacroArg);
+  if (normalMatch !== null) {
+    const leftValue = parseAndEvaluateValue(normalMatch[1], tokenValues, fallbackValue);
+    const rightValue = normalMatch[3] ? parseAndEvaluateValue(normalMatch[3], tokenValues, fallbackValue) : undefined;
+    const operator = normalMatch[2];
+    return operator && rightValue ? calc(operator, leftValue, rightValue) : leftValue;
+  }
+  throw new Error('マクロ引数のフォーマットを満たしていません: ' + expression)
+}
+
 
 /**
  * if 判別式をパースします。 (評価は行いません)

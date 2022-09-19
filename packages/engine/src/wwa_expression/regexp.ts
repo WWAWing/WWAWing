@@ -41,6 +41,13 @@ export const regAdvance = new RegExp(`${START}(${ASSIGNEE})${ASSIGN}(${VALUE_OR_
 export const regNormal = new RegExp(`${START}(${ASSIGNEE})(${ASSIGNMENT_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);
 
 /**
+ * マクロ引数のフォーマット
+ * 外側にカッコがないので注意
+ * v[x] もしくは v[x] + v[y]
+ */
+export const regMacroArg = new RegExp(`^(${VALUE_OR_FUNCTION})(?:(${CALC_OPERATOR})(${VALUE_OR_FUNCTION}))?$`);
+
+/**
  * ifマクロのフォーマット
  */
  export const regIf = new RegExp(`${START}(${VALUE_OR_FUNCTION})(${COMPARISON_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);

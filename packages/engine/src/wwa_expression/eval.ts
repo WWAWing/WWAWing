@@ -1,15 +1,15 @@
 import type { Descriminant, TokenValues, Comparable } from "./typedef";
 
-export function evaluateDescriminant(d: Descriminant, tokenValues: TokenValues): boolean {
+export function evaluateDescriminant(d: Descriminant, tokenValues: TokenValues, fallbackValue: number = 0): boolean {
     if (typeof d === "boolean") {
         return d;
     }
-    const left = evaluateValue(d.left, tokenValues);
-    const right = evaluateValue(d.right, tokenValues);
+    const left = evaluateValue(d.left, tokenValues, fallbackValue);
+    const right = evaluateValue(d.right, tokenValues, fallbackValue);
     return compare(d.operator, left, right);
 }
 
-export function evaluateValue(comparable: Comparable, tokenValues: TokenValues): number {
+export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, fallbackValue: number = 0): number {
   switch (comparable.type) {
     case 'HP':
       return tokenValues.totalStatus.energy;
@@ -52,8 +52,7 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues):
     case 'RAND':
       return Math.floor(Math.random() * evaluateValue(comparable.argument, tokenValues));
     default:
-      // 未定義は 0 とする
-      return 0;
+      return fallbackValue;
   }
 }
 
