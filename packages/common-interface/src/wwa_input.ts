@@ -81,7 +81,8 @@ export type WWAInputType =
     'PASSWORD_SAVE' |
     'RESTART_GAME' |
     'GOTO_WWA' |
-    'SOUNDLOAD_STOP'; // サウンド読み込みの中止
+    'SOUNDLOAD_STOP' | // サウンド読み込みの中止
+    'SHOW_VARIABLES';
 
 /**
  * WWAInputStore を種別化するための enum です。

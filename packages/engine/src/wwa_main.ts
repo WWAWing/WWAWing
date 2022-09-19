@@ -1868,10 +1868,9 @@ export class WWA {
                 } else if (this._inputManager.checkHit("HOWOTO_CONTROL")) {
                     // コマンドのヘルプ 
                     this._displayHelp();
-                    // UNDONE: inputManager に変数表示用コントロールを追加する必要がある
-                } /* else if (this._keyStore.checkHitKey(KeyCode.KEY_V)) {
+                } else if (this._inputManager.checkHit("SHOW_VARIABLES")) {
                     this._displayUserVars();
-                } */
+                } 
  
             }
             this._inputManager.memorizeKeyStateOnControllableFrame();
@@ -1971,23 +1970,21 @@ export class WWA {
             }
 
             // ユーザー変数表示モードの場合
-            // UNDONE: 対応する
-            /*
             if (this._inlineUserVarViewer?.isVisible) {
                 let isInputKey = false;
-                if (this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
+                if (this._inputManager.checkHit("DOWN")) {
                     this._inlineUserVarViewer.topUserVarIndex++;
                     isInputKey = true;
                 }
-                if (this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
+                if (this._inputManager.checkHit("UP")) {
                     this._inlineUserVarViewer.topUserVarIndex--;
                     isInputKey = true;
                 }
-                if (this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
+                if (this._inputManager.checkHit("RIGHT")) {
                     this._inlineUserVarViewer.topUserVarIndex += Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
-                if (this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN) {
+                if (this._inputManager.checkHit("LEFT")) {
                     this._inlineUserVarViewer.topUserVarIndex -= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
@@ -2003,11 +2000,10 @@ export class WWA {
                     this._inlineUserVarViewer.isVisible = true;
                     this._displayUserVars();
                 }
-                if (this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
+                if (this._inputManager.checkHit("SHOW_VARIABLES")) {
                     this._setNextPage();
                 }
             }
-            */
         } else if (this._player.isWatingEstimateWindow()) {
             if (this._inputManager.checkHit("MESSAGE")) {
                 this.hideBattleEstimateWindow();
