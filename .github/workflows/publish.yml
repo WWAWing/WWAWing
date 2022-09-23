@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "バージョンを入力 (patch/minor/major/X.X.X-hogehoge.X)"
+        description: "バージョンを入力 (patch/minor/major/X.Y.Z-hogehoge.based-on.A.B.C.p.N)"
         required: true
         default: "patch"
       tag:

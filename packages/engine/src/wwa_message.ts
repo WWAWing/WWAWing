@@ -13,10 +13,10 @@ import {
     DEVICE_TYPE,
     Direction,
     StatusSolutionKind,
+    PreprocessMacroType,
+    ScoreRates,
+    ScoreOptions as ScoreOptions,
 } from "./wwa_data";
-import {
-    Positioning as MPositioning
-} from "./wwa_message";
 import {
     Monster
 } from "./wwa_monster";
@@ -27,6 +27,7 @@ import {
     WWASave,
     WWASaveData
 } from "./wwa_save";
+import { type TokenValues, type Descriminant, evaluateDescriminant } from "./wwa_expression";
 
 /**
  * 値が更新された時に、再評価されるべき値を返す関数の型。
@@ -37,19 +38,96 @@ export type LazyEvaluateValue = () => number;
  * 例: ["変数 10 番の値は", () => userVar[10], "です。\n文字列中に改行も入りえます。"]
  */
 export type MessageSegments = (string | LazyEvaluateValue)[];
+
+
+export class Page {
+    constructor(
+        public firstNode?: Node,
+        public isLastPage?: boolean, // 旧 endOfPartsEvent相当
+        public showChoice?: boolean,
+        public isSystemMessage?: boolean,
+        // score オブジェクトがあるときスコア表示
+        public scoreOptions?: ScoreOptions
+    ) {
+
+    }
+}
+
+
+export abstract class Node {
+    constructor() {
+    }
+}
+
+export interface Branch {
+    /**
+     * 判別式
+     * 構文エラーの場合は undefined (false と同等扱い) になります。
+     */
+    descriminant?: Descriminant;
+    /**
+     * $else によって生成される分岐相当でなければ undefined.
+     * $else によって生成される分岐か、 $else がない $if マクロで生成される else相当の分岐ならオブジェクト.
+     */
+    elseBranch?: {
+        /**
+         * $else によって生成された分岐なら "real"
+         * $else がない $if によって擬似的に生成された $else 相当の分岐なら "pesudo-else" (疑似 else)
+         */
+        type: "real" | "pesudo-else";
+    };
+    next?: Node
+}
+
+/**
+ * メッセージ中の分岐ノード
+ */
+export class Junction extends Node {
+    constructor(
+        public branches: Branch[] = [],
+    ){
+        super();        
+    }
+    appendBranch(branch: Branch): void {
+        this.branches.push(branch);
+    }
+    getLastUnconnectedBranch(): Branch | undefined {
+        for (let branch of this.branches) {
+            if (!branch.next) {
+                return branch;
+            }
+        }
+        return undefined;
+    }
+    evaluateAndGetNextNode(generateTokenValues: () => TokenValues): Node | undefined {
+        for (let branch of this.branches) {
+            // 判別式が undefined の場合は $else 節に相当するのでそのまま次の Node を返す
+            // 判別式が null の場合はエラーなので、仕方なく次の Node を返す
+            if (!branch.descriminant || evaluateDescriminant(branch.descriminant, generateTokenValues())) {
+                return branch.next;
+            }
+        }
+        return undefined;
+    }
+
+    hasElseBranch(): boolean {
+        return this.branches.filter(branch => Boolean(branch.elseBranch)).length >= 1;
+    }
+}
+
 /**
  * パース済メッセージ。
  * 通常のメッセージの他、マクロの情報などを持ちます。
  */
-export class ParsedMessage {
-    private messageArray: MessageSegments;
+export class ParsedMessage extends Node {
+    private messageSegments: MessageSegments;
     constructor(
         textOrMessageSegments: string | MessageSegments,
-        public isSystemMessage: boolean,
-        public isEndOfPartsEvent?: boolean,
-        public macro?: Macro[]
+        public macro?: Macro[],
+        public next?: Node
     ) {
-        this.messageArray = typeof textOrMessageSegments === "string" ? [textOrMessageSegments] : textOrMessageSegments;
+        super();
+        this.messageSegments = this.parseMessage(textOrMessageSegments);
         if (this.macro === void 0) {
             this.macro = [];
         }
@@ -57,26 +135,75 @@ export class ParsedMessage {
 
     /**
      * メッセージが空であれば true を返す。
-     * 空配列の他、空文字列しかない1要素の配列を空とみなす。
-     * マクロの有無は考慮しない。
      */
     isEmpty(): boolean {
-        return (
-            this.messageArray.length === 0 ||
-            (this.messageArray.length === 1 && this.messageArray[0] === "")
-        );
+        // 全 messageSegment が空文字列 なら true.
+        // HACK: 今のところユーザ変数は文字列が扱えないが、もし扱えるようになった場合、LazyEvaluateValue が 空文字列を
+        // 返す可能性があり、その場合は実行するまで本当に空かどうかわからなくなるため、メッセージの空判定方法を根本から見直す必要がある。
+        return this.messageSegments.reduce((prev, segment) => prev && segment === "", true)
     }
 
     /**
      * LazyEvaluateValue を評価して、表示可能なメッセージを生成する。
      */
     generatePrintableMessage(): string {
-        return this.messageArray.reduce<string>((prevMessage, item) => {
+        return this.messageSegments.reduce<string>((prevMessage, item) => {
             const evaluatedItem = typeof item === "string" ? item : item();
             return `${prevMessage}${evaluatedItem}`;
         }, "")
     }
+
+    appendMessage(message: string | MessageSegments, withNewLine: boolean = false): void {
+        this.messageSegments = this.messageSegments.concat(withNewLine ? ["\n"] : [], this.parseMessage(message));
+    }
+
+    private parseMessage(message: string | MessageSegments): MessageSegments {
+        return typeof message === "string" ? [message] : message; 
+    }
 }
+
+export function isEmptyMessageTree(node: Node | undefined): boolean {
+    if (node === undefined) {
+        return true;
+    } else if (node instanceof Junction) {
+        return node.branches.reduce((prev, branch) => prev && isEmptyMessageTree(branch.next), true)
+    } else if (node instanceof ParsedMessage) {
+        return node.isEmpty() && isEmptyMessageTree(node.next);
+    }
+}
+
+export function getLastMessage(node: undefined): undefined;
+export function getLastMessage(node: Node): Node;
+export function getLastMessage(node: Node | undefined): Node | undefined {
+    if (node === undefined) {
+        return undefined;
+    } else if (node instanceof Junction) {
+        throw new Error("分岐が含まれているため、最後のメッセージを取得することができません。");
+    } else if (node instanceof ParsedMessage) {
+        return node.next === undefined ? node : getLastMessage(node.next);
+    }
+}
+
+export function concatMessage(node1: Node | undefined, node2: Node | undefined): Node | undefined {
+    if (node1 === undefined) {
+        return node2;
+    } else {
+        const lastMessage = getLastMessage(node1);
+        if (lastMessage instanceof ParsedMessage) {
+            lastMessage.next = node2;
+        }
+    }
+}
+
+export type MessageLineType = PreprocessMacroType | "text" | "normalMacro";
+export const messagLineIsText = (lineType: MessageLineType) => lineType === MacroType.SHOW_STR || lineType === "text" || lineType === "normalMacro";
+export type MessageLine = (
+    { type: PreprocessMacroType; text: string; macro: Macro; } |
+    { type: "normalMacro"; text: string; macro: Macro; } |
+    { type: "text"; text: string; macro?: undefined }
+);
+
+
 
 export class Macro {
     constructor(
@@ -94,228 +221,290 @@ export class Macro {
         return IFElseMacroList.includes(this.macroType);
     }
 
-    public execute(): void {
+    public execute(): {isGameOver?: true} {
         try {
             switch (this.macroType) {
-                case MacroType.IMGPLAYER:
+                case MacroType.IMGPLAYER: {
                     this._executeImgPlayerMacro();
-                    break;
-                case MacroType.IMGYESNO:
+                    return {};
+                }
+                case MacroType.IMGYESNO: {
                     this._executeImgYesNoMacro();
-                    break;
-                case MacroType.HPMAX:
+                    return {};
+                }
+                case MacroType.HPMAX: {
                     this._executeHPMaxMacro();
-                    break;
-                case MacroType.SAVE:
+                    return {};
+                }
+                case MacroType.SAVE: {
                     this._executeSaveMacro();
-                    break;
-                case MacroType.ITEM:
+                    return {};
+                }
+                case MacroType.ITEM: {
                     this._executeItemMacro();
-                    break;
-                case MacroType.DEFAULT:
+                    return {};
+                }
+                case MacroType.DEFAULT: {
                     this._executeDefaultMacro();
-                    break;
-                case MacroType.OLDMAP:
+                    return {};
+                }
+                case MacroType.OLDMAP: {
                     this._executeOldMapMacro();
-                    break;
-                case MacroType.PARTS:
+                    return {};
+                }
+                case MacroType.PARTS: {
                     this._executePartsMacro();
-                    break;
-                case MacroType.MOVE:
+                    return {};
+                }
+                case MacroType.MOVE: {
                     this._executeMoveMacro();
-                    break;
-                case MacroType.MAP:
+                    return {};
+                }
+                case MacroType.MAP: {
                     this._executeMapMacro();
-                    break;
-                case MacroType.DIRMAP:
+                    return {};
+                }
+                case MacroType.DIRMAP: {
                     this._executeDirMapMacro();
-                    break;
-                case MacroType.IMGFRAME:
+                    return {};
+                }
+                case MacroType.IMGFRAME: {
                     this._executeImgFrameMacro();
-                    break;
-                case MacroType.IMGBOM:
+                    return {};
+                }
+                case MacroType.IMGBOM: {
                     this._executeImgBomMacro();
-                    break;
-                case MacroType.DELPLAYER:
+                    return {};
+                }
+                case MacroType.DELPLAYER: {
                     this._executeDelPlayerMacro();
-                    break;
-                case MacroType.FACE:
+                    return {};
+                }
+                case MacroType.FACE: {
                     this._executeFaceMacro();
-                    break;
-                case MacroType.EFFECT:
+                    return {};
+                }
+                case MacroType.EFFECT: {
                     this._executeEffectMacro();
-                    break;
-                case MacroType.GAMEOVER:
+                    return {};
+                }
+                case MacroType.GAMEOVER: {
                     this._executeGameOverMacro();
-                    break;
-                case MacroType.IMGCLICK:
+                    return {};
+                }
+                case MacroType.IMGCLICK: {
                     this._executeImgClickMacro();
-                    break;
-                case MacroType.STATUS:
-                    this._executeStatusMacro();
-                    break;
-                case MacroType.EFFITEM:
+                    return {};
+                }
+                case MacroType.STATUS: {
+                    const { isGameOver } = this._executeStatusMacro();
+                    return {isGameOver};
+                }
+                case MacroType.EFFITEM: {
                     this._executeEffItemMacro();
-                    break;
-                case MacroType.COLOR:
+                    return {};
+                }
+                case MacroType.COLOR: {
                     this._executeColorMacro();
-                    break;
-                case MacroType.WAIT:
+                    return {};
+                }
+                case MacroType.WAIT: {
                     this._executeWaitMacro();
-                    break;
-                case MacroType.SOUND:
+                    return {};
+                }
+                case MacroType.SOUND: {
                     this._executeSoundMacro();
-                    break;
-                case MacroType.GAMEPAD_BUTTON:
+                    return {};
+                }
+                case MacroType.GAMEPAD_BUTTON: {
                     this._executeGamePadButtonMacro();
-                    break;
-                case MacroType.OLDMOVE:
+                    return {};
+                }
+                case MacroType.OLDMOVE: {
                     this._executeOldMoveMacro();
-                    break;
-                case MacroType.JUMPGATE:
+                    return {};
+                }
+                case MacroType.JUMPGATE: {
                     this._executeJumpGateMacro();
-                    break;
+                    return {};
+                }
                 // 現在の座標を記憶
-                case MacroType.RECPOSITION:
+                case MacroType.RECPOSITION: {
                     this._executeRecPositionMacro();
-                    break;
+                    return {};
+                }
                 // 記憶していた座標にジャンプ
-                case MacroType.JUMPRECPOSITION:
+                case MacroType.JUMPRECPOSITION: {
                     this._executeJumpRecPositionMacro();
-                    break;
+                    return {};
+                }
                 // 変数デバッグ出力
-                case MacroType.CONSOLE_LOG:
+                case MacroType.CONSOLE_LOG: {
                     this._executeConsoleLogMacro();
-                    break;
+                    return {};
+                }
                 // 変数 <- HP
-                case MacroType.COPY_HP_TO:
+                case MacroType.COPY_HP_TO: {
                     this._executeCopyHpToMacro();
-                    break;
+                    return {};
+                }
                 // HP <- 変数
-                case MacroType.SET_HP:
-                    this._executeSetHPMacro();
-                    break;
+                case MacroType.SET_HP: {
+                    const { isGameOver } = this._executeSetHPMacro();
+                    return { isGameOver };
+                }
                 // 変数 <- HPMAX
-                case MacroType.COPY_HPMAX_TO:
+                case MacroType.COPY_HPMAX_TO: {
                     this._executeCopyHpMaxToMacro();
-                    break;
+                    return {};
+                }
                 // HPMAX <- 変数
-                case MacroType.SET_HPMAX:
+                case MacroType.SET_HPMAX: {
                     this._executeSetHpMaxMacro();
-                    break;
+                    return {};
+                }
                 // 変数 <- AT
-                case MacroType.COPY_AT_TO:
+                case MacroType.COPY_AT_TO: {
                     this._executeCopyAtToMacro();
-                    break;
+                    return {};
+                }
                 // AT <- 変数
-                case MacroType.SET_AT:
+                case MacroType.SET_AT: {
                     this._executeSetAtMacro();
-                    break;
+                    return {};
+                }
                 // 変数 <- DF
-                case MacroType.COPY_DF_TO:
+                case MacroType.COPY_DF_TO: {
                     this._executeCopyDfToMacro();
-                    break;
+                    return {};
+                }
                 // DF <- 変数
-                case MacroType.SET_DF:
+                case MacroType.SET_DF: {
                     this._executeSetDfMacro();
-                    break;
+                    return {};
+                }
                 // 変数 <- MONEY
-                case MacroType.COPY_MONEY_TO:
+                case MacroType.COPY_MONEY_TO: {
                     this._executeCopyMoneyToMacro();
-                    break;
+                    return {};
+                }
                 // MONEY <- 変数
-                case MacroType.SET_MOENEY:
+                case MacroType.SET_MONEY: {
                     this._executeSetMoneyMacro();
-                    break;
+                    return {};
+                }
                 // 歩数カウント代入
-                case MacroType.COPY_STEP_COUNT_TO:
+                case MacroType.COPY_STEP_COUNT_TO: {
                     this._executeSetStepCountMacro();
-                    break;
+                    return {};
+                }
                 // 変数に定数代入
-                case MacroType.VAR_SET_VAL:
+                case MacroType.VAR_SET_VAL: {
                     this._executeVarSetValMacro();
-                    break;
+                    return {};
+                }
                 // 変数に変数代入
-                case MacroType.VAR_SET:
+                case MacroType.VAR_SET: {
                     this._executeVarSetMacro();
-                    break;
+                    return {};
+                }
                 // 足し算代入
-                case MacroType.VAR_ADD:
+                case MacroType.VAR_ADD: {
                     this._executeVarAddMacro();
-                    break;
+                    return {};
+                }
                 // 引き算代入
-                case MacroType.VAR_SUB:
+                case MacroType.VAR_SUB: {
                     this._executeVarSubMacro();
-                    break;
+                    return {};
+                }
                 // 掛け算代入
-                case MacroType.VAR_MUL:
+                case MacroType.VAR_MUL: {
                     this._executeVarMulMacro();
-                    break;
+                    return {};
+                }
                 // 割り算代入
-                case MacroType.VAR_DIV:
+                case MacroType.VAR_DIV: {
                     this._executeVarDivMacro();
-                    break;
+                    return {};
+                }
                 // 割り算の余り代入
-                case MacroType.VAR_MOD:
+                case MacroType.VAR_MOD: {
                     this._executeVarModMacro();
-                    break;
+                    return {};
+                }
                 // 変数Xに1からYまでの乱数を代入
-                case MacroType.VAR_SET_RAND:
+                case MacroType.VAR_SET_RAND: {
                     this._executeVarSetRandMacro();
-                    break;
+                    return {};
+                }
                 // 速度変更禁止マクロ
-                case MacroType.GAME_SPEED:
+                case MacroType.GAME_SPEED: {
                     this._executeGameSpeedMacro();
-                    break;
+                    return {};
+                }
                 // 変数付きのメッセージ表示
-                case MacroType.SHOW_STR:
+                case MacroType.SHOW_STR: {
                     // $show_str マクロは、キューの組み立て時に処理されていて、既に存在しないはず
-                    break;
+                    return {};
+                }
                 // IF文
-                case MacroType.IF:
-                    this._executeIfMacro();
-                    break;
+                case MacroType.IF: {
+                    // $if マクロ (新実装) は、キューの組み立て時に処理されていて、既に存在しないはず
+                    return {};
+                }
                 // IF文 (旧実装)
-                case MacroType.LEGACY_IF:
+                case MacroType.LEGACY_IF: {
                     this._executeLegacyIfMacro();
-                    break;
+                    return {};
+                }
                 // ELSE-IF文
-                case MacroType.ELSE_IF:
-                    this._executeIfElseMacro();
-                    break;
+                case MacroType.ELSE_IF: {
+                    // $else_if マクロは、キューの組み立て時に処理されていて、既に存在しないはず
+                    return {};
+                }
                 // ELSE文
-                case MacroType.ELSE:
-                    this._executeElseMacro();
-                    break;
+                case MacroType.ELSE: {
+                    // $else マクロは、キューの組み立て時に処理されていて、既に存在しないはず
+                    return {};
+                }
                 // END-IF文
-                case MacroType.END_IF:
-                    this._executeEndIfMacro();
-                    break;
+                case MacroType.END_IF: {
+                    // $endif マクロは、キューの組み立て時に処理されていて、既に存在しないはず
+                    return {};
+                }
                 // 速度設定
-                case MacroType.SET_SPEED:
+                case MacroType.SET_SPEED: {
                     this._executeSetSpeedMacro();
-                    break;
+                    return {};
+                }
                 // プレイ時間変数代入
-                case MacroType.COPY_TIME_TO:
+                case MacroType.COPY_TIME_TO: {
                     this._executeCopyTimeToMacro();
-                    break;
+                    return {};
+                }
                 // ステータスを隠す
-                case MacroType.HIDE_STATUS:
+                case MacroType.HIDE_STATUS: {
                     this._executeHideStatusMacro();
-                    break;
+                    return {};
+                }
                 // $map の変数対応版
-                case MacroType.VAR_MAP:
+                case MacroType.VAR_MAP: {
                     this._executeVarMapMacro();
-                    break;
-                case MacroType.NO_GAMEOVER:
+                    return {};
+                }
+                case MacroType.NO_GAMEOVER: {
                     this._executeNoGameOverMacro();
-                    break;
-                case MacroType.SET:
-                    this._executeSetMacro();
-                    break;
-                default:
+                    return {};
+                }
+                case MacroType.SET: {
+                    const { isGameOver } = this._executeSetMacro();
+                    return { isGameOver }
+                }
+                default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
-                    break;
+                    return {};
+                }
             }
         } catch (e) {
             // デベロッパーモードならエラーを吐くとかしたいね
@@ -412,10 +601,10 @@ export class Macro {
         this._wwa.setUserVarMONEY(num);
     }
     // set_hpマクロ実行部
-    private _executeSetHPMacro(): void {
+    private _executeSetHPMacro(): { isGameOver?: true } {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
-        this._wwa.setHPUserVar(num, true);
+        return this._wwa.setHPUserVar(num, true);
     }
     // set_hpmaxマクロ実行部
     private _executeSetHpMaxMacro(): void {
@@ -511,11 +700,6 @@ export class Macro {
         this._wwa.speedChangeJudge(speedChangeFlag);
     }
 
-    // IFマクロ実行部
-    private _executeIfMacro(): void {
-        this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
-    }
-
     // IFマクロ(旧実装)実行部
     private _executeLegacyIfMacro(): void {
         // 0,1,2 -対象ユーザ変数添字 3-番号 4-X 5-Y 6-背景物理
@@ -525,19 +709,8 @@ export class Macro {
         }
         this._wwa.userVarUserIf(this._triggerPartsPosition, str);
     }
-    // IF-ELSEマクロ実行部
-    private _executeIfElseMacro(): void {
-        this._wwa.switchConditionalExecutionStatus(this.macroArgs[0]);
-    }
-    // ELSEマクロ実行部
-    private _executeElseMacro(): void {
-        this._wwa.switchConditionalExecutionStatus();
-    }
-    // END_IFマクロ実行部
-    private _executeEndIfMacro(): void {
-        this._wwa.resetConditionalMacroExecStaus();
-    }
-    // SET_SPEEDマクロ実行部
+    
+   // SET_SPEEDマクロ実行部
     private _executeSetSpeedMacro(): void {
         this._concatEmptyArgs(1);
         var num = this._parseInt(0);
@@ -829,7 +1002,7 @@ export class Macro {
         this._wwa.updateItemEffectEnabled(!!mode);
     }
 
-    private _executeStatusMacro(): void {
+    private _executeStatusMacro(): { isGameOver?: true } {
         this._concatEmptyArgs(2);
         var type = this._parseInt(0);
         var value = this._parseInt(1);
@@ -837,7 +1010,7 @@ export class Macro {
         if (type < 0 || 4 < type) {
             throw new Error("ステータス種別が範囲外です。");
         }
-        this._wwa.setPlayerStatus(type, value, true);
+        return this._wwa.setPlayerStatus(type, value, true);
     }
 
     private _executeColorMacro(): void {
@@ -907,8 +1080,8 @@ export class Macro {
         this._wwa.setGameOverPolicy(isGameOverDisabled);
     }
 
-    private _executeSetMacro(): void {
-        this._wwa.execSetMacro(this.macroArgs[0])
+    private _executeSetMacro(): { isGameOver?: true } {
+        return this._wwa.execSetMacro(this.macroArgs[0]);
     }
 }
 
@@ -1126,7 +1299,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
     private _y: number;
     private _width: number;
     private _height: number;
-    private _message: ParsedMessage;
+    private _message: string;
 
     private _cgFileName: string;
     private _isVisible: boolean;
@@ -1171,7 +1344,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         this._y = y;
         this._width = width;
         this._height = height;
-        this._message = new ParsedMessage([], false);
+        this._message = "";
         this._isVisible = isVisible;
         this._isYesno = isYesno;
         this._isItemMenu = isItemMenu;
@@ -1251,17 +1424,17 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
     public setPositionByPlayerPosition(existsFaces: boolean, existsScoreWindow: boolean, displayCenter: boolean, playerPos: Position, cameraPos: Position) {
         var playerInScreenY = playerPos.getPartsCoord().substract(cameraPos.getPartsCoord()).y;
-        var pos: MPositioning;
+        var pos: Positioning;
         if (existsFaces) {
-            pos = MPositioning.BOTTOM;
+            pos = Positioning.BOTTOM;
         } else if (existsScoreWindow) {
-            pos = MPositioning.SCORE;
+            pos = Positioning.SCORE;
         } else if (displayCenter) {
-            pos = MPositioning.CENTER;
+            pos = Positioning.CENTER;
         } else if (playerInScreenY >= Math.ceil(WWAConsts.V_PARTS_NUM_IN_WINDOW / 2)) {
-            pos = MPositioning.TOP;
+            pos = Positioning.TOP;
         } else {
-            pos = MPositioning.BOTTOM;
+            pos = Positioning.BOTTOM;
         }
         this.setPositionEasy(pos);
     }
@@ -1298,12 +1471,12 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
     }
 
-    public setParsedMessage(message: ParsedMessage): void {
+    public setMessage(message: string): void {
         this._message = message;
         this.update();
     }
     public clear(): void {
-        this._message = new ParsedMessage([], false);
+        this._message = "";
         this.update();
     }
     public setYesNoChoice(isYesNo: boolean): boolean {
@@ -1410,7 +1583,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
             this._ynWrapperElement.style.display = "none";
         }
         this._msgWrapperElement.textContent = "";
-        var mesArray = this._message.generatePrintableMessage().split("\n");
+        var mesArray = this._message.split("\n");
         mesArray.forEach((line, i) => {
             let lsp: HTMLSpanElement; // Logical SPan
             if (this._wwa.isClassicMode()) {

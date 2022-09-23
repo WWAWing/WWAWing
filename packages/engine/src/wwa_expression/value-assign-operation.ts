@@ -18,7 +18,7 @@ export interface ValueAssignOperation {
 }
 
 export function generateValueAssignOperation(calcResult: number, assigneeExpression: string): ValueAssignOperation {
-  const targetType = parseType(assigneeExpression);
+  const targetType = parseType(assigneeExpression)?.type;
   switch (targetType) {
     case 'VARIABLE':
       const variable = assigneeExpression.match(/^v\[(\d+)\]$/);
