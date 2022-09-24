@@ -3670,6 +3670,7 @@ export class WWA {
                 case MacroType.ELSE:
                 case MacroType.END_IF:
                 case MacroType.SHOW_STR:
+                case MacroType.SHOW_STR2:
                     return { type: macro.macroType, text: line, macro }
                 default:
                     return { type: "normalMacro" as const, text: line, macro }
@@ -3688,7 +3689,11 @@ export class WWA {
             case MacroType.IF:
                 return new Junction([{ descriminant: ExpressionParser.parseDescriminant(currentLine.macro.macroArgs[0]) }]);
             case MacroType.SHOW_STR:
-                return shouldCreateParsedMessage ? new ParsedMessage(this._generateShowStrString(currentLine.macro.macroArgs, option)) : undefined;
+            case MacroType.SHOW_STR2:
+                return shouldCreateParsedMessage ? new ParsedMessage(this._generateShowStrString(currentLine.macro.macroArgs, {
+                    triggerParts: option.triggerParts,
+                    version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1
+                })) : undefined;
             case "text":
                 return shouldCreateParsedMessage ? new ParsedMessage(currentLine.text) : undefined;
             case "normalMacro":
@@ -3807,8 +3812,11 @@ export class WWA {
                 // 前の行までのメッセージ表示内容がない場合は、改行を挿入しない
                 const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
                 // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
-                if (currentLine.type === MacroType.SHOW_STR) {
-                    nodeByPrevLine.appendMessage(this._generateShowStrString(currentLine.macro.macroArgs, option), shouldInsertNewLine);
+                if (currentLine.type === MacroType.SHOW_STR || currentLine.type === MacroType.SHOW_STR2) {
+                    nodeByPrevLine.appendMessage(this._generateShowStrString(currentLine.macro.macroArgs, {
+                        triggerParts: option.triggerParts,
+                        version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1
+                    }), shouldInsertNewLine);
                 } else if (currentLine.type === "text") {
                     nodeByPrevLine.appendMessage(currentLine.text, shouldInsertNewLine);
                 } else if (currentLine.type === "normalMacro") {
@@ -5738,17 +5746,20 @@ font-weight: bold;
         this.setUserVar(x, Math.floor(Math.random() * this.toAssignableValue(num)) + bias);
     }
     
-    // $show_str マクロで表示される文字列を組み立てる。
+    // $show_str, $show_str2 マクロで表示される文字列を組み立てる。
     // 変数, ステータスは表示する時に評価される。
-    // 変数の表記は添字のみを書く方法(例: 210)と、ifなどと同じ方法(例: v[210])の両方が使える。
+    // 評価される値はifなどと同じ方法(例: v[210], RAND(2)).
+    // バージョン1 の場合は、整数値は添字として認識される。 例: 210 と書かれていると v[210] と扱われる。
     private _generateShowStrString(macroArgs: string[], option: {
         triggerParts: TriggerParts
+        version: 1 | 2
     }): MessageSegments {
         return macroArgs.map((macroArg) => {
-            // 数値の場合は、該当するユーザ変数の添字と解釈する
             const parsedNumber = parseInt(macroArg, 10);
             if (!isNaN(parsedNumber)) {
-                return () => this._wwaData.userVar[parsedNumber];
+                // バージョン1 かつ 数値の場合は、該当するユーザ変数の添字と解釈する
+                // バージョン2 の場合は数値をそのまま出力する
+                return () => option.version === 1 ? this._wwaData.userVar[parsedNumber] : parsedNumber;
             }
             // ExpressionParser で解釈できる表現 (HPMAX, RAND(x)など)を解釈する。
             // なお、数値の場合は前段で弾かれているので、定数になることはない。

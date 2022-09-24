@@ -593,13 +593,14 @@ export enum MacroType {
     END_IF = 59,
     SET = 60,
     MAP2 = 61,
+    SHOW_STR2 = 62,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101,
     LEGACY_IF = 10050
 }
 
 export type ConditionalExecuteMacroType = MacroType.IF | MacroType.ELSE_IF | MacroType.ELSE | MacroType.END_IF;
-export type PreprocessMacroType = ConditionalExecuteMacroType | MacroType.SHOW_STR;
+export type PreprocessMacroType = ConditionalExecuteMacroType | MacroType.SHOW_STR | MacroType.SHOW_STR2;
 
 export var macrotable = {
     "": 0,
@@ -662,6 +663,7 @@ export var macrotable = {
     "$endif": 59,
     "$set": 60,
     "$map2": 61,
+    "$show_str2": 62,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
