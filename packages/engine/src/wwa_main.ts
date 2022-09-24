@@ -134,6 +134,7 @@ export class WWA {
         isEmpty: boolean;
     } | undefined;
     private _reservedPartsAppearances: PartsAppearance[];
+    private _reservedJumpDestination: Position | undefined;
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
@@ -512,6 +513,7 @@ export class WWA {
             this._prevFrameEventExected = false;
             this._lastPage = undefined;
             this._reservedPartsAppearances = [];
+            this._reservedJumpDestination = undefined;
             this._execPageInNextFrame = undefined;
             this._passwordLoadExecInNextFrame = false;
 
@@ -1747,6 +1749,11 @@ export class WWA {
                 }
             }
         }
+        // ジャンプゲートは、指定位置にパーツを出現やメッセージより後に処理する必要がある
+        if(this._reservedJumpDestination) {
+            this._player.jumpTo(this._reservedJumpDestination);
+            this._reservedJumpDestination = undefined;
+        }
 
         // キー入力とプレイヤー移動
         ////////////// DEBUG IMPLEMENTATION //////////////////////
@@ -2875,7 +2882,7 @@ export class WWA {
             return false;
         }
 
-        this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP);
+        this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP, partsID);
         const messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
         const message = this._wwaData.message[messageID];
         const additionalWaitFrameCount = this._wwaData.mapAttribute[partsID][Consts.ATR_NUMBER];
@@ -2900,7 +2907,7 @@ export class WWA {
                 !this._player.hasItem(this.getObjectAttributeById(objID, Consts.ATR_ITEM)) ||
                 this.getObjectAttributeById(objType, Consts.ATR_MODE) === Consts.PASSABLE_OBJECT)) {
 
-            this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP);
+            this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP, partsID);
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             var message = this._wwaData.message[messageID];
 
@@ -2923,12 +2930,12 @@ export class WWA {
         if (jy > Consts.RELATIVE_COORD_LOWER) {
             jy = pos.y + jy - Consts.RELATIVE_COORD_BIAS;
         }
-        this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP);
+        this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.MAP, partsID);
         if (
             0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth &&
             (jx !== playerPos.x || jy !== playerPos.y)
         ) {
-            this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+            this.reserveJumpInNextFrame(new Position(this, jx, jy, 0, 0));
             this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
             return true;
         }
@@ -3198,7 +3205,7 @@ export class WWA {
             0 <= jx && 0 <= jy && jx < this._wwaData.mapWidth && jy < this._wwaData.mapWidth &&
             (jx !== playerPos.x || jy !== playerPos.y)
         ) {
-            this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+            this.reserveJumpInNextFrame(new Position(this, jx, jy, 0, 0));
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
         }
 
@@ -3900,6 +3907,10 @@ export class WWA {
         })
     }
 
+    public reserveJumpInNextFrame(position: Position): void {
+        this._reservedJumpDestination = position;
+    }
+
     public appearPartsByDirection(
         distance: number,
         targetPartsID: number,
@@ -4049,6 +4060,8 @@ export class WWA {
         this._waitFrame = 0;
         this._temporaryInputDisable = true;
         this._execPageInNextFrame = undefined;
+        this._reservedPartsAppearances = [];
+        this._reservedJumpDestination = undefined;
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
     }
 
@@ -5496,6 +5509,7 @@ font-weight: bold;
     }
     // JumpGateマクロ実装ポイント
     public forcedJumpGate(jx: number, jy: number): void {
+        // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
     }
     // User変数記憶
