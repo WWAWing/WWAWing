@@ -1673,7 +1673,20 @@ export class WWA {
         this._mouseStore.update();
         this._virtualPadStore.update();
         this._gamePadStore.update();
+
+        // 指定位置にパーツを出現は、待ち時間の消化より先に行われる必要があるため、先に消化します。
+        // (不自然な気もしますが、過去のバージョンとの互換性を重視します。)
+        const arePartsAppeared = this._reservedPartsAppearances.length > 0;
+        this._reservedPartsAppearances.forEach(appearance => this.appearParts(appearance));
+        this._reservedPartsAppearances = [];
+
+        // 待ち時間がある場合は、このフレームは何もせず終了
+        // HACK: 本来なら、フレームの終了時まで処理をスキップするような書き方が理想。
         if (this._waitFrame-- > 0) {
+            if (arePartsAppeared) {
+                // 指定位置にパーツを出現が実行された場合に限り描画
+                this._drawAll();
+            }
             //待ち時間待機
             window.requestAnimationFrame(this.mainCaller);
             return;
@@ -1685,12 +1698,14 @@ export class WWA {
             this._yesNoJudge = this._yesNoJudgeInNextFrame;
             this._yesNoJudgeInNextFrame = void 0;
         }
+
+        // 顔グラフィックをクリアする必要があるならクリア
         if (this._clearFacesInNextFrame) {
             this.clearFaces();
             this._clearFacesInNextFrame = false;
         }
-        this._reservedPartsAppearances.forEach(appearance => this.appearParts(appearance));
-        this._reservedPartsAppearances = [];
+
+        // ページ（メッセージ・マクロが含まれる <P>で区切られた単位）の処理
         if (this._execPageInNextFrame) {
             const executingPage = this._execPageInNextFrame;
             this._execPageInNextFrame  = undefined;
@@ -1754,7 +1769,7 @@ export class WWA {
             this._player.jumpTo(this._reservedJumpDestination);
             this._reservedJumpDestination = undefined;
         }
-
+        
         // キー入力とプレイヤー移動
         ////////////// DEBUG IMPLEMENTATION //////////////////////
         /////// 本番では必ず消すこと /////////////////////////////
@@ -2981,7 +2996,6 @@ export class WWA {
         // 試験的に踏み潰し判定と処理の順序を入れ替えています。不具合があるようなら戻します。 150415
         this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.OBJECT, pos);
         // 待ち時間
-        //this._waitTimeInCurrentFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * 100;
         this._waitFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
         this._temporaryInputDisable = true;
         this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
