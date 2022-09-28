@@ -141,6 +141,7 @@ export class WWA {
     private sounds: Sound[];
 
     private _temporaryInputDisable: boolean;
+    private _hasBeenCheckedEventInThisFrame: boolean;
 
     private _isLoadedSound: boolean;
     private _isSkippedSoundMessage: boolean; // メッセージの読み込みジャッジを飛ばすフラグ(汎用的に使えるようにプロパティに入れている)
@@ -1665,6 +1666,7 @@ export class WWA {
     }
 
     private _main(): void {
+        this._hasBeenCheckedEventInThisFrame = false;
         this._temporaryInputDisable = false;
         this._stopUpdateByLoadFlag = false;
 
@@ -2278,15 +2280,20 @@ export class WWA {
                 // ランダムパーツのまま残っている画面内のパーツを全置換(したい)
                 this._replaceRandomObjectsInScreen();
 
-                // 当該座標の背景パーツ判定
-                var eventExecuted = this.checkMap();
+                // プレイヤーの衝突判定などで、既にイベントをチェック済の場合はチェックしない
+                if (!this._hasBeenCheckedEventInThisFrame) {
 
-                if (!eventExecuted) {
-                    // 当該座標の物体パーツ判定
-                    this.checkObject();
+                    // 当該座標の背景パーツ判定
+                    const eventExecuted = this.checkMap();
+
+                    if (!eventExecuted) {
+                        // 当該座標の物体パーツ判定
+                        this.checkObject();
+                    }
+
+                    this._prevFrameEventExected = eventExecuted;
                 }
 
-                this._prevFrameEventExected = eventExecuted;
             }
 
             // 選択系イベント( 物の売買, 二者択一 )の処理
@@ -2802,6 +2809,7 @@ export class WWA {
 
     // 背景パーツ判定
     public checkMap(pos?: Coord): boolean {
+        this._hasBeenCheckedEventInThisFrame = true;
         var playerPos = this._player.getPosition().getPartsCoord();
         pos = (pos !== void 0 && pos !== null) ? pos : playerPos;
         var partsID: number = this._wwaData.map[pos.y][pos.x];
@@ -2836,6 +2844,7 @@ export class WWA {
 
     // 物体パーツ判定
     public checkObject(pos?: Coord): void {
+        this._hasBeenCheckedEventInThisFrame = true;
         var playerPos = this._player.getPosition().getPartsCoord();
         pos = (pos !== void 0 && pos !== null) ? pos : playerPos;
         var partsID: number = this._wwaData.mapObject[pos.y][pos.x];
