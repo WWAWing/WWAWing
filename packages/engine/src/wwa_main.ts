@@ -140,7 +140,7 @@ export class WWA {
 
     private sounds: Sound[];
 
-    private _temporaryInputDisable: boolean;
+    private _temporaryInputDisable: boolean; // フレームの間で onClick などを割り込まれなくするためのフラグ
     private _hasBeenCheckedEventInThisFrame: boolean;
 
     private _isLoadedSound: boolean;
@@ -3558,7 +3558,8 @@ export class WWA {
     ): void {
         const generatedPage = this.generatePagesByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice, scoreOption);
         this._pages = this._pages.concat(generatedPage);
-        if (this._pages.length !== 0) {
+        // 次のフレームで実行されるページが既に決まっている場合は上書きしない
+        if (!this._execPageInNextFrame && this._pages.length !== 0) {
             const topPage = this._pages.shift();
             this._execPageInNextFrame = topPage;
         }
