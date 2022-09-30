@@ -47,7 +47,12 @@ export class Page {
         public showChoice?: boolean,
         public isSystemMessage?: boolean,
         // score オブジェクトがあるときスコア表示
-        public scoreOptions?: ScoreOptions
+        public scoreOptions?: ScoreOptions,
+        // パーツIDと種別の情報を一応持っておく (主にデバッグ用途)
+        public extraInfo?: {
+            partsId: number,
+            partsType: PartsType
+        }
     ) {
 
     }
