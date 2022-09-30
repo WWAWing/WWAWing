@@ -1708,17 +1708,22 @@ export class WWA {
         }
 
         // ページ（メッセージ・マクロが含まれる <P>で区切られた単位）の処理
-        const page = this._pages.length > 0 && this._shouldSetNextPage ? this._pages.shift() : undefined;
-        this._shouldSetNextPage = false;
-        if (page) {
-            const executingPage = page;
-            const executedResult = this._executeNodes(executingPage.firstNode);
-            console.log(this._mainCallCounter, executedResult);
-            if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
-                // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
-                this._lastPage = undefined;
-            } else {
-               if (this._lastPage && this._lastPage.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
+        if (this._pages.length > 0 && this._shouldSetNextPage) {
+            this._shouldSetNextPage = false;
+            while (this._pages.length > 0) {
+                const executingPage = this._pages.shift();
+
+                // executeNodes の結果、新たなメッセージが発生した場合、既に開かれているメッセージウィンドウが閉じた後に表示される。
+                //  (this._pages の後尾にシステムメッセージのページが追加されるため)
+                // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
+                // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
+                const executedResult = this._executeNodes(executingPage.firstNode);
+                if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
+                    // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
+                    this._lastPage = undefined;
+                    break;
+                }
+                if (this._lastPage && this._lastPage.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
                     this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                     this._reservedMoveMacroTurn = void 0;
                 }
@@ -1728,9 +1733,9 @@ export class WWA {
                 if (executingPage.scoreOptions && messageLinesToDisplay.length === 0) {
                     messageLinesToDisplay.push(new ParsedMessage("スコアを表示します。"));
                 }
-                
+
+                // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
                 const existsMessageToDisplay = messageLinesToDisplay.length > 0;
-                // set message
                 if (existsMessageToDisplay) {
                     const message = messageLinesToDisplay.map(line => line.generatePrintableMessage()).join("\n");
                     this._messageWindow.setMessage(message);
@@ -1748,16 +1753,17 @@ export class WWA {
                         this._scoreWindow.show();
                     }
                     this._player.setMessageWaiting();
-                } else {
-                    if (this._pages.length === 0) {
-                        this._hideMessageWindow();
-                    } else {
-                        this._setNextPage();
+                    this._lastPage = {
+                        isEmpty: !existsMessageToDisplay,
+                        isLastPage: executingPage.isLastPage
                     }
+                    break;
                 }
-                this._lastPage = {
-                    isEmpty: !existsMessageToDisplay,
-                    isLastPage: executingPage.isLastPage
+
+                // このフレームで処理されるべきページがもうないのでループから抜ける
+                if (this._pages.length === 0) {
+                    this._hideMessageWindow();
+                    break;
                 }
             }
         }
@@ -3611,7 +3617,7 @@ export class WWA {
 
         if (messageMain === "") {
             // 空メッセージの場合は何も処理しないが、スコア表示の場合はメッセージを出すのでノードなしのページを生成
-            return scoreOption ? [new Page(undefined, true, false, false, scoreOption)] : [];
+            return scoreOption ? [new Page(undefined, true, false, false, scoreOption, { partsId, partsType})] : [];
         }
         const pageContents = messageMain.split(/\<p\>/ig);
 
@@ -3649,7 +3655,11 @@ export class WWA {
                  pageId === pageContents.length - 1,
                  pageId === 0 && showChoice,
                  isSystemMessage,
-                 pageId === 0 && scoreOption
+                 pageId === 0 && scoreOption,
+                 {
+                    partsId,
+                    partsType
+                 }
             );
         });
    }
