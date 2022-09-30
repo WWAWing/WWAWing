@@ -47,7 +47,12 @@ export class Page {
         public showChoice?: boolean,
         public isSystemMessage?: boolean,
         // score オブジェクトがあるときスコア表示
-        public scoreOptions?: ScoreOptions
+        public scoreOptions?: ScoreOptions,
+        // パーツIDと種別の情報を一応持っておく (主にデバッグ用途)
+        public extraInfo?: {
+            partsId: number,
+            partsType: PartsType
+        }
     ) {
 
     }
@@ -166,6 +171,7 @@ export function isEmptyMessageTree(node: Node | undefined): boolean {
     if (node === undefined) {
         return true;
     } else if (node instanceof Junction) {
+        // HACK: node に id を振って、メモ化するとかしないと大きい node が与えられた場合にパフォーマンス影響が発生しそう
         return node.branches.reduce((prev, branch) => prev && isEmptyMessageTree(branch.next), true)
     } else if (node instanceof ParsedMessage) {
         return node.isEmpty() && isEmptyMessageTree(node.next);

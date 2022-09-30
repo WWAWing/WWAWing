@@ -151,7 +151,7 @@ export class WWA {
     private _passwordSaveExtractData: WWAData;
 
     private _faces: Face[];
-    private _execPageInNextFrame?: Page;
+    private _shouldSetNextPage: boolean;
     private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
@@ -514,7 +514,7 @@ export class WWA {
             this._lastPage = undefined;
             this._reservedPartsAppearances = [];
             this._reservedJumpDestination = undefined;
-            this._execPageInNextFrame = undefined;
+            this._shouldSetNextPage = false;
             this._passwordLoadExecInNextFrame = false;
 
             //ロード処理の前に追加
@@ -1635,14 +1635,12 @@ export class WWA {
 
     private _executeNode(node: Node | undefined): ParsedMessage[] {
         if (node instanceof ParsedMessage) {
-            const { isGameOver } = node.macro?.reduce(
-                (prevResult, macro) => {
-                    const { isGameOver } = macro.execute();
-                    return { isGameOver: prevResult.isGameOver || isGameOver }
-                }, { isGameOver: false });
-            if (isGameOver) {
-                throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。")
-            }
+            node.macro?.forEach(macro=>{
+                const { isGameOver } = macro.execute();
+                if (isGameOver) {
+                    throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。");
+                }
+            });
             return [node, ...this._executeNode(node.next)];
         } else if (node instanceof Junction) {
             const next = node.evaluateAndGetNextNode(this._generateTokenValues.bind(this));
@@ -1706,20 +1704,20 @@ export class WWA {
         }
 
         // ページ（メッセージ・マクロが含まれる <P>で区切られた単位）の処理
-        if (this._execPageInNextFrame) {
-            const executingPage = this._execPageInNextFrame;
-            this._execPageInNextFrame  = undefined;
-            const executedResult = this._executeNodes(executingPage.firstNode)
-            if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
-                // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
-                this._lastPage = undefined;
-            } else {
-                // executeNodes の結果、新たなメッセージが発生した場合、既に開かれているメッセージウィンドウが閉じた後に表示されるべきなので、_pages に詰め直す。
+        if (this._pages.length > 0 && this._shouldSetNextPage) {
+            this._shouldSetNextPage = false;
+            while (this._pages.length > 0) {
+                const executingPage = this._pages.shift();
+
+                // executeNodes の結果、新たなメッセージが発生した場合、既に開かれているメッセージウィンドウが閉じた後に表示される。
+                //  (this._pages の後尾にシステムメッセージのページが追加されるため)
                 // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
                 // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
-                if (this._execPageInNextFrame) {
-                    this._pages.push(this._execPageInNextFrame);
-                    this._execPageInNextFrame = undefined;
+                const executedResult = this._executeNodes(executingPage.firstNode);
+                if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
+                    // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
+                    this._lastPage = undefined;
+                    break;
                 }
                 if (this._lastPage && this._lastPage.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
                     this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
@@ -1731,9 +1729,9 @@ export class WWA {
                 if (executingPage.scoreOptions && messageLinesToDisplay.length === 0) {
                     messageLinesToDisplay.push(new ParsedMessage("スコアを表示します。"));
                 }
-                
+
+                // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
                 const existsMessageToDisplay = messageLinesToDisplay.length > 0;
-                // set message
                 if (existsMessageToDisplay) {
                     const message = messageLinesToDisplay.map(line => line.generatePrintableMessage()).join("\n");
                     this._messageWindow.setMessage(message);
@@ -1751,16 +1749,17 @@ export class WWA {
                         this._scoreWindow.show();
                     }
                     this._player.setMessageWaiting();
-                } else {
-                    if (this._pages.length === 0) {
-                        this._hideMessageWindow();
-                    } else {
-                        this._setNextPage();
+                    this._lastPage = {
+                        isEmpty: !existsMessageToDisplay,
+                        isLastPage: executingPage.isLastPage
                     }
+                    break;
                 }
-                this._lastPage = {
-                    isEmpty: !existsMessageToDisplay,
-                    isLastPage: executingPage.isLastPage
+
+                // このフレームで処理されるべきページがもうないのでループから抜ける
+                if (this._pages.length === 0) {
+                    this._hideMessageWindow();
+                    break;
                 }
             }
         }
@@ -2907,10 +2906,22 @@ export class WWA {
         this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.MAP, pos.clone());
         this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
 
-        // メッセージIDが 0 でない (何らかのメッセージがある), もしくは 待ち時間が 0 でなければイベントが実行されたとみなす。
-        // Java 版に合わせた仕様のため今後変更の可能性があります。
+        // 表示されるべきメッセージがあると推定される場合, もしくは 待ち時間が 0 でなければイベントが実行されたとみなす。
+        // Junction ノードがある場合 ($if-$else) 、全ての分岐中にどれか1つでもメッセージが存在すれば、メッセージがあると推定されるため true になります。
+        // 大変わかりにくい仕様のため、今後のバージョンアップにより変更される可能性があります。
         // （現状、指定位置にパーツを出現が実行された場合でも false が返ってくる可能性があり、混乱のもとになりうる。）
-        return messageID !== 0 || additionalWaitFrameCount !== 0;
+        return messageID !== 0 && this._shouldTreatWillMessageDisplay(this._pages) || additionalWaitFrameCount !== 0;
+    }
+
+    /**
+     * メッセージが表示されるものと判定する
+     * 
+     * Junction ノード内は、いずれかの分岐にメッセージが含まれていた場合に true になってしまいますが、
+     * v3.10.1 以前のバージョンでは $if-else内はすべてマクロだったため、そのようなケースになっても互換性の上では問題ないと考えられます。
+     * HACK: 大変わかりにくい仕様となっているために改善が必要
+     */
+    private _shouldTreatWillMessageDisplay(pages: Page[]): boolean {
+        return pages.reduce((prev, page) => prev || !isEmptyMessageTree(page.firstNode), false);
     }
 
     private _execMapWallEvent(pos: Coord, partsID: number, mapAttr: number): boolean {
@@ -3290,12 +3301,12 @@ export class WWA {
         // 所持金が足りない
         if (!this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
             if (this._wwaData.message[SystemMessage1.NO_MONEY] !== "BLANK") {
-                this._execPageInNextFrame = new Page(
+                this._pages.push(new Page(
                     new ParsedMessage(
                         this._wwaData.message[SystemMessage1.NO_MONEY] === "" ?
                             "所持金がたりない。" : this._wwaData.message[SystemMessage1.NO_MONEY],
                     ), true, false, true
-                );
+                ));
             }
             return {};
         }
@@ -3320,11 +3331,11 @@ export class WWA {
             } catch (error) {
                 // アイテムボックスがいっぱい
                 if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
-                    this._execPageInNextFrame = new Page(
+                    this._pages.push(new Page(
                         new ParsedMessage(
                             this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] === "" ?
                                 "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[SystemMessage2.FULL_ITEM],
-                        ), true, false, true)
+                        ), true, false, true))
                }
                 return {};
             }
@@ -3380,11 +3391,11 @@ export class WWA {
                         } else {
                             // アイテムを持っていない
                             if (this._wwaData.message[SystemMessage1.NO_ITEM] !== "BLANK") {
-                                this._execPageInNextFrame = new Page((new ParsedMessage(
+                                this._pages.push(new Page((new ParsedMessage(
                                     this._wwaData.message[SystemMessage1.NO_ITEM] === "" ?
                                         "アイテムを持っていない。" : this._wwaData.message[SystemMessage1.NO_ITEM],
                                 )
-                                ), true, false, true);
+                                ), true, false, true));
                             };
                         }
                     } else if (partsType === Consts.OBJECT_SELL) {
@@ -3549,10 +3560,7 @@ export class WWA {
     ): void {
         const generatedPage = this.generatePagesByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice, scoreOption);
         this._pages = this._pages.concat(generatedPage);
-        if (this._pages.length !== 0) {
-            const topPage = this._pages.shift();
-            this._execPageInNextFrame = topPage;
-        }
+        this._shouldSetNextPage = true;
     }
 
     // TODO: ここから別クラスへ切り出し予定
@@ -3598,7 +3606,7 @@ export class WWA {
 
         if (messageMain === "") {
             // 空メッセージの場合は何も処理しないが、スコア表示の場合はメッセージを出すのでノードなしのページを生成
-            return scoreOption ? [new Page(undefined, true, false, false, scoreOption)] : [];
+            return scoreOption ? [new Page(undefined, true, false, false, scoreOption, { partsId, partsType})] : [];
         }
         const pageContents = messageMain.split(/\<p\>/ig);
 
@@ -3636,7 +3644,11 @@ export class WWA {
                  pageId === pageContents.length - 1,
                  pageId === 0 && showChoice,
                  isSystemMessage,
-                 pageId === 0 && scoreOption
+                 pageId === 0 && scoreOption,
+                 {
+                    partsId,
+                    partsType
+                 }
             );
         });
    }
@@ -4073,7 +4085,7 @@ export class WWA {
 
         this._waitFrame = 0;
         this._temporaryInputDisable = true;
-        this._execPageInNextFrame = undefined;
+        this._shouldSetNextPage = false;
         this._reservedPartsAppearances = [];
         this._reservedJumpDestination = undefined;
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
@@ -5059,7 +5071,7 @@ export class WWA {
         if (this._pages.length === 0) {
             this._hideMessageWindow();
         } else {
-            this._execPageInNextFrame = this._pages.shift();
+            this._shouldSetNextPage = true;
        }
         if (this._inlineUserVarViewer) {
             this._inlineUserVarViewer.isVisible = false;
