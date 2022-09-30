@@ -5537,9 +5537,6 @@ font-weight: bold;
     public forcedJumpGate(jx: number, jy: number): void {
         // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
-
-        // HACK: ジャンプ後はページを強制クリアして、積まれているページは実行しない
-        this._pages = [];
     }
     // User変数記憶
     public setUserVar(index: number, value: number): void {
