@@ -2916,10 +2916,22 @@ export class WWA {
         this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.MAP, pos.clone());
         this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
 
-        // メッセージIDが 0 でない (何らかのメッセージがある), もしくは 待ち時間が 0 でなければイベントが実行されたとみなす。
-        // Java 版に合わせた仕様のため今後変更の可能性があります。
+        // 表示されるべきメッセージがあると推定される場合, もしくは 待ち時間が 0 でなければイベントが実行されたとみなす。
+        // Junction ノードがある場合 ($if-$else) 、全ての分岐中にどれか1つでもメッセージが存在すれば、メッセージがあると推定されるため true になります。
+        // 大変わかりにくい仕様のため、今後のバージョンアップにより変更される可能性があります。
         // （現状、指定位置にパーツを出現が実行された場合でも false が返ってくる可能性があり、混乱のもとになりうる。）
-        return messageID !== 0 || additionalWaitFrameCount !== 0;
+        return messageID !== 0 && this._shouldTreatWillMessageDisplay(this._pages) || additionalWaitFrameCount !== 0;
+    }
+
+    /**
+     * メッセージが表示されるものと判定する
+     * 
+     * Junction ノード内は、いずれかの分岐にメッセージが含まれていた場合に true になってしまいますが、
+     * v3.10.1 以前のバージョンでは $if-else内はすべてマクロだったため、そのようなケースになっても互換性の上では問題ないと考えられます。
+     * HACK: 大変わかりにくい仕様となっているために改善が必要
+     */
+    private _shouldTreatWillMessageDisplay(pages: Page[]): boolean {
+        return pages.reduce((prev, page) => prev || !isEmptyMessageTree(page.firstNode), false);
     }
 
     private _execMapWallEvent(pos: Coord, partsID: number, mapAttr: number): boolean {
