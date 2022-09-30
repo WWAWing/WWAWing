@@ -152,7 +152,7 @@ export class WWA {
     private _passwordSaveExtractData: WWAData;
 
     private _faces: Face[];
-    private _execPageInNextFrame?: Page;
+    private _shouldSetNextPage: boolean;
     private _clearFacesInNextFrame: boolean;
     private _paintSkipByDoorOpen: boolean; // WWA.javaの闇を感じる扉モーションのための描画スキップフラグ
     private _isClassicModeEnable: boolean;
@@ -515,7 +515,7 @@ export class WWA {
             this._lastPage = undefined;
             this._reservedPartsAppearances = [];
             this._reservedJumpDestination = undefined;
-            this._execPageInNextFrame = undefined;
+            this._shouldSetNextPage = false;
             this._passwordLoadExecInNextFrame = false;
 
             //ロード処理の前に追加
@@ -1708,22 +1708,17 @@ export class WWA {
         }
 
         // ページ（メッセージ・マクロが含まれる <P>で区切られた単位）の処理
-        if (this._execPageInNextFrame) {
-            const executingPage = this._execPageInNextFrame;
-            this._execPageInNextFrame  = undefined;
-            const executedResult = this._executeNodes(executingPage.firstNode)
+        const page = this._pages.length > 0 && this._shouldSetNextPage ? this._pages.shift() : undefined;
+        this._shouldSetNextPage = false;
+        if (page) {
+            const executingPage = page;
+            const executedResult = this._executeNodes(executingPage.firstNode);
+            console.log(this._mainCallCounter, executedResult);
             if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
                 // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
                 this._lastPage = undefined;
             } else {
-                // executeNodes の結果、新たなメッセージが発生した場合、既に開かれているメッセージウィンドウが閉じた後に表示されるべきなので、_pages に詰め直す。
-                // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
-                // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
-                if (this._execPageInNextFrame) {
-                    this._pages.push(this._execPageInNextFrame);
-                    this._execPageInNextFrame = undefined;
-                }
-                if (this._lastPage && this._lastPage.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
+               if (this._lastPage && this._lastPage.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
                     this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                     this._reservedMoveMacroTurn = void 0;
                 }
@@ -3311,12 +3306,12 @@ export class WWA {
         // 所持金が足りない
         if (!this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
             if (this._wwaData.message[SystemMessage1.NO_MONEY] !== "BLANK") {
-                this._execPageInNextFrame = new Page(
+                this._pages.push(new Page(
                     new ParsedMessage(
                         this._wwaData.message[SystemMessage1.NO_MONEY] === "" ?
                             "所持金がたりない。" : this._wwaData.message[SystemMessage1.NO_MONEY],
                     ), true, false, true
-                );
+                ));
             }
             return {};
         }
@@ -3341,11 +3336,11 @@ export class WWA {
             } catch (error) {
                 // アイテムボックスがいっぱい
                 if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
-                    this._execPageInNextFrame = new Page(
+                    this._pages.push(new Page(
                         new ParsedMessage(
                             this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] === "" ?
                                 "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[SystemMessage2.FULL_ITEM],
-                        ), true, false, true)
+                        ), true, false, true))
                }
                 return {};
             }
@@ -3401,11 +3396,11 @@ export class WWA {
                         } else {
                             // アイテムを持っていない
                             if (this._wwaData.message[SystemMessage1.NO_ITEM] !== "BLANK") {
-                                this._execPageInNextFrame = new Page((new ParsedMessage(
+                                this._pages.push(new Page((new ParsedMessage(
                                     this._wwaData.message[SystemMessage1.NO_ITEM] === "" ?
                                         "アイテムを持っていない。" : this._wwaData.message[SystemMessage1.NO_ITEM],
                                 )
-                                ), true, false, true);
+                                ), true, false, true));
                             };
                         }
                     } else if (partsType === Consts.OBJECT_SELL) {
@@ -3570,11 +3565,7 @@ export class WWA {
     ): void {
         const generatedPage = this.generatePagesByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice, scoreOption);
         this._pages = this._pages.concat(generatedPage);
-        // 次のフレームで実行されるページが既に決まっている場合は上書きしない
-        if (!this._execPageInNextFrame && this._pages.length !== 0) {
-            const topPage = this._pages.shift();
-            this._execPageInNextFrame = topPage;
-        }
+        this._shouldSetNextPage = true;
     }
 
     // TODO: ここから別クラスへ切り出し予定
@@ -4095,7 +4086,7 @@ export class WWA {
 
         this._waitFrame = 0;
         this._temporaryInputDisable = true;
-        this._execPageInNextFrame = undefined;
+        this._shouldSetNextPage = false;
         this._reservedPartsAppearances = [];
         this._reservedJumpDestination = undefined;
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
@@ -5081,7 +5072,7 @@ export class WWA {
         if (this._pages.length === 0) {
             this._hideMessageWindow();
         } else {
-            this._execPageInNextFrame = this._pages.shift();
+            this._shouldSetNextPage = true;
        }
         if (this._inlineUserVarViewer) {
             this._inlineUserVarViewer.isVisible = false;
@@ -5547,6 +5538,9 @@ font-weight: bold;
     public forcedJumpGate(jx: number, jy: number): void {
         // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+
+        // HACK: ジャンプ後はページを強制クリアして、積まれているページは実行しない
+        this._pages = [];
     }
     // User変数記憶
     public setUserVar(index: number, value: number): void {
