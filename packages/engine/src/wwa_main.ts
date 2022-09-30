@@ -1635,14 +1635,12 @@ export class WWA {
 
     private _executeNode(node: Node | undefined): ParsedMessage[] {
         if (node instanceof ParsedMessage) {
-            const { isGameOver } = node.macro?.reduce(
-                (prevResult, macro) => {
-                    const { isGameOver } = macro.execute();
-                    return { isGameOver: prevResult.isGameOver || isGameOver }
-                }, { isGameOver: false });
-            if (isGameOver) {
-                throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。")
-            }
+            node.macro?.forEach(macro=>{
+                const { isGameOver } = macro.execute();
+                if (isGameOver) {
+                    throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。");
+                }
+            });
             return [node, ...this._executeNode(node.next)];
         } else if (node instanceof Junction) {
             const next = node.evaluateAndGetNextNode(this._generateTokenValues.bind(this));
