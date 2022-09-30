@@ -140,7 +140,8 @@ export class WWA {
 
     private sounds: Sound[];
 
-    private _temporaryInputDisable: boolean;
+    private _temporaryInputDisable: boolean; // フレームの間で onClick などを割り込まれなくするためのフラグ
+    private _hasBeenCheckedEventInThisFrame: boolean;
 
     private _isLoadedSound: boolean;
     private _isSkippedSoundMessage: boolean; // メッセージの読み込みジャッジを飛ばすフラグ(汎用的に使えるようにプロパティに入れている)
@@ -1665,6 +1666,7 @@ export class WWA {
     }
 
     private _main(): void {
+        this._hasBeenCheckedEventInThisFrame = false;
         this._temporaryInputDisable = false;
         this._stopUpdateByLoadFlag = false;
 
@@ -2278,15 +2280,20 @@ export class WWA {
                 // ランダムパーツのまま残っている画面内のパーツを全置換(したい)
                 this._replaceRandomObjectsInScreen();
 
-                // 当該座標の背景パーツ判定
-                var eventExecuted = this.checkMap();
+                // プレイヤーの衝突判定などで、既にイベントをチェック済の場合はチェックしない
+                if (!this._hasBeenCheckedEventInThisFrame) {
 
-                if (!eventExecuted) {
-                    // 当該座標の物体パーツ判定
-                    this.checkObject();
+                    // 当該座標の背景パーツ判定
+                    const eventExecuted = this.checkMap();
+
+                    if (!eventExecuted) {
+                        // 当該座標の物体パーツ判定
+                        this.checkObject();
+                    }
+
+                    this._prevFrameEventExected = eventExecuted;
                 }
 
-                this._prevFrameEventExected = eventExecuted;
             }
 
             // 選択系イベント( 物の売買, 二者択一 )の処理
@@ -2802,6 +2809,7 @@ export class WWA {
 
     // 背景パーツ判定
     public checkMap(pos?: Coord): boolean {
+        this._hasBeenCheckedEventInThisFrame = true;
         var playerPos = this._player.getPosition().getPartsCoord();
         pos = (pos !== void 0 && pos !== null) ? pos : playerPos;
         var partsID: number = this._wwaData.map[pos.y][pos.x];
@@ -2836,6 +2844,7 @@ export class WWA {
 
     // 物体パーツ判定
     public checkObject(pos?: Coord): void {
+        this._hasBeenCheckedEventInThisFrame = true;
         var playerPos = this._player.getPosition().getPartsCoord();
         pos = (pos !== void 0 && pos !== null) ? pos : playerPos;
         var partsID: number = this._wwaData.mapObject[pos.y][pos.x];
@@ -2907,10 +2916,22 @@ export class WWA {
         this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.MAP, pos.clone());
         this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
 
-        // メッセージIDが 0 でない (何らかのメッセージがある), もしくは 待ち時間が 0 でなければイベントが実行されたとみなす。
-        // Java 版に合わせた仕様のため今後変更の可能性があります。
+        // 表示されるべきメッセージがあると推定される場合, もしくは 待ち時間が 0 でなければイベントが実行されたとみなす。
+        // Junction ノードがある場合 ($if-$else) 、全ての分岐中にどれか1つでもメッセージが存在すれば、メッセージがあると推定されるため true になります。
+        // 大変わかりにくい仕様のため、今後のバージョンアップにより変更される可能性があります。
         // （現状、指定位置にパーツを出現が実行された場合でも false が返ってくる可能性があり、混乱のもとになりうる。）
-        return messageID !== 0 || additionalWaitFrameCount !== 0;
+        return messageID !== 0 && this._shouldTreatWillMessageDisplay(this._pages) || additionalWaitFrameCount !== 0;
+    }
+
+    /**
+     * メッセージが表示されるものと判定する
+     * 
+     * Junction ノード内は、いずれかの分岐にメッセージが含まれていた場合に true になってしまいますが、
+     * v3.10.1 以前のバージョンでは $if-else内はすべてマクロだったため、そのようなケースになっても互換性の上では問題ないと考えられます。
+     * HACK: 大変わかりにくい仕様となっているために改善が必要
+     */
+    private _shouldTreatWillMessageDisplay(pages: Page[]): boolean {
+        return pages.reduce((prev, page) => prev || !isEmptyMessageTree(page.firstNode), false);
     }
 
     private _execMapWallEvent(pos: Coord, partsID: number, mapAttr: number): boolean {
@@ -3549,7 +3570,8 @@ export class WWA {
     ): void {
         const generatedPage = this.generatePagesByRawMessage(message, partsID, partsType, partsPosition, isSystemMessage, showChoice, scoreOption);
         this._pages = this._pages.concat(generatedPage);
-        if (this._pages.length !== 0) {
+        // 次のフレームで実行されるページが既に決まっている場合は上書きしない
+        if (!this._execPageInNextFrame && this._pages.length !== 0) {
             const topPage = this._pages.shift();
             this._execPageInNextFrame = topPage;
         }
