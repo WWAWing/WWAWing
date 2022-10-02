@@ -2264,6 +2264,7 @@ export class WWA {
         if (this._player.getPosition().isJustPosition() && this._camera.getPosition().isScreenTopPosition()) {
 
             if (
+                !this._shouldTreatWillMessageDisplay(this._pages) && // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
                 !this._player.isJumped() &&
                 !this._player.isWaitingMessage() &&
                 !this._player.isWatingEstimateWindow() &&
