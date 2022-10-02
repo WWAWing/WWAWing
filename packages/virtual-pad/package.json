@@ -11,7 +11,7 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^4.2.4"
+    "typescript": "^4.8.4"
   },
   "publishConfig": {
     "access": "public"
