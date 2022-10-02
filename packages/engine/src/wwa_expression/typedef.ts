@@ -1,4 +1,4 @@
-import type { EquipmentStatus, Status, Coord, PartsType } from "../wwa_data";
+import type { EquipmentStatus, Status, Coord, PartsType, Direction } from "../wwa_data";
 
 /**
  * AT_TOTAL: 素手攻撃力 + 所持アイテム攻撃力
@@ -12,11 +12,40 @@ import type { EquipmentStatus, Status, Coord, PartsType } from "../wwa_data";
  * ID: メッセージを表示しているパーツ番号
  * TYPE: メッセージを表示しているパーツ種別 0=物体, 1=背景
  */
-export type SetMacroType = 'VARIABLE' | 'NUMBER' | 'HP' | 'HPMAX' | 'AT' | 'AT_TOTAL' | 'AT_ITEMS' | 'DF' | 'DF_TOTAL' | 'DF_ITEMS' | 'GD' | 'TIME' | 'STEP' | 'X' | 'Y' | 'PX' | 'PY' | 'ID' | 'TYPE' | 'RAND';
+export type SetMacroType =
+ 'VARIABLE' |
+ 'MAP' |
+ 'OBJECT' |
+ 'ITEM' |
+ 'NUMBER' |
+ 'HP' |
+ 'HPMAX' |
+ 'AT' |
+ 'AT_TOTAL' |
+ 'AT_ITEMS' |
+ 'DF' |
+ 'DF_TOTAL' |
+ 'DF_ITEMS' |
+ 'GD' |
+ 'TIME' |
+ 'STEP' |
+ 'X' |
+ 'Y' |
+ 'PX' |
+ 'PY' |
+ 'PDIR' |
+ 'ID' |
+ 'TYPE' |
+ 'ITEM_COUNT' |
+ 'RAND';
 
 export type CNumberKind = "NUMBER";
 
 export type CVariableKind = "VARIABLE";
+
+export type CPartsKind = "MAP" | "OBJECT";
+
+export type CItemKind = "ITEM";
 
 export type CEnvKind =
   "HP" |
@@ -34,8 +63,10 @@ export type CEnvKind =
   "Y" |
   "PX" |
   "PY" |
+  "PDIR" |
   "ID" |
-  "TYPE";
+  "TYPE" |
+  "ITEM_COUNT";
 
 export type CFunctionKind = "RAND"
 
@@ -49,6 +80,17 @@ export interface CVariable {
   index: number;
 }
 
+export interface CParts {
+  type: CPartsKind;
+  x: number;
+  y: number;
+}
+
+export interface CItem {
+  type: CItemKind;
+  boxIndex1To12: number;
+}
+
 export interface CEnv {
   type: CEnvKind;
 }
@@ -58,7 +100,7 @@ export interface CFunction {
   argument: CValue;
 }
 
-export type CValue = CNumber | CVariable | CEnv;
+export type CValue = CNumber | CVariable | CParts | CItem | CEnv;
 export type Comparable = CValue | CFunction;
 
 export type ComparisionOperatorKind =  "<" | ">" | "<=" | ">=" | "==" | "!="; 
@@ -79,5 +121,9 @@ export interface TokenValues {
   partsPosition: Coord;
   playerCoord: Coord;
   partsId: number;
-  partsType: PartsType
+  partsType: PartsType;
+  map: number[][];
+  mapObject: number[][];
+  itemBox: number[];
+  playerDirection: Direction;
 }

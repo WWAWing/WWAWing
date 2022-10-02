@@ -5780,9 +5780,10 @@ font-weight: bold;
     }
 
     public execSetMacro(macroStr: string = "", option: { triggerParts: TriggerParts }): { isGameOver?: true } {
-        const { assignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
+        const result = ExpressionParser.evaluateSetMacroExpression(
             macroStr, this.generateTokenValues(option.triggerParts)
         );
+        const { assignee, rawValue } = result;
         switch(assignee) {
             case "energy":
                 this._player.setEnergy(this.toValidStatusValue(rawValue));
@@ -5810,11 +5811,26 @@ font-weight: bold;
             case "moveCount":
                this._player.setMoveCount(this.toValidStatusValue(rawValue));
                 break;
-            default:
-                if (isNaN(assignee) || !this.isValidUserVarIndex(assignee)) {
+            case "variable":
+                if (isNaN(result.index) || !this.isValidUserVarIndex(result.index)) {
                     throw new Error("ユーザ変数の添字が範囲外です。");
                 }
-                this.setUserVar(assignee, this.toAssignableValue(rawValue));
+                this.setUserVar(result.index, this.toAssignableValue(rawValue));
+                break;
+            case "map":
+                // 範囲外座標・パーツ番号は appearPartsEval 内で止められるのでここでは何もしない
+                this.appearPartsEval(option.triggerParts.position, `${result.x}`, `${result.y}`, result.rawValue, PartsType.MAP);
+                break;
+            case "mapObject":
+                // 範囲外座標・パーツ番号は appearPartsEval 内で止められるのでここでは何もしない
+                this.appearPartsEval(option.triggerParts.position, `${result.x}`, `${result.y}`, result.rawValue, PartsType.OBJECT);
+                break;
+            case "item":
+                // 0 (位置未指定) は扱えない
+                this.setPlayerGetItem(result.boxIndex1to12, rawValue);
+                break;
+            case "playerDirection":
+                this._player.setDir(rawValue);
                 break;
         }
         this._player.updateStatusValueBox();
@@ -5833,9 +5849,13 @@ font-weight: bold;
             playTime: this._wwaData.playTime,
             userVars: this._wwaData.userVar,
             playerCoord: this._player.getPosition().getPartsCoord(),
+            playerDirection: this._player.getDir(),
+            itemBox: this._player.getCopyOfItemBox(),
             partsId: triggerParts.id,
             partsType: triggerParts.type,
-            partsPosition: triggerParts.position
+            partsPosition: triggerParts.position,
+            map: this._wwaData.map,
+            mapObject: this._wwaData.mapObject
         }
     }
 

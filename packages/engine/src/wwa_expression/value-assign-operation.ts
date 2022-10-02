@@ -1,13 +1,32 @@
 import { parseType } from "./parsers";
 
-export interface ValueAssignOperation {
+export interface VariableAssignOperation {
+  assignee: "variable";
+  index: number;
+  rawValue: number;
+}
+
+export interface CoordAssignOperation {
+  assignee: "map" | "mapObject";
+  x: number;
+  y: number;
+  rawValue: number;
+}
+
+export interface ItemAssignOperation {
+  assignee: "item";
+  boxIndex1to12: number;
+  rawValue: number;
+}
+
+export interface NoExtraArgumentValueeAssignOperation {
   /**
    * 代入先
    * 数値の場合は指定添字のユーザ変数
    * ユーザ変数の添字は、最低限 NaN でないことしかバリデーションされていないので、
    * 代入先としてふさわしいかどうか受け取り側でバリデーションする必要があります。
    */
-  assignee: "energy" | "energyMax" | "strength" | "defence" | "gold" | "moveCount" | number;
+  assignee: "energy" | "energyMax" | "strength" | "defence" | "gold" | "moveCount" | "playerDirection";
 
   /**
    * 代入する値
@@ -17,16 +36,47 @@ export interface ValueAssignOperation {
   rawValue: number;
 }
 
+export type ValueAssignOperation = VariableAssignOperation | CoordAssignOperation | ItemAssignOperation | NoExtraArgumentValueeAssignOperation;
+
 export function generateValueAssignOperation(calcResult: number, assigneeExpression: string): ValueAssignOperation {
   const targetType = parseType(assigneeExpression)?.type;
   switch (targetType) {
-    case 'VARIABLE':
+    case 'VARIABLE': {
       const variable = assigneeExpression.match(/^v\[(\d+)\]$/);
       const varNumber = parseInt(variable[1], 10);
       if (varNumber === null || isNaN(varNumber)) {
         throw new Error("ユーザ変数の添字のパースに失敗しました");
       }
-      return { assignee: varNumber, rawValue: calcResult };
+      return { assignee: "variable", index: varNumber, rawValue: calcResult };
+    }
+    case 'MAP': {
+      const map = assigneeExpression.match(/^m\[(\d+)\]\[(\d+)\]$/);
+      const x = parseInt(map[1], 10);
+      const y = parseInt(map[2], 10)
+      if( x === null || y === null || isNaN(x) || isNaN(y)) {
+        throw new Error("背景パーツの添字のパースに失敗しました");
+      }
+      return { assignee: "map", x, y, rawValue: calcResult };
+    }
+    case 'OBJECT': {
+      const object = assigneeExpression.match(/^o\[(\d+)\]\[(\d+)\]$/);
+      const x = parseInt(object[1], 10);
+      const y = parseInt(object[2], 10)
+      if( x === null || y === null || isNaN(x) || isNaN(y)) {
+        throw new Error("物体パーツの添字のパースに失敗しました");
+      }
+      return { assignee: "mapObject", x, y, rawValue: calcResult };
+    }
+    case 'ITEM': {
+      const item = assigneeExpression.match(/^v\[(\d+)\]$/);
+      const boxIndex1to12 = parseInt(item[1], 10);
+      if (boxIndex1to12 === null || isNaN(boxIndex1to12)) {
+        throw new Error("アイテムの添字のパースに失敗しました");
+      }
+      return { assignee: "item", boxIndex1to12, rawValue: calcResult };
+    }
+    case 'ITEM_COUNT':
+      throw new Error('左辺値に所持アイテム数は入れられません');
     case 'NUMBER':
       throw new Error('左辺値に定数は入れられません');
     case 'HP':
@@ -55,6 +105,8 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
       throw new Error('左辺値にプレイヤーX座標は入れられません');
     case 'PY':
       throw new Error('左辺値にプレイヤーY座標は入れられません');
+    case 'PDIR':
+      return { assignee: "playerDirection", rawValue: calcResult };
     case 'RAND':
       throw new Error('左辺値に乱数は入れられません');
   }

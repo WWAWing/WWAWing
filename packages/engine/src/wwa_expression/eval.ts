@@ -33,6 +33,14 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, 
       return tokenValues.moveCount;
     case 'VARIABLE':
       return tokenValues.userVars[comparable.index];
+    case 'MAP':
+      return tokenValues.map[comparable.y][comparable.x];
+    case 'OBJECT':
+      return tokenValues.mapObject[comparable.y][comparable.x];
+    case 'ITEM':
+      return tokenValues.itemBox[comparable.boxIndex1To12 - 1];
+    case 'ITEM_COUNT':
+      return tokenValues.itemBox.filter(item => item !== 0).length;
     case 'NUMBER':
       return comparable.rawValue;
     case 'TIME':
@@ -45,6 +53,8 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, 
       return tokenValues.playerCoord.x;
     case 'PY':
       return tokenValues.playerCoord.y;
+    case 'PDIR':
+      return tokenValues.playerDirection;
     case 'ID':
       return tokenValues.partsId;
     case 'TYPE':

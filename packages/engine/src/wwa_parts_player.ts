@@ -75,6 +75,9 @@ export class Player extends PartsObject {
     protected _defenceValueElement: HTMLElement;
     protected _goldValueElement: HTMLElement;
 
+    /**
+     * index は 0...11
+     */
     protected _itemBox: number[];
     protected _itemBoxElement: HTMLDivElement[];
     protected _itemUsingEvent: EventListener[];
