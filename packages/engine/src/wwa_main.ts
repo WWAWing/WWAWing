@@ -129,10 +129,7 @@ export class WWA {
     private _prevFrameEventExected: boolean;
 
     private _reservedMoveMacroTurn: number; // $moveマクロは、パーツマクロの中で最後に効果が現れる。実行されると予約として受け付け、この変数に予約内容を保管。
-    private _lastPage: {
-        isLastPage: boolean;
-        isEmpty: boolean;
-    } | undefined;
+    private _isLastPage: boolean;
     private _reservedPartsAppearances: PartsAppearance[];
     private _reservedJumpDestination: Position | undefined;
     private _frameCoord: Coord;
@@ -511,7 +508,7 @@ export class WWA {
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
             this._prevFrameEventExected = false;
-            this._lastPage = undefined;
+            this._isLastPage = false;
             this._reservedPartsAppearances = [];
             this._reservedJumpDestination = undefined;
             this._shouldSetNextPage = false;
@@ -1716,10 +1713,10 @@ export class WWA {
                 const executedResult = this._executeNodes(executingPage.firstNode);
                 if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
                     // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
-                    this._lastPage = undefined;
+                    this._isLastPage = false;
                     break;
                 }
-                if (this._lastPage && this._lastPage.isEmpty && this._lastPage.isLastPage && this._reservedMoveMacroTurn !== void 0) {
+                if (this._reservedMoveMacroTurn !== void 0) {
                     this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
                     this._reservedMoveMacroTurn = void 0;
                 }
@@ -1749,10 +1746,7 @@ export class WWA {
                         this._scoreWindow.show();
                     }
                     this._player.setMessageWaiting();
-                    this._lastPage = {
-                        isEmpty: !existsMessageToDisplay,
-                        isLastPage: executingPage.isLastPage
-                    }
+                    this._isLastPage = executingPage.isLastPage
                     break;
                 }
 
@@ -5065,7 +5059,7 @@ export class WWA {
         if (this._scoreWindow.isVisible()) {
             this._scoreWindow.hide();
         }
-        if (this._lastPage?.isLastPage && this._reservedMoveMacroTurn !== void 0) {
+        if (this._isLastPage && this._reservedMoveMacroTurn !== void 0) {
             this._player.setMoveMacroWaiting(this._reservedMoveMacroTurn);
             this._reservedMoveMacroTurn = void 0;
         }
