@@ -10,7 +10,7 @@
   "scripts": {
     "start": "npm run build && node lib debug",
     "build": "tsc -p .",
-    "generate": "shx mkdir -p bin && pkg -t node16-win-x64 ./lib/index.js --output bin/wwa-server.exe",
+    "generate": "shx mkdir -p bin && pkg -t node18-win-x64 ./lib/index.js --output bin/wwa-server.exe",
     "clean": "shx rm -rf debug lib bin",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,7 +18,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/express": "4.17.14",
-    "@types/node": "^16.11.41",
+    "@types/node": "^18.11.9",
     "express": "^4.18.1",
     "pkg": "^5.8.0",
     "shelljs": "^0.8.5",
@@ -29,7 +29,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=16",
+    "node": ">=18",
     "npm": ">=8"
   }
 }
