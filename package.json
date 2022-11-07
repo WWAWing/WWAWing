@@ -33,14 +33,14 @@
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
-    "@types/node": "^16.11.41",
-    "lerna": "^5.5.4",
+    "@types/node": "^18.11.9",
+    "lerna": "^6.0.1",
     "npm-run-all": "^4.1.5",
     "ts-node": "^10.9.1",
     "typescript": "^4.8.4"
   },
   "engines": {
-    "node": ">=16",
+    "node": ">=18",
     "npm": ">=8"
   }
 }
