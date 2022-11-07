@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "3.11.5",
+  "version": "3.11.6",
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=16",
+    "node": ">=18",
     "npm": ">=8"
   }
 }

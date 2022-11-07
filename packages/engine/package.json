@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/engine",
-  "version": "3.11.5",
+  "version": "3.11.6",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "./lib/wwa.js",
   "files": [
@@ -69,7 +69,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=16",
+    "node": ">=18",
     "npm": ">=8"
   }
 }
