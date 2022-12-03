@@ -202,7 +202,7 @@ export function concatMessage(node1: Node | undefined, node2: Node | undefined):
 }
 
 export type MessageLineType = PreprocessMacroType | "text" | "normalMacro";
-export const messagLineIsText = (lineType: MessageLineType) => lineType === MacroType.SHOW_STR || lineType === "text" || lineType === "normalMacro";
+export const messagLineIsText = (lineType: MessageLineType) => lineType === MacroType.SHOW_STR || lineType === MacroType.SHOW_STR2 || lineType === "text" || lineType === "normalMacro";
 export type MessageLine = (
     { type: PreprocessMacroType; text: string; macro: Macro; } |
     { type: "normalMacro"; text: string; macro: Macro; } |
@@ -452,6 +452,11 @@ export class Macro {
                 // 変数付きのメッセージ表示
                 case MacroType.SHOW_STR: {
                     // $show_str マクロは、キューの組み立て時に処理されていて、既に存在しないはず
+                    return {};
+                }
+                // 変数付きのメッセージ表示
+                case MacroType.SHOW_STR2: {
+                    // $show_str2 マクロは、キューの組み立て時に処理されていて、既に存在しないはず
                     return {};
                 }
                 // IF文
