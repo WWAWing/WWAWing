@@ -541,7 +541,7 @@ export class Macro {
         if (targetString === "") {
             return fallbackValue;
         }
-        const intParsedValue = parseInt(targetString, 10);
+        const intParsedValue = Number(targetString);
         if (!isNaN(intParsedValue)) {
             return intParsedValue;
         }

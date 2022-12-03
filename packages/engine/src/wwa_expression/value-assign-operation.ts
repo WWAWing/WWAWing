@@ -43,7 +43,7 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
   switch (targetType) {
     case 'VARIABLE': {
       const variable = assigneeExpression.match(/^v\[(\d+)\]$/);
-      const varNumber = parseInt(variable[1], 10);
+      const varNumber = Number(variable[1]);
       if (varNumber === null || isNaN(varNumber)) {
         throw new Error("ユーザ変数の添字のパースに失敗しました");
       }
@@ -51,8 +51,8 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
     }
     case 'MAP': {
       const map = assigneeExpression.match(/^m\[(\d+)\]\[(\d+)\]$/);
-      const x = parseInt(map[1], 10);
-      const y = parseInt(map[2], 10)
+      const x = Number(map[1]);
+      const y = Number(map[2]);
       if( x === null || y === null || isNaN(x) || isNaN(y)) {
         throw new Error("背景パーツの添字のパースに失敗しました");
       }
@@ -60,8 +60,8 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
     }
     case 'OBJECT': {
       const object = assigneeExpression.match(/^o\[(\d+)\]\[(\d+)\]$/);
-      const x = parseInt(object[1], 10);
-      const y = parseInt(object[2], 10)
+      const x = Number(object[1]);
+      const y = Number(object[2]);
       if( x === null || y === null || isNaN(x) || isNaN(y)) {
         throw new Error("物体パーツの添字のパースに失敗しました");
       }
@@ -69,7 +69,7 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
     }
     case 'ITEM': {
       const item = assigneeExpression.match(/^v\[(\d+)\]$/);
-      const boxIndex1to12 = parseInt(item[1], 10);
+      const boxIndex1to12 = Number(item[1]);
       if (boxIndex1to12 === null || isNaN(boxIndex1to12)) {
         throw new Error("アイテムの添字のパースに失敗しました");
       }

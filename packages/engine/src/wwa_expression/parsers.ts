@@ -64,7 +64,7 @@ export function parseType(str: string): Comparable | null {
 }
 
 function parseArg1Value(regExpMatchArray: RegExpMatchArray): number | null {
-    const arg = regExpMatchArray.length >= 2 ? parseInt(regExpMatchArray[1], 10) : null;
+    const arg = regExpMatchArray.length >= 2 ? Number(regExpMatchArray[1]) : null;
     return (arg !== null && !isNaN(arg)) ? arg : null;
 }
 
@@ -72,8 +72,8 @@ function parseArg2Values(regExpMatchArray: RegExpMatchArray): [number, number] |
     if(regExpMatchArray.length < 3) {
       return null;
     }
-    const arg1 =  parseInt(regExpMatchArray[1], 10) ;
-    const arg2 =  parseInt(regExpMatchArray[2], 10) ;
+    const arg1 =  Number(regExpMatchArray[1]) ;
+    const arg2 =  Number(regExpMatchArray[2]) ;
     if(isNaN(arg1) || isNaN(arg2)) {
       return null;
     }
