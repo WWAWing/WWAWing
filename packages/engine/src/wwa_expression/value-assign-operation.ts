@@ -102,9 +102,22 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
     case 'TIME':
       throw new Error('左辺値にプレイ時間は入れられません');
     case 'PX':
+      // 将来的には PX も変更できるようにする (ジャンプゲート扱い)
       throw new Error('左辺値にプレイヤーX座標は入れられません');
     case 'PY':
+      // 将来的には PY も変更できるようにする (ジャンプゲート扱い)
       throw new Error('左辺値にプレイヤーY座標は入れられません');
+    case 'X':
+      // 将来的には X も変更できるようにする (指定位置にパーツを出現x2扱い)
+      throw new Error('左辺値にパーツX座標は入れられません');
+    case 'Y':
+      // 将来的には Y も変更できるようにする (指定位置にパーツを出現x2扱い)
+      throw new Error('左辺値にパーツY座標は入れられません');
+    case 'ID':
+      // これも変更できてもいいかも (自身のパーツを同じパーツ種別内で置換する)
+      throw new Error('左辺値にパーツ番号座標は入れられません');
+    case 'TYPE':
+      throw new Error('左辺値にパーツ種別は入れられません');
     case 'PDIR':
       return { assignee: "playerDirection", rawValue: calcResult };
     case 'RAND':
