@@ -58,6 +58,13 @@ export function evaluateMacroArgExpression(expression: string, tokenValues: Toke
   throw new Error('マクロ引数のフォーマットを満たしていません: ' + expression)
 }
 
+/**
+ * マクロ引数が有効な式であれば true, そうでなければ false を返します。 
+ */
+export function isValidMacroArgExpression(expression: string): boolean {
+  return removeSpaces(expression).match(regMacroArg) !== null;
+}
+
 
 /**
  * if 判別式をパースします。 (評価は行いません)

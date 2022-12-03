@@ -5763,9 +5763,9 @@ font-weight: bold;
             }
             // ExpressionParser で解釈できる表現 (HPMAX, RAND(x)など)を解釈する。
             // なお、数値の場合は前段で弾かれているので、定数になることはない。
-            const parsedType = ExpressionParser.parseType(macroArg);
+            const parsedType = ExpressionParser.isValidMacroArgExpression(macroArg);
             if (parsedType) {
-                return () => ExpressionParser.parseAndEvaluateValue(macroArg, this.generateTokenValues(option.triggerParts));
+                return () => ExpressionParser.evaluateMacroArgExpression(macroArg, this.generateTokenValues(option.triggerParts));
             }
             // 引数を文字列として解釈する場合
             // \n は改行扱いされる。 
