@@ -25,6 +25,7 @@ export function parseType(str: string): Comparable | null {
     case "PDIR":
     case "ID":
     case "TYPE":
+    case "ITEM_COUNT":
       return { type: str };
     default:
       const userVarMatch = str.match(regUserVar);
