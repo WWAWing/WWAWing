@@ -73,7 +73,7 @@ function parseArg2Values(regExpMatchArray: RegExpMatchArray): [number, number] |
     }
     const arg1 =  parseInt(regExpMatchArray[1], 10) ;
     const arg2 =  parseInt(regExpMatchArray[2], 10) ;
-    if(!isNaN(arg1) || !isNaN(arg2)) {
+    if(isNaN(arg1) || isNaN(arg2)) {
       return null;
     }
     return [arg1, arg2];

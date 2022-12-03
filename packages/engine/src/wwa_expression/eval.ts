@@ -33,11 +33,30 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, 
       return tokenValues.moveCount;
     case 'VARIABLE':
       return tokenValues.userVars[comparable.index];
-    case 'MAP':
+    case 'MAP': 
+      if (
+        comparable.y < 0 ||
+        comparable.y >= tokenValues.map.length ||
+        comparable.x < 0 ||
+        comparable.x >= tokenValues.map[comparable.y].length
+      ) {
+        return 0;
+      }
       return tokenValues.map[comparable.y][comparable.x];
     case 'OBJECT':
+      if (
+        comparable.y < 0 ||
+        comparable.y >= tokenValues.mapObject.length ||
+        comparable.x < 0 ||
+        comparable.x >= tokenValues.mapObject[comparable.y].length
+      ) {
+        return 0;
+      }
       return tokenValues.mapObject[comparable.y][comparable.x];
     case 'ITEM':
+      if (comparable.boxIndex1To12 < 1 || comparable.boxIndex1To12 > 12) {
+        return 0;
+      }
       return tokenValues.itemBox[comparable.boxIndex1To12 - 1];
     case 'ITEM_COUNT':
       return tokenValues.itemBox.filter(item => item !== 0).length;

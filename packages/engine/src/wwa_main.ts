@@ -5755,7 +5755,7 @@ font-weight: bold;
         version: 1 | 2
     }): MessageSegments {
         return macroArgs.map((macroArg) => {
-            const parsedNumber = parseInt(macroArg, 10);
+            const parsedNumber = Number(macroArg);
             if (!isNaN(parsedNumber)) {
                 // バージョン1 かつ 数値の場合は、該当するユーザ変数の添字と解釈する
                 // バージョン2 の場合は数値をそのまま出力する
