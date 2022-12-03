@@ -68,7 +68,7 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
       return { assignee: "mapObject", x, y, rawValue: calcResult };
     }
     case 'ITEM': {
-      const item = assigneeExpression.match(/^v\[(\d+)\]$/);
+      const item = assigneeExpression.match(/^ITEM\[(\d+)\]$/);
       const boxIndex1to12 = Number(item[1]);
       if (boxIndex1to12 === null || isNaN(boxIndex1to12)) {
         throw new Error("アイテムの添字のパースに失敗しました");
