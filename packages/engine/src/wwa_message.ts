@@ -346,7 +346,7 @@ export class Macro {
                 }
                 // 変数デバッグ出力
                 case MacroType.CONSOLE_LOG: {
-                    this._executeConsoleLogMacro();
+                    this._executeConsoleLogMacro(1);
                     return {};
                 }
                 // 変数 <- HP
@@ -516,6 +516,10 @@ export class Macro {
                     this._executeMapMacro(2);
                     return {}
                 }
+                case MacroType.CONSOLE_LOG2: {
+                    this._executeConsoleLogMacro(2);
+                    return {}
+                }
                 default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     return {};
@@ -574,10 +578,19 @@ export class Macro {
         this._wwa.jumpRecUserPosition(x, y);
     }
     // consoleLogマクロ実行部
-    private _executeConsoleLogMacro(): void {
+    private _executeConsoleLogMacro(version: 1 | 2): void {
         this._concatEmptyArgs(1);
-        var num = this._evaluateIntValue(0);
-        this._wwa.outputUserVar(num);
+        const num = this._evaluateIntValue(0);
+        switch(version) {
+            case 1: {
+                this._wwa.outputUserVar(num);
+                return;
+            }
+            case 2: {
+                console.log(`${this.macroArgs[0]} = ${num}`);
+                return ;
+            }
+        }
     }
     // copy_hp_toマクロ実行部
     private _executeCopyHpToMacro(): void {
