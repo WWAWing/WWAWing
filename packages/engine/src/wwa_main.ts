@@ -5,10 +5,10 @@ import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
-    SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
-    speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
+    SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType,
+    speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
 } from "./wwa_data";
 
 import {
@@ -1769,10 +1769,6 @@ export class WWA {
         //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SPACE);
         //////////////////////////////////////////////////////////
         this._player.mainFrameCount();//プレイ時間を計測加算
-        var prevPosition = this._player.getPosition();
-
-        var pdir = this._player.getDir();
-
 
         if (this._player.isControllable()) {
             if (!this._wwaData.disableSaveFlag) {
@@ -1789,6 +1785,12 @@ export class WWA {
                  */
                 this._player.updateDelayFrame();
             } else {
+                const playerDir = this._player.getDir();
+                const dirToKey = [NaN, NaN, KeyCode.KEY_DOWN, NaN, KeyCode.KEY_LEFT, NaN, KeyCode.KEY_RIGHT, NaN, KeyCode.KEY_UP, NaN];
+                // プレイヤーの向きに対応するキーコード
+                // プレイヤーの向きを変更する入力で使う
+                const playerDirKey = dirToKey[playerDir];
+
                     //マクロ用処理割込
                 if (this._actionGamePadButtonItemMacro()) {
 
@@ -1854,11 +1856,11 @@ export class WWA {
                     }
 
                     //checkHitKey　pdir　分岐
-                } else if (this._keyStore.checkHitKey(dirToKey[pdir])) {
+                } else if (this._keyStore.checkHitKey(playerDirKey)) {
                     if (this._checkTurnKeyPressed()) {
-                        this._player.setDir(pdir);
+                        this._player.setDir(playerDir);
                     } else {
-                        this._player.controll(pdir);
+                        this._player.controll(playerDir);
                         this._objectMovingDataManager.update();
                     }
                     //checkHitKey　分岐
@@ -2509,23 +2511,25 @@ export class WWA {
         if (cpParts === void 0 || this._wwaData.delPlayerFlag) {
             return;
         }
-        var pos: Coord = this._player.getPosition().getPartsCoord();
-        var poso: Coord = this._player.getPosition().getOffsetCoord();
-        var relpcrop: number = dirToPos[this._player.getDir()];
-        var canvasX = (pos.x - cpParts.x) * Consts.CHIP_SIZE + poso.x - cpOffset.x;
-        var canvasY = (pos.y - cpParts.y) * Consts.CHIP_SIZE + poso.y - cpOffset.y;
-        var dx = Math.abs(poso.x);
-        var dy = Math.abs(poso.y);
-        var dir = this._player.getDir();
-        var crop: number;
-        var dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
+        const pos = this._player.getPosition().getPartsCoord();
+        const poso = this._player.getPosition().getOffsetCoord();
 
+        // テンキーベースの方向からプレイヤー画像のパーツ単位相対座標に変換 (歩行アニメしない方)
+        // 上向きが 0, 下向きが 2, 左向きが 4, 右向きが 6. その他は使用しない.
+        const dirToPlayerImageRelX = [NaN, NaN, 2, NaN, 4, NaN, 6, NaN, 0, NaN];
+        const playerImageRelXCrop = dirToPlayerImageRelX[this._player.getDir()];
+        const canvasX = (pos.x - cpParts.x) * Consts.CHIP_SIZE + poso.x - cpOffset.x;
+        const canvasY = (pos.y - cpParts.y) * Consts.CHIP_SIZE + poso.y - cpOffset.y;
+        let crop: number;
         if (this._useLookingAround && this._player.isLookingAround() && !this._player.isWaitingMessage()) {
+            // ジャンプゲート後のぐるぐるまわるやつ
+            const dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
             crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
         } else if (this._player.isMovingImage()) {
-            crop = this._wwaData.playerImgPosX + relpcrop + 1;
+            // 歩行アニメでは一つとなりの画像を使用
+            crop = this._wwaData.playerImgPosX + playerImageRelXCrop + 1;
         } else {
-            crop = this._wwaData.playerImgPosX + relpcrop;
+            crop = this._wwaData.playerImgPosX + playerImageRelXCrop;
         }
         if (isPrevCamera) {
             this._cgManager.drawCanvasWithLowerYLimit(crop, this._wwaData.playerImgPosY, canvasX, canvasY, yLimit);

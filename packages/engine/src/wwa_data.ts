@@ -319,25 +319,40 @@ export enum ControlPanelBottomButton {
     GAME_END = 2
 };
 
+/**
+ * 向きに合わせた数字
+ * テンキーに合わせた付番
+ * ```
+ *     ^
+ *   7 8 9 
+ * < 4 5 6 >
+ *   1 2 3
+ *     v
+ * ```
+ */
 export enum Direction {
-    LEFT = 0,
-    RIGHT = 1,
+    // 0 は使わない
+    UNUSED = 0,
+
+    // プレイヤーの向き
+    LEFT = 4,
+    RIGHT = 6,
     DOWN = 2,
-    UP = 3,
+    UP = 8,
+
     // ここから下はプレイヤー使用不可
-    LEFT_DOWN = 4,
-    LEFT_UP = 5,
-    RIGHT_DOWN = 6,
-    RIGHT_UP = 7,
+    LEFT_DOWN = 1,
+    LEFT_UP = 7,
+    RIGHT_DOWN = 3,
+    RIGHT_UP = 9,
 
     // 向きなしは、マクロ$movesで「プレイヤーの動きなしに物体を動かす」時に使う
-    NO_DIRECTION = 8
+    NO_DIRECTION = 5
 };
-export var vx = [-1, 1, 0, 0, -1, -1, 1, 1, 0];
-export var vy = [0, 0, 1, -1, 1, -1, 1, -1, 0];
-export var dirToPos = [4, 6, 2, 0]; // 仮
-export var dirToKey = [KeyCode.KEY_LEFT, KeyCode.KEY_RIGHT, KeyCode.KEY_DOWN, KeyCode.KEY_UP];
 
+// テンキーベースの方向 (Direction) から2次元のベクトルに変換 (Y軸下向き)
+export const vx = [ 0, -1, 0, 1, -1, 0, 1, -1, 0, 1];
+export const vy = [ 0, 1, 1, 1, 0, 0, 0, -1, -1, -1]
 
 export enum YesNoState {
     YES,
