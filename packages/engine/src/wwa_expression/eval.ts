@@ -1,15 +1,15 @@
 import type { Descriminant, TokenValues, Comparable } from "./typedef";
 
-export function evaluateDescriminant(d: Descriminant, tokenValues: TokenValues): boolean {
+export function evaluateDescriminant(d: Descriminant, tokenValues: TokenValues, fallbackValue: number = 0): boolean {
     if (typeof d === "boolean") {
         return d;
     }
-    const left = evaluateValue(d.left, tokenValues);
-    const right = evaluateValue(d.right, tokenValues);
+    const left = evaluateValue(d.left, tokenValues, fallbackValue);
+    const right = evaluateValue(d.right, tokenValues, fallbackValue);
     return compare(d.operator, left, right);
 }
 
-export function evaluateValue(comparable: Comparable, tokenValues: TokenValues): number {
+export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, fallbackValue: number = 0): number {
   switch (comparable.type) {
     case 'HP':
       return tokenValues.totalStatus.energy;
@@ -33,19 +33,55 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues):
       return tokenValues.moveCount;
     case 'VARIABLE':
       return tokenValues.userVars[comparable.index];
+    case 'MAP': 
+      if (
+        comparable.y < 0 ||
+        comparable.y >= tokenValues.map.length ||
+        comparable.x < 0 ||
+        comparable.x >= tokenValues.map[comparable.y].length
+      ) {
+        return 0;
+      }
+      return tokenValues.map[comparable.y][comparable.x];
+    case 'OBJECT':
+      if (
+        comparable.y < 0 ||
+        comparable.y >= tokenValues.mapObject.length ||
+        comparable.x < 0 ||
+        comparable.x >= tokenValues.mapObject[comparable.y].length
+      ) {
+        return 0;
+      }
+      return tokenValues.mapObject[comparable.y][comparable.x];
+    case 'ITEM':
+      if (comparable.boxIndex1To12 < 1 || comparable.boxIndex1To12 > 12) {
+        return 0;
+      }
+      return tokenValues.itemBox[comparable.boxIndex1To12 - 1];
+    case 'ITEM_COUNT':
+      return tokenValues.itemBox.filter(item => item !== 0).length;
     case 'NUMBER':
       return comparable.rawValue;
     case 'TIME':
       return tokenValues.playTime;
+    case 'X':
+      return tokenValues.partsPosition.x;
+    case 'Y':
+      return tokenValues.partsPosition.y;
     case 'PX':
       return tokenValues.playerCoord.x;
     case 'PY':
       return tokenValues.playerCoord.y;
+    case 'PDIR':
+      return tokenValues.playerDirection;
+    case 'ID':
+      return tokenValues.partsId;
+    case 'TYPE':
+      return tokenValues.partsType;
     case 'RAND':
       return Math.floor(Math.random() * evaluateValue(comparable.argument, tokenValues));
     default:
-      // 未定義は 0 とする
-      return 0;
+      return fallbackValue;
   }
 }
 

@@ -5,10 +5,10 @@ import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
     SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
-    SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType, dirToKey,
-    speedNameList, dirToPos, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
+    SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType,
+    speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    speedList, StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions,
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
 } from "./wwa_data";
 
 import {
@@ -1640,7 +1640,7 @@ export class WWA {
             });
             return [node, ...this._executeNode(node.next)];
         } else if (node instanceof Junction) {
-            const next = node.evaluateAndGetNextNode(this._generateTokenValues.bind(this));
+            const next = node.evaluateAndGetNextNode(this.generateTokenValues.bind(this));
             return next ? this._executeNode(next) : [];
         }
         // node === undefined
@@ -1769,10 +1769,6 @@ export class WWA {
         //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SPACE);
         //////////////////////////////////////////////////////////
         this._player.mainFrameCount();//プレイ時間を計測加算
-        var prevPosition = this._player.getPosition();
-
-        var pdir = this._player.getDir();
-
 
         if (this._player.isControllable()) {
             if (!this._wwaData.disableSaveFlag) {
@@ -1789,6 +1785,12 @@ export class WWA {
                  */
                 this._player.updateDelayFrame();
             } else {
+                const playerDir = this._player.getDir();
+                const dirToKey = [NaN, NaN, KeyCode.KEY_DOWN, NaN, KeyCode.KEY_LEFT, NaN, KeyCode.KEY_RIGHT, NaN, KeyCode.KEY_UP, NaN];
+                // プレイヤーの向きに対応するキーコード
+                // プレイヤーの向きを変更する入力で使う
+                const playerDirKey = dirToKey[playerDir];
+
                     //マクロ用処理割込
                 if (this._actionGamePadButtonItemMacro()) {
 
@@ -1854,11 +1856,11 @@ export class WWA {
                     }
 
                     //checkHitKey　pdir　分岐
-                } else if (this._keyStore.checkHitKey(dirToKey[pdir])) {
+                } else if (this._keyStore.checkHitKey(playerDirKey)) {
                     if (this._checkTurnKeyPressed()) {
-                        this._player.setDir(pdir);
+                        this._player.setDir(playerDir);
                     } else {
-                        this._player.controll(pdir);
+                        this._player.controll(playerDir);
                         this._objectMovingDataManager.update();
                     }
                     //checkHitKey　分岐
@@ -2509,23 +2511,25 @@ export class WWA {
         if (cpParts === void 0 || this._wwaData.delPlayerFlag) {
             return;
         }
-        var pos: Coord = this._player.getPosition().getPartsCoord();
-        var poso: Coord = this._player.getPosition().getOffsetCoord();
-        var relpcrop: number = dirToPos[this._player.getDir()];
-        var canvasX = (pos.x - cpParts.x) * Consts.CHIP_SIZE + poso.x - cpOffset.x;
-        var canvasY = (pos.y - cpParts.y) * Consts.CHIP_SIZE + poso.y - cpOffset.y;
-        var dx = Math.abs(poso.x);
-        var dy = Math.abs(poso.y);
-        var dir = this._player.getDir();
-        var crop: number;
-        var dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
+        const pos = this._player.getPosition().getPartsCoord();
+        const poso = this._player.getPosition().getOffsetCoord();
 
+        // テンキーベースの方向からプレイヤー画像のパーツ単位相対座標に変換 (歩行アニメしない方)
+        // 上向きが 0, 下向きが 2, 左向きが 4, 右向きが 6. その他は使用しない.
+        const dirToPlayerImageRelX = [NaN, NaN, 2, NaN, 4, NaN, 6, NaN, 0, NaN];
+        const playerImageRelXCrop = dirToPlayerImageRelX[this._player.getDir()];
+        const canvasX = (pos.x - cpParts.x) * Consts.CHIP_SIZE + poso.x - cpOffset.x;
+        const canvasY = (pos.y - cpParts.y) * Consts.CHIP_SIZE + poso.y - cpOffset.y;
+        let crop: number;
         if (this._useLookingAround && this._player.isLookingAround() && !this._player.isWaitingMessage()) {
+            // ジャンプゲート後のぐるぐるまわるやつ
+            const dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
             crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
         } else if (this._player.isMovingImage()) {
-            crop = this._wwaData.playerImgPosX + relpcrop + 1;
+            // 歩行アニメでは一つとなりの画像を使用
+            crop = this._wwaData.playerImgPosX + playerImageRelXCrop + 1;
         } else {
-            crop = this._wwaData.playerImgPosX + relpcrop;
+            crop = this._wwaData.playerImgPosX + playerImageRelXCrop;
         }
         if (isPrevCamera) {
             this._cgManager.drawCanvasWithLowerYLimit(crop, this._wwaData.playerImgPosY, canvasX, canvasY, yLimit);
@@ -3609,6 +3613,11 @@ export class WWA {
             let firstNode: Node | undefined = undefined;
             let nodeByPrevLine: Node | undefined = undefined;
             let lastPoppedJunction: Junction | undefined = undefined;
+            const triggerParts: TriggerParts = {
+                id: partsId,
+                type: partsType,
+                position: partsPosition
+            };
             const lines = this.parseMessageLines(pageContent, partsId, partsType, partsPosition)
             const junctionNodeStack: Junction[] = [];
 
@@ -3616,13 +3625,14 @@ export class WWA {
                 try {
                     const previousLineType = index === 0 ? undefined : lines[index - 1].type;
                     const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
-                    const newNode = this.createNewNode(line, !firstNode || !messagLineIsText(previousLineType));
+                    const newNode = this.createNewNode(line, !firstNode || !messagLineIsText(previousLineType), { triggerParts });
+
                     const endIfPoppedJunction = this.processConditionalExecuteMacroLine(newNode, line, parentJunction, junctionNodeStack);
                     if (endIfPoppedJunction) {
                         lastPoppedJunction = endIfPoppedJunction;
                     }
                     if (previousLineType) {
-                        this.connectOrMergeToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction, lastPoppedJunction);
+                        this.connectOrMergeToPreviousNode(line, previousLineType, nodeByPrevLine, newNode, parentJunction, lastPoppedJunction, { triggerParts });
                     } else {
                         firstNode = newNode;
                     }
@@ -3664,6 +3674,7 @@ export class WWA {
                 case MacroType.ELSE:
                 case MacroType.END_IF:
                 case MacroType.SHOW_STR:
+                case MacroType.SHOW_STR2:
                     return { type: macro.macroType, text: line, macro }
                 default:
                     return { type: "normalMacro" as const, text: line, macro }
@@ -3675,12 +3686,18 @@ export class WWA {
     /**
      * メッセージ行に対するノードを生成する。 
      */
-    private createNewNode(currentLine: MessageLine, shouldCreateParsedMessage: boolean): Node | undefined {
+    private createNewNode(currentLine: MessageLine, shouldCreateParsedMessage: boolean, option: {
+        triggerParts: TriggerParts
+    }): Node | undefined {
         switch (currentLine.type) {
             case MacroType.IF:
                 return new Junction([{ descriminant: ExpressionParser.parseDescriminant(currentLine.macro.macroArgs[0]) }]);
             case MacroType.SHOW_STR:
-                return shouldCreateParsedMessage ? new ParsedMessage(this._generateShowStrString(currentLine.macro.macroArgs)) : undefined;
+            case MacroType.SHOW_STR2:
+                return shouldCreateParsedMessage ? new ParsedMessage(this._generateShowStrString(currentLine.macro.macroArgs, {
+                    triggerParts: option.triggerParts,
+                    version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1
+                })) : undefined;
             case "text":
                 return shouldCreateParsedMessage ? new ParsedMessage(currentLine.text) : undefined;
             case "normalMacro":
@@ -3736,7 +3753,10 @@ export class WWA {
         nodeByPrevLine: Node | undefined,
         newNode: Node | undefined,
         parentJunction: Junction,
-        endIfTargetJunction: Junction | undefined
+        endIfTargetJunction: Junction | undefined,
+        option: {
+            triggerParts: TriggerParts
+        }
     ) {
         const prevLineIsText = messagLineIsText(previousLineType);
         switch (previousLineType) {
@@ -3796,8 +3816,11 @@ export class WWA {
                 // 前の行までのメッセージ表示内容がない場合は、改行を挿入しない
                 const shouldInsertNewLine = !nodeByPrevLine.isEmpty();
                 // 1つ前の行がテキストや通常マクロの場合は1つ前のParsedMessageにマージ
-                if (currentLine.type === MacroType.SHOW_STR) {
-                    nodeByPrevLine.appendMessage(this._generateShowStrString(currentLine.macro.macroArgs), shouldInsertNewLine);
+                if (currentLine.type === MacroType.SHOW_STR || currentLine.type === MacroType.SHOW_STR2) {
+                    nodeByPrevLine.appendMessage(this._generateShowStrString(currentLine.macro.macroArgs, {
+                        triggerParts: option.triggerParts,
+                        version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1
+                    }), shouldInsertNewLine);
                 } else if (currentLine.type === "text") {
                     nodeByPrevLine.appendMessage(currentLine.text, shouldInsertNewLine);
                 } else if (currentLine.type === "normalMacro") {
@@ -5727,21 +5750,26 @@ font-weight: bold;
         this.setUserVar(x, Math.floor(Math.random() * this.toAssignableValue(num)) + bias);
     }
     
-    // $show_str マクロで表示される文字列を組み立てる。
+    // $show_str, $show_str2 マクロで表示される文字列を組み立てる。
     // 変数, ステータスは表示する時に評価される。
-    // 変数の表記は添字のみを書く方法(例: 210)と、ifなどと同じ方法(例: v[210])の両方が使える。
-    private _generateShowStrString(macroArgs: string[]): MessageSegments {
+    // 評価される値はifなどと同じ方法(例: v[210], RAND(2)).
+    // バージョン1 の場合は、整数値は添字として認識される。 例: 210 と書かれていると v[210] と扱われる。
+    private _generateShowStrString(macroArgs: string[], option: {
+        triggerParts: TriggerParts
+        version: 1 | 2
+    }): MessageSegments {
         return macroArgs.map((macroArg) => {
-            // 数値の場合は、該当するユーザ変数の添字と解釈する
-            const parsedNumber = parseInt(macroArg, 10);
+            const parsedNumber = Number(macroArg);
             if (!isNaN(parsedNumber)) {
-                return () => this._wwaData.userVar[parsedNumber];
+                // バージョン1 かつ 数値の場合は、該当するユーザ変数の添字と解釈する
+                // バージョン2 の場合は数値をそのまま出力する
+                return () => option.version === 1 ? this._wwaData.userVar[parsedNumber] : parsedNumber;
             }
             // ExpressionParser で解釈できる表現 (HPMAX, RAND(x)など)を解釈する。
             // なお、数値の場合は前段で弾かれているので、定数になることはない。
-            const parsedType = ExpressionParser.parseType(macroArg);
+            const parsedType = ExpressionParser.isValidMacroArgExpression(macroArg);
             if (parsedType) {
-                return () => ExpressionParser.parseAndEvaluateValue(macroArg, this._generateTokenValues());
+                return () => ExpressionParser.evaluateMacroArgExpression(macroArg, this.generateTokenValues(option.triggerParts));
             }
             // 引数を文字列として解釈する場合
             // \n は改行扱いされる。 
@@ -5755,10 +5783,11 @@ font-weight: bold;
         this._wwaData.permitChangeGameSpeed = speedChangeFlag;
     }
 
-    public execSetMacro(macroStr: string = ""): { isGameOver?: true } {
-        const { assignee, rawValue } = ExpressionParser.evaluateSetMacroExpression(
-            macroStr, this._generateTokenValues()
+    public execSetMacro(macroStr: string = "", option: { triggerParts: TriggerParts }): { isGameOver?: true } {
+        const result = ExpressionParser.evaluateSetMacroExpression(
+            macroStr, this.generateTokenValues(option.triggerParts)
         );
+        const { assignee, rawValue } = result;
         switch(assignee) {
             case "energy":
                 this._player.setEnergy(this.toValidStatusValue(rawValue));
@@ -5786,18 +5815,33 @@ font-weight: bold;
             case "moveCount":
                this._player.setMoveCount(this.toValidStatusValue(rawValue));
                 break;
-            default:
-                if (isNaN(assignee) || !this.isValidUserVarIndex(assignee)) {
+            case "variable":
+                if (isNaN(result.index) || !this.isValidUserVarIndex(result.index)) {
                     throw new Error("ユーザ変数の添字が範囲外です。");
                 }
-                this.setUserVar(assignee, this.toAssignableValue(rawValue));
+                this.setUserVar(result.index, this.toAssignableValue(rawValue));
+                break;
+            case "map":
+                // 範囲外座標・パーツ番号は appearPartsEval 内で止められるのでここでは何もしない
+                this.appearPartsEval(option.triggerParts.position, `${result.x}`, `${result.y}`, result.rawValue, PartsType.MAP);
+                break;
+            case "mapObject":
+                // 範囲外座標・パーツ番号は appearPartsEval 内で止められるのでここでは何もしない
+                this.appearPartsEval(option.triggerParts.position, `${result.x}`, `${result.y}`, result.rawValue, PartsType.OBJECT);
+                break;
+            case "item":
+                // 0 (位置未指定) は扱えない
+                this.setPlayerGetItem(result.boxIndex1to12, rawValue);
+                break;
+            case "playerDirection":
+                this._player.setDir(rawValue);
                 break;
         }
         this._player.updateStatusValueBox();
         return {};
     }
 
-    private _generateTokenValues(): ExpressionParser.TokenValues {
+    public generateTokenValues(triggerParts: TriggerParts): ExpressionParser.TokenValues {
         // TODO: これ呼ぶ以外の方法ないのかな
         this.setNowPlayTime();
         return {
@@ -5809,6 +5853,13 @@ font-weight: bold;
             playTime: this._wwaData.playTime,
             userVars: this._wwaData.userVar,
             playerCoord: this._player.getPosition().getPartsCoord(),
+            playerDirection: this._player.getDir(),
+            itemBox: this._player.getCopyOfItemBox(),
+            partsId: triggerParts.id,
+            partsType: triggerParts.type,
+            partsPosition: triggerParts.position,
+            map: this._wwaData.map,
+            mapObject: this._wwaData.mapObject
         }
     }
 

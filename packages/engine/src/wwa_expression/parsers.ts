@@ -1,4 +1,4 @@
-import { regNumber, regRand, regUserVar } from "./regexp";
+import { regItemByBoxId, regMapByCoord, regNumber, regObjectByCoord, regRand, regUserVar } from "./regexp";
 import type { Comparable, CValue } from "./typedef";
 
 export function isCValue(c: Comparable): c is CValue {
@@ -18,15 +18,36 @@ export function parseType(str: string): Comparable | null {
     case "GD":
     case "STEP":
     case "TIME":
+    case "X":
+    case "Y":
     case "PX":
     case "PY":
+    case "PDIR":
+    case "ID":
+    case "TYPE":
+    case "ITEM_COUNT":
       return { type: str };
     default:
       const userVarMatch = str.match(regUserVar);
       if (userVarMatch) {
-        const index = userVarMatch.length >= 2 ? parseInt(userVarMatch[1], 10) : null;
-        return (index !== null && !isNaN(index)) ? { type: "VARIABLE", index } : null;
-      } 
+        const index = parseArg1Value(userVarMatch)
+        return index === null ? null : { type: "VARIABLE", index };
+      }
+      const mapMatch = str.match(regMapByCoord);
+      if(mapMatch) {
+        const coord = parseArg2Values(mapMatch);
+        return coord === null ? null : { type: "MAP", x: coord[0], y: coord[1] };
+      }
+      const objectMatch = str.match(regObjectByCoord);
+      if (objectMatch) {
+        const coord = parseArg2Values(objectMatch);
+        return coord === null ? null : { type: "OBJECT", x: coord[0], y: coord[1] };
+      }
+      const itemMatch = str.match(regItemByBoxId);
+      if (itemMatch) {
+        const index = parseArg1Value(itemMatch)
+        return index === null ? null : { type: "ITEM", boxIndex1To12: index };
+      }
       const numberMatch = str.match(regNumber)
       if (numberMatch) {
         const rawValue = parseInt(str, 10);
@@ -40,4 +61,21 @@ export function parseType(str: string): Comparable | null {
         return null;
       }
   }
+}
+
+function parseArg1Value(regExpMatchArray: RegExpMatchArray): number | null {
+    const arg = regExpMatchArray.length >= 2 ? Number(regExpMatchArray[1]) : null;
+    return (arg !== null && !isNaN(arg)) ? arg : null;
+}
+
+function parseArg2Values(regExpMatchArray: RegExpMatchArray): [number, number] | null {
+    if(regExpMatchArray.length < 3) {
+      return null;
+    }
+    const arg1 =  Number(regExpMatchArray[1]) ;
+    const arg2 =  Number(regExpMatchArray[2]) ;
+    if(isNaN(arg1) || isNaN(arg2)) {
+      return null;
+    }
+    return [arg1, arg2];
 }
