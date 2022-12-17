@@ -967,7 +967,7 @@ export class Macro {
 
     private _executeDelPlayerMacro(): void {
         this._concatEmptyArgs(1);
-        var flag = parseInt(this.macroArgs[0]);
+        const flag = this._evaluateIntValue(0);
         this._wwa.setDelPlayer(!!flag);
     }
     private _executeFaceMacro(): void {
@@ -1104,6 +1104,8 @@ export class Macro {
 
     private _executeSoundMacro(): void {
         this._concatEmptyArgs(1);
+        // 注) $sound マクロは、マップデータ読み込み時に全メッセージ解析でロードする音源を決定しているため
+        // 変数などによるサウンド番号指定を受け付けない
         var id = parseInt(this.macroArgs[0]);
         this._wwa.playSound(id);
     }
