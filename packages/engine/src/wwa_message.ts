@@ -27,7 +27,7 @@ import {
     WWASave,
     WWASaveData
 } from "./wwa_save";
-import { type TokenValues, type Descriminant, evaluateDescriminant } from "./wwa_expression";
+import { type TokenValues, type Descriminant, evaluateDescriminant, evaluateMacroArgExpression } from "./wwa_expression";
 
 /**
  * 値が更新された時に、再評価されるべき値を返す関数の型。
@@ -202,7 +202,7 @@ export function concatMessage(node1: Node | undefined, node2: Node | undefined):
 }
 
 export type MessageLineType = PreprocessMacroType | "text" | "normalMacro";
-export const messagLineIsText = (lineType: MessageLineType) => lineType === MacroType.SHOW_STR || lineType === "text" || lineType === "normalMacro";
+export const messagLineIsText = (lineType: MessageLineType) => lineType === MacroType.SHOW_STR || lineType === MacroType.SHOW_STR2 || lineType === "text" || lineType === "normalMacro";
 export type MessageLine = (
     { type: PreprocessMacroType; text: string; macro: Macro; } |
     { type: "normalMacro"; text: string; macro: Macro; } |
@@ -267,7 +267,7 @@ export class Macro {
                     return {};
                 }
                 case MacroType.MAP: {
-                    this._executeMapMacro();
+                    this._executeMapMacro(1);
                     return {};
                 }
                 case MacroType.DIRMAP: {
@@ -346,7 +346,7 @@ export class Macro {
                 }
                 // 変数デバッグ出力
                 case MacroType.CONSOLE_LOG: {
-                    this._executeConsoleLogMacro();
+                    this._executeConsoleLogMacro(1);
                     return {};
                 }
                 // 変数 <- HP
@@ -454,6 +454,11 @@ export class Macro {
                     // $show_str マクロは、キューの組み立て時に処理されていて、既に存在しないはず
                     return {};
                 }
+                // 変数付きのメッセージ表示
+                case MacroType.SHOW_STR2: {
+                    // $show_str2 マクロは、キューの組み立て時に処理されていて、既に存在しないはず
+                    return {};
+                }
                 // IF文
                 case MacroType.IF: {
                     // $if マクロ (新実装) は、キューの組み立て時に処理されていて、既に存在しないはず
@@ -507,6 +512,14 @@ export class Macro {
                     const { isGameOver } = this._executeSetMacro();
                     return { isGameOver }
                 }
+                case MacroType.MAP2: {
+                    this._executeMapMacro(2);
+                    return {}
+                }
+                case MacroType.CONSOLE_LOG2: {
+                    this._executeConsoleLogMacro(2);
+                    return {}
+                }
                 default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     return {};
@@ -527,65 +540,82 @@ export class Macro {
         }
     }
 
-    private _parseInt(argIndex: number, fallback: number = 0): number {
-        var x = parseInt(this.macroArgs[argIndex]);
-        if (isNaN(x)) {
-            return fallback;
+    private _evaluateIntValue(argIndex: number, fallbackValue: number = 0): number {
+        const targetString = this.macroArgs[argIndex];
+        if (targetString === "") {
+            return fallbackValue;
         }
-        return x;
+        const intParsedValue = Number(targetString);
+        if (!isNaN(intParsedValue)) {
+            return intParsedValue;
+        }
+        return evaluateMacroArgExpression(targetString, this._wwa.generateTokenValues({
+            id: this._triggerPartsID,
+            type: this._triggerPartsType,
+            position: this._triggerPartsPosition
+        }), fallbackValue);
     }
 
     // JumpGateマクロ実行部
     private _executeJumpGateMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.forcedJumpGate(x, y);
     }
     // RecPositionマクロ実行部
     private _executeRecPositionMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.recUserPosition(x, y);
     }
     // JumpRecPositionマクロ実行部
     private _executeJumpRecPositionMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.jumpRecUserPosition(x, y);
     }
     // consoleLogマクロ実行部
-    private _executeConsoleLogMacro(): void {
+    private _executeConsoleLogMacro(version: 1 | 2): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
-        this._wwa.outputUserVar(num);
+        const num = this._evaluateIntValue(0);
+        switch(version) {
+            case 1: {
+                this._wwa.outputUserVar(num);
+                return;
+            }
+            case 2: {
+                console.log(`${this.macroArgs[0]} = ${num}`);
+                return ;
+            }
+        }
     }
     // copy_hp_toマクロ実行部
     private _executeCopyHpToMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         this._wwa.setUserVarHP(num);
     }
     // copy_hpmax_toマクロ実行部
     private _executeCopyHpMaxToMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         this._wwa.setUserVarHPMAX(num);
     }
     // copy_at_toマクロ実行部
     private _executeCopyAtToMacro(): void {
         this._concatEmptyArgs(2);
-        const num = this._parseInt(0);
-        const kind = this._parseStatusKind(this._parseInt(1));
+        const num = this._evaluateIntValue(0);
+        const kind = this._parseStatusKind(this._evaluateIntValue(1));
         this._wwa.setUserVarAT(num, kind);
     }
     // copy_df_toマクロ実行部
     private _executeCopyDfToMacro(): void {
         this._concatEmptyArgs(2);
-        const num = this._parseInt(0);
-        const kind = this._parseStatusKind(this._parseInt(1));
+        const num = this._evaluateIntValue(0);
+        const kind = this._parseStatusKind(this._evaluateIntValue(1));
         this._wwa.setUserVarDF(num, kind);
     }
     private _parseStatusKind(kind: number): StatusSolutionKind {
@@ -603,106 +633,106 @@ export class Macro {
     // copy_money_toマクロ実行部
     private _executeCopyMoneyToMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         this._wwa.setUserVarMONEY(num);
     }
     // set_hpマクロ実行部
     private _executeSetHPMacro(): { isGameOver?: true } {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         return this._wwa.setHPUserVar(num, true);
     }
     // set_hpmaxマクロ実行部
     private _executeSetHpMaxMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         this._wwa.setHPMAXUserVar(num);
     }
     // set_atマクロ実行部
     private _executeSetAtMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         this._wwa.setATUserVar(num);
     }
     // set_dfマクロ実行部
     private _executeSetDfMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         this._wwa.setDFUserVar(num);
     }
     // set_moneyマクロ実行部
     private _executeSetMoneyMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         this._wwa.setMONEYUserVar(num);
     }
     // copy_step_count_toマクロ実行部
     private _executeSetStepCountMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         this._wwa.setUserVarStep(num);
     }
     // var_set_valマクロ実行部
     private _executeVarSetValMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var num = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var num = this._evaluateIntValue(1);
         this._wwa.setUserVarVal(x, num);
     }
     // var_setマクロ実行部
     private _executeVarSetMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.setUserValOtherUserVal(x, y);
     }
     // var_addマクロ実行部
     private _executeVarAddMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.setUserValAdd(x, y);
     }
     // var_subマクロ実行部
     private _executeVarSubMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.setUserValSub(x, y);
     }
     // var_mulマクロ実行部
     private _executeVarMulMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.setUserValMul(x, y);
     }
     // var_divマクロ実行部
     private _executeVarDivMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.setUserValDiv(x, y);
     }
     // var_modマクロ実行部
     private _executeVarModMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.setUserValMod(x, y);
     }
     // var_set_randマクロ実行部
     private _executeVarSetRandMacro(): void {
         this._concatEmptyArgs(3);
-        const x = this._parseInt(0);
-        const y = this._parseInt(1);
-        const n = this._parseInt(2, 0);
+        const x = this._evaluateIntValue(0);
+        const y = this._evaluateIntValue(1);
+        const n = this._evaluateIntValue(2, 0);
         this._wwa.setUserValRandNum(x, y, n);
     }
     // game_speedマクロ実行部
     private _executeGameSpeedMacro(): void {
         this._concatEmptyArgs(1);
-        var speedChangeFlag = !!this._parseInt(0);
+        var speedChangeFlag = !!this._evaluateIntValue(0);
         this._wwa.speedChangeJudge(speedChangeFlag);
     }
 
@@ -719,31 +749,31 @@ export class Macro {
    // SET_SPEEDマクロ実行部
     private _executeSetSpeedMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         // マクロのスピードは 1...6 だが、内部では 0...5 なので変換
         this._wwa.setPlayerSpeedIndex(num - 1);
     }
     // COPY_TO_TIMEマクロ実行部
     private _executeCopyTimeToMacro(): void {
         this._concatEmptyArgs(1);
-        var num = this._parseInt(0);
+        var num = this._evaluateIntValue(0);
         this._wwa.setUserVarPlayTime(num);
     }
     // HIDE_STATUS マクロ実行部
     private _executeHideStatusMacro(): void {
         this._concatEmptyArgs(2);
-        var no = this._parseInt(0);
-        var isHideNumber = this._parseInt(1);
+        var no = this._evaluateIntValue(0);
+        var isHideNumber = this._evaluateIntValue(1);
         var isHide = (isHideNumber === 0) ? false : true;
         this._wwa.hideStatus(no, isHide);
     }
     // VAR_MAP マクロ実行部
     private _executeVarMapMacro(): void {
         this._concatEmptyArgs(4);
-        var partsID = this._parseInt(0);
+        var partsID = this._evaluateIntValue(0);
         var xstr = this.macroArgs[1];
         var ystr = this.macroArgs[2];
-        var partsType = this._parseInt(3, PartsType.OBJECT);
+        var partsType = this._evaluateIntValue(3, PartsType.OBJECT);
 
         if (partsID < 0) {
             throw new Error("入力変数が不正です");
@@ -754,55 +784,55 @@ export class Macro {
     // executeImgPlayerMacro
     private _executeImgPlayerMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.setPlayerImgCoord(new Coord(x, y));
     }
 
     private _executeImgYesNoMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         this._wwa.setYesNoImgCoord(new Coord(x, y));
     }
 
     private _executeHPMaxMacro(): void {
         this._concatEmptyArgs(1);
-        var hpmax = Math.max(0, this._parseInt(0));
+        var hpmax = Math.max(0, this._evaluateIntValue(0));
         this._wwa.setPlayerEnergyMax(hpmax);
     }
 
     private _executeSaveMacro(): void {
         this._concatEmptyArgs(1);
-        var disableSaveFlag = !!this._parseInt(0);
+        var disableSaveFlag = !!this._evaluateIntValue(0);
         this._wwa.disableSave(disableSaveFlag);
     }
 
     private _executeItemMacro(): void {
         this._concatEmptyArgs(2);
-        var pos = this._parseInt(0);
-        var id = this._parseInt(1);
+        var pos = this._evaluateIntValue(0);
+        var id = this._evaluateIntValue(1);
         this._wwa.setPlayerGetItem(pos, id);
     }
 
     private _executeDefaultMacro(): void {
         this._concatEmptyArgs(1);
-        var defaultFlag = !!this._parseInt(0);
+        var defaultFlag = !!this._evaluateIntValue(0);
         this._wwa.setObjectNotCollapseOnPartsOnPlayer(defaultFlag);
     }
 
     private _executeOldMapMacro(): void {
         this._concatEmptyArgs(1);
-        var oldMapFlag = !!this._parseInt(0);
+        var oldMapFlag = !!this._evaluateIntValue(0);
         this._wwa.setOldMap(oldMapFlag);
     }
 
     private _executePartsMacro(): void {
         this._concatEmptyArgs(4);
-        var srcID = this._parseInt(0);
-        var destID = this._parseInt(1);
-        var partsType = this._parseInt(2, PartsType.OBJECT);
-        var onlyThisSight = this._parseInt(3);
+        var srcID = this._evaluateIntValue(0);
+        var destID = this._evaluateIntValue(1);
+        var partsType = this._evaluateIntValue(2, PartsType.OBJECT);
+        var onlyThisSight = this._evaluateIntValue(3);
 
         if (partsType !== PartsType.OBJECT && partsType !== PartsType.MAP) {
             throw new Error("パーツ種別が不明です");
@@ -828,37 +858,55 @@ export class Macro {
 
     private _executeMoveMacro(): void {
         this._concatEmptyArgs(1);
-        var moveNum = this._parseInt(0);
+        var moveNum = this._evaluateIntValue(0);
         this._wwa.setMoveMacroWaitingToPlayer(moveNum);
     }
 
-    private _executeMapMacro(): void {
+    private _executeMapMacro(version: 1 | 2): void {
         this._concatEmptyArgs(4);
-        var partsID = this._parseInt(0);
-        var xstr = this.macroArgs[1];
-        var ystr = this.macroArgs[2];
-        var partsType = this._parseInt(3, PartsType.OBJECT);
+        const partsId = this._evaluateIntValue(0);
+        var partsType = this._evaluateIntValue(3, PartsType.OBJECT);
 
-        if (partsID < 0) {
+        if (partsId < 0) {
             throw new Error("パーツ番号が不正です");
         }
         if (partsType === PartsType.OBJECT) {
-            if (partsID >= this._wwa.getObjectPartsNum()) {
+            if (partsId >= this._wwa.getObjectPartsNum()) {
                 throw new Error("パーツ番号が不正です");
             }
         } else {
-            if (partsID >= this._wwa.getMapPartsNum()) {
+            if (partsId >= this._wwa.getMapPartsNum()) {
                 throw new Error("パーツ番号が不正です");
             }
         }
-        this._wwa.appearPartsEval(this._triggerPartsPosition, xstr, ystr, partsID, partsType);
+        if (version === 1) {
+            const xstr = this.macroArgs[1];
+            const ystr = this.macroArgs[2];
+            // バージョン 1 では符号がある場合に相対指定, Pの場合にプレイヤー座標での出現が可能
+            // $map=75,+10,-10,1
+            // $map=75,P,P,1
+            this._wwa.appearPartsEval(this._triggerPartsPosition, xstr, ystr, partsId, partsType);
+        } else if (version === 2) {
+            // バージョン 2 では X, Y の絶対指定のみ対応
+            // 相対指定は下記のように行われるべき
+            // $map2=75,X+10,Y-10,1
+            // プレイヤー座標配置は下記のように行われるべき
+            // $map2=75,PX,PY,1
+            const x = this._evaluateIntValue(1);
+            const y = this._evaluateIntValue(2);
+            if (isNaN(x) || isNaN(y)) {
+                throw new Error("出現先座標が不正です")
+            }
+            // x, y の範囲外判定は appearPartsEval に任せる
+            this._wwa.appearPartsEval(this._triggerPartsPosition, `${x}`, `${y}`, partsId, partsType);
+        }
     }
 
     private _executeDirMapMacro(): void {
         this._concatEmptyArgs(3);
-        var partsID = this._parseInt(0);
-        var dist = this._parseInt(1);
-        var partsType = this._parseInt(2, PartsType.OBJECT);
+        var partsID = this._evaluateIntValue(0);
+        var dist = this._evaluateIntValue(1);
+        var partsType = this._evaluateIntValue(2, PartsType.OBJECT);
         if (isNaN(partsID) || isNaN(dist) || isNaN(partsType)) {
             throw new Error("引数が整数ではありません");
         }
@@ -879,9 +927,9 @@ export class Macro {
 
     private _executeImgFrameMacro(): void {
         this._concatEmptyArgs(3);
-        var type = this._parseInt(0);
-        var posX = this._parseInt(1);
-        var posY = this._parseInt(2);
+        var type = this._evaluateIntValue(0);
+        var posX = this._evaluateIntValue(1);
+        var posY = this._evaluateIntValue(2);
 
         if (posX < 0 || posY < 0) {
             throw new Error("座標は正でなければなりません。");
@@ -909,8 +957,8 @@ export class Macro {
 
     private _executeImgBomMacro(): void {
         this._concatEmptyArgs(2);
-        var posX = this._parseInt(0);
-        var posY = this._parseInt(1);
+        var posX = this._evaluateIntValue(0);
+        var posY = this._evaluateIntValue(1);
         if (posX < 0 || posY < 0) {
             throw new Error("座標は正でなければなりません。");
         }
@@ -919,17 +967,17 @@ export class Macro {
 
     private _executeDelPlayerMacro(): void {
         this._concatEmptyArgs(1);
-        var flag = parseInt(this.macroArgs[0]);
+        const flag = this._evaluateIntValue(0);
         this._wwa.setDelPlayer(!!flag);
     }
     private _executeFaceMacro(): void {
         this._concatEmptyArgs(6);
-        var destPosX = this._parseInt(0);
-        var destPosY = this._parseInt(1);
-        var srcPosX = this._parseInt(2);
-        var srcPosY = this._parseInt(3);
-        var srcWidth = this._parseInt(4);
-        var srcHeight = this._parseInt(5);
+        var destPosX = this._evaluateIntValue(0);
+        var destPosY = this._evaluateIntValue(1);
+        var srcPosX = this._evaluateIntValue(2);
+        var srcPosY = this._evaluateIntValue(3);
+        var srcWidth = this._evaluateIntValue(4);
+        var srcHeight = this._evaluateIntValue(5);
         var face: Face;
 
         if (destPosX < 0 || destPosY < 0 ||
@@ -948,7 +996,7 @@ export class Macro {
     }
     private _executeEffectMacro(): void {
         this._concatEmptyArgs(1);
-        var waitTime = this._parseInt(0);
+        var waitTime = this._evaluateIntValue(0);
         if (waitTime < 0) {
             throw new Error("待ち時間は0以上の整数でなければなりません。");
         }
@@ -958,7 +1006,7 @@ export class Macro {
         }
         var coords: Coord[] = [];
         for (var i = 1; i < this.macroArgs.length; i += 2) {
-            var cropX = this._parseInt(i);
+            var cropX = this._evaluateIntValue(i);
             var cropY = 0;
             if (cropX < 0) {
                 throw new Error("画像のパーツ座標指定は0以上の整数でなければなりません。");
@@ -966,7 +1014,7 @@ export class Macro {
             if (i + 1 === this.macroArgs.length) {
                 throw new Error("画像のパーツ座標指定で、Y座標が指定されていません。");
             }
-            cropY = this._parseInt(i + 1);
+            cropY = this._evaluateIntValue(i + 1);
             if (cropY < 0) {
                 throw new Error("画像のパーツ座標指定は0以上の整数でなければなりません。");
             }
@@ -977,8 +1025,8 @@ export class Macro {
 
     private _executeGameOverMacro(): void {
         this._concatEmptyArgs(2);
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
 
         if (x < 0 || x >= this._wwa.getMapWidth() || y < 0 || y >= this._wwa.getMapWidth()) {
             throw new Error("マップの範囲外が指定されています!");
@@ -992,8 +1040,8 @@ export class Macro {
         if (this.macroArgs.length < 1) {
             throw new Error("引数が少なすぎます");
         }
-        var x = this._parseInt(0);
-        var y = this._parseInt(1);
+        var x = this._evaluateIntValue(0);
+        var y = this._evaluateIntValue(1);
         if (x < 0 || y < 0) {
             throw new Error("引数が0以上の整数ではありません");
         }
@@ -1004,14 +1052,14 @@ export class Macro {
         if (this.macroArgs.length < 1) {
             throw new Error("引数が少なすぎます");
         }
-        var mode = this._parseInt(0);
+        var mode = this._evaluateIntValue(0);
         this._wwa.updateItemEffectEnabled(!!mode);
     }
 
     private _executeStatusMacro(): { isGameOver?: true } {
         this._concatEmptyArgs(2);
-        var type = this._parseInt(0);
-        var value = this._parseInt(1);
+        var type = this._evaluateIntValue(0);
+        var value = this._evaluateIntValue(1);
 
         if (type < 0 || 4 < type) {
             throw new Error("ステータス種別が範囲外です。");
@@ -1021,10 +1069,10 @@ export class Macro {
 
     private _executeColorMacro(): void {
         this._concatEmptyArgs(4);
-        var type = this._parseInt(0);
-        var r = this._parseInt(1);
-        var g = this._parseInt(2);
-        var b = this._parseInt(3);
+        var type = this._evaluateIntValue(0);
+        var r = this._evaluateIntValue(1);
+        var g = this._evaluateIntValue(2);
+        var b = this._evaluateIntValue(3);
         if (type < 0 || type > 5) {
             throw new Error("種別は0から5までです");
         }
@@ -1056,13 +1104,15 @@ export class Macro {
 
     private _executeSoundMacro(): void {
         this._concatEmptyArgs(1);
+        // 注) $sound マクロは、マップデータ読み込み時に全メッセージ解析でロードする音源を決定しているため
+        // 変数などによるサウンド番号指定を受け付けない
         var id = parseInt(this.macroArgs[0]);
         this._wwa.playSound(id);
     }
     private _executeGamePadButtonMacro(): void {
         this._concatEmptyArgs(2);
-        var buttonID: number = this._parseInt(0);
-        var itemNo: number = this._parseInt(1);
+        var buttonID: number = this._evaluateIntValue(0);
+        var itemNo: number = this._evaluateIntValue(1);
 
         if (buttonID < 0 || itemNo < 0) {
             throw new Error("各引数は0以上の整数でなければなりません。");
@@ -1076,18 +1126,26 @@ export class Macro {
 
     private _executeOldMoveMacro(): void {
         this._concatEmptyArgs(1);
-        const oldMoveFlag = !!this._parseInt(0);
+        const oldMoveFlag = !!this._evaluateIntValue(0);
         this._wwa.setOldMove(oldMoveFlag);
     }
 
     private _executeNoGameOverMacro(): void {
         this._concatEmptyArgs(1);
-        const isGameOverDisabled = this._parseInt(0);
+        const isGameOverDisabled = this._evaluateIntValue(0);
         this._wwa.setGameOverPolicy(isGameOverDisabled);
     }
 
     private _executeSetMacro(): { isGameOver?: true } {
-        return this._wwa.execSetMacro(this.macroArgs[0]);
+        return this._wwa.execSetMacro(this.macroArgs[0], 
+            {
+                triggerParts: {
+                    position: this._triggerPartsPosition,
+                    id: this._triggerPartsID,
+                    type: this._triggerPartsType
+                }
+            }
+        );
     }
 }
 

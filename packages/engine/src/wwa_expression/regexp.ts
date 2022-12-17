@@ -1,9 +1,15 @@
 const NUMBER = "-?\\d+";
 const USER_VAR = `v\\[${NUMBER}\\]`;
 const USER_VAR_CAPTURE = `v\\[(${NUMBER})\\]`;
-const READ_ONLY_VALUE = `AT_TOTAL|AT_ITEMS|DF_TOTAL|DF_ITEMS|TIME|PX|PY`;
-const WRITABLE_VALUE = "HP|HPMAX|AT|DF|GD|STEP"
-const ASSIGNEE = `${USER_VAR}|${WRITABLE_VALUE}`
+const MAP_BY_COORD = `m\\[${NUMBER}\\]\\[${NUMBER}\\]`;
+const MAP_BY_COORD_CAPTURE = `m\\[(${NUMBER})\\]\\[(${NUMBER})\\]`;
+const OBJECT_BY_COORD = `o\\[${NUMBER}\\]\\[${NUMBER}\\]`;
+const OBJECT_BY_COORD_CAPTURE = `o\\[(${NUMBER})\\]\\[(${NUMBER})\\]`;
+const ITEM_BY_BOX_ID = `ITEM\\[${NUMBER}\\]`
+const ITEM_BY_BOX_ID_CAPTURE = `ITEM\\[(${NUMBER})\\]`
+const READ_ONLY_VALUE = `AT_TOTAL|AT_ITEMS|DF_TOTAL|DF_ITEMS|TIME|X|Y|PX|PY|ID|TYPE|ITEM_COUNT`;
+const WRITABLE_VALUE = "HP|HPMAX|AT|DF|GD|STEP|PDIR"
+const ASSIGNEE = `${USER_VAR}|${MAP_BY_COORD}|${OBJECT_BY_COORD}|${ITEM_BY_BOX_ID}|${WRITABLE_VALUE}`
 const VALUE = `${NUMBER}|${USER_VAR}|${READ_ONLY_VALUE}|${WRITABLE_VALUE}`;
 
 const RAND = `RAND\\((?:${VALUE})\\)`;
@@ -22,6 +28,9 @@ const END = "\\)$";
 
 export const regNumber = new RegExp(`^${NUMBER}\$`);
 export const regUserVar = new RegExp(`^${USER_VAR_CAPTURE}\$`);
+export const regMapByCoord = new RegExp(`^${MAP_BY_COORD_CAPTURE}\$`)
+export const regObjectByCoord = new RegExp(`^${OBJECT_BY_COORD_CAPTURE}\$`)
+export const regItemByBoxId = new RegExp(`^${ITEM_BY_BOX_ID_CAPTURE}\$`)
 export const regRand = new RegExp(`^${RAND_CAPTURE}\$`);
 
 /**
@@ -39,6 +48,13 @@ export const regAdvance = new RegExp(`${START}(${ASSIGNEE})${ASSIGN}(${VALUE_OR_
  *
 */
 export const regNormal = new RegExp(`${START}(${ASSIGNEE})(${ASSIGNMENT_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);
+
+/**
+ * マクロ引数のフォーマット
+ * 外側にカッコがないので注意
+ * v[x] もしくは v[x] + v[y]
+ */
+export const regMacroArg = new RegExp(`^(${VALUE_OR_FUNCTION})(?:(${CALC_OPERATOR})(${VALUE_OR_FUNCTION}))?$`);
 
 /**
  * ifマクロのフォーマット
