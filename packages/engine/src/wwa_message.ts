@@ -52,6 +52,7 @@ export class Page {
         public extraInfo?: {
             partsId: number,
             partsType: PartsType
+            partsPosition: Coord
         }
     ) {
 
