@@ -1630,7 +1630,7 @@ export class WWA {
     );
 
 
-    private _executeNode(node: Node | undefined): ParsedMessage[] {
+    private _executeNode(node: Node | undefined, triggerParts?: TriggerParts): ParsedMessage[] {
         if (node instanceof ParsedMessage) {
             node.macro?.forEach(macro=>{
                 const { isGameOver } = macro.execute();
@@ -1638,20 +1638,25 @@ export class WWA {
                     throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。");
                 }
             });
-            return [node, ...this._executeNode(node.next)];
+            return [node, ...this._executeNode(node.next, triggerParts)];
         } else if (node instanceof Junction) {
-            const next = node.evaluateAndGetNextNode(this.generateTokenValues.bind(this));
-            return next ? this._executeNode(next) : [];
+            if (!triggerParts) {
+                // HACK: 理想は、tokenValues のパーツ起因パラメータが optional になるべき。
+                // システムメッセージなどが Junction ノードを含んでいいようになるのが望ましい。
+                throw new Error("パーツ起因ページによる実行ではないため、Junctionノードの利用を想定していません。");
+            }
+            const next = node.evaluateAndGetNextNode(() => this.generateTokenValues(triggerParts));
+            return next ? this._executeNode(next, triggerParts) : [];
         }
         // node === undefined
         return [];
     }
 
-    private _executeNodes(firstNode: Node | undefined): { isError: false, messages: ParsedMessage[] } | { isError: true } {
+    private _executeNodes(firstNode: Node | undefined, triggerParts?: TriggerParts): { isError: false, messages: ParsedMessage[] } | { isError: true } {
         try {
             return  {
                 isError: false,
-                messages: this._executeNode(firstNode)
+                messages: this._executeNode(firstNode, triggerParts)
             };
         } catch (error) {
             // ゲームオーバーなど、ページの実行が継続できなくなった場合
@@ -1710,7 +1715,11 @@ export class WWA {
                 //  (this._pages の後尾にシステムメッセージのページが追加されるため)
                 // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
                 // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
-                const executedResult = this._executeNodes(executingPage.firstNode);
+                const executedResult = this._executeNodes(executingPage.firstNode, executingPage.extraInfo ? {
+                    position: executingPage.extraInfo.partsPosition,
+                    type: executingPage.extraInfo.partsType,
+                    id: executingPage.extraInfo.partsId
+                } : undefined);
                 if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
                     // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
                     this._isLastPage = false;
@@ -3605,7 +3614,7 @@ export class WWA {
 
         if (messageMain === "") {
             // 空メッセージの場合は何も処理しないが、スコア表示の場合はメッセージを出すのでノードなしのページを生成
-            return scoreOption ? [new Page(undefined, true, false, false, scoreOption, { partsId, partsType})] : [];
+            return scoreOption ? [new Page(undefined, true, false, false, scoreOption, { partsId, partsType, partsPosition})] : [];
         }
         const pageContents = messageMain.split(/\<p\>/ig);
 
@@ -3652,7 +3661,8 @@ export class WWA {
                  pageId === 0 && scoreOption,
                  {
                     partsId,
-                    partsType
+                    partsType,
+                    partsPosition
                  }
             );
         });
