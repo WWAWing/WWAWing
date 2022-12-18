@@ -58,7 +58,7 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, 
         return 0;
       }
       return tokenValues.itemBox[comparable.boxIndex1To12 - 1];
-    case 'ITEM_COUNT':
+    case 'ITEM_COUNT_ALL':
       return tokenValues.itemBox.filter(item => item !== 0).length;
     case 'NUMBER':
       return comparable.rawValue;
@@ -80,6 +80,8 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, 
       return tokenValues.partsType;
     case 'RAND':
       return Math.floor(Math.random() * evaluateValue(comparable.argument, tokenValues));
+    case 'ITEM_COUNT':
+      return tokenValues.itemBox.filter(item => item === evaluateValue(comparable.argument, tokenValues)).length;
     default:
       return fallbackValue;
   }

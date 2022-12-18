@@ -9,15 +9,17 @@ const ITEM_BY_BOX_ID = `ITEM\\[${NUMBER}\\]`
 const ITEM_BY_BOX_ID_CAPTURE = `ITEM\\[(${NUMBER})\\]`
 const INDEXED_VALUE = `${USER_VAR}|${MAP_BY_COORD}|${OBJECT_BY_COORD}|${ITEM_BY_BOX_ID}`;
 
-const READ_ONLY_VALUE = `AT_TOTAL|AT_ITEMS|DF_TOTAL|DF_ITEMS|TIME|X|Y|PX|PY|ID|TYPE|ITEM_COUNT`;
+const READ_ONLY_VALUE = `AT_TOTAL|AT_ITEMS|DF_TOTAL|DF_ITEMS|TIME|X|Y|PX|PY|ID|TYPE|ITEM_COUNT_ALL`;
 const WRITABLE_VALUE = "HP|HPMAX|AT|DF|GD|STEP|PDIR"
 const ASSIGNEE = `${INDEXED_VALUE}|${MAP_BY_COORD}|${OBJECT_BY_COORD}|${ITEM_BY_BOX_ID}|${WRITABLE_VALUE}`
 const VALUE = `${NUMBER}|${INDEXED_VALUE}|${READ_ONLY_VALUE}|${WRITABLE_VALUE}`;
 
 const RAND = `RAND\\((?:${VALUE})\\)`;
 const RAND_CAPTURE = `RAND\\((${VALUE})\\)`;
+const ITEM_COUNT = `ITEM_COUNT\\((?:${VALUE})\\)`;
+const ITEM_COUNT_CAPTURE = `ITEM_COUNT\\((${VALUE})\\)`;
 
-const FUNCTION = `${RAND}`;
+const FUNCTION = `${RAND}|${ITEM_COUNT}`;
 const VALUE_OR_FUNCTION = `${VALUE}|${FUNCTION}`
 
 const CALC_OPERATOR = "\\+|\\-|\\*|\\/|%";
@@ -34,6 +36,7 @@ export const regMapByCoord = new RegExp(`^${MAP_BY_COORD_CAPTURE}\$`)
 export const regObjectByCoord = new RegExp(`^${OBJECT_BY_COORD_CAPTURE}\$`)
 export const regItemByBoxId = new RegExp(`^${ITEM_BY_BOX_ID_CAPTURE}\$`)
 export const regRand = new RegExp(`^${RAND_CAPTURE}\$`);
+export const regItemCount = new RegExp(`${ITEM_COUNT_CAPTURE}\$`)
 
 /**
  * v[x] = v[y] + v[z] のフォーマットの時

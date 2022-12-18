@@ -36,8 +36,9 @@ export type SetMacroType =
  'PDIR' |
  'ID' |
  'TYPE' |
- 'ITEM_COUNT' |
- 'RAND';
+ 'ITEM_COUNT_ALL' |
+ 'RAND' |
+ 'ITEM_COUNT';
 
 export type CNumberKind = "NUMBER";
 
@@ -66,9 +67,9 @@ export type CEnvKind =
   "PDIR" |
   "ID" |
   "TYPE" |
-  "ITEM_COUNT";
+  "ITEM_COUNT_ALL";
 
-export type CFunctionKind = "RAND"
+export type CFunctionKind = "RAND" | "ITEM_COUNT"
 
 export interface CNumber  {
   type: CNumberKind;
