@@ -75,7 +75,7 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
       }
       return { assignee: "item", boxIndex1to12, rawValue: calcResult };
     }
-    case 'ITEM_COUNT':
+    case 'ITEM_COUNT_ALL':
       throw new Error('左辺値に所持アイテム数は入れられません');
     case 'NUMBER':
       throw new Error('左辺値に定数は入れられません');
@@ -122,5 +122,7 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
       return { assignee: "playerDirection", rawValue: calcResult };
     case 'RAND':
       throw new Error('左辺値に乱数は入れられません');
+    case 'ITEM_COUNT':
+      throw new Error('左辺値に所持アイテム数は入れられません');
   }
 }

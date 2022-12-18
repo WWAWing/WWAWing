@@ -1,8 +1,8 @@
-import { regItemByBoxId, regMapByCoord, regNumber, regObjectByCoord, regRand, regUserVar } from "./regexp";
+import { regItemByBoxId, regItemCount, regMapByCoord, regNumber, regObjectByCoord, regRand, regUserVar } from "./regexp";
 import type { Comparable, CValue } from "./typedef";
 
 export function isCValue(c: Comparable): c is CValue {
-  return c.type !== "RAND";
+  return c.type !== "RAND" && c.type !== "ITEM_COUNT";
 }
 
 export function parseType(str: string): Comparable | null {
@@ -25,7 +25,7 @@ export function parseType(str: string): Comparable | null {
     case "PDIR":
     case "ID":
     case "TYPE":
-    case "ITEM_COUNT":
+    case "ITEM_COUNT_ALL":
       return { type: str };
     default:
       const userVarMatch = str.match(regUserVar);
@@ -57,9 +57,13 @@ export function parseType(str: string): Comparable | null {
       if (randMatch) {
         const argument = randMatch.length >= 2 ? parseType(randMatch[1]) : null;
         return (argument !== null && isCValue(argument)) ? { type: "RAND", argument } : null;
-      } else {
-        return null;
       }
+      const itemCountMatch = str.match(regItemCount);
+      if (itemCountMatch) {
+        const argument = itemCountMatch.length >= 2 ? parseType(itemCountMatch[1]) : null;
+        return (argument !== null && isCValue(argument)) ? { type: "ITEM_COUNT", argument } : null;
+      }
+      return null;
   }
 }
 
