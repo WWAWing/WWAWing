@@ -50,6 +50,7 @@ import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawin
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
 import * as ExpressionParser from "./wwa_expression";
+import * as ExpressionParser2 from "./wwa_expression2";
 
 let wwa: WWA
 
@@ -6364,6 +6365,13 @@ function start() {
 if (document.readyState === "complete") {
     setTimeout(start);
 } else {
+    const a = ExpressionParser2.parse("-2*(3-1)");
+    console.log(a);
+    const b = ExpressionParser2.convertNodeAcornToWwa(a);
+    console.log(b);
+    const c = ExpressionParser2.evalWwaNode(b);
+    console.log(c);
+    
     window.addEventListener("load", function () {
         setTimeout(start);
     });
