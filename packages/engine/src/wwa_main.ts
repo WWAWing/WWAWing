@@ -5484,6 +5484,9 @@ export class WWA {
                 return;
         }
     }
+    public setDelaySound(delayMs: number) {
+        this._wwaData.delaySound = delayMs;
+    }
 
 
     private _stylePos: number[]; // w
