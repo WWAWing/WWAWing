@@ -1370,7 +1370,7 @@ export class WWA {
         }
 
         if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
-            if (this.sounds[this._wwaData.bgm].hasData()) {
+            if (this.sounds[this._wwaData.bgm].isPlaying()) {
                 this.sounds[this._wwaData.bgm].pause();
             }
             this._wwaData.bgm = 0;

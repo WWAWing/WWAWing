@@ -5,6 +5,7 @@ export class Sound {
     private bufferSources: AudioBufferSourceNode[];
     private isLoaded: boolean;
     private isExceededMaxRetryCount?: true;
+    private delayBgmTimeoutId: NodeJS.Timeout | null;
 
     public constructor(
         /**
@@ -21,6 +22,7 @@ export class Sound {
         this.bufferSources = [];
 
         this.isLoaded = false;
+        this.delayBgmTimeoutId = null;
         // floating promise だが仕方ない
         this.load()
     }
@@ -116,7 +118,8 @@ export class Sound {
             }
             this.disposeBufferSource(bufferSource);
         }
-        setTimeout(() => {
+        this.delayBgmTimeoutId = setTimeout(() => {
+            this.delayBgmTimeoutId = null;
             bufferSource.start();
         }, delayDurationMs);
 
@@ -128,6 +131,10 @@ export class Sound {
      * 主にBGMを99番指定で止める場合に利用します。
      */
     public pause(): void {
+        if (this.delayBgmTimeoutId !== null) {
+            clearTimeout(this.delayBgmTimeoutId);
+            this.delayBgmTimeoutId = null;
+        }
         this.bufferSources.forEach(this.disposeBufferSource)
         this.bufferSources.length = 0;
     }
@@ -148,6 +155,10 @@ export class Sound {
      */
     public hasData(): boolean {
         return this.audioBuffer !== null;
+    }
+
+    public isPlaying(): boolean {
+        return this.hasData() || this.delayBgmTimeoutId !== null;
     }
     
     public isLoading(): boolean {
