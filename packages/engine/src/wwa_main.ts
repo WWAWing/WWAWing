@@ -1328,7 +1328,8 @@ export class WWA {
             // 本来鳴っているはずのBGMが targetSoundId 番であるときは再生
             if (this._wwaData.bgm === targetSoundId) {
                 if (targetAudio.hasData()) {
-                    targetAudio.play();
+                    // TODO ロード完了したタイミングの this._wwaData.delaySound は変更されているのか？
+                    targetAudio.play(this._wwaData.delaySound);
                     this._wwaData.bgm = targetSoundId;
                     this._clearSoundLoadedCheckTimer();
                 } else if (targetAudio.isError()) {
@@ -1390,7 +1391,7 @@ export class WWA {
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
-                this.sounds[id].play();
+                this.sounds[id].play(this._wwaData.delaySound);
                 this._wwaData.bgm = id;
             } else {
                 this.sounds[id].play();
