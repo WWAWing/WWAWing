@@ -91,9 +91,9 @@ export class Sound {
     /**
      * 音声を再生します。
      * 一時停止した場合でも、最初から再生します。
-     * @param delay 遅延時間
+     * @param delayDurationMs 遅延時間
      */
-    public play(delay = 0): void {
+    public play(delayDurationMs = 0): void {
         const bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
         this.bufferSources.push(bufferSource);
 
@@ -118,7 +118,7 @@ export class Sound {
         }
         setTimeout(() => {
             bufferSource.start();
-        }, delay);
+        }, delayDurationMs);
 
         this.audioGain.connect(this.audioContext.destination);
     }

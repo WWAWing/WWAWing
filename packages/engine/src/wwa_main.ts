@@ -1328,8 +1328,8 @@ export class WWA {
             // 本来鳴っているはずのBGMが targetSoundId 番であるときは再生
             if (this._wwaData.bgm === targetSoundId) {
                 if (targetAudio.hasData()) {
-                    // TODO ロード完了したタイミングの this._wwaData.delaySound は変更されているのか？
-                    targetAudio.play(this._wwaData.delaySound);
+                    // TODO ロード完了したタイミングの this._wwaData.bgmDelayDurationMs は変更されているのか？
+                    targetAudio.play(this._wwaData.bgmDelayDurationMs);
                     this._wwaData.bgm = targetSoundId;
                     this._clearSoundLoadedCheckTimer();
                 } else if (targetAudio.isError()) {
@@ -1391,7 +1391,7 @@ export class WWA {
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
-                this.sounds[id].play(this._wwaData.delaySound);
+                this.sounds[id].play(this._wwaData.bgmDelayDurationMs);
                 this._wwaData.bgm = id;
             } else {
                 this.sounds[id].play();
@@ -5485,8 +5485,8 @@ export class WWA {
                 return;
         }
     }
-    public setDelaySound(delayMs: number) {
-        this._wwaData.delaySound = delayMs;
+    public setBgmDelay(delayMs: number) {
+        this._wwaData.bgmDelayDurationMs = delayMs;
     }
 
 

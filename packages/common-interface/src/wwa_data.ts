@@ -146,7 +146,7 @@ export interface WWAData {
 
     gameOverPolicy: GameOverPolicy;
 
-    delaySound: number;
+    bgmDelayDurationMs: number;
 
 }
 

@@ -184,7 +184,7 @@ export function createDefaultWWAData(): WWAData {
         isVisibleStatusGold: undefined,
         isGameOverDisabled: undefined,
         gameOverPolicy: "default",
-        delaySound: undefined,
+        bgmDelayDurationMs: undefined,
     };
 }
 

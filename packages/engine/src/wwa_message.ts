@@ -1156,7 +1156,7 @@ export class Macro {
     private _executeDelaySoundMacro(): void {
         this._concatEmptyArgs(1);
         const delayMs = this._evaluateIntValue(0);
-        this._wwa.setDelaySound(delayMs);
+        this._wwa.setBgmDelay(delayMs);
     }
 }
 

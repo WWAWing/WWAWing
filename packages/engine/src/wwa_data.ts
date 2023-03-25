@@ -610,9 +610,9 @@ export enum MacroType {
     MAP2 = 61,
     SHOW_STR2 = 62,
     CONSOLE_LOG2 = 63,
+    DELAYSOUND = 64,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101,
-    DELAYSOUND = 102,
     LEGACY_IF = 10050
 }
 
@@ -682,9 +682,9 @@ export var macrotable = {
     "$map2": 61,
     "$show_str2": 62,
     "$console_log2": 63,
+    "$delaysound": 64,
     "$gamepad_button" : 100,
-    "$oldmove": 101,
-    "$delaysound": 102
+    "$oldmove": 101
 }
 
 
