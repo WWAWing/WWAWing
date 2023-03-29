@@ -1,0 +1,1 @@
+export const MAX_PICTURE_LAYERS_COUNT = 16;
