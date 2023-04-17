@@ -1351,7 +1351,7 @@ export class WWA {
         }
     }
 
-    public playSound(id: number): void {
+    public playSound(id: number, bgmDelayDurationMs?: number): void {
         if (!this._isLoadedSound) {
             // 音声データがロードされていなくても、次に音が流れる設定でゲーム開始したときにBGMを復元しなければならない。
             if (id === SystemSound.NO_SOUND) {
@@ -1391,7 +1391,7 @@ export class WWA {
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
-                this.sounds[id].play(this._wwaData.bgmDelayDurationMs);
+                this.sounds[id].play(bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
                 this._wwaData.bgm = id;
             } else {
                 this.sounds[id].play();
@@ -4480,7 +4480,7 @@ export class WWA {
         if (newData.bgm === 0) {
             this.playSound(SystemSound.NO_SOUND);
         } else {
-            this.playSound(newData.bgm);
+            this.playSound(newData.bgm, newData.bgmDelayDurationMs);
         }
         this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
         if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
