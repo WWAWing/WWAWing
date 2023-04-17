@@ -521,8 +521,8 @@ export class Macro {
                     this._executeConsoleLogMacro(2);
                     return {}
                 }
-                case MacroType.DELAYSOUND: {
-                    this._executeDelaySoundMacro();
+                case MacroType.DELAYBGM: {
+                    this._executeDelayBgmMacro();
                     return {};
                 }
                 default: {
@@ -1153,7 +1153,7 @@ export class Macro {
         );
     }
 
-    private _executeDelaySoundMacro(): void {
+    private _executeDelayBgmMacro(): void {
         this._concatEmptyArgs(1);
         const delayMs = this._evaluateIntValue(0);
         this._wwa.setBgmDelay(delayMs);
