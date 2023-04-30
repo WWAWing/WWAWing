@@ -521,6 +521,10 @@ export class Macro {
                     this._executeConsoleLogMacro(2);
                     return {}
                 }
+                case MacroType.DELAYBGM: {
+                    this._executeDelayBgmMacro();
+                    return {};
+                }
                 default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     return {};
@@ -1147,6 +1151,12 @@ export class Macro {
                 }
             }
         );
+    }
+
+    private _executeDelayBgmMacro(): void {
+        this._concatEmptyArgs(1);
+        const delayMs = this._evaluateIntValue(0);
+        this._wwa.setBgmDelay(delayMs);
     }
 }
 
