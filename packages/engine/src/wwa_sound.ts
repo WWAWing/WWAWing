@@ -5,7 +5,8 @@ export class Sound {
     private bufferSources: AudioBufferSourceNode[];
     private isLoaded: boolean;
     private isExceededMaxRetryCount?: true;
-    private delayBgmTimeoutId: NodeJS.Timeout | null;
+    // NOTE: 現状ブラウザで動くことを前提にしているので、もしNodeで動かすとかがあれば setTimeout まわりのラッパーを作る必要がありそうです。
+    private delayBgmTimeoutId: number | null;
 
     public constructor(
         /**
@@ -77,7 +78,7 @@ export class Sound {
     }
 
     private retry(errorCount: number) {
-        setTimeout(async () => { await this.load(errorCount + 1); }, 100)
+        window.setTimeout(async () => { await this.load(errorCount + 1); }, 100)
     }
 
     private setData(data: AudioBuffer): void {
@@ -118,7 +119,7 @@ export class Sound {
             }
             this.disposeBufferSource(bufferSource);
         }
-        this.delayBgmTimeoutId = setTimeout(() => {
+        this.delayBgmTimeoutId = window.setTimeout(() => {
             this.delayBgmTimeoutId = null;
             bufferSource.start();
         }, delayDurationMs);
@@ -132,7 +133,7 @@ export class Sound {
      */
     public pause(): void {
         if (this.delayBgmTimeoutId !== null) {
-            clearTimeout(this.delayBgmTimeoutId);
+            window.clearTimeout(this.delayBgmTimeoutId);
             this.delayBgmTimeoutId = null;
         }
         this.bufferSources.forEach(this.disposeBufferSource)
