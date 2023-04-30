@@ -1157,7 +1157,6 @@ export function parseMacro(
     position: Coord,
     macroStr: string
 ): Macro {
-
     let matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)$/);
     if (matchInfo === null || matchInfo.length !== 3) {
         // イコールがつかないタイプのマクロ
@@ -1170,12 +1169,18 @@ export function parseMacro(
     const macroName = `$${macroType.toLowerCase()}`;
     // カンマがある場合の $if は旧実装とみなす
     const macroIndex = macroName === "$if" && macroStr.match(/,/) ? MacroType.LEGACY_IF : macrotable[macroName];
-    const macroRightSide = matchInfo[2]? matchInfo[2]: "";
-    if (macroIndex === void 0) {
-        // undefined macro
-        return new Macro(wwa, partsID, partsType, position, MacroType.UNDEFINED, macroRightSide.split(","));
-    }
-    return new Macro(wwa, partsID, partsType, position, macroIndex, macroRightSide.split(",").map((e) => { return e.trim(); }));
+    // show_str 系マクロでは、文字列手前のカンマを除去しないようにする
+    // (メッセージ文字列にスペースを含められるようにするため。数値系の文字列のスペースは、パース時に除去されるのでここでは除去しなくてよい）
+    const shouldTrimWhiteSpace = Boolean(macroIndex !== MacroType.SHOW_STR && macroIndex !== MacroType.SHOW_STR2);
+    const macroArgs = (matchInfo[2] ?? "").split(",").map(arg => shouldTrimWhiteSpace ? arg.trim() : arg);
+    return new Macro(
+        wwa,
+        partsID,
+        partsType,
+        position,
+        macroIndex === undefined ? MacroType.UNDEFINED : macroIndex,
+        macroArgs
+    );
 }
 
 
