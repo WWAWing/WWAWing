@@ -175,12 +175,13 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
     case "Y":
     case "PX":
     case "PY":
+    case "v":
       return {
         type: "Symbol",
         name: node.name
       }
-    default:
-      throw new Error("未定義のシンボルです");
+    default:  
+      throw new Error("未定義のシンボルです :\n"+ node.name);
   }
 }
 

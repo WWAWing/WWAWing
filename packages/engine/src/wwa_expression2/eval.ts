@@ -1,8 +1,9 @@
+import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
 // UNDONE: boolean 値の取り扱い方法については未定
 
-export function evalWwaNode(node: Wwa.Node) {
+export function evalWwaNode(node: Wwa.Node, wwa?: WWA) {
   switch (node.type) {
     case "UnaryOperation":
       return evalUnaryOperation(node);
@@ -16,9 +17,21 @@ export function evalWwaNode(node: Wwa.Node) {
       return evalArray2D(node);
     case "Number":
       return evalNumber(node);
+    case "UserVariableAssignment":
+      return evalSetUserVariable(node, wwa);
     default:
-      throw new Error("未定義または未実装のノードです");
+      throw new Error("未定義または未実装のノードです:\n"+node.type);
   }
+}
+
+export function evalSetUserVariable(node: Wwa.UserVariableAssignment, wwa?: WWA) {
+  const right = evalWwaNode(node.value);
+  if(wwa && !isNaN(right)) {
+    // TODO: TypeScriptでエラーになるのでどうにかしたい
+    const userVarIndex: number = node.index?.value;
+    wwa.setUserVar(userVarIndex, right);
+  }
+  return 0;
 }
 
 export function evalUnaryOperation(node: Wwa.UnaryOperation) {

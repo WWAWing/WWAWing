@@ -6186,12 +6186,12 @@ font-weight: bold;
             console.log(a);
             const b = ExpressionParser2.convertNodeAcornToWwa(a);
             console.log(b);
-            const c = ExpressionParser2.evalWwaNode(b);
+            const c = ExpressionParser2.evalWwaNode(b, this);
             console.log(c);
             this.generatePageAndReserveExecution(c.toString(), false, true);
-        }catch(e) {
-            console.error(e);
-            this.generatePageAndReserveExecution("解析中にエラーが発生しました", false, true);
+        } catch(e) {
+            console.log(e.message);
+            this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
         }
     }
 };
@@ -6298,7 +6298,7 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     const evalStringInputArea = document.createElement("textarea");
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
-    evalStringInputArea.textContent = "hoge";
+    evalStringInputArea.textContent = "v[0]=10+20";
     controllerElm.appendChild(evalStringInput);
 }
 
