@@ -20,7 +20,7 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
       case "Literal":
         return convertLiteral(node as Acorn.Literal);
       default:
-        throw new Error("未定義の AST ノードです");
+        throw new Error("未定義の AST ノードです :" + node.type);
     }
 }
 

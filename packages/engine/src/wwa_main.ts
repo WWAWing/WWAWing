@@ -2064,6 +2064,8 @@ export class WWA {
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_V)) {
                     this._displayUserVars();
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_X)) {
+                    this._debugEvalString();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_Y)) {
                     // コマンドのヘルプ 
@@ -6170,6 +6172,28 @@ font-weight: bold;
             return this._wwaData.gameOverPolicy === "default" || this._wwaData.gameOverPolicy ==="except-macro";
         }
     }
+    
+    /** DEBUG用 */
+    private _debugEvalString() {
+        if (!this._player.isControllable()) {
+            return;
+        }
+        this.setNowPlayTime();
+        try {
+            const getElement: any = document.getElementsByClassName('eval-string-input-area')[0];
+            const baseEvalStr = getElement.value;
+            const a = ExpressionParser2.parse(baseEvalStr);
+            console.log(a);
+            const b = ExpressionParser2.convertNodeAcornToWwa(a);
+            console.log(b);
+            const c = ExpressionParser2.evalWwaNode(b);
+            console.log(c);
+            this.generatePageAndReserveExecution(c.toString(), false, true);
+        }catch(e) {
+            console.error(e);
+            this.generatePageAndReserveExecution("解析中にエラーが発生しました", false, true);
+        }
+    }
 };
 
 var isCopyRightClick = false;
@@ -6268,6 +6292,14 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     toggleButtonElement.textContent = "仮想パッド表示切り替え";
     toggleButtonElement.addEventListener("click", clickHander);
     controllerElm.appendChild(toggleButtonElement);
+
+    // デバッグ用の間借り
+    const evalStringInput = document.createElement("div");
+    const evalStringInputArea = document.createElement("textarea");
+    evalStringInputArea.className = "eval-string-input-area";
+    evalStringInput.appendChild(evalStringInputArea);
+    evalStringInputArea.textContent = "hoge";
+    controllerElm.appendChild(evalStringInput);
 }
 
 function start() {
@@ -6366,13 +6398,6 @@ function start() {
 if (document.readyState === "complete") {
     setTimeout(start);
 } else {
-    const a = ExpressionParser2.parse("-2*(3-1)");
-    console.log(a);
-    const b = ExpressionParser2.convertNodeAcornToWwa(a);
-    console.log(b);
-    const c = ExpressionParser2.evalWwaNode(b);
-    console.log(c);
-    
     window.addEventListener("load", function () {
         setTimeout(start);
     });
