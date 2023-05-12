@@ -1731,9 +1731,10 @@ export class WWA {
                     this._reservedMoveMacroTurn = void 0;
                 }
                 const messageLinesToDisplay = executedResult.messages.filter(line => !line.isEmpty());
+                const isScoreDisplayingPage = Boolean(executingPage.scoreOptions);
 
                 // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える
-                if (executingPage.scoreOptions && messageLinesToDisplay.length === 0) {
+                if (isScoreDisplayingPage && messageLinesToDisplay.length === 0) {
                     messageLinesToDisplay.push(new ParsedMessage("スコアを表示します。"));
                 }
 
@@ -1745,12 +1746,12 @@ export class WWA {
                     this._messageWindow.setYesNoChoice(executingPage.showChoice);
                     this._messageWindow.setPositionByPlayerPosition(
                         this._faces.length !== 0,
-                        this._scoreWindow.isVisible(),
+                        isScoreDisplayingPage,
                         executingPage.isSystemMessage,
                         this._player.getPosition(),
                         this._camera.getPosition()
                     );
-                    if (executingPage.scoreOptions) {
+                    if (isScoreDisplayingPage) {
                         this._lastScoreOptions = executingPage.scoreOptions;
                         this.updateScore(executingPage.scoreOptions);
                         this._scoreWindow.show();
