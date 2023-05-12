@@ -6186,11 +6186,12 @@ font-weight: bold;
             console.log(a);
             const b = ExpressionParser2.convertNodeAcornToWwa(a);
             console.log(b);
-            const c = ExpressionParser2.evalWwaNode(b, this);
+            const evalWWANode = new ExpressionParser2.EvalCalcWwaNode(this);
+            const c = evalWWANode.evalWwaNode(b);
             console.log(c);
             this.generatePageAndReserveExecution(c.toString(), false, true);
         } catch(e) {
-            console.log(e.message);
+            console.error(e);
             this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
         }
     }
