@@ -11,6 +11,27 @@ export interface Coord {
  */
 export type GameOverPolicy = "default" | "never" | "except-macro";
 
+export type PictureRegistory = PictureImageRegistory | PictureTextRegistry;
+
+export interface PictureImageRegistory {
+    type: 'image',
+    x: number,
+    y: number,
+    imageX: number,
+    imageY: number,
+    imageWidth: number,
+    imageHeight: number
+}
+
+export interface PictureTextRegistry {
+    type: 'text',
+    x: number,
+    y: number,
+    text: string,
+    font: string,
+    size: number,
+}
+
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
 export interface WWAData {
@@ -144,7 +165,9 @@ export interface WWAData {
      */
     isGameOverDisabled?: boolean;
 
-    gameOverPolicy: GameOverPolicy
+    gameOverPolicy: GameOverPolicy;
+
+    pictureRegistory: PictureImageRegistory[];
 
 }
 

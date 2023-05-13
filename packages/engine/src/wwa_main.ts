@@ -5485,6 +5485,10 @@ export class WWA {
         }
     }
 
+    public setPictureRegistry() {
+        // TODO 実装する
+    }
+
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;

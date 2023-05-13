@@ -184,6 +184,7 @@ export function createDefaultWWAData(): WWAData {
         isVisibleStatusGold: undefined,
         isGameOverDisabled: undefined,
         gameOverPolicy: "default",
+        pictureRegistory: [],
     };
 }
 

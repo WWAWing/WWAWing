@@ -1,5 +1,6 @@
 
 import { WWAConsts as Consts, Coord } from "./wwa_data";
+import WWAPicutre from "./wwa_picture";
 
 export class CacheCanvas {
     public cvs: HTMLCanvasElement;
@@ -52,6 +53,7 @@ export class CGManager {
     private _backCanvas: CacheCanvas;
     private _objectCanvases: CacheCanvas[];
     private _effectCanvases: CacheCanvas[];
+    private _pictureCanvases: WWAPicutre;
     public mapCache: number[] = void 0;
     public mapObjectCache: number[] = void 0;
     public mapCacheYLimit: number = 0;
@@ -345,6 +347,7 @@ export class CGManager {
         this._backCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, false);
         this._objectCanvases = [];
         this._effectCanvases = [];
+        this._pictureCanvases = new WWAPicutre();
         var i;
         for (i = 0; i < 2; i++) {
             this._objectCanvases[i] = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);
