@@ -28,6 +28,7 @@ import {
     WWASaveData
 } from "./wwa_save";
 import { type TokenValues, type Descriminant, evaluateDescriminant, evaluateMacroArgExpression } from "./wwa_expression";
+import { MAX_PICTURE_LAYERS_COUNT } from "./wwa_picture/config";
 
 /**
  * 値が更新された時に、再評価されるべき値を返す関数の型。
@@ -519,6 +520,10 @@ export class Macro {
                 }
                 case MacroType.CONSOLE_LOG2: {
                     this._executeConsoleLogMacro(2);
+                    return {}
+                }
+                case MacroType.PICTURE: {
+                    this._executePictureMacro();
                     return {}
                 }
                 default: {
@@ -1147,6 +1152,33 @@ export class Macro {
                 }
             }
         );
+    }
+
+    private _executePictureMacro(): void {
+        this._concatEmptyArgs(7);
+        if (this.macroArgs.length < 7) {
+            throw new Error("引数が少なすぎます");
+        }
+        const destPosX = this._evaluateIntValue(0);
+        const destPosY = this._evaluateIntValue(1);
+        const srcPosX = this._evaluateIntValue(2);
+        const srcPosY = this._evaluateIntValue(3);
+        const srcWidth = this._evaluateIntValue(4);
+        const srcHeight = this._evaluateIntValue(5);
+        const layerNumber = this._evaluateIntValue(6);
+        const displayTimeMs = this._evaluateIntValue(7, 0);
+        if (srcPosX < 0 || srcPosY < 0) {
+            throw new Error("画像のパーツ座標指定は0以上の整数でなければなりません。");
+        }
+        if (srcWidth < 0 || srcHeight < 0) {
+            throw new Error("画像のサイズ指定は0以上の整数でなければなりません。");
+        }
+        if (layerNumber < 0 || layerNumber > MAX_PICTURE_LAYERS_COUNT) {
+            throw new Error("レイヤー番号が範囲外です。");
+        }
+        this._wwa.setPictureRegistry({
+            destPosX, destPosY, srcPosX, srcPosY, srcWidth, srcHeight, layerNumber, displayTimeMs
+        })
     }
 }
 

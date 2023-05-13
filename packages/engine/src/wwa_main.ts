@@ -50,6 +50,7 @@ import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawin
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
 import * as ExpressionParser from "./wwa_expression";
+import { PictureMacroArgs } from "./wwa_picture/typedef";
 
 let wwa: WWA
 
@@ -5485,8 +5486,8 @@ export class WWA {
         }
     }
 
-    public setPictureRegistry() {
-        // TODO 実装する
+    public setPictureRegistry(args: PictureMacroArgs) {
+        this._cgManager.setPicture(args);
     }
 
 

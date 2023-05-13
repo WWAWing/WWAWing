@@ -1,6 +1,7 @@
 
 import { WWAConsts as Consts, Coord } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
+import { PictureMacroArgs } from "./wwa_picture/typedef";
 
 export class CacheCanvas {
     public cvs: HTMLCanvasElement;
@@ -339,6 +340,10 @@ export class CGManager {
     public setFrameImage(frameCoord: Coord): void {
         this._frameCoord = frameCoord;
         this.createFrame();
+    }
+
+    public setPicture(args: PictureMacroArgs) {
+        // TODO 実装する
     }
 
     public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {
