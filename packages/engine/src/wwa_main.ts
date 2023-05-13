@@ -5133,6 +5133,12 @@ export class WWA {
         }
 
     }
+
+    // TODO: 後で場所を変更する
+    public getPlayerPositon() {
+        return this._player.getPosition();
+    }
+
     public loadMapPartsObjectID(id: number): number {
         id = id | 0;
         if ((id < 0) || (id >= this._wwaData.objPartsMax)) {
@@ -5627,6 +5633,20 @@ font-weight: bold;
     // 記憶していた座標にジャンプ
     public jumpRecUserPosition(x: number, y: number): void {
         this.forcedJumpGate(this._wwaData.userVar[x], this._wwaData.userVar[y]);
+    }
+    /**
+     * 指定のX座標にジャンプ（Y座標は現在の座標）
+     */
+    public jumpSpecifiedXPos(x: number) {
+        const pos = this._player.getPosition().getPartsCoord();
+        this.forcedJumpGate(x, pos.y);
+    }
+    /**
+     * 指定のY座標にジャンプ（X座標は現在の座標）
+     */
+    public jumpSpecifiedYPos(y: number) {
+        const pos = this._player.getPosition().getPartsCoord();
+        this.forcedJumpGate(pos.x, y);
     }
     // 変数デバッグ出力
     public outputUserVar(num: number): void {
@@ -6189,7 +6209,7 @@ font-weight: bold;
             const evalWWANode = new ExpressionParser2.EvalCalcWwaNode(this);
             const c = evalWWANode.evalWwaNode(b);
             console.log(c);
-            this.generatePageAndReserveExecution(c.toString(), false, true);
+            this.generatePageAndReserveExecution(c?.toString() || '<empty>', false, true);
         } catch(e) {
             console.error(e);
             this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);

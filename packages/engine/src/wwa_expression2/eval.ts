@@ -9,7 +9,7 @@ export class EvalCalcWwaNode {
     this.wwa = wwa;
   }
   
-  evalWwaNode(node: Wwa.Node, wwa?: WWA) {
+  evalWwaNode(node: Wwa.Node) {
     switch (node.type) {
       case "UnaryOperation":
         return this.evalUnaryOperation(node);
@@ -25,20 +25,37 @@ export class EvalCalcWwaNode {
         return this.evalNumber(node);
       case "UserVariableAssignment":
         return this.evalSetUserVariable(node);
+      case "SpecialParameterAssignment":
+        return this.evalSetSpecialParameter(node);
       default:
         throw new Error("未定義または未実装のノードです:\n"+node.type);
     }
   }
 
+  evalSetSpecialParameter(node: Wwa.SpecialParameterAssignment) {
+    const right = this.evalWwaNode(node.value);
+    if(!this.wwa || isNaN(right)) {
+      return 0;
+    }
+    switch(node.kind) {
+      case 'PX':
+        this.wwa.jumpSpecifiedXPos(right);
+        return 0;
+      case 'PY':
+        this.wwa.jumpSpecifiedYPos(right);
+        return 0;
+      default:
+        return 0;
+    }
+  }
+
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
     const right = this.evalWwaNode(node.value);
-    console.log("UserVariableAssignment:");
-    console.log(node);
-    if(this.wwa && !isNaN(right)) {
-      const index: Wwa.Number = <Wwa.Number>node.index;
-      const userVarIndex: number = index.value;
-      this.wwa.setUserVar(userVarIndex, right);
+    if(!this.wwa || isNaN(right) || node.index.type !== "Number") {
+      return 0;
     }
+    const userVarIndex: number = node.index.value;
+    this.wwa.setUserVar(userVarIndex, right);
     return 0;
   }
 
@@ -73,14 +90,17 @@ export class EvalCalcWwaNode {
   }
 
   evalSymbol(node: Wwa.Symbol) {
+    const player_pos = this.wwa.getPlayerPositon().getPartsCoord()
     switch(node.name) {
       case "ITEM":
       case "X":
       case "Y":
-      case "PX":
-      case "PY":
         // UNDONE: WWAから値を取得する
         return 0;
+      case "PX":
+        return player_pos.x;
+      case "PY":
+        return player_pos.y;
       default:
         throw new Error("このシンボルは取得できません")
     }
