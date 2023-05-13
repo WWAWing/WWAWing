@@ -51,7 +51,7 @@ export interface BinaryOperation {
 
 export interface Symbol {
   type: "Symbol";
-  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "PX" | "PY";
+  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD";
 }
 
 export interface Array1D {

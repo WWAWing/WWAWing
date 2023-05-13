@@ -6192,6 +6192,17 @@ font-weight: bold;
             return this._wwaData.gameOverPolicy === "default" || this._wwaData.gameOverPolicy ==="except-macro";
         }
     }
+
+    // TODO: 適切な場所に移す
+    public getPlayerStatus() {
+        return {
+            hpmax: this._player.getEnergyMax(),
+            hp: this._player.getStatus().energy,
+            at: this._player.getStatus().strength,
+            df: this._player.getStatus().defence,
+            gd: this._player.getStatus().gold
+        }
+    }
     
     /** DEBUG用 */
     private _debugEvalString() {

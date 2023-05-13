@@ -90,7 +90,8 @@ export class EvalCalcWwaNode {
   }
 
   evalSymbol(node: Wwa.Symbol) {
-    const player_pos = this.wwa.getPlayerPositon().getPartsCoord()
+    const player_pos = this.wwa.getPlayerPositon().getPartsCoord();
+    const player_status = this.wwa.getPlayerStatus();
     switch(node.name) {
       case "ITEM":
       case "X":
@@ -101,6 +102,16 @@ export class EvalCalcWwaNode {
         return player_pos.x;
       case "PY":
         return player_pos.y;
+      case "AT":
+        return player_status.at;
+      case "DF":
+        return player_status.df;
+      case "GD":      
+        return player_status.gd;
+      case "HP":      
+        return player_status.hp;
+      case "HPMAX":
+        return player_status.hpmax;
       default:
         throw new Error("このシンボルは取得できません")
     }

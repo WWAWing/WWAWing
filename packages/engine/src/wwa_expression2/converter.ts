@@ -176,6 +176,11 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
     case "PX":
     case "PY":
     case "v":
+    case "HP":
+    case "HPMAX":
+    case "AT":
+    case "DF":
+    case "GD":
       return {
         type: "Symbol",
         name: node.name
