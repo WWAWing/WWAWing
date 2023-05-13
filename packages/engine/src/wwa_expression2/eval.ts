@@ -1,3 +1,4 @@
+import { MacroStatusIndex } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -44,7 +45,23 @@ export class EvalCalcWwaNode {
       case 'PY':
         this.wwa.jumpSpecifiedYPos(right);
         return 0;
+      case 'AT':
+        this.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, right, false);
+        return 0;
+      case 'DF':
+        this.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, right, false);
+        return 0;
+      case 'GD':
+        this.wwa.setPlayerStatus(MacroStatusIndex.GOLD, right, false);
+        return 0;
+      case 'HP':
+        this.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, right, false);
+        return 0;
+      case 'HPMAX':
+        this.wwa.setPlayerEnergyMax(right);
+        return 0;
       default:
+        console.error("未実装の要素です: "+node.kind);
         return 0;
     }
   }
