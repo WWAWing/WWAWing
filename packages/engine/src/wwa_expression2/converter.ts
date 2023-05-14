@@ -244,7 +244,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
     if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM") {
       throw new Error("このシンボルは配列にできません");
     }
-    if(property.type === "Number" || property.type === "Symbol") {
+    if(property.type === "Number" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
       // m, o については一次元分適用
       return {
         type: "Array1D",
@@ -252,7 +252,6 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
         index0: property
       }
     } else {
-      // 数値に解決できないものが index に来てはいけない
       throw new Error("WWAでは存在しない構文です")
     }
   } else if (object.type === "Array1D") {
@@ -261,7 +260,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
       throw new Error("この配列は2次元以上にはできません。");
     }
     // 1次元配列 + 1次元分の index を合成
-    if (property.type === "Number") {
+    if (property.type === "Number" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
       return {
         type: "Array2D",
         name: object.name,
