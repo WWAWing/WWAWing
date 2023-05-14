@@ -52,15 +52,13 @@ function execJumpgateFunction(callee: Acorn.Literal[]): Wwa.Node {
     throw new Error("RAND関数には引数が2つ必要です。")
   }
   const pos = {
-    x: callee[0].value,
-    y: callee[1].value
-  }
-  if(isNaN(pos.x) || isNaN(pos.y)) {
-    throw new Error("RAND関数の引数には数値を入れてください。")
+    x: callee[0],
+    y: callee[1]
   }
   return {
-    type: "Number",
-    value: 0
+    type: "Jumpgate",
+    x: convertNodeAcornToWwa(pos.x),
+    y: convertNodeAcornToWwa(pos.y)
   }
 }
 
@@ -78,10 +76,9 @@ function execRandomFunction(callee: Acorn.Literal[]): Wwa.Node {
   //   value: 0
   // }
   // TODO: 後でAcorn.LiteralからAcorn.Nodeに変換させるようにする
-  const hoge: any = callee[0]
   return {
     type: "Random",
-    value: convertNodeAcornToWwa(hoge)
+    value: convertNodeAcornToWwa(callee[0])
   }
   // const randMax = callee[0].value;
   // console.log(callee[0]);

@@ -1,5 +1,3 @@
-import * as Acorn from "./acorn";
-
 export type Calcurable = Array1D | Array2D | Number | Symbol | UnaryOperation | BinaryOperation;
 
 export function isCalcurable(node: Node): node is Calcurable {
@@ -75,6 +73,12 @@ export interface Random {
   value: Node;
 }
 
+export interface Jumpgate {
+  type: "Jumpgate";
+  x: Node;
+  y: Node;
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -86,4 +90,5 @@ export type Node = |
   Array2D |
   Number |
   Symbol |
-  Random;
+  Random |
+  Jumpgate;

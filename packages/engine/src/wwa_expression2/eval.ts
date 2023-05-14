@@ -30,9 +30,20 @@ export class EvalCalcWwaNode {
         return this.evalSetSpecialParameter(node);
       case "Random":
         return this.evalRandom(node);
+      case "Jumpgate":
+        return this.evalJumpgate(node);
       default:
         throw new Error("未定義または未実装のノードです:\n"+node.type);
     }
+  }
+
+  evalJumpgate(node: Wwa.Jumpgate) {
+    const x = this.evalWwaNode(node.x);
+    const y = this.evalWwaNode(node.y);
+    if(isNaN(x) || isNaN(y)) {
+      throw new Error(`飛び先の値が数値になっていません。 x=${x} / y=${y}`);
+    }
+    this.wwa.forcedJumpGate(x, y);
   }
 
   evalRandom(node: Wwa.Random) {
