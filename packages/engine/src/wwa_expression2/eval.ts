@@ -44,9 +44,15 @@ export class EvalCalcWwaNode {
         return this.itemAssignment(node);
       case "IfStatement":
         return this.ifStatement(node)
+      case "BlockStatement":
+        return this.blockStatement(node)
       default:
         throw new Error("未定義または未実装のノードです:\n"+node.type);
     }
+  }
+
+  blockStatement(node: Wwa.BlockStatement) {
+    this.evalWwaNodes(node.value);
   }
 
   ifStatement(node: Wwa.IfStatement) {

@@ -6220,9 +6220,11 @@ font-weight: bold;
             const baseEvalStr = getElement.value;
             const a = ExpressionParser2.parse(baseEvalStr);
             console.log(a);
+            console.log("b:");
             const b = ExpressionParser2.convertNodeAcornToWwaArray(a);
             console.log(b);
             const evalWWANode = new ExpressionParser2.EvalCalcWwaNode(this);
+            console.log("c:");
             const c = evalWWANode.evalWwaNodes(b);
             console.log(c);
         } catch(e) {

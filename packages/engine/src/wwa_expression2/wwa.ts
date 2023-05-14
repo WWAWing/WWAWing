@@ -91,6 +91,11 @@ export interface IfStatement {
   alternate?: Node
 }
 
+export interface BlockStatement {
+  type: "BlockStatement",
+  value: Node[]
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -105,4 +110,5 @@ export type Node = |
   Random |
   Jumpgate |
   Msg |
-  IfStatement;
+  IfStatement |
+  BlockStatement;

@@ -41,7 +41,12 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
 }
 
 function convertBlockStatement(node: Acorn.BlockStatement): Wwa.Node {
-  return convertNodeAcornToWwa(node.body[0]);
+  return {
+    type: "BlockStatement",
+    value: node.body.map((body) => {
+      return convertNodeAcornToWwa(body);
+    })
+  }
 }
 
 function convertIfStatement(node: Acorn.IfStatement): Wwa.Node {
