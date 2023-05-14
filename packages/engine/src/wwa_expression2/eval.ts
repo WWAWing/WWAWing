@@ -28,9 +28,16 @@ export class EvalCalcWwaNode {
         return this.evalSetUserVariable(node);
       case "SpecialParameterAssignment":
         return this.evalSetSpecialParameter(node);
+      case "Random":
+        return this.evalRandom(node);
       default:
         throw new Error("未定義または未実装のノードです:\n"+node.type);
     }
+  }
+
+  evalRandom(node: Wwa.Random) {
+    const maxRandValue = this.evalWwaNode(node.value);
+    return Math.floor(Math.random()*maxRandValue);
   }
 
   evalSetSpecialParameter(node: Wwa.SpecialParameterAssignment) {

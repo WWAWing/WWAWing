@@ -6330,7 +6330,7 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     const evalStringInputArea = document.createElement("textarea");
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
-    evalStringInputArea.textContent = "AT=RAND(100)";
+    evalStringInputArea.textContent = "AT=RAND(HP)";
     controllerElm.appendChild(evalStringInput);
 }
 

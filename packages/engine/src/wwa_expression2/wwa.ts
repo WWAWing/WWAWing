@@ -1,12 +1,10 @@
+import * as Acorn from "./acorn";
+
 export type Calcurable = Array1D | Array2D | Number | Symbol | UnaryOperation | BinaryOperation;
+
 export function isCalcurable(node: Node): node is Calcurable {
-  return (node.type === "Array1D" ||
-   node.type === "Array2D" ||
-   node.type === "Number" ||
-   node.type === "Symbol" ||
-   node.type === "UnaryOperation" ||
-    node.type === "BinaryOperation"
-  );
+  const supportType = ["Array1D", "Array2D", "Number", "Symbol", "UnaryOperation", "BinaryOperation", "Random"];
+  return supportType.includes(node.type);
 }
 
 export interface PartsAssignment {
@@ -72,6 +70,11 @@ export interface Number {
   value: number;
 }
 
+export interface Random {
+  type: "Random";
+  value: Node;
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -82,4 +85,5 @@ export type Node = |
   Array1D |
   Array2D |
   Number |
-  Symbol;
+  Symbol |
+  Random;

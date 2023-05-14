@@ -32,13 +32,35 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
  * @returns 
  */
 function convertCallExpression(node: Acorn.CallExpression): Wwa.Node  {
-  console.log(node);
   const functionName = node.callee.name;
   switch(functionName) {
     case "RAND":
       return execRandomFunction(node.arguments);
+    case "JUMPGATE":
+      return execJumpgateFunction(node.arguments);
     default:
       throw new Error("想定外の関数が指定されました: "+functionName);
+  }
+}
+
+/**
+ * JUMPGATE関数を実行する
+ * JUMPGATEを実行するための識別子を返す
+ */
+function execJumpgateFunction(callee: Acorn.Literal[]): Wwa.Node {
+  if(callee.length < 2) {
+    throw new Error("RAND関数には引数が2つ必要です。")
+  }
+  const pos = {
+    x: callee[0].value,
+    y: callee[1].value
+  }
+  if(isNaN(pos.x) || isNaN(pos.y)) {
+    throw new Error("RAND関数の引数には数値を入れてください。")
+  }
+  return {
+    type: "Number",
+    value: 0
   }
 }
 
@@ -51,14 +73,27 @@ function execRandomFunction(callee: Acorn.Literal[]): Wwa.Node {
   if(callee.length < 1) {
     throw new Error("RAND関数には引数が必要です。")
   }
-  const randMax = callee[0].value;
-  if(isNaN(randMax)) {
-    throw new Error("RAND関数の引数には数値を入れてください。")
-  }
+  // return {
+  //   type: "Number",
+  //   value: 0
+  // }
+  // TODO: 後でAcorn.LiteralからAcorn.Nodeに変換させるようにする
+  const hoge: any = callee[0]
   return {
-    type: "Number",
-    value: Math.floor(Math.random()*randMax)
+    type: "Random",
+    value: convertNodeAcornToWwa(hoge)
   }
+  // const randMax = callee[0].value;
+  // console.log(callee[0]);
+  // const test = convertNodeAcornToWwa(callee[0]);
+  // console.log(test);
+  // if(isNaN(randMax)) {
+  //   throw new Error("RAND関数の引数には数値を入れてください。")
+  // }
+  // return {
+  //   type: "Number",
+  //   value: Math.floor(Math.random()*randMax)
+  // }
 }
 
 function convertProgram(node: Acorn.Program): Wwa.Node {
