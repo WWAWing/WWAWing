@@ -6219,12 +6219,12 @@ font-weight: bold;
             const getElement: any = document.getElementsByClassName('eval-string-input-area')[0];
             const baseEvalStr = getElement.value;
             const a = ExpressionParser2.parse(baseEvalStr);
-            // console.log(a);
+            console.log(a);
             const b = ExpressionParser2.convertNodeAcornToWwaArray(a);
-            // console.log(b);
+            console.log(b);
             const evalWWANode = new ExpressionParser2.EvalCalcWwaNode(this);
             const c = evalWWANode.evalWwaNodes(b);
-            // console.log(c);
+            console.log(c);
         } catch(e) {
             console.error(e);
             this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
@@ -6334,7 +6334,7 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     const evalStringInputArea = document.createElement("textarea");
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
-    evalStringInputArea.textContent = `ITEM[0]=AT+1`;
+    evalStringInputArea.textContent = `if(HP > 100) {\n  v[0] = 100;\n}`;
     controllerElm.appendChild(evalStringInput);
 }
 

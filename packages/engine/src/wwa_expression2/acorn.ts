@@ -52,3 +52,14 @@ export interface CallExpression extends Node {
   arguments: Literal[],
   callee: Identifier
 }
+
+export interface IfStatement extends Node {
+  type: "IfStatement",
+  consequent: Node,
+  test: Node
+}
+
+export interface BlockStatement extends Node {
+  type: "BlockStatement",
+  body: Node[]
+}

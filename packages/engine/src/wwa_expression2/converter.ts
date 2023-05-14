@@ -31,9 +31,27 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
         return convertLiteral(node as Acorn.Literal);
       case "CallExpression":
         return convertCallExpression(node as Acorn.CallExpression);
+      case "IfStatement":
+        return convertIfStatement(node as Acorn.IfStatement);
+      case "BlockStatement":
+        return convertBlockStatement(node as Acorn.BlockStatement);
       default:
         throw new Error("未定義の AST ノードです :" + node.type);
     }
+}
+
+function convertBlockStatement(node: Acorn.BlockStatement): Wwa.Node {
+  return convertNodeAcornToWwa(node.body[0]);
+}
+
+function convertIfStatement(node: Acorn.IfStatement): Wwa.Node {
+  const consequent = convertNodeAcornToWwa(node.consequent);
+  const test = convertNodeAcornToWwa(node.test);
+  return {
+    type: "IfStatement",
+    consequent: consequent,
+    test: test
+  }
 }
 
 /**
@@ -170,7 +188,7 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.Node
 function convertUnaryExpression(node: Acorn.UnaryExpression): Wwa.UnaryOperation {
   const argument = convertNodeAcornToWwa(node.argument);
   if(node.operator !== "+" && node.operator !== "-") {
-    throw new Error("未定義の演算子です");
+    throw new Error("未定義の演算子です :"+node.operator);
   }
   if(!Wwa.isCalcurable(argument)) {
     throw new Error("単項演算子が適用できません");
@@ -194,6 +212,12 @@ function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.Node {
     case "*":
     case "/":
     case "%":
+    case ">":
+    case "<":
+    case ">=":
+    case "<=":
+    case "==":
+    case "!=":
       return {
         type: "BinaryOperation",
         operator: node.operator,
@@ -201,7 +225,7 @@ function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.Node {
         right
       }
     default:
-      throw new Error("未定義の演算子です");
+      throw new Error("未定義の演算子です :"+node.operator);
   }
 }
 

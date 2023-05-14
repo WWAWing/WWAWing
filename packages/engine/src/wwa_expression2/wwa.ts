@@ -40,7 +40,7 @@ export interface UnaryOperation {
 
 export interface BinaryOperation {
   type: "BinaryOperation";
-  operator: "+" | "-" | "*" | "/" | "%";
+  operator: "+" | "-" | "*" | "/" | "%" | ">" | "<" | ">=" | "<=" | "==" | "!=";
   left: Calcurable;
   right: Calcurable;
 }
@@ -84,6 +84,12 @@ export interface Msg {
   value: Node
 }
 
+export interface IfStatement {
+  type: "IfStatement",
+  consequent: Node,
+  test: Node
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -97,4 +103,5 @@ export type Node = |
   Symbol |
   Random |
   Jumpgate |
-  Msg;
+  Msg |
+  IfStatement;

@@ -42,9 +42,20 @@ export class EvalCalcWwaNode {
         return this.evalMessage(node);
       case "ItemAssignment":
         return this.itemAssignment(node);
+      case "IfStatement":
+        return this.ifStatement(node)
       default:
         throw new Error("未定義または未実装のノードです:\n"+node.type);
     }
+  }
+
+  ifStatement(node: Wwa.IfStatement) {
+    const ifResult = this.evalWwaNode(node.test);
+    if(ifResult) {
+      // IFがTRUEの場合には以下を実行する
+      this.evalWwaNode(node.consequent);
+    }
+    return 0;
   }
 
   /**
@@ -148,6 +159,18 @@ export class EvalCalcWwaNode {
         return right === 0 ? 0 : Math.floor(left / right);
       case "%":
         return right === 0 ? 0 :left % right;
+      case ">":
+        return left > right;
+      case ">=":
+        return left >= right;
+      case "<":
+        return left < right;
+      case "<=":
+        return left >= right;
+      case "==":
+        return left == right;
+      case "!=":
+        return left != right;
       default:
         throw new Error("存在しない単項演算子です");
     }
