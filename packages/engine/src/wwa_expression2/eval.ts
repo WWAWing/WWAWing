@@ -140,28 +140,30 @@ export class EvalCalcWwaNode {
   }
 
   evalSymbol(node: Wwa.Symbol) {
-    const player_pos = this.wwa.getPlayerPositon().getPartsCoord();
-    const player_status = this.wwa.getPlayerStatus();
+    const game_status = this.wwa.getGameStatus();
     switch(node.name) {
-      case "ITEM":
       case "X":
       case "Y":
         // UNDONE: WWAから値を取得する
         return 0;
       case "PX":
-        return player_pos.x;
+        return game_status.playerCoord.x;
       case "PY":
-        return player_pos.y;
+        return game_status.playerCoord.y;
       case "AT":
-        return player_status.at;
+        return game_status.totalStatus.strength;
       case "DF":
-        return player_status.df;
+        return game_status.totalStatus.defence;
       case "GD":      
-        return player_status.gd;
+        return game_status.totalStatus.gold;
       case "HP":      
-        return player_status.hp;
+        return game_status.totalStatus.energy;
       case "HPMAX":
-        return player_status.hpmax;
+        return game_status.energyMax;
+      case "STEP":
+        return game_status.moveCount;
+      case "TIME":
+        return game_status.playTime;
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -170,12 +172,15 @@ export class EvalCalcWwaNode {
   evalArray1D(node: Wwa.Array1D) {
     const index: Wwa.Number = <Wwa.Number>node.index0;
     const userVarIndex: number = index.value;
+    const game_status = this.wwa.getGameStatus();
     switch (node.name) {
       case "v":
         return this.wwa.getUserVar(userVarIndex);
       case "ITEM":
-        // UNDONE: WWAから値を取得する
-        return 0;
+        if(game_status.itemBox[userVarIndex] === undefined) {
+          throw new Error("ITMEの添字に想定外の値が入っています。: "+userVarIndex);
+        }
+        return game_status.itemBox[userVarIndex];
       default:
         throw new Error("このシンボルは取得できません")
     }

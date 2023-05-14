@@ -6194,13 +6194,18 @@ font-weight: bold;
     }
 
     // TODO: 適切な場所に移す
-    public getPlayerStatus() {
+    public getGameStatus() {
         return {
-            hpmax: this._player.getEnergyMax(),
-            hp: this._player.getStatus().energy,
-            at: this._player.getStatus().strength,
-            df: this._player.getStatus().defence,
-            gd: this._player.getStatus().gold
+            totalStatus: this._player.getStatus(),
+            bareStatus: this._player.getStatusWithoutEquipments(),
+            itemStatus: this._player.getStatusOfEquipments(),
+            energyMax: this._player.getEnergyMax(),
+            moveCount: this._player.getMoveCount(),
+            playTime: this._wwaData.playTime,
+            userVars: this._wwaData.userVar,
+            playerCoord: this._player.getPosition().getPartsCoord(),
+            playerDirection: this._player.getDir(),
+            itemBox: this._player.getCopyOfItemBox()
         }
     }
     
@@ -6214,17 +6219,12 @@ font-weight: bold;
             const getElement: any = document.getElementsByClassName('eval-string-input-area')[0];
             const baseEvalStr = getElement.value;
             const a = ExpressionParser2.parse(baseEvalStr);
-            console.log(a);
+            // console.log(a);
             const b = ExpressionParser2.convertNodeAcornToWwaArray(a);
-            console.log(b);
+            // console.log(b);
             const evalWWANode = new ExpressionParser2.EvalCalcWwaNode(this);
             const c = evalWWANode.evalWwaNodes(b);
-            console.log(c);
-            let display = "";
-            c.forEach((d) => {
-                display += `${d}\n`
-            })
-            this.generatePageAndReserveExecution(display?.toString() || '<empty>', false, true);
+            // console.log(c);
         } catch(e) {
             console.error(e);
             this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
@@ -6334,7 +6334,7 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     const evalStringInputArea = document.createElement("textarea");
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
-    evalStringInputArea.textContent = `MSG("テストです。")`;
+    evalStringInputArea.textContent = `v[0]=ITEM[1]`;
     controllerElm.appendChild(evalStringInput);
 }
 

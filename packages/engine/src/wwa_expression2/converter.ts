@@ -56,6 +56,11 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.Node  {
   }
 }
 
+/**
+ * Message関数を実行する
+ * @param callee 
+ * @returns 
+ */
 function execMessageFunction(callee: Acorn.Literal[]): Wwa.Node {
   return {
     type: "Msg",
@@ -91,26 +96,11 @@ function execRandomFunction(callee: Acorn.Literal[]): Wwa.Node {
   if(callee.length < 1) {
     throw new Error("RAND関数には引数が必要です。")
   }
-  // return {
-  //   type: "Number",
-  //   value: 0
-  // }
   // TODO: 後でAcorn.LiteralからAcorn.Nodeに変換させるようにする
   return {
     type: "Random",
     value: convertNodeAcornToWwa(callee[0])
   }
-  // const randMax = callee[0].value;
-  // console.log(callee[0]);
-  // const test = convertNodeAcornToWwa(callee[0]);
-  // console.log(test);
-  // if(isNaN(randMax)) {
-  //   throw new Error("RAND関数の引数には数値を入れてください。")
-  // }
-  // return {
-  //   type: "Number",
-  //   value: Math.floor(Math.random()*randMax)
-  // }
 }
 
 function convertProgram(node: Acorn.Program): Wwa.Node {
@@ -270,6 +260,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
     case "AT":
     case "DF":
     case "GD":
+    case "STEP":
+    case "TIME":
       return {
         type: "Symbol",
         name: node.name
