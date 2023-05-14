@@ -79,6 +79,11 @@ export interface Jumpgate {
   y: Node;
 }
 
+export interface Msg {
+  type: "Msg";
+  value: Node
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -91,4 +96,5 @@ export type Node = |
   Number |
   Symbol |
   Random |
-  Jumpgate;
+  Jumpgate |
+  Msg;

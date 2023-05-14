@@ -38,9 +38,18 @@ export class EvalCalcWwaNode {
         return this.evalRandom(node);
       case "Jumpgate":
         return this.evalJumpgate(node);
+      case "Msg":
+        return this.evalMessage(node);
       default:
         throw new Error("未定義または未実装のノードです:\n"+node.type);
     }
+  }
+
+  evalMessage(node: Wwa.Msg) {
+    const value = this.evalWwaNode(node.value);
+    const showString = isNaN(value)? value: value.toString();
+    this.wwa.generatePageAndReserveExecution(showString, false, false);
+    return 0;
   }
 
   evalJumpgate(node: Wwa.Jumpgate) {

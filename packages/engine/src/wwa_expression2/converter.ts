@@ -48,8 +48,18 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.Node  {
       return execRandomFunction(node.arguments);
     case "JUMPGATE":
       return execJumpgateFunction(node.arguments);
+    case "MSG":
+    case "MESSAGE":
+      return execMessageFunction(node.arguments);
     default:
       throw new Error("想定外の関数が指定されました: "+functionName);
+  }
+}
+
+function execMessageFunction(callee: Acorn.Literal[]): Wwa.Node {
+  return {
+    type: "Msg",
+    value: convertNodeAcornToWwa(callee[0])
   }
 }
 
