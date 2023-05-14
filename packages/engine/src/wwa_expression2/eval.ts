@@ -211,6 +211,8 @@ export class EvalCalcWwaNode {
         return game_status.moveCount;
       case "TIME":
         return game_status.playTime;
+      case "PRID":
+        return game_status.playerDirection
       default:
         throw new Error("このシンボルは取得できません")
     }

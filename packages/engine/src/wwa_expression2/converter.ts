@@ -292,6 +292,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
     case "GD":
     case "STEP":
     case "TIME":
+    case "PRID":
       return {
         type: "Symbol",
         name: node.name
