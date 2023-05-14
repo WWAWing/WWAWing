@@ -40,9 +40,23 @@ export class EvalCalcWwaNode {
         return this.evalJumpgate(node);
       case "Msg":
         return this.evalMessage(node);
+      case "ItemAssignment":
+        return this.itemAssignment(node);
       default:
         throw new Error("未定義または未実装のノードです:\n"+node.type);
     }
+  }
+
+  /**
+   * 保持しているITMEを変更する
+   * @param node 
+   * @returns 
+   */
+  itemAssignment(node: Wwa.ItemAssignment) {
+    const idx = this.evalWwaNode(node.itemBoxPosition1to12);
+    const itemID = this.evalWwaNode(node.value);
+    this.wwa.setPlayerGetItem(idx, itemID);
+    return 0;
   }
 
   evalMessage(node: Wwa.Msg) {

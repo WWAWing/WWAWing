@@ -6334,7 +6334,7 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     const evalStringInputArea = document.createElement("textarea");
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
-    evalStringInputArea.textContent = `v[0]=ITEM[1]`;
+    evalStringInputArea.textContent = `ITEM[0]=AT+1`;
     controllerElm.appendChild(evalStringInput);
 }
 
