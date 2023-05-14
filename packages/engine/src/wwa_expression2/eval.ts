@@ -6,8 +6,18 @@ import * as Wwa from "./wwa";
 
 export class EvalCalcWwaNode {
   wwa: WWA;
+  for_id: {
+    i: number,
+    j: number,
+    k: number
+  }
   constructor(wwa: WWA) {
     this.wwa = wwa;
+    this.for_id = {
+      i: 0,
+      j: 0,
+      k: 0
+    }
   }
 
   evalWwaNodes(nodes: Wwa.Node[]) {
@@ -48,8 +58,22 @@ export class EvalCalcWwaNode {
         return this.blockStatement(node);
       case "PartsAssignment":
         return this.partsAssignment(node);
+      case "ForStatement":
+        return this.forStateMent(node);
       default:
         throw new Error("未定義または未実装のノードです:\n"+node.type);
+    }
+  }
+
+  /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
+  forStateMent(node: Wwa.ForStatement) {
+    // TODO: for文の入れ子には未対応
+    this.for_id.i = 0;
+    const addValue = this.evalWwaNode(node.update);
+    this.for_id.i = this.evalWwaNode(node.init);
+    for(let i = this.for_id.i; this.evalWwaNode(node.test); i+=addValue) {
+      this.for_id.i = i;
+      this.evalWwaNodes(node.body);
     }
   }
 
@@ -140,6 +164,9 @@ export class EvalCalcWwaNode {
       case 'HPMAX':
         this.wwa.setPlayerEnergyMax(right);
         return 0;
+      /** for文用（暫定） */
+      case 'i':
+        return this.evalWwaNode(node.value);
       default:
         console.error("未実装の要素です: "+node.kind);
         return 0;
@@ -225,6 +252,9 @@ export class EvalCalcWwaNode {
         return game_status.playTime;
       case "PRID":
         return game_status.playerDirection
+      /** for文用（暫定） */
+      case 'i':
+        return this.for_id.i;
       default:
         throw new Error("このシンボルは取得できません")
     }

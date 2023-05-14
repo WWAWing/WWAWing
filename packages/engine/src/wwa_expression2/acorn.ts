@@ -64,3 +64,15 @@ export interface BlockStatement extends Node {
   type: "BlockStatement",
   body: Node[]
 }
+
+export interface ForStatement extends Node {
+  type: "ForStatement";
+  body: BlockStatement;
+  init: Node;
+  test: Node;
+  update: Node;
+}
+
+export interface UpdateExpression extends Node {
+  type: "UpdateExpression"
+}

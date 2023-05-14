@@ -35,9 +35,24 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
         return convertIfStatement(node as Acorn.IfStatement);
       case "BlockStatement":
         return convertBlockStatement(node as Acorn.BlockStatement);
+      case "ForStatement":
+        return convertForStatement(node as Acorn.ForStatement);
       default:
         throw new Error("未定義の AST ノードです :" + node.type);
     }
+}
+
+function convertForStatement(node: Acorn.ForStatement): Wwa.Node {
+  const body = node.body.body.map((body) => {
+    return convertNodeAcornToWwa(body);
+  })
+  return {
+    type: "ForStatement",
+    body: body,
+    init: convertNodeAcornToWwa(node.init),
+    test: convertNodeAcornToWwa(node.test),
+    update: convertNodeAcornToWwa(node.update),
+  }
 }
 
 function convertBlockStatement(node: Acorn.BlockStatement): Wwa.Node {
@@ -292,6 +307,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
     case "STEP":
     case "TIME":
     case "PRID":
+    case "i":
       return {
         type: "Symbol",
         name: node.name

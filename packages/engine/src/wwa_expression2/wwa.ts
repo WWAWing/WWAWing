@@ -28,7 +28,7 @@ export interface UserVariableAssignment {
 
 export interface SpecialParameterAssignment {
   type: "SpecialParameterAssignment";
-  kind: "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PRID";
+  kind: "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PRID" | "i";
   value: Calcurable;
 }
 
@@ -47,7 +47,7 @@ export interface BinaryOperation {
 
 export interface Symbol {
   type: "Symbol";
-  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PRID";
+  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PRID" | "i";
 }
 
 export interface Array1D {
@@ -96,6 +96,14 @@ export interface BlockStatement {
   value: Node[]
 }
 
+export interface ForStatement {
+  type: "ForStatement";
+  body: Node[];
+  init: Node;
+  test: Node;
+  update: Node;
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -111,4 +119,5 @@ export type Node = |
   Jumpgate |
   Msg |
   IfStatement |
-  BlockStatement;
+  BlockStatement |
+  ForStatement;
