@@ -46,3 +46,9 @@ export interface Literal extends Node {
   type: "Literal",
   value: number;
 }
+
+export interface CallExpression extends Node {
+  type: "CallExpression",
+  arguments: Literal[],
+  callee: Identifier
+}

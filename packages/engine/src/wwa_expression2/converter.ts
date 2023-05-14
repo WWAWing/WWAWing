@@ -19,9 +19,46 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
         return convertIdentifer(node as Acorn.Identifier);
       case "Literal":
         return convertLiteral(node as Acorn.Literal);
+      case "CallExpression":
+        return convertCallExpression(node as Acorn.CallExpression);
       default:
         throw new Error("未定義の AST ノードです :" + node.type);
     }
+}
+
+/**
+ * RANDなど特殊関数を判別して実行する
+ * @param node 
+ * @returns 
+ */
+function convertCallExpression(node: Acorn.CallExpression): Wwa.Node  {
+  console.log(node);
+  const functionName = node.callee.name;
+  switch(functionName) {
+    case "RAND":
+      return execRandomFunction(node.arguments);
+    default:
+      throw new Error("想定外の関数が指定されました: "+functionName);
+  }
+}
+
+/**
+ * RAND関数を実行する
+ * @param callee 
+ * @returns 
+ */
+function execRandomFunction(callee: Acorn.Literal[]): Wwa.Node {
+  if(callee.length < 1) {
+    throw new Error("RAND関数には引数が必要です。")
+  }
+  const randMax = callee[0].value;
+  if(isNaN(randMax)) {
+    throw new Error("RAND関数の引数には数値を入れてください。")
+  }
+  return {
+    type: "Number",
+    value: Math.floor(Math.random()*randMax)
+  }
 }
 
 function convertProgram(node: Acorn.Program): Wwa.Node {
