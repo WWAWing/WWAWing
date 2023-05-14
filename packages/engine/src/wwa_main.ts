@@ -6215,12 +6215,16 @@ font-weight: bold;
             const baseEvalStr = getElement.value;
             const a = ExpressionParser2.parse(baseEvalStr);
             console.log(a);
-            const b = ExpressionParser2.convertNodeAcornToWwa(a);
+            const b = ExpressionParser2.convertNodeAcornToWwaArray(a);
             console.log(b);
             const evalWWANode = new ExpressionParser2.EvalCalcWwaNode(this);
-            const c = evalWWANode.evalWwaNode(b);
+            const c = evalWWANode.evalWwaNodes(b);
             console.log(c);
-            this.generatePageAndReserveExecution(c?.toString() || '<empty>', false, true);
+            let display = "";
+            c.forEach((d) => {
+                display += `${d}\n`
+            })
+            this.generatePageAndReserveExecution(display?.toString() || '<empty>', false, true);
         } catch(e) {
             console.error(e);
             this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
@@ -6330,7 +6334,7 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     const evalStringInputArea = document.createElement("textarea");
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
-    evalStringInputArea.textContent = "AT=RAND(HP)";
+    evalStringInputArea.textContent = "v[0]=20;\nv[1]=10;\nJUMPGATE(v[0], v[1])";
     controllerElm.appendChild(evalStringInput);
 }
 

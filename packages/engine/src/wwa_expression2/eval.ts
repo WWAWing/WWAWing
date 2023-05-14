@@ -9,6 +9,12 @@ export class EvalCalcWwaNode {
   constructor(wwa: WWA) {
     this.wwa = wwa;
   }
+
+  evalWwaNodes(nodes: Wwa.Node[]) {
+    return nodes.map((node) => {
+      return this.evalWwaNode(node)
+    })
+  }
   
   evalWwaNode(node: Wwa.Node) {
     switch (node.type) {

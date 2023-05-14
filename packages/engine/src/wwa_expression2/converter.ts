@@ -1,6 +1,16 @@
 import * as Acorn from "./acorn";
 import * as Wwa from "./wwa";
 
+export function convertNodeAcornToWwaArray(node: Acorn.Node): Wwa.Node[] {
+  if(node.type === "Program") {
+    const arrayNode: Acorn.Program = <Acorn.Program>node;
+    return arrayNode.body.map((oneNode) => {
+      return convertNodeAcornToWwa(oneNode)
+    })
+  }
+  return [convertNodeAcornToWwa(node)];
+}
+
 export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
     switch(node.type) {
       case "Program":
