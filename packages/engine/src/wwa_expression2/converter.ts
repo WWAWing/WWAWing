@@ -50,8 +50,9 @@ function convertIfStatement(node: Acorn.IfStatement): Wwa.Node {
   return {
     type: "IfStatement",
     consequent: consequent,
-    test: test
-  }
+    test: test,
+    alternate: node.alternate? convertNodeAcornToWwa(node.alternate): undefined
+  };
 }
 
 /**

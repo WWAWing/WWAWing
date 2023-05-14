@@ -56,7 +56,8 @@ export interface CallExpression extends Node {
 export interface IfStatement extends Node {
   type: "IfStatement",
   consequent: Node,
-  test: Node
+  test: Node,
+  alternate?: IfStatement
 }
 
 export interface BlockStatement extends Node {

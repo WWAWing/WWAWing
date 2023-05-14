@@ -87,7 +87,8 @@ export interface Msg {
 export interface IfStatement {
   type: "IfStatement",
   consequent: Node,
-  test: Node
+  test: Node,
+  alternate?: Node
 }
 
 export type Node = |

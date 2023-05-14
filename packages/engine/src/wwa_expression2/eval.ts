@@ -55,6 +55,10 @@ export class EvalCalcWwaNode {
       // IFがTRUEの場合には以下を実行する
       this.evalWwaNode(node.consequent);
     }
+    // ELSEの場合には以下条件を繰り返し実行する
+    else if(node.alternate) {
+      this.evalWwaNode(node.alternate);
+    }
     return 0;
   }
 
