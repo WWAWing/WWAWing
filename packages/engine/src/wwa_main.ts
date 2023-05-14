@@ -6339,15 +6339,16 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
     evalStringInputArea.textContent = 
-`if(HP >= 1000) {
+`o[5][5]=1;
+if(HP >= 1000) {
     v[0] = 1000;
-    MSG("HPは1000以上です。")
+    MSG("HPは1000以上です。");
 } else if(HP >= 100) {
     v[0] = 100;
-    MSG("HPは100以上です。")
+    MSG("HPは100以上です。");
 } else {
-    v[0] = 0
-    MSG("HPは100未満です。")
+    v[0] = 0;
+    MSG("HPは100未満です。");
 }`;
     controllerElm.appendChild(evalStringInput);
 }

@@ -1,4 +1,4 @@
-import { MacroStatusIndex } from "../wwa_data";
+import { MacroStatusIndex, PartsType } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -43,12 +43,24 @@ export class EvalCalcWwaNode {
       case "ItemAssignment":
         return this.itemAssignment(node);
       case "IfStatement":
-        return this.ifStatement(node)
+        return this.ifStatement(node);
       case "BlockStatement":
-        return this.blockStatement(node)
+        return this.blockStatement(node);
+      case "PartsAssignment":
+        return this.partsAssignment(node);
       default:
         throw new Error("未定義または未実装のノードです:\n"+node.type);
     }
+  }
+
+  /** m[0][0] のような二次元はを処理する */
+  partsAssignment(node: Wwa.PartsAssignment) {
+    const game_status = this.wwa.getGameStatus();
+    const x = this.evalWwaNode(node.destinationX);
+    const y = this.evalWwaNode(node.destinationY);
+    const value = this.evalWwaNode(node.value);
+    const partsKind = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
+    this.wwa.appearPartsEval(game_status.playerCoord, x, y, value, partsKind);
   }
 
   blockStatement(node: Wwa.BlockStatement) {
