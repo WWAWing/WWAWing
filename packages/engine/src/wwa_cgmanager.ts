@@ -1,4 +1,5 @@
 
+import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
 import { PictureMacroArgs } from "./wwa_picture/typedef";
@@ -157,6 +158,9 @@ export class CGManager {
             }
         }
     }
+    public updatePictures(): void {
+        this._pictureCanvases.updatePictures(this._image);
+    }
 
     public drawFrame(): void {
         // 全
@@ -190,6 +194,12 @@ export class CGManager {
         this._ctx.drawImage(effectCanvas.cvs,
             0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW,
             0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
+    }
+
+    public drawPictures(): void {
+        this._pictureCanvases.forEachPictures((picture) => {
+            this._ctx.drawImage(picture.canvas.cvs, picture.x, picture.y);
+        });
     }
 
     public drawCanvas(chipX: number, chipY: number, canvasX: number, canvasY: number): void {
@@ -342,8 +352,12 @@ export class CGManager {
         this.createFrame();
     }
 
-    public setPicture(args: PictureMacroArgs) {
-        // TODO 実装する
+    public setPicture(layerNumber: number, registory: PictureRegistory | null) {
+        if (registory === null) {
+            this._pictureCanvases.deletePicture(layerNumber);
+        } else {
+            this._pictureCanvases.registPictureImage(registory);
+        }
     }
 
     public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {

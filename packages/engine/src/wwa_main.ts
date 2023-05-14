@@ -51,6 +51,7 @@ import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
 import * as ExpressionParser from "./wwa_expression";
 import { PictureMacroArgs } from "./wwa_picture/typedef";
+import WWAPicutre from "./wwa_picture";
 
 let wwa: WWA
 
@@ -2721,6 +2722,10 @@ export class WWA {
 
     private _drawFrame(): void {
         this._cgManager.drawFrame();
+    }
+
+    private _drawPictures(): void {
+        this._cgManager.drawPictures();
     }
 
     private _checkNoDrawObject(objCoord: Coord, objType: number, atrNumber: number): boolean {
@@ -5487,7 +5492,13 @@ export class WWA {
     }
 
     public setPictureRegistry(args: PictureMacroArgs) {
-        this._cgManager.setPicture(args);
+        const registory = WWAPicutre.convertPictureImageRegistory(args);
+        if (registory === null) {
+            this._wwaData.pictureRegistory.splice(args.layerNumber, 1);
+        } else {
+            this._wwaData.pictureRegistory[args.layerNumber] = registory;
+        }
+        this._cgManager.setPicture(args.layerNumber, registory);
     }
 
 

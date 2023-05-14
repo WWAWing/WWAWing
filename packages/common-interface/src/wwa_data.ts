@@ -17,6 +17,7 @@ export interface PictureImageRegistory {
     type: 'image',
     x: number,
     y: number,
+    layerNumber: number,
     imageX: number,
     imageY: number,
     imageWidth: number,
@@ -27,6 +28,7 @@ export interface PictureTextRegistry {
     type: 'text',
     x: number,
     y: number,
+    layerNumber: number,
     text: string,
     font: string,
     size: number,
@@ -167,7 +169,7 @@ export interface WWAData {
 
     gameOverPolicy: GameOverPolicy;
 
-    pictureRegistory: PictureImageRegistory[];
+    pictureRegistory: PictureRegistory[];
 
 }
 
