@@ -6339,9 +6339,17 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
     evalStringInputArea.textContent =
-`for(i=0; i<10; i=i+1) {
-    MSG(i);
+`for(i=0; i<5; i=i+1) {
+    for(j=0; j<5; j=j+1) {
+        for(k=0; k<2; k=k+1) {
+            MSG("i:"+i+"/ j:"+j+"/k:"+k);
+        }
+    }
 }`;
+
+// `for(i=0; i<5; i=i+1) {
+//     MSG("i:"+i+"/ j:");
+// }`;
 
 //     evalStringInputArea.textContent = 
 // `o[5][5]=1;

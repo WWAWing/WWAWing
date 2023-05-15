@@ -9,14 +9,16 @@ export class EvalCalcWwaNode {
   for_id: {
     i: number,
     j: number,
-    k: number
+    k: number,
+    loopCount: number
   }
   constructor(wwa: WWA) {
     this.wwa = wwa;
     this.for_id = {
-      i: 0,
-      j: 0,
-      k: 0
+      i: null,
+      j: null,
+      k: null,
+      loopCount: 0
     }
   }
 
@@ -67,13 +69,71 @@ export class EvalCalcWwaNode {
 
   /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
   forStateMent(node: Wwa.ForStatement) {
-    // TODO: for文の入れ子には未対応
-    this.for_id.i = 0;
+    const init: Wwa.SpecialParameterAssignment = <Wwa.SpecialParameterAssignment>node.init;
+    switch(init.kind) {
+      case 'i':
+        if(this.for_id.i !== null) {
+          throw new Error("iの値が既に外側のforループで使われています。");
+        }
+        break;
+      case 'j':
+        if(this.for_id.j !== null) {
+          throw new Error("jの値が既に外側のforループで使われています。");
+        }
+        break;
+      case 'k':
+        if(this.for_id.k !== null) {
+          throw new Error("kの値が既に外側のforループで使われています。");
+        }
+        break;
+      default:
+        throw new Error("予想外の変数がfor文内で使用されました :"+init.kind);
+    }
     const addValue = this.evalWwaNode(node.update);
-    this.for_id.i = this.evalWwaNode(node.init);
-    for(let i = this.for_id.i; this.evalWwaNode(node.test); i+=addValue) {
-      this.for_id.i = i;
+    const initValue = this.evalWwaNode(node.init)
+    switch(init.kind) {
+      case 'i':
+        this.for_id.i = initValue;
+        break;
+      case 'j':
+        this.for_id.j = initValue;
+        break;
+      case 'k':
+        this.for_id.k = initValue;
+        break;
+    }
+    for(let iterator = initValue; this.evalWwaNode(node.test); iterator+=addValue) {
+      this.for_id.loopCount++;
+      if(this.for_id.loopCount > 10000) {
+        throw new Error("処理回数が多すぎます！")
+      }
+      console.log(this.for_id);
+      switch(init.kind) {
+        case 'i':
+          this.for_id.i = iterator;
+          break;
+        case 'j':
+          this.for_id.j = iterator;
+          break;
+        case 'k':
+          this.for_id.k = iterator;
+          break;
+      }
+      if(!this.evalWwaNode(node.test)) {
+        break;
+      }
       this.evalWwaNodes(node.body);
+    }
+    switch(init.kind) {
+      case 'i':
+        this.for_id.i = null;
+        break;
+      case 'j':
+        this.for_id.j = null;
+        break;
+      case 'k':
+        this.for_id.k = null;
+        break;
     }
   }
 
@@ -166,6 +226,8 @@ export class EvalCalcWwaNode {
         return 0;
       /** for文用（暫定） */
       case 'i':
+      case 'j':
+      case 'k':
         return this.evalWwaNode(node.value);
       default:
         console.error("未実装の要素です: "+node.kind);
@@ -255,6 +317,10 @@ export class EvalCalcWwaNode {
       /** for文用（暫定） */
       case 'i':
         return this.for_id.i;
+      case 'j':
+        return this.for_id.j;
+      case 'k':
+        return this.for_id.k;
       default:
         throw new Error("このシンボルは取得できません")
     }
