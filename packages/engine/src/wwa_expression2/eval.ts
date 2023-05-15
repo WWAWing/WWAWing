@@ -64,8 +64,13 @@ export class EvalCalcWwaNode {
         // 曲を鳴らす
         this.wwa.playSound(soundNumber);
         break;
+      case "SAVE":
+        // SAVEは引数を一つだけ取る
+        const saveNumber = Boolean(this.evalWwaNode(node.value[0]));
+        this.wwa.disableSave(saveNumber);
+        break;
       default:
-        throw new Error("未定義の関数が指定されました :"+node.functionName);
+        throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
   }
 
