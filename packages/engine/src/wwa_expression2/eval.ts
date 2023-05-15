@@ -49,7 +49,7 @@ export class EvalCalcWwaNode {
       case "PartsAssignment":
         return this.partsAssignment(node);
       default:
-        throw new Error("未定義または未実装のノードです:\n"+node.type);
+        throw new Error("未定義または未実装のノードです");
     }
   }
 
