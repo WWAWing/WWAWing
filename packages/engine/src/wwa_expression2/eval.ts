@@ -63,7 +63,7 @@ export class EvalCalcWwaNode {
       case "ForStatement":
         return this.forStateMent(node);
       default:
-        throw new Error("未定義または未実装のノードです:\n"+node.type);
+        throw new Error("未定義または未実装のノードです");
     }
   }
 
