@@ -6363,7 +6363,6 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
 //     v[0] = 0;
 //     MSG("HPは100未満です。");
 // }`;
-
     controllerElm.appendChild(evalStringInput);
 }
 

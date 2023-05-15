@@ -104,6 +104,12 @@ export interface ForStatement {
   update: Node;
 }
 
+export interface AnyFunction {
+  type: "AnyFunction",
+  functionName: string,
+  value: Node[]
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -120,4 +126,5 @@ export type Node = |
   Msg |
   IfStatement |
   BlockStatement |
-  ForStatement;
+  ForStatement |
+  AnyFunction;
