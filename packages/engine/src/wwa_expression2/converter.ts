@@ -75,8 +75,25 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.Node  {
     case "MSG":
     case "MESSAGE":
       return execMessageFunction(node.arguments);
+    case "SOUND":
+      return execAnyFunction(node.arguments, functionName);
     default:
       throw new Error("想定外の関数が指定されました: "+functionName);
+  }
+}
+
+/**
+ * 任意の関数型
+ * @param callee 
+ * @returns 
+ */
+function execAnyFunction(callee: Acorn.Literal[], functionName: string): Wwa.Node {
+  return {
+    type: "AnyFunction",
+    functionName: functionName,
+    value: callee.map((v) => {
+      return convertNodeAcornToWwa(v)
+    })
   }
 }
 

@@ -48,8 +48,24 @@ export class EvalCalcWwaNode {
         return this.blockStatement(node);
       case "PartsAssignment":
         return this.partsAssignment(node);
+      case "AnyFunction":
+      return this.evalAnyFunction(node);
       default:
         throw new Error("未定義または未実装のノードです");
+    }
+  }
+
+  /** SOUNDの用な任意の特殊関数を実行する */
+  evalAnyFunction(node: Wwa.AnyFunction) {
+    switch(node.functionName) {
+      case "SOUND":
+        // SOUNDは引数を一つだけ取る
+        const soundNumber = this.evalWwaNode(node.value[0]);
+        // 曲を鳴らす
+        this.wwa.playSound(soundNumber);
+        break;
+      default:
+        throw new Error("未定義の関数が指定されました :"+node.functionName);
     }
   }
 

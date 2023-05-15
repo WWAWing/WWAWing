@@ -96,6 +96,12 @@ export interface BlockStatement {
   value: Node[]
 }
 
+export interface AnyFunction {
+  type: "AnyFunction",
+  functionName: string,
+  value: Node[]
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -111,4 +117,5 @@ export type Node = |
   Jumpgate |
   Msg |
   IfStatement |
-  BlockStatement;
+  BlockStatement |
+  AnyFunction;
