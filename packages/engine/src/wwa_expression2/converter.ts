@@ -91,6 +91,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.Node  {
     case "MESSAGE":
       return execMessageFunction(node.arguments);
     case "SOUND":
+    case "SAVE":
       return execAnyFunction(node.arguments, functionName);
     default:
       throw new Error("想定外の関数が指定されました: "+functionName);
