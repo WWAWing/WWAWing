@@ -1085,9 +1085,14 @@ export class WWA {
             // ユーザ定義スクリプトファイルを読み込む
             const userScriptFileName = "./script/index.js";
             const userScriptStrings = await fetchScriptFile(userScriptFileName);
+            /** 初期化しておく */
             this.userDefinedFunctions = {};
             this.setUsertScript(userScriptStrings);
         });
+    }
+
+    public getUserScript(functionName: string): WWANode | null {
+        return this.userDefinedFunctions[functionName] || null;
     }
 
     /** ユーザ定義スクリプト処理関数 */

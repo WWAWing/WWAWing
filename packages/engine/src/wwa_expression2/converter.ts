@@ -94,7 +94,10 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "DEL_PLAYER":
       return execAnyFunction(node.arguments, functionName);
     default:
-      throw new Error("想定外の関数が指定されました: "+functionName);
+      return {
+        type: "CallDefinedFunction",
+        functionName: functionName
+      }
   }
 }
 
