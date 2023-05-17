@@ -1,4 +1,4 @@
-import { MacroStatusIndex, PartsType } from "../wwa_data";
+import { Coord, MacroStatusIndex, PartsType } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -187,6 +187,33 @@ export class EvalCalcWwaNode {
         // SAVEは引数を一つだけ取る
         const saveNumber = Boolean(this.evalWwaNode(node.value[0]));
         this.wwa.disableSave(saveNumber);
+        break;
+      case "LOG":
+        // 指定した引数の文字列をログ出力する
+        const value = this.evalWwaNode(node.value[0]);
+        console.log(value);
+        break;
+      case "ABLE_CHANGE_SPEED":
+        const isAbleChangeSpeed = Boolean(this.evalWwaNode(node.value[0]));
+        this.wwa.speedChangeJudge(isAbleChangeSpeed);
+        break;
+      case "SET_SPEED":
+        const gameSpeedValue = Number(this.evalWwaNode(node.value[0]));
+        this.wwa.setPlayerSpeedIndex(gameSpeedValue);
+        break;
+      case "CHANGE_GAMEOVER_POS":
+        const gameover_pos = {
+          x: Number(this.evalWwaNode(node.value[0])),
+          y: Number(this.evalWwaNode(node.value[1]))
+        }
+        if(gameover_pos.x < 0 || gameover_pos.x >= this.wwa.getMapWidth() || gameover_pos.y < 0 || gameover_pos.y > this.wwa.getMapWidth()) {
+          throw new Error("マップの範囲外が指定されています!");
+        }
+        this.wwa.setGameOverPosition(new Coord(gameover_pos.x, gameover_pos.y));
+        break;
+      case "DEL_PLAYER":
+        const isDelPlayer = Boolean(this.evalWwaNode(node.value[0]));
+        this.wwa.setDelPlayer(isDelPlayer);
         break;
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
