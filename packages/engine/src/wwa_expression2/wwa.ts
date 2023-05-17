@@ -102,6 +102,12 @@ export interface AnyFunction {
   value: WWANode[]
 }
 
+export interface definedFunction {
+  type: "DefinedFunction",
+  functionName: string,
+  body: WWANode
+}
+
 export type WWANode = |
   PartsAssignment |
   ItemAssignment |
@@ -118,4 +124,5 @@ export type WWANode = |
   Msg |
   IfStatement |
   BlockStatement |
-  AnyFunction;
+  AnyFunction |
+  definedFunction;

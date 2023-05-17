@@ -251,6 +251,9 @@ export class WWA {
     private _startTime: number;
     private _dumpElement: HTMLElement;
 
+    /** ユーザー定義スクリプト関数 */
+    private userDefinedFunctions: { [key: string]: WWANode }
+
     constructor(
         mapFileName: string,
         urlgateEnabled: boolean = false,
@@ -1082,6 +1085,7 @@ export class WWA {
             // ユーザ定義スクリプトファイルを読み込む
             const userScriptFileName = "./script/index.js";
             const userScriptStrings = await fetchScriptFile(userScriptFileName);
+            this.userDefinedFunctions = {};
             this.setUsertScript(userScriptStrings);
         });
     }
@@ -1092,7 +1096,13 @@ export class WWA {
             return;
         }
         const readScriptWWANodes = this.convertWwaNodes(userScriptStrings.data);
-        console.log(readScriptWWANodes);
+        readScriptWWANodes.forEach((currentNode) => {
+            if(currentNode.type === 'DefinedFunction') {
+                const functionName = currentNode.functionName;
+                this.userDefinedFunctions[functionName] = currentNode.body;
+            }
+        })
+        console.log(this.userDefinedFunctions);
     }
 
     private convertWwaNodes = (scriptString: string): WWANode[] => {
@@ -6248,13 +6258,8 @@ font-weight: bold;
             const getElement: any = document.getElementsByClassName('eval-string-input-area')[0];
             const baseEvalStr = getElement.value;
             const nodes = this.convertWwaNodes(baseEvalStr);
-            // const a = ExpressionParser2.parse(baseEvalStr);
-            // console.log(a);
-            // console.log("b:");
-            // const b = ExpressionParser2.convertNodeAcornToWwaArray(a);
-            // console.log(b);
             const evalWWANode = new ExpressionParser2.EvalCalcWwaNode(this);
-            // console.log("c:");
+            console.log("c:");
             const c = evalWWANode.evalWwaNodes(nodes);
             console.log(c);
         } catch(e) {

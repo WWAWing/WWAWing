@@ -35,9 +35,19 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertIfStatement(node as Acorn.IfStatement);
       case "BlockStatement":
         return convertBlockStatement(node as Acorn.BlockStatement);
+      case "FunctionDeclaration":
+        return convertFunctionStatement(node as Acorn.FunctionDeclaration);
       default:
         throw new Error("未定義の AST ノードです :" + node.type);
     }
+}
+
+function convertFunctionStatement(node: Acorn.FunctionDeclaration): Wwa.WWANode {
+  return {
+    type: "DefinedFunction",
+    functionName: node.id.name,
+    body: convertNodeAcornToWwa(node.body)
+  }
 }
 
 function convertBlockStatement(node: Acorn.BlockStatement): Wwa.WWANode {
