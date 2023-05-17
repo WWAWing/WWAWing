@@ -74,6 +74,14 @@ export class EvalCalcWwaNode {
         const value = this.evalWwaNode(node.value[0]);
         console.log(value);
         break;
+      case "ABLE_CHANGE_SPEED":
+        const isAbleChangeSpeed = Boolean(this.evalWwaNode(node.value[0]));
+        this.wwa.speedChangeJudge(isAbleChangeSpeed);
+        break;
+      case "SET_SPEED":
+        const gameSpeedValue = Number(this.evalWwaNode(node.value[0]));
+        this.wwa.setPlayerSpeedIndex(gameSpeedValue);
+        break;
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
