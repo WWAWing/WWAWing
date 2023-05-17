@@ -51,6 +51,8 @@ import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
 import * as ExpressionParser from "./wwa_expression";
 import * as ExpressionParser2 from "./wwa_expression2";
+import { UserScriptResponse, fetchScriptFile } from "./load_script_file";
+import { WWANode } from "./wwa_expression2/wwa";
 
 let wwa: WWA
 
@@ -1076,7 +1078,26 @@ export class WWA {
                 errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
             })
             this.setUserVarStatus(userVarStatus, userVarNamesFile);
+            console.log(userVarNamesFile);
+            // ユーザ定義スクリプトファイルを読み込む
+            const userScriptFileName = "./script/index.js";
+            const userScriptStrings = await fetchScriptFile(userScriptFileName);
+            this.setUsertScript(userScriptStrings);
         });
+    }
+
+    /** ユーザ定義スクリプト処理関数 */
+    private setUsertScript(userScriptStrings: UserScriptResponse) {
+        if(userScriptStrings.kind !== "data") {
+            return;
+        }
+        const readScriptWWANodes = this.convertWwaNodes(userScriptStrings.data);
+        console.log(readScriptWWANodes);
+    }
+
+    private convertWwaNodes = (scriptString: string): WWANode[] => {
+        const acornNode = ExpressionParser2.parse(scriptString);
+        return ExpressionParser2.convertNodeAcornToWwaArray(acornNode);
     }
 
     /** ユーザ変数読み込み関数 */
@@ -6226,14 +6247,15 @@ font-weight: bold;
         try {
             const getElement: any = document.getElementsByClassName('eval-string-input-area')[0];
             const baseEvalStr = getElement.value;
-            const a = ExpressionParser2.parse(baseEvalStr);
-            console.log(a);
-            console.log("b:");
-            const b = ExpressionParser2.convertNodeAcornToWwaArray(a);
-            console.log(b);
+            const nodes = this.convertWwaNodes(baseEvalStr);
+            // const a = ExpressionParser2.parse(baseEvalStr);
+            // console.log(a);
+            // console.log("b:");
+            // const b = ExpressionParser2.convertNodeAcornToWwaArray(a);
+            // console.log(b);
             const evalWWANode = new ExpressionParser2.EvalCalcWwaNode(this);
-            console.log("c:");
-            const c = evalWWANode.evalWwaNodes(b);
+            // console.log("c:");
+            const c = evalWWANode.evalWwaNodes(nodes);
             console.log(c);
         } catch(e) {
             console.error(e);

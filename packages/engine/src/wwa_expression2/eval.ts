@@ -10,13 +10,13 @@ export class EvalCalcWwaNode {
     this.wwa = wwa;
   }
 
-  evalWwaNodes(nodes: Wwa.Node[]) {
+  evalWwaNodes(nodes: Wwa.WWANode[]) {
     return nodes.map((node) => {
       return this.evalWwaNode(node)
     })
   }
   
-  evalWwaNode(node: Wwa.Node) {
+  evalWwaNode(node: Wwa.WWANode) {
     switch (node.type) {
       case "UnaryOperation":
         return this.evalUnaryOperation(node);
