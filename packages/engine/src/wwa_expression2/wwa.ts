@@ -110,6 +110,11 @@ export interface AnyFunction {
   value: Node[]
 }
 
+export interface Break {
+  type: "Break",
+  label: string
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -127,4 +132,5 @@ export type Node = |
   IfStatement |
   BlockStatement |
   ForStatement |
-  AnyFunction;
+  AnyFunction |
+  Break;

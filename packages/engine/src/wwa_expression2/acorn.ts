@@ -76,3 +76,8 @@ export interface ForStatement extends Node {
 export interface UpdateExpression extends Node {
   type: "UpdateExpression"
 }
+
+export interface BreakStatement extends Node {
+  label: string;
+  type: "BreakExpression"
+}

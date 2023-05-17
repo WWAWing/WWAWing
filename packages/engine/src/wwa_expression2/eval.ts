@@ -12,6 +12,7 @@ export class EvalCalcWwaNode {
     k: number,
     loopCount: number
   }
+  break_flag: boolean;
   constructor(wwa: WWA) {
     this.wwa = wwa;
     this.for_id = {
@@ -20,6 +21,7 @@ export class EvalCalcWwaNode {
       k: null,
       loopCount: 0
     }
+    this.break_flag = false;
   }
 
   evalWwaNodes(nodes: Wwa.Node[]) {
@@ -29,6 +31,11 @@ export class EvalCalcWwaNode {
   }
   
   evalWwaNode(node: Wwa.Node) {
+    /** breakフラグが立っていたら処理しない */
+    if(this.break_flag) {
+      console.log(this.for_id);
+      return;
+    }
     switch (node.type) {
       case "UnaryOperation":
         return this.evalUnaryOperation(node);
@@ -63,10 +70,18 @@ export class EvalCalcWwaNode {
       case "ForStatement":
         return this.forStateMent(node);
       case "AnyFunction":
-      return this.evalAnyFunction(node);
+        return this.evalAnyFunction(node);
+      case "Break":
+        return this.breakStatement(node);
       default:
         throw new Error("未定義または未実装のノードです");
     }
+  }
+
+  /** break文を処理する */
+  breakStatement(node: Wwa.Break) {
+    /** Breakフラグを立てる */
+    this.break_flag = true;
   }
 
   /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
@@ -104,12 +119,16 @@ export class EvalCalcWwaNode {
         this.for_id.k = initValue;
         break;
     }
+    /** for文処理の繰り返し部分 */
     for(let iterator = initValue; this.evalWwaNode(node.test); iterator+=addValue) {
       this.for_id.loopCount++;
       if(this.for_id.loopCount > 10000) {
         throw new Error("処理回数が多すぎます！")
       }
-      console.log(this.for_id);
+      /** breakフラグが立っていたらそれ以降は処理しない */
+      if(this.break_flag) {
+        break;
+      }
       switch(init.kind) {
         case 'i':
           this.for_id.i = iterator;
@@ -126,6 +145,8 @@ export class EvalCalcWwaNode {
       }
       this.evalWwaNodes(node.body);
     }
+    /** for文処理の繰り返し部分ここまで */
+    this.break_flag = false;
     switch(init.kind) {
       case 'i':
         this.for_id.i = null;

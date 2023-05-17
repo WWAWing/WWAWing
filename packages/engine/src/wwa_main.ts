@@ -6341,9 +6341,10 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     evalStringInputArea.textContent =
 `for(i=0; i<5; i=i+1) {
     for(j=0; j<5; j=j+1) {
-        for(k=0; k<2; k=k+1) {
-            MSG("i:"+i+"/ j:"+j+"/k:"+k);
+        if(j < 3) {
+            break;
         }
+        MSG("i:"+i+"/ j:"+j+"/k:"+k);
     }
 }`;
 
