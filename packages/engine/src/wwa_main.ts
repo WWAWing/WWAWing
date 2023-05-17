@@ -1,6 +1,6 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
-import type { JsonResponseError } from "./json_api_client";
+import type { JsonResponseData, JsonResponseError, JsonResponseErrorKind } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
@@ -1071,51 +1071,59 @@ export class WWA {
             }
             this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
             // ユーザー変数ファイルを読み込む
-            return userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
+            const userVarStatus = await (userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
                 kind: "noFileSpecified" as const,
                 errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
-            }
-        }).then(status => {
-            if (!status) {
-                return;
-            }
-            if (status.kind === "noFileSpecified") {
-                // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
-                this._updateVarDumpInformationArea(status.errorMessage, false);
-                return;
-            }
-            if(status.kind !== "data") {
-                this._userVarNameListRequestError = status;
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
-                return;
-            }
-            if (!status.data || typeof status.data !== "object") {
-                this._userVarNameListRequestError = {
-                    kind: "notObject",
-                    errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
-                }
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
-                return;
-            }
-            this._userVarNameList = this.convertUserVariableNameListToArray(status.data);
-            if (this._dumpElement === null) {
-                return;
-            }
-            // 以下は変数一覧に変数名を流し込む処理
-            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                const varNum = i.toString(10);
-                if (!this._userVarNameList[i]) {
-                    continue;
-                }
-                const varIndexQuery = `.var-index${varNum}`;
-                const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
-                const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
-                varLabelElement.textContent = this._userVarNameList[i];
-                varIndexElement.setAttribute("data-labelled-var-index", "true");
-                varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
-                varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
-            }
+            })
+            this.setUserVarStatus(userVarStatus, userVarNamesFile);
         });
+    }
+
+    /** ユーザ変数読み込み関数 */
+    private setUserVarStatus(userVarStatus: (JsonResponseData | JsonResponseError<JsonResponseErrorKind> | {
+        kind: "noFileSpecified";
+        errorMessage: string;
+    }), userVarNamesFile: string) {
+
+        if (!userVarStatus) {
+            return;
+        }
+        if (userVarStatus.kind === "noFileSpecified") {
+            // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
+            this._updateVarDumpInformationArea(userVarStatus.errorMessage, false);
+            return;
+        }
+        if(userVarStatus.kind !== "data") {
+            this._userVarNameListRequestError = userVarStatus;
+            this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+            return;
+        }
+        if (!userVarStatus.data || typeof userVarStatus.data !== "object") {
+            this._userVarNameListRequestError = {
+                kind: "notObject",
+                errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
+            }
+            this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+            return;
+        }
+        this._userVarNameList = this.convertUserVariableNameListToArray(userVarStatus.data);
+        if (this._dumpElement === null) {
+            return;
+        }
+        // 以下は変数一覧に変数名を流し込む処理
+        for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
+            const varNum = i.toString(10);
+            if (!this._userVarNameList[i]) {
+                continue;
+            }
+            const varIndexQuery = `.var-index${varNum}`;
+            const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
+            const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
+            varLabelElement.textContent = this._userVarNameList[i];
+            varIndexElement.setAttribute("data-labelled-var-index", "true");
+            varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
+            varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
+        }
     }
 
     /**
@@ -6339,7 +6347,7 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
     evalStringInputArea.textContent = 
-`LOG("test")`;
+`testFunc();`;
 // `o[5][5]=1;
 // if(HP >= 1000) {
 //     v[0] = 1000;
