@@ -39,9 +39,18 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
         return convertForStatement(node as Acorn.ForStatement);
       case "BreakStatement":
         return convertBreakStatement(node as Acorn.BreakStatement);
+      case "ContinueStatement":
+        return convertContinueStatment(node as Acorn.ContinueStatement);
       default:
         throw new Error("未定義の AST ノードです :" + node.type);
     }
+}
+
+function convertContinueStatment(node: Acorn.ContinueStatement): Wwa.Node {
+  return {
+    type: "Continue",
+    label: node.label
+  }
 }
 
 function convertBreakStatement(node: Acorn.BreakStatement): Wwa.Node {

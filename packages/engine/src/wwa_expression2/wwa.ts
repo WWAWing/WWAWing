@@ -115,6 +115,11 @@ export interface Break {
   label: string
 }
 
+export interface Continue {
+  type: "Continue",
+  label: string
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -133,4 +138,5 @@ export type Node = |
   BlockStatement |
   ForStatement |
   AnyFunction |
-  Break;
+  Break |
+  Continue;

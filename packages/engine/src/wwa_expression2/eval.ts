@@ -6,13 +6,17 @@ import * as Wwa from "./wwa";
 
 export class EvalCalcWwaNode {
   wwa: WWA;
+  /** ループ処理で使用するフラグ */
   for_id: {
     i: number,
     j: number,
     k: number,
     loopCount: number
   }
+  /** break/continue管理フラグ */
   break_flag: boolean;
+  continue_flag: boolean;
+
   constructor(wwa: WWA) {
     this.wwa = wwa;
     this.for_id = {
@@ -31,9 +35,8 @@ export class EvalCalcWwaNode {
   }
   
   evalWwaNode(node: Wwa.Node) {
-    /** breakフラグが立っていたら処理しない */
-    if(this.break_flag) {
-      console.log(this.for_id);
+    /** break/continueフラグが立っていたら処理しない */
+    if(this.break_flag || this.continue_flag) {
       return;
     }
     switch (node.type) {
@@ -73,13 +76,22 @@ export class EvalCalcWwaNode {
         return this.evalAnyFunction(node);
       case "Break":
         return this.breakStatement(node);
+      case "Continue":
+        return this.contunueStatment(node);
       default:
         throw new Error("未定義または未実装のノードです");
     }
   }
 
+  /** Continue文を処理する */
+  contunueStatment(node: Wwa.Continue) {
+    // TODO: node.labelを活用したい
+    this.continue_flag = true;
+  }
+
   /** break文を処理する */
   breakStatement(node: Wwa.Break) {
+    // TODO: node.labelを活用したい
     /** Breakフラグを立てる */
     this.break_flag = true;
   }
@@ -144,6 +156,8 @@ export class EvalCalcWwaNode {
         break;
       }
       this.evalWwaNodes(node.body);
+      /** continueフラグを解除する */
+      this.continue_flag = false;
     }
     /** for文処理の繰り返し部分ここまで */
     this.break_flag = false;
