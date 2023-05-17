@@ -69,6 +69,11 @@ export class EvalCalcWwaNode {
         const saveNumber = Boolean(this.evalWwaNode(node.value[0]));
         this.wwa.disableSave(saveNumber);
         break;
+      case "LOG":
+        // 指定した引数の文字列をログ出力する
+        const value = this.evalWwaNode(node.value[0]);
+        console.log(value);
+        break;
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }

@@ -6339,9 +6339,7 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
     evalStringInputArea.textContent = 
-`SOUND(10);
-SOUND(70);
-`
+`LOG("test")`;
 // `o[5][5]=1;
 // if(HP >= 1000) {
 //     v[0] = 1000;
