@@ -28,7 +28,7 @@ export interface UserVariableAssignment {
 
 export interface SpecialParameterAssignment {
   type: "SpecialParameterAssignment";
-  kind: "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PRID";
+  kind: "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PRID" | "i" | "j" | "k";
   value: Calcurable;
 }
 
@@ -47,7 +47,7 @@ export interface BinaryOperation {
 
 export interface Symbol {
   type: "Symbol";
-  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PRID";
+  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PRID" | "i" | "j" | "k";
 }
 
 export interface Array1D {
@@ -96,6 +96,14 @@ export interface BlockStatement {
   value: WWANode[]
 }
 
+export interface ForStatement {
+  type: "ForStatement";
+  body: WWANode[];
+  init: WWANode;
+  test: WWANode;
+  update: WWANode;
+}
+
 export interface AnyFunction {
   type: "AnyFunction",
   functionName: string,
@@ -111,6 +119,16 @@ export interface DefinedFunction {
 export interface CallDefinedFunction {
   type: "CallDefinedFunction",
   functionName: string
+}
+
+export interface Break {
+  type: "Break",
+  label: string
+}
+
+export interface Continue {
+  type: "Continue",
+  label: string
 }
 
 export type WWANode = |
@@ -131,4 +149,8 @@ export type WWANode = |
   BlockStatement |
   AnyFunction |
   DefinedFunction |
-  CallDefinedFunction;
+  CallDefinedFunction |
+  ForStatement |
+  AnyFunction |
+  Break |
+  Continue;

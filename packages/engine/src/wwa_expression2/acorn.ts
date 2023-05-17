@@ -70,3 +70,25 @@ export interface FunctionDeclaration extends Node {
   body: BlockStatement,
   id: Identifier
 }
+
+export interface ForStatement extends Node {
+  type: "ForStatement";
+  body: BlockStatement;
+  init: Node;
+  test: Node;
+  update: Node;
+}
+
+export interface UpdateExpression extends Node {
+  type: "UpdateExpression"
+}
+
+export interface BreakStatement extends Node {
+  label: string;
+  type: "BreakExpression"
+}
+
+export interface ContinueStatement extends Node {
+  label: string;
+  type: "ContinueExpression"
+}
