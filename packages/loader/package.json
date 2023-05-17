@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/loader",
-  "version": "3.12.3",
+  "version": "3.13.0-acorn-statement.based-on.3.12.3",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/index.js",
   "module": "./module/index.js",
