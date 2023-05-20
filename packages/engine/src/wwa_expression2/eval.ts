@@ -87,7 +87,32 @@ export class EvalCalcWwaNode {
 
   /** i++ などが実行された時の処理 */
   updateExpression(node: Wwa.UpdateExpression) {
-    console.log(node);
+    if(node.argument.type === "Symbol") {
+      const value = this.evalSymbol(node.argument);
+      const addValue = (()=>{
+        switch(node.operator) {
+          case '++':
+            return value+1;
+          case '--':
+            return value-1;
+          default:
+            throw new Error("想定外のOperatorが渡されました :"+node.operator);
+        }
+      })()
+      const SpecialParameterAssignment: Wwa.SpecialParameterAssignment = {
+        type: "SpecialParameterAssignment",
+        kind: <any>node.argument.name,
+        value: {
+          type: "Number",
+          value: addValue
+        }
+      }
+      this.evalSetSpecialParameter(SpecialParameterAssignment);
+    }
+    else {
+      console.log(node);
+      throw new Error("node.argument.typeがSymbolではありません。:"+node.argument.type);
+    }
   }
 
   /** Continue文を処理する */
@@ -274,6 +299,8 @@ export class EvalCalcWwaNode {
   }
 
   evalSetSpecialParameter(node: Wwa.SpecialParameterAssignment) {
+    console.log("evalSetSpecialParameter");
+    console.log(node);
     const right = this.evalWwaNode(node.value);
     if(!this.wwa || isNaN(right)) {
       return 0;
