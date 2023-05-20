@@ -252,7 +252,10 @@ export class EvalCalcWwaNode {
     }
   }
 
-  /** m[0][0] のような二次元はを処理する */
+  /**
+   * m[0][0] のようなObject/mapパーツを左辺値に代入する際の処理
+   * 右辺値取得は evalArray2D で処理する
+   **/
   partsAssignment(node: Wwa.PartsAssignment) {
     const game_status = this.wwa.getGameStatus();
     const x = this.evalWwaNode(node.destinationX);
@@ -468,10 +471,19 @@ export class EvalCalcWwaNode {
     }
   }
 
+  /**
+   * o[1][2]のようなobject/mapパーツを右辺値に持ってきた際に該当座標のパーツ番号を返す
+   * 左辺値代入は partsAssignment で処理する
+   **/
   evalArray2D(node: Wwa.Array2D) {
     switch(node.name) {
       case "m":
       case "o":
+        const x = this.evalWwaNode(node.index0);
+        const y = this.evalWwaNode(node.index1);
+        const partsType = node.name === 'o'? PartsType.OBJECT: PartsType.MAP;
+        const partsID = this.wwa.getPartsID(new Coord(x, y), partsType);
+        return partsID;
       default:
         throw new Error("このシンボルは取得できません")
     }

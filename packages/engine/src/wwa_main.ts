@@ -4117,6 +4117,21 @@ export class WWA {
         }
     }
 
+    /** 該当座標のパーツ番号を取得する */
+    public getPartsID(triggerPartsPos: Coord, targetPartsType: PartsType) {
+        // TODO: 画面の最大値が分かれば制御を入れる
+        if(triggerPartsPos.x < 0 || triggerPartsPos.y < 0) {
+            throw new Error("想定外の座標が指定されました");
+        }
+        /** 簡易エラーチェック */
+        if(targetPartsType === PartsType.MAP) {
+            return this._wwaData.map[triggerPartsPos.y][triggerPartsPos.x];
+        }
+        else {
+            return this._wwaData.mapObject[triggerPartsPos.y][triggerPartsPos.x];
+        }
+    }
+
     private _replaceRandomObject(pos: Coord): void {
         var id = this._wwaData.mapObject[pos.y][pos.x];
         var type = this._wwaData.objectAttribute[id][Consts.ATR_TYPE];
