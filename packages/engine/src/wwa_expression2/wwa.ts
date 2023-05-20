@@ -120,6 +120,12 @@ export interface Continue {
   label: string
 }
 
+export interface UpdateExpression {
+  type: "UpdateExpression",
+  operator: string,
+  argument: Node
+}
+
 export type Node = |
   PartsAssignment |
   ItemAssignment |
@@ -139,4 +145,5 @@ export type Node = |
   ForStatement |
   AnyFunction |
   Break |
-  Continue;
+  Continue |
+  UpdateExpression;
