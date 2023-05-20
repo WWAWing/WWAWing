@@ -299,8 +299,6 @@ export class EvalCalcWwaNode {
   }
 
   evalSetSpecialParameter(node: Wwa.SpecialParameterAssignment) {
-    console.log("evalSetSpecialParameter");
-    console.log(node);
     const right = this.evalWwaNode(node.value);
     if(!this.wwa || isNaN(right)) {
       return 0;
