@@ -284,6 +284,8 @@ export class EvalCalcWwaNode {
       case "STEP":
         return game_status.moveCount;
       case "TIME":
+        /** 現在時刻を更新する */
+        this.wwa.setNowPlayTime();
         return game_status.playTime;
       case "PRID":
         return game_status.playerDirection

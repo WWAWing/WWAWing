@@ -28,3 +28,7 @@ function makeRandomPartsAllMaps() {
 function CALL_SAVE() {
   MSG("セーブしました！")
 }
+
+function CALL_FRAME() {
+  v[0]=TIME;
+}

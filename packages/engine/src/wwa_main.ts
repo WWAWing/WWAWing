@@ -2439,6 +2439,12 @@ export class WWA {
                 this._dumpElement.querySelector(`.var${varNum}`).textContent = this._wwaData.userVar[i] + "";
             }
         }
+
+        /** フレームごとにユーザー定義独自関数を呼び出す */
+        const frameFunc = this.userDefinedFunctions["CALL_FRAME"];
+        if(frameFunc) {
+            this.evalCalcWwaNode.evalWwaNode(frameFunc);
+        }
     }
     public vibration(isStrong: boolean) {
         this._gamePadStore.vibration(isStrong);
@@ -4383,6 +4389,13 @@ export class WWA {
     }
 
     private _quickSave(callInfo: number): string {
+        /** セーブ時にユーザ定義独自関数を呼び出す */
+        /** 処理内容もセーブの中身に入れ込めるようセーブ処理前に実行する */
+        const func = this.userDefinedFunctions["CALL_SAVE"];
+        if(func) {
+            this.evalCalcWwaNode.evalWwaNode(func);
+        }
+
         var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
         
         var pc = this._player.getPosition().getPartsCoord();
@@ -4422,12 +4435,6 @@ export class WWA {
         qd.message = void 0;
         qd.mapAttribute = void 0;
         qd.objectAttribute = void 0;
-
-        /** セーブ時にユーザ定義独自関数を呼び出す */
-        const func = this.userDefinedFunctions["CALL_SAVE"];
-        if(func) {
-            this.evalCalcWwaNode.evalWwaNode(func);
-        }
 
         /** ユーザー定義 */
         switch (callInfo) {
@@ -6064,7 +6071,7 @@ font-weight: bold;
         this.setUserVar(num, this._wwaData.playTime);
     }
     // 現在時刻セット
-    private setNowPlayTime(): void {
+    public setNowPlayTime(): void {
         const _nowTime = new Date();
         this._wwaData.playTime += (_nowTime.getTime() - this._startTime);
         this._startTime = _nowTime.getTime();
