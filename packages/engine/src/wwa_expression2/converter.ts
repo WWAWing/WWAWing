@@ -37,7 +37,16 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertBlockStatement(node as Acorn.BlockStatement);
       case "FunctionDeclaration":
         return convertFunctionStatement(node as Acorn.FunctionDeclaration);
+      case "ForStatement":
+        return convertForStatement(node as Acorn.ForStatement);
+      case "BreakStatement":
+        return convertBreakStatement(node as Acorn.BreakStatement);
+      case "ContinueStatement":
+        return convertContinueStatment(node as Acorn.ContinueStatement);
+      case "UpdateExpression":
+        return convertUpdateExpression(node as Acorn.UpdateExpression);
       default:
+        console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
     }
 }
@@ -47,6 +56,41 @@ function convertFunctionStatement(node: Acorn.FunctionDeclaration): Wwa.WWANode 
     type: "DefinedFunction",
     functionName: node.id.name,
     body: convertNodeAcornToWwa(node.body)
+  }
+}
+
+function convertUpdateExpression(node: Acorn.UpdateExpression): Wwa.WWANode {
+  return {
+    type: "UpdateExpression",
+    operator: node.operator,
+    argument: convertNodeAcornToWwa(node.argument)
+  }
+}
+
+function convertContinueStatment(node: Acorn.ContinueStatement): Wwa.WWANode {
+  return {
+    type: "Continue",
+    label: node.label
+  }
+}
+
+function convertBreakStatement(node: Acorn.BreakStatement): Wwa.WWANode {
+  return {
+    type: "Break",
+    label: node.label
+  }
+}
+
+function convertForStatement(node: Acorn.ForStatement): Wwa.WWANode {
+  const body = node.body.body.map((body) => {
+    return convertNodeAcornToWwa(body);
+  })
+  return {
+    type: "ForStatement",
+    body: body,
+    init: convertNodeAcornToWwa(node.init),
+    test: convertNodeAcornToWwa(node.test),
+    update: convertNodeAcornToWwa(node.update),
   }
 }
 
@@ -328,6 +372,10 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
     case "STEP":
     case "TIME":
     case "PRID":
+    case "i":
+    case "j":
+    case "k":
+    case "LOOPLIMIT":
       return {
         type: "Symbol",
         name: node.name
