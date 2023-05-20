@@ -1081,13 +1081,33 @@ export class WWA {
                 errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
             })
             this.setUserVarStatus(userVarStatus, userVarNamesFile);
-            console.log(userVarNamesFile);
-            // ユーザ定義スクリプトファイルを読み込む
-            const userScriptFileName = "./script/index.js";
-            const userScriptStrings = await fetchScriptFile(userScriptFileName);
-            /** 初期化しておく */
+
+            /** ユーザ定義関数を取得する */
+
+            /** ユーザ定義関数を初期化する */
             this.userDefinedFunctions = {};
-            this.setUsertScript(userScriptStrings);
+            const userScriptListJSONFileName = "./script/script_file_list.json";
+            const userScriptFileNameList = await fetchJsonFile(userScriptListJSONFileName);
+            let userScriptStringsPromises = [];
+            if(userScriptFileNameList?.kind === 'data') {
+                if(Array.isArray(userScriptFileNameList.data)) {
+                    userScriptFileNameList.data.map((fileName) => {
+                        userScriptStringsPromises.push(
+                            fetchScriptFile(fileName)
+                        )
+                    })
+                }
+            }
+            // 読み込んだ外部ファイルの一覧
+            const loadUserScriptstringsObjList = await Promise.all(userScriptStringsPromises);
+            loadUserScriptstringsObjList.forEach((loadUserScriptstringsObj)=>{
+                try {
+                    this.setUsertScript(loadUserScriptstringsObj);
+                }
+                catch(e) {
+                    console.error(e.message);
+                }
+            })
         });
     }
 
