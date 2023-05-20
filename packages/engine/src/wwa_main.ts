@@ -2139,6 +2139,53 @@ export class WWA {
                     // コマンドのヘルプ 
                     this._displayHelp();
                 }
+                /** Keyを押した際のユーザ定義独自関数を呼び出す */
+                const checkHitKeyUserFunctions = [
+                    {
+                        key: KeyCode.KEY_Q,
+                        func: "CALL_PUSH_Q"
+                    },
+                    {
+                        key: KeyCode.KEY_A,
+                        func: "CALL_PUSH_A"
+                    },
+                    {
+                        key: KeyCode.KEY_Z,
+                        func: "CALL_PUSH_Z"
+                    },
+                    {
+                        key: KeyCode.KEY_W,
+                        func: "CALL_PUSH_W"
+                    },
+                    {
+                        key: KeyCode.KEY_S,
+                        func: "CALL_PUSH_S"
+                    },
+                    {
+                        key: KeyCode.KEY_X,
+                        func: "CALL_PUSH_X"
+                    },
+                    {
+                        key: KeyCode.KEY_E,
+                        func: "CALL_PUSH_E"
+                    },
+                    {
+                        key: KeyCode.KEY_D,
+                        func: "CALL_PUSH_D"
+                    },
+                    {
+                        key: KeyCode.KEY_C,
+                        func: "CALL_PUSH_C"
+                    }
+                ]
+                checkHitKeyUserFunctions.forEach((key)=>{
+                    if(this._keyStore.checkHitKey(key.key)) {
+                        const userFunc = this.userDefinedFunctions[key.func];
+                        if(userFunc) {
+                            this.evalCalcWwaNode.evalWwaNode(userFunc);
+                        }
+                    }
+                })
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
