@@ -375,6 +375,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
     case "i":
     case "j":
     case "k":
+    case "LOOPLIMIT":
       return {
         type: "Symbol",
         name: node.name

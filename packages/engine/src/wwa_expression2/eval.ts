@@ -16,6 +16,8 @@ export class EvalCalcWwaNode {
   /** break/continue管理フラグ */
   break_flag: boolean;
   continue_flag: boolean;
+  /** for文上限回数 */
+  loop_limit: number;
 
   constructor(wwa: WWA) {
     this.wwa = wwa;
@@ -26,6 +28,7 @@ export class EvalCalcWwaNode {
       loopCount: 0
     }
     this.break_flag = false;
+    this.loop_limit = 10000;
   }
 
   evalWwaNodes(nodes: Wwa.WWANode[]) {
@@ -172,7 +175,7 @@ export class EvalCalcWwaNode {
     /** for文処理の繰り返し部分 */
     for(initStatment(); this.evalWwaNode(node.test); this.evalWwaNode(node.update)) {
       this.for_id.loopCount++;
-      if(this.for_id.loopCount > 10000) {
+      if(this.for_id.loopCount > this.loop_limit) {
         throw new Error("処理回数が多すぎます！")
       }
       /** breakフラグが立っていたらそれ以降は処理しない */
@@ -345,6 +348,9 @@ export class EvalCalcWwaNode {
         return 0;
       case 'k':
         this.for_id.k = this.evalWwaNode(node.value);
+        return 0;
+      case 'LOOPLIMIT':
+        this.loop_limit = this.evalWwaNode(node.value);
         return 0;
       default:
         console.error("未実装の要素です: "+node.kind);
