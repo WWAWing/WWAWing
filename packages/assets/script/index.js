@@ -24,3 +24,7 @@ function makeRandomPartsAllMaps() {
   }
   MSG("配置完了");
 }
+
+function CALL_SAVE() {
+  MSG("セーブしました！")
+}
