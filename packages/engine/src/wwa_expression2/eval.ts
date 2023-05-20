@@ -172,7 +172,7 @@ export class EvalCalcWwaNode {
     /** for文処理の繰り返し部分 */
     for(initStatment(); this.evalWwaNode(node.test); this.evalWwaNode(node.update)) {
       this.for_id.loopCount++;
-      if(this.for_id.loopCount > 10) {
+      if(this.for_id.loopCount > 10000) {
         throw new Error("処理回数が多すぎます！")
       }
       /** breakフラグが立っていたらそれ以降は処理しない */
