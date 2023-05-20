@@ -1,7 +1,7 @@
 import * as Acorn from "./acorn";
 import * as Wwa from "./wwa";
 
-export function convertNodeAcornToWwaArray(node: Acorn.Node): Wwa.Node[] {
+export function convertNodeAcornToWwaArray(node: Acorn.Node): Wwa.WWANode[] {
   if(node.type === "Program") {
     const arrayNode: Acorn.Program = <Acorn.Program>node;
     return arrayNode.body.map((oneNode) => {
@@ -11,7 +11,7 @@ export function convertNodeAcornToWwaArray(node: Acorn.Node): Wwa.Node[] {
   return [convertNodeAcornToWwa(node)];
 }
 
-export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
+export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
     switch(node.type) {
       case "Program":
         return convertProgram(node as Acorn.Program);
@@ -35,12 +35,22 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.Node {
         return convertIfStatement(node as Acorn.IfStatement);
       case "BlockStatement":
         return convertBlockStatement(node as Acorn.BlockStatement);
+      case "FunctionDeclaration":
+        return convertFunctionStatement(node as Acorn.FunctionDeclaration);
       default:
         throw new Error("未定義の AST ノードです :" + node.type);
     }
 }
 
-function convertBlockStatement(node: Acorn.BlockStatement): Wwa.Node {
+function convertFunctionStatement(node: Acorn.FunctionDeclaration): Wwa.WWANode {
+  return {
+    type: "DefinedFunction",
+    functionName: node.id.name,
+    body: convertNodeAcornToWwa(node.body)
+  }
+}
+
+function convertBlockStatement(node: Acorn.BlockStatement): Wwa.WWANode {
   return {
     type: "BlockStatement",
     value: node.body.map((body) => {
@@ -49,7 +59,7 @@ function convertBlockStatement(node: Acorn.BlockStatement): Wwa.Node {
   }
 }
 
-function convertIfStatement(node: Acorn.IfStatement): Wwa.Node {
+function convertIfStatement(node: Acorn.IfStatement): Wwa.WWANode {
   const consequent = convertNodeAcornToWwa(node.consequent);
   const test = convertNodeAcornToWwa(node.test);
   return {
@@ -65,7 +75,7 @@ function convertIfStatement(node: Acorn.IfStatement): Wwa.Node {
  * @param node 
  * @returns 
  */
-function convertCallExpression(node: Acorn.CallExpression): Wwa.Node  {
+function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
   const functionName = node.callee.name;
   switch(functionName) {
     case "RAND":
@@ -84,7 +94,10 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.Node  {
     case "DEL_PLAYER":
       return execAnyFunction(node.arguments, functionName);
     default:
-      throw new Error("想定外の関数が指定されました: "+functionName);
+      return {
+        type: "CallDefinedFunction",
+        functionName: functionName
+      }
   }
 }
 
@@ -93,7 +106,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.Node  {
  * @param callee 
  * @returns 
  */
-function execAnyFunction(callee: Acorn.Literal[], functionName: string): Wwa.Node {
+function execAnyFunction(callee: Acorn.Literal[], functionName: string): Wwa.WWANode {
   return {
     type: "AnyFunction",
     functionName: functionName,
@@ -108,7 +121,7 @@ function execAnyFunction(callee: Acorn.Literal[], functionName: string): Wwa.Nod
  * @param callee 
  * @returns 
  */
-function execMessageFunction(callee: Acorn.Literal[]): Wwa.Node {
+function execMessageFunction(callee: Acorn.Literal[]): Wwa.WWANode {
   return {
     type: "Msg",
     value: convertNodeAcornToWwa(callee[0])
@@ -119,7 +132,7 @@ function execMessageFunction(callee: Acorn.Literal[]): Wwa.Node {
  * JUMPGATE関数を実行する
  * JUMPGATEを実行するための識別子を返す
  */
-function execJumpgateFunction(callee: Acorn.Literal[]): Wwa.Node {
+function execJumpgateFunction(callee: Acorn.Literal[]): Wwa.WWANode {
   if(callee.length < 2) {
     throw new Error("RAND関数には引数が2つ必要です。")
   }
@@ -139,7 +152,7 @@ function execJumpgateFunction(callee: Acorn.Literal[]): Wwa.Node {
  * @param callee 
  * @returns 
  */
-function execRandomFunction(callee: Acorn.Literal[]): Wwa.Node {
+function execRandomFunction(callee: Acorn.Literal[]): Wwa.WWANode {
   if(callee.length < 1) {
     throw new Error("RAND関数には引数が必要です。")
   }
@@ -150,18 +163,18 @@ function execRandomFunction(callee: Acorn.Literal[]): Wwa.Node {
   }
 }
 
-function convertProgram(node: Acorn.Program): Wwa.Node {
+function convertProgram(node: Acorn.Program): Wwa.WWANode {
   if (node.body.length !== 1) {
     throw new Error("bodyが1以外の場合評価できません。")
   }
   return convertNodeAcornToWwa(node.body[0]);
 }
 
-function convertExpressionStatement(node: Acorn.ExpressionStatement): Wwa.Node {
+function convertExpressionStatement(node: Acorn.ExpressionStatement): Wwa.WWANode {
   return convertNodeAcornToWwa(node.expression);
 }
 
-function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.Node {
+function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWANode {
   const left = convertNodeAcornToWwa(node.left);
   const right = convertNodeAcornToWwa(node.right);
   if (!Wwa.isCalcurable(right)) {
@@ -229,7 +242,7 @@ function convertUnaryExpression(node: Acorn.UnaryExpression): Wwa.UnaryOperation
   }
 }
 
-function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.Node {
+function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.WWANode {
   const left = convertNodeAcornToWwa(node.left);
   const right = convertNodeAcornToWwa(node.right);
   if (!Wwa.isCalcurable(left) || !Wwa.isCalcurable(right)) {

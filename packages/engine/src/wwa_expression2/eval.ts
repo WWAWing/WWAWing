@@ -10,13 +10,13 @@ export class EvalCalcWwaNode {
     this.wwa = wwa;
   }
 
-  evalWwaNodes(nodes: Wwa.Node[]) {
+  evalWwaNodes(nodes: Wwa.WWANode[]) {
     return nodes.map((node) => {
       return this.evalWwaNode(node)
     })
   }
   
-  evalWwaNode(node: Wwa.Node) {
+  evalWwaNode(node: Wwa.WWANode) {
     switch (node.type) {
       case "UnaryOperation":
         return this.evalUnaryOperation(node);
@@ -49,10 +49,21 @@ export class EvalCalcWwaNode {
       case "PartsAssignment":
         return this.partsAssignment(node);
       case "AnyFunction":
-      return this.evalAnyFunction(node);
+        return this.evalAnyFunction(node);
+      case "CallDefinedFunction":
+        return this.callDefinedFunction(node);
       default:
         throw new Error("未定義または未実装のノードです");
     }
+  }
+
+  /** 関数の呼び出し */
+  callDefinedFunction(node: Wwa.CallDefinedFunction) {
+    const func = this.wwa.getUserScript(node.functionName);
+    if(func === null) {
+      throw new Error(`未定義の関数が呼び出されました: ${node.functionName}`);
+    }
+    this.evalWwaNode(func);
   }
 
   /** SOUNDの用な任意の特殊関数を実行する */

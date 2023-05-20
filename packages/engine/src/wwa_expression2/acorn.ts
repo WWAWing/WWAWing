@@ -64,3 +64,9 @@ export interface BlockStatement extends Node {
   type: "BlockStatement",
   body: Node[]
 }
+
+export interface FunctionDeclaration extends Node {
+  type: "FunctionDeclaration",
+  body: BlockStatement,
+  id: Identifier
+}

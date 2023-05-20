@@ -1,6 +1,6 @@
 export type Calcurable = Array1D | Array2D | Number | Symbol | UnaryOperation | BinaryOperation;
 
-export function isCalcurable(node: Node): node is Calcurable {
+export function isCalcurable(node: WWANode): node is Calcurable {
   const supportType = ["Array1D", "Array2D", "Number", "Symbol", "UnaryOperation", "BinaryOperation", "Random"];
   return supportType.includes(node.type);
 }
@@ -70,39 +70,50 @@ export interface Number {
 
 export interface Random {
   type: "Random";
-  value: Node;
+  value: WWANode;
 }
 
 export interface Jumpgate {
   type: "Jumpgate";
-  x: Node;
-  y: Node;
+  x: WWANode;
+  y: WWANode;
 }
 
 export interface Msg {
   type: "Msg";
-  value: Node
+  value: WWANode
 }
 
 export interface IfStatement {
   type: "IfStatement",
-  consequent: Node,
-  test: Node,
-  alternate?: Node
+  consequent: WWANode,
+  test: WWANode,
+  alternate?: WWANode
 }
 
 export interface BlockStatement {
   type: "BlockStatement",
-  value: Node[]
+  value: WWANode[]
 }
 
 export interface AnyFunction {
   type: "AnyFunction",
   functionName: string,
-  value: Node[]
+  value: WWANode[]
 }
 
-export type Node = |
+export interface DefinedFunction {
+  type: "DefinedFunction",
+  functionName: string,
+  body: WWANode
+}
+
+export interface CallDefinedFunction {
+  type: "CallDefinedFunction",
+  functionName: string
+}
+
+export type WWANode = |
   PartsAssignment |
   ItemAssignment |
   UserVariableAssignment |
@@ -118,4 +129,6 @@ export type Node = |
   Msg |
   IfStatement |
   BlockStatement |
-  AnyFunction;
+  AnyFunction |
+  DefinedFunction |
+  CallDefinedFunction;
