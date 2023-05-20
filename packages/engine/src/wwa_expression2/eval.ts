@@ -6,8 +6,29 @@ import * as Wwa from "./wwa";
 
 export class EvalCalcWwaNode {
   wwa: WWA;
+  /** ループ処理で使用するフラグ */
+  for_id: {
+    i: number,
+    j: number,
+    k: number,
+    loopCount: number
+  }
+  /** break/continue管理フラグ */
+  break_flag: boolean;
+  continue_flag: boolean;
+  /** for文上限回数 */
+  loop_limit: number;
+
   constructor(wwa: WWA) {
     this.wwa = wwa;
+    this.for_id = {
+      i: null,
+      j: null,
+      k: null,
+      loopCount: 0
+    }
+    this.break_flag = false;
+    this.loop_limit = 10000;
   }
 
   evalWwaNodes(nodes: Wwa.WWANode[]) {
@@ -17,6 +38,10 @@ export class EvalCalcWwaNode {
   }
   
   evalWwaNode(node: Wwa.WWANode) {
+    /** break/continueフラグが立っていたら処理しない */
+    if(this.break_flag || this.continue_flag) {
+      return;
+    }
     switch (node.type) {
       case "UnaryOperation":
         return this.evalUnaryOperation(node);
@@ -48,10 +73,18 @@ export class EvalCalcWwaNode {
         return this.blockStatement(node);
       case "PartsAssignment":
         return this.partsAssignment(node);
+      case "ForStatement":
+        return this.forStateMent(node);
       case "AnyFunction":
         return this.evalAnyFunction(node);
       case "CallDefinedFunction":
         return this.callDefinedFunction(node);
+      case "Break":
+        return this.breakStatement(node);
+      case "Continue":
+        return this.contunueStatment(node);
+      case "UpdateExpression":
+        return this.updateExpression(node);
       default:
         throw new Error("未定義または未実装のノードです");
     }
@@ -66,6 +99,113 @@ export class EvalCalcWwaNode {
     this.evalWwaNode(func);
   }
 
+  /** i++ などが実行された時の処理 */
+  updateExpression(node: Wwa.UpdateExpression) {
+    if(node.argument.type === "Symbol") {
+      const value = this.evalSymbol(node.argument);
+      const addValue = (()=>{
+        switch(node.operator) {
+          case '++':
+            return value+1;
+          case '--':
+            return value-1;
+          default:
+            throw new Error("想定外のOperatorが渡されました :"+node.operator);
+        }
+      })()
+      const SpecialParameterAssignment: Wwa.SpecialParameterAssignment = {
+        type: "SpecialParameterAssignment",
+        kind: <any>node.argument.name,
+        value: {
+          type: "Number",
+          value: addValue
+        }
+      }
+      this.evalSetSpecialParameter(SpecialParameterAssignment);
+    }
+    else {
+      console.log(node);
+      throw new Error("node.argument.typeがSymbolではありません。:"+node.argument.type);
+    }
+  }
+
+  /** Continue文を処理する */
+  contunueStatment(node: Wwa.Continue) {
+    // TODO: node.labelを活用したい
+    this.continue_flag = true;
+  }
+
+  /** break文を処理する */
+  breakStatement(node: Wwa.Break) {
+    // TODO: node.labelを活用したい
+    /** Breakフラグを立てる */
+    this.break_flag = true;
+  }
+
+  /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
+  forStateMent(node: Wwa.ForStatement) {
+    const init: Wwa.SpecialParameterAssignment = <Wwa.SpecialParameterAssignment>node.init;
+
+    /** for文初期化時に呼ばれる関数 */
+    const initStatment = () => {
+      /** 初期化チェックを行う */
+      switch(init.kind) {
+        case 'i':
+          if(this.for_id.i !== null) {
+            throw new Error("iの値が既に外側のforループで使われています。");
+          }
+          break;
+        case 'j':
+          if(this.for_id.j !== null) {
+            throw new Error("jの値が既に外側のforループで使われています。");
+          }
+          break;
+        case 'k':
+          if(this.for_id.k !== null) {
+            throw new Error("kの値が既に外側のforループで使われています。");
+          }
+          break;
+        default:
+          throw new Error("予想外の変数がfor文内で使用されました :"+init.kind);
+      }
+      /** 添字の初期化処理を実施する */
+      this.evalWwaNode(node.init);
+    }
+
+    /** for文処理の繰り返し部分 */
+    for(initStatment(); this.evalWwaNode(node.test); this.evalWwaNode(node.update)) {
+      this.for_id.loopCount++;
+      if(this.for_id.loopCount > this.loop_limit) {
+        throw new Error("処理回数が多すぎます！")
+      }
+      /** breakフラグが立っていたらそれ以降は処理しない */
+      if(this.break_flag) {
+        break;
+      }
+      if(!this.evalWwaNode(node.test)) {
+        break;
+      }
+      this.evalWwaNodes(node.body);
+      /** continueフラグを解除する */
+      this.continue_flag = false;
+    }
+    /** for文処理の繰り返し部分ここまで */
+
+    /** for文終了後に呼ばれる処理 */
+    this.break_flag = false;
+    switch(init.kind) {
+      case 'i':
+        this.for_id.i = null;
+        break;
+      case 'j':
+        this.for_id.j = null;
+        break;
+      case 'k':
+        this.for_id.k = null;
+        break;
+    }
+  }
+  
   /** SOUNDの用な任意の特殊関数を実行する */
   evalAnyFunction(node: Wwa.AnyFunction) {
     switch(node.functionName) {
@@ -202,6 +342,19 @@ export class EvalCalcWwaNode {
       case 'HPMAX':
         this.wwa.setPlayerEnergyMax(right);
         return 0;
+      /** for文用; 左辺値iに値を代入する場合: ex) i=i+2 */
+      case 'i':
+        this.for_id.i = this.evalWwaNode(node.value);
+        return 0;
+      case 'j':
+        this.for_id.j = this.evalWwaNode(node.value);
+        return 0;
+      case 'k':
+        this.for_id.k = this.evalWwaNode(node.value);
+        return 0;
+      case 'LOOPLIMIT':
+        this.loop_limit = this.evalWwaNode(node.value);
+        return 0;
       default:
         console.error("未実装の要素です: "+node.kind);
         return 0;
@@ -287,6 +440,15 @@ export class EvalCalcWwaNode {
         return game_status.playTime;
       case "PRID":
         return game_status.playerDirection
+      /** for文用（暫定） */
+      case 'i':
+        return this.for_id.i;
+      case 'j':
+        return this.for_id.j;
+      case 'k':
+        return this.for_id.k;
+      case 'LOOPLIMIT':
+        return this.loop_limit;
       default:
         throw new Error("このシンボルは取得できません")
     }
