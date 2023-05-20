@@ -6399,21 +6399,21 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     evalStringInputArea.className = "eval-string-input-area";
     evalStringInput.appendChild(evalStringInputArea);
     evalStringInputArea.textContent =
-`for(i=0; i<5; i=i+1) {
-    if(i == 3) {
-        continue;
-    }
-    for(j=0; j<5; j=j+1) {
-        if(j > 3) {
-            break;
-        }
-        MSG("i:"+i+"/ j:"+j);
-    }
-}`;
-
 // `for(i=0; i<5; i=i+1) {
-//     MSG("i:"+i+"/ j:");
+//     if(i == 3) {
+//         continue;
+//     }
+//     for(j=0; j<5; j=j+1) {
+//         if(j > 3) {
+//             break;
+//         }
+//         MSG("i:"+i+"/ j:"+j);
+//     }
 // }`;
+
+`for(i=0; i<5; i++) {
+    MSG("i:"+i+"/ j:");
+}`;
 
 //     evalStringInputArea.textContent = 
 // `o[5][5]=1;

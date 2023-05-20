@@ -131,6 +131,12 @@ export interface Continue {
   label: string
 }
 
+export interface UpdateExpression {
+  type: "UpdateExpression",
+  operator: string,
+  argument: WWANode
+}
+
 export type WWANode = |
   PartsAssignment |
   ItemAssignment |
@@ -153,4 +159,5 @@ export type WWANode = |
   ForStatement |
   AnyFunction |
   Break |
-  Continue;
+  Continue |
+  UpdateExpression;

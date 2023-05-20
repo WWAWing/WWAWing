@@ -80,7 +80,9 @@ export interface ForStatement extends Node {
 }
 
 export interface UpdateExpression extends Node {
-  type: "UpdateExpression"
+  type: "UpdateExpression",
+  operator: string,
+  argument: Node
 }
 
 export interface BreakStatement extends Node {
