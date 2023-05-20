@@ -444,6 +444,8 @@ export class EvalCalcWwaNode {
         return this.for_id.j;
       case 'k':
         return this.for_id.k;
+      case 'LOOPLIMIT':
+        return this.loop_limit;
       default:
         throw new Error("このシンボルは取得できません")
     }
