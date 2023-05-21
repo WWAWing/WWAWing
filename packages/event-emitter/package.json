@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/event-emitter",
-  "version": "3.13.0-acorn-statement.based-on.3.12.3",
+  "version": "3.13.0-acorn-statement-v2.based-on.3.12.3",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "files": [
     "lib",
