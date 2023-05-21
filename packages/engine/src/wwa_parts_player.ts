@@ -135,6 +135,8 @@ export class Player extends PartsObject {
                 this._isPartsEventExecuted = false;
                 this._samePosLastExecutedMapID = void 0;
                 this._samePosLastExecutedObjID = void 0;
+                /** プレイヤーが動いた歳ユーザ定義独自関数を呼び出す */
+                this._wwa.callMoveUserDefineFunction();
             }
             this._position = next;
         }

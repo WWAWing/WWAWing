@@ -1110,9 +1110,23 @@ export class WWA {
                     console.error(e.message);
                 }
             })
+            
+            /** ゲーム開始時のユーザ定義独自関数を呼び出す */
+            const gameStartFunc = this.userDefinedFunctions["CALL_WWA_START"];
+            if(gameStartFunc) {
+                this.evalCalcWwaNode.evalWwaNode(gameStartFunc);
+            }
         });
         /** スクリプトパーサーを作成する */
         this.evalCalcWwaNode = new ExpressionParser2.EvalCalcWwaNode(this);
+    }
+
+    /** プレイヤーが動いた際のユーザ定義独自関数を呼び出す */
+    public callMoveUserDefineFunction() {
+        const moveFunc = this.userDefinedFunctions["CALL_MOVE"];
+        if(moveFunc) {
+            this.evalCalcWwaNode.evalWwaNode(moveFunc);
+        }
     }
 
     public getUserScript(functionName: string): WWANode | null {
@@ -1131,7 +1145,6 @@ export class WWA {
                 this.userDefinedFunctions[functionName] = currentNode.body;
             }
         })
-        console.log(this.userDefinedFunctions);
     }
 
     private convertWwaNodes = (scriptString: string): WWANode[] => {
@@ -2469,13 +2482,28 @@ export class WWA {
                 if (this._loadType === LoadType.QUICK_LOAD) {
                     this._quickLoad();
                     this.wwaCustomEvent('wwa_quickload');
+                    /** クイックロード時のユーザ定義独自関数を呼び出す */
+                    const quickLoadFunc = this.userDefinedFunctions["CALL_QUICKLOAD"];
+                    if(quickLoadFunc) {
+                        this.evalCalcWwaNode.evalWwaNode(quickLoadFunc);
+                    }
                 } else if (this._loadType === LoadType.RESTART_GAME) {
                     this._restartGame();
                     this.wwaCustomEvent('wwa_restert');
+                    /** リスタート時のユーザ定義独自関数を呼び出す */
+                    const restartFunc = this.userDefinedFunctions["CALL_RESTART"];
+                    if(restartFunc) {
+                        this.evalCalcWwaNode.evalWwaNode(restartFunc);
+                    }
                 } else if (this._loadType === LoadType.PASSWORD) {
                     this._applyQuickLoad(this._passwordSaveExtractData);
                     this._passwordSaveExtractData = void 0;
                     this.wwaCustomEvent('wwa_passwordload');
+                    /** パスワードロード時のユーザ定義独自関数を呼び出す */
+                    const passwordLoadFunc = this.userDefinedFunctions["CALL_PASSWORDLOAD"];
+                    if(passwordLoadFunc) {
+                        this.evalCalcWwaNode.evalWwaNode(passwordLoadFunc);
+                    }
                 }
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
@@ -4257,6 +4285,12 @@ export class WWA {
         this._reservedPartsAppearances = [];
         this._reservedJumpDestination = undefined;
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+
+        /** ゲームオーバー時のユーザ定義独自関数を呼び出す */
+        const gameOverFunc = this.userDefinedFunctions["CALL_GAMEOVER"];
+        if(gameOverFunc) {
+            this.evalCalcWwaNode.evalWwaNode(gameOverFunc);
+        }
     }
 
     public setYesNoInput(yesNo: YesNoState): void {
@@ -5076,6 +5110,12 @@ export class WWA {
         this._battleEstimateWindow.update(this._player.getStatus(), monsterList);
         this._battleEstimateWindow.show();
         this._player.setEstimateWindowWating();
+        
+        /** ゲーム開始時のユーザ定義独自関数を呼び出す */
+        const battleReportFunc = this.userDefinedFunctions["CALL_BATTLE_REPORT"];
+        if(battleReportFunc) {
+            this.evalCalcWwaNode.evalWwaNode(battleReportFunc);
+        }
         return true;
     }
 
