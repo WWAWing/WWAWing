@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "3.13.0-acorn-statement.based-on.3.12.3.p.1",
+  "version": "3.13.0-acorn-statement.based-on.3.12.3.p.3",
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
