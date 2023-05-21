@@ -254,7 +254,7 @@ export class WWA {
     private evalCalcWwaNode: ExpressionParser2.EvalCalcWwaNode;
 
     /** ユーザー定義スクリプト関数 */
-    private userDefinedFunctions: { [key: string]: WWANode }
+    private userDefinedFunctions: { [key: string]: WWANode } = {};
 
     constructor(
         mapFileName: string,
@@ -1073,24 +1073,23 @@ export class WWA {
         loader.requestAndLoadMapData().then(async () => {
             this._canDisplayUserVars = canDisplayUserVars;
             this._userVarNameList = [];
-            if (!this._canDisplayUserVars) {
-                return undefined;;
+            if (this._canDisplayUserVars) {
+                this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
+                // ユーザー変数ファイルを読み込む
+                const userVarStatus = await (userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
+                    kind: "noFileSpecified" as const,
+                    errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
+                })
+                this.setUserVarStatus(userVarStatus, userVarNamesFile);
             }
-            this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
-            // ユーザー変数ファイルを読み込む
-            const userVarStatus = await (userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
-                kind: "noFileSpecified" as const,
-                errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
-            })
-            this.setUserVarStatus(userVarStatus, userVarNamesFile);
-
+        });
+        /** 外部スクリプト関係処理 */
+        (async () => {
             /** ユーザ定義関数を取得する */
-
-            /** ユーザ定義関数を初期化する */
-            this.userDefinedFunctions = {};
             const userScriptListJSONFileName = "./script/script_file_list.json";
             const userScriptFileNameList = await fetchJsonFile(userScriptListJSONFileName);
             let userScriptStringsPromises = [];
+            console.log(userScriptFileNameList);
             if(userScriptFileNameList?.kind === 'data') {
                 if(Array.isArray(userScriptFileNameList.data)) {
                     userScriptFileNameList.data.map((fileName) => {
@@ -1112,18 +1111,18 @@ export class WWA {
             })
             
             /** ゲーム開始時のユーザ定義独自関数を呼び出す */
-            const gameStartFunc = this.userDefinedFunctions["CALL_WWA_START"];
+            const gameStartFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_WWA_START"];
             if(gameStartFunc) {
                 this.evalCalcWwaNode.evalWwaNode(gameStartFunc);
             }
-        });
+        })()
         /** スクリプトパーサーを作成する */
         this.evalCalcWwaNode = new ExpressionParser2.EvalCalcWwaNode(this);
     }
 
     /** ジャンプゲートで移動した際のユーザ定義独自関数を呼び出す */
     public callJumpGateUserDefineFunction() {
-        const jumpgateFunc = this.userDefinedFunctions["CALL_JUMPGATE"];
+        const jumpgateFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_JUMPGATE"];
         if(jumpgateFunc) {
             this.evalCalcWwaNode.evalWwaNode(jumpgateFunc);
         }
@@ -1131,24 +1130,27 @@ export class WWA {
 
     /** プレイヤーが動いた際のユーザ定義独自関数を呼び出す */
     public callMoveUserDefineFunction() {
-        const moveFunc = this.userDefinedFunctions["CALL_MOVE"];
+        const moveFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_MOVE"];
         if(moveFunc) {
             this.evalCalcWwaNode.evalWwaNode(moveFunc);
         }
     }
 
     public getUserScript(functionName: string): WWANode | null {
-        return this.userDefinedFunctions[functionName] || null;
+        console.log(this.userDefinedFunctions);
+        return this.userDefinedFunctions && this.userDefinedFunctions[functionName] || null;
     }
 
     /** ユーザ定義スクリプト処理関数 */
     private setUsertScript(userScriptStrings: UserScriptResponse) {
         if(userScriptStrings.kind !== "data") {
+            console.error(userScriptStrings);
             return;
         }
         const readScriptWWANodes = this.convertWwaNodes(userScriptStrings.data);
+        console.log(readScriptWWANodes);
         readScriptWWANodes.forEach((currentNode) => {
-            if(currentNode.type === 'DefinedFunction') {
+            if(currentNode.type === 'DefinedFunction' && this.userDefinedFunctions) {
                 const functionName = currentNode.functionName;
                 this.userDefinedFunctions[functionName] = currentNode.body;
             }
@@ -1705,7 +1707,7 @@ export class WWA {
         }
         this.generatePageAndReserveExecution(speedMessage, false, true);
         /** 速度変更時のユーザ定義独自関数を呼び出す */
-        const callChangeSpeedFunc = this.userDefinedFunctions["CALL_CHANGE_SPEED"];
+        const callChangeSpeedFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_CHANGE_SPEED"];
         if(callChangeSpeedFunc) {
             this.evalCalcWwaNode.evalWwaNode(callChangeSpeedFunc);
         }
@@ -2206,7 +2208,7 @@ export class WWA {
                 ]
                 checkHitKeyUserFunctions.forEach((key)=>{
                     if(this._keyStore.checkHitKey(key.key)) {
-                        const userFunc = this.userDefinedFunctions[key.func];
+                        const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[key.func];
                         if(userFunc) {
                             this.evalCalcWwaNode.evalWwaNode(userFunc);
                         }
@@ -2496,7 +2498,7 @@ export class WWA {
                     this._quickLoad();
                     this.wwaCustomEvent('wwa_quickload');
                     /** クイックロード時のユーザ定義独自関数を呼び出す */
-                    const quickLoadFunc = this.userDefinedFunctions["CALL_QUICKLOAD"];
+                    const quickLoadFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_QUICKLOAD"];
                     if(quickLoadFunc) {
                         this.evalCalcWwaNode.evalWwaNode(quickLoadFunc);
                     }
@@ -2504,7 +2506,7 @@ export class WWA {
                     this._restartGame();
                     this.wwaCustomEvent('wwa_restert');
                     /** リスタート時のユーザ定義独自関数を呼び出す */
-                    const restartFunc = this.userDefinedFunctions["CALL_RESTART"];
+                    const restartFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_RESTART"];
                     if(restartFunc) {
                         this.evalCalcWwaNode.evalWwaNode(restartFunc);
                     }
@@ -2513,7 +2515,7 @@ export class WWA {
                     this._passwordSaveExtractData = void 0;
                     this.wwaCustomEvent('wwa_passwordload');
                     /** パスワードロード時のユーザ定義独自関数を呼び出す */
-                    const passwordLoadFunc = this.userDefinedFunctions["CALL_PASSWORDLOAD"];
+                    const passwordLoadFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_PASSWORDLOAD"];
                     if(passwordLoadFunc) {
                         this.evalCalcWwaNode.evalWwaNode(passwordLoadFunc);
                     }
@@ -2529,7 +2531,7 @@ export class WWA {
         }
 
         /** フレームごとにユーザー定義独自関数を呼び出す */
-        const frameFunc = this.userDefinedFunctions["CALL_FRAME"];
+        const frameFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_FRAME"];
         if(frameFunc) {
             this.evalCalcWwaNode.evalWwaNode(frameFunc);
         }
@@ -4300,7 +4302,7 @@ export class WWA {
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
 
         /** ゲームオーバー時のユーザ定義独自関数を呼び出す */
-        const gameOverFunc = this.userDefinedFunctions["CALL_GAMEOVER"];
+        const gameOverFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_GAMEOVER"];
         if(gameOverFunc) {
             this.evalCalcWwaNode.evalWwaNode(gameOverFunc);
         }
@@ -4485,7 +4487,7 @@ export class WWA {
     private _quickSave(callInfo: number): string {
         /** セーブ時にユーザ定義独自関数を呼び出す */
         /** 処理内容もセーブの中身に入れ込めるようセーブ処理前に実行する */
-        const func = this.userDefinedFunctions["CALL_SAVE"];
+        const func = this.userDefinedFunctions && this.userDefinedFunctions["CALL_SAVE"];
         if(func) {
             this.evalCalcWwaNode.evalWwaNode(func);
         }
@@ -5125,7 +5127,7 @@ export class WWA {
         this._player.setEstimateWindowWating();
         
         /** ゲーム開始時のユーザ定義独自関数を呼び出す */
-        const battleReportFunc = this.userDefinedFunctions["CALL_BATTLE_REPORT"];
+        const battleReportFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BATTLE_REPORT"];
         if(battleReportFunc) {
             this.evalCalcWwaNode.evalWwaNode(battleReportFunc);
         }
