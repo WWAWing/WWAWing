@@ -1,4 +1,5 @@
 [
   "./script/index.js",
-  "./script/lib.js"
+  "./script/lib.js",
+  "./script/defined.js"
 ]

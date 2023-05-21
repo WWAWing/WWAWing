@@ -1121,6 +1121,14 @@ export class WWA {
         this.evalCalcWwaNode = new ExpressionParser2.EvalCalcWwaNode(this);
     }
 
+    /** ジャンプゲートで移動した際のユーザ定義独自関数を呼び出す */
+    public callJumpGateUserDefineFunction() {
+        const jumpgateFunc = this.userDefinedFunctions["CALL_JUMPGATE"];
+        if(jumpgateFunc) {
+            this.evalCalcWwaNode.evalWwaNode(jumpgateFunc);
+        }
+    }
+
     /** プレイヤーが動いた際のユーザ定義独自関数を呼び出す */
     public callMoveUserDefineFunction() {
         const moveFunc = this.userDefinedFunctions["CALL_MOVE"];
@@ -1696,6 +1704,11 @@ export class WWA {
                 break;
         }
         this.generatePageAndReserveExecution(speedMessage, false, true);
+        /** 速度変更時のユーザ定義独自関数を呼び出す */
+        const callChangeSpeedFunc = this.userDefinedFunctions["CALL_CHANGE_SPEED"];
+        if(callChangeSpeedFunc) {
+            this.evalCalcWwaNode.evalWwaNode(callChangeSpeedFunc);
+        }
     }
 
     public isBattleSpeedIndexForQuickBattle(battleSpeedIndex: number): boolean {

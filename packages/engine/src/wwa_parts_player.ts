@@ -457,6 +457,9 @@ export class Player extends PartsObject {
             this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         }
 
+        // ジャンプゲートで移動した際に呼ばれるユーザ定義独自関数
+        this._wwa.callJumpGateUserDefineFunction();
+
         return true;
     }
 
