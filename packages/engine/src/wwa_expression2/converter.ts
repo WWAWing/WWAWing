@@ -136,6 +136,10 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "SET_SPEED":
     case "CHANGE_GAMEOVER_POS":
     case "DEL_PLAYER":
+    case "RESTART_GAME":
+    case "URL_JUMPGATE":
+    case "HIDE_STATUS":
+    case "PARTS":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {

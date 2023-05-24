@@ -205,35 +205,52 @@ export class EvalCalcWwaNode {
         break;
     }
   }
+
+  /**
+   * 関数実行時に引数が不足しているかチェックする
+   * @param length 
+   * @param node 
+   */
+  private _checkArgsLength(length: number, node: Wwa.AnyFunction) {
+    if(node.value.length < length) {
+      throw new Error(`関数 ${node.functionName} の引数が不足しています！`);
+    }
+  }
   
   /** SOUNDの用な任意の特殊関数を実行する */
   evalAnyFunction(node: Wwa.AnyFunction) {
     switch(node.functionName) {
       case "SOUND":
+        this._checkArgsLength(1, node);
         // SOUNDは引数を一つだけ取る
         const soundNumber = this.evalWwaNode(node.value[0]);
         // 曲を鳴らす
         this.wwa.playSound(soundNumber);
         break;
       case "SAVE":
+        this._checkArgsLength(1, node);
         // SAVEは引数を一つだけ取る
         const saveNumber = Boolean(this.evalWwaNode(node.value[0]));
         this.wwa.disableSave(saveNumber);
         break;
       case "LOG":
+        this._checkArgsLength(1, node);
         // 指定した引数の文字列をログ出力する
         const value = this.evalWwaNode(node.value[0]);
         console.log(value);
         break;
       case "ABLE_CHANGE_SPEED":
+        this._checkArgsLength(1, node);
         const isAbleChangeSpeed = Boolean(this.evalWwaNode(node.value[0]));
         this.wwa.speedChangeJudge(isAbleChangeSpeed);
         break;
       case "SET_SPEED":
+        this._checkArgsLength(1, node);
         const gameSpeedValue = Number(this.evalWwaNode(node.value[0]));
         this.wwa.setPlayerSpeedIndex(gameSpeedValue);
         break;
       case "CHANGE_GAMEOVER_POS":
+        this._checkArgsLength(2, node);
         const gameover_pos = {
           x: Number(this.evalWwaNode(node.value[0])),
           y: Number(this.evalWwaNode(node.value[1]))
@@ -244,8 +261,39 @@ export class EvalCalcWwaNode {
         this.wwa.setGameOverPosition(new Coord(gameover_pos.x, gameover_pos.y));
         break;
       case "DEL_PLAYER":
+        this._checkArgsLength(1, node);
         const isDelPlayer = Boolean(this.evalWwaNode(node.value[0]));
         this.wwa.setDelPlayer(isDelPlayer);
+        break;
+      case "RESTART_GAME":
+        this.wwa.restartGame();
+        break;
+      case "URL_JUMPGATE":
+        this._checkArgsLength(1, node);
+        const url = this.evalWwaNode(node.value[0]);
+        location.href = url;
+        break;
+      case "HIDE_STATUS":
+        this._checkArgsLength(2, node);
+        const target = Number(this.evalWwaNode(node.value[0]));
+        const isHide = Boolean(this.evalWwaNode(node.value[1]));
+        this.wwa.hideStatus(target, isHide);
+        break;
+      case "PARTS":
+        this._checkArgsLength(2, node);
+        const srcID = Number(this.evalWwaNode(node.value[0]));
+        const destID = Number(this.evalWwaNode(node.value[1]));
+        let partsType = node.value[2]? Number(this.evalWwaNode(node.value[2])): 0;
+        let onlyThisSight = node.value[3]? Boolean(this.evalWwaNode(node.value[3])): true;
+        const PARTS_TYPE_LIST = [PartsType.OBJECT, PartsType.MAP];
+        if(srcID < 0 || destID < 0 ) {
+          throw new Error("パーツ番号が不正です");
+        }
+        else if(!PARTS_TYPE_LIST.includes(partsType)) {
+          throw new Error("パーツ種別が不明です");
+        }
+        // TODO: パーツ番号が最大値を超えていないかチェックする
+        this.wwa.replaceParts(srcID, destID, partsType, onlyThisSight);
         break;
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);

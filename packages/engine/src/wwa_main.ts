@@ -2503,7 +2503,7 @@ export class WWA {
                         this.evalCalcWwaNode.evalWwaNode(quickLoadFunc);
                     }
                 } else if (this._loadType === LoadType.RESTART_GAME) {
-                    this._restartGame();
+                    this.restartGame();
                     this.wwaCustomEvent('wwa_restert');
                     /** リスタート時のユーザ定義独自関数を呼び出す */
                     const restartFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_RESTART"];
@@ -4726,7 +4726,10 @@ export class WWA {
         }
     }
 
-    private _restartGame(): void {
+    /**
+     * リスタートゲームをかける
+     */
+    public restartGame(): void {
         this._quickLoad(true);
     }
 
