@@ -26,7 +26,6 @@ jobs:
           npm i -g npm@8
           npm install
           npm run build
-          npm run generate
 
       - name: "test"
         run: |
