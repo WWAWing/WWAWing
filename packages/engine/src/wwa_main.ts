@@ -3751,7 +3751,7 @@ export class WWA {
     ): Page[] {
 
         // コメント削除
-        const messageMain = message
+        const messageMainAll = message
             .split(/\n\<c\>/i)[0]
             .split(/\<c\>/i)[0]
             .replace(/\n\<p\>\n/ig, "<P>")
@@ -3779,6 +3779,19 @@ export class WWA {
             .filter(line => line !== undefined)
             .join("\n")
             .replace(/\\\/\\\//ig, "//"); // エスケープ対応: 「\/\/」 を 「//」 にする。
+        
+        /**
+         * <script> タグ仮対応
+         * TODO: 後で直してください
+         **/
+        const messageMainSplit = messageMainAll.split("<script>");
+        const messageMain = messageMainSplit[0];
+
+        /** <script> タグが含まれる場合中身を実行する。 */
+        if(messageMainSplit.length > 1) {
+            const scriptStrings = messageMainSplit[1];
+            this._execEvalString(scriptStrings);
+        }
 
         if (messageMain === "") {
             // 空メッセージの場合は何も処理しないが、スコア表示の場合はメッセージを出すのでノードなしのページを生成
@@ -6420,11 +6433,23 @@ font-weight: bold;
         try {
             const getElement: any = document.getElementsByClassName('eval-string-input-area')[0];
             const baseEvalStr = getElement.value;
-            const nodes = this.convertWwaNodes(baseEvalStr);
-            console.log("c:");
-            const c = this.evalCalcWwaNode.evalWwaNodes(nodes);
-            console.log(c);
+            this._execEvalString(baseEvalStr);
         } catch(e) {
+            console.error(e);
+            this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
+        }
+    }
+
+    /**
+     * Script要素実行部分
+     * @param evalString 
+     */
+    private _execEvalString(evalString: string) {
+        try {
+            const nodes = this.convertWwaNodes(evalString);
+            this.evalCalcWwaNode.evalWwaNodes(nodes);
+        }
+        catch(e) {
             console.error(e);
             this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
         }
