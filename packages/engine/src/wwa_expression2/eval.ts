@@ -298,10 +298,7 @@ export class EvalCalcWwaNode {
         this.generator.wwa.restartGame();
         break;
       case "URL_JUMPGATE":
-        this._checkArgsLength(1, node);
-        const url = this.evalWwaNode(node.value[0]);
-        location.href = url;
-        break;
+        throw new Error("URL_JUMPGATE 関数は調整中のためご利用になれません");
       case "HIDE_STATUS":
         this._checkArgsLength(2, node);
         const target = Number(this.evalWwaNode(node.value[0]));
