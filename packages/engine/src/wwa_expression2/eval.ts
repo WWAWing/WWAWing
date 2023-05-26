@@ -28,7 +28,8 @@ export class EvalCalcWwaNode {
       loopCount: 0
     }
     this.break_flag = false;
-    this.loop_limit = 10000;
+    /** 初期処理上限を10万回にする */
+    this.loop_limit = 100000;
   }
 
   evalWwaNodes(nodes: Wwa.WWANode[]) {
@@ -176,6 +177,13 @@ export class EvalCalcWwaNode {
     for(initStatment(); this.evalWwaNode(node.test); this.evalWwaNode(node.update)) {
       this.for_id.loopCount++;
       if(this.for_id.loopCount > this.loop_limit) {
+        // i,j,kを初期化する
+        this.for_id = {
+          loopCount: 0,
+          i: null,
+          j: null,
+          k: null
+        }
         throw new Error("処理回数が多すぎます！")
       }
       /** breakフラグが立っていたらそれ以降は処理しない */

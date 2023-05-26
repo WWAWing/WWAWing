@@ -12,8 +12,8 @@ function makeRandomParts() {
 }
 
 function makeRandomPartsAllMaps() {
-  for(i = 0; i < 60; i=i+1) {
-    for(j = 0; j < 60; j=j+1) {
+  for(i = 0; i < 100; i=i+1) {
+    for(j = 0; j < 100; j=j+1) {
       if(RAND(3) > 1) {
         o[i][j] = RAND(200);
       }
