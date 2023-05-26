@@ -37,15 +37,15 @@ export class EvalCalcWwaNodeGenerator {
 export class EvalCalcWwaNode {
   generator: EvalCalcWwaNodeGenerator;
   /** ループ処理で使用するフラグ */
-  for_id: {
+  private for_id: {
     i: number,
     j: number,
     k: number,
-    loopCount: number
+    loopCount: number,
+    /** break/continue管理フラグ */
+    break_flag: boolean;
+    continue_flag: boolean;
   }
-  /** break/continue管理フラグ */
-  break_flag: boolean;
-  continue_flag: boolean;
 
 
   constructor(generator: EvalCalcWwaNodeGenerator) {
@@ -54,9 +54,10 @@ export class EvalCalcWwaNode {
       i: null,
       j: null,
       k: null,
-      loopCount: 0
+      loopCount: 0,
+      break_flag: false,
+      continue_flag: false
     }
-    this.break_flag = false;
   }
 
   private evalWwaNodes(nodes: Wwa.WWANode[]) {
@@ -67,7 +68,7 @@ export class EvalCalcWwaNode {
   
   public evalWwaNode(node: Wwa.WWANode) {
     /** break/continueフラグが立っていたら処理しない */
-    if(this.break_flag || this.continue_flag) {
+    if(this.for_id.break_flag || this.for_id.continue_flag) {
       return;
     }
     switch (node.type) {
@@ -160,14 +161,14 @@ export class EvalCalcWwaNode {
   /** Continue文を処理する */
   contunueStatment(node: Wwa.Continue) {
     // TODO: node.labelを活用したい
-    this.continue_flag = true;
+    this.for_id.continue_flag = true;
   }
 
   /** break文を処理する */
   breakStatement(node: Wwa.Break) {
     // TODO: node.labelを活用したい
     /** Breakフラグを立てる */
-    this.break_flag = true;
+    this.for_id.break_flag = true;
   }
 
   /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
@@ -207,7 +208,7 @@ export class EvalCalcWwaNode {
         throw new Error("処理回数が多すぎます！")
       }
       /** breakフラグが立っていたらそれ以降は処理しない */
-      if(this.break_flag) {
+      if(this.for_id.break_flag) {
         break;
       }
       if(!this.evalWwaNode(node.test)) {
@@ -215,12 +216,12 @@ export class EvalCalcWwaNode {
       }
       this.evalWwaNodes(node.body);
       /** continueフラグを解除する */
-      this.continue_flag = false;
+      this.for_id.continue_flag = false;
     }
     /** for文処理の繰り返し部分ここまで */
 
     /** for文終了後に呼ばれる処理 */
-    this.break_flag = false;
+    this.for_id.break_flag = false;
     switch(init.kind) {
       case 'i':
         this.for_id.i = null;
