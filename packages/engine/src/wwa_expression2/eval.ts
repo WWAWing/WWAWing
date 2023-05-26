@@ -58,6 +58,12 @@ export class EvalCalcWwaNode {
     }
     this.break_flag = false;
   }
+
+  private evalWwaNodes(nodes: Wwa.WWANode[]) {
+    return nodes.map((node) => {
+      return this.evalWwaNode(node)
+    })
+  }
   
   public evalWwaNode(node: Wwa.WWANode) {
     /** break/continueフラグが立っていたら処理しない */
@@ -207,7 +213,7 @@ export class EvalCalcWwaNode {
       if(!this.evalWwaNode(node.test)) {
         break;
       }
-      this.generator.evalWwaNodes(node.body);
+      this.evalWwaNodes(node.body);
       /** continueフラグを解除する */
       this.continue_flag = false;
     }
@@ -336,7 +342,7 @@ export class EvalCalcWwaNode {
   }
 
   blockStatement(node: Wwa.BlockStatement) {
-    this.generator.evalWwaNodes(node.value);
+    this.evalWwaNodes(node.value);
   }
 
   ifStatement(node: Wwa.IfStatement) {
