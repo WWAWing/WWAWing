@@ -2,10 +2,40 @@ import { Coord, MacroStatusIndex, PartsType } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
+export class EvalCalcWwaNodeGenerator {
+  wwa: WWA;
+  /** for文上限回数 */
+  loop_limit: number;
+  constructor(wwa: WWA) {
+    this.wwa = wwa;
+    /** 初期処理上限を10万回にする */
+    this.loop_limit = 100000;
+  }
+
+  public evalWwaNodes(nodes: Wwa.WWANode[]) {
+    return nodes.map((node) => {
+      return this.evalWwaNode(node)
+    })
+  }
+
+  public evalWwaNode(node: Wwa.WWANode) {
+    if(node.type === "BlockStatement" && Array.isArray(node.value) && node.value.length === 0 ) {
+      return;
+    }
+    const evalNode = new EvalCalcWwaNode(this);
+    evalNode.evalWwaNode(node)
+  }
+
+  public updateLoopLimit(limit: number) {
+    this.loop_limit = limit;
+  }
+}
+
+
 // UNDONE: boolean 値の取り扱い方法については未定
 
 export class EvalCalcWwaNode {
-  wwa: WWA;
+  generator: EvalCalcWwaNodeGenerator;
   /** ループ処理で使用するフラグ */
   for_id: {
     i: number,
@@ -16,11 +46,10 @@ export class EvalCalcWwaNode {
   /** break/continue管理フラグ */
   break_flag: boolean;
   continue_flag: boolean;
-  /** for文上限回数 */
-  loop_limit: number;
 
-  constructor(wwa: WWA) {
-    this.wwa = wwa;
+
+  constructor(generator: EvalCalcWwaNodeGenerator) {
+    this.generator = generator;
     this.for_id = {
       i: null,
       j: null,
@@ -28,17 +57,9 @@ export class EvalCalcWwaNode {
       loopCount: 0
     }
     this.break_flag = false;
-    /** 初期処理上限を10万回にする */
-    this.loop_limit = 100000;
-  }
-
-  evalWwaNodes(nodes: Wwa.WWANode[]) {
-    return nodes.map((node) => {
-      return this.evalWwaNode(node)
-    })
   }
   
-  evalWwaNode(node: Wwa.WWANode) {
+  public evalWwaNode(node: Wwa.WWANode) {
     /** break/continueフラグが立っていたら処理しない */
     if(this.break_flag || this.continue_flag) {
       return;
@@ -93,7 +114,7 @@ export class EvalCalcWwaNode {
 
   /** 関数の呼び出し */
   callDefinedFunction(node: Wwa.CallDefinedFunction) {
-    const func = this.wwa.getUserScript(node.functionName);
+    const func = this.generator.wwa.getUserScript(node.functionName);
     if(func === null) {
       throw new Error(`未定義の関数が呼び出されました: ${node.functionName}`);
     }
@@ -176,14 +197,7 @@ export class EvalCalcWwaNode {
     /** for文処理の繰り返し部分 */
     for(initStatment(); this.evalWwaNode(node.test); this.evalWwaNode(node.update)) {
       this.for_id.loopCount++;
-      if(this.for_id.loopCount > this.loop_limit) {
-        // i,j,kを初期化する
-        this.for_id = {
-          loopCount: 0,
-          i: null,
-          j: null,
-          k: null
-        }
+      if(this.for_id.loopCount > this.generator.loop_limit) {
         throw new Error("処理回数が多すぎます！")
       }
       /** breakフラグが立っていたらそれ以降は処理しない */
@@ -193,7 +207,7 @@ export class EvalCalcWwaNode {
       if(!this.evalWwaNode(node.test)) {
         break;
       }
-      this.evalWwaNodes(node.body);
+      this.generator.evalWwaNodes(node.body);
       /** continueフラグを解除する */
       this.continue_flag = false;
     }
@@ -233,13 +247,13 @@ export class EvalCalcWwaNode {
         // SOUNDは引数を一つだけ取る
         const soundNumber = this.evalWwaNode(node.value[0]);
         // 曲を鳴らす
-        this.wwa.playSound(soundNumber);
+        this.generator.wwa.playSound(soundNumber);
         break;
       case "SAVE":
         this._checkArgsLength(1, node);
         // SAVEは引数を一つだけ取る
         const saveNumber = Boolean(this.evalWwaNode(node.value[0]));
-        this.wwa.disableSave(saveNumber);
+        this.generator.wwa.disableSave(saveNumber);
         break;
       case "LOG":
         this._checkArgsLength(1, node);
@@ -250,12 +264,12 @@ export class EvalCalcWwaNode {
       case "ABLE_CHANGE_SPEED":
         this._checkArgsLength(1, node);
         const isAbleChangeSpeed = Boolean(this.evalWwaNode(node.value[0]));
-        this.wwa.speedChangeJudge(isAbleChangeSpeed);
+        this.generator.wwa.speedChangeJudge(isAbleChangeSpeed);
         break;
       case "SET_SPEED":
         this._checkArgsLength(1, node);
         const gameSpeedValue = Number(this.evalWwaNode(node.value[0]));
-        this.wwa.setPlayerSpeedIndex(gameSpeedValue);
+        this.generator.wwa.setPlayerSpeedIndex(gameSpeedValue);
         break;
       case "CHANGE_GAMEOVER_POS":
         this._checkArgsLength(2, node);
@@ -263,18 +277,18 @@ export class EvalCalcWwaNode {
           x: Number(this.evalWwaNode(node.value[0])),
           y: Number(this.evalWwaNode(node.value[1]))
         }
-        if(gameover_pos.x < 0 || gameover_pos.x >= this.wwa.getMapWidth() || gameover_pos.y < 0 || gameover_pos.y > this.wwa.getMapWidth()) {
+        if(gameover_pos.x < 0 || gameover_pos.x >= this.generator.wwa.getMapWidth() || gameover_pos.y < 0 || gameover_pos.y > this.generator.wwa.getMapWidth()) {
           throw new Error("マップの範囲外が指定されています!");
         }
-        this.wwa.setGameOverPosition(new Coord(gameover_pos.x, gameover_pos.y));
+        this.generator.wwa.setGameOverPosition(new Coord(gameover_pos.x, gameover_pos.y));
         break;
       case "DEL_PLAYER":
         this._checkArgsLength(1, node);
         const isDelPlayer = Boolean(this.evalWwaNode(node.value[0]));
-        this.wwa.setDelPlayer(isDelPlayer);
+        this.generator.wwa.setDelPlayer(isDelPlayer);
         break;
       case "RESTART_GAME":
-        this.wwa.restartGame();
+        this.generator.wwa.restartGame();
         break;
       case "URL_JUMPGATE":
         this._checkArgsLength(1, node);
@@ -285,7 +299,7 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(2, node);
         const target = Number(this.evalWwaNode(node.value[0]));
         const isHide = Boolean(this.evalWwaNode(node.value[1]));
-        this.wwa.hideStatus(target, isHide);
+        this.generator.wwa.hideStatus(target, isHide);
         break;
       case "PARTS":
         this._checkArgsLength(2, node);
@@ -301,7 +315,7 @@ export class EvalCalcWwaNode {
           throw new Error("パーツ種別が不明です");
         }
         // TODO: パーツ番号が最大値を超えていないかチェックする
-        this.wwa.replaceParts(srcID, destID, partsType, onlyThisSight);
+        this.generator.wwa.replaceParts(srcID, destID, partsType, onlyThisSight);
         break;
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
@@ -313,16 +327,16 @@ export class EvalCalcWwaNode {
    * 右辺値取得は evalArray2D で処理する
    **/
   partsAssignment(node: Wwa.PartsAssignment) {
-    const game_status = this.wwa.getGameStatus();
+    const game_status = this.generator.wwa.getGameStatus();
     const x = this.evalWwaNode(node.destinationX);
     const y = this.evalWwaNode(node.destinationY);
     const value = this.evalWwaNode(node.value);
     const partsKind = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
-    this.wwa.appearPartsEval(game_status.playerCoord, x, y, value, partsKind);
+    this.generator.wwa.appearPartsEval(game_status.playerCoord, x, y, value, partsKind);
   }
 
   blockStatement(node: Wwa.BlockStatement) {
-    this.evalWwaNodes(node.value);
+    this.generator.evalWwaNodes(node.value);
   }
 
   ifStatement(node: Wwa.IfStatement) {
@@ -346,14 +360,14 @@ export class EvalCalcWwaNode {
   itemAssignment(node: Wwa.ItemAssignment) {
     const idx = this.evalWwaNode(node.itemBoxPosition1to12);
     const itemID = this.evalWwaNode(node.value);
-    this.wwa.setPlayerGetItem(idx, itemID);
+    this.generator.wwa.setPlayerGetItem(idx, itemID);
     return 0;
   }
 
   evalMessage(node: Wwa.Msg) {
     const value = this.evalWwaNode(node.value);
     const showString = isNaN(value)? value: value.toString();
-    this.wwa.generatePageAndReserveExecution(showString, false, false);
+    this.generator.wwa.generatePageAndReserveExecution(showString, false, false);
     return 0;
   }
 
@@ -363,7 +377,7 @@ export class EvalCalcWwaNode {
     if(isNaN(x) || isNaN(y)) {
       throw new Error(`飛び先の値が数値になっていません。 x=${x} / y=${y}`);
     }
-    this.wwa.forcedJumpGate(x, y);
+    this.generator.wwa.forcedJumpGate(x, y);
   }
 
   evalRandom(node: Wwa.Random) {
@@ -373,30 +387,30 @@ export class EvalCalcWwaNode {
 
   evalSetSpecialParameter(node: Wwa.SpecialParameterAssignment) {
     const right = this.evalWwaNode(node.value);
-    if(!this.wwa || isNaN(right)) {
+    if(!this.generator.wwa || isNaN(right)) {
       return 0;
     }
     switch(node.kind) {
       case 'PX':
-        this.wwa.jumpSpecifiedXPos(right);
+        this.generator.wwa.jumpSpecifiedXPos(right);
         return 0;
       case 'PY':
-        this.wwa.jumpSpecifiedYPos(right);
+        this.generator.wwa.jumpSpecifiedYPos(right);
         return 0;
       case 'AT':
-        this.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, right, false);
         return 0;
       case 'DF':
-        this.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, right, false);
         return 0;
       case 'GD':
-        this.wwa.setPlayerStatus(MacroStatusIndex.GOLD, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.GOLD, right, false);
         return 0;
       case 'HP':
-        this.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, right, false);
         return 0;
       case 'HPMAX':
-        this.wwa.setPlayerEnergyMax(right);
+        this.generator.wwa.setPlayerEnergyMax(right);
         return 0;
       /** for文用; 左辺値iに値を代入する場合: ex) i=i+2 */
       case 'i':
@@ -409,7 +423,7 @@ export class EvalCalcWwaNode {
         this.for_id.k = this.evalWwaNode(node.value);
         return 0;
       case 'LOOPLIMIT':
-        this.loop_limit = this.evalWwaNode(node.value);
+        this.generator.updateLoopLimit(this.evalWwaNode(node.value));
         return 0;
       default:
         console.error("未実装の要素です: "+node.kind);
@@ -419,11 +433,11 @@ export class EvalCalcWwaNode {
 
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
     const right = this.evalWwaNode(node.value);
-    if(!this.wwa || isNaN(right) || node.index.type !== "Number") {
+    if(!this.generator.wwa || isNaN(right) || node.index.type !== "Number") {
       return 0;
     }
     const userVarIndex: number = node.index.value;
-    this.wwa.setUserVar(userVarIndex, right);
+    this.generator.wwa.setUserVar(userVarIndex, right);
     return 0;
   }
 
@@ -470,7 +484,7 @@ export class EvalCalcWwaNode {
   }
 
   evalSymbol(node: Wwa.Symbol) {
-    const game_status = this.wwa.getGameStatus();
+    const game_status = this.generator.wwa.getGameStatus();
     switch(node.name) {
       case "X":
       case "Y":
@@ -494,7 +508,7 @@ export class EvalCalcWwaNode {
         return game_status.moveCount;
       case "TIME":
         /** 現在時刻を更新する */
-        this.wwa.setNowPlayTime();
+        this.generator.wwa.setNowPlayTime();
         return game_status.playTime;
       case "PRID":
         return game_status.playerDirection
@@ -506,7 +520,7 @@ export class EvalCalcWwaNode {
       case 'k':
         return this.for_id.k;
       case 'LOOPLIMIT':
-        return this.loop_limit;
+        return this.generator.loop_limit;
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -515,10 +529,10 @@ export class EvalCalcWwaNode {
   evalArray1D(node: Wwa.Array1D) {
     const index: Wwa.Number = <Wwa.Number>node.index0;
     const userVarIndex: number = index.value;
-    const game_status = this.wwa.getGameStatus();
+    const game_status = this.generator.wwa.getGameStatus();
     switch (node.name) {
       case "v":
-        return this.wwa.getUserVar(userVarIndex);
+        return this.generator.wwa.getUserVar(userVarIndex);
       case "ITEM":
         if(game_status.itemBox[userVarIndex] === undefined) {
           throw new Error("ITMEの添字に想定外の値が入っています。: "+userVarIndex);
@@ -540,7 +554,7 @@ export class EvalCalcWwaNode {
         const x = this.evalWwaNode(node.index0);
         const y = this.evalWwaNode(node.index1);
         const partsType = node.name === 'o'? PartsType.OBJECT: PartsType.MAP;
-        const partsID = this.wwa.getPartsID(new Coord(x, y), partsType);
+        const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
       default:
         throw new Error("このシンボルは取得できません")
