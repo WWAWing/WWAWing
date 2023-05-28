@@ -205,7 +205,7 @@ export class EvalCalcWwaNode {
     for(initStatment(); this.evalWwaNode(node.test); this.evalWwaNode(node.update)) {
       this.for_id.loopCount++;
       if(this.for_id.loopCount > this.generator.loop_limit) {
-        throw new Error("処理回数が多すぎます！")
+        throw new Error("処理回数が多すぎます！\n上限値は LOOPLIMIT で変えられます。")
       }
       /** breakフラグが立っていたらそれ以降は処理しない */
       if(this.for_id.break_flag) {
@@ -320,6 +320,35 @@ export class EvalCalcWwaNode {
         }
         // TODO: パーツ番号が最大値を超えていないかチェックする
         this.generator.wwa.replaceParts(srcID, destID, partsType, onlyThisSight);
+        break;
+      case "EFFECT":
+        // ex) EFFECT(6, 9, 15)
+        this._checkArgsLength(1, node);
+        const waitTime = Number(this.evalWwaNode(node.value[0]));
+        if (waitTime < 0) {
+            throw new Error("待ち時間は0以上の整数でなければなりません。");
+        }
+        if (waitTime === 0) {
+            this.generator.wwa.stopEffect();
+            return;
+        }
+        const coords: Coord[] = [];
+        for(let i = 1; i < node.value.length; i+=2) {
+          console.log(i);
+          const cropX = Number(this.evalWwaNode(node.value[i]));
+          if(cropX < 0) {
+            throw new Error("画像のパーツ座標指定は0以上の整数でなければなりません。");
+          }
+          if(i+1 === node.value.length) {
+            throw new Error("画像のパーツ座標指定で、Y座標が指定されていません。");
+          }
+          const cropY = Number(this.evalWwaNode(node.value[i+1]));
+          if (cropY < 0) {
+            throw new Error("画像のパーツ座標指定は0以上の整数でなければなりません。");
+          }
+          coords.push(new Coord(cropX, cropY));
+        }
+        this.generator.wwa.setEffect(waitTime, coords);
         break;
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);

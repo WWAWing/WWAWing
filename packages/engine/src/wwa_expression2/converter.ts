@@ -140,6 +140,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "URL_JUMPGATE":
     case "HIDE_STATUS":
     case "PARTS":
+    case "EFFECT":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
