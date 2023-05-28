@@ -141,6 +141,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "HIDE_STATUS":
     case "PARTS":
     case "EFFECT":
+    case "CHANGE_PLAYER_IMAGE":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {

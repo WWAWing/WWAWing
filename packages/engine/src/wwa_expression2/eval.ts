@@ -334,7 +334,6 @@ export class EvalCalcWwaNode {
         }
         const coords: Coord[] = [];
         for(let i = 1; i < node.value.length; i+=2) {
-          console.log(i);
           const cropX = Number(this.evalWwaNode(node.value[i]));
           if(cropX < 0) {
             throw new Error("画像のパーツ座標指定は0以上の整数でなければなりません。");
@@ -349,6 +348,13 @@ export class EvalCalcWwaNode {
           coords.push(new Coord(cropX, cropY));
         }
         this.generator.wwa.setEffect(waitTime, coords);
+        break;
+      case "CHANGE_PLAYER_IMAGE":
+        this._checkArgsLength(2, node);
+        const x = Number(this.evalWwaNode(node.value[0]));
+        const y = Number(this.evalWwaNode(node.value[1]));
+        const coord = new Coord(x, y);
+        this.generator.wwa.setPlayerImgCoord(coord);
         break;
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
