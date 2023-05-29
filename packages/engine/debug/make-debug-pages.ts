@@ -1,5 +1,6 @@
 import { render, InputConfig } from "@wwawing/page-generator";
 import * as fs from "fs";
+import * as pug from "pug";
 import * as path from "path";
 import maps from "./maps-config";
 
@@ -13,13 +14,24 @@ interface IndexPageOption {
     }
 }
 
+const indexPageTemplageFile = path.join(__dirname, "index.pug");
+const compileIndexPage = pug.compileFile(indexPageTemplageFile, { pretty: true });
 const outputDirectory = path.join(__dirname, "..", "lib");
 
-Promise.all(createPlayPagePromises(maps))
+Promise.all([
+    ...createPlayPagePromises(maps),
+    // Netlify でデプロイする場合は wwa-server を使用しないため、トップページを生成する
+    ...(!isDev ? [createIndexPage({ page: { maps, thisYear: new Date().getFullYear() } })] : [])
+])
     .catch(error => {
         console.error("error", error);
         process.exit(1);
     });
+
+function createIndexPage(option: IndexPageOption): Promise<void> {
+    return createWriteFilePromise(
+        path.join(outputDirectory, "index.html"), `${compileIndexPage(option)}\n`);
+}
 
 function createPlayPagePromises(maps: Maps): Promise<void>[] {
     return maps
