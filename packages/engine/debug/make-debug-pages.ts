@@ -20,7 +20,8 @@ const outputDirectory = path.join(__dirname, "..", "lib");
 
 Promise.all([
     ...createPlayPagePromises(maps),
-    createIndexPage({ page: { maps, thisYear: new Date().getFullYear() } })
+    // Netlify でデプロイする場合は wwa-server を使用しないため、トップページを生成する
+    ...(!isDev ? [createIndexPage({ page: { maps, thisYear: new Date().getFullYear() } })] : [])
 ])
     .catch(error => {
         console.error("error", error);
