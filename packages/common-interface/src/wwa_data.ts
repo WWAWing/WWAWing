@@ -144,7 +144,9 @@ export interface WWAData {
      */
     isGameOverDisabled?: boolean;
 
-    gameOverPolicy: GameOverPolicy
+    gameOverPolicy: GameOverPolicy;
+
+    bgmDelayDurationMs: number;
 
 }
 

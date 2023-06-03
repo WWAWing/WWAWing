@@ -134,6 +134,8 @@ export class TextLoader {
 
     wwaData.gameOverPolicy = "default";
 
+    wwaData.bgmDelayDurationMs = 0;
+
     return wwaData;
   }
 
