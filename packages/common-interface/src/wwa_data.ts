@@ -157,6 +157,8 @@ export interface WWAData {
 
     gameOverPolicy: GameOverPolicy;
 
+    bgmDelayDurationMs: number;
+
     pictureRegistory: PictureRegistory[];
 
 }

@@ -124,5 +124,7 @@ export function generateValueAssignOperation(calcResult: number, assigneeExpress
       throw new Error('左辺値に乱数は入れられません');
     case 'ITEM_COUNT':
       throw new Error('左辺値に所持アイテム数は入れられません');
+    default:
+      throw new Error('この文字列から代入操作オブジェクトは生成できません');
   }
 }
