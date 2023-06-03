@@ -1108,11 +1108,12 @@ export class Macro {
     }
 
     private _executeSoundMacro(): void {
-        this._concatEmptyArgs(1);
+        this._concatEmptyArgs(2);
         // 注) $sound マクロは、マップデータ読み込み時に全メッセージ解析でロードする音源を決定しているため
         // 変数などによるサウンド番号指定を受け付けない
-        var id = parseInt(this.macroArgs[0]);
-        this._wwa.playSound(id);
+        const id = parseInt(this.macroArgs[0]);
+        const bgmDelayMs = parseInt(this.macroArgs[1]);
+        this._wwa.playSound(id, bgmDelayMs);
     }
     private _executeGamePadButtonMacro(): void {
         this._concatEmptyArgs(2);
