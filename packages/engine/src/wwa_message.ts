@@ -521,6 +521,10 @@ export class Macro {
                     this._executeConsoleLogMacro(2);
                     return {}
                 }
+                case MacroType.DELAYBGM: {
+                    this._executeDelayBgmMacro();
+                    return {};
+                }
                 default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     return {};
@@ -1104,11 +1108,12 @@ export class Macro {
     }
 
     private _executeSoundMacro(): void {
-        this._concatEmptyArgs(1);
+        this._concatEmptyArgs(2);
         // 注) $sound マクロは、マップデータ読み込み時に全メッセージ解析でロードする音源を決定しているため
         // 変数などによるサウンド番号指定を受け付けない
-        var id = parseInt(this.macroArgs[0]);
-        this._wwa.playSound(id);
+        const id = parseInt(this.macroArgs[0]);
+        const bgmDelayMs = parseInt(this.macroArgs[1]);
+        this._wwa.playSound(id, bgmDelayMs);
     }
     private _executeGamePadButtonMacro(): void {
         this._concatEmptyArgs(2);
@@ -1148,6 +1153,12 @@ export class Macro {
             }
         );
     }
+
+    private _executeDelayBgmMacro(): void {
+        this._concatEmptyArgs(1);
+        const delayMs = this._evaluateIntValue(0);
+        this._wwa.setBgmDelay(delayMs);
+    }
 }
 
 export function parseMacro(
@@ -1157,7 +1168,6 @@ export function parseMacro(
     position: Coord,
     macroStr: string
 ): Macro {
-
     let matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)$/);
     if (matchInfo === null || matchInfo.length !== 3) {
         // イコールがつかないタイプのマクロ
@@ -1170,12 +1180,18 @@ export function parseMacro(
     const macroName = `$${macroType.toLowerCase()}`;
     // カンマがある場合の $if は旧実装とみなす
     const macroIndex = macroName === "$if" && macroStr.match(/,/) ? MacroType.LEGACY_IF : macrotable[macroName];
-    const macroRightSide = matchInfo[2]? matchInfo[2]: "";
-    if (macroIndex === void 0) {
-        // undefined macro
-        return new Macro(wwa, partsID, partsType, position, MacroType.UNDEFINED, macroRightSide.split(","));
-    }
-    return new Macro(wwa, partsID, partsType, position, macroIndex, macroRightSide.split(",").map((e) => { return e.trim(); }));
+    // show_str 系マクロでは、文字列手前のカンマを除去しないようにする
+    // (メッセージ文字列にスペースを含められるようにするため。数値系の文字列のスペースは、パース時に除去されるのでここでは除去しなくてよい）
+    const shouldTrimWhiteSpace = Boolean(macroIndex !== MacroType.SHOW_STR && macroIndex !== MacroType.SHOW_STR2);
+    const macroArgs = (matchInfo[2] ?? "").split(",").map(arg => shouldTrimWhiteSpace ? arg.trim() : arg);
+    return new Macro(
+        wwa,
+        partsID,
+        partsType,
+        position,
+        macroIndex === undefined ? MacroType.UNDEFINED : macroIndex,
+        macroArgs
+    );
 }
 
 

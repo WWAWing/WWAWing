@@ -1420,7 +1420,8 @@ export class WWA {
             // 本来鳴っているはずのBGMが targetSoundId 番であるときは再生
             if (this._wwaData.bgm === targetSoundId) {
                 if (targetAudio.hasData()) {
-                    targetAudio.play();
+                    // TODO ロード完了したタイミングの this._wwaData.bgmDelayDurationMs は変更されているのか？
+                    targetAudio.play(this._wwaData.bgmDelayDurationMs);
                     this._wwaData.bgm = targetSoundId;
                     this._clearSoundLoadedCheckTimer();
                 } else if (targetAudio.isError()) {
@@ -1442,7 +1443,7 @@ export class WWA {
         }
     }
 
-    public playSound(id: number): void {
+    public playSound(id: number, bgmDelayDurationMs?: number): void {
         if (!this._isLoadedSound) {
             // 音声データがロードされていなくても、次に音が流れる設定でゲーム開始したときにBGMを復元しなければならない。
             if (id === SystemSound.NO_SOUND) {
@@ -1461,7 +1462,7 @@ export class WWA {
         }
 
         if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
-            if (this.sounds[this._wwaData.bgm].hasData()) {
+            if (this.sounds[this._wwaData.bgm].isPlaying()) {
                 this.sounds[this._wwaData.bgm].pause();
             }
             this._wwaData.bgm = 0;
@@ -1482,7 +1483,7 @@ export class WWA {
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
-                this.sounds[id].play();
+                this.sounds[id].play(bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
                 this._wwaData.bgm = id;
             } else {
                 this.sounds[id].play();
@@ -4688,7 +4689,7 @@ export class WWA {
         if (newData.bgm === 0) {
             this.playSound(SystemSound.NO_SOUND);
         } else {
-            this.playSound(newData.bgm);
+            this.playSound(newData.bgm, newData.bgmDelayDurationMs);
         }
         this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
         if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
@@ -5707,6 +5708,9 @@ export class WWA {
                 // 何もしない
                 return;
         }
+    }
+    public setBgmDelay(delayMs: number) {
+        this._wwaData.bgmDelayDurationMs = delayMs;
     }
 
 
