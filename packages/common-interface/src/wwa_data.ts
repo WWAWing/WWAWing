@@ -1,3 +1,5 @@
+import { PictureProperties } from "./wwa_picture";
+
 export interface Coord {
     x: number;
     y: number;
@@ -11,28 +13,14 @@ export interface Coord {
  */
 export type GameOverPolicy = "default" | "never" | "except-macro";
 
-export type PictureRegistory = PictureImageRegistory | PictureTextRegistry;
-
-export interface PictureImageRegistory {
-    type: 'image',
-    x: number,
-    y: number,
+export type PictureRegistory = {
     layerNumber: number,
-    imageX: number,
-    imageY: number,
-    imageWidth: number,
-    imageHeight: number
-}
-
-export interface PictureTextRegistry {
-    type: 'text',
-    x: number,
-    y: number,
-    layerNumber: number,
-    text: string,
-    font: string,
-    size: number,
-}
+    imgPosX: number,
+    imgPosY: number,
+    imgPosX2: number,
+    imgPosY2: number,
+    properties: PictureProperties
+};
 
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
@@ -172,4 +160,3 @@ export interface WWAData {
     pictureRegistory: PictureRegistory[];
 
 }
-

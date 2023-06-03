@@ -1155,30 +1155,21 @@ export class Macro {
     }
 
     private _executePictureMacro(): void {
-        this._concatEmptyArgs(7);
-        if (this.macroArgs.length < 7) {
+        this._concatEmptyArgs(3);
+        if (this.macroArgs.length < 1) {
             throw new Error("引数が少なすぎます");
         }
-        const destPosX = this._evaluateIntValue(0);
-        const destPosY = this._evaluateIntValue(1);
-        const srcPosX = this._evaluateIntValue(2);
-        const srcPosY = this._evaluateIntValue(3);
-        const srcWidth = this._evaluateIntValue(4);
-        const srcHeight = this._evaluateIntValue(5);
-        const layerNumber = this._evaluateIntValue(6);
-        const displayTimeMs = this._evaluateIntValue(7, 0);
-        if (srcPosX < 0 || srcPosY < 0) {
-            throw new Error("画像のパーツ座標指定は0以上の整数でなければなりません。");
-        }
-        if (srcWidth < 0 || srcHeight < 0) {
-            throw new Error("画像のサイズ指定は0以上の整数でなければなりません。");
+        const layerNumber = this._evaluateIntValue(0);
+        // 0: そのパーツ自身, -1: パーツを消去
+        const definePartsNumber = this._evaluateIntValue(1, 0);
+        const definePartsType = this._evaluateIntValue(2, PartsType.OBJECT);
+        if (definePartsNumber < -1) {
+            throw new Error("パーツ番号は-1以上の整数でなければなりません。");
         }
         if (layerNumber < 0 || layerNumber > MAX_PICTURE_LAYERS_COUNT) {
             throw new Error("レイヤー番号が範囲外です。");
         }
-        this._wwa.setPictureRegistry({
-            destPosX, destPosY, srcPosX, srcPosY, srcWidth, srcHeight, layerNumber, displayTimeMs
-        })
+        this._wwa.setPictureRegistry(layerNumber, definePartsNumber, definePartsType);
     }
 }
 

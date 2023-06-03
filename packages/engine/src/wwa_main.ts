@@ -50,8 +50,6 @@ import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawin
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
 import * as ExpressionParser from "./wwa_expression";
-import { PictureMacroArgs } from "./wwa_picture/typedef";
-import WWAPicutre from "./wwa_picture";
 
 let wwa: WWA
 
@@ -5491,14 +5489,8 @@ export class WWA {
         }
     }
 
-    public setPictureRegistry(args: PictureMacroArgs) {
-        const registory = WWAPicutre.convertPictureImageRegistory(args);
-        if (registory === null) {
-            this._wwaData.pictureRegistory.splice(args.layerNumber, 1);
-        } else {
-            this._wwaData.pictureRegistory[args.layerNumber] = registory;
-        }
-        this._cgManager.setPicture(args.layerNumber, registory);
+    public setPictureRegistry(layerNumber: number, partsNumber: number, partsType: PartsType) {
+        // TODO 実装する
     }
 
 

@@ -1,8 +1,7 @@
 
-import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
-import { PictureMacroArgs } from "./wwa_picture/typedef";
+import { PictureRegistoryParts } from "./wwa_picture/typedef";
 
 export class CacheCanvas {
     public cvs: HTMLCanvasElement;
@@ -198,7 +197,9 @@ export class CGManager {
 
     public drawPictures(): void {
         this._pictureCanvases.forEachPictures((picture) => {
-            this._ctx.drawImage(picture.canvas.cvs, picture.x, picture.y);
+            this._ctx.drawImage(picture.canvas.cvs,
+                0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW,
+                0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
         });
     }
 
@@ -352,12 +353,8 @@ export class CGManager {
         this.createFrame();
     }
 
-    public setPicture(layerNumber: number, registory: PictureRegistory | null) {
-        if (registory === null) {
-            this._pictureCanvases.deletePicture(layerNumber);
-        } else {
-            this._pictureCanvases.registPictureImage(registory);
-        }
+    public setPicture(regitory: PictureRegistoryParts) {
+        this._pictureCanvases.registPicture(regitory);
     }
 
     public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {
