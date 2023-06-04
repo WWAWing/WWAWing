@@ -4506,6 +4506,8 @@ export class WWA {
 
         this.updateCSSRule();
         this.updateEffect();
+        this._cgManager.reloadPictures(this._wwaData.pictureRegistory);
+        this.updatePictures();
         this._player.updateStatusValueBox();
         this._wwaSave.quickSaveButtonUpdate(this._wwaData);
     }
@@ -5432,6 +5434,10 @@ export class WWA {
         this._cgManager.updateEffects(<Coord[]>this._wwaData.effectCoords);
     }
 
+    public updatePictures(): void {
+        this._cgManager.updatePictures();
+    }
+
     public setImgClick(pos: Coord): void {
         this._wwaData.imgClickX = pos.x;
         this._wwaData.imgClickY = pos.y;
@@ -5505,7 +5511,7 @@ export class WWA {
         }
         const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
         const propertiesText = getPictureDefineText(messageText ?? "");
-        this._cgManager.setPicture({
+        const data = this._cgManager.setPicture({
             layerNumber,
             imgPosX: (attributes[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE) ?? 0,
             imgPosX2: (attributes[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE) ?? 0,
@@ -5513,6 +5519,8 @@ export class WWA {
             imgPosY2: (attributes[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE) ?? 0,
             propertiesText,
         });
+        this._wwaData.pictureRegistory = data;
+        this.updatePictures();
     }
 
     public deletePictureRegistory(layerNumber: number) {

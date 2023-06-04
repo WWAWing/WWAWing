@@ -1,4 +1,5 @@
 
+import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
 import { PictureRegistoryParts } from "./wwa_picture/typedef";
@@ -156,6 +157,13 @@ export class CGManager {
                 }
             }
         }
+    }
+
+    public reloadPictures(regitories?: PictureRegistory[]): void {
+        this._pictureCanvases.clearAllPictures();
+        regitories.forEach((registory) => {
+            this._pictureCanvases.registPicture(registory);
+        });
     }
     public updatePictures(): void {
         this._pictureCanvases.updatePictures(this._image);
@@ -353,9 +361,15 @@ export class CGManager {
         this.createFrame();
     }
 
+    /**
+     * ピクチャを登録し、追加後のピクチャをデータにして返します。
+     * プロパティの変換は WWAPicture クラス内で行われます。
+     * @param regitory ピクチャの登録情報
+     * @returns wwaData で使用できるピクチャの登録データ（配列形式）
+     */
     public setPicture(regitory: PictureRegistoryParts) {
-        this._pictureCanvases.registPicture(regitory);
-        this.updatePictures();
+        this._pictureCanvases.registPictureFromText(regitory);
+        return this._pictureCanvases.getPictureRegistoryData();
     }
 
     public deletePicture(layerNumber: number) {
