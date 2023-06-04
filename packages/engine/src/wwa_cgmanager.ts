@@ -159,14 +159,14 @@ export class CGManager {
         }
     }
 
-    public reloadPictures(regitories?: PictureRegistory[]): void {
+    public updatePictures(regitories: PictureRegistory[]): void {
         this._pictureCanvases.clearAllPictures();
         regitories.forEach((registory) => {
             this._pictureCanvases.registPicture(registory);
         });
     }
-    public updatePictures(): void {
-        this._pictureCanvases.updatePictures(this._image);
+    public updatePicturesCache(isMainAnimation = true): void {
+        this._pictureCanvases.updatePicturesCache(this._image, isMainAnimation);
     }
 
     public drawFrame(): void {
@@ -372,8 +372,14 @@ export class CGManager {
         return this._pictureCanvases.getPictureRegistoryData();
     }
 
+    /**
+     * ピクチャの登録を削除し、削除後のピクチャをデータにして返します。
+     * @param layerNumber 削除したいレイヤーの番号
+     * @returns wwaData で使用できるピクチャの登録データ（配列形式）
+     */
     public deletePicture(layerNumber: number) {
         this._pictureCanvases.deletePicture(layerNumber);
+        return this._pictureCanvases.getPictureRegistoryData();
     }
 
     public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {

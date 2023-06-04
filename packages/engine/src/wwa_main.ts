@@ -2322,6 +2322,12 @@ export class WWA {
         this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
         if (!this._player.isWaitingMessage() || !this._isClassicModeEnable) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
             this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
+            // isSubAnimation の定義では、 this._animationCounter > ANIMATION_REP_HALF_FRAME となっていて、
+            // ANIMATION_REP_HALF_FRAME の剰余だけで算出すると、常時非 sub のアニメーションが流れることになるため、
+            // sub の判定については 1 フレーム分判定を後ろにずらしている
+            if (this._animationCounter === 0 || this._animationCounter === Consts.ANIMATION_REP_HALF_FRAME + 1) {
+                this.updatePicturesCache();
+            }
         }
         if (this._camera.isResetting()) {
             this._camera.advanceTransitionStepNum();
@@ -2373,6 +2379,10 @@ export class WWA {
     }
     public vibration(isStrong: boolean) {
         this._gamePadStore.vibration(isStrong);
+    }
+
+    private _isMainAnimation() {
+        return this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
     }
 
     private _drawAll() {
@@ -2562,7 +2572,7 @@ export class WWA {
         var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW);
         var offset: Coord;
         var count: number = 0;
-        var animationType: boolean = this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
+        var animationType: boolean = this._isMainAnimation();
         var imgType: boolean, ppxo: number, ppyo: number, canvasX: number, canvasY: number, type: number, num: number, result: Coord;
         var x: number, y: number, partsIDObj: number, savePartsIDObj: number, n: number;
         var useBattleArea: boolean = this._player.isFighting() &&
@@ -4506,8 +4516,8 @@ export class WWA {
 
         this.updateCSSRule();
         this.updateEffect();
-        this._cgManager.reloadPictures(this._wwaData.pictureRegistory);
-        this.updatePictures();
+        this._cgManager.updatePictures(this._wwaData.pictureRegistory);
+        this.updatePicturesCache();
         this._player.updateStatusValueBox();
         this._wwaSave.quickSaveButtonUpdate(this._wwaData);
     }
@@ -5434,8 +5444,8 @@ export class WWA {
         this._cgManager.updateEffects(<Coord[]>this._wwaData.effectCoords);
     }
 
-    public updatePictures(): void {
-        this._cgManager.updatePictures();
+    public updatePicturesCache(): void {
+        this._cgManager.updatePicturesCache(this._isMainAnimation());
     }
 
     public setImgClick(pos: Coord): void {
@@ -5519,12 +5529,14 @@ export class WWA {
             imgPosY2: (attributes[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE) ?? 0,
             propertiesText,
         });
+        // _cgManager 内のデータと _wwaData 内のデータで同期を取る
         this._wwaData.pictureRegistory = data;
-        this.updatePictures();
+        this.updatePicturesCache();
     }
 
     public deletePictureRegistory(layerNumber: number) {
-        this._cgManager.deletePicture(layerNumber);
+        const data = this._cgManager.deletePicture(layerNumber);
+        this._wwaData.pictureRegistory = data;
     };
 
     private _stylePos: number[]; // w

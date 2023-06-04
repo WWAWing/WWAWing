@@ -59,23 +59,19 @@ export default class WWAPicutre {
     }
 
     public forEachPictures(caller: (picture: PictureItem) => void) {
-        this._pictures.forEach((picture) => {
-            if (picture === null) {
-                return;
-            }
-            caller(picture);
-        });
+        this._pictures.forEach(caller);
     }
 
-    public updatePictures(image: HTMLImageElement) {
+    public updatePicturesCache(image: HTMLImageElement, isMainAnimation = true) {
         this.forEachPictures((picture) => {
             if (picture.layerNumber !== 0) {
                 picture.canvas.clear();
             }
+            const isDefineSubAnimation = picture.imgPosX2 !== 0 || picture.imgPosY2 !== 0;
             picture.canvas.drawCanvas(
                 image,
-                picture.imgPosX,
-                picture.imgPosY,
+                isMainAnimation || !isDefineSubAnimation ? picture.imgPosX : picture.imgPosX2,
+                isMainAnimation || !isDefineSubAnimation ? picture.imgPosY : picture.imgPosY2,
                 picture.properties.pos[0] ?? 0,
                 picture.properties.pos[1] ?? 0,
             );
