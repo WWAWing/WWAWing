@@ -355,6 +355,11 @@ export class CGManager {
 
     public setPicture(regitory: PictureRegistoryParts) {
         this._pictureCanvases.registPicture(regitory);
+        this.updatePictures();
+    }
+
+    public deletePicture(layerNumber: number) {
+        this._pictureCanvases.deletePicture(layerNumber);
     }
 
     public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {

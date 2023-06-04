@@ -8,7 +8,7 @@ import {
     SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, WWAConsts,
 } from "./wwa_data";
 
 import {
@@ -39,6 +39,7 @@ import { ObjectMovingDataManager } from "./wwa_motion";
 import {
     MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
 } from "./wwa_message";
+import { getPictureDefineText } from "./wwa_message/utils";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject, checkTouchDevice } from "./wwa_inject_html";
@@ -2458,6 +2459,7 @@ export class WWA {
 
         // 7. マクロ文で描画されるエフェクトや顔表示、フレームなどを描画
         this._drawEffect();
+        this._drawPictures();
         this._drawFaces();
         this._drawFrame();
 
@@ -5494,9 +5496,28 @@ export class WWA {
     }
 
     public setPictureRegistry(layerNumber: number, partsNumber: number, partsType: PartsType) {
-        // TODO 実装する
+        const attributes =
+            partsType === PartsType.OBJECT ? this._wwaData.objectAttribute[partsNumber] :
+            partsType === PartsType.MAP ? this._wwaData.mapAttribute[partsNumber] :
+            null;
+        if (attributes === null) {
+            throw new Error("対応していないパーツ番号です。");
+        }
+        const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
+        const propertiesText = getPictureDefineText(messageText ?? "");
+        this._cgManager.setPicture({
+            layerNumber,
+            imgPosX: (attributes[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE) ?? 0,
+            imgPosX2: (attributes[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE) ?? 0,
+            imgPosY: (attributes[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE) ?? 0,
+            imgPosY2: (attributes[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE) ?? 0,
+            propertiesText,
+        });
     }
 
+    public deletePictureRegistory(layerNumber: number) {
+        this._cgManager.deletePicture(layerNumber);
+    };
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;

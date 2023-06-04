@@ -29,6 +29,7 @@ import {
 } from "./wwa_save";
 import { type TokenValues, type Descriminant, evaluateDescriminant, evaluateMacroArgExpression } from "./wwa_expression";
 import { MAX_PICTURE_LAYERS_COUNT } from "./wwa_picture/config";
+import { convertRelativeValue } from "./wwa_message/utils";
 
 /**
  * 値が更新された時に、再評価されるべき値を返す関数の型。
@@ -1165,12 +1166,21 @@ export class Macro {
             throw new Error("引数が少なすぎます");
         }
         const layerNumber = this._evaluateIntValue(0);
-        // 0: そのパーツ自身, -1: パーツを消去
-        const definePartsNumber = this._evaluateIntValue(1, 0);
-        const definePartsType = this._evaluateIntValue(2, PartsType.OBJECT);
-        if (definePartsNumber < -1) {
-            throw new Error("パーツ番号は-1以上の整数でなければなりません。");
+        // 未指定の場合は "+0" (パーツそのまま)
+        const definePartsNumberString = this.macroArgs[1].length > 0 ? this.macroArgs[1] : "+0";
+        // 0: パーツを消去
+        if (definePartsNumberString === "0") {
+            this._wwa.deletePictureRegistory(layerNumber);
+            return;
         }
+        const definePartsNumber = convertRelativeValue(definePartsNumberString, this._triggerPartsID);
+        if (definePartsNumber === 0) {
+            throw new Error("パーツ番号の相対値算出で0が検出されました。ピクチャを消去する場合は0のまま指定してください。");
+        }
+        if (definePartsNumber < 0) {
+            throw new Error("パーツ番号は0以上の整数でなければなりません。");
+        }
+        const definePartsType = this._evaluateIntValue(2, PartsType.OBJECT);
         if (layerNumber < 0 || layerNumber > MAX_PICTURE_LAYERS_COUNT) {
             throw new Error("レイヤー番号が範囲外です。");
         }

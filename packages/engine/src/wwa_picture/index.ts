@@ -35,7 +35,7 @@ export default class WWAPicutre {
                 properties: jsonObject as PictureProperties
             });
         } catch (e) {
-            // TODO 構文エラーなど出せるようにしたい
+            throw new Error(e);
         }
     }
 
