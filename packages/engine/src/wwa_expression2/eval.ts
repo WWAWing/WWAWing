@@ -246,8 +246,9 @@ export class EvalCalcWwaNode {
     }
   }
   
-  /** SOUNDの用な任意の特殊関数を実行する */
+  /** 任意の特殊関数を実行する */
   evalAnyFunction(node: Wwa.AnyFunction) {
+    const game_status = this.generator.wwa.getGameStatus();
     switch(node.functionName) {
       case "SOUND":
         this._checkArgsLength(1, node);
@@ -356,6 +357,12 @@ export class EvalCalcWwaNode {
         const coord = new Coord(x, y);
         this.generator.wwa.setPlayerImgCoord(coord);
         break;
+      case "HAS_ITEM":
+        this._checkArgsLength(1, node);
+        const targetItemID = Number(this.evalWwaNode(node.value[0]));
+        const hasIem = game_status.itemBox.includes(targetItemID);
+        return hasIem;
+      case "GET_ITEM_NO":
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
