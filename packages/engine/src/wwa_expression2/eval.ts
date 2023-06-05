@@ -359,10 +359,27 @@ export class EvalCalcWwaNode {
         break;
       case "HAS_ITEM":
         this._checkArgsLength(1, node);
-        const targetItemID = Number(this.evalWwaNode(node.value[0]));
-        const hasIem = game_status.itemBox.includes(targetItemID);
-        return hasIem;
-      case "GET_ITEM_NO":
+        {
+          const targetItemID = Number(this.evalWwaNode(node.value[0]));
+          const hasIem = game_status.itemBox.includes(targetItemID);
+          return hasIem;
+        }
+      case "REMOVE_ITEM":
+        this._checkArgsLength(1, node);
+        {
+          const targetItemID = Number(this.evalWwaNode(node.value[0]));
+          const isRemoveAll = node.value[1]? this.evalWwaNode(node.value[1]) === 1: false;
+          for(let idx = 0; idx < game_status.itemBox.length; idx++) {
+            const item = game_status.itemBox[idx];
+            if(targetItemID === item) {
+              this.generator.wwa.setPlayerGetItem(idx + 1, 0);
+              if(!isRemoveAll) {
+                break;
+              }
+            }
+          }
+          break;
+        }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
