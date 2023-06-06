@@ -573,7 +573,7 @@ export class EvalCalcWwaNode {
         /** 現在時刻を更新する */
         this.generator.wwa.setNowPlayTime();
         return game_status.playTime;
-      case "PRID":
+      case "PDIR":
         return game_status.playerDirection
       /** for文用（暫定） */
       case 'i':
