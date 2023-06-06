@@ -380,6 +380,17 @@ export class EvalCalcWwaNode {
           }
           break;
         }
+      case "MOVE":
+        this._checkArgsLength(1, node);
+        {
+          const direction = Number(this.evalWwaNode(node.value[0]))
+          if(direction <= 0 || direction > 9) {
+            throw Error("MOVEの移動先は2/4/6/8で指定してください！")
+          }
+          this.generator.wwa.movePlayer(direction);
+          this.generator.wwa.movePlayer(direction);
+        }
+        break;
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }

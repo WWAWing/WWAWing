@@ -6458,6 +6458,14 @@ font-weight: bold;
             this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
         }
     }
+
+    /**
+     * プレイヤーを動かす
+     * @param moveDir
+     */
+    public movePlayer(moveDir: Direction): void {
+        this._player.controll(moveDir);
+    }
 };
 
 var isCopyRightClick = false;
