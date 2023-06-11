@@ -4821,13 +4821,15 @@ export class WWA {
     }
 
     private _getRandomMoveCoord(playerIsMoving: boolean, currentPos: Position, objectsInNextFrame: number[][]): Coord {
-        var currentCoord = currentPos.getPartsCoord();
-        var resultCoord: Coord = currentCoord.clone();
-        var iterNum = this._wwaData.isOldMove
+        const currentCoord = currentPos.getPartsCoord();
+        const resultCoord: Coord = currentCoord.clone();
+        const iterNum = this._wwaData.isOldMove
             ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31
             : Consts.RANDOM_MOVE_ITERATION_NUM;
-        for (var i = 0; i < iterNum; i++) {
-            var rand = Math.floor(Math.random() * 8);
+        for (let i = 0; i < iterNum; i++) {
+            const vx = [-1, 1, 0, 0, -1, -1, 1, 1];
+            const vy = [0, 0, 1, -1, 1, -1, 1, -1];
+            const rand = Math.floor(Math.random() * vx.length);
             resultCoord.x = currentCoord.x + vx[rand];
             resultCoord.y = currentCoord.y + vy[rand];
             if (this._objectCanMoveTo(playerIsMoving, resultCoord, objectsInNextFrame)) {
