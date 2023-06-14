@@ -60,16 +60,29 @@ export default class WWAPicutre {
         });
     }
 
+    /**
+     * ピクチャをテキストデータから登録し、追加後のピクチャをデータにして返します。
+     * プロパティの変換は WWAPicture クラス内で行われます。
+     * @param regitory ピクチャの登録情報
+     * @returns wwaData で使用できるピクチャの登録データ（配列形式）
+     */
     public registPictureFromText(registory: PictureRegistoryParts) {
         this.registPicture(convertPictureRegistoryFromText(registory));
+        return this.getPictureRegistoryData();
     }
 
+    /**
+     * ピクチャの登録を削除し、削除後のピクチャをデータにして返します。
+     * @param layerNumber 削除したいレイヤーの番号
+     * @returns wwaData で使用できるピクチャの登録データ（配列形式）
+     */
     public deletePicture(layerNumber: number) {
         if (!this._pictures.has(layerNumber)) {
             return;
         }
         this._pictures.get(layerNumber).canvas.clear();
         this._pictures.delete(layerNumber);
+        return this.getPictureRegistoryData();
     }
 
     public clearAllPictures() {
@@ -97,7 +110,7 @@ export default class WWAPicutre {
     }
 
     public decrementPictureDisplayTimeStock() {
-        this.forEachPictures((picture => {
+        this.forEachPictures(picture => {
             if (picture.displayStocckTime === undefined) {
                 return;
             }

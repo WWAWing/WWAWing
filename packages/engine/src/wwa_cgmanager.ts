@@ -361,27 +361,6 @@ export class CGManager {
         this.createFrame();
     }
 
-    /**
-     * ピクチャを登録し、追加後のピクチャをデータにして返します。
-     * プロパティの変換は WWAPicture クラス内で行われます。
-     * @param regitory ピクチャの登録情報
-     * @returns wwaData で使用できるピクチャの登録データ（配列形式）
-     */
-    public setPicture(regitory: PictureRegistoryParts, playTime: number) {
-        this.picture.registPictureFromText(regitory, playTime);
-        return this.picture.getPictureRegistoryData();
-    }
-
-    /**
-     * ピクチャの登録を削除し、削除後のピクチャをデータにして返します。
-     * @param layerNumber 削除したいレイヤーの番号
-     * @returns wwaData で使用できるピクチャの登録データ（配列形式）
-     */
-    public deletePicture(layerNumber: number) {
-        this.picture.deletePicture(layerNumber);
-        return this.picture.getPictureRegistoryData();
-    }
-
     public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {
 
         this._frameCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);
