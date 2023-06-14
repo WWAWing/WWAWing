@@ -33,7 +33,7 @@ export default class WWAPicutre {
      * @param image CacheCanvas.drawCanvas で使用されるイメージ要素
      * @param picture 対象のピクチャ
      */
-    private drawPicture(image: HTMLImageElement, picture: PictureItem) {
+    private _drawPicture(image: HTMLImageElement, picture: PictureItem) {
         const isDefineSubAnimation = picture.imgPosX2 !== 0 || picture.imgPosY2 !== 0;
         picture.canvas.drawCanvas(
             image,
@@ -55,6 +55,7 @@ export default class WWAPicutre {
         );
         this._pictures.set(registory.layerNumber, {
             ...registory,
+            displayStocckTime: registory.properties.time,
             canvas,
         });
     }
@@ -91,8 +92,21 @@ export default class WWAPicutre {
             if (picture.layerNumber !== 0) {
                 picture.canvas.clear();
             }
-            this.drawPicture(image, picture);
+            this._drawPicture(image, picture);
         })
+    }
+
+    public decrementPictureDisplayTimeStock() {
+        this.forEachPictures((picture => {
+            if (picture.displayStocckTime === undefined) {
+                return;
+            }
+            // TODO 果たして動くのか？
+            picture.displayStocckTime--;
+            if (picture.displayStocckTime <= 0) {
+                this.deletePicture(picture.layerNumber);
+            }
+        });
     }
 
     public getPictureRegistoryData(): PictureRegistory[] {

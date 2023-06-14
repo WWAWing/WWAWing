@@ -2073,6 +2073,7 @@ export class WWA {
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
+            this._cgManager.picture.decrementPictureDisplayTimeStock();
         } else if (this._player.isJumped()) {
             if (!this._camera.isResetting()) {
                 this._player.processAfterJump();
@@ -5521,14 +5522,18 @@ export class WWA {
         }
         const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
         const propertiesText = getPictureDefineText(messageText ?? "");
-        const data = this._cgManager.setPicture({
-            layerNumber,
-            imgPosX: (attributes[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE) ?? 0,
-            imgPosX2: (attributes[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE) ?? 0,
-            imgPosY: (attributes[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE) ?? 0,
-            imgPosY2: (attributes[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE) ?? 0,
-            propertiesText,
-        });
+        this.setNowPlayTime();
+        const data = this._cgManager.setPicture(
+            {
+                layerNumber,
+                imgPosX: (attributes[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE) ?? 0,
+                imgPosX2: (attributes[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE) ?? 0,
+                imgPosY: (attributes[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE) ?? 0,
+                imgPosY2: (attributes[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE) ?? 0,
+                propertiesText,
+            },
+            this._wwaData.playTime
+        );
         // _cgManager 内のデータと _wwaData 内のデータで同期を取る
         this._wwaData.pictureRegistory = data;
         this.updatePicturesCache();

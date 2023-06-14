@@ -55,7 +55,7 @@ export class CGManager {
     private _backCanvas: CacheCanvas;
     private _objectCanvases: CacheCanvas[];
     private _effectCanvases: CacheCanvas[];
-    private _pictureCanvases: WWAPicutre;
+    public picture: WWAPicutre;
     public mapCache: number[] = void 0;
     public mapObjectCache: number[] = void 0;
     public mapCacheYLimit: number = 0;
@@ -160,13 +160,13 @@ export class CGManager {
     }
 
     public updatePictures(regitories: PictureRegistory[]): void {
-        this._pictureCanvases.clearAllPictures();
+        this.picture.clearAllPictures();
         regitories.forEach((registory) => {
-            this._pictureCanvases.registPicture(registory);
+            this.picture.registPicture(registory);
         });
     }
     public updatePicturesCache(isMainAnimation = true): void {
-        this._pictureCanvases.updatePicturesCache(this._image, isMainAnimation);
+        this.picture.updatePicturesCache(this._image, isMainAnimation);
     }
 
     public drawFrame(): void {
@@ -204,7 +204,7 @@ export class CGManager {
     }
 
     public drawPictures(): void {
-        this._pictureCanvases.forEachPictures((picture) => {
+        this.picture.forEachPictures((picture) => {
             this._ctx.drawImage(picture.canvas.cvs,
                 0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW,
                 0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
@@ -367,9 +367,9 @@ export class CGManager {
      * @param regitory ピクチャの登録情報
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
-    public setPicture(regitory: PictureRegistoryParts) {
-        this._pictureCanvases.registPictureFromText(regitory);
-        return this._pictureCanvases.getPictureRegistoryData();
+    public setPicture(regitory: PictureRegistoryParts, playTime: number) {
+        this.picture.registPictureFromText(regitory, playTime);
+        return this.picture.getPictureRegistoryData();
     }
 
     /**
@@ -378,8 +378,8 @@ export class CGManager {
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
     public deletePicture(layerNumber: number) {
-        this._pictureCanvases.deletePicture(layerNumber);
-        return this._pictureCanvases.getPictureRegistoryData();
+        this.picture.deletePicture(layerNumber);
+        return this.picture.getPictureRegistoryData();
     }
 
     public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {
@@ -388,7 +388,7 @@ export class CGManager {
         this._backCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, false);
         this._objectCanvases = [];
         this._effectCanvases = [];
-        this._pictureCanvases = new WWAPicutre();
+        this.picture = new WWAPicutre();
         var i;
         for (i = 0; i < 2; i++) {
             this._objectCanvases[i] = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);
