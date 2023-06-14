@@ -20,8 +20,28 @@ import { convertPictureRegistoryFromText } from "./utils";
  */
 export default class WWAPicutre {
     private _pictures: Map<number, PictureItem>;
+    private _isMainAnimation: boolean;
     constructor() {
         this._pictures = new Map();
+        this._isMainAnimation = true;
+    }
+
+    /**
+     * ピクチャのプロパティ情報を基に、ピクチャを Canvas に描画します。
+     * プロパティ情報が追加されてピクチャの描画方法が追加される場合は、このメソッドの実装を変えてください。
+     * また、追加情報が必要な場合はフィールドを定義し、そのフィールドから参照するようにしてください。
+     * @param image CacheCanvas.drawCanvas で使用されるイメージ要素
+     * @param picture 対象のピクチャ
+     */
+    private drawPicture(image: HTMLImageElement, picture: PictureItem) {
+        const isDefineSubAnimation = picture.imgPosX2 !== 0 || picture.imgPosY2 !== 0;
+        picture.canvas.drawCanvas(
+            image,
+            this._isMainAnimation || !isDefineSubAnimation ? picture.imgPosX : picture.imgPosX2,
+            this._isMainAnimation || !isDefineSubAnimation ? picture.imgPosY : picture.imgPosY2,
+            picture.properties.pos[0] ?? 0,
+            picture.properties.pos[1] ?? 0,
+        );
     }
 
     public registPicture(registory: PictureRegistory) {
@@ -62,19 +82,16 @@ export default class WWAPicutre {
         this._pictures.forEach(caller);
     }
 
-    public updatePicturesCache(image: HTMLImageElement, isMainAnimation = true) {
+    public updatePicturesCache(image: HTMLImageElement, isMainAnimation: boolean) {
+        this._isMainAnimation = isMainAnimation;
         this.forEachPictures((picture) => {
+            // layerNumber が 0 の場合はいわゆる無名ピクチャという扱いのため、既存のピクチャ定義を上書きしない挙動となっている。
+            // このことを想定して、 canvas のクリアを除外しているのだが、これだと変化前の画像データが残ってしまうことになる。
+            // TODO WWAeval の実装では無名ピクチャをどのように実装しているのかソースを確認する
             if (picture.layerNumber !== 0) {
                 picture.canvas.clear();
             }
-            const isDefineSubAnimation = picture.imgPosX2 !== 0 || picture.imgPosY2 !== 0;
-            picture.canvas.drawCanvas(
-                image,
-                isMainAnimation || !isDefineSubAnimation ? picture.imgPosX : picture.imgPosX2,
-                isMainAnimation || !isDefineSubAnimation ? picture.imgPosY : picture.imgPosY2,
-                picture.properties.pos[0] ?? 0,
-                picture.properties.pos[1] ?? 0,
-            );
+            this.drawPicture(image, picture);
         })
     }
 
