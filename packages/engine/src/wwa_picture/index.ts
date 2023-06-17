@@ -114,7 +114,8 @@ export default class WWAPicutre {
             if (picture.displayStocckTime === undefined) {
                 return;
             }
-            // TODO 果たして動くのか？
+            // TODO ms 単位になっていない、300と指定すると6秒かかる
+            //      requestAnimationFrame 依存のため、ここから別の Ticker を設ける必要があるのではないかと思う
             picture.displayStocckTime--;
             if (picture.displayStocckTime <= 0) {
                 this.deletePicture(picture.layerNumber);
