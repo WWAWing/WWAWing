@@ -1362,8 +1362,9 @@ export class WWA {
             return;
         }
 
-        if (id < 0 || id > Consts.SOUND_MAX) {
-            throw new Error("サウンド番号が範囲外です。");
+        if (id < 0 || id >= Consts.SOUND_MAX) {
+            console.warn("サウンド番号が範囲外です。");
+            return;
         }
         if (id >= SystemSound.BGM_LB && this._wwaData.bgm === id) {
             return;
