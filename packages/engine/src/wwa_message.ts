@@ -550,7 +550,9 @@ export class Macro {
         if (targetString === "") {
             return fallbackValue;
         }
-        const intParsedValue = Number(targetString);
+        const parsedRawNumber = Number(targetString);
+        // 小数点以下を無視する (正数の場合は切り捨て、負数の場合は切り上げ)
+        const intParsedValue = parsedRawNumber >= 0 ? Math.floor(parsedRawNumber) : Math.ceil(parsedRawNumber);
         if (!isNaN(intParsedValue)) {
             return intParsedValue;
         }
