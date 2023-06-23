@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/virtual-pad",
-  "version": "3.13.0-acorn-statement.based-on.3.12.3.p.6",
+  "version": "3.13.0-acorn-statement.based-on.3.12.5",
   "description": "WWA Wing Virtual Pad for mobile phone",
   "main": "lib/index.js",
   "scripts": {
