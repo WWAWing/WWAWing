@@ -21,9 +21,15 @@ import { convertPictureRegistoryFromText } from "./utils";
 export default class WWAPicutre {
     private _pictures: Map<number, PictureItem>;
     private _isMainAnimation: boolean;
+    private _currentFrameValue: number;
     constructor() {
         this._pictures = new Map();
         this._isMainAnimation = true;
+        this._currentFrameValue = WWAPicutre._getNowFrameValue();
+    }
+
+    private static _getNowFrameValue() {
+        return performance.now();
     }
 
     /**
@@ -110,17 +116,17 @@ export default class WWAPicutre {
     }
 
     public decrementPictureDisplayTimeStock() {
+        const newFrameValue = WWAPicutre._getNowFrameValue();
         this.forEachPictures(picture => {
             if (picture.displayStocckTime === undefined) {
                 return;
             }
-            // TODO ms 単位になっていない、300と指定すると6秒かかる
-            //      requestAnimationFrame 依存のため、ここから別の Ticker を設ける必要があるのではないかと思う
-            picture.displayStocckTime--;
+            picture.displayStocckTime -= (newFrameValue - this._currentFrameValue);
             if (picture.displayStocckTime <= 0) {
                 this.deletePicture(picture.layerNumber);
             }
         });
+        this._currentFrameValue = newFrameValue;
     }
 
     public getPictureRegistoryData(): PictureRegistory[] {
