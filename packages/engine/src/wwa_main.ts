@@ -248,6 +248,13 @@ export class WWA {
      */
     private _messageDisplayRequest: string[] = [];
 
+    /**
+     * メッセージが表示されている途中に発生したジャンプゲートリクエスト.
+     * 複数のリクエストがある場合は後に発生したものが有効となります.
+     * ジャンプゲートの後にPXやPYが書き換わった場合には、ジャンプゲートの座標にPX, PYが書き換わったものが適用されます.
+     */
+    private _jumpGateRequest?: { x: number; y: number } = undefined
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -1873,11 +1880,7 @@ export class WWA {
                 // このフレームで処理されるべきページがもうないのでループから抜ける
                 if (this._pages.length === 0) {
                     this._hideMessageWindow();
-                    // メッセージ表示中に積まれたリクエストをさらに消化
-                    if (this._messageDisplayRequest.length > 0) {
-                        const message = this._messageDisplayRequest.shift();
-                        this.generatePageAndReserveExecution(message, false, false);
-                    }
+                    this._dispatchRequests();
                     break;
                 }
             }
@@ -3747,11 +3750,21 @@ export class WWA {
         }
     }
 
+    private _dispatchRequests(): void {
+        // メッセージ表示中に積まれたリクエストをさらに消化
+        if (this._jumpGateRequest) {
+            this.forcedJumpGate(this._jumpGateRequest.x, this._jumpGateRequest.y);
+        }
+        if (this._messageDisplayRequest.length > 0) {
+            const message = this._messageDisplayRequest.shift();
+            this.generatePageAndReserveExecution(message, false, false);
+        }
+    }
+
     // 現在のメッセージウィンドウが閉じられた後のメッセージ出力を予約します。
     // 二者択一はできません。
     public reserveMessageDisplayWhenCurrentMessageClosed(message: string) {
-        console.log("reserveMessageDisplayWhenCurrentMessageClosed", message);
-        if(this._messageWindow.isVisible()) {
+        if(this._player.isWaitingMessage()) {
             this._messageDisplayRequest.push(message);
         } else {
             this.generatePageAndReserveExecution(message, false, false);
@@ -5355,6 +5368,7 @@ export class WWA {
         }
         if (this._pages.length === 0) {
             this._hideMessageWindow();
+            this._dispatchRequests();
         } else {
             this._shouldSetNextPage = true;
        }
@@ -5829,8 +5843,13 @@ font-weight: bold;
     }
     // JumpGateマクロ実装ポイント
     public forcedJumpGate(jx: number, jy: number): void {
-        // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
-        this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+        if(this._player.isWaitingMessage()) {
+            this._jumpGateRequest = { x: jx, y: jy };
+        } else {
+            this._jumpGateRequest = undefined;
+            // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
+            this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+        }
     }
     // User変数記憶
     public setUserVar(index: number, value: number): void {
