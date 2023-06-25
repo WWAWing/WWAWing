@@ -235,6 +235,13 @@ export class WWA {
      */
     private _lastScoreOptions?: ScoreOptions;
 
+    /**
+     * ゲームスピード変更がリクエストされたかどうか.
+     * プレイヤー移動処理中にゲームスピード変更しようとすると壊れるので、
+     * プレイヤーが次の座標に納まってからゲームスピード変更を実行する。
+     */
+    private _gameSpeedChangeRequest?: { speedIndex: number } = undefined;
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -1878,8 +1885,6 @@ export class WWA {
         //////////////////////////////////////////////////////////
         this._player.mainFrameCount();//プレイ時間を計測加算
 
-        console.log("##", this._player.isControllable());
-
         if (this._player.isControllable()) {
             if (!this._wwaData.disableSaveFlag) {
                 //オートセーブ処理
@@ -2227,6 +2232,10 @@ export class WWA {
         } else if (this._player.isMoving()) {
             this._player.move();
             this._objectMovingDataManager.update();
+            // 移動後のプレイヤーが justPosition ならゲームスピード変更を適用する
+            if (this._player.getPosition().isJustPosition() && this._gameSpeedChangeRequest) {
+                this.setPlayerSpeedIndex(this._gameSpeedChangeRequest.speedIndex);
+            }
         } else if (this._player.isWaitingMessage()) {
 
             if (!this._messageWindow.isVisible()) {
@@ -4315,6 +4324,7 @@ export class WWA {
         this._shouldSetNextPage = false;
         this._reservedPartsAppearances = [];
         this._reservedJumpDestination = undefined;
+        this._gameSpeedChangeRequest = undefined;
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
 
         /** ゲームオーバー時のユーザ定義独自関数を呼び出す */
@@ -4697,6 +4707,8 @@ export class WWA {
         if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
             this._player.setPartsAppearedFlag();
         }
+
+        this._gameSpeedChangeRequest = undefined;
         this._wwaData = newData;
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
@@ -6190,9 +6202,11 @@ font-weight: bold;
             throw new Error("#set_speed の引数が異常です:" + speedIndex);
         }
         if (this._player.isMoving()) {
-            throw new Error("プレイヤーが移動中にプレイヤーの速度変更をしないでください！");
+            this._gameSpeedChangeRequest = { speedIndex };
+            return;
         }
         this._wwaData.gameSpeedIndex = this._player.setSpeedIndex(speedIndex);
+        this._gameSpeedChangeRequest = undefined;
     }
     // ユーザ変数にプレイ時間を代入
     public setUserVarPlayTime(num: number): void {
