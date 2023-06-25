@@ -1137,7 +1137,6 @@ export class WWA {
     }
 
     public getUserScript(functionName: string): WWANode | null {
-        console.log(this.userDefinedFunctions);
         return this.userDefinedFunctions && this.userDefinedFunctions[functionName] || null;
     }
 
@@ -1878,6 +1877,8 @@ export class WWA {
         //            this.debug = this._keyStore.checkHitKey(KeyCode.KEY_SPACE);
         //////////////////////////////////////////////////////////
         this._player.mainFrameCount();//プレイ時間を計測加算
+
+        console.log("##", this._player.isControllable());
 
         if (this._player.isControllable()) {
             if (!this._wwaData.disableSaveFlag) {
