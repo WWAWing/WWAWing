@@ -2269,6 +2269,7 @@ export class WWA {
             this._objectMovingDataManager.update();
         }
 
+        this._cgManager.picture.updateFrameTimerValue();
         this._prevFrameEventExected = false;
         if (this._player.getPosition().isJustPosition() && this._camera.getPosition().isScreenTopPosition()) {
 

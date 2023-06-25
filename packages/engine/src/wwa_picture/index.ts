@@ -21,11 +21,12 @@ import { convertPictureRegistoryFromText } from "./utils";
 export default class WWAPicutre {
     private _pictures: Map<number, PictureItem>;
     private _isMainAnimation: boolean;
-    private _currentFrameValue: number;
+    private _frameTimerValue: number;
+
     constructor() {
         this._pictures = new Map();
         this._isMainAnimation = true;
-        this._currentFrameValue = WWAPicutre._getNowFrameValue();
+        this._frameTimerValue = WWAPicutre._getNowFrameValue();
     }
 
     private static _getNowFrameValue() {
@@ -61,7 +62,7 @@ export default class WWAPicutre {
         );
         this._pictures.set(registory.layerNumber, {
             ...registory,
-            displayStocckTime: registory.properties.time,
+            displayStockTime: registory.properties.time,
             canvas,
         });
     }
@@ -115,18 +116,26 @@ export default class WWAPicutre {
         })
     }
 
+    /**
+     * decrementPictureDisplayTimeStock の後に実行するようにしてください。
+     * メッセージ表示中においても常時実行する必要があります。
+     */
+    public updateFrameTimerValue() {
+        this._frameTimerValue = WWAPicutre._getNowFrameValue();
+    }
+
     public decrementPictureDisplayTimeStock() {
         const newFrameValue = WWAPicutre._getNowFrameValue();
+        const frameMs = newFrameValue - this._frameTimerValue;
         this.forEachPictures(picture => {
-            if (picture.displayStocckTime === undefined) {
+            if (picture.displayStockTime === undefined) {
                 return;
             }
-            picture.displayStocckTime -= (newFrameValue - this._currentFrameValue);
-            if (picture.displayStocckTime <= 0) {
+            picture.displayStockTime -= frameMs;
+            if (picture.displayStockTime <= 0) {
                 this.deletePicture(picture.layerNumber);
             }
         });
-        this._currentFrameValue = newFrameValue;
     }
 
     public getPictureRegistoryData(): PictureRegistory[] {
