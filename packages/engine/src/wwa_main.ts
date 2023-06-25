@@ -242,6 +242,12 @@ export class WWA {
      */
     private _gameSpeedChangeRequest?: { speedIndex: number } = undefined;
 
+    /**
+     * メッセージが表示されている途中に発生したメッセージ表示リクエスト.
+     * 現在表示されているメッセージが全て掃けた後にメッセージとして表示されます。
+     */
+    private _messageDisplayRequest: string[] = [];
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -1864,10 +1870,14 @@ export class WWA {
                     this._isLastPage = executingPage.isLastPage
                     break;
                 }
-
                 // このフレームで処理されるべきページがもうないのでループから抜ける
                 if (this._pages.length === 0) {
                     this._hideMessageWindow();
+                    // メッセージ表示中に積まれたリクエストをさらに消化
+                    if (this._messageDisplayRequest.length > 0) {
+                        const message = this._messageDisplayRequest.shift();
+                        this.generatePageAndReserveExecution(message, false, false);
+                    }
                     break;
                 }
             }
@@ -3734,6 +3744,17 @@ export class WWA {
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
                 this._messageWindow.setYesNoChoice(false);
             }
+        }
+    }
+
+    // 現在のメッセージウィンドウが閉じられた後のメッセージ出力を予約します。
+    // 二者択一はできません。
+    public reserveMessageDisplayWhenCurrentMessageClosed(message: string) {
+        console.log("reserveMessageDisplayWhenCurrentMessageClosed", message);
+        if(this._messageWindow.isVisible()) {
+            this._messageDisplayRequest.push(message);
+        } else {
+            this.generatePageAndReserveExecution(message, false, false);
         }
     }
 
