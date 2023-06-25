@@ -6189,6 +6189,9 @@ font-weight: bold;
         if (speedIndex < Consts.MIN_SPEED_INDEX || Consts.MAX_SPEED_INDEX < speedIndex) {
             throw new Error("#set_speed の引数が異常です:" + speedIndex);
         }
+        if (this._player.isMoving()) {
+            throw new Error("プレイヤーが移動中にプレイヤーの速度変更をしないでください！");
+        }
         this._wwaData.gameSpeedIndex = this._player.setSpeedIndex(speedIndex);
     }
     // ユーザ変数にプレイ時間を代入
