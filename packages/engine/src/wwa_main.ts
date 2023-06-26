@@ -236,9 +236,9 @@ export class WWA {
     private _lastScoreOptions?: ScoreOptions;
 
     /**
-     * ゲームスピード変更がリクエストされたかどうか.
+     * ゲームスピード変更リクエスト.
      * プレイヤー移動処理中にゲームスピード変更しようとすると壊れるので、
-     * プレイヤーが次の座標に納まってからゲームスピード変更を実行する。
+     * プレイヤーが次の座標に納まってからゲームスピード変更を実行します。
      */
     private _gameSpeedChangeRequest?: { speedIndex: number } = undefined;
 
@@ -250,6 +250,7 @@ export class WWA {
 
     /**
      * メッセージが表示されている途中に発生したジャンプゲートリクエスト.
+     * 現在表示されているメッセージが全て掃けた後にジャンプが発生します。
      * 複数のリクエストがある場合は後に発生したものが有効となります.
      * ジャンプゲートの後にPXやPYが書き換わった場合には、ジャンプゲートの座標にPX, PYが書き換わったものが適用されます.
      */
@@ -3761,6 +3762,12 @@ export class WWA {
         }
     }
 
+    private _clearAllRequests(): void {
+        this._gameSpeedChangeRequest = undefined;
+        this._jumpGateRequest = undefined;
+        this._messageDisplayRequest = [];
+    }
+
     // 現在のメッセージウィンドウが閉じられた後のメッセージ出力を予約します。
     // 二者択一はできません。
     public reserveMessageDisplayWhenCurrentMessageClosed(message: string) {
@@ -4358,7 +4365,7 @@ export class WWA {
         this._shouldSetNextPage = false;
         this._reservedPartsAppearances = [];
         this._reservedJumpDestination = undefined;
-        this._gameSpeedChangeRequest = undefined;
+        this._clearAllRequests();
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
 
         /** ゲームオーバー時のユーザ定義独自関数を呼び出す */
@@ -4742,7 +4749,7 @@ export class WWA {
             this._player.setPartsAppearedFlag();
         }
 
-        this._gameSpeedChangeRequest = undefined;
+        this._clearAllRequests();
         this._wwaData = newData;
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
