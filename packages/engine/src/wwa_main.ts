@@ -6526,6 +6526,10 @@ font-weight: bold;
             this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
         }
     }
+
+    public isPlayerWaitingMessage(): boolean {
+        return this._player.isWaitingMessage();
+    }
 };
 
 var isCopyRightClick = false;
