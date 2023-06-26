@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/debug-server",
-  "version": "3.13.0-acorn-statement.based-on.3.12.6",
+  "version": "3.13.0-acorn-statement.based-on.3.12.6.p.1",
   "description": "wwawing debug server",
   "main": "lib/index.js",
   "files": [
