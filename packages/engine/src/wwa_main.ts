@@ -240,13 +240,19 @@ export class WWA {
      * プレイヤー移動処理中にゲームスピード変更しようとすると壊れるので、
      * プレイヤーが次の座標に納まってからゲームスピード変更を実行します。
      */
-    private _gameSpeedChangeRequest?: { speedIndex: number } = undefined;
+    private _playerStopWaitingGameSpeedChangeRequest?: { speedIndex: number } = undefined;
 
     /**
      * メッセージが表示されている途中に発生したメッセージ表示リクエスト.
      * 現在表示されているメッセージが全て掃けた後にメッセージとして表示されます。
      */
-    private _messageDisplayRequest: string[] = [];
+    private _messageClearWaitingMessageDisplayRequests: string[] = [];
+
+    /**
+     * プレイヤーが動いている途中に発生したメッセージ表示リクエスト.
+     * プレイヤーが次の座標に納まってからメッセージ処理を実行します。
+     */
+    private _playerStopWaitingMessageDisplayRequests: string[] = [];
 
     /**
      * メッセージが表示されている途中に発生したジャンプゲートリクエスト.
@@ -2246,9 +2252,17 @@ export class WWA {
         } else if (this._player.isMoving()) {
             this._player.move();
             this._objectMovingDataManager.update();
-            // 移動後のプレイヤーが justPosition ならゲームスピード変更を適用する
-            if (this._player.getPosition().isJustPosition() && this._gameSpeedChangeRequest) {
-                this.setPlayerSpeedIndex(this._gameSpeedChangeRequest.speedIndex);
+            if (this._player.getPosition().isJustPosition()) {
+                if (this._playerStopWaitingGameSpeedChangeRequest) {
+                    // 移動後のプレイヤーが justPosition ならゲームスピード変更を適用する
+                    this.setPlayerSpeedIndex(this._playerStopWaitingGameSpeedChangeRequest.speedIndex);
+                }
+                if (this._playerStopWaitingMessageDisplayRequests.length > 0) {
+                    // 移動後のプレイヤーが justPosition ならメッセージを表示する
+                    // HACK: <P> で発生したメッセージを無理やり連結しているが、配列を直接受け取れるようになるべき
+                    this.generatePageAndReserveExecution(this._playerStopWaitingMessageDisplayRequests.join("<p>"), false, false);
+                    this._playerStopWaitingMessageDisplayRequests = [];
+                }
             }
         } else if (this._player.isWaitingMessage()) {
 
@@ -3756,23 +3770,25 @@ export class WWA {
         if (this._jumpGateRequest) {
             this.forcedJumpGate(this._jumpGateRequest.x, this._jumpGateRequest.y);
         }
-        if (this._messageDisplayRequest.length > 0) {
-            const message = this._messageDisplayRequest.shift();
+        if (this._messageClearWaitingMessageDisplayRequests.length > 0) {
+            const message = this._messageClearWaitingMessageDisplayRequests.shift();
             this.generatePageAndReserveExecution(message, false, false);
         }
     }
 
     private _clearAllRequests(): void {
-        this._gameSpeedChangeRequest = undefined;
+        this._playerStopWaitingGameSpeedChangeRequest = undefined;
         this._jumpGateRequest = undefined;
-        this._messageDisplayRequest = [];
+        this._messageClearWaitingMessageDisplayRequests = [];
     }
 
-    // 現在のメッセージウィンドウが閉じられた後のメッセージ出力を予約します。
-    // 二者択一はできません。
-    public reserveMessageDisplayWhenCurrentMessageClosed(message: string) {
-        if(this._player.isWaitingMessage()) {
-            this._messageDisplayRequest.push(message);
+    // メッセージが表示できる場合は表示します。
+    // できない場合はできるようになってからします。
+    public reserveMessageDisplayWhenShouldOpen(message: string) {
+        if (this._player.isWaitingMessage()) {
+            this._messageClearWaitingMessageDisplayRequests.push(message);
+        } else if (this._player.isMoving()) {
+            this._playerStopWaitingMessageDisplayRequests.push(message);
         } else {
             this.generatePageAndReserveExecution(message, false, false);
         }
@@ -6249,11 +6265,11 @@ font-weight: bold;
             throw new Error("#set_speed の引数が異常です:" + speedIndex);
         }
         if (this._player.isMoving()) {
-            this._gameSpeedChangeRequest = { speedIndex };
+            this._playerStopWaitingGameSpeedChangeRequest = { speedIndex };
             return;
         }
         this._wwaData.gameSpeedIndex = this._player.setSpeedIndex(speedIndex);
-        this._gameSpeedChangeRequest = undefined;
+        this._playerStopWaitingGameSpeedChangeRequest = undefined;
     }
     // ユーザ変数にプレイ時間を代入
     public setUserVarPlayTime(num: number): void {
