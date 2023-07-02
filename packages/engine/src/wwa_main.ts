@@ -237,30 +237,32 @@ export class WWA {
 
     /**
      * ゲームスピード変更リクエスト.
-     * プレイヤー移動処理中にゲームスピード変更しようとすると壊れるので、
-     * プレイヤーが次の座標に納まってからゲームスピード変更を実行します。
+     * プレイヤー・物体移動処理中にゲームスピード変更しようとすると壊れるので、
+     * プレイヤー・物体パーツが次の座標に納まってからゲームスピード変更を実行します。
      */
-    private _playerStopWaitingGameSpeedChangeRequest?: { speedIndex: number } = undefined;
+    private _playerAndObjectsStopWaitingGameSpeedChangeRequest?: { speedIndex: number } = undefined;
 
     /**
-     * メッセージが表示されている途中に発生したメッセージ表示リクエスト.
-     * 現在表示されているメッセージが全て掃けた後にメッセージとして表示されます。
+     * ウィンドウが表示されている途中に発生したメッセージ表示リクエスト.
+     * 現在表示されているウィンドウが全て閉じられた後にメッセージとして表示されます.
+     * メッセージウィンドウ(システムメッセージ含む)に関しては、表示される予定のものが全て掃けた後にリクエスト内容のメッセージが表示されます.
      */
-    private _messageClearWaitingMessageDisplayRequests: string[] = [];
+    private _windowCloseWaitingMessageDisplayRequests: string[] = [];
 
     /**
-     * プレイヤーが動いている途中に発生したメッセージ表示リクエスト.
+     * プレイヤーや物体パーツが動いている途中に発生したメッセージ表示リクエスト.
      * プレイヤーが次の座標に納まってからメッセージ処理を実行します。
      */
-    private _playerStopWaitingMessageDisplayRequests: string[] = [];
+    private _playerAndObjectsStopWaitingMessageDisplayRequests: string[] = [];
 
     /**
-     * メッセージが表示されている途中に発生したジャンプゲートリクエスト.
-     * 現在表示されているメッセージが全て掃けた後にジャンプが発生します。
+     * ウィンドウが表示されている途中に発生したジャンプゲートリクエスト.
      * 複数のリクエストがある場合は後に発生したものが有効となります.
+     * 現在表示されているウィンドウが全て閉じられた後にジャンプ処理が発生します.
+     * メッセージウィンドウ(システムメッセージ含む)に関しては、表示される予定のものが全て掃けた後にリクエスト内容のジャンプ処理が発生します.
      * ジャンプゲートの後にPXやPYが書き換わった場合には、ジャンプゲートの座標にPX, PYが書き換わったものが適用されます.
      */
-    private _jumpGateRequest?: { x: number; y: number } = undefined
+    private _windowCloseWaitingJumpGateRequest?: { x: number; y: number } = undefined
 
     ////////////////////////
     public debug: boolean;
@@ -1887,7 +1889,7 @@ export class WWA {
                 // このフレームで処理されるべきページがもうないのでループから抜ける
                 if (this._pages.length === 0) {
                     this._hideMessageWindow();
-                    this._dispatchRequests();
+                    this._dispatchWindowClosedTimeRequests();
                     break;
                 }
             }
@@ -2253,16 +2255,7 @@ export class WWA {
             this._player.move();
             this._objectMovingDataManager.update();
             if (this._player.getPosition().isJustPosition()) {
-                if (this._playerStopWaitingGameSpeedChangeRequest) {
-                    // 移動後のプレイヤーが justPosition ならゲームスピード変更を適用する
-                    this.setPlayerSpeedIndex(this._playerStopWaitingGameSpeedChangeRequest.speedIndex);
-                }
-                if (this._playerStopWaitingMessageDisplayRequests.length > 0) {
-                    // 移動後のプレイヤーが justPosition ならメッセージを表示する
-                    // HACK: <P> で発生したメッセージを無理やり連結しているが、配列を直接受け取れるようになるべき
-                    this.generatePageAndReserveExecution(this._playerStopWaitingMessageDisplayRequests.join("<p>"), false, false);
-                    this._playerStopWaitingMessageDisplayRequests = [];
-                }
+                this._dispatchPlayerAndObjectsStopTimeRequests();
             }
         } else if (this._player.isWaitingMessage()) {
 
@@ -2433,7 +2426,7 @@ export class WWA {
                     this._setNextPage();
                 }
             }
-        } else if (this._player.isWatingEstimateWindow()) {
+        } else if (this._player.isWaitingEstimateWindow()) {
             if (this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                 this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
                 this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B) ||
@@ -2459,7 +2452,7 @@ export class WWA {
                 !this._shouldTreatWillMessageDisplay(this._pages) && // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
                 !this._player.isJumped() &&
                 !this._player.isWaitingMessage() &&
-                !this._player.isWatingEstimateWindow() &&
+                !this._player.isWaitingEstimateWindow() &&
                 !this._player.isWaitingMoveMacro() &&
                 !this._player.isFighting()) {
 
@@ -2528,6 +2521,10 @@ export class WWA {
         }
         if (this._player.isWaitingMoveMacro()) {
             this._player.decrementMoveObjectAutoExecTimer();
+            // デクリメントで待ちターンが 0 になった場合
+            if(!this._player.isWaitingMoveMacro()) {
+                this._dispatchPlayerAndObjectsStopTimeRequests();   
+            }
         }
         if (!this._stopUpdateByLoadFlag) {
             //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
@@ -3308,6 +3305,7 @@ export class WWA {
             partsID, pos, monsterImgCoord, monsterStatus, monsterMessage, monsterItemID,
             () => {
                 this._monsterWindow.hide();
+                this._dispatchWindowClosedTimeRequests();
             });
 
         this._player.startBattleWith(this._monster);
@@ -3765,30 +3763,50 @@ export class WWA {
         }
     }
 
-    private _dispatchRequests(): void {
+    private _dispatchWindowClosedTimeRequests(): void {
         // メッセージ表示中に積まれたリクエストをさらに消化
-        if (this._jumpGateRequest) {
-            this.forcedJumpGate(this._jumpGateRequest.x, this._jumpGateRequest.y);
+        if (this._windowCloseWaitingJumpGateRequest) {
+            this.forcedJumpGate(this._windowCloseWaitingJumpGateRequest.x, this._windowCloseWaitingJumpGateRequest.y);
         }
-        if (this._messageClearWaitingMessageDisplayRequests.length > 0) {
-            const message = this._messageClearWaitingMessageDisplayRequests.shift();
+        if (this._windowCloseWaitingMessageDisplayRequests.length > 0) {
+            const message = this._windowCloseWaitingMessageDisplayRequests.shift();
             this.generatePageAndReserveExecution(message, false, false);
         }
     }
 
+    private _dispatchPlayerAndObjectsStopTimeRequests(): void {
+        if (this._playerAndObjectsStopWaitingGameSpeedChangeRequest) {
+            // 移動後のプレイヤーが justPosition ならゲームスピード変更を適用する
+            this.setPlayerSpeedIndex(this._playerAndObjectsStopWaitingGameSpeedChangeRequest.speedIndex);
+            this._playerAndObjectsStopWaitingGameSpeedChangeRequest = undefined;
+        }
+        if (this._playerAndObjectsStopWaitingMessageDisplayRequests.length > 0) {
+            // 移動後のプレイヤーが justPosition ならメッセージを表示する
+            // HACK: <P> で発生したメッセージを無理やり連結しているが、配列を直接受け取れるようになるべき
+            this.generatePageAndReserveExecution(this._playerAndObjectsStopWaitingMessageDisplayRequests.join("<p>"), false, false);
+            this._playerAndObjectsStopWaitingMessageDisplayRequests = [];
+        }
+    }
+
     private _clearAllRequests(): void {
-        this._playerStopWaitingGameSpeedChangeRequest = undefined;
-        this._jumpGateRequest = undefined;
-        this._messageClearWaitingMessageDisplayRequests = [];
+        this._playerAndObjectsStopWaitingMessageDisplayRequests = [];
+        this._playerAndObjectsStopWaitingGameSpeedChangeRequest = undefined;
+        this._windowCloseWaitingJumpGateRequest = undefined;
+        this._windowCloseWaitingMessageDisplayRequests = [];
     }
 
     // メッセージが表示できる場合は表示します。
     // できない場合はできるようになってからします。
     public reserveMessageDisplayWhenShouldOpen(message: string) {
-        if (this._player.isWaitingMessage()) {
-            this._messageClearWaitingMessageDisplayRequests.push(message);
-        } else if (this._player.isMoving()) {
-            this._playerStopWaitingMessageDisplayRequests.push(message);
+        if (
+            this._player.isWaitingMessage() ||
+            this._player.isFighting() ||
+            this._player.isWaitingPasswordWindow() ||
+            this._player.isWaitingEstimateWindow()
+        ) {
+            this._windowCloseWaitingMessageDisplayRequests.push(message);
+        } else if (this._player.isMoving() || this._player.isWaitingMoveMacro()) {
+            this._playerAndObjectsStopWaitingMessageDisplayRequests.push(message);
         } else {
             this.generatePageAndReserveExecution(message, false, false);
         }
@@ -5228,18 +5246,21 @@ export class WWA {
         this._battleEstimateWindow.hide();
         this._player.clearEstimateWindowWaiting();
         (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+        this._dispatchWindowClosedTimeRequests();
     }
 
     public hidePasswordWindow(isCancel: boolean = false): void {
         this._passwordWindow.hide();
         if (isCancel || this._passwordWindow.mode === Mode.SAVE) {
             this._player.clearPasswordWindowWaiting();
+            this._dispatchWindowClosedTimeRequests();
             return;
         }
         try {
             var data = this._quickLoad(false, this._passwordWindow.password, false);
         } catch (e) {
             this._player.clearPasswordWindowWaiting();
+            this._dispatchWindowClosedTimeRequests();
             // 読み込み失敗
             alert("セーブデータの復元に失敗しました。\nエラー詳細:\n" + e.message);
             return;
@@ -5391,7 +5412,7 @@ export class WWA {
         }
         if (this._pages.length === 0) {
             this._hideMessageWindow();
-            this._dispatchRequests();
+            this._dispatchWindowClosedTimeRequests();
         } else {
             this._shouldSetNextPage = true;
        }
@@ -5867,9 +5888,9 @@ font-weight: bold;
     // JumpGateマクロ実装ポイント
     public forcedJumpGate(jx: number, jy: number): void {
         if(this._player.isWaitingMessage()) {
-            this._jumpGateRequest = { x: jx, y: jy };
+            this._windowCloseWaitingJumpGateRequest = { x: jx, y: jy };
         } else {
-            this._jumpGateRequest = undefined;
+            this._windowCloseWaitingJumpGateRequest = undefined;
             // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         }
@@ -6265,11 +6286,11 @@ font-weight: bold;
             throw new Error("#set_speed の引数が異常です:" + speedIndex);
         }
         if (this._player.isMoving()) {
-            this._playerStopWaitingGameSpeedChangeRequest = { speedIndex };
+            this._playerAndObjectsStopWaitingGameSpeedChangeRequest = { speedIndex };
             return;
         }
         this._wwaData.gameSpeedIndex = this._player.setSpeedIndex(speedIndex);
-        this._playerStopWaitingGameSpeedChangeRequest = undefined;
+        this._playerAndObjectsStopWaitingGameSpeedChangeRequest = undefined;
     }
     // ユーザ変数にプレイ時間を代入
     public setUserVarPlayTime(num: number): void {

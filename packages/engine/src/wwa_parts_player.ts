@@ -365,7 +365,7 @@ export class Player extends PartsObject {
         this._state = PlayerState.ESTIMATE_WINDOW_WAITING;
     }
 
-    public isWatingEstimateWindow(): boolean {
+    public isWaitingEstimateWindow(): boolean {
         return this._state === PlayerState.ESTIMATE_WINDOW_WAITING;
     }
 
