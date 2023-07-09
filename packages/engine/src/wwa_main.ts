@@ -5438,13 +5438,13 @@ export class WWA {
                 this._mouseStore.clear();
             }
             this._player.clearMessageWaiting();
-            return { newPageGenerated: false};
+            return { newPageGenerated: false };
         } else {
             this.generatePageAndReserveExecution(
                 this.getMessageById(mesID),
                 false, false, itemID, PartsType.OBJECT,
                 this._player.getPosition().getPartsCoord());
-            return { newPageGenerated: this._pages.length !== 0}
+            return { newPageGenerated: this._pages.length !== 0 }
         }
     }
 
