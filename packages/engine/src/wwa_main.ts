@@ -1792,6 +1792,7 @@ export class WWA {
     }
 
     private _main(): void {
+
         this._temporaryInputDisable = false;
         this._stopUpdateByLoadFlag = false;
 
@@ -1888,8 +1889,10 @@ export class WWA {
                 }
                 // このフレームで処理されるべきページがもうないのでループから抜ける
                 if (this._pages.length === 0) {
-                    this._hideMessageWindow();
-                    this._dispatchWindowClosedTimeRequests();
+                    const { newPageGenerated } = this._hideMessageWindow();
+                    if (!newPageGenerated) {
+                        this._dispatchWindowClosedTimeRequests();
+                    }
                     break;
                 }
             }
@@ -5411,8 +5414,10 @@ export class WWA {
             this._reservedMoveMacroTurn = void 0;
         }
         if (this._pages.length === 0) {
-            this._hideMessageWindow();
-            this._dispatchWindowClosedTimeRequests();
+            const { newPageGenerated } = this._hideMessageWindow();
+            if (!newPageGenerated) {
+                this._dispatchWindowClosedTimeRequests();
+            }
         } else {
             this._shouldSetNextPage = true;
        }
@@ -5421,12 +5426,9 @@ export class WWA {
         }
     }
 
-    private _hideMessageWindow(): void {
-        var itemID = 0;
-        if (this._player.isReadyToUseItem()) {
-            itemID = this._player.useItem();
-        }
-        var mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
+    private _hideMessageWindow(): { newPageGenerated: boolean } {
+        const itemID =  this._player.isReadyToUseItem() ? this._player.useItem() : 0;
+        const mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
         this.clearFaces();
         if (mesID === 0) {
             if (this._messageWindow.isVisible()) {
@@ -5436,13 +5438,14 @@ export class WWA {
                 this._mouseStore.clear();
             }
             this._player.clearMessageWaiting();
+            return { newPageGenerated: false};
         } else {
             this.generatePageAndReserveExecution(
                 this.getMessageById(mesID),
                 false, false, itemID, PartsType.OBJECT,
                 this._player.getPosition().getPartsCoord());
+            return { newPageGenerated: this._pages.length !== 0}
         }
-
     }
 
     // TODO: 後で場所を変更する
