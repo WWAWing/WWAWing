@@ -250,36 +250,41 @@ export class EvalCalcWwaNode {
   evalAnyFunction(node: Wwa.AnyFunction) {
     const game_status = this.generator.wwa.getGameStatus();
     switch(node.functionName) {
-      case "SOUND":
+      case "SOUND": {
         this._checkArgsLength(1, node);
         // SOUNDは引数を一つだけ取る
         const soundNumber = this.evalWwaNode(node.value[0]);
         // 曲を鳴らす
         this.generator.wwa.playSound(soundNumber);
         break;
-      case "SAVE":
+      }
+      case "SAVE": {
         this._checkArgsLength(1, node);
         // SAVEは引数を一つだけ取る
         const saveNumber = Boolean(this.evalWwaNode(node.value[0]));
         this.generator.wwa.disableSave(saveNumber);
         break;
-      case "LOG":
+      }
+      case "LOG": {
         this._checkArgsLength(1, node);
         // 指定した引数の文字列をログ出力する
         const value = this.evalWwaNode(node.value[0]);
         console.log(value);
         break;
-      case "ABLE_CHANGE_SPEED":
+      }
+      case "ABLE_CHANGE_SPEED": {
         this._checkArgsLength(1, node);
         const isAbleChangeSpeed = Boolean(this.evalWwaNode(node.value[0]));
         this.generator.wwa.speedChangeJudge(isAbleChangeSpeed);
         break;
-      case "SET_SPEED":
+      }
+      case "SET_SPEED": {
         this._checkArgsLength(1, node);
         const gameSpeedValue = Number(this.evalWwaNode(node.value[0]));
         this.generator.wwa.setPlayerSpeedIndex(gameSpeedValue);
         break;
-      case "CHANGE_GAMEOVER_POS":
+      }
+      case "CHANGE_GAMEOVER_POS": {
         this._checkArgsLength(2, node);
         const gameover_pos = {
           x: Number(this.evalWwaNode(node.value[0])),
@@ -290,23 +295,27 @@ export class EvalCalcWwaNode {
         }
         this.generator.wwa.setGameOverPosition(new Coord(gameover_pos.x, gameover_pos.y));
         break;
-      case "DEL_PLAYER":
+      }
+      case "DEL_PLAYER": {
         this._checkArgsLength(1, node);
         const isDelPlayer = Boolean(this.evalWwaNode(node.value[0]));
         this.generator.wwa.setDelPlayer(isDelPlayer);
         break;
-      case "RESTART_GAME":
+      }
+      case "RESTART_GAME": {
         this.generator.wwa.restartGame();
         break;
+      }
       case "URL_JUMPGATE":
         throw new Error("URL_JUMPGATE 関数は調整中のためご利用になれません");
-      case "HIDE_STATUS":
+      case "HIDE_STATUS": {
         this._checkArgsLength(2, node);
         const target = Number(this.evalWwaNode(node.value[0]));
         const isHide = Boolean(this.evalWwaNode(node.value[1]));
         this.generator.wwa.hideStatus(target, isHide);
         break;
-      case "PARTS":
+      }
+      case "PARTS": {
         this._checkArgsLength(2, node);
         const srcID = Number(this.evalWwaNode(node.value[0]));
         const destID = Number(this.evalWwaNode(node.value[1]));
@@ -322,7 +331,8 @@ export class EvalCalcWwaNode {
         // TODO: パーツ番号が最大値を超えていないかチェックする
         this.generator.wwa.replaceParts(srcID, destID, partsType, onlyThisSight);
         break;
-      case "EFFECT":
+      }
+      case "EFFECT": {
         // ex) EFFECT(6, 9, 15)
         this._checkArgsLength(1, node);
         const waitTime = Number(this.evalWwaNode(node.value[0]));
@@ -350,37 +360,36 @@ export class EvalCalcWwaNode {
         }
         this.generator.wwa.setEffect(waitTime, coords);
         break;
-      case "CHANGE_PLAYER_IMAGE":
+      }
+      case "CHANGE_PLAYER_IMAGE": {
         this._checkArgsLength(2, node);
         const x = Number(this.evalWwaNode(node.value[0]));
         const y = Number(this.evalWwaNode(node.value[1]));
         const coord = new Coord(x, y);
         this.generator.wwa.setPlayerImgCoord(coord);
         break;
-      case "HAS_ITEM":
+      }
+      case "HAS_ITEM": {
         this._checkArgsLength(1, node);
-        {
-          const targetItemID = Number(this.evalWwaNode(node.value[0]));
-          const hasIem = game_status.itemBox.includes(targetItemID);
-          return hasIem;
-        }
-      case "REMOVE_ITEM":
+        const targetItemID = Number(this.evalWwaNode(node.value[0]));
+        const hasIem = game_status.itemBox.includes(targetItemID);
+        return hasIem;
+      }
+      case "REMOVE_ITEM": {
         this._checkArgsLength(1, node);
-        {
-          const targetItemID = Number(this.evalWwaNode(node.value[0]));
-          const isRemoveAll = node.value[1]? this.evalWwaNode(node.value[1]) === 1: false;
-          for(let idx = 0; idx < game_status.itemBox.length; idx++) {
-            const item = game_status.itemBox[idx];
-            if(targetItemID === item) {
-              this.generator.wwa.setPlayerGetItem(idx + 1, 0);
-              if(!isRemoveAll) {
-                break;
-              }
+        const targetItemID = Number(this.evalWwaNode(node.value[0]));
+        const isRemoveAll = node.value[1] ? this.evalWwaNode(node.value[1]) === 1 : false;
+        for (let idx = 0; idx < game_status.itemBox.length; idx++) {
+          const item = game_status.itemBox[idx];
+          if (targetItemID === item) {
+            this.generator.wwa.setPlayerGetItem(idx + 1, 0);
+            if (!isRemoveAll) {
+              break;
             }
           }
-          break;
         }
-      case "MOVE":
+      }
+      case "MOVE": 
         this._checkArgsLength(1, node);
         {
           const direction = Number(this.evalWwaNode(node.value[0]))
@@ -391,6 +400,9 @@ export class EvalCalcWwaNode {
           this.generator.wwa.movePlayer(direction);
         }
         break;
+      case "IS_PLAYER_WAITING_MESSAGE": {
+        return this.generator.wwa.isPlayerWaitingMessage();
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
@@ -441,7 +453,7 @@ export class EvalCalcWwaNode {
   evalMessage(node: Wwa.Msg) {
     const value = this.evalWwaNode(node.value);
     const showString = isNaN(value)? value: value.toString();
-    this.generator.wwa.generatePageAndReserveExecution(showString, false, false);
+    this.generator.wwa.reserveMessageDisplayWhenShouldOpen(showString);
     return 0;
   }
 

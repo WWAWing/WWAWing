@@ -235,6 +235,33 @@ export class WWA {
      */
     private _lastScoreOptions?: ScoreOptions;
 
+    /**
+     * ゲームスピード変更リクエスト.
+     * プレイヤー移動処理中にゲームスピード変更しようとすると壊れるので、
+     * プレイヤーが次の座標に納まってからゲームスピード変更を実行します。
+     */
+    private _playerStopWaitingGameSpeedChangeRequest?: { speedIndex: number } = undefined;
+
+    /**
+     * メッセージが表示されている途中に発生したメッセージ表示リクエスト.
+     * 現在表示されているメッセージが全て掃けた後にメッセージとして表示されます。
+     */
+    private _messageClearWaitingMessageDisplayRequests: string[] = [];
+
+    /**
+     * プレイヤーが動いている途中に発生したメッセージ表示リクエスト.
+     * プレイヤーが次の座標に納まってからメッセージ処理を実行します。
+     */
+    private _playerStopWaitingMessageDisplayRequests: string[] = [];
+
+    /**
+     * メッセージが表示されている途中に発生したジャンプゲートリクエスト.
+     * 現在表示されているメッセージが全て掃けた後にジャンプが発生します。
+     * 複数のリクエストがある場合は後に発生したものが有効となります.
+     * ジャンプゲートの後にPXやPYが書き換わった場合には、ジャンプゲートの座標にPX, PYが書き換わったものが適用されます.
+     */
+    private _jumpGateRequest?: { x: number; y: number } = undefined
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -1137,7 +1164,6 @@ export class WWA {
     }
 
     public getUserScript(functionName: string): WWANode | null {
-        console.log(this.userDefinedFunctions);
         return this.userDefinedFunctions && this.userDefinedFunctions[functionName] || null;
     }
 
@@ -1454,8 +1480,9 @@ export class WWA {
             return;
         }
 
-        if (id < 0 || id > Consts.SOUND_MAX) {
-            throw new Error("サウンド番号が範囲外です。");
+        if (id < 0 || id >= Consts.SOUND_MAX) {
+            console.warn("サウンド番号が範囲外です。");
+            return;
         }
         if (id >= SystemSound.BGM_LB && this._wwaData.bgm === id) {
             return;
@@ -1857,10 +1884,10 @@ export class WWA {
                     this._isLastPage = executingPage.isLastPage
                     break;
                 }
-
                 // このフレームで処理されるべきページがもうないのでループから抜ける
                 if (this._pages.length === 0) {
                     this._hideMessageWindow();
+                    this._dispatchRequests();
                     break;
                 }
             }
@@ -2225,6 +2252,18 @@ export class WWA {
         } else if (this._player.isMoving()) {
             this._player.move();
             this._objectMovingDataManager.update();
+            if (this._player.getPosition().isJustPosition()) {
+                if (this._playerStopWaitingGameSpeedChangeRequest) {
+                    // 移動後のプレイヤーが justPosition ならゲームスピード変更を適用する
+                    this.setPlayerSpeedIndex(this._playerStopWaitingGameSpeedChangeRequest.speedIndex);
+                }
+                if (this._playerStopWaitingMessageDisplayRequests.length > 0) {
+                    // 移動後のプレイヤーが justPosition ならメッセージを表示する
+                    // HACK: <P> で発生したメッセージを無理やり連結しているが、配列を直接受け取れるようになるべき
+                    this.generatePageAndReserveExecution(this._playerStopWaitingMessageDisplayRequests.join("<p>"), false, false);
+                    this._playerStopWaitingMessageDisplayRequests = [];
+                }
+            }
         } else if (this._player.isWaitingMessage()) {
 
             if (!this._messageWindow.isVisible()) {
@@ -3726,6 +3765,35 @@ export class WWA {
         }
     }
 
+    private _dispatchRequests(): void {
+        // メッセージ表示中に積まれたリクエストをさらに消化
+        if (this._jumpGateRequest) {
+            this.forcedJumpGate(this._jumpGateRequest.x, this._jumpGateRequest.y);
+        }
+        if (this._messageClearWaitingMessageDisplayRequests.length > 0) {
+            const message = this._messageClearWaitingMessageDisplayRequests.shift();
+            this.generatePageAndReserveExecution(message, false, false);
+        }
+    }
+
+    private _clearAllRequests(): void {
+        this._playerStopWaitingGameSpeedChangeRequest = undefined;
+        this._jumpGateRequest = undefined;
+        this._messageClearWaitingMessageDisplayRequests = [];
+    }
+
+    // メッセージが表示できる場合は表示します。
+    // できない場合はできるようになってからします。
+    public reserveMessageDisplayWhenShouldOpen(message: string) {
+        if (this._player.isWaitingMessage()) {
+            this._messageClearWaitingMessageDisplayRequests.push(message);
+        } else if (this._player.isMoving()) {
+            this._playerStopWaitingMessageDisplayRequests.push(message);
+        } else {
+            this.generatePageAndReserveExecution(message, false, false);
+        }
+    }
+
     public generatePageAndReserveExecution(
         message: string,
         showChoice: boolean,
@@ -4313,6 +4381,7 @@ export class WWA {
         this._shouldSetNextPage = false;
         this._reservedPartsAppearances = [];
         this._reservedJumpDestination = undefined;
+        this._clearAllRequests();
         this._player.jumpTo(new Position(this, jx, jy, 0, 0));
 
         /** ゲームオーバー時のユーザ定義独自関数を呼び出す */
@@ -4695,6 +4764,8 @@ export class WWA {
         if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
             this._player.setPartsAppearedFlag();
         }
+
+        this._clearAllRequests();
         this._wwaData = newData;
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
@@ -5033,13 +5104,15 @@ export class WWA {
     }
 
     private _getRandomMoveCoord(playerIsMoving: boolean, currentPos: Position, objectsInNextFrame: number[][]): Coord {
-        var currentCoord = currentPos.getPartsCoord();
-        var resultCoord: Coord = currentCoord.clone();
-        var iterNum = this._wwaData.isOldMove
+        const currentCoord = currentPos.getPartsCoord();
+        const resultCoord: Coord = currentCoord.clone();
+        const iterNum = this._wwaData.isOldMove
             ? Consts.RANDOM_MOVE_ITERATION_NUM_BEFORE_V31
             : Consts.RANDOM_MOVE_ITERATION_NUM;
-        for (var i = 0; i < iterNum; i++) {
-            var rand = Math.floor(Math.random() * 8);
+        for (let i = 0; i < iterNum; i++) {
+            const vx = [-1, 1, 0, 0, -1, -1, 1, 1];
+            const vy = [0, 0, 1, -1, 1, -1, 1, -1];
+            const rand = Math.floor(Math.random() * vx.length);
             resultCoord.x = currentCoord.x + vx[rand];
             resultCoord.y = currentCoord.y + vy[rand];
             if (this._objectCanMoveTo(playerIsMoving, resultCoord, objectsInNextFrame)) {
@@ -5318,6 +5391,7 @@ export class WWA {
         }
         if (this._pages.length === 0) {
             this._hideMessageWindow();
+            this._dispatchRequests();
         } else {
             this._shouldSetNextPage = true;
        }
@@ -5792,8 +5866,13 @@ font-weight: bold;
     }
     // JumpGateマクロ実装ポイント
     public forcedJumpGate(jx: number, jy: number): void {
-        // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
-        this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+        if(this._player.isWaitingMessage()) {
+            this._jumpGateRequest = { x: jx, y: jy };
+        } else {
+            this._jumpGateRequest = undefined;
+            // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
+            this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+        }
     }
     // User変数記憶
     public setUserVar(index: number, value: number): void {
@@ -6185,7 +6264,12 @@ font-weight: bold;
         if (speedIndex < Consts.MIN_SPEED_INDEX || Consts.MAX_SPEED_INDEX < speedIndex) {
             throw new Error("#set_speed の引数が異常です:" + speedIndex);
         }
+        if (this._player.isMoving()) {
+            this._playerStopWaitingGameSpeedChangeRequest = { speedIndex };
+            return;
+        }
         this._wwaData.gameSpeedIndex = this._player.setSpeedIndex(speedIndex);
+        this._playerStopWaitingGameSpeedChangeRequest = undefined;
     }
     // ユーザ変数にプレイ時間を代入
     public setUserVarPlayTime(num: number): void {
@@ -6465,6 +6549,10 @@ font-weight: bold;
      */
     public movePlayer(moveDir: Direction): void {
         this._player.controll(moveDir);
+    }
+
+    public isPlayerWaitingMessage(): boolean {
+        return this._player.isWaitingMessage();
     }
 };
 

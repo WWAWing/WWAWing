@@ -145,6 +145,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "HAS_ITEM":
     case "REMOVE_ITEM":
     case "MOVE":
+    case "IS_PLAYER_WAITING_MESSAGE":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
