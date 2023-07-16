@@ -33,6 +33,26 @@ export default class WWAPicutre {
         return performance.now();
     }
 
+    private static _getImgPosByPicture(picture: PictureItem, isMainTime: boolean) {
+        const { properties } = picture;
+        if (properties.img[0] !== undefined && properties.crop[1] !== undefined) {
+            if (isMainTime) {
+                return [properties.img[0], properties.img[1]];
+            }
+            if (properties.img[2] !== undefined && properties.img[3] !== undefined) {
+                return [properties.img[2], properties.img[3]];
+            }
+            return [properties.img[0], properties.img[1]];
+        }
+        if (isMainTime) {
+            return [picture.imgPosX, picture.imgPosY];
+        }
+        if (picture.imgPosX2 !== 0 || picture.imgPosY2 !== 0) {
+            return [picture.imgPosX2, picture.imgPosY2];
+        }
+        return [picture.imgPosX2, picture.imgPosY2];
+    }
+
     /**
      * ピクチャのプロパティ情報を基に、ピクチャを Canvas に描画します。
      * プロパティ情報が追加されてピクチャの描画方法が追加される場合は、このメソッドの実装を変えてください。
@@ -41,9 +61,7 @@ export default class WWAPicutre {
      * @param picture 対象のピクチャ
      */
     private _drawPicture(image: HTMLImageElement, picture: PictureItem) {
-        const isDefineSubAnimation = picture.imgPosX2 !== 0 || picture.imgPosY2 !== 0;
-        const imgPosX = this._isMainAnimation || !isDefineSubAnimation ? picture.imgPosX : picture.imgPosX2;
-        const imgPosY = this._isMainAnimation || !isDefineSubAnimation ? picture.imgPosY : picture.imgPosY2;
+        const [imgPosX, imgPosY] = WWAPicutre._getImgPosByPicture(picture, this._isMainAnimation);
         const posX = picture.properties.pos[0] ?? 0;
         const posY = picture.properties.pos[1] ?? 0;
         picture.canvas.drawCanvas(
