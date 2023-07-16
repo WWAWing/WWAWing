@@ -42,13 +42,30 @@ export default class WWAPicutre {
      */
     private _drawPicture(image: HTMLImageElement, picture: PictureItem) {
         const isDefineSubAnimation = picture.imgPosX2 !== 0 || picture.imgPosY2 !== 0;
+        const imgPosX = this._isMainAnimation || !isDefineSubAnimation ? picture.imgPosX : picture.imgPosX2;
+        const imgPosY = this._isMainAnimation || !isDefineSubAnimation ? picture.imgPosY : picture.imgPosY2;
+        const posX = picture.properties.pos[0] ?? 0;
+        const posY = picture.properties.pos[1] ?? 0;
         picture.canvas.drawCanvas(
             image,
-            this._isMainAnimation || !isDefineSubAnimation ? picture.imgPosX : picture.imgPosX2,
-            this._isMainAnimation || !isDefineSubAnimation ? picture.imgPosY : picture.imgPosY2,
-            picture.properties.pos[0] ?? 0,
-            picture.properties.pos[1] ?? 0,
+            imgPosX,
+            imgPosY,
+            posX,
+            posY,
         );
+        if (picture.properties.crop) {
+            for (let y = 0; y < picture.properties.crop[1]; y++) {
+                for (let x = y === 0 ? 1 : 0; x < picture.properties.crop[0]; x++) {
+                    picture.canvas.drawCanvas(
+                        image,
+                        imgPosX + x,
+                        imgPosY + y,
+                        posX + (WWAConsts.CHIP_SIZE * x),
+                        posY + (WWAConsts.CHIP_SIZE * y)
+                    );
+                }
+            }
+        }
     }
 
     public registPicture(registory: PictureRegistory) {

@@ -4,7 +4,7 @@ export interface PictureProperties {
   size?: [number, number];
   repat?: [number, number];
   img?: [number, number];
-  clip?: [number, number];
+  crop?: [number, number];
   text?: string;
   font?: string;
   color?: string;
