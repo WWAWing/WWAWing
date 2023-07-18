@@ -2,7 +2,7 @@ import {
     Coord,
     PartsType,
     ScoreOptions as ScoreOptions,
-} from "../wwa_data";
+} from "../../wwa_data";
 import { Node } from "./node";
 
 export class Page {

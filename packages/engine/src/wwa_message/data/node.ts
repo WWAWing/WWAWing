@@ -1,5 +1,5 @@
-import { type TokenValues, type Descriminant, evaluateDescriminant } from "../wwa_expression";
-import { Macro } from "../wwa_macro";
+import { type TokenValues, type Descriminant, evaluateDescriminant } from "../../wwa_expression";
+import { Macro } from "../../wwa_macro";
 
 
 export abstract class Node {
