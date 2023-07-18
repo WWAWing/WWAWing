@@ -38,8 +38,8 @@ import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import { parseMacro } from "./wwa_macro";
 import {
-    ParsedMessage,  MessageSegments, isEmptyMessageTree,  Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
-} from "./wwa_message";
+    ParsedMessage,  MessageSegments, isEmptyMessageTree, Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
+} from "./wwa_messsage";
 import { MessageWindow, MonsterWindow, ScoreWindow } from "./wwa_window"
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
