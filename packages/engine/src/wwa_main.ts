@@ -41,7 +41,7 @@ import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import { parseMacro } from "./wwa_macro";
 import {
-    ParsedMessage,  MessageSegments, isEmptyMessageTree,  Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
+    ParsedMessage,  MessageSegments, isEmptyMessageTree, Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
 } from "./wwa_message";
 import { MessageWindow, MonsterWindow, ScoreWindow } from "./wwa_window"
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
