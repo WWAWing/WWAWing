@@ -1,6 +1,5 @@
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
-import { KeyCode } from "./wwa_input";
 import { WWAData } from "@wwawing/common-interface";
 import type { JsonResponseErrorKind } from "./json_api_client";
 

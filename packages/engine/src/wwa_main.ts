@@ -36,9 +36,11 @@ import { Camera } from "./wwa_camera";
 import { Parts, Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
+import { parseMacro } from "./wwa_macro";
 import {
-    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
+    ParsedMessage,  MessageSegments, isEmptyMessageTree,  Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
 } from "./wwa_message";
+import { MessageWindow, MonsterWindow, ScoreWindow } from "./wwa_window"
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject, checkTouchDevice } from "./wwa_inject_html";
@@ -3775,10 +3777,11 @@ export class WWA {
         switch (previousLineType) {
             case MacroType.IF:
             case MacroType.ELSE_IF:
-            case MacroType.ELSE:
+            case MacroType.ELSE: {
                 if (!newNode || !parentJunction) {
                     return;
                 }
+
                 const target = parentJunction.getLastUnconnectedBranch();
                 if (target) {
                     target.next = newNode;
@@ -3786,7 +3789,8 @@ export class WWA {
                     throw new Error("lastUnconnectedBranchが見つかりませんでした。")
                 }
                 return;
-            case MacroType.END_IF:
+            }
+            case MacroType.END_IF: {
                 if (!newNode || !(endIfTargetJunction instanceof Junction)) {
                     return;
                 }
@@ -3821,8 +3825,9 @@ export class WWA {
                         }
                     })
                 }
+            }
                 return;
-            default:
+            default: {
                 if (!prevLineIsText || !(nodeByPrevLine instanceof ParsedMessage)) {
                     return;
                 }
@@ -3841,6 +3846,7 @@ export class WWA {
                 } else { // if などの場合は単純に接続する
                     nodeByPrevLine.next = newNode;
                 }
+            }
         }
    }
 
