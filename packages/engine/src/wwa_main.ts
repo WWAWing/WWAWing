@@ -322,6 +322,8 @@ export class WWA {
 
         try {
             if (this._hasTitleImg) {
+                // HACK: develop マージ時に条件分岐を書く
+                util.$id("unstable-version-warning").textContent = "この WWA Wing は [不安定版] です。";
                 util.$id("version").textContent = "WWA Wing Ver." + VERSION_WWAJS;
             } else {
                 this._setLoadingMessage(ctxCover, 0);
@@ -539,6 +541,7 @@ export class WWA {
                 this._virtualPadButtonElements = null;
                 this._virtualPadStore = new VirtualPadStore({});
             }
+            setupDebugConsole(util.$id("wwa-debug-console-area"));
             this._gamePadStore = new GamePadStore();
             this._pages = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
@@ -6676,9 +6679,16 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
     toggleButtonElement.textContent = "仮想パッド表示切り替え";
     toggleButtonElement.addEventListener("click", clickHander);
     controllerElm.appendChild(toggleButtonElement);
+}
 
+
+function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null) {
+    if(debugConsoleAreaElement === null) {
+        return;
+    }
     // デバッグ用の間借り
     const evalStringInput = document.createElement("div");
+    evalStringInput.setAttribute("id", "wwa-debug-console");
     const evalStringInputArea = document.createElement("textarea");
     evalStringInputArea.setAttribute("rows", "10");
     evalStringInputArea.setAttribute("cols", "60");
@@ -6713,7 +6723,8 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
 //     v[0] = 0;
 //     MSG("HPは100未満です。");
 // }`;
-    controllerElm.appendChild(evalStringInput);
+    debugConsoleAreaElement.appendChild(evalStringInput);
+
 }
 
 function start() {
