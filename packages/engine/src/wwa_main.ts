@@ -2197,7 +2197,9 @@ export class WWA {
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_V)) {
                     this._displayUserVars();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_X)) {
-                    this._debugEvalString();
+                    if (util.$id("wwa-debug-console")) {
+                      this._debugEvalString();
+                    }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_Y)) {
                     // コマンドのヘルプ 
