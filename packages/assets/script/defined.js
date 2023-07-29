@@ -7,9 +7,44 @@ function CALL_SAVE() {
 function CALL_FRAME() {
 }
 
-/** Cボタンを押した際に呼ばれる関数 */
-function CALL_PUSH_C() {
-  MSG("C keyが押されました")
+/** Rボタンを押した際に呼ばれる関数 */
+function CALL_PUSH_R() {
+  MSG("R keyが押されました")
+}
+
+/** Fボタンを押した際に呼ばれる関数 */
+function CALL_PUSH_F() {
+  MSG("F keyが押されました")
+}
+
+/** Vボタンを押した際に呼ばれる関数 */
+function CALL_PUSH_V() {
+  MSG("V keyが押されました")
+}
+
+/** Tボタンを押した際に呼ばれる関数 */
+function CALL_PUSH_T() {
+  MSG("T keyが押されました")
+}
+
+/** Gボタンを押した際に呼ばれる関数 */
+function CALL_PUSH_G() {
+  MSG("G keyが押されました")
+}
+
+/** Bボタンを押した際に呼ばれる関数 */
+function CALL_PUSH_B() {
+  MSG("B keyが押されました")
+}
+
+/** Enterボタンを押した際に呼ばれる関数 */
+function CALL_PUSH_ENTER() {
+  MSG("Enter keyが押されました")
+}
+
+/** Escボタンを押した際に呼ばれる関数 */
+function CALL_PUSH_ESC() {
+  MSG("ESC keyが押されました")
 }
 
 /** WWAを開始した際に呼ばれる関数 */

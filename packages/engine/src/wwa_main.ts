@@ -2206,42 +2206,139 @@ export class WWA {
                     this._displayHelp();
                 }
                 /** Keyを押した際のユーザ定義独自関数を呼び出す */
+                // TODO: 冗長な表現になってるので修正したい
                 const checkHitKeyUserFunctions = [
-                    {
-                        key: KeyCode.KEY_Q,
-                        func: "CALL_PUSH_Q"
-                    },
                     {
                         key: KeyCode.KEY_A,
                         func: "CALL_PUSH_A"
                     },
                     {
-                        key: KeyCode.KEY_Z,
-                        func: "CALL_PUSH_Z"
+                        key: KeyCode.KEY_B,
+                        func: "CALL_PUSH_B"
                     },
                     {
-                        key: KeyCode.KEY_W,
-                        func: "CALL_PUSH_W"
-                    },
-                    {
-                        key: KeyCode.KEY_S,
-                        func: "CALL_PUSH_S"
-                    },
-                    {
-                        key: KeyCode.KEY_X,
-                        func: "CALL_PUSH_X"
-                    },
-                    {
-                        key: KeyCode.KEY_E,
-                        func: "CALL_PUSH_E"
+                        key: KeyCode.KEY_C,
+                        func: "CALL_PUSH_C"
                     },
                     {
                         key: KeyCode.KEY_D,
                         func: "CALL_PUSH_D"
                     },
                     {
-                        key: KeyCode.KEY_C,
-                        func: "CALL_PUSH_C"
+                        key: KeyCode.KEY_E,
+                        func: "CALL_PUSH_E"
+                    },
+                    {
+                        key: KeyCode.KEY_F,
+                        func: "CALL_PUSH_F"
+                    },
+                    {
+                        key: KeyCode.KEY_G,
+                        func: "CALL_PUSH_G"
+                    },
+                    {
+                        key: KeyCode.KEY_H,
+                        func: "CALL_PUSH_H"
+                    },
+                    {
+                        key: KeyCode.KEY_I,
+                        func: "CALL_PUSH_I"
+                    },
+                    {
+                        key: KeyCode.KEY_J,
+                        func: "CALL_PUSH_J"
+                    },
+                    {
+                        key: KeyCode.KEY_K,
+                        func: "CALL_PUSH_K"
+                    },
+                    {
+                        key: KeyCode.KEY_L,
+                        func: "CALL_PUSH_L"
+                    },
+                    {
+                        key: KeyCode.KEY_M,
+                        func: "CALL_PUSH_M"
+                    },
+                    {
+                        key: KeyCode.KEY_N,
+                        func: "CALL_PUSH_N"
+                    },
+                    {
+                        key: KeyCode.KEY_O,
+                        func: "CALL_PUSH_O"
+                    },
+                    {
+                        key: KeyCode.KEY_P,
+                        func: "CALL_PUSH_P"
+                    },
+                    {
+                        key: KeyCode.KEY_Q,
+                        func: "CALL_PUSH_P"
+                    },
+                    {
+                        key: KeyCode.KEY_R,
+                        func: "CALL_PUSH_R"
+                    },
+                    {
+                        key: KeyCode.KEY_S,
+                        func: "CALL_PUSH_S"
+                    },
+                    {
+                        key: KeyCode.KEY_T,
+                        func: "CALL_PUSH_T"
+                    },
+                    {
+                        key: KeyCode.KEY_U,
+                        func: "CALL_PUSH_U"
+                    },
+                    {
+                        key: KeyCode.KEY_V,
+                        func: "CALL_PUSH_V"
+                    },
+                    {
+                        key: KeyCode.KEY_W,
+                        func: "CALL_PUSH_W"
+                    },
+                    {
+                        key: KeyCode.KEY_X,
+                        func: "CALL_PUSH_X"
+                    },
+                    {
+                        key: KeyCode.KEY_Y,
+                        func: "CALL_PUSH_Y"
+                    },
+                    {
+                        key: KeyCode.KEY_Z,
+                        func: "CALL_PUSH_Z"
+                    },
+                    {
+                        key: KeyCode.KEY_ENTER,
+                        func: "CALL_PUSH_ENTER"
+                    },
+                    {
+                        key: KeyCode.KEY_ESC,
+                        func: "CALL_PUSH_ESC"
+                    },
+                    {
+                        key: KeyCode.KEY_SPACE,
+                        func: "CALL_PUSH_SPACE"
+                    },
+                    {
+                        key: KeyCode.KEY_LEFT,
+                        func: "CALL_PUSH_LEFT"
+                    },
+                    {
+                        key: KeyCode.KEY_RIGHT,
+                        func: "CALL_PUSH_RIGHT"
+                    },
+                    {
+                        key: KeyCode.KEY_UP,
+                        func: "CALL_PUSH_UP"
+                    },
+                    {
+                        key: KeyCode.KEY_DOWN,
+                        func: "CALL_PUSH_DOWN"
                     }
                 ]
                 checkHitKeyUserFunctions.forEach((key)=>{
