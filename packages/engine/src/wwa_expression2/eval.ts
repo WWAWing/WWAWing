@@ -581,8 +581,12 @@ export class EvalCalcWwaNode {
       case "PY":
         return game_status.playerCoord.y;
       case "AT":
+        return game_status.bareStatus.strength;
+      case "AT_TOTAL":
         return game_status.totalStatus.strength;
       case "DF":
+        return game_status.bareStatus.defence;
+      case "DF_TOTAL":
         return game_status.totalStatus.defence;
       case "GD":      
         return game_status.totalStatus.gold;

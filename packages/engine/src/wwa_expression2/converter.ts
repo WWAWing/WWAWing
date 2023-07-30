@@ -268,6 +268,12 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM") {
           throw new Error("このシンボルには代入できません");
         }
+        if (left.name === "AT_TOTAL") {
+            throw new Error(`"装備品込みの攻撃力(AT_TOTAL)への代入はできません。"`);
+        }
+        if (left.name === "DF_TOTAL") {
+          throw new Error(`"装備品込みの防御力(DF_TOTAL)への代入はできません。"`);
+        }
         return {
           type: "SpecialParameterAssignment",
           kind: left.name,
@@ -377,7 +383,9 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
     case "HP":
     case "HPMAX":
     case "AT":
+    case "AT_TOTAL":
     case "DF":
+    case "DF_TOTAL":
     case "GD":
     case "STEP":
     case "TIME":
