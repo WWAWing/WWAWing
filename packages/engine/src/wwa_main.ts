@@ -2274,7 +2274,7 @@ export class WWA {
                     },
                     {
                         key: KeyCode.KEY_Q,
-                        func: "CALL_PUSH_P"
+                        func: "CALL_PUSH_Q"
                     },
                     {
                         key: KeyCode.KEY_R,

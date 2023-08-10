@@ -388,6 +388,7 @@ export class EvalCalcWwaNode {
             }
           }
         }
+        break;
       }
       case "MOVE": 
         this._checkArgsLength(1, node);
