@@ -146,6 +146,12 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "REMOVE_ITEM":
     case "MOVE":
     case "IS_PLAYER_WAITING_MESSAGE":
+    case "GET_UNIXTIME":
+    case "GET_DATE_YEAR":
+    case "GET_DATE_MONTH":
+    case "GET_DATE_DAY":
+    case "GET_DATE_HOUR":
+    case "GET_DATE_MINUTES":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {

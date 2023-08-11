@@ -404,6 +404,18 @@ export class EvalCalcWwaNode {
       case "IS_PLAYER_WAITING_MESSAGE": {
         return this.generator.wwa.isPlayerWaitingMessage();
       }
+      case "GET_UNIXTIME":
+        return Math.floor(new Date().getTime()/1000);
+      case "GET_DATE_YEAR":
+        return (new Date()).getFullYear();
+      case "GET_DATE_MONTH":
+        return (new Date()).getMonth()+1;
+      case "GET_DATE_DAY":
+        return (new Date()).getDate();
+      case "GET_DATE_HOUR":
+        return (new Date()).getHours();
+      case "GET_DATE_MINUTES":
+        return (new Date()).getMinutes();
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
