@@ -4,11 +4,12 @@ import type { JsonResponseError } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
-    SidebarButton, SystemMessage2, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
-    SystemSound, loadMessages, SystemMessage1, sidebarButtonCellElementID, SpeedChange, PartsType,
+    SidebarButton, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
+    SystemSound, loadMessages, SystemMessageIndexV1, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
     StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
+    SystemMessageConfigMap, SystemMessageKey,
 } from "./wwa_data";
 
 import {
@@ -952,14 +953,15 @@ export class WWA {
                             break;
                     }
                 };
-                if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "ON") {
+                const soundLoadConfirmMessage = this.resolveSystemMessage(SystemMessageKey.CONFIRM_LOAD_SOUND);
+                if (soundLoadConfirmMessage === "ON") {
                     this._isLoadedSound = true;
                     setGameStartingMessageWhenPcOrSP();
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound();
                     window.requestAnimationFrame(this.soundCheckCaller);
                     return;
-                } else if (this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "OFF") {
+                } else if (soundLoadConfirmMessage === "OFF") {
                     this._isLoadedSound = false;
                     setGameStartingMessageWhenPcOrSP();
                     this.openGameWindow();
@@ -971,15 +973,11 @@ export class WWA {
                 }
 
                 if (this._usePassword) {
-                    let showMessage = "効果音・ＢＧＭデータをロードしますか？";
+                    let showingMessage = soundLoadConfirmMessage;
                     if (canDisplayUserVars) {
-                        showMessage += "\n\n※変数表示が有効になっています。\n公開前に必ずHTMLファイル内の\n data-wwa-display-user-vars=\"true\" \nを消してください。"
+                        showingMessage += "\n\n※変数表示が有効になっています。\n公開前に必ずHTMLファイル内の\n data-wwa-display-user-vars=\"true\" \nを消してください。"
                     }
-                    this._messageWindow.setMessage(
-                        this._wwaData.systemMessage[SystemMessage2.LOAD_SE] === "" ?
-                            showMessage :
-                            this._wwaData.systemMessage[SystemMessage2.LOAD_SE]
-                    );
+                    this._messageWindow.setMessage(showingMessage);
                     // TODO: システムメッセージなのでメッセージウィンドウの中央配置が必要かも
                     this._messageWindow.show();
                     this._setProgressBar(getProgress(4, 4, LoadStage.GAME_INIT));
@@ -1444,7 +1442,7 @@ export class WWA {
             var bg = <HTMLDivElement>(util.$id("item" + (itemPos - 1)));
             bg.classList.add("onpress");
             this.playSound(SystemSound.DECISION);
-            if (this._wwaData.message[SystemMessage1.USE_ITEM] === "BLANK") {
+            if (this._wwaData.message[SystemMessageIndexV1.USE_ITEM] === "BLANK") {
                 this._player.readyToUseItem(itemPos);
                 var itemID = this._player.useItem();
                 var mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
@@ -1454,9 +1452,9 @@ export class WWA {
                     this._player.getPosition().getPartsCoord());
             } else {
                 this.generatePageAndReserveExecution(
-                    this._wwaData.message[SystemMessage1.USE_ITEM] === "" ?
+                    this._wwaData.message[SystemMessageIndexV1.USE_ITEM] === "" ?
                         "このアイテムを使用します。\nよろしいですか?" :
-                        this._wwaData.message[SystemMessage1.USE_ITEM], true, true);
+                        this._wwaData.message[SystemMessageIndexV1.USE_ITEM], true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_ITEM_USE;
                 this._yesNoUseItemPos = itemPos;
             }
@@ -2985,14 +2983,14 @@ export class WWA {
         if (!this._isURLGateEnable) {
             return true;
         }
-        if (this._wwaData.message[SystemMessage1.ASK_LINK] === "BLANK") {
+        if (this._wwaData.message[SystemMessageIndexV1.ASK_LINK] === "BLANK") {
             location.href = util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0])
             return;
         }
         this.generatePageAndReserveExecution(
-            this._wwaData.message[SystemMessage1.ASK_LINK] === "" ?
+            this._wwaData.message[SystemMessageIndexV1.ASK_LINK] === "" ?
                 "他のページにリンクします。\nよろしいですか？" :
-                this._wwaData.message[SystemMessage1.ASK_LINK], true, true);
+                this._wwaData.message[SystemMessageIndexV1.ASK_LINK], true, true);
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_MAP_PARTS;
@@ -3171,12 +3169,14 @@ export class WWA {
                 this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
             }
         } catch (e) {
+            const systemMessage = this.resolveSystemMessage(SystemMessageKey.ITEM_BOX_FULL);
             // これ以上、アイテムを持てません
-            if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
+            if (systemMessage !== "BLANK") {
                 this.generatePageAndReserveExecution(
-                    this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] === "" ?
-                        "これ以上、アイテムを持てません。" :
-                        this._wwaData.systemMessage[SystemMessage2.FULL_ITEM], false, true);
+                  systemMessage,
+                  false,
+                  true
+                );
             }
 
         }
@@ -3252,14 +3252,14 @@ export class WWA {
         if (!this._isURLGateEnable) {
             return;
         }
-        if (this._wwaData.message[SystemMessage1.ASK_LINK] === "BLANK") {
+        if (this._wwaData.message[SystemMessageIndexV1.ASK_LINK] === "BLANK") {
             location.href = util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0]);
             return;
         }
         this.generatePageAndReserveExecution(
-            this._wwaData.message[SystemMessage1.ASK_LINK] === "" ?
+            this._wwaData.message[SystemMessageIndexV1.ASK_LINK] === "" ?
                 "他のページにリンクします。\nよろしいですか？" :
-                this._wwaData.message[SystemMessage1.ASK_LINK], true, true);
+                this._wwaData.message[SystemMessageIndexV1.ASK_LINK], true, true);
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -3311,11 +3311,11 @@ export class WWA {
     private _execChoiceWindowObjectSellEvent(): { isGameOver?: true } {
         // 所持金が足りない
         if (!this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
-            if (this._wwaData.message[SystemMessage1.NO_MONEY] !== "BLANK") {
+            if (this._wwaData.message[SystemMessageIndexV1.NO_MONEY] !== "BLANK") {
                 this._pages.push(new Page(
                     new ParsedMessage(
-                        this._wwaData.message[SystemMessage1.NO_MONEY] === "" ?
-                            "所持金がたりない。" : this._wwaData.message[SystemMessage1.NO_MONEY],
+                        this._wwaData.message[SystemMessageIndexV1.NO_MONEY] === "" ?
+                            "所持金がたりない。" : this._wwaData.message[SystemMessageIndexV1.NO_MONEY],
                     ), true, false, true
                 ));
             }
@@ -3341,12 +3341,9 @@ export class WWA {
                 } : undefined);
             } catch (error) {
                 // アイテムボックスがいっぱい
-                if (this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] !== "BLANK") {
-                    this._pages.push(new Page(
-                        new ParsedMessage(
-                            this._wwaData.systemMessage[SystemMessage2.FULL_ITEM] === "" ?
-                                "これ以上、アイテムを持てません。" : this._wwaData.systemMessage[SystemMessage2.FULL_ITEM],
-                        ), true, false, true))
+                const systemMessage = this.resolveSystemMessage(SystemMessageKey.ITEM_BOX_FULL);
+                if (systemMessage !== "BLANK") {
+                    this._pages.push(new Page(new ParsedMessage(systemMessage), true, false, true))
                }
                 return {};
             }
@@ -3401,10 +3398,10 @@ export class WWA {
                             this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                         } else {
                             // アイテムを持っていない
-                            if (this._wwaData.message[SystemMessage1.NO_ITEM] !== "BLANK") {
+                            if (this._wwaData.message[SystemMessageIndexV1.NO_ITEM] !== "BLANK") {
                                 this._pages.push(new Page((new ParsedMessage(
-                                    this._wwaData.message[SystemMessage1.NO_ITEM] === "" ?
-                                        "アイテムを持っていない。" : this._wwaData.message[SystemMessage1.NO_ITEM],
+                                    this._wwaData.message[SystemMessageIndexV1.NO_ITEM] === "" ?
+                                        "アイテムを持っていない。" : this._wwaData.message[SystemMessageIndexV1.NO_ITEM],
                                 )
                                 ), true, false, true));
                             };
@@ -6174,6 +6171,66 @@ font-weight: bold;
             return this._wwaData.gameOverPolicy === "default";
         } else {
             return this._wwaData.gameOverPolicy === "default" || this._wwaData.gameOverPolicy ==="except-macro";
+        }
+    }
+
+    private _loadSystemMessage(systemMessageKey: SystemMessageKey): string {
+        const config = SystemMessageConfigMap[systemMessageKey];
+        if (config.mapdataParams) {
+            switch (config.mapdataParams.messageArea) {
+                case "message": {
+                    const mapdataDefinedMessage = this._wwaData.message[config.mapdataParams.index];
+                    return mapdataDefinedMessage === "" ? config.defaultText : mapdataDefinedMessage;
+                }
+                case "systemMessage": {
+                    const mapdataDefinedMessage = this._wwaData.systemMessage[config.mapdataParams.index];
+                    return mapdataDefinedMessage === "" ? config.defaultText : mapdataDefinedMessage;
+                }
+                default:
+                    throw new Error("システムエラー: システムメッセージの設定がおかしいようです");
+            }
+        }
+        return config.defaultText;
+    }
+
+    public resolveSystemMessage(systemMessageKey: SystemMessageKey): string {
+        const loadedMessage = this._loadSystemMessage(systemMessageKey);
+        switch(systemMessageKey) {
+            case SystemMessageKey.ITEM_SELECT_TUTORIAL:
+                return loadedMessage.replaceAll("%HOW_TO_ITEM_USE%", (() => {
+                    switch (this.userDevice.device) {
+                        case DEVICE_TYPE.PC:
+                            return "右のボックスを選択する";
+                        case DEVICE_TYPE.VR:
+                            return "右のボックスをクリックする";
+                        case DEVICE_TYPE.SP:
+                            return "右のボックスをタップする";
+                        case DEVICE_TYPE.GAME: {
+                            switch (this.userDevice.os) {
+                                case OS_TYPE.NINTENDO:
+                                    return "Ｘボタンを押すか、右のボックスをタップする";
+                                case OS_TYPE.PLAY_STATION:
+                                    return "△ボタンを押す";
+                                case OS_TYPE.XBOX:
+                                    return "Ｙボタンを押す";
+                                default:
+                                    return "右のボックスを選択する";
+                           }
+                        }
+                        default:
+                            return "右のボックスを選択する";
+                    }
+                })());
+            case SystemMessageKey.GAME_SPEED_CHANGED:
+                return loadedMessage
+                    .replaceAll("%GAME_SPEED_NAME%", speedNameList[this._wwaData.gameSpeedIndex])
+                    .replaceAll("%HIGH_SPEED_MESSAGE%", this.isBattleSpeedIndexForQuickBattle(this._wwaData.gameSpeedIndex) ? "戦闘も速くなります。\n" : "")
+                    .replaceAll("%MAX_SPEED_INDEX%", String(Consts.MAX_SPEED_INDEX + 1))
+                    .replaceAll("%GAME_SPEED_INDEX%", String(this._wwaData.gameSpeedIndex))
+                    .replaceAll("%SPEED_UP_BUTTON%", this.userDevice.os === OS_TYPE.NINTENDO ? "+ボタン" : "Pキー")
+                    .replaceAll("%SPEED_DOWN_BUTTON%", this.userDevice.os === OS_TYPE.NINTENDO ? "-ボタン" : "Iキー");
+            default:
+                return loadedMessage;
         }
     }
 };

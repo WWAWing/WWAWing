@@ -8,12 +8,10 @@ import {
     speedList,
     PartsType,
     ItemMode,
-    SystemMessage2,
     SystemSound,
     AppearanceTriggerType,
     Coord,
-    DEVICE_TYPE,
-    OS_TYPE
+    SystemMessageKey
 } from "./wwa_data";
 import { Camera } from "./wwa_camera";
 import { Monster } from "./wwa_monster";
@@ -790,41 +788,10 @@ export class Player extends PartsObject {
         this.removeItemByItemPosition(pos);
         this._itemBox[pos - 1] = id;
         if (id !== 0 && itemType !== ItemMode.NORMAL) {
-            var mes = this._wwa.getSystemMessageById(SystemMessage2.CLICKABLE_ITEM);
+            const mes = this._wwa.resolveSystemMessage(SystemMessageKey.ITEM_SELECT_TUTORIAL);
             if (!this._isClickableItemGot) {
                 if (mes !== "BLANK") {
-                    var deviceMessage: string = "";
-                    switch (this._wwa.userDevice.device) {
-                        case DEVICE_TYPE.PC:
-                            deviceMessage = "このアイテムは右のボックスを選択することで使用できます。\n" +
-                                "使用できるアイテムは色枠で囲まれます。";
-                            break;
-                        case DEVICE_TYPE.VR:
-                            deviceMessage = "このアイテムは右のボックスをクリックすることで使用できます。\n" +
-                                "使用できるアイテムは色枠で囲まれます。";
-                            break;
-                        case DEVICE_TYPE.SP:
-                            deviceMessage = "このアイテムは右のボックスをタップすることで使用できます。\n" +
-                                "使用できるアイテムは色枠で囲まれます。";
-                            break;
-                        case DEVICE_TYPE.GAME:
-                            switch (this._wwa.userDevice.os) {
-                                case OS_TYPE.NINTENDO:
-                                    deviceMessage = "このアイテムはＸボタンを押すか、右のボックスをタップすることで使用できます。\n" +
-                                        "使用できるアイテムは色枠で囲まれます。";
-                                    break;
-                                case OS_TYPE.PLAY_STATION:
-                                    deviceMessage = "このアイテムは△ボタンを押すことで使用できます。\n" +
-                                        "使用できるアイテムは色枠で囲まれます。";
-                                    break;
-                                case OS_TYPE.XBOX:
-                                    deviceMessage = "このアイテムはＹボタンを押すことで使用できます。\n" +
-                                        "使用できるアイテムは色枠で囲まれます。";
-                                    break;
-                            }
-                            break;
-                    }
-                    this._wwa.generatePageAndReserveExecution(mes === "" ? deviceMessage : mes, false, true);
+                    this._wwa.generatePageAndReserveExecution(mes, false, true);
                 }
                 this._isClickableItemGot = true;
             }
