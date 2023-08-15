@@ -1039,7 +1039,8 @@ export class Player extends PartsObject {
                 return;
             }
             this._enemy.battleEndProcess();
-            this._wwa.generatePageAndReserveExecution("相手の防御能力が高すぎる！", false, true);
+            const systemMessage = this._wwa.resolveSystemMessage(SystemMessageKey.CANNOT_DAMAGE_ENEMY);
+            this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
             this._battleTurnNum = 0;
             this._enemy = null;
         } else {

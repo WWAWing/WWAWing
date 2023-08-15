@@ -5,7 +5,7 @@ import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
     LoaderProgress, LoadStage, YesNoState, ChoiceCallInfo, Status, WWAData, Face, LoadType, Direction,
     SidebarButton, LoadingMessageSize, LoadingMessagePosition, loadMessagesClassic,
-    SystemSound, loadMessages, SystemMessageIndexV1, sidebarButtonCellElementID, SpeedChange, PartsType,
+    SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
     StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
@@ -1442,7 +1442,8 @@ export class WWA {
             var bg = <HTMLDivElement>(util.$id("item" + (itemPos - 1)));
             bg.classList.add("onpress");
             this.playSound(SystemSound.DECISION);
-            if (this._wwaData.message[SystemMessageIndexV1.USE_ITEM] === "BLANK") {
+            const systemMessage = this.resolveSystemMessage(SystemMessageKey.CONFIRM_USE_ITEM);
+            if (systemMessage === "BLANK") {
                 this._player.readyToUseItem(itemPos);
                 var itemID = this._player.useItem();
                 var mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
@@ -1451,10 +1452,7 @@ export class WWA {
                     false, false, itemID, PartsType.OBJECT,
                     this._player.getPosition().getPartsCoord());
             } else {
-                this.generatePageAndReserveExecution(
-                    this._wwaData.message[SystemMessageIndexV1.USE_ITEM] === "" ?
-                        "このアイテムを使用します。\nよろしいですか?" :
-                        this._wwaData.message[SystemMessageIndexV1.USE_ITEM], true, true);
+                this.generatePageAndReserveExecution(systemMessage, true, true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_ITEM_USE;
                 this._yesNoUseItemPos = itemPos;
             }
@@ -1592,28 +1590,20 @@ export class WWA {
 
     public onchangespeed(type: SpeedChange) {
         if (!this._wwaData.permitChangeGameSpeed) {
-            this.generatePageAndReserveExecution("ここでは移動速度を\n変更できません。", false, true);
+            const systemMessage = this.resolveSystemMessage(SystemMessageKey.GAME_SPEED_CHANGE_DISABLED);
+            this.generatePageAndReserveExecution(systemMessage, false, true);
             return;
         }
-        var speedIndex: number, speedMessage: string;
-        if (type === SpeedChange.UP) {
-            speedIndex = this._player.speedUp();
-        } else {
-            speedIndex = this._player.speedDown();
-        }
-        speedMessage = "移動速度を【" + speedNameList[speedIndex] + "】に切り替えました。\n" +
-            (this.isBattleSpeedIndexForQuickBattle(speedIndex) ? "戦闘も速くなります。\n" : "") +
-            "(" + (Consts.MAX_SPEED_INDEX + 1) + "段階中" + (speedIndex + 1) + "）";
-        // TODO(rmn): 適切な分岐に直したい
-        switch (this.userDevice.os) {
-            case OS_TYPE.NINTENDO:
-                speedMessage += "速度を落とすには-ボタン, 速度を上げるには+ボタンを押してください。";
+        switch (type) {
+            case SpeedChange.UP:
+                this._player.speedUp();
                 break;
-            default:
-                speedMessage += "速度を落とすにはIキー, 速度を上げるにはPキーを押してください。";
+            case SpeedChange.DOWN:
+                this._player.speedDown();
                 break;
         }
-        this.generatePageAndReserveExecution(speedMessage, false, true);
+        const systemMessage = this.resolveSystemMessage(SystemMessageKey.GAME_SPEED_CHANGED);
+        this.generatePageAndReserveExecution(systemMessage, false, true);
     }
 
     public isBattleSpeedIndexForQuickBattle(battleSpeedIndex: number): boolean {
@@ -2983,14 +2973,12 @@ export class WWA {
         if (!this._isURLGateEnable) {
             return true;
         }
-        if (this._wwaData.message[SystemMessageIndexV1.ASK_LINK] === "BLANK") {
+        const systemMessage = this.resolveSystemMessage(SystemMessageKey.CONFIRM_ENTER_URL_GATE);
+        if (systemMessage === "BLANK") {
             location.href = util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0])
             return;
         }
-        this.generatePageAndReserveExecution(
-            this._wwaData.message[SystemMessageIndexV1.ASK_LINK] === "" ?
-                "他のページにリンクします。\nよろしいですか？" :
-                this._wwaData.message[SystemMessageIndexV1.ASK_LINK], true, true);
+        this.generatePageAndReserveExecution(systemMessage, true, true);
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_MAP_PARTS;
@@ -3252,14 +3240,12 @@ export class WWA {
         if (!this._isURLGateEnable) {
             return;
         }
-        if (this._wwaData.message[SystemMessageIndexV1.ASK_LINK] === "BLANK") {
+        const systemMessage = this.resolveSystemMessage(SystemMessageKey.CONFIRM_ENTER_URL_GATE)
+        if (systemMessage === "BLANK") {
             location.href = util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0]);
             return;
         }
-        this.generatePageAndReserveExecution(
-            this._wwaData.message[SystemMessageIndexV1.ASK_LINK] === "" ?
-                "他のページにリンクします。\nよろしいですか？" :
-                this._wwaData.message[SystemMessageIndexV1.ASK_LINK], true, true);
+        this.generatePageAndReserveExecution(systemMessage, true, true);
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -3311,13 +3297,9 @@ export class WWA {
     private _execChoiceWindowObjectSellEvent(): { isGameOver?: true } {
         // 所持金が足りない
         if (!this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
-            if (this._wwaData.message[SystemMessageIndexV1.NO_MONEY] !== "BLANK") {
-                this._pages.push(new Page(
-                    new ParsedMessage(
-                        this._wwaData.message[SystemMessageIndexV1.NO_MONEY] === "" ?
-                            "所持金がたりない。" : this._wwaData.message[SystemMessageIndexV1.NO_MONEY],
-                    ), true, false, true
-                ));
+            const systemMessage = this.resolveSystemMessage(SystemMessageKey.NO_MONEY)
+            if (systemMessage !== "BLANK") {
+                this._pages.push(new Page(new ParsedMessage(systemMessage), true, false, true));
             }
             return {};
         }
@@ -3398,12 +3380,9 @@ export class WWA {
                             this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                         } else {
                             // アイテムを持っていない
-                            if (this._wwaData.message[SystemMessageIndexV1.NO_ITEM] !== "BLANK") {
-                                this._pages.push(new Page((new ParsedMessage(
-                                    this._wwaData.message[SystemMessageIndexV1.NO_ITEM] === "" ?
-                                        "アイテムを持っていない。" : this._wwaData.message[SystemMessageIndexV1.NO_ITEM],
-                                )
-                                ), true, false, true));
+                            const systemMessage = this.resolveSystemMessage(SystemMessageKey.NO_ITEM)
+                            if (systemMessage !== "BLANK") {
+                                this._pages.push(new Page((new ParsedMessage(systemMessage)), true, false, true));
                             };
                         }
                     } else if (partsType === Consts.OBJECT_SELL) {

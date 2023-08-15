@@ -630,18 +630,6 @@ export const SystemMessageConfigMap: {
 } = _systemMessage;
 
 
-/**
- * マップデータの通常メッセージ領域（システムメッセージ領域ではない！！）
- * にある分のシステムメッセージの添字リストです。
- * これがシステムメッセージ領域にない理由は、おそらくマップデータの互換性にまつわる歴史的経緯と思われます。
- */
-export enum SystemMessageIndexV1 {
-    ASK_LINK = 5,
-    NO_MONEY = 6,
-    NO_ITEM = 7,
-    USE_ITEM = 8
-}
-
 export enum MacroType {
     UNDEFINED = 0,
     IMGPLAYER = 1,
