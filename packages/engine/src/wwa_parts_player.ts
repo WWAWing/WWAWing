@@ -1039,7 +1039,7 @@ export class Player extends PartsObject {
                 return;
             }
             this._enemy.battleEndProcess();
-            const systemMessage = this._wwa.resolveSystemMessage(SystemMessageKey.CANNOT_DAMAGE_ENEMY);
+            const systemMessage = this._wwa.resolveSystemMessage(SystemMessageKey.CANNOT_DAMAGE_MONSTER);
             if (systemMessage !== "BLANK") {
                 this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
             }

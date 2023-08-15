@@ -2009,12 +2009,12 @@ export class WWA {
                 } else if (this._keyStore.getKeyState(KeyCode.KEY_C) === KeyState.KEYDOWN) {
                     this.onselectitem(12);
                     //移動速度
-                } else if (this._keyStore.getKeyState(KeyCode.KEY_I) ||
+                } else if (this._keyStore.getKeyState(KeyCode.KEY_I) === KeyState.KEYDOWN ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_MINUS) ||
                     this._virtualPadStore.checkTouchButton("BUTTON_SLOW")) {
                     this.onchangespeed(SpeedChange.DOWN);
                 } else if (
-                    this._keyStore.checkHitKey(KeyCode.KEY_P) ||
+                    this._keyStore.getKeyState(KeyCode.KEY_P) === KeyState.KEYDOWN ||
                     this._keyStore.checkHitKey(KeyCode.KEY_F2) ||
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_PLUS) ||
                     this._virtualPadStore.checkTouchButton("BUTTON_FAST")) {
@@ -6158,6 +6158,9 @@ font-weight: bold;
     }
 
     private _loadSystemMessage(systemMessageKey: SystemMessageKey): string {
+        if (this._wwaData.customSystemMessages[systemMessageKey]) {
+            return this._wwaData.customSystemMessages[systemMessageKey];
+        }
         const config = SystemMessageConfigMap[systemMessageKey];
         if (config.mapdataParams) {
             switch (config.mapdataParams.messageArea) {
@@ -6180,7 +6183,7 @@ font-weight: bold;
         const loadedMessage = this._loadSystemMessage(systemMessageKey);
         switch(systemMessageKey) {
             case SystemMessageKey.ITEM_SELECT_TUTORIAL:
-                return loadedMessage.replaceAll("%HOW_TO_ITEM_USE%", (() => {
+                return loadedMessage.replaceAll("%HOW_TO_USE_ITEM%", (() => {
                     switch (this.userDevice.device) {
                         case DEVICE_TYPE.PC:
                             return "右のボックスを選択する";
@@ -6204,17 +6207,23 @@ font-weight: bold;
                             return "右のボックスを選択する";
                     }
                 })());
-            case SystemMessageKey.GAME_SPEED_CHANGED:
+            case SystemMessageKey.GAME_SPEED_CHANGED: {
+                const speedIndex = this._player.getSpeedIndex();
                 return loadedMessage
-                    .replaceAll("%GAME_SPEED_NAME%", speedNameList[this._wwaData.gameSpeedIndex])
-                    .replaceAll("%HIGH_SPEED_MESSAGE%", this.isBattleSpeedIndexForQuickBattle(this._wwaData.gameSpeedIndex) ? "戦闘も速くなります。\n" : "")
+                    .replaceAll("%GAME_SPEED_NAME%", speedNameList[speedIndex])
+                    .replaceAll("%HIGH_SPEED_MESSAGE%", this.isBattleSpeedIndexForQuickBattle(speedIndex) ? "戦闘も速くなります。\n" : "")
                     .replaceAll("%MAX_SPEED_INDEX%", String(Consts.MAX_SPEED_INDEX + 1))
-                    .replaceAll("%GAME_SPEED_INDEX%", String(this._wwaData.gameSpeedIndex))
+                    .replaceAll("%GAME_SPEED_INDEX%", String(speedIndex + 1)) // 内部値は [0, MAX - 1] だが、表示は [1, MAX]
                     .replaceAll("%SPEED_UP_BUTTON%", this.userDevice.os === OS_TYPE.NINTENDO ? "+ボタン" : "Pキー")
                     .replaceAll("%SPEED_DOWN_BUTTON%", this.userDevice.os === OS_TYPE.NINTENDO ? "-ボタン" : "Iキー");
+            }
             default:
                 return loadedMessage;
         }
+    }
+
+    public overwriteSystemMessage(systemMessageKey: SystemMessageKey, message: string | undefined) {
+        this._wwaData.customSystemMessages[systemMessageKey] = message;
     }
 };
 

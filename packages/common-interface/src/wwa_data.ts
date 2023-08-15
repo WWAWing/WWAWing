@@ -1,3 +1,5 @@
+import type { SystemMessageKey } from "./wwa_system_message";
+
 export interface Coord {
     x: number;
     y: number;
@@ -147,6 +149,17 @@ export interface WWAData {
     gameOverPolicy: GameOverPolicy;
 
     bgmDelayDurationMs: number;
+
+    /**
+     * ゲーム中に書き換えられたシステムメッセージ群
+     * SystemMessageKeyごとにデータが保存されています。
+     * キーに対する値が未定義の場合はマップデータで決められたシステムメッセージ
+     * (WWAData の message もしくは systemMessage) を使用します。
+     * 
+     * 本当は WWAData の systemMessage を使いたいがセーブデータの互換性が損なわれる問題があるため
+     * キーを増やす対応をしています。
+     */
+    customSystemMessages: Partial<Record<SystemMessageKey, string>>;
 
 }
 

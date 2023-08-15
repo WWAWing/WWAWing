@@ -16,6 +16,9 @@ import {
     PreprocessMacroType,
     ScoreRates,
     ScoreOptions as ScoreOptions,
+    systemMessageKeys,
+    SystemMessageConfigMap,
+    SystemMessageKey,
 } from "./wwa_data";
 import {
     Monster
@@ -524,6 +527,10 @@ export class Macro {
                 case MacroType.DELAYBGM: {
                     this._executeDelayBgmMacro();
                     return {};
+                }
+                case MacroType.SYSMSG: {
+                    this._executeSysMsgMacro();
+                    return {}
                 }
                 default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
@@ -1161,7 +1168,43 @@ export class Macro {
         const delayMs = this._evaluateIntValue(0);
         this._wwa.setBgmDelay(delayMs);
     }
+
+    private _executeSysMsgMacro(): void {
+        this._concatEmptyArgs(2);
+        const key = this.resolveSystemMessageKeyFromMacroArg(this.macroArgs[0]);
+        if (!key) {
+            throw new Error("該当するシステムメッセージの定義がありません");
+        }
+        const message = this.macroArgs[1] === "" ? undefined : this.macroArgs[1].replaceAll("\\n", "\n");
+        this._wwa.overwriteSystemMessage(key, message);
+    }
+
+    private resolveSystemMessageKeyFromMacroArg(rawValue: string): SystemMessageKey | undefined {
+        // メッセージコードとして解決しようとする
+        if (stringIsSystemMessageKey(rawValue)) {
+          return rawValue;
+        }
+
+        // 通常のマクロ引数として解決しようとする
+        const value = this._evaluateIntValue(0);
+        return findSystemMessageKeyByCode(value);
+    }
+
 }
+
+function stringIsSystemMessageKey(rawValue: string): rawValue is SystemMessageKey {
+    return systemMessageKeys.some((key) => key === rawValue);
+}
+
+function findSystemMessageKeyByCode(code: number): SystemMessageKey | undefined {
+    for (let key of systemMessageKeys) {
+      if (SystemMessageConfigMap[key].code === code) {
+        return key;
+      }
+    }
+    return undefined;
+}
+
 
 export function parseMacro(
     wwa: WWA,
