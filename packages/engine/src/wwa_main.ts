@@ -1591,7 +1591,9 @@ export class WWA {
     public onchangespeed(type: SpeedChange) {
         if (!this._wwaData.permitChangeGameSpeed) {
             const systemMessage = this.resolveSystemMessage(SystemMessageKey.GAME_SPEED_CHANGE_DISABLED);
-            this.generatePageAndReserveExecution(systemMessage, false, true);
+            if (systemMessage !== "BLANK") {
+                this.generatePageAndReserveExecution(systemMessage, false, true);
+            }
             return;
         }
         switch (type) {
@@ -1603,7 +1605,9 @@ export class WWA {
                 break;
         }
         const systemMessage = this.resolveSystemMessage(SystemMessageKey.GAME_SPEED_CHANGED);
-        this.generatePageAndReserveExecution(systemMessage, false, true);
+        if (systemMessage !== "BLANK") {
+            this.generatePageAndReserveExecution(systemMessage, false, true);
+        }
     }
 
     public isBattleSpeedIndexForQuickBattle(battleSpeedIndex: number): boolean {
