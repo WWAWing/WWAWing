@@ -1,10 +1,9 @@
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
-import { KeyCode } from "./wwa_input";
-import { WWAData } from "@wwawing/common-interface";
+import { type WWAData, SystemMessageConfig,  SystemMessageKey, systemMessageKeys, SystemMessageConfigMap } from "@wwawing/common-interface";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
-export { WWAData };
+export { type WWAData, SystemMessageConfig,  SystemMessageKey, systemMessageKeys, SystemMessageConfigMap };
 
 export class EquipmentStatus {
     public strength: number;
@@ -534,19 +533,6 @@ export enum SecondCandidateMoveType {
 export var sidebarButtonCellElementID = ["cell-load", "cell-save", "cell-restart", "cell-gotowwa"];
 
 
-export enum SystemMessage1 {
-    ASK_LINK = 5,
-    NO_MONEY = 6,
-    NO_ITEM = 7,
-    USE_ITEM = 8
-}
-
-export enum SystemMessage2 {
-    CLICKABLE_ITEM = 0,
-    FULL_ITEM = 1,
-    LOAD_SE = 2
-}
-
 export enum MacroType {
     UNDEFINED = 0,
     IMGPLAYER = 1,
@@ -611,6 +597,7 @@ export enum MacroType {
     SHOW_STR2 = 62,
     CONSOLE_LOG2 = 63,
     DELAYBGM = 64,
+    SYSMSG = 65,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101,
     LEGACY_IF = 10050
@@ -683,6 +670,7 @@ export var macrotable = {
     "$show_str2": 62,
     "$console_log2": 63,
     "$delaybgm": 64,
+    "$sysmsg": 65,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
