@@ -1,9 +1,9 @@
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
-import { type WWAData, SystemMessageConfig,  SystemMessageKey, systemMessageKeys, SystemMessageConfigMap } from "@wwawing/common-interface";
+import { type WWAData } from "@wwawing/common-interface";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
-export { type WWAData, SystemMessageConfig,  SystemMessageKey, systemMessageKeys, SystemMessageConfigMap };
+export { type WWAData };
 
 export class EquipmentStatus {
     public strength: number;

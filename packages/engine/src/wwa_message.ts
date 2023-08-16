@@ -1,3 +1,4 @@
+import { SystemMessage } from "@wwawing/common-interface"
 import { WWA } from "./wwa_main";
 import {
     WWAConsts,
@@ -16,9 +17,6 @@ import {
     PreprocessMacroType,
     ScoreRates,
     ScoreOptions as ScoreOptions,
-    systemMessageKeys,
-    SystemMessageConfigMap,
-    SystemMessageKey,
 } from "./wwa_data";
 import {
     Monster
@@ -1179,32 +1177,18 @@ export class Macro {
         this._wwa.overwriteSystemMessage(key, message);
     }
 
-    private resolveSystemMessageKeyFromMacroArg(rawValue: string): SystemMessageKey | undefined {
+    private resolveSystemMessageKeyFromMacroArg(rawValue: string): SystemMessage.Key | undefined {
         // メッセージコードとして解決しようとする
-        if (stringIsSystemMessageKey(rawValue)) {
+        if (SystemMessage.stringIsKey(rawValue)) {
           return rawValue;
         }
 
         // 通常のマクロ引数として解決しようとする
         const value = this._evaluateIntValue(0);
-        return findSystemMessageKeyByCode(value);
+        return SystemMessage.findKeyByCode(value);
     }
 
 }
-
-function stringIsSystemMessageKey(rawValue: string): rawValue is SystemMessageKey {
-    return systemMessageKeys.some((key) => key === rawValue);
-}
-
-function findSystemMessageKeyByCode(code: number): SystemMessageKey | undefined {
-    for (let key of systemMessageKeys) {
-      if (SystemMessageConfigMap[key].code === code) {
-        return key;
-      }
-    }
-    return undefined;
-}
-
 
 export function parseMacro(
     wwa: WWA,
