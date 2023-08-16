@@ -1,3 +1,4 @@
+import { SystemMessage } from "@wwawing/common-interface";
 import { Coord, MacroStatusIndex, PartsType } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
@@ -390,9 +391,8 @@ export class EvalCalcWwaNode {
         }
         break;
       }
-      case "MOVE": 
-        this._checkArgsLength(1, node);
-        {
+      case "MOVE": {
+          this._checkArgsLength(1, node);
           const direction = Number(this.evalWwaNode(node.value[0]))
           if(direction <= 0 || direction > 9) {
             throw Error("MOVEの移動先は2/4/6/8で指定してください！")
@@ -416,10 +416,43 @@ export class EvalCalcWwaNode {
         return (new Date()).getHours();
       case "GET_DATE_MINUTES":
         return (new Date()).getMinutes();
+      case "CHANGE_SYSMSG": {
+        this._checkArgsLength(1, node);
+        const rawTarget = this.evalWwaNode(node.value[0]);
+        const message =  node.value.length >= 2 ? this.evalWwaNode(node.value[1]) : undefined;
+        const target = this.resolveSystemMessageKeyFromMacroArg(rawTarget);
+        if (!target) {
+          throw new Error("このIDのシステムメッセージは未定義です。");
+        }
+        if (
+          typeof message === "number" ||
+          typeof message === "string" ||
+          typeof message === "boolean"
+         ) {
+          this.generator.wwa.overwriteSystemMessage(target, String(message));
+        } else if (typeof message === "undefined" || message === null) {
+          this.generator.wwa.overwriteSystemMessage(target, undefined);
+        } else {
+          throw new Error("この値は文字列に変換できないため、システムメッセージを表示できません。");
+        }
+      }
+      break;
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
   }
+
+  private resolveSystemMessageKeyFromMacroArg(target: any): SystemMessage.Key | undefined {
+    if (typeof target === "string") {
+      // メッセージコードとして解決しようとする
+      return SystemMessage.stringIsKey(target) ? target : undefined;
+    } else if (typeof target === "number") {
+      return SystemMessage.findKeyByCode(target);
+    } else {
+      return undefined;
+    }
+  }
+
 
   /**
    * m[0][0] のようなObject/mapパーツを左辺値に代入する際の処理
