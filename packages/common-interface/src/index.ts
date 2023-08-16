@@ -1,2 +1,2 @@
 export * from "./wwa_data";
-export * from "./wwa_system_message";
+export * as SystemMessage from "./wwa_system_message";

@@ -1,3 +1,4 @@
+import { SystemMessage } from "@wwawing/common-interface";
 import { WWA } from "./wwa_main";
 import {
     Position,
@@ -11,7 +12,6 @@ import {
     SystemSound,
     AppearanceTriggerType,
     Coord,
-    SystemMessageKey
 } from "./wwa_data";
 import { Camera } from "./wwa_camera";
 import { Monster } from "./wwa_monster";
@@ -793,7 +793,7 @@ export class Player extends PartsObject {
         this.removeItemByItemPosition(pos);
         this._itemBox[pos - 1] = id;
         if (id !== 0 && itemType !== ItemMode.NORMAL) {
-            const mes = this._wwa.resolveSystemMessage(SystemMessageKey.ITEM_SELECT_TUTORIAL);
+            const mes = this._wwa.resolveSystemMessage(SystemMessage.Key.ITEM_SELECT_TUTORIAL);
             if (!this._isClickableItemGot) {
                 if (mes !== "BLANK") {
                     this._wwa.generatePageAndReserveExecution(mes, false, true);
@@ -1044,7 +1044,7 @@ export class Player extends PartsObject {
                 return;
             }
             this._enemy.battleEndProcess();
-            const systemMessage = this._wwa.resolveSystemMessage(SystemMessageKey.CANNOT_DAMAGE_MONSTER);
+            const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
             if (systemMessage !== "BLANK") {
                 this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
             }

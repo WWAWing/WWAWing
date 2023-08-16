@@ -1,4 +1,4 @@
-export interface SystemMessageConfig {
+export interface Config {
     code: number;
     defaultText: string;
     mapdataParams?: {
@@ -72,23 +72,36 @@ const _systemMessage = Object.freeze({
   },
 } as const);
 
-export const systemMessageKeys = Object.keys(_systemMessage) as SystemMessageKey[];
+export const keys = Object.keys(_systemMessage) as Key[];
 
-export type SystemMessageKey = keyof typeof _systemMessage;
-export const SystemMessageKey = (
-    systemMessageKeys
-).reduce<Partial<{ [KEY in SystemMessageKey]: SystemMessageKey }>>(
+export type Key = keyof typeof _systemMessage;
+export const Key = (
+    keys
+).reduce<Partial<{ [KEY in Key]: Key }>>(
   (prev, key) => ({
     ...prev,
     [key]: key,
   }),
   {}
-) as { [KEY in SystemMessageKey]: SystemMessageKey };
+) as { [K in Key]: Key };
 
 /**
  * システムメッセージの設定
  * マクロで書き換え可能なもの + マップデータで変更できるものみ定義しています
  */
-export const SystemMessageConfigMap: {
-  [KEY in SystemMessageKey]: SystemMessageConfig;
+export const ConfigMap: {
+  [KEY in Key]: Config;
 } = _systemMessage;
+
+export function stringIsKey(rawValue: string): rawValue is Key {
+    return keys.some((key) => key === rawValue);
+}
+
+export function findKeyByCode(code: number): Key | undefined {
+    for (let key of keys) {
+      if (ConfigMap[key].code === code) {
+        return key;
+      }
+    }
+    return undefined;
+}
