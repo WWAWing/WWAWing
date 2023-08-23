@@ -1,6 +1,6 @@
 
 import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
-import { WWAConsts as Consts, Coord } from "./wwa_data";
+import { WWAConsts as Consts, Coord, WWAConsts } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
 import { PictureRegistoryParts } from "./wwa_picture/typedef";
 
@@ -22,6 +22,19 @@ export class CacheCanvas {
             Consts.CHIP_SIZE, Consts.CHIP_SIZE, canvasX, canvasY,
             Consts.CHIP_SIZE, Consts.CHIP_SIZE
         );
+    }
+    public drawFont(text: string, canvasX: number, canvasY: number, font?: string, textAlign?: CanvasTextAlign): void {
+        this.ctx.save();
+        if (font) {
+            // TODO: CSS の font の仕様をもとに記述するインターフェイスは親切ではなく、場合によってはセキュリティリスクになるかもしれない。フォントとテキストサイズを別々に分別できないか検討中
+            this.ctx.font = font;
+        }
+        if (textAlign) {
+            this.ctx.textAlign = textAlign;
+        }
+        this.ctx.fillStyle = "#000000";
+        this.ctx.fillText(text, canvasX, canvasY);
+        this.ctx.restore();
     }
     public clear() {
         this.clearRect(0, 0, this.cvs.width, this.cvs.height);

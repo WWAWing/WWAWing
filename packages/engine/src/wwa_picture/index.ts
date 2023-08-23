@@ -35,7 +35,7 @@ export default class WWAPicutre {
 
     private static _getImgPosByPicture(picture: PictureItem, isMainTime: boolean) {
         const { properties } = picture;
-        if (properties.img[0] !== undefined && properties.crop[1] !== undefined) {
+        if (properties.img?.[0] !== undefined && properties.img?.[1] !== undefined) {
             if (isMainTime) {
                 return [properties.img[0], properties.img[1]];
             }
@@ -64,6 +64,15 @@ export default class WWAPicutre {
         const [imgPosX, imgPosY] = WWAPicutre._getImgPosByPicture(picture, this._isMainAnimation);
         const posX = picture.properties.pos[0] ?? 0;
         const posY = picture.properties.pos[1] ?? 0;
+        if (picture.properties.text) {
+            picture.canvas.drawFont(
+                picture.properties.text,
+                posX,
+                posY,
+                picture.properties.font
+            );
+            return;
+        }
         picture.canvas.drawCanvas(
             image,
             imgPosX,
