@@ -605,7 +605,7 @@ export class EvalCalcWwaNode {
       case "<":
         return left < right;
       case "<=":
-        return left >= right;
+        return left <= right;
       case "==":
         return left == right;
       case "!=":
