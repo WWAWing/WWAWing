@@ -3,6 +3,7 @@ import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord, WWAConsts } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
 import { PictureRegistoryParts } from "./wwa_picture/typedef";
+import * as util from "./wwa_util";
 
 export class CacheCanvas {
     public cvs: HTMLCanvasElement;
@@ -23,16 +24,14 @@ export class CacheCanvas {
             Consts.CHIP_SIZE, Consts.CHIP_SIZE
         );
     }
-    public drawFont(text: string, canvasX: number, canvasY: number, font?: string, textAlign?: CanvasTextAlign): void {
+    public drawFont(text: string, canvasX: number, canvasY: number, color?: string, textAlign?: CanvasTextAlign): void {
         this.ctx.save();
-        if (font) {
-            // TODO: CSS の font の仕様をもとに記述するインターフェイスは親切ではなく、場合によってはセキュリティリスクになるかもしれない。フォントとテキストサイズを別々に分別できないか検討中
-            this.ctx.font = font;
-        }
+        const wwaStyle = getComputedStyle(util.$id("wwa-wrapper"));
+        this.ctx.font = wwaStyle.font;
         if (textAlign) {
             this.ctx.textAlign = textAlign;
         }
-        this.ctx.fillStyle = "#000000";
+        this.ctx.fillStyle = color ?? "#000000";
         this.ctx.fillText(text, canvasX, canvasY);
         this.ctx.restore();
     }

@@ -44,13 +44,19 @@ export default class WWAPicutre {
             }
             return [properties.img[0], properties.img[1]];
         }
-        if (isMainTime) {
+        if (isMainTime || (picture.imgPosX2 === 0 && picture.imgPosY2 === 0)) {
             return [picture.imgPosX, picture.imgPosY];
         }
-        if (picture.imgPosX2 !== 0 || picture.imgPosY2 !== 0) {
-            return [picture.imgPosX2, picture.imgPosY2];
-        }
         return [picture.imgPosX2, picture.imgPosY2];
+    }
+
+    private static _convertTextAlign(value: string): CanvasTextAlign | undefined {
+        if (["center", "end", "left", "right", "start"].includes(value)) {
+            return value as CanvasTextAlign;
+        }
+        // TODO 例外を投げるべき？
+        console.warn(`textAlign プロパティで不正な値が検出されました。: ${value}`);
+        return undefined;
     }
 
     /**
@@ -69,9 +75,9 @@ export default class WWAPicutre {
                 picture.properties.text,
                 posX,
                 posY,
-                picture.properties.font
+                picture.properties.color,
+                WWAPicutre._convertTextAlign(picture.properties.textAlign)
             );
-            return;
         }
         picture.canvas.drawCanvas(
             image,
