@@ -5655,7 +5655,7 @@ export class WWA {
     }
 
     public setPlayerEnergyMax(eng: number): number {
-        return this._player.setEnergyMax(eng);
+        return this._player.setEnergyMax(this.toValidStatusValue(eng));
     }
     public getMapPartsNum(): number {
         return this._wwaData.mapPartsMax;
@@ -5702,8 +5702,7 @@ export class WWA {
 
     public setPlayerStatus(type: MacroStatusIndex, value: number, isCalledByMacro: boolean): { isGameOver?: true } {
         if (type === MacroStatusIndex.ENERGY) {
-            // 生命力は setEnergy 内でマイナスの値を処理しているためこのまま続行
-            this._player.setEnergy(value);
+            this._player.setEnergy(this.toValidStatusValue(value));
             if(
                 this._player.isDead() &&
                 this.shouldApplyGameOver({ isCalledByMacro })
