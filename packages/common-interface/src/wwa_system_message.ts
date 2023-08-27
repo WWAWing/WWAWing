@@ -1,4 +1,4 @@
-export interface SystemMessageConfig {
+export interface Config {
     code: number;
     defaultText: string;
     mapdataParams?: {
@@ -10,7 +10,11 @@ export interface SystemMessageConfig {
 const _systemMessage = Object.freeze({
   CONFIRM_LOAD_SOUND: {
     code: 1,
-    defaultText: "効果音・ＢＧＭデータをロードしますか？"
+    defaultText: "効果音・ＢＧＭデータをロードしますか？",
+    mapdataParams: {
+      messageArea:"systemMessage",
+      index: 2
+    }
   },
   NO_MONEY: {
     code: 101,
@@ -40,14 +44,18 @@ const _systemMessage = Object.freeze({
     code: 203,
     defaultText: `このアイテムは%HOW_TO_USE_ITEM%ことで使用できます。
 使用できるアイテムは色枠で囲まれます。`,
+    mapdataParams: {
+       messageArea: "systemMessage",
+      index: 0,
+    }
   },
   CONFIRM_USE_ITEM: {
     code: 204,
     defaultText: `このアイテムを使用します。
 よろしいですか?`,
     mapdataParams: {
-      messageArea: "systemMessage",
-      index: 0,
+      messageArea: "message",
+      index: 8,
     },
   },
   CANNOT_DAMAGE_MONSTER: {
@@ -58,6 +66,10 @@ const _systemMessage = Object.freeze({
     code: 401,
     defaultText: `他のページにリンクします。
 よろしいですか？`,
+    mapdataParams: {
+        messageArea: "message",
+        index: 5
+    }
   },
   GAME_SPEED_CHANGED: {
     code: 501,
@@ -70,25 +82,39 @@ const _systemMessage = Object.freeze({
     defaultText: `ここでは移動速度を
 変更できません。`,
   },
-} as const);
+} as {[key in string]: Config});
 
-export const systemMessageKeys = Object.keys(_systemMessage) as SystemMessageKey[];
+export const keys = Object.keys(_systemMessage) as Key[];
 
-export type SystemMessageKey = keyof typeof _systemMessage;
-export const SystemMessageKey = (
-    systemMessageKeys
-).reduce<Partial<{ [KEY in SystemMessageKey]: SystemMessageKey }>>(
+// string と交差させないと keyof で number が乱入してくる
+export type Key = (keyof typeof _systemMessage) & string;
+export const Key = (
+    keys
+).reduce<Partial<{ [KEY in Key]: Key }>>(
   (prev, key) => ({
     ...prev,
     [key]: key,
   }),
   {}
-) as { [KEY in SystemMessageKey]: SystemMessageKey };
+) as { [K in Key]: Key };
 
 /**
  * システムメッセージの設定
  * マクロで書き換え可能なもの + マップデータで変更できるものみ定義しています
  */
-export const SystemMessageConfigMap: {
-  [KEY in SystemMessageKey]: SystemMessageConfig;
+export const ConfigMap: {
+  [KEY in Key]: Config;
 } = _systemMessage;
+
+export function stringIsKey(rawValue: string): rawValue is Key {
+    return keys.some((key) => key === rawValue);
+}
+
+export function findKeyByCode(code: number): Key | undefined {
+    for (let key of keys) {
+      if (ConfigMap[key].code === code) {
+        return key;
+      }
+    }
+    return undefined;
+}

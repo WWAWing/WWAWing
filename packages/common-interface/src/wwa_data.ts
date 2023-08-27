@@ -1,4 +1,4 @@
-import type { SystemMessageKey } from "./wwa_system_message";
+import type { Key } from "./wwa_system_message";
 
 export interface Coord {
     x: number;
@@ -159,7 +159,7 @@ export interface WWAData {
      * 本当は WWAData の systemMessage を使いたいがセーブデータの互換性が損なわれる問題があるため
      * キーを増やす対応をしています。
      */
-    customSystemMessages: Partial<Record<SystemMessageKey, string>>;
+    customSystemMessages: Partial<Record<Key, string>>;
 
 }
 

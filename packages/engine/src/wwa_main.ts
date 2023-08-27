@@ -1,5 +1,6 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
+import { SystemMessage } from "@wwawing/common-interface";
 import type { JsonResponseError } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
@@ -9,7 +10,6 @@ import {
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
     StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
-    SystemMessageConfigMap, SystemMessageKey,
 } from "./wwa_data";
 
 import {
@@ -953,7 +953,7 @@ export class WWA {
                             break;
                     }
                 };
-                const soundLoadConfirmMessage = this.resolveSystemMessage(SystemMessageKey.CONFIRM_LOAD_SOUND);
+                const soundLoadConfirmMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_LOAD_SOUND);
                 if (soundLoadConfirmMessage === "ON") {
                     this._isLoadedSound = true;
                     setGameStartingMessageWhenPcOrSP();
@@ -1442,7 +1442,7 @@ export class WWA {
             var bg = <HTMLDivElement>(util.$id("item" + (itemPos - 1)));
             bg.classList.add("onpress");
             this.playSound(SystemSound.DECISION);
-            const systemMessage = this.resolveSystemMessage(SystemMessageKey.CONFIRM_USE_ITEM);
+            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_USE_ITEM);
             if (systemMessage === "BLANK") {
                 this._player.readyToUseItem(itemPos);
                 var itemID = this._player.useItem();
@@ -1590,7 +1590,7 @@ export class WWA {
 
     public onchangespeed(type: SpeedChange) {
         if (!this._wwaData.permitChangeGameSpeed) {
-            const systemMessage = this.resolveSystemMessage(SystemMessageKey.GAME_SPEED_CHANGE_DISABLED);
+            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.GAME_SPEED_CHANGE_DISABLED);
             if (systemMessage !== "BLANK") {
                 this.generatePageAndReserveExecution(systemMessage, false, true);
             }
@@ -1604,7 +1604,7 @@ export class WWA {
                 this._player.speedDown();
                 break;
         }
-        const systemMessage = this.resolveSystemMessage(SystemMessageKey.GAME_SPEED_CHANGED);
+        const systemMessage = this.resolveSystemMessage(SystemMessage.Key.GAME_SPEED_CHANGED);
         if (systemMessage !== "BLANK") {
             this.generatePageAndReserveExecution(systemMessage, false, true);
         }
@@ -2977,7 +2977,7 @@ export class WWA {
         if (!this._isURLGateEnable) {
             return true;
         }
-        const systemMessage = this.resolveSystemMessage(SystemMessageKey.CONFIRM_ENTER_URL_GATE);
+        const systemMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_ENTER_URL_GATE);
         if (systemMessage === "BLANK") {
             location.href = util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0])
             return;
@@ -3161,7 +3161,7 @@ export class WWA {
                 this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
             }
         } catch (e) {
-            const systemMessage = this.resolveSystemMessage(SystemMessageKey.ITEM_BOX_FULL);
+            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.ITEM_BOX_FULL);
             // これ以上、アイテムを持てません
             if (systemMessage !== "BLANK") {
                 this.generatePageAndReserveExecution(
@@ -3244,7 +3244,7 @@ export class WWA {
         if (!this._isURLGateEnable) {
             return;
         }
-        const systemMessage = this.resolveSystemMessage(SystemMessageKey.CONFIRM_ENTER_URL_GATE)
+        const systemMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_ENTER_URL_GATE)
         if (systemMessage === "BLANK") {
             location.href = util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0]);
             return;
@@ -3301,7 +3301,7 @@ export class WWA {
     private _execChoiceWindowObjectSellEvent(): { isGameOver?: true } {
         // 所持金が足りない
         if (!this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
-            const systemMessage = this.resolveSystemMessage(SystemMessageKey.NO_MONEY)
+            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.NO_MONEY)
             if (systemMessage !== "BLANK") {
                 this._pages.push(new Page(new ParsedMessage(systemMessage), true, false, true));
             }
@@ -3327,7 +3327,7 @@ export class WWA {
                 } : undefined);
             } catch (error) {
                 // アイテムボックスがいっぱい
-                const systemMessage = this.resolveSystemMessage(SystemMessageKey.ITEM_BOX_FULL);
+                const systemMessage = this.resolveSystemMessage(SystemMessage.Key.ITEM_BOX_FULL);
                 if (systemMessage !== "BLANK") {
                     this._pages.push(new Page(new ParsedMessage(systemMessage), true, false, true))
                }
@@ -3384,7 +3384,7 @@ export class WWA {
                             this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                         } else {
                             // アイテムを持っていない
-                            const systemMessage = this.resolveSystemMessage(SystemMessageKey.NO_ITEM)
+                            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.NO_ITEM)
                             if (systemMessage !== "BLANK") {
                                 this._pages.push(new Page((new ParsedMessage(systemMessage)), true, false, true));
                             };
@@ -6157,11 +6157,13 @@ font-weight: bold;
         }
     }
 
-    private _loadSystemMessage(systemMessageKey: SystemMessageKey): string {
-        if (this._wwaData.customSystemMessages[systemMessageKey]) {
-            return this._wwaData.customSystemMessages[systemMessageKey];
+    private _loadSystemMessage(key: SystemMessage.Key): string {
+        // マクロなどで上書きされたシステムメッセージを解決
+        if (this._wwaData.customSystemMessages[key]) {
+            return this._wwaData.customSystemMessages[key];
         }
-        const config = SystemMessageConfigMap[systemMessageKey];
+        const config = SystemMessage.ConfigMap[key];
+        // マップデータで定義されたシステムメッセージがあればそれを使う、さもなくばWWAデフォルトのメッセージを使用する
         if (config.mapdataParams) {
             switch (config.mapdataParams.messageArea) {
                 case "message": {
@@ -6179,10 +6181,10 @@ font-weight: bold;
         return config.defaultText;
     }
 
-    public resolveSystemMessage(systemMessageKey: SystemMessageKey): string {
-        const loadedMessage = this._loadSystemMessage(systemMessageKey);
-        switch(systemMessageKey) {
-            case SystemMessageKey.ITEM_SELECT_TUTORIAL:
+    public resolveSystemMessage(key: SystemMessage.Key): string {
+        const loadedMessage = this._loadSystemMessage(key);
+        switch(key) {
+            case SystemMessage.Key.ITEM_SELECT_TUTORIAL:
                 return loadedMessage.replaceAll("%HOW_TO_USE_ITEM%", (() => {
                     switch (this.userDevice.device) {
                         case DEVICE_TYPE.PC:
@@ -6207,7 +6209,7 @@ font-weight: bold;
                             return "右のボックスを選択する";
                     }
                 })());
-            case SystemMessageKey.GAME_SPEED_CHANGED: {
+            case SystemMessage.Key.GAME_SPEED_CHANGED: {
                 const speedIndex = this._player.getSpeedIndex();
                 return loadedMessage
                     .replaceAll("%GAME_SPEED_NAME%", speedNameList[speedIndex])
@@ -6222,8 +6224,8 @@ font-weight: bold;
         }
     }
 
-    public overwriteSystemMessage(systemMessageKey: SystemMessageKey, message: string | undefined) {
-        this._wwaData.customSystemMessages[systemMessageKey] = message;
+    public overwriteSystemMessage(key: SystemMessage.Key, message: string | undefined) {
+        this._wwaData.customSystemMessages[key] = message;
     }
 };
 
