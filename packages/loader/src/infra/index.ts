@@ -185,6 +185,7 @@ export function createDefaultWWAData(): WWAData {
         isGameOverDisabled: undefined,
         gameOverPolicy: "default",
         bgmDelayDurationMs: undefined,
+        customSystemMessages: {},
         pictureRegistory: [],
     };
 }

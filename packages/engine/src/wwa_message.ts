@@ -1,3 +1,4 @@
+import { SystemMessage } from "@wwawing/common-interface"
 import { WWA } from "./wwa_main";
 import {
     WWAConsts,
@@ -527,6 +528,10 @@ export class Macro {
                     this._executeDelayBgmMacro();
                     return {};
                 }
+                case MacroType.SYSMSG: {
+                    this._executeSysMsgMacro();
+                    return {}
+                }
                 case MacroType.PICTURE: {
                     this._executePictureMacro();
                     return {};
@@ -556,7 +561,9 @@ export class Macro {
         if (targetString === "") {
             return fallbackValue;
         }
-        const intParsedValue = Number(targetString);
+        const parsedRawNumber = Number(targetString);
+        // 小数点以下を無視する (正数の場合は切り捨て、負数の場合は切り上げ)
+        const intParsedValue = parsedRawNumber >= 0 ? Math.floor(parsedRawNumber) : Math.ceil(parsedRawNumber);
         if (!isNaN(intParsedValue)) {
             return intParsedValue;
         }
@@ -1192,6 +1199,28 @@ export class Macro {
         const delayMs = this._evaluateIntValue(0);
         this._wwa.setBgmDelay(delayMs);
     }
+
+    private _executeSysMsgMacro(): void {
+        this._concatEmptyArgs(2);
+        const key = this.resolveSystemMessageKeyFromMacroArg(this.macroArgs[0]);
+        if (!key) {
+            throw new Error("該当するシステムメッセージの定義がありません");
+        }
+        const message = this.macroArgs[1] === "" ? undefined : this.macroArgs[1].replaceAll("\\n", "\n");
+        this._wwa.overwriteSystemMessage(key, message);
+    }
+
+    private resolveSystemMessageKeyFromMacroArg(rawValue: string): SystemMessage.Key | undefined {
+        // メッセージコードとして解決しようとする
+        if (SystemMessage.stringIsKey(rawValue)) {
+          return rawValue;
+        }
+
+        // 通常のマクロ引数として解決しようとする
+        const value = this._evaluateIntValue(0);
+        return SystemMessage.findKeyByCode(value);
+    }
+
 }
 
 export function parseMacro(
