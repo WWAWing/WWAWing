@@ -6661,10 +6661,12 @@ font-weight: bold;
         return this._player.isWaitingMessage();
     }
     private _loadSystemMessage(key: SystemMessage.Key): string {
+        // マクロなどで上書きされたシステムメッセージを解決
         if (this._wwaData.customSystemMessages[key]) {
             return this._wwaData.customSystemMessages[key];
         }
         const config = SystemMessage.ConfigMap[key];
+        // マップデータで定義されたシステムメッセージがあればそれを使う、さもなくばWWAデフォルトのメッセージを使用する
         if (config.mapdataParams) {
             switch (config.mapdataParams.messageArea) {
                 case "message": {
