@@ -663,15 +663,17 @@ export class EvalCalcWwaNode {
   }
 
   evalArray1D(node: Wwa.Array1D) {
-    const index: Wwa.Number = <Wwa.Number>node.index0;
-    const userVarIndex: number = index.value;
+    const userVarIndex = this.evalWwaNode(node.index0);
+    if (typeof userVarIndex !== "number") {
+      throw new Error("添字の計算結果が数値になりませんでした");
+    }
     const game_status = this.generator.wwa.getGameStatus();
     switch (node.name) {
       case "v":
         return this.generator.wwa.getUserVar(userVarIndex);
       case "ITEM":
         if(game_status.itemBox[userVarIndex] === undefined) {
-          throw new Error("ITMEの添字に想定外の値が入っています。: "+userVarIndex);
+          throw new Error("ITEMの添字に想定外の値が入っています。: "+userVarIndex);
         }
         return game_status.itemBox[userVarIndex];
       default:
