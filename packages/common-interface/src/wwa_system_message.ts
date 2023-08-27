@@ -10,7 +10,11 @@ export interface Config {
 const _systemMessage = Object.freeze({
   CONFIRM_LOAD_SOUND: {
     code: 1,
-    defaultText: "効果音・ＢＧＭデータをロードしますか？"
+    defaultText: "効果音・ＢＧＭデータをロードしますか？",
+    mapdataParams: {
+      messageArea:"systemMessage",
+      index: 2
+    }
   },
   NO_MONEY: {
     code: 101,
@@ -40,14 +44,18 @@ const _systemMessage = Object.freeze({
     code: 203,
     defaultText: `このアイテムは%HOW_TO_USE_ITEM%ことで使用できます。
 使用できるアイテムは色枠で囲まれます。`,
+    mapdataParams: {
+       messageArea: "systemMessage",
+      index: 0,
+    }
   },
   CONFIRM_USE_ITEM: {
     code: 204,
     defaultText: `このアイテムを使用します。
 よろしいですか?`,
     mapdataParams: {
-      messageArea: "systemMessage",
-      index: 0,
+      messageArea: "message",
+      index: 8,
     },
   },
   CANNOT_DAMAGE_MONSTER: {
@@ -58,6 +66,10 @@ const _systemMessage = Object.freeze({
     code: 401,
     defaultText: `他のページにリンクします。
 よろしいですか？`,
+    mapdataParams: {
+        messageArea: "message",
+        index: 5
+    }
   },
   GAME_SPEED_CHANGED: {
     code: 501,
@@ -70,11 +82,12 @@ const _systemMessage = Object.freeze({
     defaultText: `ここでは移動速度を
 変更できません。`,
   },
-} as const);
+} as {[key in string]: Config});
 
 export const keys = Object.keys(_systemMessage) as Key[];
 
-export type Key = keyof typeof _systemMessage;
+// string と交差させないと keyof で number が乱入してくる
+export type Key = (keyof typeof _systemMessage) & string;
 export const Key = (
     keys
 ).reduce<Partial<{ [KEY in Key]: Key }>>(
