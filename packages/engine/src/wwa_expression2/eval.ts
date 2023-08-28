@@ -667,7 +667,6 @@ export class EvalCalcWwaNode {
 
   evalArray1D(node: Wwa.Array1D) {
     const userVarIndex = this.evalWwaNode(node.index0);
-    console.log(userVarIndex);
     if (typeof userVarIndex !== "number") {
       throw new Error("添字の計算結果が数値になりませんでした");
     }
