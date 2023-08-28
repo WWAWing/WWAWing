@@ -565,10 +565,13 @@ export class EvalCalcWwaNode {
 
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
     const right = this.evalWwaNode(node.value);
-    if(!this.generator.wwa || isNaN(right) || node.index.type !== "Number") {
+    if(!this.generator.wwa || isNaN(right)) {
       return 0;
     }
-    const userVarIndex: number = node.index.value;
+    const userVarIndex = this.evalWwaNode(node.index);
+    if (typeof userVarIndex !== "number") {
+      throw new Error("代入先の添字が数値になりませんでした");
+    }
     this.generator.wwa.setUserVar(userVarIndex, right);
     return 0;
   }
@@ -664,6 +667,7 @@ export class EvalCalcWwaNode {
 
   evalArray1D(node: Wwa.Array1D) {
     const userVarIndex = this.evalWwaNode(node.index0);
+    console.log(userVarIndex);
     if (typeof userVarIndex !== "number") {
       throw new Error("添字の計算結果が数値になりませんでした");
     }
