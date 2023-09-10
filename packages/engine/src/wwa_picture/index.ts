@@ -4,7 +4,7 @@ import { MAX_PICTURE_LAYERS_COUNT } from "./config";
 import { PictureItem, PictureRegistoryParts } from "./typedef";
 import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
 import { convertPictureRegistoryFromText } from "./utils";
-import { PicturePropertyNames } from "@wwawing/common-interface/lib/wwa_picture";
+import { PictureProperties, PicturePropertyNames } from "@wwawing/common-interface/lib/wwa_picture";
 
 /**
  * ピクチャ機能の表示や制御を行うクラスです。
@@ -112,7 +112,7 @@ export default class WWAPicutre {
             true
         );
         const invalidPropertyNames = Object.keys(registory.properties)
-            .filter((propertyName) => !PicturePropertyNames.includes(propertyName));
+            .filter((propertyName) => !PicturePropertyNames.includes(propertyName as keyof PictureProperties));
         if (invalidPropertyNames.length > 0) {
             throw new Error(`不明なプロパティ名 ${invalidPropertyNames.map(str => `"${str}"`).join(", ")} が検出されました。`);
         }
