@@ -265,6 +265,8 @@ export class WWA {
      */
     private _windowCloseWaitingJumpGateRequest?: { x: number; y: number } = undefined
 
+    private _debugConsoleElement: HTMLElement | undefined = undefined;
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -542,7 +544,13 @@ export class WWA {
                 this._virtualPadButtonElements = null;
                 this._virtualPadStore = new VirtualPadStore({});
             }
-            setupDebugConsole(util.$id("wwa-debug-console-area"));
+            this._debugConsoleElement = setupDebugConsole(util.$id("wwa-debug-console-area"));
+            this._debugConsoleElement
+                ?.querySelector(".script-running-button")
+                .addEventListener("click", () => {
+                    this._debugEvalString();
+                });
+
             this._gamePadStore = new GamePadStore();
             this._pages = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
@@ -2189,7 +2197,7 @@ export class WWA {
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_V)) {
                     this._displayUserVars();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_X)) {
-                    if (util.$id("wwa-debug-console")) {
+                    if (this._debugConsoleElement) {
                       this._debugEvalString();
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
@@ -6624,9 +6632,13 @@ font-weight: bold;
         }
         this.setNowPlayTime();
         try {
-            const getElement: any = document.getElementsByClassName('eval-string-input-area')[0];
-            const baseEvalStr = getElement.value;
-            this._execEvalString(baseEvalStr);
+            const getElement = this._debugConsoleElement.querySelector(".console-text-area");
+            if (!(getElement instanceof HTMLTextAreaElement)) {
+              throw new Error(
+                "要素 #wwa-debug-console > .console-text-area が textarea 要素でありません"
+              );
+            }
+            this._execEvalString(getElement.value);
         } catch(e) {
             console.error(e);
             this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
@@ -6830,50 +6842,36 @@ function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHande
 }
 
 
-function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null) {
+function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLElement | null {
     if(debugConsoleAreaElement === null) {
         return;
     }
     // デバッグ用の間借り
-    const evalStringInput = document.createElement("div");
-    evalStringInput.setAttribute("id", "wwa-debug-console");
-    const evalStringInputArea = document.createElement("textarea");
-    evalStringInputArea.setAttribute("rows", "10");
-    evalStringInputArea.setAttribute("cols", "60");
-    evalStringInputArea.className = "eval-string-input-area";
-    evalStringInput.appendChild(evalStringInputArea);
-    evalStringInputArea.textContent =
-// `for(i=0; i<5; i=i+1) {
-//     if(i == 3) {
-//         continue;
-//     }
-//     for(j=0; j<5; j=j+1) {
-//         if(j > 3) {
-//             break;
-//         }
-//         MSG("i:"+i+"/ j:"+j);
-//     }
-// }`;
+    const wwaDebugConsoleElement = document.createElement("section");
+    wwaDebugConsoleElement.setAttribute("id", "wwa-debug-console");
 
-`for(i=0; i<5; i++) {
-    MSG("i:"+i+"/ j:");
-}`;
+    const consoleTextareaElement = document.createElement("textarea");
+    consoleTextareaElement.setAttribute("rows", "10");
+    consoleTextareaElement.setAttribute("cols", "60");
+    consoleTextareaElement.textContent = `for(i=0; i<5; i++) {\n    MSG("i:"+i);\n}`;
+    // textarea に対するキー入力を WWA の入力として扱わない
+    // HACK: 本来は WWA の入力を window で listen しないようにすべき
+    const keyListener = (event: KeyboardEvent) => event.stopPropagation();
+    consoleTextareaElement.addEventListener("keydown", keyListener);
+    consoleTextareaElement.addEventListener("keypress", keyListener);
+    consoleTextareaElement.addEventListener("keyup", keyListener);
+    consoleTextareaElement.classList.add("console-text-area");
+    wwaDebugConsoleElement.appendChild(consoleTextareaElement);
 
-//     evalStringInputArea.textContent = 
-// `o[5][5]=1;
-// if(HP >= 1000) {
-//     v[0] = 1000;
-//     MSG("HPは1000以上です。");
-// } else if(HP >= 100) {
-//     v[0] = 100;
-//     MSG("HPは100以上です。");
-// } else {
-//     v[0] = 0;
-//     MSG("HPは100未満です。");
-// }`;
-    debugConsoleAreaElement.appendChild(evalStringInput);
+    const scriptRunningButtonElement = document.createElement("button");
+    scriptRunningButtonElement.classList.add("script-running-button");
+    scriptRunningButtonElement.textContent = "実行(X)";
+    wwaDebugConsoleElement.appendChild(scriptRunningButtonElement);
 
-}
+    debugConsoleAreaElement.appendChild(wwaDebugConsoleElement);
+
+    return wwaDebugConsoleElement;
+}   
 
 function start() {
     if (
