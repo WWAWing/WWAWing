@@ -680,9 +680,9 @@ export class EvalCalcWwaNode {
         return this.for_id.k;
       case 'LOOPLIMIT':
         return this.generator.loop_limit;
-      case 'item_id':
+      case 'ITEM_ID':
         return this.generator.readonly_value.item_id;
-      case 'item_pos':
+      case 'ITEM_POS':
         return this.generator.readonly_value.item_pos;
       default:
         throw new Error("このシンボルは取得できません")

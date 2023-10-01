@@ -747,6 +747,9 @@ export class Player extends PartsObject {
             insertPos = this._getBlankItemPos();
 
             if (insertPos === Consts.ITEMBOX_IS_FULL) {
+                /** ユーザ定義関数用処理 */
+                this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(objID, -1);
+                this._wwa.callGetItemFullUserDefineFunction();
                 throw new Error("これ以上、アイテムを持てません。");
             }
             overwrittenObjectId = this._itemBox[insertPos - 1];
@@ -763,6 +766,9 @@ export class Player extends PartsObject {
                     this._forceSetItemBox(oldInsertPos, oldObjID);
                     this._forceSetItemBox(insertPos, objID);
                 } else {
+                    /** ユーザ定義関数用処理 */
+                    this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(objID, -1);
+                    this._wwa.callGetItemFullUserDefineFunction();
                     throw new Error("これ以上、アイテムを持てません。");
                 }
             } else {
