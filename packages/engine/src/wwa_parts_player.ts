@@ -800,7 +800,7 @@ export class Player extends PartsObject {
         this._itemBox[pos - 1] = id;
         // カスタムイベント関数処理
         this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(id, pos);
-        this._wwa.callUseItemUserDefineFunction();
+        this._wwa.callGetItemUserDefineFunction();
         if (id !== 0 && itemType !== ItemMode.NORMAL) {
             const mes = this._wwa.resolveSystemMessage(SystemMessage.Key.ITEM_SELECT_TUTORIAL);
             if (!this._isClickableItemGot) {
