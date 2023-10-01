@@ -1158,6 +1158,39 @@ export class WWA {
         this.evalCalcWwaNodeGenerator = new ExpressionParser2.EvalCalcWwaNodeGenerator(this);
     }
 
+    /**
+     * Item関連のReadOnly値をセットする
+     * @param item_id 使用・取得したITEMのID
+     * @param item_pos 使用・取得したITEMのID
+     */
+    public setEvalCalCWwaNodeReadOnlyItemValue(item_id: number, item_pos: number) {
+        this.evalCalcWwaNodeGenerator.setReadOnlyItemValue(item_id, item_pos);
+    }
+
+    /** アイテムを取得した際のユーザ定義独自関数を呼び出す */
+    public callGetItemUserDefineFunction() {
+        const getItemFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_GET_ITEM"];
+        if(getItemFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(getItemFunc);
+        }
+    }
+    
+    /** アイテムを取得したがいっぱいだった時のユーザ定義独自関数を呼び出す */
+    public callGetItemFullUserDefineFunction() {
+        const useItemFullFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_GET_ITEM_FULL"];
+        if(useItemFullFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(useItemFullFunc);
+        }
+    }
+
+    /** アイテムを使用した際のユーザ定義独自関数を呼び出す */
+    public callUseItemUserDefineFunction() {
+        const useItemFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_USE_ITEM"];
+        if(useItemFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(useItemFunc);
+        }
+    }
+
     /** ジャンプゲートで移動した際のユーザ定義独自関数を呼び出す */
     public callJumpGateUserDefineFunction() {
         const jumpgateFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_JUMPGATE"];

@@ -7,10 +7,31 @@ export class EvalCalcWwaNodeGenerator {
   wwa: WWA;
   /** for文上限回数 */
   loop_limit: number;
+
+  /** 読み込み専用の特殊値 */
+  readonly_value: {
+    /** 使用・取得したアイテムのID */
+    item_id: number,
+    /** 使用・取得したアイテムの位置 */
+    item_pos: number
+  }
   constructor(wwa: WWA) {
     this.wwa = wwa;
     /** 初期処理上限を10万回にする */
     this.loop_limit = 100000;
+  }
+
+  /**
+   * Item関連のReadOnly値をセットする
+   * @param item_id 使用・取得したITEMのID
+   * @param item_pos 使用・取得したITEMのID
+   */
+  public setReadOnlyItemValue(item_id: number, item_pos: number) {
+    this.readonly_value = {
+      ...this.readonly_value,
+      item_id: item_id,
+      item_pos: item_pos
+    }
   }
 
   public evalWwaNodes(nodes: Wwa.WWANode[]) {
@@ -47,7 +68,6 @@ export class EvalCalcWwaNode {
     break_flag: boolean;
     continue_flag: boolean;
   }
-
 
   constructor(generator: EvalCalcWwaNodeGenerator) {
     this.generator = generator;
@@ -660,6 +680,10 @@ export class EvalCalcWwaNode {
         return this.for_id.k;
       case 'LOOPLIMIT':
         return this.generator.loop_limit;
+      case 'item_id':
+        return this.generator.readonly_value.item_id;
+      case 'item_pos':
+        return this.generator.readonly_value.item_pos;
       default:
         throw new Error("このシンボルは取得できません")
     }

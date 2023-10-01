@@ -876,6 +876,11 @@ export class Player extends PartsObject {
             }
         }, Consts.DEFAULT_FRAME_INTERVAL);
 
+        /** アイテム関係の値を独自関数で使用できるようセットする */
+        this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(itemID, this._readyToUseItemPos - 1);
+        /** アイテムを使用した際のユーザ定義独自関数を呼び出す */
+        this._wwa.callUseItemUserDefineFunction();
+
         this._isReadyToUseItem = false;
         this._readyToUseItemPos = void 0;
 

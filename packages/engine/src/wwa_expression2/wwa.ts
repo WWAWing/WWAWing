@@ -28,7 +28,7 @@ export interface UserVariableAssignment {
 
 export interface SpecialParameterAssignment {
   type: "SpecialParameterAssignment";
-  kind: "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT";
+  kind: "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "item_id" | "item_pos";
   value: Calcurable;
 }
 
@@ -47,7 +47,7 @@ export interface BinaryOperation {
 
 export interface Symbol {
   type: "Symbol";
-  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT";
+  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "item_id" | "item_pos";
 }
 
 export interface Array1D {
