@@ -1,7 +1,7 @@
 export type Calcurable = Array1D | Array2D | Number | Symbol | UnaryOperation | BinaryOperation;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
-  const supportType = ["Array1D", "Array2D", "Number", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction"];
+  const supportType = ["Array1D", "Array2D", "Number", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "Identifier", "UserDefinedVariable"];
   return supportType.includes(node.type);
 }
 
@@ -48,6 +48,11 @@ export interface BinaryOperation {
 export interface Symbol {
   type: "Symbol";
   name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS";
+}
+
+export interface UserDefinedVariable {
+  type: "UserDefinedVariable",
+  name: string
 }
 
 export interface Array1D {
@@ -172,4 +177,5 @@ export type WWANode = |
   Break |
   Continue |
   UpdateExpression |
-  VariableDeclaration;
+  VariableDeclaration |
+  UserDefinedVariable;

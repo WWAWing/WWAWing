@@ -149,6 +149,8 @@ export class EvalCalcWwaNode {
         return this.updateExpression(node);
       case "VariableDeclaration":
         return this.VariableDeclaration(node);
+      case "UserDefinedVariable":
+        return this.UserDefinedVariable(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -201,6 +203,12 @@ export class EvalCalcWwaNode {
       variableDeclarator.id,
       this.evalWwaNode(variableDeclarator.argument)
     )
+  }
+
+  /** ユーザー変数の値を取得する */
+  UserDefinedVariable(node: Wwa.UserDefinedVariable) {
+    const userDefinedValue = this.generator.userVariableDeclaration[node.name];
+    return userDefinedValue;
   }
 
   /** Continue文を処理する */

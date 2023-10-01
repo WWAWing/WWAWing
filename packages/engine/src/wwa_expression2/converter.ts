@@ -392,7 +392,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
   }
 }
 
-function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
+function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number | Wwa.UserDefinedVariable {
   switch(node.name) {
     case "m":
     case "o":
@@ -422,8 +422,11 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
         type: "Symbol",
         name: node.name
       }
-    default:  
-      throw new Error("未定義のシンボルです :\n"+ node.name);
+    default:
+      return {
+        type: "UserDefinedVariable",
+        name: node.name
+      }
   }
 }
 
