@@ -137,6 +137,17 @@ export interface UpdateExpression {
   argument: WWANode
 }
 
+export interface VariableDeclaration {
+  type: "VariableDeclaration",
+  declarations: VariableDeclarator[]
+}
+
+export interface VariableDeclarator {
+  type: "VariableDeclarator"
+  id: string,
+  argument: WWANode
+}
+
 export type WWANode = |
   PartsAssignment |
   ItemAssignment |
@@ -160,4 +171,5 @@ export type WWANode = |
   AnyFunction |
   Break |
   Continue |
-  UpdateExpression;
+  UpdateExpression |
+  VariableDeclaration;

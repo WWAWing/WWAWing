@@ -15,10 +15,22 @@ export class EvalCalcWwaNodeGenerator {
     /** 使用・取得したアイテムの位置 */
     item_pos: number
   }
+  /** ユーザ定義変数 */
+  userVariableDeclaration: {
+    [key: string]: any
+  }
+
   constructor(wwa: WWA) {
     this.wwa = wwa;
     /** 初期処理上限を10万回にする */
     this.loop_limit = 100000;
+    /** ユーザ定義変数を作成 */
+    this.userVariableDeclaration = {};
+  }
+
+  /** ユーザ定義変数を追加する */
+  addUserVariable(id: string, value: any) {
+    this.userVariableDeclaration[id] = value;
   }
 
   /**
@@ -135,7 +147,10 @@ export class EvalCalcWwaNode {
         return this.contunueStatment(node);
       case "UpdateExpression":
         return this.updateExpression(node);
+      case "VariableDeclaration":
+        return this.VariableDeclaration(node);
       default:
+        console.log(node);
         throw new Error("未定義または未実装のノードです");
     }
   }
@@ -177,6 +192,15 @@ export class EvalCalcWwaNode {
       console.log(node);
       throw new Error("node.argument.typeがSymbolではありません。:"+node.argument.type);
     }
+  }
+
+  /** let によるユーザ変数定義 */
+  VariableDeclaration(node: Wwa.VariableDeclaration) {
+    const variableDeclarator = node.declarations[0];
+    this.generator.addUserVariable(
+      variableDeclarator.id,
+      this.evalWwaNode(variableDeclarator.argument)
+    )
   }
 
   /** Continue文を処理する */

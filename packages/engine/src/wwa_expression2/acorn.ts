@@ -94,3 +94,16 @@ export interface ContinueStatement extends Node {
   label: string;
   type: "ContinueExpression"
 }
+
+export interface VariableDeclaration extends Node {
+  label: string;
+  type: "VariableDeclaration";
+  declarations: VariableDeclarator[];
+}
+
+export interface VariableDeclarator extends Node {
+  label: string;
+  type: "VariableDeclarator";
+  id: Identifier;
+  init: Literal
+}
