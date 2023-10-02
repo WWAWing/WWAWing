@@ -88,6 +88,7 @@ export class Player extends PartsObject {
 
     protected _enemy: Monster;
     protected _moves: number;
+    // 現状使われていないに等しいが、セーブデータに互換性のため入っている。
     protected _frameCount: number;
 
     protected _moveMacroWaitingRemainMoves: number;
@@ -1098,18 +1099,6 @@ export class Player extends PartsObject {
         return new Coord(targetX, targetY);
     }
 
-    /**
-     * ゲーム開始から経過したフレーム数を基に、 HHHH:MM:SS 形式のプレイ時間文字列を返します。
-     */
-    public getPlayTimeText(): string {
-        const seconds = Math.floor(this._frameCount / 60);
-        // FIY: 0とのビットOR( | ) は 小数点以下切り捨て
-        return seconds >= 60 * 60 * 10000 ?
-            "9999:99:99" :
-            ("000" + ((seconds / 60 / 60) | 0)).slice(-4) +
-            ":" + ("0" + (((seconds / 60) | 0) % 60)).slice(-2) +
-            ":" + ("0" + (seconds % 60)).slice(-2);
-    }
 
     //プレイ時間を計測
     public mainFrameCount(): void {
@@ -1225,7 +1214,6 @@ export class Player extends PartsObject {
         this._isReadyToUseItem = false;
         this._isClickableItemGot = false;
         this._moves = moves;
-        this._frameCount = 0;
         this._moveMacroWaitingRemainMoves = 0;
         this._moveObjectAutoExecTimer = 0;
         this.updateStatusValueBox();

@@ -22,6 +22,8 @@ import {
     GamePadStore
 } from "./wwa_input";
 
+import { PlayTimeCalculator } from "./wwa_play_time";
+
 import {
     VirtualPadButtonCodes,
     VirtualPadButtonCode,
@@ -246,7 +248,7 @@ export class WWA {
     public userDevice: UserDevice;
     private soundLoadedCheckTimer: number | undefined = undefined;
 
-    private _startTime: number;
+    private _playTimeCalculator: PlayTimeCalculator | undefined = undefined;
     private _dumpElement: HTMLElement;
 
     constructor(
@@ -396,7 +398,7 @@ export class WWA {
             this._wwaData.mapCGName = pathList.join("/");  //pathを復元
 
             // プレイ時間関連
-            this._startTime = new Date().getTime();
+            this._playTimeCalculator = new PlayTimeCalculator();
             this._restartData = JSON.parse(JSON.stringify(this._wwaData));
             this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
 
@@ -4294,6 +4296,7 @@ export class WWA {
         qd.moves = this._player.getMoveCount();
         qd.frameCount = this._player.getFrameCount();
         qd.gameSpeedIndex = this._player.getSpeedIndex();
+        qd.playTime = this._playTimeCalculator?.calculateTimeMs() ?? 0;
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
@@ -4467,6 +4470,7 @@ export class WWA {
         if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
             this._player.setPartsAppearedFlag();
         }
+        this._playTimeCalculator = new PlayTimeCalculator(newData.playTime);
         this._wwaData = newData;
         this._mapIDTableCreate();
         this._replaceAllRandomObjects();
@@ -4949,7 +4953,6 @@ export class WWA {
         // 表示中フラグをONにする
         this._inlineUserVarViewer.isVisible = true;
         if (this._player.isControllable()) {
-            this.setNowPlayTime();
             let helpMessage: string = '変数一覧\n';
             if (this._userVarNameListRequestError) {
                 if (this._userVarNameListRequestError.kind === "noFileSpecified") {
@@ -4977,7 +4980,7 @@ export class WWA {
 
     private _displayHelp(): void {
         if (this._player.isControllable()) {
-            this.setNowPlayTime();
+            const playTime = this._playTimeCalculator?.calculatePlayTimeFormat();
             var helpMessage: string = "";
             switch (this.userDevice.device) {
                 case DEVICE_TYPE.GAME:
@@ -5010,7 +5013,7 @@ export class WWA {
                                 "OPTIONS: 移動速度を上げる\n" +
                                 "SHARE: 移動速度を落とす\n" +
                                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                                "　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
+                                (playTime ? ("　　プレイ時間：" + playTime + "\n") : "") + 
                                 "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
@@ -5027,7 +5030,7 @@ export class WWA {
                                 "MENU: 移動速度を上げる\n" +
                                 "WINDOW: 移動速度を落とす\n" +
                                 "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                                "　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
+                                (playTime ? ("　　プレイ時間：" + playTime + "\n") : "") + 
                                 "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                                 "　マップデータ バージョン: " +
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
@@ -5057,7 +5060,7 @@ export class WWA {
                         "　　　Ｉ: 移動速度を落とす／\n" +
                         "Ｆ２、Ｐ: 移動速度を上げる\n" +
                         "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
-                        "　　プレイ時間：" + this._player.getPlayTimeText() + "\n" + 
+                        (playTime ? ("　　プレイ時間：" + playTime + "\n") : "") + 
                         "　WWA Wing バージョン:" + VERSION_WWAJS + "\n" +
                         "　マップデータ バージョン: " +
                         Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
@@ -5839,15 +5842,13 @@ font-weight: bold;
     }
 
     public generateTokenValues(triggerParts: TriggerParts): ExpressionParser.TokenValues {
-        // TODO: これ呼ぶ以外の方法ないのかな
-        this.setNowPlayTime();
         return {
             totalStatus: this._player.getStatus(),
             bareStatus: this._player.getStatusWithoutEquipments(),
             itemStatus: this._player.getStatusOfEquipments(),
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
-            playTime: this._wwaData.playTime,
+            playTime: this._playTimeCalculator?.calculateTimeMs() ?? 0,
             userVars: this._wwaData.userVar,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
@@ -5933,15 +5934,9 @@ font-weight: bold;
     }
     // ユーザ変数にプレイ時間を代入
     public setUserVarPlayTime(num: number): void {
-        this.setNowPlayTime();
-        this.setUserVar(num, this._wwaData.playTime);
+        this.setUserVar(num, this._playTimeCalculator?.calculateTimeMs() ?? 0);
     }
-    // 現在時刻セット
-    private setNowPlayTime(): void {
-        const _nowTime = new Date();
-        this._wwaData.playTime += (_nowTime.getTime() - this._startTime);
-        this._startTime = _nowTime.getTime();
-    }
+
     // 各種ステータスを非表示にする
     public hideStatus(no: number, isHide: boolean): void {
         if (no < 0 || no > StatusKind.length) {
