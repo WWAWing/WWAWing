@@ -666,8 +666,6 @@ export class EvalCalcWwaNode {
       case "STEP":
         return game_status.moveCount;
       case "TIME":
-        /** 現在時刻を更新する */
-        this.generator.wwa.setNowPlayTime();
         return game_status.playTime;
       case "PDIR":
         return game_status.playerDirection
