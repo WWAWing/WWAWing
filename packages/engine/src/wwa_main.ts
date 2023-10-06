@@ -108,6 +108,7 @@ export class WWA {
     private _yesNoDispCounter: number;
     private _yesNoUseItemPos: number;
     private _yesNoURL: string;
+    private _yesNoURLTarget: string;
     private _waitFrame: number;
     private _usePassword: boolean;
     private _bottomButtonType: number;
@@ -2989,6 +2990,7 @@ export class WWA {
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_MAP_PARTS;
         this._yesNoURL = this._wwaData.message[messageID].split(/\s/g)[0];
+        this._yesNoURLTarget = this._wwaData.message[messageID].split(/\s/g)[1];
         return true;
     }
 
@@ -3256,6 +3258,7 @@ export class WWA {
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
         this._yesNoURL = this._wwaData.message[messageID].split(/\s/g)[0];
+        this._yesNoURLTarget = this._wwaData.message[messageID].split(/\s/g)[1];
     }
 
     /**
@@ -3373,7 +3376,11 @@ export class WWA {
                 if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_MAP_PARTS) {
                     partsType = this._wwaData.mapAttribute[this._yesNoChoicePartsID][Consts.ATR_TYPE];
                     if (partsType === Consts.MAP_URLGATE) {
-                        location.href = util.$escapedURI(this._yesNoURL);
+                        if (this._yesNoURLTarget) {
+                            window.open(util.$escapedURI(this._yesNoURL), this._yesNoURLTarget)
+                        } else {
+                            location.href = util.$escapedURI(this._yesNoURL);
+                        }
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_OBJECT_PARTS) {
                     partsType = this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_TYPE];
@@ -3399,7 +3406,11 @@ export class WWA {
                     } else if (partsType === Consts.OBJECT_SELECT) {
                         this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.CHOICE_YES, this._yesNoChoicePartsID);
                     } else if (partsType === Consts.OBJECT_URLGATE) {
-                        location.href = util.$escapedURI(this._yesNoURL);
+                        if (this._yesNoURLTarget) {
+                            window.open(util.$escapedURI(this._yesNoURL), this._yesNoURLTarget)
+                        } else {
+                            location.href = util.$escapedURI(this._yesNoURL);
+                        }
                     }
                 } else if (this._yesNoChoiceCallInfo === ChoiceCallInfo.CALL_BY_ITEM_USE) {
                     this._player.readyToUseItem(this._yesNoUseItemPos);
