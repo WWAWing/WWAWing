@@ -45,6 +45,8 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertContinueStatment(node as Acorn.ContinueStatement);
       case "UpdateExpression":
         return convertUpdateExpression(node as Acorn.UpdateExpression);
+      case "LogicalExpression":
+        return convertLogicalExpression(node as Acorn.LogicalExpression);
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -64,6 +66,15 @@ function convertUpdateExpression(node: Acorn.UpdateExpression): Wwa.WWANode {
     type: "UpdateExpression",
     operator: node.operator,
     argument: convertNodeAcornToWwa(node.argument)
+  }
+}
+
+function convertLogicalExpression(node: Acorn.LogicalExpression): Wwa.WWANode {
+  return {
+    type: "LogicalExpression",
+    operator: node.operator,
+    left: convertNodeAcornToWwa(node.left),
+    right: convertNodeAcornToWwa(node.right)
   }
 }
 

@@ -137,6 +137,13 @@ export interface UpdateExpression {
   argument: WWANode
 }
 
+export interface LogicalExpression {
+  type: "LogicalExpression",
+  operator: string,
+  left: WWANode,
+  right: WWANode
+}
+
 export type WWANode = |
   PartsAssignment |
   ItemAssignment |
@@ -160,4 +167,5 @@ export type WWANode = |
   AnyFunction |
   Break |
   Continue |
-  UpdateExpression;
+  UpdateExpression |
+  LogicalExpression;

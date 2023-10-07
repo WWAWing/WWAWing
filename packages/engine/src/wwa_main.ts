@@ -6880,7 +6880,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `for(i=0; i<5; i++) {\n    MSG("i:"+i);\n}`;
+    consoleTextareaElement.textContent = `if(v[0] ==0 || AT == 80) {\n    MSG("HOGE");\n}`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();

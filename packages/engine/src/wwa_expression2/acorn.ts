@@ -85,6 +85,13 @@ export interface UpdateExpression extends Node {
   argument: Node
 }
 
+export interface LogicalExpression extends Node {
+  type: "LogicalExpression",
+  operator: string,
+  left: Node,
+  right: Node
+}
+
 export interface BreakStatement extends Node {
   label: string;
   type: "BreakExpression"
