@@ -135,6 +135,8 @@ export class EvalCalcWwaNode {
         return this.contunueStatment(node);
       case "UpdateExpression":
         return this.updateExpression(node);
+      case "LogicalExpression":
+        return this.logicalExpression(node);
       default:
         throw new Error("未定義または未実装のノードです");
     }
@@ -176,6 +178,20 @@ export class EvalCalcWwaNode {
     else {
       console.log(node);
       throw new Error("node.argument.typeがSymbolではありません。:"+node.argument.type);
+    }
+  }
+
+  /** && や || などの論理式が来た時の対応 */
+  logicalExpression(node: Wwa.LogicalExpression) {
+    const left = this.evalWwaNode(node.left);
+    const right = this.evalWwaNode(node.right);
+    switch(node.operator) {
+      case '||':
+        return (left || right);
+      case '&&':
+        return (left && right);
+      default:
+        throw new Error("存在しない論理式です!: "+node.operator);
     }
   }
 
