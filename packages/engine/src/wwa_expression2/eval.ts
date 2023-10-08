@@ -452,6 +452,11 @@ export class EvalCalcWwaNode {
         return (new Date()).getHours();
       case "GET_DATE_MINUTES":
         return (new Date()).getMinutes();
+      case "SHOW_USER_DEF_VAR":
+        {
+          console.log(this.generator.wwa.getAllUserNameVar());
+          return;
+        }
       case "CHANGE_SYSMSG": {
         this._checkArgsLength(1, node);
         const rawTarget = this.evalWwaNode(node.value[0]);

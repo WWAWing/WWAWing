@@ -6084,6 +6084,10 @@ font-weight: bold;
     public getUserNameVar(id: number | string): number | string | boolean {
         return this._wwaData.userNamedVar.get(id.toString());
     }
+    // User名称変数の一覧を取得
+    public getAllUserNameVar() {
+        return Array.from(this._wwaData.userNamedVar);
+    }
     // 現在の位置情報記憶
     public recUserPosition(x: number, y: number): void {
         var pos = this._player.getPosition().getPartsCoord();
@@ -6893,7 +6897,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `v["money"] = 100;\nv["name"] = "ヤツロウ";\nMSG(v["name"]+"「俺の所持金は"+v["money"]+"ゴールドだ」");`;
+    consoleTextareaElement.textContent = `v["money"] = 100;\nv["name"] = "ヤツロウ";\nMSG(v["name"]+"「俺の所持金は"+v["money"]+"ゴールドだ」");\nSHOW_USER_DEF_VAR();`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();
