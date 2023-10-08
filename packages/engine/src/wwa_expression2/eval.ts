@@ -103,7 +103,7 @@ export class EvalCalcWwaNode {
         return this.evalArray1D(node);
       case "Array2D":
         return this.evalArray2D(node);
-      case "Number":
+      case "Literal":
         return this.evalNumber(node);
       case "UserVariableAssignment":
         return this.evalSetUserVariable(node);
@@ -169,7 +169,7 @@ export class EvalCalcWwaNode {
         type: "SpecialParameterAssignment",
         kind: <any>node.argument.name,
         value: {
-          type: "Number",
+          type: "Literal",
           value: addValue
         }
       }
@@ -605,9 +605,6 @@ export class EvalCalcWwaNode {
       return 0;
     }
     const userVarIndex = this.evalWwaNode(node.index);
-    if (typeof userVarIndex !== "number") {
-      throw new Error("代入先の添字が数値になりませんでした");
-    }
     this.generator.wwa.setUserVar(userVarIndex, right);
     return 0;
   }
@@ -740,7 +737,7 @@ export class EvalCalcWwaNode {
     }
   }
 
-  evalNumber(node: Wwa.Number) {
+  evalNumber(node: Wwa.Literal) {
     return node.value;
   }
 }

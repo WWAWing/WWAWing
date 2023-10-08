@@ -6024,16 +6024,25 @@ font-weight: bold;
         }
     }
     // User変数記憶
-    public setUserVar(index: number, value: number): void {
-        // number 型でない変数, NaN, 範囲外の index を弾く
+    public setUserVar(index: number | string, value: number | string | boolean): void {
+        // number 型でない変数, NaN, 範囲外の index が来たら setUserNameVar に切り替える
         if (this.isNotNumberTypeOrNaN(index) || !this.isValidUserVarIndex(index)) {
-            throw new Error (`代入先のユーザ変数の番号 が 0 以上 ${Consts.USER_VAR_NUM - 1} 以下の数値になっていません!`)
+            this.setUserNameVar(index, value);
+            // throw new Error (`代入先のユーザ変数の番号 が 0 以上 ${Consts.USER_VAR_NUM - 1} 以下の数値になっていません!`)
         }
-        this._wwaData.userVar[index] = this.toAssignableValue(value);
+        else {
+            this._wwaData.userVar[index] = this.toAssignableValue(Number(value));
+        }
         
         // メッセージボックスに表示されている変数を更新
         this._messageWindow.update();
     }
+
+    // UserName変数記憶
+    public setUserNameVar(index: number | string, value: number | string | boolean): void {
+        this._wwaData.userNamedVar[index] = value;
+    }
+
     /**
      * 数値 x を代入可能な変数に変換する。
      * 
@@ -6880,7 +6889,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `if(v[0] ==0 || AT == 80) {\n    MSG("HOGE");\n}`;
+    consoleTextareaElement.textContent = `v["test"] = 20;\nv["hoge"] = "fuga";\nMSG(v["test"]);`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();
