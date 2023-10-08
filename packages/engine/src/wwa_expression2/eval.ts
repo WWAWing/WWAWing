@@ -601,7 +601,7 @@ export class EvalCalcWwaNode {
 
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
     const right = this.evalWwaNode(node.value);
-    if(!this.generator.wwa || isNaN(right)) {
+    if(!this.generator.wwa) {
       return 0;
     }
     const userVarIndex = this.evalWwaNode(node.index);
