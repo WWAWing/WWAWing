@@ -6080,6 +6080,10 @@ font-weight: bold;
     public getUserVar(no: number): number {
         return this._wwaData.userVar[no];
     }
+    // User名称変数取得
+    public getUserNameVar(id: number | string): number | string | boolean {
+        return this._wwaData.userNamedVar[id];
+    }
     // 現在の位置情報記憶
     public recUserPosition(x: number, y: number): void {
         var pos = this._player.getPosition().getPartsCoord();

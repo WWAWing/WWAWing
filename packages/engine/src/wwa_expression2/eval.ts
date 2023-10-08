@@ -703,7 +703,12 @@ export class EvalCalcWwaNode {
   evalArray1D(node: Wwa.Array1D) {
     const userVarIndex = this.evalWwaNode(node.index0);
     if (typeof userVarIndex !== "number") {
-      throw new Error("添字の計算結果が数値になりませんでした");
+      switch(node.name) {
+        case "v":
+          return this.generator.wwa.getUserNameVar(userVarIndex);
+        default:
+          throw new Error("このシンボルは取得できません");
+      }
     }
     const game_status = this.generator.wwa.getGameStatus();
     switch (node.name) {
