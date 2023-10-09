@@ -137,7 +137,10 @@ export class EvalCalcWwaNode {
         return this.updateExpression(node);
       case "LogicalExpression":
         return this.logicalExpression(node);
+      case "TemplateLiteral":
+        return this.convertTemplateLiteral(node);
       default:
+        console.log(node);
         throw new Error("未定義または未実装のノードです");
     }
   }
@@ -193,6 +196,24 @@ export class EvalCalcWwaNode {
       default:
         throw new Error("存在しない論理式です!: "+node.operator);
     }
+  }
+
+  /** テンプレートリテラル構文の解析をする */
+  convertTemplateLiteral(node: Wwa.TemplateLiteral) {
+    const expressions = node.expressions.map((exp) => {
+      return this.evalWwaNode(exp);
+    })
+    const quasis = node.quasis.map((q: Wwa.TemplateElement) => {
+      return q.value.cooked;
+    })
+    let return_string = "";
+    quasis.forEach((q, id) => {
+      return_string += q;
+      if(expressions[id]) {
+        return_string += expressions[id];
+      }
+    });
+    return return_string;
   }
 
   /** Continue文を処理する */

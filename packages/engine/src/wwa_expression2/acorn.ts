@@ -101,3 +101,19 @@ export interface ContinueStatement extends Node {
   label: string;
   type: "ContinueExpression"
 }
+
+export interface TemplateLiteral extends Node {
+  label: string;
+  type: "TemplateLiteral";
+  expressions: Node[];
+  quasis: Node[];
+}
+
+export interface TemplateElement extends Node {
+  label: string;
+  type: "TemplateElement";
+  value: {
+    cooked: string,
+    raw: string
+  }
+}

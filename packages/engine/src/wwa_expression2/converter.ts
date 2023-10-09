@@ -47,6 +47,10 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertUpdateExpression(node as Acorn.UpdateExpression);
       case "LogicalExpression":
         return convertLogicalExpression(node as Acorn.LogicalExpression);
+      case "TemplateLiteral":
+        return convertTemplateLiteral(node as Acorn.TemplateLiteral);
+      case "TemplateElement":
+        return convertTemplateElement(node as Acorn.TemplateElement);
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -75,6 +79,21 @@ function convertLogicalExpression(node: Acorn.LogicalExpression): Wwa.WWANode {
     operator: node.operator,
     left: convertNodeAcornToWwa(node.left),
     right: convertNodeAcornToWwa(node.right)
+  }
+}
+
+function convertTemplateLiteral(node: Acorn.TemplateLiteral): Wwa.WWANode {
+  return {
+    type: "TemplateLiteral",
+    expressions: node.expressions.map((exp) => convertNodeAcornToWwa(exp) ),
+    quasis: node.quasis.map((q) => convertNodeAcornToWwa(q) )
+  }
+}
+
+function convertTemplateElement(node: Acorn.TemplateElement): Wwa.WWANode {
+  return {
+    type: "TemplateElement",
+    value: node.value
   }
 }
 

@@ -144,6 +144,20 @@ export interface LogicalExpression {
   right: WWANode
 }
 
+export interface TemplateLiteral {
+  type: "TemplateLiteral",
+  expressions: WWANode[],
+  quasis: WWANode[]
+}
+
+export interface TemplateElement {
+  type: "TemplateElement",
+  value: {
+    cooked: string,
+    raw: string
+  }
+}
+
 export type WWANode = |
   PartsAssignment |
   ItemAssignment |
@@ -168,4 +182,6 @@ export type WWANode = |
   Break |
   Continue |
   UpdateExpression |
-  LogicalExpression;
+  LogicalExpression |
+  TemplateLiteral |
+  TemplateElement;
