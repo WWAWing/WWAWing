@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/event-emitter",
-  "version": "3.13.0-unstable.based-on.3.12.10.p.1",
+  "version": "3.13.0-unstable.based-on.3.12.10.p.2",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "files": [
     "lib",
