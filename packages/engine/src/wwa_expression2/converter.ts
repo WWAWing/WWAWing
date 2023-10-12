@@ -273,6 +273,10 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
   }
   switch(node.operator) {
     case "=":
+    case "+=":
+    case "-=":
+    case "*=":
+    case "/=":
       if (left.type === "Array2D") {
         if (left.name === "m" || left.name === "o") {
           return {
@@ -280,7 +284,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
             partsKind: left.name === "m" ? "map" : "object",
             destinationX: left.index0,
             destinationY: left.index1,
-            value: right
+            value: right,
+            operator: node.operator
           }
         } else {
           throw new Error("想定していない記号が2次元配列ででてきました");
@@ -290,13 +295,15 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           return {
             type: "ItemAssignment",
             itemBoxPosition1to12: left.index0,
-            value: right
+            value: right,
+            operator: node.operator
           }
         } else if (left.name === "v") {
           return {
             type: "UserVariableAssignment",
             index: left.index0,
-            value: right
+            value: right,
+            operator: node.operator
           }
         } else {
           throw new Error("");
@@ -314,13 +321,16 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         return {
           type: "SpecialParameterAssignment",
           kind: left.name,
-          value: right
+          value: right,
+          operator: node.operator
         }
       } else if (left.type === "Number") {
         throw new Error("数値には代入できません");
       } else {
         throw new Error("代入できません");
       }
+    default:
+      throw new Error("想定していないオペレーターです")
   }
 }
 

@@ -88,6 +88,7 @@ export class EvalCalcWwaNode {
   }
   
   public evalWwaNode(node: Wwa.WWANode) {
+    console.log(node);
     /** break/continueフラグが立っていたら処理しない */
     if(this.for_id.break_flag || this.for_id.continue_flag) {
       return;
@@ -629,7 +630,7 @@ export class EvalCalcWwaNode {
     if (typeof userVarIndex !== "number") {
       throw new Error("代入先の添字が数値になりませんでした");
     }
-    this.generator.wwa.setUserVar(userVarIndex, right);
+    this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
     return 0;
   }
 
