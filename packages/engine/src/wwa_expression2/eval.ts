@@ -579,27 +579,46 @@ export class EvalCalcWwaNode {
     if(!this.generator.wwa || isNaN(right)) {
       return 0;
     }
+    const currentValue = this.evalSymbol({
+      type: "Symbol",
+      name: node.kind
+    })
+    const setValue = (()=>{
+      switch(node.operator) {
+        case "+=":
+          return currentValue + right;
+        case "-=":
+          return currentValue - right;
+        case "*=":
+          return currentValue * right;
+        case "/=":
+          return currentValue / right;
+        case "=":
+        default:
+          return right;
+      }
+    })()
     switch(node.kind) {
       case 'PX':
-        this.generator.wwa.jumpSpecifiedXPos(right);
+        this.generator.wwa.jumpSpecifiedXPos(setValue);
         return 0;
       case 'PY':
-        this.generator.wwa.jumpSpecifiedYPos(right);
+        this.generator.wwa.jumpSpecifiedYPos(setValue);
         return 0;
       case 'AT':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, setValue, false);
         return 0;
       case 'DF':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, setValue, false);
         return 0;
       case 'GD':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.GOLD, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.GOLD, setValue, false);
         return 0;
       case 'HP':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, setValue, false);
         return 0;
       case 'HPMAX':
-        this.generator.wwa.setPlayerEnergyMax(right);
+        this.generator.wwa.setPlayerEnergyMax(setValue);
         return 0;
       /** for文用; 左辺値iに値を代入する場合: ex) i=i+2 */
       case 'i':
@@ -629,7 +648,7 @@ export class EvalCalcWwaNode {
     if (typeof userVarIndex !== "number") {
       throw new Error("代入先の添字が数値になりませんでした");
     }
-    this.generator.wwa.setUserVar(userVarIndex, right);
+    this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
     return 0;
   }
 

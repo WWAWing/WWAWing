@@ -8,7 +8,7 @@ export function isCalcurable(node: WWANode): node is Calcurable {
 export interface PartsAssignment {
   type: "PartsAssignment"
   partsKind: "map" | "object";
-  operator?: "+" | "-" | "*" | "/" | "%"; // 複合代入で使う
+  operator?: "+" | "-" | "*" | "/" | "%" | "+=" | "=" | "-=" | "*=" | "/="; // 複合代入で使う
   destinationX: Calcurable;
   destinationY: Calcurable;
   value: Calcurable;
@@ -18,18 +18,21 @@ export interface ItemAssignment {
   type: "ItemAssignment";
   itemBoxPosition1to12: Calcurable;
   value: Calcurable;
+  operator?: "=" | "+=" | "-=" | "*=" | "/=";
 }
 
 export interface UserVariableAssignment {
   type: "UserVariableAssignment";
   index: Calcurable;
   value: Calcurable;
+  operator?: "=" | "+=" | "-=" | "*=" | "/=";
 }
 
 export interface SpecialParameterAssignment {
   type: "SpecialParameterAssignment";
   kind: "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS";
   value: Calcurable;
+  operator?: "=" | "+=" | "-=" | "*=" | "/=";
 }
 
 export interface UnaryOperation {

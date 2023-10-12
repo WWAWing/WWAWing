@@ -6024,12 +6024,28 @@ font-weight: bold;
         }
     }
     // User変数記憶
-    public setUserVar(index: number, value: number): void {
+    public setUserVar(index: number, value: number, operator?: string): void {
         // number 型でない変数, NaN, 範囲外の index を弾く
         if (this.isNotNumberTypeOrNaN(index) || !this.isValidUserVarIndex(index)) {
             throw new Error (`代入先のユーザ変数の番号 が 0 以上 ${Consts.USER_VAR_NUM - 1} 以下の数値になっていません!`)
         }
-        this._wwaData.userVar[index] = this.toAssignableValue(value);
+        switch(operator) {
+            case "+=":
+                this._wwaData.userVar[index] += this.toAssignableValue(value);
+                break;
+            case "-=":
+                this._wwaData.userVar[index] -= this.toAssignableValue(value);
+                break;
+            case "*=":
+                this._wwaData.userVar[index] *= this.toAssignableValue(value);
+                break;
+            case "/=":
+                this._wwaData.userVar[index] /= this.toAssignableValue(value);
+                break;
+            case "=":
+            default:
+                this._wwaData.userVar[index] = this.toAssignableValue(value);
+        }
         
         // メッセージボックスに表示されている変数を更新
         this._messageWindow.update();
