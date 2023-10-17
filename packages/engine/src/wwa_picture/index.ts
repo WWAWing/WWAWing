@@ -76,7 +76,10 @@ export default class WWAPicutre {
                 picture.properties.text,
                 posX,
                 posY,
-                picture.properties.color,
+                picture.properties.font,
+                picture.properties.color?.[0],
+                picture.properties.color?.[1],
+                picture.properties.color?.[2],
                 WWAPicutre._convertTextAlign(picture.properties.textAlign)
             );
         }

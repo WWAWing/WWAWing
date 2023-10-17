@@ -24,14 +24,14 @@ export class CacheCanvas {
             Consts.CHIP_SIZE, Consts.CHIP_SIZE
         );
     }
-    public drawFont(text: string, canvasX: number, canvasY: number, color?: string, textAlign?: CanvasTextAlign): void {
+    public drawFont(text: string, canvasX: number, canvasY: number, customFont?: string, colorR = 0, colorG = 0, colorB = 0, textAlign?: CanvasTextAlign): void {
         this.ctx.save();
         const wwaStyle = getComputedStyle(util.$id("wwa-wrapper"));
-        this.ctx.font = wwaStyle.font;
+        this.ctx.font = customFont ?? wwaStyle.font;
         if (textAlign) {
             this.ctx.textAlign = textAlign;
         }
-        this.ctx.fillStyle = color ?? "#000000";
+        this.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
         this.ctx.fillText(text, canvasX, canvasY);
         this.ctx.restore();
     }

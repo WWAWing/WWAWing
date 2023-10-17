@@ -6,9 +6,8 @@ export interface PictureProperties {
   img?: ([number, number] | [number, number, number, number]);
   crop?: [number, number];
   text?: string;
-  // 文字サイズに固定化する予定？
   font?: string;
-  color?: string;
+  color?: [number, number, number];
   // CanvasTextAlign そのままの値
   textAlign?: "center" | "end" | "left" | "right" | "start";
 }
