@@ -2,7 +2,7 @@ export interface PictureProperties {
   pos?: [number, number];
   time?: number,
   size?: [number, number];
-  repat?: [number, number];
+  repeat?: [number, number];
   img?: ([number, number] | [number, number, number, number]);
   crop?: [number, number];
   text?: string;
@@ -21,7 +21,7 @@ export const PicturePropertyNames: (keyof PictureProperties)[] = [
   "pos",
   "time",
   "size",
-  "repat",
+  "repeat",
   "img",
   "crop",
   "text",
