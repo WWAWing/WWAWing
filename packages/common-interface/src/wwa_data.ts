@@ -14,14 +14,17 @@ export interface Coord {
  */
 export type GameOverPolicy = "default" | "never" | "except-macro";
 
-export type PictureRegistory = {
+type PictureRegistoryBase<N> = {
     layerNumber: number,
     imgPosX: number,
     imgPosY: number,
     imgPosX2: number,
     imgPosY2: number,
-    properties: PictureProperties
+    properties: PictureProperties<N>
 };
+export type PictureRegistory = PictureRegistoryBase<number>;
+// 変数参照がまだ残っている状態の PictureRegistory
+export type RawPictureRegistory = PictureRegistoryBase<number | string>;
 
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files

@@ -1,4 +1,4 @@
-export interface PictureProperties {
+export interface PictureProperties<N = number> {
   pos?: [number, number];
   time?: number,
   size?: [number, number];

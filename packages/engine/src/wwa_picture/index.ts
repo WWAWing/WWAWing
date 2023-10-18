@@ -2,8 +2,8 @@ import { CacheCanvas } from "../wwa_cgmanager";
 import { WWAConsts } from "../wwa_data";
 import { MAX_PICTURE_LAYERS_COUNT } from "./config";
 import { PictureItem, PictureRegistoryParts } from "./typedef";
-import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
-import { convertPictureRegistoryFromText } from "./utils";
+import { PictureRegistory, WWAData } from "@wwawing/common-interface/lib/wwa_data";
+import { convertPictureRegistoryFromText, convertVariablesFromRawRegistory } from "./utils";
 import { PictureProperties, PicturePropertyNames } from "@wwawing/common-interface/lib/wwa_picture";
 
 /**
@@ -130,10 +130,12 @@ export default class WWAPicutre {
      * ピクチャをテキストデータから登録し、追加後のピクチャをデータにして返します。
      * プロパティの変換は WWAPicture クラス内で行われます。
      * @param regitory ピクチャの登録情報
+     * @param wwaData WWAのデータ (変数参照に必要)
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
-    public registPictureFromText(registory: PictureRegistoryParts) {
-        this.registPicture(convertPictureRegistoryFromText(registory));
+    public registPictureFromText(registory: PictureRegistoryParts, wwaData: WWAData) {
+        const rawRegistory = convertPictureRegistoryFromText(registory);
+        this.registPicture(convertVariablesFromRawRegistory(rawRegistory, wwaData));
         return this.getPictureRegistoryData();
     }
 
