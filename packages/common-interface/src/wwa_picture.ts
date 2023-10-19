@@ -1,30 +1,13 @@
 export interface PictureProperties<N = number> {
-  pos?: [number, number];
-  time?: number,
-  size?: [number, number];
-  repeat?: [number, number];
-  img?: ([number, number] | [number, number, number, number]);
-  crop?: [number, number];
+  pos?: [N, N];
+  time?: N,
+  size?: [N, N];
+  repeat?: [N, N];
+  img?: ([N, N] | [N, N, N, N]);
+  crop?: [N, N];
   text?: string;
   font?: string;
-  color?: [number, number, number];
+  color?: [N, N, N];
   // CanvasTextAlign そのままの値
   textAlign?: "center" | "end" | "left" | "right" | "start";
 }
-
-/**
- * ピクチャで使用可能なプロパティ名
- * 下記配列にない場合は不正利用と扱いエラーで弾く
- */
-export const PicturePropertyNames: (keyof PictureProperties)[] = [
-  "pos",
-  "time",
-  "size",
-  "repeat",
-  "img",
-  "crop",
-  "text",
-  "font",
-  "color",
-  "textAlign",
-];

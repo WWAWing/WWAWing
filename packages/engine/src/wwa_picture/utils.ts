@@ -1,5 +1,7 @@
 import { PictureRegistory, RawPictureRegistory, WWAData } from "@wwawing/common-interface/lib/wwa_data";
 import { PictureRegistoryParts } from "./typedef";
+import { PicturePropertyDefinitions } from "./config";
+import { TokenValues, evaluateMacroArgExpression } from "../wwa_expression";
 
 export const convertPictureRegistoryFromText = (partsRegistory: PictureRegistoryParts): RawPictureRegistory => {
     const jsonObject = JSON.parse(partsRegistory.propertiesText);
@@ -15,29 +17,34 @@ export const convertPictureRegistoryFromText = (partsRegistory: PictureRegistory
     };
 };
 
-const variableRegExp = /v\[(\d+)\]/;
-export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory, wwaData: WWAData): PictureRegistory => {
-    const stringToNumber = (value: string): number | string => {
-        // 変数参照の場合
-        if (value.match(variableRegExp) === null) {
+export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory, tokenValues: TokenValues): PictureRegistory => {
+    // 数値専用形式で数値あるいは文字列が来た場合、正規表現で置き換えて処理する関数
+    const stringToNumberForNumericValue = (value: string | number): number | string => {
+        // 数値そのままの場合
+        if (typeof value === "number") {
             return value;
         }
-        // TODO 汎用的な解析システムを使用したい
-        const matches = value.match(variableRegExp);
-        const userVarNumber = matches?.[1];
-        if (userVarNumber === null || userVarNumber === undefined) {
-            console.warn(`ピクチャーの登録でユーザー変数番号が算出できませんでした。入った文字列は ${value} でした。`);
-            // 解析エラーという扱いで 0 とする
-            return 0;
-        }
-        return wwaData.userVar[userVarNumber] ?? 0;
+        // 変数参照などの場合
+        return evaluateMacroArgExpression(value, tokenValues);
     }
     const propertiesArray = Object.entries(registory.properties).map(([key, value]) => {
-        if (Array.isArray(value)) {
-            return [key, value.map((valueItem) => typeof valueItem === "string" ? stringToNumber(valueItem) : valueItem)]
+        const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
+        if (!definitions) {
+            // 本来ならエラーにすべきだが、あらかじめバリデーションを通している関係でそのままスルーする。ただし警告は出す。
+            // TODO フィルターをかけて定義街のプロパティを排除してもいいかもしれない
+            console.warn(`定義外のプロパティ ${key} を見つけました。`);
+            return [key, value];
         }
-        // TODO 数値形式の想定で非数値形式が代入された場合はどうするか？
-        return [key, typeof value === "string" ? stringToNumber(value) : value];
+        switch (definitions.type) {
+            case "number":
+                return [key, stringToNumberForNumericValue(value)];
+            case "numberArray":
+                return [key, value.map(stringToNumberForNumericValue)]
+            // TODO 将来はテンプレート文字列に対応したい
+            case "string":
+            default:
+                return [key, value];
+        }
     });
     return {
         ...registory,

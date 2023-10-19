@@ -1191,7 +1191,7 @@ export class Macro {
         if (layerNumber < 0 || layerNumber > MAX_PICTURE_LAYERS_COUNT) {
             throw new Error("レイヤー番号が範囲外です。");
         }
-        this._wwa.setPictureRegistry(layerNumber, definePartsNumber, definePartsType);
+        this._wwa.setPictureRegistry(layerNumber, definePartsNumber, definePartsType, this._triggerPartsPosition);
     }
 
     private _executeDelayBgmMacro(): void {

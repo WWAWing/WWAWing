@@ -2,8 +2,8 @@
 import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord, WWAConsts } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
-import { PictureRegistoryParts } from "./wwa_picture/typedef";
 import * as util from "./wwa_util";
+import { WWA } from "./wwa_main";
 
 export class CacheCanvas {
     public cvs: HTMLCanvasElement;
@@ -373,13 +373,13 @@ export class CGManager {
         this.createFrame();
     }
 
-    public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {
+    public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, wwa: WWA, loadCompleteCallBack: () => void) {
 
         this._frameCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);
         this._backCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, false);
         this._objectCanvases = [];
         this._effectCanvases = [];
-        this.picture = new WWAPicutre();
+        this.picture = new WWAPicutre(wwa);
         var i;
         for (i = 0; i < 2; i++) {
             this._objectCanvases[i] = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);

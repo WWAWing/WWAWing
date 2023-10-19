@@ -1,10 +1,10 @@
 import { CacheCanvas } from "../wwa_cgmanager";
-import { WWAConsts } from "../wwa_data";
-import { MAX_PICTURE_LAYERS_COUNT } from "./config";
+import { Coord, PartsType, WWAConsts } from "../wwa_data";
+import { MAX_PICTURE_LAYERS_COUNT, PicturePropertyDefinitions } from "./config";
 import { PictureItem, PictureRegistoryParts } from "./typedef";
 import { PictureRegistory, WWAData } from "@wwawing/common-interface/lib/wwa_data";
 import { convertPictureRegistoryFromText, convertVariablesFromRawRegistory } from "./utils";
-import { PictureProperties, PicturePropertyNames } from "@wwawing/common-interface/lib/wwa_picture";
+import { WWA } from "../wwa_main";
 
 /**
  * ピクチャ機能の表示や制御を行うクラスです。
@@ -20,11 +20,13 @@ import { PictureProperties, PicturePropertyNames } from "@wwawing/common-interfa
  * 3. CacheCanvas を更新する -> updatePictures
  */
 export default class WWAPicutre {
+    private _wwa: WWA;
     private _pictures: Map<number, PictureItem>;
     private _isMainAnimation: boolean;
     private _frameTimerValue: number;
 
-    constructor() {
+    constructor(wwa: WWA) {
+        this._wwa = wwa;
         this._pictures = new Map();
         this._isMainAnimation = true;
         this._frameTimerValue = WWAPicutre._getNowFrameValue();
@@ -115,7 +117,7 @@ export default class WWAPicutre {
             true
         );
         const invalidPropertyNames = Object.keys(registory.properties)
-            .filter((propertyName) => !PicturePropertyNames.includes(propertyName as keyof PictureProperties));
+            .filter((propertyName) => !PicturePropertyDefinitions.some(({ name }) => name === propertyName));
         if (invalidPropertyNames.length > 0) {
             throw new Error(`不明なプロパティ名 ${invalidPropertyNames.map(str => `"${str}"`).join(", ")} が検出されました。`);
         }
@@ -130,12 +132,23 @@ export default class WWAPicutre {
      * ピクチャをテキストデータから登録し、追加後のピクチャをデータにして返します。
      * プロパティの変換は WWAPicture クラス内で行われます。
      * @param regitory ピクチャの登録情報
-     * @param wwaData WWAのデータ (変数参照に必要)
+     * @param targetPartsID 対象のパーツ番号
+     * @param targetPartsType 対象のパーツ種類
+     * @param triggerPartsPosition 実行元パーツの座標
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
-    public registPictureFromText(registory: PictureRegistoryParts, wwaData: WWAData) {
+    public registPictureFromText(
+        registory: PictureRegistoryParts,
+        targetPartsID: number,
+        targetPartsType: PartsType,
+        triggerPartsPosition: Coord
+    ) {
         const rawRegistory = convertPictureRegistoryFromText(registory);
-        this.registPicture(convertVariablesFromRawRegistory(rawRegistory, wwaData));
+        this.registPicture(convertVariablesFromRawRegistory(rawRegistory, this._wwa.generateTokenValues({
+            id: targetPartsID,
+            type: targetPartsType,
+            position: triggerPartsPosition
+        })));
         return this.getPictureRegistoryData();
     }
 

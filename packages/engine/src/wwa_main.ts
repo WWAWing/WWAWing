@@ -942,7 +942,7 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, (): void => {
+            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, this, (): void => {
                 this._isSkippedSoundMessage = true;
                 const setGameStartingMessageWhenPcOrSP = () => {
                     switch (this.userDevice.device) {
@@ -5496,7 +5496,7 @@ export class WWA {
         this._wwaData.bgmDelayDurationMs = delayMs;
     }
 
-    public setPictureRegistry(layerNumber: number, partsNumber: number, partsType: PartsType) {
+    public setPictureRegistry(layerNumber: number, partsNumber: number, partsType: PartsType, partsPosition: Coord) {
         const attributes =
             partsType === PartsType.OBJECT ? this._wwaData.objectAttribute[partsNumber] :
             partsType === PartsType.MAP ? this._wwaData.mapAttribute[partsNumber] :
@@ -5516,7 +5516,10 @@ export class WWA {
                 imgPosY2: (attributes[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE) ?? 0,
                 propertiesText,
             },
-            this._wwaData
+            // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
+            partsNumber,
+            partsType,
+            partsPosition
         );
         // _cgManager 内のデータと _wwaData 内のデータで同期を取る
         this._wwaData.pictureRegistory = data;
