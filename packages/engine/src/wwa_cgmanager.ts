@@ -1,6 +1,6 @@
 
 import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
-import { WWAConsts as Consts, Coord, WWAConsts } from "./wwa_data";
+import { WWAConsts as Consts, Coord } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
 import * as util from "./wwa_util";
 import { WWA } from "./wwa_main";
@@ -219,7 +219,7 @@ export class CGManager {
 
     public drawPictures(): void {
         this.picture.forEachPictures((picture) => {
-            this._ctx.drawImage(picture.canvas.cvs,
+            this._ctx.drawImage(picture.cvs,
                 0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW,
                 0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
         });
