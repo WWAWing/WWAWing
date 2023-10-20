@@ -2,7 +2,7 @@ import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, PartsType, WWAConsts } from "../wwa_data";
 import { MAX_PICTURE_LAYERS_COUNT, PicturePropertyDefinitions } from "./config";
 import { PictureItem, PictureRegistoryParts } from "./typedef";
-import { PictureRegistory, WWAData } from "@wwawing/common-interface/lib/wwa_data";
+import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
 import { convertPictureRegistoryFromText, convertVariablesFromRawRegistory } from "./utils";
 import { WWA } from "../wwa_main";
 
@@ -68,40 +68,44 @@ export default class WWAPicutre {
      * また、追加情報が必要な場合はフィールドを定義し、そのフィールドから参照するようにしてください。
      * @param image CacheCanvas.drawCanvas で使用されるイメージ要素
      * @param picture 対象のピクチャ
+     * @todo 毎フレーム複雑な条件分岐処理が実行されるので、デフォルト値を置くかインスタンス化したい
      */
     private _drawPicture(image: HTMLImageElement, picture: PictureItem) {
+        const { properties } = picture;
         const [imgPosX, imgPosY] = WWAPicutre._getImgPosByPicture(picture, this._isMainAnimation);
-        const posX = picture.properties.pos[0] ?? 0;
-        const posY = picture.properties.pos[1] ?? 0;
-        if (picture.properties.text) {
-            picture.canvas.drawFont(
-                picture.properties.text,
-                posX,
-                posY,
-                picture.properties.font,
-                picture.properties.color?.[0],
-                picture.properties.color?.[1],
-                picture.properties.color?.[2],
-                WWAPicutre._convertTextAlign(picture.properties.textAlign)
-            );
-        }
-        picture.canvas.drawCanvas(
-            image,
-            imgPosX,
-            imgPosY,
-            posX,
-            posY,
-        );
-        if (picture.properties.crop) {
-            for (let y = 0; y < picture.properties.crop[1]; y++) {
-                for (let x = y === 0 ? 1 : 0; x < picture.properties.crop[0]; x++) {
-                    picture.canvas.drawCanvas(
-                        image,
-                        imgPosX + x,
-                        imgPosY + y,
-                        posX + (WWAConsts.CHIP_SIZE * x),
-                        posY + (WWAConsts.CHIP_SIZE * y)
+        const posX = properties.pos[0] ?? 0;
+        const posY = properties.pos[1] ?? 0;
+        const width = picture.properties.size?.[0] ?? WWAConsts.CHIP_SIZE * (picture.properties.crop?.[0] ?? 1);
+        const height = picture.properties.size?.[1] ?? WWAConsts.CHIP_SIZE * (picture.properties.crop?.[1] ?? 1);
+        const chipWidth = Math.floor(width / (picture.properties.crop?.[0] ?? 1));
+        const chipHeight = Math.floor(height / (picture.properties.crop?.[1] ?? 1));
+
+        for (let repeatY = 0; repeatY < (picture.properties.repeat?.[1] ?? 1); repeatY++) {
+            for (let repeatX = 0; repeatX < (picture.properties.repeat?.[0] ?? 1); repeatX++) {
+                if (picture.properties.text) {
+                    picture.canvas.drawFont(
+                        properties.text,
+                        posX + (width * repeatX),
+                        posY + (height * repeatY),
+                        properties.font,
+                        properties.color?.[0],
+                        properties.color?.[1],
+                        properties.color?.[2],
+                        properties.textAlign ? WWAPicutre._convertTextAlign(properties.textAlign) : undefined
                     );
+                }
+                for (let cropY = 0; cropY < (properties.crop?.[1] ?? 1); cropY++) {
+                    for (let cropX = 0; cropX < (properties.crop?.[0] ?? 1); cropX++) {
+                        picture.canvas.drawCanvas(
+                            image,
+                            imgPosX + cropX,
+                            imgPosY + cropY,
+                            posX + (width * repeatX) + (WWAConsts.CHIP_SIZE * cropX),
+                            posY + (height * repeatY) + (WWAConsts.CHIP_SIZE * cropY),
+                            chipWidth,
+                            chipHeight
+                        );
+                    }
                 }
             }
         }

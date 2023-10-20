@@ -14,14 +14,16 @@ export class CacheCanvas {
         this.cvs.width = width;
         this.cvs.height = height;
         this.ctx = this.cvs.getContext("2d", { alpha: isTransparent });
+        // TODO オプションでオフにできるようにしたい
+        this.ctx.imageSmoothingEnabled = false;
         this._isTransparent = isTransparent;
         //document.body.appendChild(this.cvs);
     }
-    public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number): void {
+    public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
         this.ctx.drawImage(
             _image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
             Consts.CHIP_SIZE, Consts.CHIP_SIZE, canvasX, canvasY,
-            Consts.CHIP_SIZE, Consts.CHIP_SIZE
+            width, height
         );
     }
     public drawFont(text: string, canvasX: number, canvasY: number, customFont?: string, colorR = 0, colorG = 0, colorB = 0, textAlign?: CanvasTextAlign): void {
