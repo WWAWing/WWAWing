@@ -5970,7 +5970,6 @@ export class WWA {
         }
         const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
         const propertiesText = getPictureDefineText(messageText ?? "");
-        this.setNowPlayTime();
         const data = this._cgManager.picture.registPictureFromText(
             {
                 layerNumber,
