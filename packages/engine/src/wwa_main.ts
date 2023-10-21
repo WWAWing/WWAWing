@@ -42,7 +42,6 @@ import { ObjectMovingDataManager } from "./wwa_motion";
 import {
     MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
 } from "./wwa_message";
-import { getPictureDefineText } from "./wwa_message/utils";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject, checkTouchDevice } from "./wwa_inject_html";
@@ -5969,7 +5968,6 @@ export class WWA {
             throw new Error("対応していないパーツ番号です。");
         }
         const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
-        const propertiesText = getPictureDefineText(messageText ?? "");
         const data = this._cgManager.picture.registPictureFromText(
             {
                 layerNumber,
@@ -5977,7 +5975,7 @@ export class WWA {
                 imgPosX2: (attributes[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE) ?? 0,
                 imgPosY: (attributes[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE) ?? 0,
                 imgPosY2: (attributes[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE) ?? 0,
-                propertiesText,
+                propertiesText: messageText,
             },
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
             partsNumber,

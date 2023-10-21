@@ -4,17 +4,21 @@ import { PicturePropertyDefinitions } from "./config";
 import { TokenValues, evaluateMacroArgExpression } from "../wwa_expression";
 
 export const convertPictureRegistoryFromText = (partsRegistory: PictureRegistoryParts): RawPictureRegistory => {
-    const jsonObject = JSON.parse(partsRegistory.propertiesText);
-    if (Array.isArray(jsonObject)) {
-        throw new Error("配列形式ではなくオブジェクト形式で記述してください。");
+    try {
+        const jsonObject = JSON.parse(partsRegistory.propertiesText);
+        if (Array.isArray(jsonObject)) {
+            throw new Error("配列形式ではなくオブジェクト形式で記述してください。");
+        }
+        if (typeof jsonObject !== 'object') {
+            throw new Error("オブジェクト形式で記述してください。");
+        }
+        return {
+            ...partsRegistory,
+            properties: jsonObject
+        };
+    } catch (e) {
+        console.error(`JSON パースエラーが発生しました！: ${e.message}`);
     }
-    if (typeof jsonObject !== 'object') {
-        throw new Error("オブジェクト形式で記述してください。");
-    }
-    return {
-        ...partsRegistory,
-        properties: jsonObject
-    };
 };
 
 export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory, tokenValues: TokenValues): PictureRegistory => {
