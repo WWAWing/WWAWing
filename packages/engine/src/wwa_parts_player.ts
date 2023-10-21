@@ -88,6 +88,7 @@ export class Player extends PartsObject {
 
     protected _enemy: Monster;
     protected _moves: number;
+    // 現状使われていないに等しいが、セーブデータに互換性のため入っている。
     protected _frameCount: number;
 
     protected _moveMacroWaitingRemainMoves: number;
@@ -133,6 +134,8 @@ export class Player extends PartsObject {
                 this._isPartsEventExecuted = false;
                 this._samePosLastExecutedMapID = void 0;
                 this._samePosLastExecutedObjID = void 0;
+                /** プレイヤーが動いた歳ユーザ定義独自関数を呼び出す */
+                this._wwa.callMoveUserDefineFunction();
             }
             this._position = next;
         }
@@ -361,7 +364,7 @@ export class Player extends PartsObject {
         this._state = PlayerState.ESTIMATE_WINDOW_WAITING;
     }
 
-    public isWatingEstimateWindow(): boolean {
+    public isWaitingEstimateWindow(): boolean {
         return this._state === PlayerState.ESTIMATE_WINDOW_WAITING;
     }
 
@@ -452,6 +455,9 @@ export class Player extends PartsObject {
             this._isPreparedForLookingAround = true;
             this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         }
+
+        // ジャンプゲートで移動した際に呼ばれるユーザ定義独自関数
+        this._wwa.callJumpGateUserDefineFunction();
 
         return true;
     }
@@ -742,6 +748,9 @@ export class Player extends PartsObject {
             insertPos = this._getBlankItemPos();
 
             if (insertPos === Consts.ITEMBOX_IS_FULL) {
+                /** ユーザ定義関数用処理 */
+                this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(objID, -1);
+                this._wwa.callGetItemFullUserDefineFunction();
                 throw new Error("これ以上、アイテムを持てません。");
             }
             overwrittenObjectId = this._itemBox[insertPos - 1];
@@ -758,6 +767,9 @@ export class Player extends PartsObject {
                     this._forceSetItemBox(oldInsertPos, oldObjID);
                     this._forceSetItemBox(insertPos, objID);
                 } else {
+                    /** ユーザ定義関数用処理 */
+                    this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(objID, -1);
+                    this._wwa.callGetItemFullUserDefineFunction();
                     throw new Error("これ以上、アイテムを持てません。");
                 }
             } else {
@@ -787,6 +799,9 @@ export class Player extends PartsObject {
         var itemType = this._wwa.getObjectAttributeById(id, Consts.ATR_MODE);
         this.removeItemByItemPosition(pos);
         this._itemBox[pos - 1] = id;
+        // カスタムイベント関数処理
+        this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(id, pos);
+        this._wwa.callGetItemUserDefineFunction();
         if (id !== 0 && itemType !== ItemMode.NORMAL) {
             const mes = this._wwa.resolveSystemMessage(SystemMessage.Key.ITEM_SELECT_TUTORIAL);
             if (!this._isClickableItemGot) {
@@ -870,6 +885,11 @@ export class Player extends PartsObject {
                 bg.classList.remove("onpress");
             }
         }, Consts.DEFAULT_FRAME_INTERVAL);
+
+        /** アイテム関係の値を独自関数で使用できるようセットする */
+        this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(itemID, this._readyToUseItemPos - 1);
+        /** アイテムを使用した際のユーザ定義独自関数を呼び出す */
+        this._wwa.callUseItemUserDefineFunction();
 
         this._isReadyToUseItem = false;
         this._readyToUseItemPos = void 0;
@@ -1098,18 +1118,6 @@ export class Player extends PartsObject {
         return new Coord(targetX, targetY);
     }
 
-    /**
-     * ゲーム開始から経過したフレーム数を基に、 HHHH:MM:SS 形式のプレイ時間文字列を返します。
-     */
-    public getPlayTimeText(): string {
-        const seconds = Math.floor(this._frameCount / 60);
-        // FIY: 0とのビットOR( | ) は 小数点以下切り捨て
-        return seconds >= 60 * 60 * 10000 ?
-            "9999:99:99" :
-            ("000" + ((seconds / 60 / 60) | 0)).slice(-4) +
-            ":" + ("0" + (((seconds / 60) | 0) % 60)).slice(-2) +
-            ":" + ("0" + (seconds % 60)).slice(-2);
-    }
 
     //プレイ時間を計測
     public mainFrameCount(): void {
@@ -1225,7 +1233,6 @@ export class Player extends PartsObject {
         this._isReadyToUseItem = false;
         this._isClickableItemGot = false;
         this._moves = moves;
-        this._frameCount = 0;
         this._moveMacroWaitingRemainMoves = 0;
         this._moveObjectAutoExecTimer = 0;
         this.updateStatusValueBox();

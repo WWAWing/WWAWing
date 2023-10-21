@@ -152,6 +152,9 @@ export default async function makeDistribution(
                     virtualPad: {
                         enable: false,
                     },
+                    debugConsole: {
+                        
+                    },
                     ...(canIncludeUserVarOptions ? {
                         userVars: {
                             dumpElementId: "vardump",
