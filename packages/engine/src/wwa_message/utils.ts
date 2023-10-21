@@ -34,25 +34,3 @@ export const convertRelativeValue = (relativeValue: string, baseValue: number) =
     }
     return number;
 };
-
-/**
- * メッセージテキストから `<picture>` 以下のピクチャ定義を取得します。
- *
- * @param messageText メッセージのテキスト定義
- * @returns `<picture>` 以下のピクチャ定義 (なければ空文字)
- * @todo `<script>` 対応をしたい
- */
-export const getPictureDefineText = (messageText: string) => {
-    /**
-     * <picture> タグ仮対応
-     * TODO: 後で直してください
-     **/
-    const messageTextSplit = messageText.split("<picture>");
-
-    /** <picture> タグが含まれる場合中身を実行する。 */
-    if(messageTextSplit.length > 1) {
-        return messageTextSplit[1];
-    }
-
-    return "";
-};
