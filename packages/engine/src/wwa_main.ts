@@ -5505,7 +5505,7 @@ export class WWA {
         }
         const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
         this.setNowPlayTime();
-        const data = this._cgManager.picture.registPictureFromText(
+        const data = this._cgManager.picture.registerPictureFromText(
             {
                 layerNumber,
                 imgPosX: (attributes[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE) ?? 0,

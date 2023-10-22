@@ -176,7 +176,7 @@ export class CGManager {
     public updatePictures(regitories: PictureRegistory[]): void {
         this.picture.clearAllPictures();
         regitories.forEach((registory) => {
-            this.picture.registPicture(registory);
+            this.picture.registerPicture(registory);
         });
     }
     public updatePicturesCache(isMainAnimation = true): void {

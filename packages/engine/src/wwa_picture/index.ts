@@ -11,13 +11,13 @@ import WWAPictureItem from "./WWAPictureItem";
  * ピクチャ機能の表示や制御を行うクラスです。
  * 
  * # メッセージからピクチャを表示する場合
- * 1. 入力したテキストを基に登録する -> registPictureFromText
+ * 1. 入力したテキストを基に登録する -> registerPictureFromText
  * 2. 登録後の状態を wwaData に記録できるように出力する -> getPictureRegistoryData
  * 3. ピクチャの CacheCanvas を更新する -> updatePictures
  * 
  * # Quick Load でピクチャを読み込む場合
  * 1. 一旦ピクチャの内容をクリアする -> clearAllPictures
- * 2. 各ピクチャの登録情報を読み込む -> registPicture
+ * 2. 各ピクチャの登録情報を読み込む -> registerPicture
  * 3. CacheCanvas を更新する -> updatePictures
  */
 export default class WWAPicutre {
@@ -35,7 +35,7 @@ export default class WWAPicutre {
         return performance.now();
     }
 
-    public registPicture(registory: PictureRegistory) {
+    public registerPicture(registory: PictureRegistory) {
         if (registory.layerNumber > MAX_PICTURE_LAYERS_COUNT) {
             throw new Error(`ピクチャの最大レイヤー ${MAX_PICTURE_LAYERS_COUNT} の範囲を超えています。`);
         }
@@ -61,14 +61,14 @@ export default class WWAPicutre {
      * @param triggerPartsPosition 実行元パーツの座標
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
-    public registPictureFromText(
+    public registerPictureFromText(
         registory: PictureRegistoryParts,
         targetPartsID: number,
         targetPartsType: PartsType,
         triggerPartsPosition: Coord
     ) {
         const rawRegistory = convertPictureRegistoryFromText(registory);
-        this.registPicture(convertVariablesFromRawRegistory(rawRegistory, this._wwa.generateTokenValues({
+        this.registerPicture(convertVariablesFromRawRegistory(rawRegistory, this._wwa.generateTokenValues({
             id: targetPartsID,
             type: targetPartsType,
             position: triggerPartsPosition
