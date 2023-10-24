@@ -1,6 +1,7 @@
 import { PictureRegistory } from "@wwawing/common-interface";
 import { CacheCanvas } from "../wwa_cgmanager";
 import { WWAConsts } from "../wwa_data";
+import * as util from "../wwa_util";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -19,7 +20,6 @@ export default class WWAPictureItem {
     private readonly _repeatY: number;
     private readonly _cropX: number;
     private readonly _cropY: number;
-    private readonly _textAlign: CanvasTextAlign;
     
     private _displayStockTime?: number;
 
@@ -35,9 +35,19 @@ export default class WWAPictureItem {
         this._totalHeight = (properties.size?.[1] ?? WWAConsts.CHIP_SIZE) * this._cropY;
         this._chipWidth = Math.floor(this._totalWidth / this._cropX);
         this._chipHeight = Math.floor(this._totalHeight / this._cropY);
-        this._textAlign = properties.textAlign ? WWAPictureItem._convertTextAlign(properties.textAlign) : undefined;
-
+        
         this._displayStockTime = properties.time;
+        
+        // Canvas の ctx を色々いじる
+        this._canvas.ctx.globalAlpha = properties.opacity ? properties.opacity / 100 : 1;;
+        this._canvas.ctx.font = properties.font ?? getComputedStyle(util.$id("wwa-wrapper")).font;
+        if (properties.textAlign) {
+            this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
+        }
+        const colorR = properties.color?.[0] ?? 0;
+        const colorG = properties.color?.[1] ?? 0;
+        const colorB = properties.color?.[2] ?? 0;
+        this._canvas.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
     }
 
     public get layerNumber() {
@@ -62,12 +72,7 @@ export default class WWAPictureItem {
                     this._canvas.drawFont(
                         this._registory.properties.text,
                         this._posX + (this._totalWidth * rx),
-                        this._posY + (this._totalHeight * ry),
-                        this._registory.properties.font,
-                        this._registory.properties.color?.[0],
-                        this._registory.properties.color?.[1],
-                        this._registory.properties.color?.[2],
-                        this._textAlign
+                        this._posY + (this._totalHeight * ry)
                     );
                 }
                 const chipX = this._posX + (this._totalWidth * rx);

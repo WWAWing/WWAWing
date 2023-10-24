@@ -10,4 +10,5 @@ export interface PictureProperties<N = number> {
   color?: [N, N, N];
   // CanvasTextAlign そのままの値
   textAlign?: "center" | "end" | "left" | "right" | "start";
+  opacity?: N;
 }

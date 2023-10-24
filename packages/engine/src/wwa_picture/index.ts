@@ -1,7 +1,7 @@
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, PartsType, WWAConsts } from "../wwa_data";
 import { MAX_PICTURE_LAYERS_COUNT, PicturePropertyDefinitions } from "./config";
-import { PictureItem, PictureRegistoryParts } from "./typedef";
+import { PictureRegistoryParts } from "./typedef";
 import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
 import { convertPictureRegistoryFromText, convertVariablesFromRawRegistory } from "./utils";
 import { WWA } from "../wwa_main";
