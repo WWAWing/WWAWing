@@ -45,7 +45,9 @@ export default class WWAPictureItem {
         this._displayStockTime = properties.time;
         
         // Canvas の ctx を色々いじる
-        this._canvas.ctx.globalAlpha = properties.opacity ? properties.opacity / 100 : 1;;
+        this._canvas.ctx.globalAlpha = properties.opacity
+            ? WWAPictureItem._roundPercentage(properties.opacity) / 100
+            : 1;
         this._canvas.ctx.font = properties.font ?? getComputedStyle(util.$id("wwa-wrapper")).font;
         if (properties.textAlign) {
             this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
@@ -144,5 +146,15 @@ export default class WWAPictureItem {
         // TODO 例外を投げるべき？
         console.warn(`textAlign プロパティで不正な値が検出されました。: ${value}`);
         return undefined;
+    }
+
+    private static _roundPercentage(value: number): number {
+        if (value < 0) {
+            return 0;
+        }
+        if (value > 100) {
+            return 100;
+        }
+        return value;
     }
 }
