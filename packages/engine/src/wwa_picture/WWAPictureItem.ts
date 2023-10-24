@@ -12,6 +12,10 @@ export default class WWAPictureItem {
 
     private readonly _posX: number;
     private readonly _posY: number;
+    private readonly _imgMainX: number;
+    private readonly _imgMainY: number;
+    private readonly _imgSubX: number;
+    private readonly _imgSubY: number;
     private readonly _chipWidth: number;
     private readonly _chipHeight: number;
     private readonly _totalWidth: number;
@@ -27,6 +31,8 @@ export default class WWAPictureItem {
         const { properties } = _registory;
         this._posX = properties.pos?.[0] ?? 0;
         this._posY = properties.pos?.[1] ?? 0;
+        [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registory, true);
+        [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registory, false);
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._cropX = properties.crop?.[0] ?? 1;
@@ -63,8 +69,8 @@ export default class WWAPictureItem {
      * 毎フレーム処理されるため、プロパティから直接引き出される値以外はあらかじめフィールドに数値などをキャッシュしてください。
      */
     public draw(image: HTMLImageElement, isMainAnimation: boolean) {
-        // TODO これらもフィールドに移行してキャッシュにしたい
-        const [imgPosX, imgPosY] = WWAPictureItem._getImgPosByPicture(this._registory, isMainAnimation);
+        const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
+        const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;
         
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
