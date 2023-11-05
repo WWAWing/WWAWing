@@ -1,7 +1,7 @@
 import { PictureRegistory, RawPictureRegistory, WWAData } from "@wwawing/common-interface/lib/wwa_data";
 import { PictureRegistoryParts } from "./typedef";
 import { PicturePropertyDefinitions } from "./config";
-import { TokenValues, evaluateMacroArgExpression } from "../wwa_expression";
+import { TokenValues, evaluateMacroArgExpression, regPictureTemplate } from "../wwa_expression";
 
 export const convertPictureRegistoryFromText = (partsRegistory: PictureRegistoryParts): RawPictureRegistory => {
     try {
@@ -44,8 +44,30 @@ export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory,
                 return [key, stringToNumberForNumericValue(value)];
             case "numberArray":
                 return [key, value.map(stringToNumberForNumericValue)]
-            // TODO 将来はテンプレート文字列に対応したい
             case "string":
+                if (typeof value !== "string") {
+                    if (typeof value !== "number") {
+                        console.warn(`プロパティ ${key} では文字列形式である必要があります。実際に入った値は ${value} です。`);
+                    }
+                    return [key, value];
+                }
+                let evaluatedString = String(value);
+                // spread 構文の使用には tsconfig の変更が必要
+                // 正規表現の扱いについてはまだエラーを発することが多いので、 try-catch を囲んでもいいかもしれない
+                const targetValues = Array.from(value.matchAll(regPictureTemplate));
+                targetValues.forEach((matchedExpression) => {
+                    if (matchedExpression.length < 2) {
+                        console.warn(`テンプレート文字列で合致した文字列の中の値を取り出すことができませんでした。文字列そのものの値は ${value} です。`);
+                    }
+                    const targetExpression = matchedExpression[0];
+                    const evaluateExpression = matchedExpression[1];
+                    const evaluatedValue = stringToNumberForNumericValue(evaluateExpression);
+                    evaluatedString = evaluatedString.replace(
+                        targetExpression,
+                        typeof evaluatedValue === "number" ? evaluatedValue.toString() : evaluatedValue
+                    );
+                });
+                return [key, evaluatedString];
             default:
                 return [key, value];
         }

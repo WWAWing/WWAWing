@@ -83,6 +83,7 @@ export default class WWAPicutre {
      */
     public deletePicture(layerNumber: number) {
         if (!this._pictures.has(layerNumber)) {
+            console.warn(`${layerNumber} 番のピクチャが見つかりませんでした。`)
             return;
         }
         this._pictures.get(layerNumber).clearCanvas();
