@@ -137,7 +137,10 @@ export class EvalCalcWwaNode {
         return this.updateExpression(node);
       case "LogicalExpression":
         return this.logicalExpression(node);
+      case "TemplateLiteral":
+        return this.convertTemplateLiteral(node);
       default:
+        console.log(node);
         throw new Error("未定義または未実装のノードです");
     }
   }
@@ -193,6 +196,24 @@ export class EvalCalcWwaNode {
       default:
         throw new Error("存在しない論理式です!: "+node.operator);
     }
+  }
+
+  /** テンプレートリテラル構文の解析をする */
+  convertTemplateLiteral(node: Wwa.TemplateLiteral) {
+    const expressions = node.expressions.map((exp) => {
+      return this.evalWwaNode(exp);
+    })
+    const quasis = node.quasis.map((q: Wwa.TemplateElement) => {
+      return q.value.cooked;
+    })
+    let return_string = "";
+    quasis.forEach((q, id) => {
+      return_string += q;
+      if(expressions[id]) {
+        return_string += expressions[id];
+      }
+    });
+    return return_string;
   }
 
   /** Continue文を処理する */
@@ -563,27 +584,46 @@ export class EvalCalcWwaNode {
     if(!this.generator.wwa || isNaN(right)) {
       return 0;
     }
+    const currentValue = this.evalSymbol({
+      type: "Symbol",
+      name: node.kind
+    })
+    const setValue = (()=>{
+      switch(node.operator) {
+        case "+=":
+          return currentValue + right;
+        case "-=":
+          return currentValue - right;
+        case "*=":
+          return currentValue * right;
+        case "/=":
+          return currentValue / right;
+        case "=":
+        default:
+          return right;
+      }
+    })()
     switch(node.kind) {
       case 'PX':
-        this.generator.wwa.jumpSpecifiedXPos(right);
+        this.generator.wwa.jumpSpecifiedXPos(setValue);
         return 0;
       case 'PY':
-        this.generator.wwa.jumpSpecifiedYPos(right);
+        this.generator.wwa.jumpSpecifiedYPos(setValue);
         return 0;
       case 'AT':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, setValue, false);
         return 0;
       case 'DF':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, setValue, false);
         return 0;
       case 'GD':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.GOLD, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.GOLD, setValue, false);
         return 0;
       case 'HP':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, right, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, setValue, false);
         return 0;
       case 'HPMAX':
-        this.generator.wwa.setPlayerEnergyMax(right);
+        this.generator.wwa.setPlayerEnergyMax(setValue);
         return 0;
       /** for文用; 左辺値iに値を代入する場合: ex) i=i+2 */
       case 'i':
@@ -610,7 +650,7 @@ export class EvalCalcWwaNode {
       return 0;
     }
     const userVarIndex = this.evalWwaNode(node.index);
-    this.generator.wwa.setUserVar(userVarIndex, right);
+    this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
     return 0;
   }
 
