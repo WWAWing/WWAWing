@@ -47,6 +47,10 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertUpdateExpression(node as Acorn.UpdateExpression);
       case "LogicalExpression":
         return convertLogicalExpression(node as Acorn.LogicalExpression);
+      case "TemplateLiteral":
+        return convertTemplateLiteral(node as Acorn.TemplateLiteral);
+      case "TemplateElement":
+        return convertTemplateElement(node as Acorn.TemplateElement);
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -75,6 +79,21 @@ function convertLogicalExpression(node: Acorn.LogicalExpression): Wwa.WWANode {
     operator: node.operator,
     left: convertNodeAcornToWwa(node.left),
     right: convertNodeAcornToWwa(node.right)
+  }
+}
+
+function convertTemplateLiteral(node: Acorn.TemplateLiteral): Wwa.WWANode {
+  return {
+    type: "TemplateLiteral",
+    expressions: node.expressions.map((exp) => convertNodeAcornToWwa(exp) ),
+    quasis: node.quasis.map((q) => convertNodeAcornToWwa(q) )
+  }
+}
+
+function convertTemplateElement(node: Acorn.TemplateElement): Wwa.WWANode {
+  return {
+    type: "TemplateElement",
+    value: node.value
   }
 }
 
@@ -255,6 +274,10 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
   }
   switch(node.operator) {
     case "=":
+    case "+=":
+    case "-=":
+    case "*=":
+    case "/=":
       if (left.type === "Array2D") {
         if (left.name === "m" || left.name === "o") {
           return {
@@ -262,7 +285,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
             partsKind: left.name === "m" ? "map" : "object",
             destinationX: left.index0,
             destinationY: left.index1,
-            value: right
+            value: right,
+            operator: node.operator
           }
         } else {
           throw new Error("想定していない記号が2次元配列ででてきました");
@@ -272,13 +296,15 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           return {
             type: "ItemAssignment",
             itemBoxPosition1to12: left.index0,
-            value: right
+            value: right,
+            operator: node.operator
           }
         } else if (left.name === "v") {
           return {
             type: "UserVariableAssignment",
             index: left.index0,
-            value: right
+            value: right,
+            operator: node.operator
           }
         } else {
           throw new Error("");
@@ -296,13 +322,16 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         return {
           type: "SpecialParameterAssignment",
           kind: left.name,
-          value: right
+          value: right,
+          operator: node.operator
         }
       } else if (left.type === "Literal") {
         throw new Error("数値には代入できません");
       } else {
         throw new Error("代入できません");
       }
+    default:
+      throw new Error("想定していないオペレーターです")
   }
 }
 

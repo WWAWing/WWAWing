@@ -6024,23 +6024,110 @@ font-weight: bold;
         }
     }
     // User変数記憶
-    public setUserVar(index: number | string, value: number | string | boolean): void {
-        // number 型でない変数, NaN, 範囲外の index が来たら setUserNameVar に切り替える
-        if (this.isNotNumberTypeOrNaN(index) || !this.isValidUserVarIndex(index)) {
-            this.setUserNameVar(index, value);
-            // throw new Error (`代入先のユーザ変数の番号 が 0 以上 ${Consts.USER_VAR_NUM - 1} 以下の数値になっていません!`)
+    public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
+
+       const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
+            if (typeof indexOrName === "number") {
+                if (typeof value !== "number") {
+                    throw new TypeError("数字index変数への数値以外の代入は今のところできません。あらかじめご了承ください。");
+                }
+                this._wwaData.userVar[indexOrName] = typeof value === "number" ? this.toAssignableValue(value) : value;
+            } else { // indexOrName === "string"
+                this._wwaData.userNamedVar.set(indexOrName, value);
+            }
         }
-        else {
-            this._wwaData.userVar[index] = this.toAssignableValue(Number(value));
+
+        const _get = (indexOrName: number | string,): number | string | boolean => {
+            if (typeof indexOrName === "number") {
+                return this._wwaData.userVar[indexOrName];
+            } else { // indexOrName === "string"
+                return this._wwaData.userNamedVar.get(indexOrName);
+            }
         }
-        
+
+        const currentValue = _get(index);
+        if (typeof assignee === "number") {
+            switch (operator) {
+                case "+=": {
+                    if (typeof currentValue === "number") {
+                        // number += number
+                        _assign(index, currentValue + assignee);
+                    } else if (typeof currentValue === "string") {
+                        // string += number
+                        _assign(index, String(currentValue) + assignee);
+                    } else {
+                        // boolean += number
+                        throw new TypeError("boolean に number は足せません");
+                    }
+                    break;
+                }
+                case "-=": {
+                    if (typeof currentValue === "number") {
+                        // number -= number
+                        _assign(index, currentValue - assignee);
+                    } else {
+                        // string -= number
+                        // boolean -= number
+                        throw new TypeError("string/boolean から number は引けません")
+                    }
+                    break;
+                }
+                case "*=":
+                    if (typeof currentValue === "number") {
+                        // number *= number
+                        _assign(index, currentValue * assignee);
+                    } else {
+                        // string *= number
+                        // boolean *= number
+                        throw new TypeError("string/boolean に number はかけられません")
+                    }
+                    break;
+                case "/=":
+                    if (typeof currentValue === "number") {
+                        // number /= number
+                        _assign(index, currentValue / assignee);
+                    } else {
+                        // string /= number
+                        // boolean /= number
+                        throw new TypeError("string/boolean は number で割れません")
+                    }
+                    break;
+                case "=":
+                default:
+                    _assign(index, assignee);
+                    break;
+            }
+        } else if (typeof assignee === "string") {
+            switch (operator) {
+                case "+=": // 文字列連結
+                    // string += string
+                   _assign(index, currentValue + assignee);
+                   break;
+                case "=":
+                    _assign(index, assignee);
+                    break;
+                default:
+                    throw new TypeError("文字列を -=, *=, /= で複合代入することはできません");
+            }
+        } else { // typeof assignee === "boolean"
+             switch (operator) {
+                case "+=":
+                    if (typeof currentValue === "string") {
+                        // string += boolean
+                        _assign(index, currentValue + assignee);
+                    } else {
+                        throw new TypeError("number/boolean に boolean を足せません")
+                    }
+                   break;
+                case "=":
+                    _assign(index, assignee);
+                    break;
+                default:
+                    throw new TypeError("booleanを -=, *=, /= で複合代入することはできません");
+            }
+        }
         // メッセージボックスに表示されている変数を更新
         this._messageWindow.update();
-    }
-
-    // UserName変数記憶
-    public setUserNameVar(index: number | string, value: number | string | boolean): void {
-        this._wwaData.userNamedVar.set(index.toString(), value);
     }
 
     /**
