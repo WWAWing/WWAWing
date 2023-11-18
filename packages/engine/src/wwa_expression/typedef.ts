@@ -118,7 +118,7 @@ export interface TokenValues {
   energyMax: number;
   moveCount: number;
   playTime: number;
-  userVars: number[];
+  userVars: (number | string | boolean)[];
   partsPosition: Coord;
   playerCoord: Coord;
   partsId: number;
