@@ -58,3 +58,19 @@ export var arr2str4save = (x: any): string => {
 
 // 文字列を逆転
 export const reverse = (str: string) => str.split("").reverse().join("");
+
+
+export function assertNumber(value: unknown, varName: string): value is number {
+    if (typeof value !== "number") {
+        throw new TypeError(`${varName} が数値ではありません。`);
+    }
+    return true;
+}
+
+export function assertString(value: unknown, varName: string): value is string {
+    if (typeof value !== "string") {
+        throw new TypeError(`${varName} が文字列ではありません。`);
+    }
+    return true;
+}
+
