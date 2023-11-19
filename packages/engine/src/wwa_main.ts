@@ -2703,7 +2703,7 @@ export class WWA {
         if (this._dumpElement !== null) {
             for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
                 const varNum = i.toString(10);
-                this._dumpElement.querySelector(`.var${varNum}`).textContent = this._wwaData.userVar[i] + "";
+                this._dumpElement.querySelector(`.var${varNum}`).textContent = util.formatUserVarForDisplay(this._wwaData.userVar[i]) + "";
             }
         }
 
@@ -5424,7 +5424,9 @@ export class WWA {
                 const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ?
                     this._userVarNameList[currentIndex] : "名無し";
                 const label = `変数 ${currentIndex}: ${displayName}`;
-                helpMessage += `${label}: ${this._wwaData.userVar[currentIndex]}\n`;
+                
+
+                helpMessage += `${label}: ${util.formatUserVarForDisplay(this._wwaData.userVar[currentIndex])}\n`;
             }
             helpMessage += "\n操作方法\n";
             helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
@@ -5432,6 +5434,7 @@ export class WWA {
             this.generatePageAndReserveExecution(helpMessage, false, true);
         }
     }
+
 
     private _displayHelp(): void {
         if (this._player.isControllable()) {
