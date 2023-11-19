@@ -74,3 +74,24 @@ export function assertString(value: unknown, varName: string): value is string {
     return true;
 }
 
+/**
+ * ユーザ変数などで使われる値をデバッグ系ツールに出力するためのフォーマット関数
+ * string 型の場合にダブルクォートでくくったものを返します。それ以外の場合はそのまま値を文字列化したものを返します。
+ */
+export function formatUserVarForDisplay(value: number | string | boolean): string {
+  if (typeof value === "string") {
+    // 文字列かつ10文字以上の場合に省略表記にしたい
+    // しかしサロゲートペアを考慮してスプレッド記法を使おうとするとtsconfigのtargetを上げる必要があるため2023-11-19時点では断念。
+    // target を上げても問題ないとは思うが、ブラウザの対応状況を慎重に見極めたい。
+    /*
+    const arrayValue = [...value];
+    if (arrayValue.length > 10) {
+      return `"${arrayValue.slice(0, 10).join("")}...`;
+    }
+    */
+    return `"${value}"`;
+  }
+  return String(value);
+}
+
+
