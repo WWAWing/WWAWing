@@ -26,6 +26,7 @@ export function setup(dumpElmQuery: string): HTMLElement | null {
   informationElm.classList.add(INFORMATION_CLASS_NAME);
   informationElm.textContent =
     "強調されている番号にカーソルを乗せると説明が表示されます。";
+  // UNDONE: informationElm の下あたりに名前つき変数一覧を入れる
   tableElm.appendChild(headerTrElm);
   tableElm.appendChild(informationElm);
   let trNumElm: HTMLElement = null;

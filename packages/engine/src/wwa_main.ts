@@ -5416,6 +5416,7 @@ export class WWA {
             }
             for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
                 /** 終端まで行った際にはループして0番目から参照する */
+                // UNDONE: 0番の手前あたりに名前つき変数一覧を入れる
                 let currentIndex = (this._inlineUserVarViewer.topUserVarIndex + i) % Consts.USER_VAR_NUM;
                 const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ?
                     this._userVarNameList[currentIndex] : "名無し";
