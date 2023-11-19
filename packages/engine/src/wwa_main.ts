@@ -53,6 +53,7 @@ import { WWALoader, WWALoaderEventEmitter, Progress, LoaderError } from "@wwawin
 import { BrowserEventEmitter, IEventEmitter } from "@wwawing/event-emitter";
 import { fetchJsonFile } from "./json_api_client";
 import * as ExpressionParser from "./wwa_expression";
+import * as VarDump from "./wwa_vardump"
 
 let wwa: WWA
 
@@ -1080,12 +1081,12 @@ export class WWA {
             }
             if (status.kind === "noFileSpecified") {
                 // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
-                this._updateVarDumpInformationArea(status.errorMessage, false);
+                VarDump.updateInformation(this._dumpElement, status.errorMessage, false);
                 return;
             }
             if(status.kind !== "data") {
                 this._userVarNameListRequestError = status;
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+                VarDump.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
                 return;
             }
             if (!status.data || typeof status.data !== "object") {
@@ -1093,27 +1094,11 @@ export class WWA {
                     kind: "notObject",
                     errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
                 }
-                this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+                VarDump.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
                 return;
             }
             this._userVarNameList = this.convertUserVariableNameListToArray(status.data);
-            if (this._dumpElement === null) {
-                return;
-            }
-            // 以下は変数一覧に変数名を流し込む処理
-            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                const varNum = i.toString(10);
-                if (!this._userVarNameList[i]) {
-                    continue;
-                }
-                const varIndexQuery = `.var-index${varNum}`;
-                const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
-                const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
-                varLabelElement.textContent = this._userVarNameList[i];
-                varIndexElement.setAttribute("data-labelled-var-index", "true");
-                varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
-                varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
-            }
+            VarDump.updateLabels(this._dumpElement, this._userVarNameList);
         });
     }
 
@@ -2358,12 +2343,7 @@ export class WWA {
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
-        if (this._dumpElement !== null) {
-            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                const varNum = i.toString(10);
-                this._dumpElement.querySelector(`.var${varNum}`).textContent = this._wwaData.userVar[i] + "";
-            }
-        }
+        VarDump.updateValues(this._dumpElement, this._wwaData.userVar);
     }
     public vibration(isStrong: boolean) {
         this._gamePadStore.vibration(isStrong);
@@ -6132,17 +6112,6 @@ font-weight: bold;
         }
     }
 
-    private _updateVarDumpInformationArea(content: string, isError: boolean = false) {
-        if(!this._dumpElement) {
-            return;
-        }
-        const elm = this._dumpElement.querySelector(".varlist-information");
-        if (!elm) {
-            return;
-        }
-        elm.textContent = `${isError ? "【エラー】" : ""}${content}`;
-    }
-
     public shouldApplyGameOver({ isCalledByMacro }: { isCalledByMacro: boolean }) {
         if(isCalledByMacro) {
             return this._wwaData.gameOverPolicy === "default";
@@ -6225,90 +6194,7 @@ font-weight: bold;
 
 var isCopyRightClick = false;
 
-function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
-    const dumpElm = util.$qs(dumpElmQuery) as HTMLElement | null;
-    if (!dumpElm) {
-        // 要素がない場合は何もしない
-        return null;
-    }
-    dumpElm.classList.add("wwa-vardump-wrapper")
-    const tableElm = document.createElement("table");
-    const headerTrElm = document.createElement("tr");
-    const headerThElm = document.createElement("th");
-    const hideButton = document.createElement("button");
-    const informationElm = document.createElement("td");
-    hideButton.textContent = "隠す";
-    headerThElm.textContent = "変数一覧";
-    headerThElm.setAttribute("colspan", "10");
-    headerThElm.classList.add("varlist-header");
-    headerThElm.appendChild(hideButton);
-    headerTrElm.appendChild(headerThElm);
-    informationElm.setAttribute("colspan", "10");
-    informationElm.classList.add("varlist-information");
-    informationElm.textContent = "強調されている番号にカーソルを乗せると説明が表示されます。";
-    tableElm.appendChild(headerTrElm);
-    tableElm.appendChild(informationElm);
-    let trNumElm: HTMLElement = null;
-    let trValElm: HTMLElement = null;
-    for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-        if (i % 10 === 0) {
-            if (trNumElm !== null) {
-                tableElm.appendChild(trNumElm);
-                tableElm.appendChild(trValElm);
-            }
-            trNumElm = document.createElement("tr");
-            trNumElm.classList.add("var-number");
-            trValElm = document.createElement("tr");
-            trValElm.classList.add("var-val");
-        }
-        const thNumElm = document.createElement("th");
-        const varLabelElm = document.createElement("div");
-        varLabelElm.textContent = "-";
-        varLabelElm.setAttribute("aria-hidden", "true");
-        thNumElm.classList.add(`var-index${i}`);
-        const tdValElm = document.createElement("td");
-        thNumElm.textContent = i + "";
-        thNumElm.appendChild(varLabelElm);
-        tdValElm.classList.add(`var${i}`);
-        tdValElm.textContent = "-";
-        trNumElm.appendChild(thNumElm);
-        trValElm.appendChild(tdValElm);
-    }
-    if (Consts.USER_VAR_NUM % 10 !== 0) {
-        tableElm.appendChild(trNumElm);
-        tableElm.appendChild(trValElm);
-    }
-    dumpElm.appendChild(tableElm);
-    var varDispStatus = true;
-    hideButton.addEventListener("click", function (e) {
-        if (varDispStatus) {
-            this.textContent = "表示";
-            informationElm.style.display = "none";
-            Array.prototype.forEach.call(
-                tableElm.querySelectorAll("tr.var-number"), function (etr) {
-                    etr.style.display = "none";
-                });
-            Array.prototype.forEach.call(
-                tableElm.querySelectorAll("tr.var-val"), function (etr) {
-                    etr.style.display = "none";
-                });
-            varDispStatus = false;
-        } else {
-            this.textContent = "隠す";
-            informationElm.style.display = "";
-            Array.prototype.forEach.call(
-                tableElm.querySelectorAll("tr.var-number"), function (etr) {
-                    etr.style.display = "";
-                });
-            Array.prototype.forEach.call(
-                tableElm.querySelectorAll("tr.var-val"), function (etr) {
-                    etr.style.display = "";
-                });
-            varDispStatus = true;
-        }
-    });
-    return dumpElm;
-}
+
 
 function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHander: VoidFunction) {
     if (controllerElm === null) {
@@ -6360,7 +6246,7 @@ function start() {
     /** WWAの変数命名データを読み込む */
     var userVarNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-var-names-file");
     if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm") && canDisplayUserVars) {
-        dumpElm = setupVarDumpElement(dumpElmQuery);
+        dumpElm = VarDump.setup(dumpElmQuery);
     }
     var urlgateEnabled = true;
     if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
