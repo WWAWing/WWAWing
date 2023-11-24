@@ -1,9 +1,12 @@
 import { WWAConsts as Consts } from "../wwa_data";
 
+import * as UserVariableLabel from "./user-variable-label";
 import * as UserVariableViewer from "./user-variable-viewer";
 import * as UserVariableViewerSection from "./user-variable-viewer-section";
-import { INFORMATION_SELECTOR, USER_VARIABLE_VIEWER_SELECTOR } from "./constants"
 
+/**
+ * 指定された dumpElement 内にある UserVariableViewer の全ユーザ変数を userVar の値で更新します。
+ */
 export function updateValues(
   dumpElement: HTMLElement | undefined | null,
   userVar: (number | string | boolean)[]
@@ -12,13 +15,19 @@ export function updateValues(
     return;
   }
   Array.from({ length: Consts.USER_VAR_NUM }).map((_, index) => {
-    const element = dumpElement.querySelector(generateVarValueSelector(index));
-    if (element) {
-      element.textContent = String(userVar[index]);
+    const element = getUserVariableViewerValueCellElement(dumpElement, index);
+    if (!(element instanceof HTMLElement)) {
+      return;
     }
+    UserVariableViewer.Cell.setValue(element, userVar[index]);
   });
 }
 
+/**
+ * 指定された dumpElement 内にある UserVariableViewer の添字セルの
+ * ハイライト状態とラベルを userVarNameListで更新します。
+ * userVarNameList は添字がユーザ変数の添字に対応する変数名ラベルの配列です。
+ */
 export function updateLabels(
   dumpElement: HTMLElement | undefined | null,
   userVarNameList: string[]
@@ -32,23 +41,26 @@ export function updateLabels(
     if (!userVarName) {
       return;
     }
-    const varIndexElement = dumpElement.querySelector(
-      generateVarIndexSelector(index)
+    const varIndexElement = getUserVariableViewerIndexCellElement(
+      dumpElement,
+      index
     );
-    const varLabelElement = varIndexElement.querySelector(
-      `.${UserVariableViewer.Row.Column.Label.CLASS_NAME}`
-    );
-    if (
-      !(varIndexElement instanceof HTMLElement) ||
-      !(varLabelElement instanceof HTMLElement)
-    ) {
+    if (!(varIndexElement instanceof HTMLElement)) {
       return;
     }
-    UserVariableViewer.Row.Column.Label.setText(varLabelElement, userVarName);
-    UserVariableViewer.Row.Column.setupLabel(varIndexElement, varLabelElement);
+    const varLabelElement =
+      UserVariableViewer.Cell.getLabelElement(varIndexElement);
+    if (!(varLabelElement instanceof HTMLElement)) {
+      return;
+    }
+    UserVariableLabel.setText(varLabelElement, userVarName);
+    UserVariableViewer.Cell.setupLabel(varIndexElement, varLabelElement);
   });
 }
 
+/**
+ * 指定された dumpElement 内にある information 内のメッセージを更新します。
+ */
 export function updateInformation(
   dumpElement: HTMLElement | undefined | null,
   content: string,
@@ -57,7 +69,7 @@ export function updateInformation(
   if (!dumpElement) {
     return;
   }
-  const element = dumpElement.querySelector(INFORMATION_SELECTOR);
+  const element = getInformationElement(dumpElement);
   if (!(element instanceof HTMLElement)) {
     return;
   }
@@ -68,10 +80,33 @@ export function updateInformation(
   );
 }
 
-function generateVarIndexSelector(index: number): string {
-  return `${USER_VARIABLE_VIEWER_SELECTOR} > tbody > tr > th[data-var-index="${CSS.escape(String(index))}"]`;
+
+const USER_VARIABLE_VIEWER_ROW_SELECTOR = `.${UserVariableViewerSection.CLASS_NAME} > .${UserVariableViewer.CLASS_NAME} > tbody > tr`;
+
+function getInformationElement(dumpElement: HTMLElement) {
+  return dumpElement.querySelector(
+    `.${UserVariableViewerSection.CLASS_NAME} > header > .${UserVariableViewerSection.Header.Information.CLASS_NAME}`
+  );
 }
 
-function generateVarValueSelector(index: number): string {
-  return `${USER_VARIABLE_VIEWER_SELECTOR} > tbody > tr > td[data-var-index="${CSS.escape(String(index))}"]`;
+function getUserVariableViewerIndexCellElement(
+  dumpElement: HTMLElement,
+  index: number
+) {
+  return dumpElement.querySelector(
+    `${USER_VARIABLE_VIEWER_ROW_SELECTOR} > th[data-var-index="${CSS.escape(
+      String(index)
+    )}"]`
+  );
+}
+
+function getUserVariableViewerValueCellElement(
+  dumpElement: HTMLElement,
+  index: number
+) {
+  return dumpElement.querySelector(
+    `${USER_VARIABLE_VIEWER_ROW_SELECTOR} > td[data-var-index="${CSS.escape(
+      String(index)
+    )}"]`
+  );
 }

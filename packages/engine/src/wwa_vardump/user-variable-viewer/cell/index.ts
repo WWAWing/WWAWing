@@ -1,6 +1,4 @@
-import * as Label from "./label";
-
-export { Label }
+import * as Label from "../../user-variable-label";
 
 export type ContentType = "index" | "value";
 
@@ -8,6 +6,8 @@ export interface Props {
   index: number;
   contentType: ContentType;
 }
+
+const BLANK = "-";
 
 export function createElement({
   index,
@@ -40,6 +40,18 @@ export function setupLabel(
   );
 }
 
+export function setValue(element: HTMLElement, value: number | string | boolean): void {
+  element.textContent = String(value);
+}
+
+export function clearValue(element: HTMLElement) {
+  element.textContent = BLANK;
+}
+
+export function getLabelElement(element: HTMLElement): HTMLElement | null {
+  return element.querySelector(`.${Label.CLASS_NAME}`);
+}
+
 function resolveContent({
   contentType,
   index,
@@ -51,7 +63,7 @@ function resolveContent({
     case "index":
       return { tagName: "th", defaultValue: String(index) };
     case "value":
-      return { tagName: "td", defaultValue: "-" };
+      return { tagName: "td", defaultValue: BLANK };
     default:
       contentType satisfies never;
       throw new TypeError(`未定義の contentType です: ${contentType}`);

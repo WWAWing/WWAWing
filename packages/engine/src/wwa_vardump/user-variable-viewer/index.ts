@@ -1,9 +1,10 @@
 import { WWAConsts as Consts } from "../../wwa_data";
 import * as Row from "./row";
+import * as Cell from "./cell";
 
 export const CLASS_NAME = "user-variable-viewer";
 
-export { Row };
+export { Row, Cell };
 
 export function createElement(): HTMLTableElement {
   const element = document.createElement("table");

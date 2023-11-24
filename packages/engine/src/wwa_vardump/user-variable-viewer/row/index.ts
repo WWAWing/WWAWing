@@ -1,8 +1,6 @@
 import { WWAConsts as Consts } from "../../../wwa_data";
 
-import * as Column from "./column";
-
-export { Column };
+import * as Cell from "../cell";
 
 export interface Props {
   rowIndex: number;
@@ -28,7 +26,7 @@ export function createElement({ rowIndex, isLastRowSet }: Props) {
   // 行の中身を生成
   Array.from({ length: columnNum })
     .map((_, colIndex) => {
-      return Column.createElement({
+      return Cell.createElement({
         contentType,
         index: Math.floor(rowIndex / 2) * 10 + colIndex,
       });

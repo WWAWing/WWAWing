@@ -1,4 +1,4 @@
-export const CLASS_NAME = "label";
+export const CLASS_NAME = "user-variable-label";
 
 export function createElement(): HTMLElement {
   const element = document.createElement("div");
