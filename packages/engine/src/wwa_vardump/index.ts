@@ -22,7 +22,6 @@ export function setup(dumpElmQuery: string): HTMLElement | null {
     UserVariableViewerSection.createElement({ userVariableKind: "named" })
   );
   */
-
   element.appendChild(
     UserVariableViewerSection.createElement({ userVariableKind: "indexed" })
   );

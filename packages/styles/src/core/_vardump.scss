@@ -34,18 +34,21 @@
         }
       }
     }
-    > table.user-variable-viewer {
+    > .user-variable-viewer {
       &[aria-hidden="true"] {
         display: none;
       }
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
       margin: 0 8px 8px 8px;
       width: calc(100% - 16px);
       box-sizing: border-box;
       text-align: center;
       border-spacing: 1px;
-      > tbody {
-        > tr[data-row-content-type="index"] > th {
-          border-radius: 8px 8px 0 0;
+      > .cell {
+        margin: 1px;
+        > .index {
+          border-radius: 4px 4px 0 0;
           background-color: #FFFF66;
           position: relative;
 
@@ -71,8 +74,8 @@
             }
           }
         }
-        > tr[data-row-content-type="value"] > td {
-          border-radius: 0 0 8px 8px;
+        .value {
+          border-radius: 0 0 4px 4px;
           background-color: #FFFFCC;
         }
       }

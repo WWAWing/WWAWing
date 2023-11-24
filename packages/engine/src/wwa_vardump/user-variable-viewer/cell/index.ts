@@ -1,30 +1,33 @@
 import * as Label from "../../user-variable-label";
 
-export type ContentType = "index" | "value";
-
 export interface Props {
   index: number;
-  contentType: ContentType;
 }
 
 const BLANK = "-";
 
-export function createElement({
-  index,
-  contentType,
-}: Props): HTMLTableCellElement {
-  const indexString = String(index);
-  const { tagName, defaultValue } = resolveContent({ contentType, index });
-  const cellElement = document.createElement(tagName);
-  cellElement.textContent = defaultValue;
-  cellElement.dataset.varIndex = indexString;
+export function createElement({ index }: Props): HTMLElement {
+  const element = document.createElement("div");
+  element.classList.add("cell")
+  element.dataset.varIndex = String(index);
+  element.appendChild(createIndexElement(index));
+  element.appendChild(createValueElement());
+  return element;
+}
 
-  // index 表示部にラベル生成
-  if (contentType === "index") {
-    cellElement.appendChild(Label.createElement());
-  }
+function createIndexElement(index: number): HTMLElement {
+  const element = document.createElement("div");
+  element.classList.add("index");
+  element.textContent = String(index);
+  element.appendChild(Label.createElement());
+  return element;
+}
 
-  return cellElement;
+function createValueElement(): HTMLElement {
+  const element = document.createElement("div");
+  element.classList.add("value");
+  element.textContent = BLANK;
+  return element;
 }
 
 export function setupLabel(
@@ -50,22 +53,4 @@ export function clearValue(element: HTMLElement) {
 
 export function getLabelElement(element: HTMLElement): HTMLElement | null {
   return element.querySelector(`.${Label.CLASS_NAME}`);
-}
-
-function resolveContent({
-  contentType,
-  index,
-}: Pick<Props, "index" | "contentType">): {
-  tagName: "th" | "td";
-  defaultValue: string;
-} {
-  switch (contentType) {
-    case "index":
-      return { tagName: "th", defaultValue: String(index) };
-    case "value":
-      return { tagName: "td", defaultValue: BLANK };
-    default:
-      contentType satisfies never;
-      throw new TypeError(`未定義の contentType です: ${contentType}`);
-  }
 }

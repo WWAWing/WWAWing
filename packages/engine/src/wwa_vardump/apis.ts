@@ -82,7 +82,7 @@ export function updateInformation(
 
 
 const INDEXED_USER_VARIABLE_VIEWER_SECTION_SELECTOR = `.${UserVariableViewerSection.CLASS_NAME}[data-user-variable-kind="indexed"]`;
-const INDEXED_USER_VARIABLE_VIEWER_ROW_SELECTOR = `${INDEXED_USER_VARIABLE_VIEWER_SECTION_SELECTOR} > .${UserVariableViewer.CLASS_NAME} > tbody > tr`;
+const INDEXED_USER_VARIABLE_VIEWER_SELECTOR = `${INDEXED_USER_VARIABLE_VIEWER_SECTION_SELECTOR} > .${UserVariableViewer.CLASS_NAME}`;
 
 function getIndexedUserVarInformationElement(dumpElement: HTMLElement) {
   return dumpElement.querySelector(
@@ -95,9 +95,9 @@ function getIndexedUserVariableViewerIndexCellElement(
   index: number
 ) {
   return dumpElement.querySelector(
-    `${INDEXED_USER_VARIABLE_VIEWER_ROW_SELECTOR} > th[data-var-index="${CSS.escape(
+    `${INDEXED_USER_VARIABLE_VIEWER_SELECTOR} > .cell[data-var-index="${CSS.escape(
       String(index)
-    )}"]`
+    )}"] > .index`
   );
 }
 
@@ -106,8 +106,8 @@ function getIndexedUserVariableViewerValueCellElement(
   index: number
 ) {
   return dumpElement.querySelector(
-    `${INDEXED_USER_VARIABLE_VIEWER_ROW_SELECTOR} > td[data-var-index="${CSS.escape(
+    `${INDEXED_USER_VARIABLE_VIEWER_SELECTOR} > .cell[data-var-index="${CSS.escape(
       String(index)
-    )}"]`
+    )}"] > .value`
   );
 }
