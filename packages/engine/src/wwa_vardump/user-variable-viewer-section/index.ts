@@ -6,22 +6,22 @@ export const CLASS_NAME = "user-variable-viewer-section";
 export { Header };
 
 export interface Props {
-  header: Omit<Header.Props, "contentVisibilityToggleButton"> & {
-    contentVisibilityToggleButton?: Header.Props["contentVisibilityToggleButton"];
-  };
+  userVariableKind: "indexed" | "named";
 }
 
-export function createElement({ header }: Props): HTMLElement {
+export function createElement({ userVariableKind }: Props): HTMLElement {
   const element = document.createElement("section");
   element.classList.add(CLASS_NAME);
+  element.dataset.userVariableKind = userVariableKind;
 
-  const userVariableViewerElement = UserVariableViewer.createElement();
+  const userVariableViewerElement = UserVariableViewer.createElement( { userVariableKind });
   const headerElement = Header.createElement({
-    ...header,
+    heading: {
+      text: userVariableKind === "named" ? "名前つき変数一覧" : "変数一覧",
+    },
+    information: (userVariableKind === "indexed" || undefined) && {},
     contentVisibilityToggleButton: {
-      ...header.contentVisibilityToggleButton,
       onClick: (event) => {
-        header.contentVisibilityToggleButton?.onClick(event);
         const informationElm = headerElement.querySelector(
           `.${Header.Information.CLASS_NAME}`
         );

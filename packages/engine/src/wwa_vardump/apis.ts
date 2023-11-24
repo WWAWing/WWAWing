@@ -15,7 +15,7 @@ export function updateValues(
     return;
   }
   Array.from({ length: Consts.USER_VAR_NUM }).map((_, index) => {
-    const element = getUserVariableViewerValueCellElement(dumpElement, index);
+    const element = getIndexedUserVariableViewerValueCellElement(dumpElement, index);
     if (!(element instanceof HTMLElement)) {
       return;
     }
@@ -41,7 +41,7 @@ export function updateLabels(
     if (!userVarName) {
       return;
     }
-    const varIndexElement = getUserVariableViewerIndexCellElement(
+    const varIndexElement = getIndexedUserVariableViewerIndexCellElement(
       dumpElement,
       index
     );
@@ -69,7 +69,7 @@ export function updateInformation(
   if (!dumpElement) {
     return;
   }
-  const element = getInformationElement(dumpElement);
+  const element = getIndexedUserVarInformationElement(dumpElement);
   if (!(element instanceof HTMLElement)) {
     return;
   }
@@ -81,31 +81,32 @@ export function updateInformation(
 }
 
 
-const USER_VARIABLE_VIEWER_ROW_SELECTOR = `.${UserVariableViewerSection.CLASS_NAME} > .${UserVariableViewer.CLASS_NAME} > tbody > tr`;
+const INDEXED_USER_VARIABLE_VIEWER_SECTION_SELECTOR = `.${UserVariableViewerSection.CLASS_NAME}[data-user-variable-kind="indexed"]`;
+const INDEXED_USER_VARIABLE_VIEWER_ROW_SELECTOR = `${INDEXED_USER_VARIABLE_VIEWER_SECTION_SELECTOR} > .${UserVariableViewer.CLASS_NAME} > tbody > tr`;
 
-function getInformationElement(dumpElement: HTMLElement) {
+function getIndexedUserVarInformationElement(dumpElement: HTMLElement) {
   return dumpElement.querySelector(
-    `.${UserVariableViewerSection.CLASS_NAME} > header > .${UserVariableViewerSection.Header.Information.CLASS_NAME}`
+    `.${INDEXED_USER_VARIABLE_VIEWER_SECTION_SELECTOR} > header > .${UserVariableViewerSection.Header.Information.CLASS_NAME}`
   );
 }
 
-function getUserVariableViewerIndexCellElement(
+function getIndexedUserVariableViewerIndexCellElement(
   dumpElement: HTMLElement,
   index: number
 ) {
   return dumpElement.querySelector(
-    `${USER_VARIABLE_VIEWER_ROW_SELECTOR} > th[data-var-index="${CSS.escape(
+    `${INDEXED_USER_VARIABLE_VIEWER_ROW_SELECTOR} > th[data-var-index="${CSS.escape(
       String(index)
     )}"]`
   );
 }
 
-function getUserVariableViewerValueCellElement(
+function getIndexedUserVariableViewerValueCellElement(
   dumpElement: HTMLElement,
   index: number
 ) {
   return dumpElement.querySelector(
-    `${USER_VARIABLE_VIEWER_ROW_SELECTOR} > td[data-var-index="${CSS.escape(
+    `${INDEXED_USER_VARIABLE_VIEWER_ROW_SELECTOR} > td[data-var-index="${CSS.escape(
       String(index)
     )}"]`
   );

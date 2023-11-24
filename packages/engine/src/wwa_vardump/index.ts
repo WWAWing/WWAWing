@@ -17,10 +17,14 @@ export function setup(dumpElmQuery: string): HTMLElement | null {
   }
 
   element.classList.add(CLASS_NAME);
+  /*
   element.appendChild(
-    UserVariableViewerSection.createElement({
-      header: { heading: { text: "変数一覧" } },
-    })
+    UserVariableViewerSection.createElement({ userVariableKind: "named" })
+  );
+  */
+
+  element.appendChild(
+    UserVariableViewerSection.createElement({ userVariableKind: "indexed" })
   );
 
   return element;

@@ -1,8 +1,12 @@
 .wwa-vardump-wrapper {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 
   > .user-variable-viewer-section {
+    & + .user-variable-viewer-section {
+      margin-top: 16px;
+    }
     width: 560px;
     box-sizing: border-box;
     border-radius: 8px;
