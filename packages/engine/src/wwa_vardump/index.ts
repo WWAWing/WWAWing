@@ -25,11 +25,11 @@ export function setup(dumpElmQuery: string): HTMLElement | null {
   element.classList.add(CLASS_NAME);
   /*
   element.appendChild(
-    UserVariableListSection.createElement({ userVariableKind: "named" })
+    UserVariableListSection.createElement({ kind: "named" })
   );
   */
   element.appendChild(
-    UserVariableListSection.createElement({ kind: "indexed" })
+    UserVariableListSection.createElement({ kind: "numbered" })
   );
 
   return element;

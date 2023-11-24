@@ -1,4 +1,5 @@
 import * as Header from "./header";
+import type * as UserVariableCard from "../user-variable-card";
 import * as UserVariableList from "../user-variable-list";
 
 export const CLASS_NAME = "user-variable-list-section";
@@ -6,7 +7,7 @@ export const CLASS_NAME = "user-variable-list-section";
 export { Header };
 
 export interface Props {
-  kind: "indexed" | "named";
+  kind: UserVariableCard.Kind;
 }
 
 export function createElement({ kind }: Props): HTMLElement {
@@ -19,7 +20,7 @@ export function createElement({ kind }: Props): HTMLElement {
     heading: {
       text: kind === "named" ? "名前つき変数一覧" : "変数一覧",
     },
-    information: (kind === "indexed" || undefined) && {},
+    information: (kind === "numbered" || undefined) && {},
     contentVisibilityToggleButton: {
       onClick: (event) => {
         const informationElm = headerElement.querySelector(

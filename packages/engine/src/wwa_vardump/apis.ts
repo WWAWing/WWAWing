@@ -16,7 +16,7 @@ export function updateValues(
     return;
   }
   Array.from({ length: Consts.USER_VAR_NUM }).map((_, index) => {
-    const element = getIndexedUserVariableCardValueElement(
+    const element = getNumberedUserVariableCardValueElement(
       dumpElement,
       index
     );
@@ -45,7 +45,7 @@ export function updateLabels(
     if (!userVarName) {
       return;
     }
-    const varIndexElement = getIndexedUserVariableCardIndexElement(
+    const varIndexElement = getNumberedUserVariableCardIndexElement(
       dumpElement,
       index
     );
@@ -72,7 +72,7 @@ export function updateInformation(
   if (!dumpElement) {
     return;
   }
-  const element = getIndexedUserVarInformationElement(dumpElement);
+  const element = getNumberedUserVarInformationElement(dumpElement);
   if (!(element instanceof HTMLElement)) {
     return;
   }
@@ -83,36 +83,36 @@ export function updateInformation(
   );
 }
 
-const INDEXED_USER_VARIABLE_LIST_SECTION_SELECTOR = `.${UserVariableListSection.CLASS_NAME}[data-kind="indexed"]`;
+const NUMBERED_USER_VARIABLE_LIST_SECTION_SELECTOR = `.${UserVariableListSection.CLASS_NAME}[data-kind="numbered"]`;
 
-function getIndexedUserVarInformationElement(dumpElement: HTMLElement) {
+function getNumberedUserVarInformationElement(dumpElement: HTMLElement) {
   return dumpElement.querySelector(
-    `.${INDEXED_USER_VARIABLE_LIST_SECTION_SELECTOR} > header > .${UserVariableListSection.Header.Information.CLASS_NAME}`
+    `.${NUMBERED_USER_VARIABLE_LIST_SECTION_SELECTOR} > header > .${UserVariableListSection.Header.Information.CLASS_NAME}`
   );
 }
 
-function generateIndexedUserVariableCardSelector(index: number) {
-  return `${INDEXED_USER_VARIABLE_LIST_SECTION_SELECTOR} > .${
+function generateNumberedUserVariableCardSelector(index: number) {
+  return `${NUMBERED_USER_VARIABLE_LIST_SECTION_SELECTOR} > .${
     UserVariableList.CLASS_NAME
   } > li > .${UserVariableCard.CLASS_NAME}[data-var-index="${CSS.escape(
     String(index)
   )}"]`;
 }
 
-function getIndexedUserVariableCardIndexElement(
+function getNumberedUserVariableCardIndexElement(
   dumpElement: HTMLElement,
   index: number
 ) {
   return dumpElement.querySelector(
-    `${generateIndexedUserVariableCardSelector(index)} > .index`
+    `${generateNumberedUserVariableCardSelector(index)} > .index`
   );
 }
 
-function getIndexedUserVariableCardValueElement(
+function getNumberedUserVariableCardValueElement(
   dumpElement: HTMLElement,
   index: number
 ) {
   return dumpElement.querySelector(
-    `${generateIndexedUserVariableCardSelector(index)} > .value`
+    `${generateNumberedUserVariableCardSelector(index)} > .value`
   );
 }

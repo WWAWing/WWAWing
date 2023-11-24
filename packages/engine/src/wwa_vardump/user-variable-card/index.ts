@@ -1,5 +1,7 @@
 import * as UserVariableLabel from "../user-variable-label";
 
+export type Kind = "numbered" | "named";
+
 export interface Props {
   index: number;
 }
