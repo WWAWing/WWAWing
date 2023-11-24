@@ -3,8 +3,8 @@
   flex-direction: column;
   align-items: center;
 
-  > .user-variable-viewer-section {
-    & + .user-variable-viewer-section {
+  > .user-variable-list-section {
+    & + .user-variable-list-section {
       margin-top: 16px;
     }
     width: 560px;
@@ -34,18 +34,20 @@
         }
       }
     }
-    > .user-variable-viewer {
+    > .user-variable-list {
       &[aria-hidden="true"] {
         display: none;
       }
       display: grid;
       grid-template-columns: repeat(10, 1fr);
       margin: 0 8px 8px 8px;
+      padding: 0;
       width: calc(100% - 16px);
       box-sizing: border-box;
       text-align: center;
       border-spacing: 1px;
-      > .cell {
+      list-style: none;
+      > li > .user-variable-card {
         margin: 1px;
         > .index {
           border-radius: 4px 4px 0 0;

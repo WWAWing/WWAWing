@@ -1,14 +1,15 @@
-import * as Label from "../../user-variable-label";
+import * as UserVariableLabel from "../user-variable-label";
 
 export interface Props {
   index: number;
 }
 
 const BLANK = "-";
+export const CLASS_NAME = "user-variable-card"
 
 export function createElement({ index }: Props): HTMLElement {
   const element = document.createElement("div");
-  element.classList.add("cell")
+  element.classList.add(CLASS_NAME)
   element.dataset.varIndex = String(index);
   element.appendChild(createIndexElement(index));
   element.appendChild(createValueElement());
@@ -19,7 +20,7 @@ function createIndexElement(index: number): HTMLElement {
   const element = document.createElement("div");
   element.classList.add("index");
   element.textContent = String(index);
-  element.appendChild(Label.createElement());
+  element.appendChild(UserVariableLabel.createElement());
   return element;
 }
 
@@ -52,5 +53,5 @@ export function clearValue(element: HTMLElement) {
 }
 
 export function getLabelElement(element: HTMLElement): HTMLElement | null {
-  return element.querySelector(`.${Label.CLASS_NAME}`);
+  return element.querySelector(`.${UserVariableLabel.CLASS_NAME}`);
 }

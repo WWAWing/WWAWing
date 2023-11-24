@@ -1,11 +1,17 @@
 import { $qs } from "../wwa_util";
 
+import * as UserVariableCard from "./user-variable-card";
 import * as UserVariableLabel from "./user-variable-label";
-import * as UserVariableViewer from "./user-variable-viewer";
-import * as UserVariableViewerSection from "./user-variable-viewer-section";
+import * as UserVariableList from "./user-variable-list";
+import * as UserVariableListSection from "./user-variable-list-section";
 
 export * from "./apis";
-export { UserVariableLabel, UserVariableViewer, UserVariableViewerSection };
+export {
+  UserVariableCard,
+  UserVariableLabel,
+  UserVariableList,
+  UserVariableListSection,
+};
 
 export const CLASS_NAME = "wwa-vardump-wrapper";
 
@@ -19,11 +25,11 @@ export function setup(dumpElmQuery: string): HTMLElement | null {
   element.classList.add(CLASS_NAME);
   /*
   element.appendChild(
-    UserVariableViewerSection.createElement({ userVariableKind: "named" })
+    UserVariableListSection.createElement({ userVariableKind: "named" })
   );
   */
   element.appendChild(
-    UserVariableViewerSection.createElement({ userVariableKind: "indexed" })
+    UserVariableListSection.createElement({ kind: "indexed" })
   );
 
   return element;

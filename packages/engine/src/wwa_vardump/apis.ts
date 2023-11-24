@@ -1,8 +1,9 @@
 import { WWAConsts as Consts } from "../wwa_data";
 
+import * as UserVariableCard from "./user-variable-card";
 import * as UserVariableLabel from "./user-variable-label";
-import * as UserVariableViewer from "./user-variable-viewer";
-import * as UserVariableViewerSection from "./user-variable-viewer-section";
+import * as UserVariableList from "./user-variable-list";
+import * as UserVariableListSection from "./user-variable-list-section";
 
 /**
  * 指定された dumpElement 内にある UserVariableViewer の全ユーザ変数を userVar の値で更新します。
@@ -15,11 +16,14 @@ export function updateValues(
     return;
   }
   Array.from({ length: Consts.USER_VAR_NUM }).map((_, index) => {
-    const element = getIndexedUserVariableViewerValueCellElement(dumpElement, index);
+    const element = getIndexedUserVariableCardValueElement(
+      dumpElement,
+      index
+    );
     if (!(element instanceof HTMLElement)) {
       return;
     }
-    UserVariableViewer.Cell.setValue(element, userVar[index]);
+    UserVariableCard.setValue(element, userVar[index]);
   });
 }
 
@@ -41,20 +45,19 @@ export function updateLabels(
     if (!userVarName) {
       return;
     }
-    const varIndexElement = getIndexedUserVariableViewerIndexCellElement(
+    const varIndexElement = getIndexedUserVariableCardIndexElement(
       dumpElement,
       index
     );
     if (!(varIndexElement instanceof HTMLElement)) {
       return;
     }
-    const varLabelElement =
-      UserVariableViewer.Cell.getLabelElement(varIndexElement);
+    const varLabelElement = UserVariableCard.getLabelElement(varIndexElement);
     if (!(varLabelElement instanceof HTMLElement)) {
       return;
     }
     UserVariableLabel.setText(varLabelElement, userVarName);
-    UserVariableViewer.Cell.setupLabel(varIndexElement, varLabelElement);
+    UserVariableCard.setupLabel(varIndexElement, varLabelElement);
   });
 }
 
@@ -73,41 +76,43 @@ export function updateInformation(
   if (!(element instanceof HTMLElement)) {
     return;
   }
-  UserVariableViewerSection.Header.Information.updateText(
+  UserVariableListSection.Header.Information.updateText(
     element,
     content,
     isError
   );
 }
 
-
-const INDEXED_USER_VARIABLE_VIEWER_SECTION_SELECTOR = `.${UserVariableViewerSection.CLASS_NAME}[data-user-variable-kind="indexed"]`;
-const INDEXED_USER_VARIABLE_VIEWER_SELECTOR = `${INDEXED_USER_VARIABLE_VIEWER_SECTION_SELECTOR} > .${UserVariableViewer.CLASS_NAME}`;
+const INDEXED_USER_VARIABLE_LIST_SECTION_SELECTOR = `.${UserVariableListSection.CLASS_NAME}[data-kind="indexed"]`;
 
 function getIndexedUserVarInformationElement(dumpElement: HTMLElement) {
   return dumpElement.querySelector(
-    `.${INDEXED_USER_VARIABLE_VIEWER_SECTION_SELECTOR} > header > .${UserVariableViewerSection.Header.Information.CLASS_NAME}`
+    `.${INDEXED_USER_VARIABLE_LIST_SECTION_SELECTOR} > header > .${UserVariableListSection.Header.Information.CLASS_NAME}`
   );
 }
 
-function getIndexedUserVariableViewerIndexCellElement(
+function generateIndexedUserVariableCardSelector(index: number) {
+  return `${INDEXED_USER_VARIABLE_LIST_SECTION_SELECTOR} > .${
+    UserVariableList.CLASS_NAME
+  } > li > .${UserVariableCard.CLASS_NAME}[data-var-index="${CSS.escape(
+    String(index)
+  )}"]`;
+}
+
+function getIndexedUserVariableCardIndexElement(
   dumpElement: HTMLElement,
   index: number
 ) {
   return dumpElement.querySelector(
-    `${INDEXED_USER_VARIABLE_VIEWER_SELECTOR} > .cell[data-var-index="${CSS.escape(
-      String(index)
-    )}"] > .index`
+    `${generateIndexedUserVariableCardSelector(index)} > .index`
   );
 }
 
-function getIndexedUserVariableViewerValueCellElement(
+function getIndexedUserVariableCardValueElement(
   dumpElement: HTMLElement,
   index: number
 ) {
   return dumpElement.querySelector(
-    `${INDEXED_USER_VARIABLE_VIEWER_SELECTOR} > .cell[data-var-index="${CSS.escape(
-      String(index)
-    )}"] > .value`
+    `${generateIndexedUserVariableCardSelector(index)} > .value`
   );
 }

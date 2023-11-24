@@ -1,25 +1,25 @@
 import * as Header from "./header";
-import * as UserVariableViewer from "../user-variable-viewer";
+import * as UserVariableList from "../user-variable-list";
 
-export const CLASS_NAME = "user-variable-viewer-section";
+export const CLASS_NAME = "user-variable-list-section";
 
 export { Header };
 
 export interface Props {
-  userVariableKind: "indexed" | "named";
+  kind: "indexed" | "named";
 }
 
-export function createElement({ userVariableKind }: Props): HTMLElement {
+export function createElement({ kind }: Props): HTMLElement {
   const element = document.createElement("section");
   element.classList.add(CLASS_NAME);
-  element.dataset.userVariableKind = userVariableKind;
+  element.dataset.kind = kind;
 
-  const userVariableViewerElement = UserVariableViewer.createElement( { userVariableKind });
+  const userVariableViewerElement = UserVariableList.createElement( { kind });
   const headerElement = Header.createElement({
     heading: {
-      text: userVariableKind === "named" ? "名前つき変数一覧" : "変数一覧",
+      text: kind === "named" ? "名前つき変数一覧" : "変数一覧",
     },
-    information: (userVariableKind === "indexed" || undefined) && {},
+    information: (kind === "indexed" || undefined) && {},
     contentVisibilityToggleButton: {
       onClick: (event) => {
         const informationElm = headerElement.querySelector(
