@@ -167,6 +167,11 @@ export class WWA {
     private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
     private _isDisallowLoadOldSave: boolean = false;
 
+    private _userVar: {
+        named: Map<string, number | string | boolean>
+        numbered: (number | string | boolean)[];
+    };
+
     /**
      * ゲーム内ユーザ変数ビューワの設定
      */
@@ -526,6 +531,10 @@ export class WWA {
                 this._wwaData.statusEnergy, this._wwaData.statusStrength,
                 this._wwaData.statusDefence, this._wwaData.statusGold);
             this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax, this._wwaData.moves, this._wwaData.gameSpeedIndex);
+            this._userVar = {
+                numbered: Array.from({length: Consts.USER_VAR_NUM}).map(() => 0),
+                named: new Map()
+            };
             this._objectMovingDataManager = new ObjectMovingDataManager(this, this._player);
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
@@ -2530,7 +2539,7 @@ export class WWA {
                 const kind =this._inlineUserVarViewer.kind;
                 let isInputKey = false;
                 const varNum = kind === "named"
-                        ? this._wwaData.userNamedVar.size
+                        ? this._userVar.named.size
                         : Consts.USER_VAR_NUM;
  
                 if (this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
@@ -2707,8 +2716,8 @@ export class WWA {
         }
         VarDump.Api.updateAllVariables({
           dumpElement: this._dumpElement,
-          userVar: this._wwaData.userVar,
-          namedUserVar: this._wwaData.userNamedVar
+          userVar: this._userVar.numbered,
+          namedUserVar: this._userVar.named,
         });
 
         /** フレームごとにユーザー定義独自関数を呼び出す */
@@ -4741,6 +4750,8 @@ export class WWA {
         qd.frameCount = this._player.getFrameCount();
         qd.gameSpeedIndex = this._player.getSpeedIndex();
         qd.playTime = this._playTimeCalculator?.calculateTimeMs() ?? 0;
+        qd.userVar = this._userVar.numbered;
+        qd.userNamedVar = [...this._userVar.named];
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
@@ -4893,6 +4904,8 @@ export class WWA {
     }
 
     private _applyQuickLoad(newData: WWAData): void {
+        this._userVar.named = new Map(newData.userNamedVar);
+        this._userVar.numbered = newData.userVar;
         this._player.setEnergyMax(newData.statusEnergyMax);
         this._player.setEnergy(newData.statusEnergy);
         this._player.setStrength(newData.statusStrength);
@@ -5413,7 +5426,7 @@ export class WWA {
         let helpMessage: string = "";
         this._inlineUserVarViewer.isVisible = true;
         if (this._player.isControllable()) {
-          const namedUserVars = [...this._wwaData.userNamedVar];
+          const namedUserVars = [...this._userVar.named];
           if (this._inlineUserVarViewer.kind === "named") {
             helpMessage = "名前つき変数一覧\n";
             if (namedUserVars.length === 0) {
@@ -5451,7 +5464,7 @@ export class WWA {
               let currentIndex = (this._inlineUserVarViewer.topUserVarIndex[this._inlineUserVarViewer.kind] + i) % Consts.USER_VAR_NUM;
               const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ? this._userVarNameList[currentIndex] : "名無し";
               const label = `変数 ${currentIndex}: ${displayName}`;
-              helpMessage += `${label}: ${util.formatUserVarForDisplay(this._wwaData.userVar[currentIndex]), true}\n`;
+              helpMessage += `${label}: ${util.formatUserVarForDisplay(this._userVar.numbered[currentIndex], true)}\n`;
             }
           }
           helpMessage += "\n操作方法\n";
@@ -6061,17 +6074,17 @@ font-weight: bold;
                 if (typeof value !== "number") {
                     throw new TypeError("数字index変数への数値以外の代入は今のところできません。あらかじめご了承ください。");
                 }
-                this._wwaData.userVar[indexOrName] = typeof value === "number" ? this.toAssignableValue(value) : value;
+                this._userVar.numbered[indexOrName] = typeof value === "number" ? this.toAssignableValue(value) : value;
             } else { // indexOrName === "string"
-                this._wwaData.userNamedVar.set(indexOrName, value);
+                this._userVar.named.set(indexOrName, value);
             }
         }
 
         const _get = (indexOrName: number | string,): number | string | boolean => {
             if (typeof indexOrName === "number") {
-                return this._wwaData.userVar[indexOrName];
+                return this._userVar.numbered[indexOrName];
             } else { // indexOrName === "string"
-                return this._wwaData.userNamedVar.get(indexOrName);
+                return this._userVar.named.get(indexOrName);
             }
         }
 
@@ -6195,15 +6208,15 @@ font-weight: bold;
 
     // User変数取得
     public getUserVar(no: number): number | string | boolean {
-        return this._wwaData.userVar[no];
+        return this._userVar.numbered[no];
     }
     // User名称変数取得
     public getUserNameVar(id: number | string): number | string | boolean {
-        return this._wwaData.userNamedVar.get(id.toString());
+        return this._userVar.named.get(id.toString());
     }
     // User名称変数の一覧を取得
     public getAllUserNameVar() {
-        return Array.from(this._wwaData.userNamedVar);
+        return Array.from(this._userVar.named);
     }
     // 現在の位置情報記憶
     public recUserPosition(x: number, y: number): void {
@@ -6213,8 +6226,8 @@ font-weight: bold;
     }
     // 記憶していた座標にジャンプ
     public jumpRecUserPosition(x: number, y: number): void {
-        const jx = this._wwaData.userVar[x]
-        const jy = this._wwaData.userVar[y];
+        const jx = this._userVar.numbered[x]
+        const jy = this._userVar.numbered[y];
         if(!util.assertNumber(jx, `v[${x}]`) || !util.assertNumber(jy, `v[${y}]`)) {
             return;
         }
@@ -6236,7 +6249,7 @@ font-weight: bold;
     }
     // 変数デバッグ出力
     public outputUserVar(num: number): void {
-        console.log("Var[" + num + "] = " + this._wwaData.userVar[num]);
+        console.log("Var[" + num + "] = " + this._userVar.numbered[num]);
     }
     // ユーザ変数 <= HP
     public setUserVarHP(num: number): void {
@@ -6286,7 +6299,7 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        const assignee = this._wwaData.userVar[index];
+        const assignee = this._userVar.numbered[index];
         if (!util.assertNumber(assignee, `v[${index}]`)) {
             return;
         }
@@ -6307,7 +6320,7 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        const assignee = this._wwaData.userVar[index];
+        const assignee = this._userVar.numbered[index];
         if (!util.assertNumber(assignee, `v[${index}]`)) {
             return;
         }
@@ -6319,7 +6332,7 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        const assignee = this._wwaData.userVar[index];
+        const assignee = this._userVar.numbered[index];
         if (!util.assertNumber(assignee, `v[${index}]`)) {
             return;
         }
@@ -6331,7 +6344,7 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        const assignee = this._wwaData.userVar[index];
+        const assignee = this._userVar.numbered[index];
         if (!util.assertNumber(assignee, `v[${index}]`)) {
             return;
         }
@@ -6343,7 +6356,7 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        const assignee = this._wwaData.userVar[index];
+        const assignee = this._userVar.numbered[index];
         if (!util.assertNumber(assignee, `v[${index}]`)) {
             return;
         }
@@ -6360,12 +6373,12 @@ font-weight: bold;
     }
     // ユーザ変数X <- ユーザ変数Y
     public setUserValOtherUserVal(x: number, y: number): void {
-        this.setUserVar(x, this._wwaData.userVar[y]);
+        this.setUserVar(x, this._userVar.numbered[y]);
     }
     // ユーザ変数X <- ユーザ変数X + ユーザ変数Y
     public setUserValAdd(x: number, y: number): void {
-        const vx = this._wwaData.userVar[x];
-        const vy = this._wwaData.userVar[y];
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
         if(typeof vx !== "boolean" && typeof vy !== "boolean") {
            // @ts-expect-error (number | string) + (number | string) の演算はどれも成立するが型が通らない
             this.setUserVar(x, vx + vy)
@@ -6373,24 +6386,24 @@ font-weight: bold;
     }
     // ユーザ変数X <- ユーザ変数X - ユーザ変数Y
     public setUserValSub(x: number, y: number): void {
-        const vx = this._wwaData.userVar[x];
-        const vy = this._wwaData.userVar[y];
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
         if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
             this.setUserVar(x, vx - vy);
         }
     }
     // ユーザ変数X <- ユーザ変数X * ユーザ変数Y
     public setUserValMul(x: number, y: number): void {
-        const vx = this._wwaData.userVar[x];
-        const vy = this._wwaData.userVar[y];
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
         if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
             this.setUserVar(x, vx * vy);
         }
     }
     // ユーザ変数X <- ユーザ変数X / ユーザ変数Y
     public setUserValDiv(x: number, y: number): void {
-        const vx = this._wwaData.userVar[x];
-        const vy = this._wwaData.userVar[y];
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
         if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
             // 商の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
             this.setUserVar(x, vy === 0 ? 0 : vx / vy);
@@ -6398,8 +6411,8 @@ font-weight: bold;
     }
     // ユーザ変数X <- ユーザ変数X % ユーザ変数Y
     public setUserValMod(x: number, y: number): void {
-        const vx = this._wwaData.userVar[x];
-        const vy = this._wwaData.userVar[y];
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
         if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
             // 剰余の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
             this.setUserVar(x, vy === 0 ? 0 : vx % vy);
@@ -6424,7 +6437,7 @@ font-weight: bold;
             if (!isNaN(parsedNumber)) {
                 // バージョン1 かつ 数値の場合は、該当するユーザ変数の添字と解釈する
                 // バージョン2 の場合は数値をそのまま出力する
-                return () => option.version === 1 ? this._wwaData.userVar[parsedNumber] : parsedNumber;
+                return () => option.version === 1 ? this._userVar.numbered[parsedNumber] : parsedNumber;
             }
             // ExpressionParser で解釈できる表現 (HPMAX, RAND(x)など)を解釈する。
             // なお、数値の場合は前段で弾かれているので、定数になることはない。
@@ -6510,7 +6523,7 @@ font-weight: bold;
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
             playTime: this._playTimeCalculator?.calculateTimeMs() ?? 0,
-            userVars: this._wwaData.userVar,
+            userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox(),
@@ -6533,9 +6546,9 @@ font-weight: bold;
         if(!this.isValidUserVarIndex(userVar1Index) || !this.isValidUserVarIndex(userVar2Index)) {
             throw new Error("判定対象のユーザ変数の添字が範囲外です!")
         }
-        const userVar1 = this._wwaData.userVar[userVar1Index];
+        const userVar1 = this._userVar.numbered[userVar1Index];
         const opeCode = args[1];
-        const userVar2 = this._wwaData.userVar[userVar2Index];
+        const userVar2 = this._userVar.numbered[userVar2Index];
 
         if(!util.assertNumber(userVar1, `v[${userVar1Index}]`) || !util.assertNumber(userVar2, `v[${userVar2Index}]`)) {
             return;
@@ -6626,7 +6639,7 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(partsID)) {
             throw new Error("対象のユーザ変数の添字が範囲外です");
         }
-        const targetPartsID = this._wwaData.userVar[partsID];
+        const targetPartsID = this._userVar.numbered[partsID];
         if (typeof targetPartsID !== "number") {
             throw new Error("数値でないパーツ番号は指定できません");
         }
@@ -6822,7 +6835,7 @@ font-weight: bold;
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
             playTime: this._playTimeCalculator?.calculateTimeMs() ?? 0,
-            userVars: this._wwaData.userVar,
+            userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox()

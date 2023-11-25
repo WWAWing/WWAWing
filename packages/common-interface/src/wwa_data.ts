@@ -129,7 +129,7 @@ export interface WWAData {
     gamePadButtonItemTable: number[];
 
     userVar: (string | number | boolean)[];
-    userNamedVar: Map<string, string | number | boolean>;
+    userNamedVar: [string, string | number | boolean][];
     permitChangeGameSpeed: boolean;
     gameSpeedIndex: number;
     playTime: number;

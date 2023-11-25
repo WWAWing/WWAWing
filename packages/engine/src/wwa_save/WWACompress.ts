@@ -4,18 +4,19 @@ import {
 } from "../wwa_data";
 import { WWADataWithWorldNameStatus } from "./common";
 
-var SAVE_COMPRESS_ID = {
+const SAVE_COMPRESS_ID = Object.freeze({
     MAP: "map",
     MAP_OBJECT: "mapObject",
     SYSTEM_MESSAGE: "systemMessage",
     USER_VAR: "userVar"
-};
+});
 
-var NOT_COMPRESS_ID = {
+const NOT_COMPRESS_ID = Object.freeze({
     "mapAttribute": true,
     "objectAttribute": true,
     "message": true,
-};
+    "userNamedVar": true
+});
 
 export class FirstChangedMapUint8Table {
     public map: Uint8Array;
@@ -51,11 +52,12 @@ export default class WWACompress {
                     }
                     break;
                 case "object":
-                    if (value === null) {
+                   if (value === null) {
                         if (this._restartData[key] === value) {
                             continue;
                         }
-                    } else {
+                    } else { 
+                        // typeof value === "object" には instanceof Array なども含まれることに注意してください。
                         value = this.compressObject(key, value, this._restartData[key]);
                         if (value === undefined) {
                             continue;
