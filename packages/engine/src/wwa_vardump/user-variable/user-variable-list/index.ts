@@ -1,4 +1,4 @@
-import { WWAConsts as Consts } from "../../wwa_data";
+import { WWAConsts as Consts } from "../../../wwa_data";
 import * as UserVariableCard from "../user-variable-card";
 
 export const CLASS_NAME = "user-variable-list";
