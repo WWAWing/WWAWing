@@ -9,7 +9,7 @@ import {
     SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, type UserVariableKind
 } from "./wwa_data";
 
 import {
@@ -172,13 +172,22 @@ export class WWA {
      */
     private _inlineUserVarViewer: {
         /**
+         * 変数種別
+         * - numbered: 数字添字
+         * - named: 文字列添字
+         */
+        kind: UserVariableKind 
+        /**
          * 表示されているかどうか
          */
         isVisible: boolean
         /**
-         * 表示中の先頭にあるユーザ変数の添字
+         * 表示中の先頭にあるユーザ変数の添字 
+         * numbered と named で個別に保持します
+         * named は map を配列化した時の順番を添字とします。
+         * 
          */
-        topUserVarIndex: number;
+        topUserVarIndex: {[KEY in UserVariableKind]: number };
     }
     /**
      * ユーザ変数の名前 (wwaData のユーザ変数と添字が対応)
@@ -1115,7 +1124,7 @@ export class WWA {
             this._canDisplayUserVars = canDisplayUserVars;
             this._userVarNameList = [];
             if (this._canDisplayUserVars) {
-                this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
+                this._inlineUserVarViewer = { topUserVarIndex:  {named: 0, numbered: 0}, isVisible: false, kind: "numbered" };
                 // ユーザー変数ファイルを読み込む
                 const userVarStatus = await (userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
                     kind: "noFileSpecified" as const,
@@ -2518,37 +2527,48 @@ export class WWA {
 
             // ユーザー変数表示モードの場合
             if (this._inlineUserVarViewer?.isVisible) {
+                const kind =this._inlineUserVarViewer.kind;
                 let isInputKey = false;
+                const varNum = kind === "named"
+                        ? this._wwaData.userNamedVar.size
+                        : Consts.USER_VAR_NUM;
+ 
                 if (this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex++;
+                    this._inlineUserVarViewer.topUserVarIndex[kind]++;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex--;
+                    this._inlineUserVarViewer.topUserVarIndex[kind]--;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex += Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
+                    this._inlineUserVarViewer.topUserVarIndex[kind] += Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex -= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
+                    this._inlineUserVarViewer.topUserVarIndex[kind] -= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
-                // 0 - USER_VAR_NUMの範囲外ならループさせる
-                if (this._inlineUserVarViewer.topUserVarIndex < 0) {
-                    this._inlineUserVarViewer.topUserVarIndex += (Consts.USER_VAR_NUM);
+                if (this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
+                    if (this._inlineUserVarViewer.kind === "named") {
+                        this._inlineUserVarViewer.kind = "numbered";
+                    } else if (this._inlineUserVarViewer.kind === "numbered") {
+                        this._inlineUserVarViewer.kind = "named";
+                    }
+                    isInputKey = true;
                 }
-                if (this._inlineUserVarViewer.topUserVarIndex > Consts.USER_VAR_NUM) {
-                    this._inlineUserVarViewer.topUserVarIndex -= (Consts.USER_VAR_NUM);
+
+                // 0 - varNum の範囲外ならループさせる
+                if (this._inlineUserVarViewer.topUserVarIndex[kind] < 0) {
+                    this._inlineUserVarViewer.topUserVarIndex[kind] += varNum;
+                }
+                if (this._inlineUserVarViewer.topUserVarIndex[kind] > varNum) {
+                    this._inlineUserVarViewer.topUserVarIndex[kind] -= varNum;
                 }
                 if (isInputKey) {
                     this._setNextPage();
                     this._inlineUserVarViewer.isVisible = true;
                     this._displayUserVars();
-                }
-                if (this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
-                    this._setNextPage();
                 }
             }
         } else if (this._player.isWaitingEstimateWindow()) {
@@ -2688,6 +2708,7 @@ export class WWA {
         VarDump.Api.updateAllVariables({
           dumpElement: this._dumpElement,
           userVar: this._wwaData.userVar,
+          namedUserVar: this._wwaData.userNamedVar
         });
 
         /** フレームごとにユーザー定義独自関数を呼び出す */
@@ -5389,33 +5410,55 @@ export class WWA {
             return;
         }
         // 表示中フラグをONにする
+        let helpMessage: string = "";
         this._inlineUserVarViewer.isVisible = true;
         if (this._player.isControllable()) {
-            let helpMessage: string = '変数一覧\n';
+          const namedUserVars = [...this._wwaData.userNamedVar];
+          if (this._inlineUserVarViewer.kind === "named") {
+            helpMessage = "名前つき変数一覧\n";
+            if (namedUserVars.length === 0) {
+              helpMessage += "名前つき変数はありません\n";
+            } else if (namedUserVars.length <= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM) {
+              helpMessage += namedUserVars
+                .map(
+                  ([key, value]) =>
+                    `${key}: ${util.formatUserVarForDisplay(value)}`
+                )
+                .join("\n");
+              helpMessage += "\n";
+            } else {
+              /** 終端まで行った際にはループして0番目から参照する */
+              for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
+                let currentIndex =
+                  (this._inlineUserVarViewer.topUserVarIndex[this._inlineUserVarViewer.kind] + i) %
+                  namedUserVars.length;
+                helpMessage += `${namedUserVars[currentIndex][0]}: ${util.formatUserVarForDisplay(namedUserVars[currentIndex][1], true)}\n`;
+              }
+            }
+          } else if (this._inlineUserVarViewer.kind === "numbered") {
+            helpMessage = "変数一覧\n";
             if (this._userVarNameListRequestError) {
-                if (this._userVarNameListRequestError.kind === "noFileSpecified") {
-                    helpMessage += this._userVarNameListRequestError.errorMessage + "\n";
-                } else {
-                    helpMessage += "【変数名取得失敗】\n";
-                    helpMessage += "  すべての変数を名無しとしています。\n";
-                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.errorMessage}\n`
-                }
+              if (this._userVarNameListRequestError.kind === "noFileSpecified") {
+                helpMessage += this._userVarNameListRequestError.errorMessage + "\n";
+              } else {
+                helpMessage += "【変数名取得失敗】\n";
+                helpMessage += "  すべての変数を名無しとしています。\n";
+                helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.errorMessage}\n`;
+              }
             }
-            for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
-                /** 終端まで行った際にはループして0番目から参照する */
-                // UNDONE: 0番の手前あたりに名前つき変数一覧を入れる
-                let currentIndex = (this._inlineUserVarViewer.topUserVarIndex + i) % Consts.USER_VAR_NUM;
-                const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ?
-                    this._userVarNameList[currentIndex] : "名無し";
-                const label = `変数 ${currentIndex}: ${displayName}`;
-                
-
-                helpMessage += `${label}: ${util.formatUserVarForDisplay(this._wwaData.userVar[currentIndex])}\n`;
+            for (let i = 0;  i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;  i++) {
+              /** 終端まで行った際にはループして0番目から参照する */
+              let currentIndex = (this._inlineUserVarViewer.topUserVarIndex[this._inlineUserVarViewer.kind] + i) % Consts.USER_VAR_NUM;
+              const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ? this._userVarNameList[currentIndex] : "名無し";
+              const label = `変数 ${currentIndex}: ${displayName}`;
+              helpMessage += `${label}: ${util.formatUserVarForDisplay(this._wwaData.userVar[currentIndex]), true}\n`;
             }
-            helpMessage += "\n操作方法\n";
-            helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
-            helpMessage += "左キー：１０つ戻す　右キー：１０つ進める\n";
-            this.generatePageAndReserveExecution(helpMessage, false, true);
+          }
+          helpMessage += "\n操作方法\n";
+          helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
+          helpMessage += "左キー：１０個戻す　右キー：１０個進める\n";
+          helpMessage += "Vキー: 名前付き変数/通常変数の切り替え";
+          this.generatePageAndReserveExecution(helpMessage, false, true);
         }
     }
 

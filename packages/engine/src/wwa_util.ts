@@ -77,9 +77,9 @@ export function assertString(value: unknown, varName: string): value is string {
 /**
  * ユーザ変数などで使われる値をデバッグ系ツールに出力するためのフォーマット関数
  * string 型の場合にダブルクォートでくくったものを返します。それ以外の場合はそのまま値を文字列化したものを返します。
- * 将来的には text-overflow: ellipsis による省略にしていくのが望ましいが、画面内の変数表示でそれを実現するのが難しそう。
+ * trimming = true にした場合は 11コードポイント以上の文字列は10文字までに省略されます。
  */
-export function formatUserVarForDisplay(value: number | string | boolean): string {
+export function formatUserVarForDisplay(value: number | string | boolean, trimming?: boolean): string {
   if (typeof value === "string") {
     // 文字列かつ10文字以上の場合に省略表記にしたい
     // 基本的な絵文字はこれで文字数カウントできるが、Zero Width Joiner があるとうまく分割できない
@@ -87,8 +87,8 @@ export function formatUserVarForDisplay(value: number | string | boolean): strin
     // Intl.Segmenter を使うのもよさそうだが、ロケールを ja で固定していいのかという問題と、Firefoxで使うのに Polyfill が
     // 必要になることなどをふまえ、ここではそこまで真面目に対応しない。
     const arrayValue = [...value];
-    if (arrayValue.length > 10) {
-      return `"${arrayValue.slice(0, 10).join("")}…`;
+    if (trimming && arrayValue.length > 10) {
+        return `"${arrayValue.slice(0, 10).join("")}…`;
     }
     return `"${value}"`;
   }

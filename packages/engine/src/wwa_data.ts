@@ -1045,3 +1045,10 @@ export interface TriggerParts {
     type: PartsType;
     position: Coord;
 }
+
+/**
+ * ユーザ変数の種類
+ * - named: 名前つき変数
+ * - numbered: 添字が数値の変数
+ */
+export type UserVariableKind = "named" | "numbered";
