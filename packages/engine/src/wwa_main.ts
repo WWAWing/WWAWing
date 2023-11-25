@@ -1246,12 +1246,12 @@ export class WWA {
         }
         if (userVarStatus.kind === "noFileSpecified") {
             // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
-            VarDump.updateInformation(this._dumpElement, userVarStatus.errorMessage, false);
+            VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, userVarStatus.errorMessage, false);
             return;
         }
         if(userVarStatus.kind !== "data") {
             this._userVarNameListRequestError = userVarStatus;
-            VarDump.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
+            VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
             return;
         }
         if (!userVarStatus.data || typeof userVarStatus.data !== "object") {
@@ -1259,27 +1259,11 @@ export class WWA {
                 kind: "notObject",
                 errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
             }
-            VarDump.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
+            VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
             return;
         }
         this._userVarNameList = this.convertUserVariableNameListToArray(userVarStatus.data);
-        if (this._dumpElement === null) {
-            return;
-        }
-        // 以下は変数一覧に変数名を流し込む処理
-        for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-            const varNum = i.toString(10);
-            if (!this._userVarNameList[i]) {
-                continue;
-            }
-            const varIndexQuery = `.var-index${varNum}`;
-            const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
-            const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
-            varLabelElement.textContent = this._userVarNameList[i];
-            varIndexElement.setAttribute("data-labelled-var-index", "true");
-            varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
-            varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
-        }
+        VarDump.Api.NumberedUserVariable.updateLabels(this._dumpElement, this._userVarNameList);
     }
 
     /**
@@ -2701,7 +2685,10 @@ export class WWA {
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
-        VarDump.updateValues(this._dumpElement, this._wwaData.userVar);
+        VarDump.Api.updateAllVariables({
+          dumpElement: this._dumpElement,
+          userVar: this._wwaData.userVar,
+        });
 
         /** フレームごとにユーザー定義独自関数を呼び出す */
         const frameFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_FRAME"];
