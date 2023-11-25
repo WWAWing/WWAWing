@@ -18,7 +18,8 @@ export function setup(dumpElmQuery: string): HTMLElement | null {
   }
 
   element.classList.add(CLASS_NAME);
-  element.appendChild(UserVariableListSection.createElement({ kind: "named" }));
+// feat/acorn 以外では封印
+//  element.appendChild(UserVariableListSection.createElement({ kind: "named" }));
   element.appendChild(
     UserVariableListSection.createElement({ kind: "numbered" })
   );
