@@ -1081,12 +1081,12 @@ export class WWA {
             }
             if (status.kind === "noFileSpecified") {
                 // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
-                VarDump.updateInformation(this._dumpElement, status.errorMessage, false);
+                VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, status.errorMessage, false);
                 return;
             }
             if(status.kind !== "data") {
                 this._userVarNameListRequestError = status;
-                VarDump.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
+                VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
                 return;
             }
             if (!status.data || typeof status.data !== "object") {
@@ -1094,11 +1094,11 @@ export class WWA {
                     kind: "notObject",
                     errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
                 }
-                VarDump.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
+                VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
                 return;
             }
             this._userVarNameList = this.convertUserVariableNameListToArray(status.data);
-            VarDump.updateLabels(this._dumpElement, this._userVarNameList);
+            VarDump.Api.NumberedUserVariable.updateLabels(this._dumpElement, this._userVarNameList);
         });
     }
 
@@ -2343,7 +2343,10 @@ export class WWA {
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
-        VarDump.updateValues(this._dumpElement, this._wwaData.userVar);
+        VarDump.Api.updateAllVariables({
+          dumpElement: this._dumpElement,
+          userVar: this._wwaData.userVar,
+        });
     }
     public vibration(isStrong: boolean) {
         this._gamePadStore.vibration(isStrong);
