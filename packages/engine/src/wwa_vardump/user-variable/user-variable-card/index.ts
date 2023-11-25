@@ -3,33 +3,44 @@ import * as UserVariableLabel from "../user-variable-label";
 export type Kind = "numbered" | "named";
 
 export interface Props {
-  index: number;
+  index: number | string;
+  value?: number | string | boolean;
 }
 
 const BLANK = "-";
-export const CLASS_NAME = "user-variable-card"
+export const CLASS_NAME = "user-variable-card";
 
-export function createElement({ index }: Props): HTMLElement {
+export function createElement({ index, value }: Props): HTMLElement {
   const element = document.createElement("div");
-  element.classList.add(CLASS_NAME)
+  element.classList.add(CLASS_NAME);
   element.dataset.varIndex = String(index);
   element.appendChild(createIndexElement(index));
-  element.appendChild(createValueElement());
+  element.appendChild(createValueElement(value));
   return element;
 }
 
-function createIndexElement(index: number): HTMLElement {
+function createIndexElement(index: number | string): HTMLElement {
   const element = document.createElement("div");
   element.classList.add("index");
   element.textContent = String(index);
+  if (typeof index === "string") {
+    // 名前つき変数の場合はホバーでタイトルチップ表示 (省略表記があるため)
+    // 数字indexの変数の場合は、別途ラベルが出る可能性があるため出しません
+    element.setAttribute("title", index);
+  }
   element.appendChild(UserVariableLabel.createElement());
   return element;
 }
 
-function createValueElement(): HTMLElement {
+function createValueElement(value?: number | string | boolean): HTMLElement {
   const element = document.createElement("div");
   element.classList.add("value");
-  element.textContent = BLANK;
+  if (typeof value === "string") {
+    // 値が文字列の場合はツールチップ表示 数字indexの場合でも出します
+    element.setAttribute("title", String(value));
+  }
+
+  setValue(element, value);
   return element;
 }
 
@@ -46,8 +57,11 @@ export function setupLabel(
   );
 }
 
-export function setValue(element: HTMLElement, value: number | string | boolean): void {
-  element.textContent = String(value);
+export function setValue(
+  element: HTMLElement,
+  value?: number | string | boolean
+): void {
+  element.textContent = value === undefined ? BLANK : String(value);
 }
 
 export function clearValue(element: HTMLElement) {

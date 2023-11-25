@@ -19,8 +19,21 @@ export function createElement({ kind }: Props): HTMLElement {
   return element;
 }
 
-export function createListItemElement({ index }: { index: number }) {
+export function createListItemElement({
+  index,
+  value,
+}: {
+  index: number | string;
+  value?: number | string | boolean;
+}) {
   const element = document.createElement("li");
-  element.appendChild(UserVariableCard.createElement({ index }));
+  element.appendChild(UserVariableCard.createElement({ index, value }));
   return element;
+}
+
+export function appendNewListItemElement(
+  element: HTMLElement,
+  { index, value }: { index: number | string; value: number | string | boolean }
+) {
+  element.appendChild(createListItemElement({ index, value }));
 }

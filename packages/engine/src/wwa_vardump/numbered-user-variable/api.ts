@@ -6,7 +6,7 @@ import * as UserVariableList from "../user-variable/user-variable-list";
 import * as UserVariableListSection from "../user-variable/user-variable-list-section";
 
 /**
- * 指定された dumpElement 内にある UserVariableListSection (Named) の全ユーザ変数を userVar の値で更新します。
+ * 指定された dumpElement 内にある UserVariableListSection (Numbered) の全ユーザ変数を userVar の値で更新します。
  */
 export function updateValues(
   dumpElement: HTMLElement | undefined | null,
@@ -25,7 +25,7 @@ export function updateValues(
 }
 
 /**
- * 指定された dumpElement 内にある UserVariableListSection (Named) の添字セルの
+ * 指定された dumpElement 内にある UserVariableListSection (Numbered) の添字セルの
  * ハイライト状態とラベルを userVarNameListで更新します。
  * userVarNameList は添字がユーザ変数の添字に対応する変数名ラベルの配列です。
  */
