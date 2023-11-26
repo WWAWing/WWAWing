@@ -15,7 +15,6 @@ const NOT_COMPRESS_ID = Object.freeze({
     "mapAttribute": true,
     "objectAttribute": true,
     "message": true,
-    "userNamedVar": true
 });
 
 export class FirstChangedMapUint8Table {
