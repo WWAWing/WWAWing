@@ -9,7 +9,7 @@ import {
     SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, type UserVariableKind
 } from "./wwa_data";
 
 import {
@@ -167,18 +167,32 @@ export class WWA {
     private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
     private _isDisallowLoadOldSave: boolean = false;
 
+    private _userVar: {
+        named: Map<string, number | string | boolean>
+        numbered: (number | string | boolean)[];
+    };
+
     /**
      * ゲーム内ユーザ変数ビューワの設定
      */
     private _inlineUserVarViewer: {
         /**
+         * 変数種別
+         * - numbered: 数字添字
+         * - named: 文字列添字
+         */
+        kind: UserVariableKind 
+        /**
          * 表示されているかどうか
          */
         isVisible: boolean
         /**
-         * 表示中の先頭にあるユーザ変数の添字
+         * 表示中の先頭にあるユーザ変数の添字 
+         * numbered と named で個別に保持します
+         * named は map を配列化した時の順番を添字とします。
+         * 
          */
-        topUserVarIndex: number;
+        topUserVarIndex: {[KEY in UserVariableKind]: number };
     }
     /**
      * ユーザ変数の名前 (wwaData のユーザ変数と添字が対応)
@@ -517,6 +531,10 @@ export class WWA {
                 this._wwaData.statusEnergy, this._wwaData.statusStrength,
                 this._wwaData.statusDefence, this._wwaData.statusGold);
             this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax, this._wwaData.moves, this._wwaData.gameSpeedIndex);
+            this._userVar = {
+                numbered: Array.from({length: Consts.USER_VAR_NUM}).map(() => 0),
+                named: new Map()
+            };
             this._objectMovingDataManager = new ObjectMovingDataManager(this, this._player);
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
@@ -1115,7 +1133,7 @@ export class WWA {
             this._canDisplayUserVars = canDisplayUserVars;
             this._userVarNameList = [];
             if (this._canDisplayUserVars) {
-                this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
+                this._inlineUserVarViewer = { topUserVarIndex:  {named: 0, numbered: 0}, isVisible: false, kind: "numbered" };
                 // ユーザー変数ファイルを読み込む
                 const userVarStatus = await (userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
                     kind: "noFileSpecified" as const,
@@ -2518,37 +2536,48 @@ export class WWA {
 
             // ユーザー変数表示モードの場合
             if (this._inlineUserVarViewer?.isVisible) {
+                const kind =this._inlineUserVarViewer.kind;
                 let isInputKey = false;
+                const varNum = kind === "named"
+                        ? this._userVar.named.size
+                        : Consts.USER_VAR_NUM;
+ 
                 if (this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex++;
+                    this._inlineUserVarViewer.topUserVarIndex[kind]++;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex--;
+                    this._inlineUserVarViewer.topUserVarIndex[kind]--;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex += Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
+                    this._inlineUserVarViewer.topUserVarIndex[kind] += Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex -= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
+                    this._inlineUserVarViewer.topUserVarIndex[kind] -= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
-                // 0 - USER_VAR_NUMの範囲外ならループさせる
-                if (this._inlineUserVarViewer.topUserVarIndex < 0) {
-                    this._inlineUserVarViewer.topUserVarIndex += (Consts.USER_VAR_NUM);
+                if (this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
+                    if (this._inlineUserVarViewer.kind === "named") {
+                        this._inlineUserVarViewer.kind = "numbered";
+                    } else if (this._inlineUserVarViewer.kind === "numbered") {
+                        this._inlineUserVarViewer.kind = "named";
+                    }
+                    isInputKey = true;
                 }
-                if (this._inlineUserVarViewer.topUserVarIndex > Consts.USER_VAR_NUM) {
-                    this._inlineUserVarViewer.topUserVarIndex -= (Consts.USER_VAR_NUM);
+
+                // 0 - varNum の範囲外ならループさせる
+                if (this._inlineUserVarViewer.topUserVarIndex[kind] < 0) {
+                    this._inlineUserVarViewer.topUserVarIndex[kind] += varNum;
+                }
+                if (this._inlineUserVarViewer.topUserVarIndex[kind] > varNum) {
+                    this._inlineUserVarViewer.topUserVarIndex[kind] -= varNum;
                 }
                 if (isInputKey) {
                     this._setNextPage();
                     this._inlineUserVarViewer.isVisible = true;
                     this._displayUserVars();
-                }
-                if (this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
-                    this._setNextPage();
                 }
             }
         } else if (this._player.isWaitingEstimateWindow()) {
@@ -2687,7 +2716,8 @@ export class WWA {
         }
         VarDump.Api.updateAllVariables({
           dumpElement: this._dumpElement,
-          userVar: this._wwaData.userVar,
+          userVar: this._userVar.numbered,
+          namedUserVar: this._userVar.named,
         });
 
         /** フレームごとにユーザー定義独自関数を呼び出す */
@@ -4720,6 +4750,8 @@ export class WWA {
         qd.frameCount = this._player.getFrameCount();
         qd.gameSpeedIndex = this._player.getSpeedIndex();
         qd.playTime = this._playTimeCalculator?.calculateTimeMs() ?? 0;
+        qd.userVar = this._userVar.numbered;
+        qd.userNamedVar = [...this._userVar.named];
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
@@ -4872,6 +4904,8 @@ export class WWA {
     }
 
     private _applyQuickLoad(newData: WWAData): void {
+        this._userVar.named = new Map(newData.userNamedVar);
+        this._userVar.numbered = newData.userVar;
         this._player.setEnergyMax(newData.statusEnergyMax);
         this._player.setEnergy(newData.statusEnergy);
         this._player.setStrength(newData.statusStrength);
@@ -5389,32 +5423,58 @@ export class WWA {
             return;
         }
         // 表示中フラグをONにする
+        let helpMessage: string = "";
         this._inlineUserVarViewer.isVisible = true;
         if (this._player.isControllable()) {
-            let helpMessage: string = '変数一覧\n';
+          const namedUserVars = [...this._userVar.named];
+          if (this._inlineUserVarViewer.kind === "named") {
+            helpMessage = "名前つき変数一覧\n";
+            if (namedUserVars.length === 0) {
+              helpMessage += "名前つき変数はありません\n";
+            } else if (namedUserVars.length <= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM) {
+              helpMessage += namedUserVars
+                .map(
+                  ([key, value]) =>
+                    `${key}: ${util.formatUserVarForDisplay(value)}`
+                )
+                .join("\n");
+              helpMessage += "\n";
+            } else {
+              /** 終端まで行った際にはループして0番目から参照する */
+              for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
+                let currentIndex =
+                  (this._inlineUserVarViewer.topUserVarIndex[this._inlineUserVarViewer.kind] + i) %
+                  namedUserVars.length;
+                helpMessage += `${namedUserVars[currentIndex][0]}: ${util.formatUserVarForDisplay(namedUserVars[currentIndex][1], true)}\n`;
+              }
+            }
+          } else if (this._inlineUserVarViewer.kind === "numbered") {
+            helpMessage = "変数一覧\n";
             if (this._userVarNameListRequestError) {
-                if (this._userVarNameListRequestError.kind === "noFileSpecified") {
-                    helpMessage += this._userVarNameListRequestError.errorMessage + "\n";
-                } else {
-                    helpMessage += "【変数名取得失敗】\n";
-                    helpMessage += "  すべての変数を名無しとしています。\n";
-                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.errorMessage}\n`
-                }
+              if (this._userVarNameListRequestError.kind === "noFileSpecified") {
+                helpMessage += this._userVarNameListRequestError.errorMessage + "\n";
+              } else {
+                helpMessage += "【変数名取得失敗】\n";
+                helpMessage += "  すべての変数を名無しとしています。\n";
+                helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.errorMessage}\n`;
+              }
             }
-            for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
-                /** 終端まで行った際にはループして0番目から参照する */
-                let currentIndex = (this._inlineUserVarViewer.topUserVarIndex + i) % Consts.USER_VAR_NUM;
-                const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ?
-                    this._userVarNameList[currentIndex] : "名無し";
-                const label = `変数 ${currentIndex}: ${displayName}`;
-                helpMessage += `${label}: ${this._wwaData.userVar[currentIndex]}\n`;
+            for (let i = 0;  i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;  i++) {
+              /** 終端まで行った際にはループして0番目から参照する */
+              let currentIndex = (this._inlineUserVarViewer.topUserVarIndex[this._inlineUserVarViewer.kind] + i) % Consts.USER_VAR_NUM;
+              const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ? this._userVarNameList[currentIndex] : "名無し";
+              const label = `変数 ${currentIndex}: ${displayName}`;
+              helpMessage += `${label}: ${util.formatUserVarForDisplay(this._userVar.numbered[currentIndex], true)}\n`;
             }
-            helpMessage += "\n操作方法\n";
-            helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
-            helpMessage += "左キー：１０つ戻す　右キー：１０つ進める\n";
-            this.generatePageAndReserveExecution(helpMessage, false, true);
+          }
+          helpMessage += "\n操作方法\n";
+          helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
+          helpMessage += "左キー：１０個戻す　右キー：１０個進める\n";
+          helpMessage += "Vキー: 名前付き変数/通常変数の切り替え";
+          this.generatePageAndReserveExecution(helpMessage, false, true);
         }
     }
+
 
     private _displayHelp(): void {
         if (this._player.isControllable()) {
@@ -6007,32 +6067,112 @@ font-weight: bold;
         }
     }
     // User変数記憶
-    public setUserVar(index: number, value: number, operator?: string): void {
-        // number 型でない変数, NaN, 範囲外の index を弾く
-        if (this.isNotNumberTypeOrNaN(index) || !this.isValidUserVarIndex(index)) {
-            throw new Error (`代入先のユーザ変数の番号 が 0 以上 ${Consts.USER_VAR_NUM - 1} 以下の数値になっていません!`)
+    public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
+
+       const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
+            if (typeof indexOrName === "number") {
+                if (typeof value !== "number") {
+                    throw new TypeError("数字index変数への数値以外の代入は今のところできません。あらかじめご了承ください。");
+                }
+                this._userVar.numbered[indexOrName] = typeof value === "number" ? this.toAssignableValue(value) : value;
+            } else { // indexOrName === "string"
+                this._userVar.named.set(indexOrName, value);
+            }
         }
-        switch(operator) {
-            case "+=":
-                this._wwaData.userVar[index] += this.toAssignableValue(value);
-                break;
-            case "-=":
-                this._wwaData.userVar[index] -= this.toAssignableValue(value);
-                break;
-            case "*=":
-                this._wwaData.userVar[index] *= this.toAssignableValue(value);
-                break;
-            case "/=":
-                this._wwaData.userVar[index] /= this.toAssignableValue(value);
-                break;
-            case "=":
-            default:
-                this._wwaData.userVar[index] = this.toAssignableValue(value);
+
+        const _get = (indexOrName: number | string,): number | string | boolean => {
+            if (typeof indexOrName === "number") {
+                return this._userVar.numbered[indexOrName];
+            } else { // indexOrName === "string"
+                return this._userVar.named.get(indexOrName);
+            }
         }
-        
+
+        const currentValue = _get(index);
+        if (typeof assignee === "number") {
+            switch (operator) {
+                case "+=": {
+                    if (typeof currentValue === "number") {
+                        // number += number
+                        _assign(index, currentValue + assignee);
+                    } else if (typeof currentValue === "string") {
+                        // string += number
+                        _assign(index, String(currentValue) + assignee);
+                    } else {
+                        // boolean += number
+                        throw new TypeError("boolean に number は足せません");
+                    }
+                    break;
+                }
+                case "-=": {
+                    if (typeof currentValue === "number") {
+                        // number -= number
+                        _assign(index, currentValue - assignee);
+                    } else {
+                        // string -= number
+                        // boolean -= number
+                        throw new TypeError("string/boolean から number は引けません")
+                    }
+                    break;
+                }
+                case "*=":
+                    if (typeof currentValue === "number") {
+                        // number *= number
+                        _assign(index, currentValue * assignee);
+                    } else {
+                        // string *= number
+                        // boolean *= number
+                        throw new TypeError("string/boolean に number はかけられません")
+                    }
+                    break;
+                case "/=":
+                    if (typeof currentValue === "number") {
+                        // number /= number
+                        _assign(index, currentValue / assignee);
+                    } else {
+                        // string /= number
+                        // boolean /= number
+                        throw new TypeError("string/boolean は number で割れません")
+                    }
+                    break;
+                case "=":
+                default:
+                    _assign(index, assignee);
+                    break;
+            }
+        } else if (typeof assignee === "string") {
+            switch (operator) {
+                case "+=": // 文字列連結
+                    // string += string
+                   _assign(index, currentValue + assignee);
+                   break;
+                case "=":
+                    _assign(index, assignee);
+                    break;
+                default:
+                    throw new TypeError("文字列を -=, *=, /= で複合代入することはできません");
+            }
+        } else { // typeof assignee === "boolean"
+             switch (operator) {
+                case "+=":
+                    if (typeof currentValue === "string") {
+                        // string += boolean
+                        _assign(index, currentValue + assignee);
+                    } else {
+                        throw new TypeError("number/boolean に boolean を足せません")
+                    }
+                   break;
+                case "=":
+                    _assign(index, assignee);
+                    break;
+                default:
+                    throw new TypeError("booleanを -=, *=, /= で複合代入することはできません");
+            }
+        }
         // メッセージボックスに表示されている変数を更新
         this._messageWindow.update();
     }
+
     /**
      * 数値 x を代入可能な変数に変換する。
      * 
@@ -6067,8 +6207,16 @@ font-weight: bold;
     }
 
     // User変数取得
-    public getUserVar(no: number): number {
-        return this._wwaData.userVar[no];
+    public getUserVar(no: number): number | string | boolean {
+        return this._userVar.numbered[no];
+    }
+    // User名称変数取得
+    public getUserNameVar(id: number | string): number | string | boolean {
+        return this._userVar.named.get(id.toString());
+    }
+    // User名称変数の一覧を取得
+    public getAllUserNameVar() {
+        return Array.from(this._userVar.named);
     }
     // 現在の位置情報記憶
     public recUserPosition(x: number, y: number): void {
@@ -6078,7 +6226,12 @@ font-weight: bold;
     }
     // 記憶していた座標にジャンプ
     public jumpRecUserPosition(x: number, y: number): void {
-        this.forcedJumpGate(this._wwaData.userVar[x], this._wwaData.userVar[y]);
+        const jx = this._userVar.numbered[x]
+        const jy = this._userVar.numbered[y];
+        if(!util.assertNumber(jx, `v[${x}]`) || !util.assertNumber(jy, `v[${y}]`)) {
+            return;
+        }
+        this.forcedJumpGate(jx, jy);
     }
     /**
      * 指定のX座標にジャンプ（Y座標は現在の座標）
@@ -6096,7 +6249,7 @@ font-weight: bold;
     }
     // 変数デバッグ出力
     public outputUserVar(num: number): void {
-        console.log("Var[" + num + "] = " + this._wwaData.userVar[num]);
+        console.log("Var[" + num + "] = " + this._userVar.numbered[num]);
     }
     // ユーザ変数 <= HP
     public setUserVarHP(num: number): void {
@@ -6146,7 +6299,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setEnergy(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setEnergy(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
         // 0 になった場合はゲームオーバー
         if (
@@ -6163,7 +6320,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setEnergyMax(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setEnergyMax(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
     }
     // AT (装備品以外) <- ユーザ変数
@@ -6171,7 +6332,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setStrength(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setStrength(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
     }
     // DF (装備品以外) <- ユーザ変数
@@ -6179,7 +6344,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setDefence(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setDefence(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
     }
     // MONEY <- ユーザ変数
@@ -6187,7 +6356,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setGold(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setGold(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
     }
     // ユーザ変数 <- 歩数
@@ -6200,29 +6373,50 @@ font-weight: bold;
     }
     // ユーザ変数X <- ユーザ変数Y
     public setUserValOtherUserVal(x: number, y: number): void {
-        this.setUserVar(x, this._wwaData.userVar[y]);
+        this.setUserVar(x, this._userVar.numbered[y]);
     }
     // ユーザ変数X <- ユーザ変数X + ユーザ変数Y
     public setUserValAdd(x: number, y: number): void {
-        this.setUserVar(x, this._wwaData.userVar[x] + this._wwaData.userVar[y])
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(typeof vx !== "boolean" && typeof vy !== "boolean") {
+           // @ts-expect-error (number | string) + (number | string) の演算はどれも成立するが型が通らない
+            this.setUserVar(x, vx + vy)
+        }
     }
     // ユーザ変数X <- ユーザ変数X - ユーザ変数Y
     public setUserValSub(x: number, y: number): void {
-        this.setUserVar(x, this._wwaData.userVar[x] - this._wwaData.userVar[y]);
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
+            this.setUserVar(x, vx - vy);
+        }
     }
     // ユーザ変数X <- ユーザ変数X * ユーザ変数Y
     public setUserValMul(x: number, y: number): void {
-        this.setUserVar(x, this._wwaData.userVar[x] * this._wwaData.userVar[y]);
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
+            this.setUserVar(x, vx * vy);
+        }
     }
     // ユーザ変数X <- ユーザ変数X / ユーザ変数Y
     public setUserValDiv(x: number, y: number): void {
-        // 商の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
-        this.setUserVar(x, this._wwaData.userVar[y] === 0 ? 0 : this._wwaData.userVar[x] / this._wwaData.userVar[y]);
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
+            // 商の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
+            this.setUserVar(x, vy === 0 ? 0 : vx / vy);
+        }
     }
     // ユーザ変数X <- ユーザ変数X % ユーザ変数Y
     public setUserValMod(x: number, y: number): void {
-        // 剰余の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
-        this.setUserVar(x, this._wwaData.userVar[y] === 0 ? 0 : this._wwaData.userVar[x] % this._wwaData.userVar[y]);
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
+            // 剰余の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
+            this.setUserVar(x, vy === 0 ? 0 : vx % vy);
+        }
     }
     // ユーザ変数X <- rand
     public setUserValRandNum(x: number, num: number, bias: number): void {
@@ -6243,7 +6437,7 @@ font-weight: bold;
             if (!isNaN(parsedNumber)) {
                 // バージョン1 かつ 数値の場合は、該当するユーザ変数の添字と解釈する
                 // バージョン2 の場合は数値をそのまま出力する
-                return () => option.version === 1 ? this._wwaData.userVar[parsedNumber] : parsedNumber;
+                return () => option.version === 1 ? this._userVar.numbered[parsedNumber] : parsedNumber;
             }
             // ExpressionParser で解釈できる表現 (HPMAX, RAND(x)など)を解釈する。
             // なお、数値の場合は前段で弾かれているので、定数になることはない。
@@ -6329,7 +6523,7 @@ font-weight: bold;
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
             playTime: this._playTimeCalculator?.calculateTimeMs() ?? 0,
-            userVars: this._wwaData.userVar,
+            userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox(),
@@ -6352,9 +6546,13 @@ font-weight: bold;
         if(!this.isValidUserVarIndex(userVar1Index) || !this.isValidUserVarIndex(userVar2Index)) {
             throw new Error("判定対象のユーザ変数の添字が範囲外です!")
         }
-        const userVar1 = this._wwaData.userVar[userVar1Index];
+        const userVar1 = this._userVar.numbered[userVar1Index];
         const opeCode = args[1];
-        const userVar2 = this._wwaData.userVar[userVar2Index];
+        const userVar2 = this._userVar.numbered[userVar2Index];
+
+        if(!util.assertNumber(userVar1, `v[${userVar1Index}]`) || !util.assertNumber(userVar2, `v[${userVar2Index}]`)) {
+            return;
+        }
 
         /**
          *  partsTypeArgument が 0 以外の数値として解釈できるなら 背景パーツ
@@ -6441,7 +6639,10 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(partsID)) {
             throw new Error("対象のユーザ変数の添字が範囲外です");
         }
-        const targetPartsID = this._wwaData.userVar[partsID];
+        const targetPartsID = this._userVar.numbered[partsID];
+        if (typeof targetPartsID !== "number") {
+            throw new Error("数値でないパーツ番号は指定できません");
+        }
         if (targetPartsID < 0) {
             throw new Error("負のパーツ番号は指定できません");
         }
@@ -6634,7 +6835,7 @@ font-weight: bold;
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
             playTime: this._playTimeCalculator?.calculateTimeMs() ?? 0,
-            userVars: this._wwaData.userVar,
+            userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox()
@@ -6785,7 +6986,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `if(v[0] ==0 || AT == 80) {\n    MSG("HOGE");\n}`;
+    consoleTextareaElement.textContent = `v["money"] = 100;\nv["name"] = "ヤツロウ";\nMSG(v["name"]+"「俺の所持金は"+v["money"]+"ゴールドだ」");\nSHOW_USER_DEF_VAR();`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();

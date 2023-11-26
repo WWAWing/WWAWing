@@ -183,6 +183,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_HOUR":
     case "GET_DATE_MINUTES":
     case "CHANGE_SYSMSG":
+    case "SHOW_USER_DEF_VAR":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -324,7 +325,7 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           value: right,
           operator: node.operator
         }
-      } else if (left.type === "Number") {
+      } else if (left.type === "Literal") {
         throw new Error("数値には代入できません");
       } else {
         throw new Error("代入できません");
@@ -387,7 +388,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
     if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM") {
       throw new Error("このシンボルは配列にできません");
     }
-    if(property.type === "Number" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
+    if(property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
       // m, o については一次元分適用
       return {
         type: "Array1D",
@@ -403,7 +404,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
       throw new Error("この配列は2次元以上にはできません。");
     }
     // 1次元配列 + 1次元分の index を合成
-    if (property.type === "Number" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
+    if (property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
       return {
         type: "Array2D",
         name: object.name,
@@ -417,7 +418,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
   }
 }
 
-function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
+function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
   switch(node.name) {
     case "m":
     case "o":
@@ -452,12 +453,12 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
   }
 }
 
-function convertLiteral(node: Acorn.Literal): Wwa.Number {
+function convertLiteral(node: Acorn.Literal): Wwa.Literal {
   // UNDONE: 小数点以下の処理をする
   // UNDONE: boolean 値の取り扱いをする. 多分 Wwa.Boolean を作ることになる.
   // typeof node.value が number でも boolean でもないならエラーにする. (nullやらundefinedやら書かれると困る)
   return {
-    type: "Number",
+    type: "Literal",
     value: node.value
   }
 }

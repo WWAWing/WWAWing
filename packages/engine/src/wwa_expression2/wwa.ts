@@ -1,7 +1,7 @@
-export type Calcurable = Array1D | Array2D | Number | Symbol | UnaryOperation | BinaryOperation;
+export type Calcurable = Array1D | Array2D | Literal | Symbol | UnaryOperation | BinaryOperation;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
-  const supportType = ["Array1D", "Array2D", "Number", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction"];
+  const supportType = ["Array1D", "Array2D", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction"];
   return supportType.includes(node.type);
 }
 
@@ -66,9 +66,9 @@ export interface Array2D {
   index1: Calcurable;
 }
 
-export interface Number {
-  type: "Number";
-  value: number;
+export interface Literal {
+  type: "Literal";
+  value: number | string;
 }
 
 export interface Random {
@@ -170,7 +170,7 @@ export type WWANode = |
   BinaryOperation |
   Array1D |
   Array2D |
-  Number |
+  Literal |
   Symbol |
   Random |
   Jumpgate |

@@ -1,6 +1,5 @@
+import { formatUserVarForDisplay } from "../../../wwa_util";
 import * as UserVariableLabel from "../user-variable-label";
-
-export type Kind = "numbered" | "named";
 
 export interface Props {
   index: number | string;
@@ -37,7 +36,7 @@ function createValueElement(value?: number | string | boolean): HTMLElement {
   element.classList.add("value");
   if (typeof value === "string") {
     // 値が文字列の場合はツールチップ表示 数字indexの場合でも出します
-    element.setAttribute("title", String(value));
+    element.setAttribute("title", formatUserVarForDisplay(value));
   }
 
   setValue(element, value);
@@ -61,7 +60,7 @@ export function setValue(
   element: HTMLElement,
   value?: number | string | boolean
 ): void {
-  element.textContent = value === undefined ? BLANK : String(value);
+  element.textContent = value === undefined ? BLANK : formatUserVarForDisplay(value);
 }
 
 export function clearValue(element: HTMLElement) {

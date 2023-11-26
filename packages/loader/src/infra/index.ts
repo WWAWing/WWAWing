@@ -175,6 +175,7 @@ export function createDefaultWWAData(): WWAData {
         frameCount: undefined,
         gamePadButtonItemTable: undefined,
         userVar: undefined,
+        userNamedVar: undefined,
         permitChangeGameSpeed: undefined,
         gameSpeedIndex: undefined,
         playTime: undefined,

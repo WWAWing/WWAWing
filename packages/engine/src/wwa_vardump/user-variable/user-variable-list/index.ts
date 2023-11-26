@@ -1,10 +1,10 @@
-import { WWAConsts as Consts } from "../../../wwa_data";
+import { WWAConsts as Consts, type UserVariableKind } from "../../../wwa_data";
 import * as UserVariableCard from "../user-variable-card";
 
 export const CLASS_NAME = "user-variable-list";
 
 export interface Props {
-  kind: UserVariableCard.Kind;
+  kind: UserVariableKind;
 }
 
 export function createElement({ kind }: Props): HTMLElement {

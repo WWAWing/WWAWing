@@ -103,7 +103,7 @@ export class EvalCalcWwaNode {
         return this.evalArray1D(node);
       case "Array2D":
         return this.evalArray2D(node);
-      case "Number":
+      case "Literal":
         return this.evalNumber(node);
       case "UserVariableAssignment":
         return this.evalSetUserVariable(node);
@@ -172,7 +172,7 @@ export class EvalCalcWwaNode {
         type: "SpecialParameterAssignment",
         kind: <any>node.argument.name,
         value: {
-          type: "Number",
+          type: "Literal",
           value: addValue
         }
       }
@@ -473,6 +473,11 @@ export class EvalCalcWwaNode {
         return (new Date()).getHours();
       case "GET_DATE_MINUTES":
         return (new Date()).getMinutes();
+      case "SHOW_USER_DEF_VAR":
+        {
+          console.log(this.generator.wwa.getAllUserNameVar());
+          return;
+        }
       case "CHANGE_SYSMSG": {
         this._checkArgsLength(1, node);
         const rawTarget = this.evalWwaNode(node.value[0]);
@@ -641,13 +646,10 @@ export class EvalCalcWwaNode {
 
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
     const right = this.evalWwaNode(node.value);
-    if(!this.generator.wwa || isNaN(right)) {
+    if(!this.generator.wwa) {
       return 0;
     }
     const userVarIndex = this.evalWwaNode(node.index);
-    if (typeof userVarIndex !== "number") {
-      throw new Error("代入先の添字が数値になりませんでした");
-    }
     this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
     return 0;
   }
@@ -746,7 +748,12 @@ export class EvalCalcWwaNode {
   evalArray1D(node: Wwa.Array1D) {
     const userVarIndex = this.evalWwaNode(node.index0);
     if (typeof userVarIndex !== "number") {
-      throw new Error("添字の計算結果が数値になりませんでした");
+      switch(node.name) {
+        case "v":
+          return this.generator.wwa.getUserNameVar(userVarIndex);
+        default:
+          throw new Error("このシンボルは取得できません");
+      }
     }
     const game_status = this.generator.wwa.getGameStatus();
     switch (node.name) {
@@ -780,7 +787,7 @@ export class EvalCalcWwaNode {
     }
   }
 
-  evalNumber(node: Wwa.Number) {
+  evalNumber(node: Wwa.Literal) {
     return node.value;
   }
 }
