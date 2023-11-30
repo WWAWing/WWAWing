@@ -66,6 +66,14 @@ export default class WWAPictureItem {
         return this._canvas.cvs;
     }
 
+    public get nextPictureNumber() {
+        return this._registory.properties.next;
+    }
+
+    public get appearPartsInfo() {
+        return this._registory.properties.map;
+    }
+
     /**
      * ピクチャを描画します。
      * 毎フレーム処理されるため、プロパティから直接引き出される値以外はあらかじめフィールドに数値などをキャッシュしてください。

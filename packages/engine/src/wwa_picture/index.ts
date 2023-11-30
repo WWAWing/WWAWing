@@ -131,7 +131,14 @@ export default class WWAPicutre {
             }
             picture.decrementDisplayTimeStock(frameMs);
             if (picture.isDeadlineOver()) {
-                this.deletePicture(picture.layerNumber);
+                const layerNumber = picture.layerNumber;
+                const nextPictureNumber = picture.nextPictureNumber;
+                this.deletePicture(layerNumber);
+                if (nextPictureNumber?.[0] !== undefined) {
+                    // TODO 座標を算出したい
+                    this._wwa.setPictureRegistry(layerNumber, nextPictureNumber[0], nextPictureNumber[1] ?? PartsType.OBJECT, new Coord())
+                }
+                // TODO map プロパティの機能を実装する
             }
         });
     }
