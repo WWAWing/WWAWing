@@ -20,6 +20,14 @@ type PictureRegistoryBase<N> = {
     imgPosY: number,
     imgPosX2: number,
     imgPosY2: number,
+    /**
+     * ピクチャ作成を呼び出したパーツの X 座標。 next プロパティで次のピクチャをつながる場合に使用する。
+     */
+    triggerPartsX: number,
+    /**
+     * ピクチャ作成を呼び出したパーツの Y 座標。
+     */
+    triggerPartsY: number,
     properties: PictureProperties<N>
 };
 export type PictureRegistory = PictureRegistoryBase<number>;

@@ -1,6 +1,6 @@
 import { PictureRegistory } from "@wwawing/common-interface";
 import { CacheCanvas } from "../wwa_cgmanager";
-import { WWAConsts } from "../wwa_data";
+import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
 
 /**
@@ -128,6 +128,10 @@ export default class WWAPictureItem {
 
     public getRegistoryData() {
         return this._registory;
+    }
+
+    public getTriggerPartsCoord() {
+        return new Coord(this._registory.triggerPartsX, this._registory.triggerPartsY);
     }
 
     private static _getImgPosByPicture(registory: PictureRegistory, isMainTime: boolean) {

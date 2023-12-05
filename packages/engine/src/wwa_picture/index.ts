@@ -65,13 +65,12 @@ export default class WWAPicutre {
         registory: PictureRegistoryParts,
         targetPartsID: number,
         targetPartsType: PartsType,
-        triggerPartsPosition: Coord
     ) {
         const rawRegistory = convertPictureRegistoryFromText(registory);
         this.registerPicture(convertVariablesFromRawRegistory(rawRegistory, this._wwa.generateTokenValues({
             id: targetPartsID,
             type: targetPartsType,
-            position: triggerPartsPosition
+            position: new Coord(registory.triggerPartsX, registory.triggerPartsY)
         })));
         return this.getPictureRegistoryData();
     }
@@ -133,10 +132,16 @@ export default class WWAPicutre {
             if (picture.isDeadlineOver()) {
                 const layerNumber = picture.layerNumber;
                 const nextPictureNumber = picture.nextPictureNumber;
+                const triggerPartsCoord = picture.getTriggerPartsCoord();
                 this.deletePicture(layerNumber);
                 if (nextPictureNumber?.[0] !== undefined) {
                     // TODO 座標を算出したい
-                    this._wwa.setPictureRegistry(layerNumber, nextPictureNumber[0], nextPictureNumber[1] ?? PartsType.OBJECT, new Coord())
+                    this._wwa.setPictureRegistry(
+                        layerNumber,
+                        nextPictureNumber[0],
+                        nextPictureNumber[1] ?? PartsType.OBJECT,
+                        triggerPartsCoord
+                    );
                 }
                 // TODO map プロパティの機能を実装する
             }

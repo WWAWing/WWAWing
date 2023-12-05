@@ -5512,12 +5512,13 @@ export class WWA {
                 imgPosX2: (attributes[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE) ?? 0,
                 imgPosY: (attributes[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE) ?? 0,
                 imgPosY2: (attributes[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE) ?? 0,
+                triggerPartsX: partsPosition.x,
+                triggerPartsY: partsPosition.y,
                 propertiesText: messageText,
             },
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
             partsNumber,
             partsType,
-            partsPosition
         );
         // _cgManager 内のデータと _wwaData 内のデータで同期を取る
         this._wwaData.pictureRegistory = data;
