@@ -23,10 +23,9 @@ export class Monster {
 
     public damage(amount: number): void {
         // Playerから敵を攻撃した時に呼ばれるユーザ定義関数
-        this._calcCustomCalcDamageFunc();
-        // if( !this._calcCustomCalcDamageFunc() ) {
+        if( !this._calcCustomCalcDamageFunc() ) {
             this._status.energy = Math.max(0, this._status.energy - amount);
-        // }
+        }
     }
 
     public battleEndProcess(): void {
@@ -34,13 +33,13 @@ export class Monster {
     }
 
     public setStatus(status: Status): void {
-        if(status.energy) {
+        if(status.energy !== null) {
             this._status.energy = status.energy;
         }
-        if(status.strength) {
+        if(status.strength !== null) {
             this._status.strength = status.strength;
         }
-        if(status.defence) {
+        if(status.defence !== null) {
             this._status.defence = status.defence;
         }
     }

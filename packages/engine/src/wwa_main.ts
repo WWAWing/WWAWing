@@ -1238,7 +1238,6 @@ export class WWA {
      * @returns ユーザ独自関数が定義されているか？
      */
     public callCalcEnemyToPlayerUserDefineFunction(): boolean {
-        console.log("hoge");
         const calcEnemyToPlayerFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_ENEMY_TO_PLAYER_DAMAGE"];
         if( calcEnemyToPlayerFunc ) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);

@@ -1036,48 +1036,72 @@ export class Player extends PartsObject {
         var playerStatus = this.getStatus();
         var enemyStatus = this._enemy.status;
 
-
         if (this._isPlayerTurn) {
             // プレイヤーターン
-            if (playerStatus.strength > enemyStatus.defence ||
-                playerStatus.defence < enemyStatus.strength) {
-
-                // モンスターがこのターンで死なない場合
-                if (enemyStatus.energy > playerStatus.strength - enemyStatus.defence) {
-                    if (playerStatus.strength > enemyStatus.defence) {
-                        this._enemy.damage(playerStatus.strength - enemyStatus.defence);
-                    }
-
-                    // プレイヤー勝利
+            const defaultDamageValue = this.calcDamage(playerStatus, enemyStatus);
+            this._enemy.damage(defaultDamageValue);
+            // プレイヤー勝利
+            if(this._enemy.status.energy <= 0) {
+                this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
+                //                        this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
+                this.earnGold(enemyStatus.gold);
+                this._wwa.setStatusChangedEffect(new Status(0, 0, 0, enemyStatus.gold));
+                if (this._enemy.item !== 0) {
+                    this._wwa.setPartsOnPosition(PartsType.OBJECT, this._enemy.item, this._enemy.position);
                 } else {
-                    this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
-                    //                        this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
-                    this.earnGold(enemyStatus.gold);
-                    this._wwa.setStatusChangedEffect(new Status(0, 0, 0, enemyStatus.gold));
-                    if (this._enemy.item !== 0) {
-                        this._wwa.setPartsOnPosition(PartsType.OBJECT, this._enemy.item, this._enemy.position);
-                    } else {
-                        // 本当はif文でわける必要ないけど、可読性のため設置。
-                        this._wwa.setPartsOnPosition(PartsType.OBJECT, 0, this._enemy.position);
-                    }
-                    // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
-                    this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
-                    this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-                    this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
-                    this._enemy.battleEndProcess();
-                    this._battleTurnNum = 0;
-                    this._enemy = null;
+                    // 本当はif文でわける必要ないけど、可読性のため設置。
+                    this._wwa.setPartsOnPosition(PartsType.OBJECT, 0, this._enemy.position);
                 }
-                this._isPlayerTurn = false;
-                return;
+                // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
+                this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
+                this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
+                this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
+                this._enemy.battleEndProcess();
+                this._battleTurnNum = 0;
+                this._enemy = null;
             }
-            this._enemy.battleEndProcess();
-            const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
-            if (systemMessage !== "BLANK") {
-                this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
-            }
-            this._battleTurnNum = 0;
-            this._enemy = null;
+            this._isPlayerTurn = false;
+            // TODO: 勝負がつかないときの処理を書く
+
+            // if (playerStatus.strength > enemyStatus.defence ||
+            //     playerStatus.defence < enemyStatus.strength) {
+
+            //     // モンスターがこのターンで死なない場合
+            //     if (enemyStatus.energy > playerStatus.strength - enemyStatus.defence) {
+            //         if (playerStatus.strength > enemyStatus.defence) {
+            //             this._enemy.damage(playerStatus.strength - enemyStatus.defence);
+            //         }
+
+            //         // プレイヤー勝利
+            //     } else {
+            //         this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
+            //         //                        this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
+            //         this.earnGold(enemyStatus.gold);
+            //         this._wwa.setStatusChangedEffect(new Status(0, 0, 0, enemyStatus.gold));
+            //         if (this._enemy.item !== 0) {
+            //             this._wwa.setPartsOnPosition(PartsType.OBJECT, this._enemy.item, this._enemy.position);
+            //         } else {
+            //             // 本当はif文でわける必要ないけど、可読性のため設置。
+            //             this._wwa.setPartsOnPosition(PartsType.OBJECT, 0, this._enemy.position);
+            //         }
+            //         // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
+            //         this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
+            //         this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
+            //         this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
+            //         this._enemy.battleEndProcess();
+            //         this._battleTurnNum = 0;
+            //         this._enemy = null;
+            //     }
+            //     this._isPlayerTurn = false;
+            //     return;
+            // }
+            // this._enemy.battleEndProcess();
+            // const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
+            // if (systemMessage !== "BLANK") {
+            //     this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
+            // }
+            // this._battleTurnNum = 0;
+            // this._enemy = null;
         } else {
             // モンスターターン
             const defaultDamageValue = this.calcDamage(enemyStatus, playerStatus)
@@ -1095,8 +1119,8 @@ export class Player extends PartsObject {
                     this._wwa.gameover();
                 }
             }
+            this._isPlayerTurn = true;
         }
-        this._isPlayerTurn = true;
 
     }
 
