@@ -6855,6 +6855,13 @@ font-weight: bold;
         }
     }
 
+    public getEnemyStatus(): Status | number {
+        if(!this._monster) {
+            return -1;
+        }
+        return this._monster.status;
+    }
+
     // TODO: 適切な場所に移す
     public getGameStatus() {
         return {
