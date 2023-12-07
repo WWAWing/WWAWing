@@ -105,6 +105,18 @@ export class Player extends PartsObject {
 
     protected _messageDelayFrameCount: number;
 
+    protected _fightDamageLog: {
+        enemy: number[],
+        player: number[]
+    }
+
+    protected _tmpFightEnergy: {
+        enemy: number,
+        player: number
+    }
+
+    // 戦闘でお互いノーダメージが指定ターン続いた場合、引き分けとする
+    static FIGHT_DRAW_TURN: number = 20;
 
     public move(): void {
         if (this.isControllable()) {
@@ -987,6 +999,14 @@ export class Player extends PartsObject {
         this._battleTurnNum = 0;
         this._enemy = enemy;
         this._state = PlayerState.BATTLE;
+        this._fightDamageLog = {
+            player: [],
+            enemy: []
+        }
+        this._tmpFightEnergy = {
+            player: this._status.energy,
+            enemy: this._enemy.status.energy
+        }
     }
 
     public isFighting(): boolean {
@@ -1060,48 +1080,14 @@ export class Player extends PartsObject {
                 this._battleTurnNum = 0;
                 this._enemy = null;
             }
+            // 前回のダメージログを記録
+            if(this._enemy !== null) {
+                this._fightDamageLog.enemy.push(
+                    this._tmpFightEnergy.enemy - this._enemy.status.energy
+                )
+                this._tmpFightEnergy.enemy = this._enemy.status.energy;
+            }
             this._isPlayerTurn = false;
-            // TODO: 勝負がつかないときの処理を書く
-
-            // if (playerStatus.strength > enemyStatus.defence ||
-            //     playerStatus.defence < enemyStatus.strength) {
-
-            //     // モンスターがこのターンで死なない場合
-            //     if (enemyStatus.energy > playerStatus.strength - enemyStatus.defence) {
-            //         if (playerStatus.strength > enemyStatus.defence) {
-            //             this._enemy.damage(playerStatus.strength - enemyStatus.defence);
-            //         }
-
-            //         // プレイヤー勝利
-            //     } else {
-            //         this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
-            //         //                        this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
-            //         this.earnGold(enemyStatus.gold);
-            //         this._wwa.setStatusChangedEffect(new Status(0, 0, 0, enemyStatus.gold));
-            //         if (this._enemy.item !== 0) {
-            //             this._wwa.setPartsOnPosition(PartsType.OBJECT, this._enemy.item, this._enemy.position);
-            //         } else {
-            //             // 本当はif文でわける必要ないけど、可読性のため設置。
-            //             this._wwa.setPartsOnPosition(PartsType.OBJECT, 0, this._enemy.position);
-            //         }
-            //         // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
-            //         this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
-            //         this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-            //         this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
-            //         this._enemy.battleEndProcess();
-            //         this._battleTurnNum = 0;
-            //         this._enemy = null;
-            //     }
-            //     this._isPlayerTurn = false;
-            //     return;
-            // }
-            // this._enemy.battleEndProcess();
-            // const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
-            // if (systemMessage !== "BLANK") {
-            //     this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
-            // }
-            // this._battleTurnNum = 0;
-            // this._enemy = null;
         } else {
             // モンスターターン
             const defaultDamageValue = this.calcDamage(enemyStatus, playerStatus)
@@ -1119,9 +1105,32 @@ export class Player extends PartsObject {
                     this._wwa.gameover();
                 }
             }
+            // 前回のダメージログを記録
+            this._fightDamageLog.player.push(
+                this._tmpFightEnergy.player - this._status.energy
+            )
+            this._tmpFightEnergy.player = this._status.energy;
             this._isPlayerTurn = true;
         }
 
+        // 勝負がつかないときの処理
+        // 規定ターンを超えた場合
+        if(this._fightDamageLog.player.length > Player.FIGHT_DRAW_TURN) {
+            const isPlayerNoDamage = this._fightDamageLog.player.slice(-1 * Player.FIGHT_DRAW_TURN)
+                .every((dmg) => dmg === 0);
+            const isEnemyNoDamage = this._fightDamageLog.enemy.slice(-1 * Player.FIGHT_DRAW_TURN)
+                .every((dmg) => dmg === 0);
+            // PlayerとEnemy両方が規定ターンノーダメージなら戦闘を強制終了する
+            if(isPlayerNoDamage && isEnemyNoDamage) {
+                this._enemy.battleEndProcess();
+                const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
+                if (systemMessage !== "BLANK") {
+                    this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
+                }
+                this._battleTurnNum = 0;
+                this._enemy = null;
+            }
+        }
     }
 
     public readyToUseItem(itemPos: number): void {

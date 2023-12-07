@@ -640,17 +640,17 @@ export class EvalCalcWwaNode {
         return 0;
       case 'ENEMY_HP':
         this.generator.wwa.setEnemyStatus(
-          new Status(this.evalWwaNode(node.value), 0, 0, 0)
+          new Status(this.evalWwaNode(node.value), null, null, 0)
         );
         return 0;
       case 'ENEMY_AT':
         this.generator.wwa.setEnemyStatus(
-          new Status(0, this.evalWwaNode(node.value), 0, 0)
+          new Status(null, this.evalWwaNode(node.value), null, 0)
         );
         return 0;
       case 'ENEMY_DF':
         this.generator.wwa.setEnemyStatus(
-          new Status(0, 0, this.evalWwaNode(node.value), 0)
+          new Status(null, null, this.evalWwaNode(node.value), 0)
         );
         return 0;
       default:
