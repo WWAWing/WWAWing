@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { Coord, MacroStatusIndex, PartsType } from "../wwa_data";
+import { Coord, MacroStatusIndex, PartsType, Status } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -637,6 +637,21 @@ export class EvalCalcWwaNode {
         return 0;
       case 'LOOPLIMIT':
         this.generator.updateLoopLimit(this.evalWwaNode(node.value));
+        return 0;
+      case 'ENEMY_HP':
+        this.generator.wwa.setEnemyStatus(
+          new Status(this.evalWwaNode(node.value), 0, 0, 0)
+        );
+        return 0;
+      case 'ENEMY_AT':
+        this.generator.wwa.setEnemyStatus(
+          new Status(0, this.evalWwaNode(node.value), 0, 0)
+        );
+        return 0;
+      case 'ENEMY_DF':
+        this.generator.wwa.setEnemyStatus(
+          new Status(0, 0, this.evalWwaNode(node.value), 0)
+        );
         return 0;
       default:
         console.error("未実装の要素です: "+node.kind);

@@ -6862,6 +6862,15 @@ font-weight: bold;
         return this._monster.status;
     }
 
+    public setEnemyStatus(status: Status) {
+        if(this._monster) {
+            this._monster.setStatus(status);
+        }
+        else {
+            throw new Error("敵が存在しません");
+        }
+    } 
+
     // TODO: 適切な場所に移す
     public getGameStatus() {
         return {

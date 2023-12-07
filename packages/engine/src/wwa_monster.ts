@@ -33,5 +33,16 @@ export class Monster {
         this._battleEndCallback();
     }
 
+    public setStatus(status: Status): void {
+        if(status.energy) {
+            this._status.energy = status.energy;
+        }
+        if(status.strength) {
+            this._status.strength = status.strength;
+        }
+        if(status.defence) {
+            this._status.defence = status.defence;
+        }
+    }
 }
 
