@@ -8,7 +8,8 @@ export class Monster {
         private _status: Status,
         private _message: string,
         private _item: number,
-        private _battleEndCallback: () => void
+        private _battleEndCallback: () => void,
+        private _calcCustomCalcDamageFunc: () => boolean
     ) {
 
     }
@@ -21,7 +22,11 @@ export class Monster {
     get item(): number { return this._item; }
 
     public damage(amount: number): void {
-        this._status.energy = Math.max(0, this._status.energy - amount);
+        // Playerから敵を攻撃した時に呼ばれるユーザ定義関数
+        this._calcCustomCalcDamageFunc();
+        // if( !this._calcCustomCalcDamageFunc() ) {
+            this._status.energy = Math.max(0, this._status.energy - amount);
+        // }
     }
 
     public battleEndProcess(): void {

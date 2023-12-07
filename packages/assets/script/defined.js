@@ -99,3 +99,13 @@ function CALL_CHANGE_SPEED() {
 function CALL_JUMPGATE() {
   MSG("jumpgate移動しました")
 }
+
+function CALC_PLAYER_TO_ENEMY_DAMAGE() {
+  // ENEMY_HP / ENEMY_AT / ENEMY_DF
+  MONEY += 1;
+}
+
+function CALC_ENEMY_TO_PLAYER_DAMAGE() {
+  // ENEMY_HP / ENEMY_AT / ENEMY_DF
+  v[0] += 1;
+}

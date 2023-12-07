@@ -509,6 +509,12 @@ export class Player extends PartsObject {
     }
 
     public damage(amount: number): void {
+        // ダメージが0以下なら何もしない
+        if(amount < 0) {
+            return;
+        }
+        // ENEMY -> PLAYER 攻撃した時に呼ばれるユーザ定義関数
+        const hasUserFunc = this._wwa.callCalcEnemyToPlayerUserDefineFunction();
         this._status.energy = Math.max(0, this._status.energy - amount);
         if (this.isDead()) {
             this._status.energy = 0;
@@ -996,6 +1002,10 @@ export class Player extends PartsObject {
         return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnNum === 0;
     }
 
+    public calcDamage(enemyStatus: Status, playerStatus: Status): number {
+        return enemyStatus.strength - playerStatus.defence;
+    }
+
     public fight(): void {
         if (!this.isFighting()) {
             throw new Error("バトルが開始されていません。");
@@ -1066,13 +1076,14 @@ export class Player extends PartsObject {
             this._battleTurnNum = 0;
             this._enemy = null;
         } else {
+            const damageValue = this.calcDamage(enemyStatus, playerStatus)
             // モンスターターン
-            if (enemyStatus.strength > playerStatus.defence) {
+            if (damageValue > 0) {
                 // プレイヤーがまだ生きてる
-                if (playerStatus.energy > enemyStatus.strength - playerStatus.defence) {
-                    this.damage(enemyStatus.strength - playerStatus.defence);
-                    // モンスター勝利
+                if (playerStatus.energy - damageValue > 0) {
+                    this.damage(damageValue);
                 } else {
+                    // モンスター勝利
                     this.setEnergy(0);
                     this._enemy.battleEndProcess();
                     this._state = PlayerState.CONTROLLABLE;

@@ -1220,6 +1220,33 @@ export class WWA {
         }
     }
 
+    /**
+     * 戦闘でPlayerToEnemyのダメージ発生時のユーザ定義独自関数を呼び出す
+     * @returns ユーザ独自関数が定義されているか？
+     **/
+    public callCalcPlayerToEnemyUserDefineFunction(): boolean {
+        const calcPlayerToEnemyFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_PLAYER_TO_ENEMY_DAMAGE"];
+        if(calcPlayerToEnemyFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(calcPlayerToEnemyFunc);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 戦闘でEnemyToPlayerのダメージ発生時のユーザ定義独自関数を呼び出す
+     * @returns ユーザ独自関数が定義されているか？
+     */
+    public callCalcEnemyToPlayerUserDefineFunction(): boolean {
+        console.log("hoge");
+        const calcEnemyToPlayerFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_ENEMY_TO_PLAYER_DAMAGE"];
+        if( calcEnemyToPlayerFunc ) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);
+            return true;
+        }
+        return false;
+    }
+
     /** プレイヤーが動いた際のユーザ定義独自関数を呼び出す */
     public callMoveUserDefineFunction() {
         const moveFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_MOVE"];
@@ -3457,7 +3484,9 @@ export class WWA {
             () => {
                 this._monsterWindow.hide();
                 this._dispatchWindowClosedTimeRequests();
-            });
+            },
+            this.callCalcPlayerToEnemyUserDefineFunction.bind(this)
+        );
 
         this._player.startBattleWith(this._monster);
         //↓待ち時間の前にやるのはよくないので、戦闘開始時にやります。
