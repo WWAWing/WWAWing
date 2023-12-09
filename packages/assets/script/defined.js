@@ -99,3 +99,23 @@ function CALL_CHANGE_SPEED() {
 function CALL_JUMPGATE() {
   MSG("jumpgate移動しました")
 }
+
+/**
+ * プレイヤーから敵に与えるダメージ計算式
+ */
+function CALC_PLAYER_TO_ENEMY_DAMAGE() {
+  v["tmp_enemy_damage"] = (AT - ENEMY_DF)
+  if(v["tmp_enemy_damage"] > 0) {
+    ENEMY_HP = ENEMY_HP - v["tmp_enemy_damage"];
+  }
+}
+
+/**
+ * 敵からプレイヤーに与えるダメージ計算式
+ */
+function CALC_ENEMY_TO_PLAYER_DAMAGE() {
+  v["tmp_player_damage"] = (ENEMY_AT - DF)
+  if(v["tmp_player_damage"] > 0) {
+    HP = HP - v["tmp_player_damage"];
+  }
+}

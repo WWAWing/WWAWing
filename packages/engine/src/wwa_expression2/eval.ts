@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { Coord, MacroStatusIndex, PartsType } from "../wwa_data";
+import { Coord, MacroStatusIndex, PartsType, Status } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -638,6 +638,21 @@ export class EvalCalcWwaNode {
       case 'LOOPLIMIT':
         this.generator.updateLoopLimit(this.evalWwaNode(node.value));
         return 0;
+      case 'ENEMY_HP':
+        this.generator.wwa.setEnemyStatus(
+          new Status(this.evalWwaNode(node.value), null, null, 0)
+        );
+        return 0;
+      case 'ENEMY_AT':
+        this.generator.wwa.setEnemyStatus(
+          new Status(null, this.evalWwaNode(node.value), null, 0)
+        );
+        return 0;
+      case 'ENEMY_DF':
+        this.generator.wwa.setEnemyStatus(
+          new Status(null, null, this.evalWwaNode(node.value), 0)
+        );
+        return 0;
       default:
         console.error("未実装の要素です: "+node.kind);
         return 0;
@@ -697,36 +712,37 @@ export class EvalCalcWwaNode {
   }
 
   evalSymbol(node: Wwa.Symbol) {
-    const game_status = this.generator.wwa.getGameStatus();
+    const gameStatus = this.generator.wwa.getGameStatus();
+    const enemyStatus = this.generator.wwa.getEnemyStatus();
     switch(node.name) {
       case "X":
       case "Y":
         // UNDONE: WWAから値を取得する
         return 0;
       case "PX":
-        return game_status.playerCoord.x;
+        return gameStatus.playerCoord.x;
       case "PY":
-        return game_status.playerCoord.y;
+        return gameStatus.playerCoord.y;
       case "AT":
-        return game_status.bareStatus.strength;
+        return gameStatus.bareStatus.strength;
       case "AT_TOTAL":
-        return game_status.totalStatus.strength;
+        return gameStatus.totalStatus.strength;
       case "DF":
-        return game_status.bareStatus.defence;
+        return gameStatus.bareStatus.defence;
       case "DF_TOTAL":
-        return game_status.totalStatus.defence;
+        return gameStatus.totalStatus.defence;
       case "GD":      
-        return game_status.totalStatus.gold;
+        return gameStatus.totalStatus.gold;
       case "HP":      
-        return game_status.totalStatus.energy;
+        return gameStatus.totalStatus.energy;
       case "HPMAX":
-        return game_status.energyMax;
+        return gameStatus.energyMax;
       case "STEP":
-        return game_status.moveCount;
+        return gameStatus.moveCount;
       case "TIME":
-        return game_status.playTime;
+        return gameStatus.playTime;
       case "PDIR":
-        return game_status.playerDirection
+        return gameStatus.playerDirection
       /** for文用（暫定） */
       case 'i':
         return this.for_id.i;
@@ -740,6 +756,12 @@ export class EvalCalcWwaNode {
         return this.generator.readonly_value.item_id;
       case 'ITEM_POS':
         return this.generator.readonly_value.item_pos;
+      case 'ENEMY_HP':
+        return typeof enemyStatus === 'number'? -1: enemyStatus.energy;
+      case 'ENEMY_AT':
+        return typeof enemyStatus === 'number'? -1: enemyStatus.strength;
+      case 'ENEMY_DF':
+        return typeof enemyStatus === 'number'? -1: enemyStatus.defence;
       default:
         throw new Error("このシンボルは取得できません")
     }
