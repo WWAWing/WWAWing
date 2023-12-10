@@ -84,7 +84,7 @@ export class Player extends PartsObject {
 
     protected _battleFrameCounter: number;
     protected _isPlayerTurn: boolean;
-    protected _battleTurnNum: number;
+    protected _battleTurnLength: number;
 
     protected _enemy: Monster;
     protected _moves: number;
@@ -105,18 +105,15 @@ export class Player extends PartsObject {
 
     protected _messageDelayFrameCount: number;
 
-    protected _fightDamageLog: {
-        enemy: number[],
-        player: number[]
-    }
+    // ダメージが発生していないターンの長さ (0ダメージターンがあるごとに加算)
+    // プレイヤーターン, 敵ターンともに1ターンとしてカウントする。
+    // 戦闘開始からでなくとも、途中から0ダメージターンが規定回数が超えた場合も終了。
+    // 戦闘していない場合は 0。
+    protected _battleNoDamageTurnLength: number;
 
-    protected _tmpFightEnergy: {
-        enemy: number,
-        player: number
-    }
-
-    // 戦闘でお互いノーダメージが指定ターン続いた場合、引き分けとする
-    static FIGHT_DRAW_TURN: number = 20;
+    // 戦闘でお互いノーダメージが指定ターン続いた場合、引き分けとする。
+    // ここでいうターンは プレイヤーターンと敵ターンの合計であることに注意。
+    static readonly FIGHT_DRAW_TURN: number = 40;
 
     public move(): void {
         if (this.isControllable()) {
@@ -987,17 +984,10 @@ export class Player extends PartsObject {
     public startBattleWith(enemy: Monster): void {
         this._isPlayerTurn = true;
         this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
-        this._battleTurnNum = 0;
+        this._battleTurnLength = 0;
+        this._battleNoDamageTurnLength = 0;
         this._enemy = enemy;
         this._state = PlayerState.BATTLE;
-        this._fightDamageLog = {
-            player: [],
-            enemy: []
-        }
-        this._tmpFightEnergy = {
-            player: this._status.energy,
-            enemy: this._enemy.status.energy
-        }
     }
 
     public isFighting(): boolean {
@@ -1009,11 +999,11 @@ export class Player extends PartsObject {
     }
 
     public getTurnNum(): number {
-        return this._battleTurnNum;
+        return this._battleTurnLength;
     }
 
     public isBattleStartFrame(): boolean {
-        return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnNum === 0;
+        return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnLength === 0;
     }
 
     private _calcDamagePlayerToEnemy(playerStatus: Status, enemyStatus: Status): number {
@@ -1042,16 +1032,16 @@ export class Player extends PartsObject {
         if (!this.isFighting()) {
             throw new Error("バトルが開始されていません。");
         }
-        if (this._battleTurnNum === 0 && this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM) {
+        if (this._battleTurnLength === 0 && this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM) {
             this._wwa.showMonsterWindow();
         }
         if (--this._battleFrameCounter > 0) {
             return;
         }
 
-        this._battleTurnNum++;
-        if (this._wwa.isBattleSpeedIndexForQuickBattle(this._speedIndex) || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
-            if (this._battleTurnNum === 1) {
+        this._battleTurnLength++;
+        if (this._wwa.isBattleSpeedIndexForQuickBattle(this._speedIndex) || this._battleTurnLength > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
+            if (this._battleTurnLength === 1) {
                 this._wwa.playSound(SystemSound.ATTACK);
                 this._wwa.vibration(false);
             }
@@ -1066,8 +1056,9 @@ export class Player extends PartsObject {
         var enemyStatus = this._enemy.status;
 
         if (this._isPlayerTurn) {
+            const damage = this._calcDamagePlayerToEnemy(playerStatus, enemyStatus);
             // プレイヤーターン
-            this._enemy.damage(this._calcDamagePlayerToEnemy(playerStatus, enemyStatus));
+            this._enemy.damage(damage);
             // プレイヤー勝利
             if(this._enemy.status.energy <= 0) {
                 this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
@@ -1085,20 +1076,23 @@ export class Player extends PartsObject {
                 this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
                 this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
                 this._enemy.battleEndProcess();
-                this._battleTurnNum = 0;
+                this._battleTurnLength = 0;
+                this._battleNoDamageTurnLength = 0;
                 this._enemy = null;
             }
             // 前回のダメージログを記録
-            if(this._enemy !== null) {
-                this._fightDamageLog.enemy.push(
-                    this._tmpFightEnergy.enemy - this._enemy.status.energy
-                )
-                this._tmpFightEnergy.enemy = this._enemy.status.energy;
+            if (this._enemy !== null) {
+                if (damage === 0) {
+                    this._battleNoDamageTurnLength++;
+                } else {
+                    this._battleNoDamageTurnLength = 0;
+                }
             }
             this._isPlayerTurn = false;
         } else {
             // モンスターターン
-            this.damage(this._calcDamageEnemyToPlayer(enemyStatus, playerStatus));
+            const damage = this._calcDamageEnemyToPlayer(enemyStatus, playerStatus);
+            this.damage(damage);
             // プレイヤーがまだ生きてる
             // playerStatus.energy - defaultDamageValue < 0
             if (this._status.energy <= 0) {
@@ -1106,37 +1100,34 @@ export class Player extends PartsObject {
                 this.setEnergy(0);
                 this._enemy.battleEndProcess();
                 this._state = PlayerState.CONTROLLABLE;
-                this._battleTurnNum = 0;
+                this._battleTurnLength = 0;
+                this._battleNoDamageTurnLength = 0;
                 this._enemy = null;
                 if (this._wwa.shouldApplyGameOver({ isCalledByMacro: false })) {
                     this._wwa.gameover();
                 }
             }
             // 前回のダメージログを記録
-            this._fightDamageLog.player.push(
-                this._tmpFightEnergy.player - this._status.energy
-            )
-            this._tmpFightEnergy.player = this._status.energy;
+            if (damage === 0) {
+                this._battleNoDamageTurnLength++;
+            } else {
+                this._battleNoDamageTurnLength = 0;
+            }
             this._isPlayerTurn = true;
         }
 
         // 勝負がつかないときの処理
         // 規定ターンを超えた場合
-        if(this._fightDamageLog.player.length > Player.FIGHT_DRAW_TURN) {
-            const isPlayerNoDamage = this._fightDamageLog.player.slice(-1 * Player.FIGHT_DRAW_TURN)
-                .every((dmg) => dmg === 0);
-            const isEnemyNoDamage = this._fightDamageLog.enemy.slice(-1 * Player.FIGHT_DRAW_TURN)
-                .every((dmg) => dmg === 0);
-            // PlayerとEnemy両方が規定ターンノーダメージなら戦闘を強制終了する
-            if(isPlayerNoDamage && isEnemyNoDamage) {
-                this._enemy.battleEndProcess();
-                const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
-                if (systemMessage !== "BLANK") {
-                    this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
-                }
-                this._battleTurnNum = 0;
-                this._enemy = null;
+        if(this._battleNoDamageTurnLength > Player.FIGHT_DRAW_TURN) {
+            // 戦闘開始から規定ターン、プレイヤーも敵もノーダメージなら戦闘を強制終了する
+            this._enemy.battleEndProcess();
+            const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
+            if (systemMessage !== "BLANK") {
+                this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
             }
+            this._battleTurnLength = 0;
+            this._battleNoDamageTurnLength = 0;
+            this._enemy = null;
         }
     }
 
@@ -1293,6 +1284,7 @@ export class Player extends PartsObject {
         this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         this._speedIndex = gameSpeedIndex;
         this._messageDelayFrameCount = 0;
+        this._battleNoDamageTurnLength = 0;
     }
 
 }
