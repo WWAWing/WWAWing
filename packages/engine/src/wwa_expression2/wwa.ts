@@ -1,3 +1,5 @@
+import { ReturnStatement } from "./acorn";
+
 export type Calcurable = Array1D | Array2D | Literal | Symbol | UnaryOperation | BinaryOperation;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
@@ -30,7 +32,7 @@ export interface UserVariableAssignment {
 
 export interface SpecialParameterAssignment {
   type: "SpecialParameterAssignment";
-  kind: "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF";
+  kind: "X" | "Y" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS";
   value: Calcurable;
   operator?: "=" | "+=" | "-=" | "*=" | "/=";
 }
@@ -129,6 +131,11 @@ export interface Break {
   label: string
 }
 
+export interface Return {
+  type: "Return",
+  argument: WWANode
+}
+
 export interface Continue {
   type: "Continue",
   label: string
@@ -184,6 +191,7 @@ export type WWANode = |
   AnyFunction |
   Break |
   Continue |
+  Return |
   UpdateExpression |
   LogicalExpression |
   TemplateLiteral |

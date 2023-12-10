@@ -521,16 +521,7 @@ export class Player extends PartsObject {
     }
 
     public damage(amount: number): void {
-        // ENEMY -> PLAYER 攻撃した時に呼ばれるユーザ定義関数
-        const hasUserFunc = this._wwa.callCalcEnemyToPlayerUserDefineFunction();
-        // ユーザ定義のダメージ計算式がない時には通常のアルテリオス計算式でダメージ処理をする
-        if(!hasUserFunc) {
-            // ダメージが0以下なら何もしない
-            if(amount < 0) {
-                return;
-            }
-            this._status.energy = Math.max(0, this._status.energy - amount);
-        }
+        this._status.energy = Math.max(0, this._status.energy - amount);
         if (this.isDead()) {
             this._status.energy = 0;
         }
@@ -1025,8 +1016,26 @@ export class Player extends PartsObject {
         return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnNum === 0;
     }
 
-    public calcDamage(enemyStatus: Status, playerStatus: Status): number {
-        return enemyStatus.strength - playerStatus.defence;
+    private _calcDamagePlayerToEnemy(playerStatus: Status, enemyStatus: Status): number {
+        const userDefinedDamage = this._wwa.callCalcPlayerToEnemyUserDefineFunction();
+        if (typeof userDefinedDamage === "number") {
+            return userDefinedDamage;
+        }
+        return this._calcDamageDefault(playerStatus, enemyStatus);
+    }
+
+    private _calcDamageEnemyToPlayer(enemyStatus: Status, playerStatus: Status): number {
+        const userDefinedDamage = this._wwa.callCalcEnemyToPlayerUserDefineFunction();
+        if (typeof userDefinedDamage === "number") {
+            return userDefinedDamage;
+        }
+        return this._calcDamageDefault(enemyStatus, playerStatus);
+    }
+
+    // アルテリオス計算式によるデフォルトダメージ計算。
+    // 攻撃側攻撃力 - 防御側防御力 がダメージとなる。
+    private _calcDamageDefault(offenceSideStatus: Status, defenceSideStatus: Status): number {
+        return offenceSideStatus.strength - defenceSideStatus.defence;
     }
 
     public fight(): void {
@@ -1058,8 +1067,7 @@ export class Player extends PartsObject {
 
         if (this._isPlayerTurn) {
             // プレイヤーターン
-            const defaultDamageValue = this.calcDamage(playerStatus, enemyStatus);
-            this._enemy.damage(defaultDamageValue);
+            this._enemy.damage(this._calcDamagePlayerToEnemy(playerStatus, enemyStatus));
             // プレイヤー勝利
             if(this._enemy.status.energy <= 0) {
                 this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
@@ -1090,8 +1098,7 @@ export class Player extends PartsObject {
             this._isPlayerTurn = false;
         } else {
             // モンスターターン
-            const defaultDamageValue = this.calcDamage(enemyStatus, playerStatus)
-            this.damage(defaultDamageValue);
+            this.damage(this._calcDamageEnemyToPlayer(enemyStatus, playerStatus));
             // プレイヤーがまだ生きてる
             // playerStatus.energy - defaultDamageValue < 0
             if (this._status.energy <= 0) {

@@ -1222,28 +1222,34 @@ export class WWA {
 
     /**
      * 戦闘でPlayerToEnemyのダメージ発生時のユーザ定義独自関数を呼び出す
-     * @returns ユーザ独自関数が定義されているか？
+     * @returns 定義されていればその結果, 未定義なら undefined. 
      **/
-    public callCalcPlayerToEnemyUserDefineFunction(): boolean {
+    public callCalcPlayerToEnemyUserDefineFunction(): number | undefined {
         const calcPlayerToEnemyFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_PLAYER_TO_ENEMY_DAMAGE"];
-        if(calcPlayerToEnemyFunc) {
-            this.evalCalcWwaNodeGenerator.evalWwaNode(calcPlayerToEnemyFunc);
-            return true;
+        if (calcPlayerToEnemyFunc) {
+            const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcPlayerToEnemyFunc);
+            if (typeof damage !== "number") {
+                throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
+            }
+            return damage;
         }
-        return false;
+        return undefined;
     }
 
     /**
      * 戦闘でEnemyToPlayerのダメージ発生時のユーザ定義独自関数を呼び出す
-     * @returns ユーザ独自関数が定義されているか？
+     * @returns 定義されていればその結果, 未定義なら undefined. 
      */
-    public callCalcEnemyToPlayerUserDefineFunction(): boolean {
+    public callCalcEnemyToPlayerUserDefineFunction(): number | undefined {
         const calcEnemyToPlayerFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_ENEMY_TO_PLAYER_DAMAGE"];
-        if( calcEnemyToPlayerFunc ) {
-            this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);
-            return true;
+        if (calcEnemyToPlayerFunc) {
+            const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);
+            if (typeof damage !== "number") {
+                throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
+            }
+            return damage;
         }
-        return false;
+        return undefined;
     }
 
     /** プレイヤーが動いた際のユーザ定義独自関数を呼び出す */
@@ -3484,7 +3490,6 @@ export class WWA {
                 this._monsterWindow.hide();
                 this._dispatchWindowClosedTimeRequests();
             },
-            this.callCalcPlayerToEnemyUserDefineFunction.bind(this)
         );
 
         this._player.startBattleWith(this._monster);
