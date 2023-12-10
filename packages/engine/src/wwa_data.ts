@@ -899,6 +899,9 @@ export class WWAConsts {
      */
     static INLINE_USER_VAR_VIEWER_DISPLAY_NUM = 10;
 
+    // 戦闘でお互いノーダメージが指定ターン続いた場合、引き分けとする。
+    // ここでいうターンは プレイヤーターンと敵ターンの合計であることに注意。
+    static readonly FIGHT_DRAW_TURN: number = 40;
 }
 export class WWASaveConsts {
     static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数

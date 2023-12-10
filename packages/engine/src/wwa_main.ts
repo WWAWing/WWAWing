@@ -5410,7 +5410,12 @@ export class WWA {
             this.hideBattleEstimateWindow();
             return false;
         }
-        this._battleEstimateWindow.update(this._player.getStatus(), monsterList);
+        this._battleEstimateWindow.update(
+            this._player.getStatus(),
+            monsterList,
+            (playerStatus: Status, enemyStatus: Status) => this._player.calcDamagePlayerToEnemy(playerStatus, enemyStatus),
+            (enemyStatus: Status, playerStatus: Status) => this._player.calcDamageEnemyToPlayer(enemyStatus, playerStatus)
+        );
         this._battleEstimateWindow.show();
         this._player.setEstimateWindowWating();
         

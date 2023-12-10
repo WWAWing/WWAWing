@@ -111,10 +111,6 @@ export class Player extends PartsObject {
     // 戦闘していない場合は 0。
     protected _battleNoDamageTurnLength: number;
 
-    // 戦闘でお互いノーダメージが指定ターン続いた場合、引き分けとする。
-    // ここでいうターンは プレイヤーターンと敵ターンの合計であることに注意。
-    static readonly FIGHT_DRAW_TURN: number = 40;
-
     public move(): void {
         if (this.isControllable()) {
             this.controll(this._dir);
@@ -1006,7 +1002,7 @@ export class Player extends PartsObject {
         return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnLength === 0;
     }
 
-    private _calcDamagePlayerToEnemy(playerStatus: Status, enemyStatus: Status): number {
+    public calcDamagePlayerToEnemy(playerStatus: Status, enemyStatus: Status): number {
         const userDefinedDamage = this._wwa.callCalcPlayerToEnemyUserDefineFunction();
         if (typeof userDefinedDamage === "number") {
             return userDefinedDamage;
@@ -1014,7 +1010,7 @@ export class Player extends PartsObject {
         return this._calcDamageDefault(playerStatus, enemyStatus);
     }
 
-    private _calcDamageEnemyToPlayer(enemyStatus: Status, playerStatus: Status): number {
+    public calcDamageEnemyToPlayer(enemyStatus: Status, playerStatus: Status): number {
         const userDefinedDamage = this._wwa.callCalcEnemyToPlayerUserDefineFunction();
         if (typeof userDefinedDamage === "number") {
             return userDefinedDamage;
@@ -1056,7 +1052,7 @@ export class Player extends PartsObject {
         var enemyStatus = this._enemy.status;
 
         if (this._isPlayerTurn) {
-            const damage = this._calcDamagePlayerToEnemy(playerStatus, enemyStatus);
+            const damage = this.calcDamagePlayerToEnemy(playerStatus, enemyStatus);
             // プレイヤーターン
             this._enemy.damage(damage);
             // プレイヤー勝利
@@ -1091,7 +1087,7 @@ export class Player extends PartsObject {
             this._isPlayerTurn = false;
         } else {
             // モンスターターン
-            const damage = this._calcDamageEnemyToPlayer(enemyStatus, playerStatus);
+            const damage = this.calcDamageEnemyToPlayer(enemyStatus, playerStatus);
             this.damage(damage);
             // プレイヤーがまだ生きてる
             // playerStatus.energy - defaultDamageValue < 0
@@ -1118,7 +1114,7 @@ export class Player extends PartsObject {
 
         // 勝負がつかないときの処理
         // 規定ターンを超えた場合
-        if(this._battleNoDamageTurnLength > Player.FIGHT_DRAW_TURN) {
+        if(this._battleNoDamageTurnLength > Consts.FIGHT_DRAW_TURN) {
             // 戦闘開始から規定ターン、プレイヤーも敵もノーダメージなら戦闘を強制終了する
             this._enemy.battleEndProcess();
             const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
