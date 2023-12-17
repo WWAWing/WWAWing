@@ -48,13 +48,14 @@ export class EvalCalcWwaNodeGenerator {
       const evalNode = new EvalCalcWwaNode(this);
       return evalNode.evalWwaNode(node);
     } catch (caughtThing) {
-      if (caughtThing instanceof ReturnedInformation) {
-        // return で関数が強制終了した場合のケア
-        return caughtThing.value;
-      } else {
-        // 一般エラー
-        throw caughtThing;
-      }
+      // if (caughtThing instanceof ReturnedInformation) {
+      //   // return で関数が強制終了した場合のケア
+      //   return caughtThing.value;
+      // } else {
+      //   // 一般エラー
+      //   throw caughtThing;
+      // }
+      throw caughtThing;
     }
   }
 
@@ -142,7 +143,8 @@ export class EvalCalcWwaNode {
       case "Break":
         return this.breakStatement(node);
       case "Return":
-        throw new ReturnedInformation(this.returnStatement(node));
+        // throw new ReturnedInformation(this.returnStatement(node));
+        return this.returnStatement(node);
       case "Continue":
         return this.contunueStatment(node);
       case "UpdateExpression":
@@ -163,7 +165,7 @@ export class EvalCalcWwaNode {
     if(func === null) {
       throw new Error(`未定義の関数が呼び出されました: ${node.functionName}`);
     }
-    this.evalWwaNode(func);
+    return this.evalWwaNode(func);
   }
 
   /** i++ などが実行された時の処理 */
@@ -547,7 +549,8 @@ export class EvalCalcWwaNode {
   }
 
   blockStatement(node: Wwa.BlockStatement) {
-    this.evalWwaNodes(node.value);
+    const value = this.evalWwaNodes(node.value)
+    return value[0];
   }
 
   ifStatement(node: Wwa.IfStatement) {
@@ -820,8 +823,8 @@ export class EvalCalcWwaNode {
  * return が呼び出された場合に throw されるインスタンスのクラス
  * 以降の処理を打ち切って関数の外に出るための情報。
  */
-class ReturnedInformation {
-  // HACK: evalWwaNode の型つけが any になっているのでそれに準じる形で妥協。
-  // evalWwaNode の型つけは改善されるべき。
-  constructor(public value: any) {}
-}
+// class ReturnedInformation {
+//   // HACK: evalWwaNode の型つけが any になっているのでそれに準じる形で妥協。
+//   // evalWwaNode の型つけは改善されるべき。
+//   constructor(public value: any) {}
+// }
