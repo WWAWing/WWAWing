@@ -1021,7 +1021,8 @@ export class Player extends PartsObject {
     // アルテリオス計算式によるデフォルトダメージ計算。
     // 攻撃側攻撃力 - 防御側防御力 がダメージとなる。
     private _calcDamageDefault(offenceSideStatus: Status, defenceSideStatus: Status): number {
-        return offenceSideStatus.strength - defenceSideStatus.defence;
+        const damage = offenceSideStatus.strength - defenceSideStatus.defence
+        return damage > 0? damage: 0;
     }
 
     public fight(): void {
