@@ -1222,28 +1222,34 @@ export class WWA {
 
     /**
      * 戦闘でPlayerToEnemyのダメージ発生時のユーザ定義独自関数を呼び出す
-     * @returns ユーザ独自関数が定義されているか？
+     * @returns 定義されていればその結果, 未定義なら undefined. 
      **/
-    public callCalcPlayerToEnemyUserDefineFunction(): boolean {
+    public callCalcPlayerToEnemyUserDefineFunction(): number | undefined {
         const calcPlayerToEnemyFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_PLAYER_TO_ENEMY_DAMAGE"];
-        if(calcPlayerToEnemyFunc) {
-            this.evalCalcWwaNodeGenerator.evalWwaNode(calcPlayerToEnemyFunc);
-            return true;
+        if (calcPlayerToEnemyFunc) {
+            const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcPlayerToEnemyFunc);
+            if (typeof damage !== "number") {
+                throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
+            }
+            return damage;
         }
-        return false;
+        return undefined;
     }
 
     /**
      * 戦闘でEnemyToPlayerのダメージ発生時のユーザ定義独自関数を呼び出す
-     * @returns ユーザ独自関数が定義されているか？
+     * @returns 定義されていればその結果, 未定義なら undefined. 
      */
-    public callCalcEnemyToPlayerUserDefineFunction(): boolean {
+    public callCalcEnemyToPlayerUserDefineFunction(): number | undefined {
         const calcEnemyToPlayerFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_ENEMY_TO_PLAYER_DAMAGE"];
-        if( calcEnemyToPlayerFunc ) {
-            this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);
-            return true;
+        if (calcEnemyToPlayerFunc) {
+            const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);
+            if (typeof damage !== "number") {
+                throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
+            }
+            return damage;
         }
-        return false;
+        return undefined;
     }
 
     /** プレイヤーが動いた際のユーザ定義独自関数を呼び出す */
@@ -3463,30 +3469,14 @@ export class WWA {
     }
 
     private _execObjectMonsterEvent(pos: Coord, partsID: number, objAttr: number): void {
-        var monsterImgCoord = new Coord(
-            this._wwaData.objectAttribute[partsID][Consts.ATR_X],
-            this._wwaData.objectAttribute[partsID][Consts.ATR_Y]);
-
-        var monsterStatus = new Status(
-            this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
-            this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
-            this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
-            this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]);
-
-        var monsterMessage = this._wwaData.message[
-            this._wwaData.objectAttribute[partsID][Consts.ATR_STRING]];
-
-        var monsterItemID = this._wwaData.objectAttribute[partsID][Consts.ATR_ITEM];
-
-        this._monster = new Monster(
-            partsID, pos, monsterImgCoord, monsterStatus, monsterMessage, monsterItemID,
+        this._monster = this._createMonster(
+            partsID, pos,
             () => {
+                this._monster = undefined;
                 this._monsterWindow.hide();
                 this._dispatchWindowClosedTimeRequests();
-            },
-            this.callCalcPlayerToEnemyUserDefineFunction.bind(this)
+            }
         );
-
         this._player.startBattleWith(this._monster);
         //↓待ち時間の前にやるのはよくないので、戦闘開始時にやります。
         //            this._monsterWindow.show();
@@ -5380,21 +5370,23 @@ export class WWA {
     }
 
     public launchBattleEstimateWindow(): boolean {
-        var cpParts = this._camera.getPosition().getPartsCoord();
-        var xLeft = Math.max(0, cpParts.x);
-        var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1);
-        var yTop = Math.max(0, cpParts.y);
-        var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
-        var monsterList: number[] = [];
+        const cpParts = this._camera.getPosition().getPartsCoord();
+        const xLeft = Math.max(0, cpParts.x);
+        const xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1);
+        const yTop = Math.max(0, cpParts.y);
+        const yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
+        const monsterList: Monster[] = [];
         this.playSound(SystemSound.DECISION);
-        for (var x: number = xLeft; x <= xRight; x++) {
-            for (var y: number = yTop; y <= yBottom; y++) {
-                var pid = this._wwaData.mapObject[y][x];
-                if (this._wwaData.objectAttribute[pid][Consts.ATR_TYPE] === Consts.OBJECT_MONSTER) {
-                    if (monsterList.indexOf(pid) === -1) {
-                        monsterList.push(pid);
-                    }
+        for (let x = xLeft; x <= xRight; x++) {
+            for (let y= yTop; y <= yBottom; y++) {
+                const partsId = this._wwaData.mapObject[y][x];
+                if (
+                    this._wwaData.objectAttribute[partsId][Consts.ATR_TYPE] !== Consts.OBJECT_MONSTER ||
+                    monsterList.find(monster => monster.partsID === partsId )
+                ) {
+                    continue;
                 }
+                monsterList.push(this._createMonster(partsId, new Coord(x, y)));
             }
         }
         if (this._bottomButtonType === ControlPanelBottomButton.BATTLE_REPORT) {
@@ -5405,7 +5397,24 @@ export class WWA {
             this.hideBattleEstimateWindow();
             return false;
         }
-        this._battleEstimateWindow.update(this._player.getStatus(), monsterList);
+        this._battleEstimateWindow.update(
+            this._player.getStatus(),
+            monsterList,
+            (playerStatus: Status, monster: Monster) => {
+                // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
+                this._monster = monster;
+                const damage =  this._player.calcDamagePlayerToEnemy(playerStatus, monster.status);
+                this._monster = undefined;
+                return damage;
+            },
+            (monster: Monster, playerStatus: Status) => {
+                // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
+                this._monster = monster;
+                const damage = this._player.calcDamageEnemyToPlayer(monster.status, playerStatus)
+                this._monster = undefined;
+                return damage;
+            }
+        );
         this._battleEstimateWindow.show();
         this._player.setEstimateWindowWating();
         
@@ -5415,6 +5424,26 @@ export class WWA {
             this.evalCalcWwaNodeGenerator.evalWwaNode(battleReportFunc);
         }
         return true;
+    }
+
+    private _createMonster(partsId: number, coord: Coord, battleEndCallback?: () => void ): Monster {
+        return new Monster(
+            partsId,
+            coord,
+            new Coord(
+                this._wwaData.objectAttribute[partsId][Consts.ATR_X],
+                this._wwaData.objectAttribute[partsId][Consts.ATR_Y]
+            ),
+            new Status(
+                this._wwaData.objectAttribute[partsId][Consts.ATR_ENERGY],
+                this._wwaData.objectAttribute[partsId][Consts.ATR_STRENGTH],
+                this._wwaData.objectAttribute[partsId][Consts.ATR_DEFENCE],
+                this._wwaData.objectAttribute[partsId][Consts.ATR_GOLD]
+            ),
+            this._wwaData.message[this._wwaData.objectAttribute[partsId][Consts.ATR_STRING]],
+            this._wwaData.objectAttribute[partsId][Consts.ATR_ITEM],
+            battleEndCallback
+        );
     }
 
     public hideBattleEstimateWindow(): void {

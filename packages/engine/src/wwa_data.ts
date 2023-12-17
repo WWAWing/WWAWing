@@ -6,8 +6,8 @@ import type { JsonResponseErrorKind } from "./json_api_client";
 export { type WWAData };
 
 export class EquipmentStatus {
-    public strength: number | null;
-    public defence: number | null;
+    public strength: number;
+    public defence: number;
     public add(s: EquipmentStatus): EquipmentStatus {
         this.strength += s.strength;
         this.defence += s.defence;
@@ -28,7 +28,7 @@ export class EquipmentStatus {
     public equals(e: EquipmentStatus): boolean {
         return this.strength === e.strength && this.defence === e.defence;
     }
-    public constructor(s: number | null, d: number | null) {
+    public constructor(s: number, d: number) {
         this.strength = s;
         this.defence = d;
     }
@@ -37,7 +37,7 @@ export class EquipmentStatus {
 
 
 export class Status extends EquipmentStatus {
-    public energy: number | null;
+    public energy: number;
     public gold: number;
 
     public add(s: EquipmentStatus): Status {
@@ -88,7 +88,11 @@ export class Status extends EquipmentStatus {
         return (Object.keys(scoreOption.rates) as Key[]).reduce((prev, key) =>  prev + scoreOption.rates[key] * this[key], 0);
     }
 
-    public constructor(e: number | null, s: number | null, d: number | null, g: number) {
+    public clone() {
+        return new Status(this.energy, this.strength, this.defence, this.gold);
+    }
+
+    public constructor(e: number, s: number, d: number, g: number) {
         super(s, d);
         this.energy = e;
         this.gold = g;
@@ -899,6 +903,9 @@ export class WWAConsts {
      */
     static INLINE_USER_VAR_VIEWER_DISPLAY_NUM = 10;
 
+    // 戦闘でお互いノーダメージが指定ターン続いた場合、引き分けとする。
+    // ここでいうターンは プレイヤーターンと敵ターンの合計であることに注意。
+    static readonly FIGHT_DRAW_TURN: number = 40;
 }
 export class WWASaveConsts {
     static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数

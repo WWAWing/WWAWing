@@ -8,8 +8,7 @@ export class Monster {
         private _status: Status,
         private _message: string,
         private _item: number,
-        private _battleEndCallback: () => void,
-        private _calcCustomCalcDamageFunc: () => boolean
+        private _battleEndCallback?: () => void,
     ) {
 
     }
@@ -22,14 +21,11 @@ export class Monster {
     get item(): number { return this._item; }
 
     public damage(amount: number): void {
-        // Playerから敵を攻撃した時に呼ばれるユーザ定義関数
-        if( !this._calcCustomCalcDamageFunc() ) {
-            this._status.energy = Math.max(0, this._status.energy - amount);
-        }
+        this._status.energy = Math.max(0, this._status.energy - amount);
     }
 
     public battleEndProcess(): void {
-        this._battleEndCallback();
+        this._battleEndCallback?.();
     }
 
     public setStatus(status: Status): void {
@@ -42,6 +38,19 @@ export class Monster {
         if(status.defence !== null) {
             this._status.defence = status.defence;
         }
+    }
+    // データをクローンします。ただしコールバックは引き継ぎます。
+    public clone(): Monster {
+        return new Monster(
+            this._partsID,
+            this._position.clone(),
+            this._imgCoord.clone(),
+            this._status.clone(),
+            this._message,
+            this._item,
+            this._battleEndCallback
+        )
+            
     }
 }
 

@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { Coord, MacroStatusIndex, PartsType, Status } from "../wwa_data";
+import { Coord, MacroStatusIndex, PartsType  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -44,8 +44,18 @@ export class EvalCalcWwaNodeGenerator {
     if(node.type === "BlockStatement" && Array.isArray(node.value) && node.value.length === 0 ) {
       return;
     }
-    const evalNode = new EvalCalcWwaNode(this);
-    evalNode.evalWwaNode(node)
+    try {
+      const evalNode = new EvalCalcWwaNode(this);
+      return evalNode.evalWwaNode(node);
+    } catch (caughtThing) {
+      if (caughtThing instanceof ReturnedInformation) {
+        // return で関数が強制終了した場合のケア
+        return caughtThing.value;
+      } else {
+        // 一般エラー
+        throw caughtThing;
+      }
+    }
   }
 
   public updateLoopLimit(limit: number) {
@@ -131,6 +141,8 @@ export class EvalCalcWwaNode {
         return this.callDefinedFunction(node);
       case "Break":
         return this.breakStatement(node);
+      case "Return":
+        throw new ReturnedInformation(this.returnStatement(node));
       case "Continue":
         return this.contunueStatment(node);
       case "UpdateExpression":
@@ -227,6 +239,11 @@ export class EvalCalcWwaNode {
     // TODO: node.labelを活用したい
     /** Breakフラグを立てる */
     this.for_id.break_flag = true;
+  }
+
+  // return文を処理する。 ここでは値を返すだけ。
+  returnStatement(node: Wwa.Return) {
+    return this.evalWwaNode(node.argument);
   }
 
   /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
@@ -638,21 +655,6 @@ export class EvalCalcWwaNode {
       case 'LOOPLIMIT':
         this.generator.updateLoopLimit(this.evalWwaNode(node.value));
         return 0;
-      case 'ENEMY_HP':
-        this.generator.wwa.setEnemyStatus(
-          new Status(this.evalWwaNode(node.value), null, null, 0)
-        );
-        return 0;
-      case 'ENEMY_AT':
-        this.generator.wwa.setEnemyStatus(
-          new Status(null, this.evalWwaNode(node.value), null, 0)
-        );
-        return 0;
-      case 'ENEMY_DF':
-        this.generator.wwa.setEnemyStatus(
-          new Status(null, null, this.evalWwaNode(node.value), 0)
-        );
-        return 0;
       default:
         console.error("未実装の要素です: "+node.kind);
         return 0;
@@ -812,4 +814,14 @@ export class EvalCalcWwaNode {
   evalNumber(node: Wwa.Literal) {
     return node.value;
   }
+}
+
+/**
+ * return が呼び出された場合に throw されるインスタンスのクラス
+ * 以降の処理を打ち切って関数の外に出るための情報。
+ */
+class ReturnedInformation {
+  // HACK: evalWwaNode の型つけが any になっているのでそれに準じる形で妥協。
+  // evalWwaNode の型つけは改善されるべき。
+  constructor(public value: any) {}
 }

@@ -97,6 +97,11 @@ export interface BreakStatement extends Node {
   type: "BreakExpression"
 }
 
+export interface ReturnStatement extends Node {
+  type: "ReturnStatement";
+  argument?: Node;
+}
+
 export interface ContinueStatement extends Node {
   label: string;
   type: "ContinueExpression"

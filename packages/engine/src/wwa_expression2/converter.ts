@@ -41,6 +41,8 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertForStatement(node as Acorn.ForStatement);
       case "BreakStatement":
         return convertBreakStatement(node as Acorn.BreakStatement);
+      case "ReturnStatement":
+        return convertReturnStatement(node as Acorn.ReturnStatement)
       case "ContinueStatement":
         return convertContinueStatment(node as Acorn.ContinueStatement);
       case "UpdateExpression":
@@ -108,6 +110,13 @@ function convertBreakStatement(node: Acorn.BreakStatement): Wwa.WWANode {
   return {
     type: "Break",
     label: node.label
+  }
+}
+
+function convertReturnStatement(node: Acorn.ReturnStatement): Wwa.WWANode {
+  return {
+    type: "Return",
+    argument: convertNodeAcornToWwa(node.argument)
   }
 }
 
@@ -314,10 +323,13 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           throw new Error("このシンボルには代入できません");
         }
         if (left.name === "AT_TOTAL") {
-            throw new Error(`"装備品込みの攻撃力(AT_TOTAL)への代入はできません。"`);
+          throw new Error(`"装備品込みの攻撃力(AT_TOTAL)への代入はできません。"`);
         }
         if (left.name === "DF_TOTAL") {
           throw new Error(`"装備品込みの防御力(DF_TOTAL)への代入はできません。"`);
+        }
+        if (left.name === "ENEMY_HP" || left.name === "ENEMY_AT" || left.name === "ENEMY_DF") {
+          throw new Error("敵ステータス (ENEMY_HP, ENEMY_AT, ENEMY_DF) への代入はできません。");
         }
         return {
           type: "SpecialParameterAssignment",
