@@ -1,5 +1,6 @@
 import { WWA } from "./wwa_main";
 import { Coord, Status, WWAConsts } from "./wwa_data";
+import { Monster } from "./wwa_monster";
 
 class EstimateDisplayElements {
     public elem: HTMLElement;
@@ -106,9 +107,9 @@ export class BattleEstimateWindow {
 
     public update(
         playerStatus: Status,
-        monsters: number[],
-        calcDamagePlayerToEnemy: (playerStatus: Status, enemyStatus: Status) => number,
-        calcDamageEnemyToPlayer: (enemyStatus: Status, playerStatus: Status) => number,
+        monsters: Monster[],
+        calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => number,
+        calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => number,
     ): void {
         // モンスターの種類が8種類を超える場合は、先頭の8種類のみ処理
         for (let i = 0; i < WWAConsts.BATTLE_ESTIMATE_MONSTER_TYPE_MAX; i++) {
@@ -117,16 +118,16 @@ export class BattleEstimateWindow {
                 this._edes[i].hide()
                 continue;
             }
-            const imgx = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_X);
-            const imgy = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_Y);
+            const imgx = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_X);
+            const imgy = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_Y);
             const imgPos = new Coord(imgx, imgy);
-            const eng = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_ENERGY);
-            const str = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_STRENGTH);
-            const def = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_DEFENCE);
+            const eng = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_ENERGY);
+            const str = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_STRENGTH);
+            const def = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_DEFENCE);
             const enemyStatus = new Status(eng, str, def, 0);
             const result = calc(
                 playerStatus,
-                enemyStatus,
+                monsters[i],
                 calcDamagePlayerToEnemy,
                 calcDamageEnemyToPlayer,
             );
@@ -155,11 +156,11 @@ interface EstimatedBattleResult {
 // 戦闘結果を予測します。プレイヤーの生命力は考慮されない点に注意してください。
 function calc(
     playerStatus: Status,
-    enemyStatus: Status,
-    calcDamagePlayerToEnemy: (playerStatus: Status, enemyStatus: Status) => number,
-    calcDamageEnemyToPlayer: (enemyStatus: Status, playerStatus: Status) => number,
+    monster: Monster,
+    calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => number,
+    calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => number,
  ): EstimatedBattleResult {
-    let enemyEnergy = enemyStatus.energy;
+    const clonedMonster = monster.clone();
 
     let damage = 0;
     let turnLength = 0;
@@ -170,15 +171,15 @@ function calc(
     // 根本的には、ダメージ関数については参照できる変数などのシンボルに制約を入れることになりそう
     while (1) {
         turnLength++;
-        const playerToEnemyDamage = calcDamagePlayerToEnemy(playerStatus, enemyStatus);
-        enemyEnergy -= playerToEnemyDamage;
+        const playerToEnemyDamage = calcDamagePlayerToEnemy(playerStatus, clonedMonster);
+        clonedMonster.status.energy -= playerToEnemyDamage;
 
         if (playerToEnemyDamage === 0) {
             noDamageTurnLength++;
         } else {
             noDamageTurnLength = 0;
         }
-        if (enemyEnergy <= 0) {
+        if (clonedMonster.status.energy <= 0) {
             return { estimatedDamage: damage };
         } else if (noDamageTurnLength > WWAConsts.FIGHT_DRAW_TURN)  {
             return { noSettled: true, estimatedDamage: damage }
@@ -186,7 +187,7 @@ function calc(
             return { isOverMaxTurn: true, estimatedDamage: 0 };
         }
         turnLength++;
-        const enemyToPlayerDamage = calcDamageEnemyToPlayer(playerStatus, enemyStatus);
+        const enemyToPlayerDamage = calcDamageEnemyToPlayer(clonedMonster, playerStatus);
         if (enemyToPlayerDamage === 0) {
             noDamageTurnLength++;
         } else {

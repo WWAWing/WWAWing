@@ -88,6 +88,10 @@ export class Status extends EquipmentStatus {
         return (Object.keys(scoreOption.rates) as Key[]).reduce((prev, key) =>  prev + scoreOption.rates[key] * this[key], 0);
     }
 
+    public clone() {
+        return new Status(this.energy, this.strength, this.defence, this.gold);
+    }
+
     public constructor(e: number, s: number, d: number, g: number) {
         super(s, d);
         this.energy = e;
