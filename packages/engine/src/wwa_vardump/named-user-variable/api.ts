@@ -10,10 +10,10 @@ export function updateValues(
   dumpElement: HTMLElement | undefined | null,
   userVar: Map<string, number | string | boolean>
 ): void {
-  const removeTargetUserVarIndexSet = createDisplayingUserVarSet(dumpElement);
   if (!(dumpElement instanceof HTMLElement)) {
     return;
   }
+  const removeTargetUserVarIndexSet = createDisplayingUserVarSet(dumpElement);
   const listElement = getUserVariableListElement(dumpElement);
   if (!(listElement instanceof HTMLElement)) {
     return;
