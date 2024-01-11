@@ -5838,6 +5838,14 @@ export class WWA {
         return pos;
     }
 
+    // ゲームオーバー座標を取得する
+    public getGemeOverPosition(): Coord {
+        return new Coord(
+            this._wwaData.gameoverX,
+            this._wwaData.gameoverY
+        )
+    }
+
     // 負値, 数値でない値, NaN は 0にする。
     // 小数部分を含む場合は、整数部分だけ取り出す。
     private toValidStatusValue(x: number): number {

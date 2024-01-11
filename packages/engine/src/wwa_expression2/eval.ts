@@ -151,6 +151,8 @@ export class EvalCalcWwaNode {
         return this.logicalExpression(node);
       case "TemplateLiteral":
         return this.convertTemplateLiteral(node);
+      case "ConditionalExpression":
+        return this.convertConditionalExpression(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -490,11 +492,19 @@ export class EvalCalcWwaNode {
         return (new Date()).getHours();
       case "GET_DATE_MINUTES":
         return (new Date()).getMinutes();
+      case "GET_DATE_SECONDS":
+        return (new Date()).getSeconds();
+      case "GET_DATE_MILLISECONDS":
+        return (new Date()).getMilliseconds();
+      case "GET_DATE_WEEKDAY":
+        return (new Date()).getDay();
+      /** ユーザー定義名前付き変数をconsole.log出力する */
       case "SHOW_USER_DEF_VAR":
         {
           console.log(this.generator.wwa.getAllUserNameVar());
           return;
         }
+      /** システムメッセージを変更する */
       case "CHANGE_SYSMSG": {
         this._checkArgsLength(1, node);
         const rawTarget = this.evalWwaNode(node.value[0]);
@@ -516,6 +526,21 @@ export class EvalCalcWwaNode {
         }
       }
       break;
+      /** 絶対値を返す関数 */
+      case "ABS": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.abs(value);
+      }
+      /** ゲームオーバー座標取得関数たち */
+      case "GET_GAMEOVER_POS_X": {
+        const pos = this.generator.wwa.getGemeOverPosition();
+        return pos.x;
+      }
+      case "GET_GAMEOVER_POS_Y":{
+        const pos = this.generator.wwa.getGemeOverPosition();
+        return pos.y;
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
@@ -550,6 +575,7 @@ export class EvalCalcWwaNode {
     this.evalWwaNodes(node.value);
   }
 
+  /** ifステートメントを実行する */
   ifStatement(node: Wwa.IfStatement) {
     const ifResult = this.evalWwaNode(node.test);
     if(ifResult) {
@@ -561,6 +587,14 @@ export class EvalCalcWwaNode {
       this.evalWwaNode(node.alternate);
     }
     return 0;
+  }
+
+  /** 三項演算子を実行する */
+  convertConditionalExpression(node: Wwa.ConditionalExpression) {
+    const ifResult = this.evalWwaNode(node.test);
+    const target = ifResult? node.consequent: node.alternate;
+    const value = this.evalWwaNode(target)
+    return value;
   }
 
   /**
@@ -677,6 +711,8 @@ export class EvalCalcWwaNode {
         return this.evalWwaNode(node.argument);
       case "-":
         return - this.evalWwaNode(node.argument);
+      case "!":
+        return !this.evalWwaNode(node.argument);
       default:
           throw new Error("存在しない単項演算子です");
     }

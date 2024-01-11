@@ -53,6 +53,8 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertTemplateLiteral(node as Acorn.TemplateLiteral);
       case "TemplateElement":
         return convertTemplateElement(node as Acorn.TemplateElement);
+      case "ConditionalExpression":
+        return convertConditionalExpression(node as Acorn.ConditionalExpression)
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -191,8 +193,14 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_DAY":
     case "GET_DATE_HOUR":
     case "GET_DATE_MINUTES":
+    case "GET_DATE_SECONDS":
+    case "GET_DATE_MILLISECONDS":
+    case "GET_DATE_WEEKDAY":
     case "CHANGE_SYSMSG":
     case "SHOW_USER_DEF_VAR":
+    case "ABS":
+    case "GET_GAMEOVER_POS_X":
+    case "GET_GAMEOVER_POS_Y":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -349,7 +357,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
 
 function convertUnaryExpression(node: Acorn.UnaryExpression): Wwa.UnaryOperation {
   const argument = convertNodeAcornToWwa(node.argument);
-  if(node.operator !== "+" && node.operator !== "-") {
+  const allowOperatorList = ["+", "-", "!"];
+  if(!allowOperatorList.includes(node.operator)) {
     throw new Error("未定義の演算子です :"+node.operator);
   }
   if(!Wwa.isCalcurable(argument)) {
@@ -357,7 +366,7 @@ function convertUnaryExpression(node: Acorn.UnaryExpression): Wwa.UnaryOperation
   }
   return {
     type: "UnaryOperation",
-    operator: node.operator,
+    operator: <"!"|"+"|"-">node.operator,
     argument
   }
 }
@@ -476,4 +485,16 @@ function convertLiteral(node: Acorn.Literal): Wwa.Literal {
     type: "Literal",
     value: node.value
   }
+}
+
+function convertConditionalExpression(node: Acorn.ConditionalExpression): Wwa.WWANode {
+  const consequent = convertNodeAcornToWwa(node.consequent);
+  const alternate = convertNodeAcornToWwa(node.alternate);
+  const test = convertNodeAcornToWwa(node.test);
+  return {
+    type: "ConditionalExpression",
+    consequent: consequent,
+    test: test,
+    alternate: alternate
+  };
 }
