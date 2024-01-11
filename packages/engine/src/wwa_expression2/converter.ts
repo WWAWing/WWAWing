@@ -195,11 +195,12 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_MINUTES":
     case "GET_DATE_SECONDS":
     case "GET_DATE_MILLISECONDS":
-    case "GET_DATE_DAY":
     case "GET_DATE_WEEKDAY":
     case "CHANGE_SYSMSG":
     case "SHOW_USER_DEF_VAR":
     case "ABS":
+    case "GET_GAMEOVER_POS_X":
+    case "GET_GAMEOVER_POS_Y":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {

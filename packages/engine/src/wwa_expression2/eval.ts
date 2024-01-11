@@ -532,6 +532,15 @@ export class EvalCalcWwaNode {
         const value = Number(this.evalWwaNode(node.value[0]));
         return Math.abs(value);
       }
+      /** ゲームオーバー座標取得関数たち */
+      case "GET_GAMEOVER_POS_X": {
+        const pos = this.generator.wwa.getGemeOverPosition();
+        return pos.x;
+      }
+      case "GET_GAMEOVER_POS_Y":{
+        const pos = this.generator.wwa.getGemeOverPosition();
+        return pos.y;
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
