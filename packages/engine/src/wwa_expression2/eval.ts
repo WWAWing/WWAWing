@@ -492,6 +492,12 @@ export class EvalCalcWwaNode {
         return (new Date()).getHours();
       case "GET_DATE_MINUTES":
         return (new Date()).getMinutes();
+      case "GET_DATE_SECONDS":
+        return (new Date()).getSeconds();
+      case "GET_DATE_MILLISECONDS":
+        return (new Date()).getMilliseconds();
+      case "GET_DATE_WEEKDAY":
+        return (new Date()).getDay();
       /** ユーザー定義名前付き変数をconsole.log出力する */
       case "SHOW_USER_DEF_VAR":
         {
