@@ -151,6 +151,8 @@ export class EvalCalcWwaNode {
         return this.logicalExpression(node);
       case "TemplateLiteral":
         return this.convertTemplateLiteral(node);
+      case "ConditionalExpression":
+        return this.convertConditionalExpression(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -558,6 +560,7 @@ export class EvalCalcWwaNode {
     this.evalWwaNodes(node.value);
   }
 
+  /** ifステートメントを実行する */
   ifStatement(node: Wwa.IfStatement) {
     const ifResult = this.evalWwaNode(node.test);
     if(ifResult) {
@@ -569,6 +572,14 @@ export class EvalCalcWwaNode {
       this.evalWwaNode(node.alternate);
     }
     return 0;
+  }
+
+  /** 三項演算子を実行する */
+  convertConditionalExpression(node: Wwa.ConditionalExpression) {
+    const ifResult = this.evalWwaNode(node.test);
+    const target = ifResult? node.consequent: node.alternate;
+    const value = this.evalWwaNode(target)
+    return value;
   }
 
   /**

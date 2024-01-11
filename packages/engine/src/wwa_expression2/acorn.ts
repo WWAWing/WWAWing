@@ -122,3 +122,11 @@ export interface TemplateElement extends Node {
     raw: string
   }
 }
+
+export interface ConditionalExpression extends Node {
+  label: string;
+  type: "ConditionalExpression";
+  test: Node;
+  consequent: Node;
+  alternate: Node;
+}
