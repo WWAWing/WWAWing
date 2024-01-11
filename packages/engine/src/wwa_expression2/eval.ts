@@ -490,11 +490,13 @@ export class EvalCalcWwaNode {
         return (new Date()).getHours();
       case "GET_DATE_MINUTES":
         return (new Date()).getMinutes();
+      /** ユーザー定義名前付き変数をconsole.log出力する */
       case "SHOW_USER_DEF_VAR":
         {
           console.log(this.generator.wwa.getAllUserNameVar());
           return;
         }
+      /** システムメッセージを変更する */
       case "CHANGE_SYSMSG": {
         this._checkArgsLength(1, node);
         const rawTarget = this.evalWwaNode(node.value[0]);
@@ -516,6 +518,12 @@ export class EvalCalcWwaNode {
         }
       }
       break;
+      /** 絶対値を返す関数 */
+      case "ABS": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.abs(value);
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }

@@ -193,6 +193,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_MINUTES":
     case "CHANGE_SYSMSG":
     case "SHOW_USER_DEF_VAR":
+    case "ABS":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
