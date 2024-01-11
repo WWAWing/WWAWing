@@ -39,7 +39,7 @@ export interface SpecialParameterAssignment {
 
 export interface UnaryOperation {
   type: "UnaryOperation";
-  operator: "+" | "-";
+  operator: "+" | "-" | "!";
   argument: Calcurable;
 }
 

@@ -349,7 +349,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
 
 function convertUnaryExpression(node: Acorn.UnaryExpression): Wwa.UnaryOperation {
   const argument = convertNodeAcornToWwa(node.argument);
-  if(node.operator !== "+" && node.operator !== "-") {
+  const allowOperatorList = ["+", "-", "!"];
+  if(!allowOperatorList.includes(node.operator)) {
     throw new Error("未定義の演算子です :"+node.operator);
   }
   if(!Wwa.isCalcurable(argument)) {
@@ -357,7 +358,7 @@ function convertUnaryExpression(node: Acorn.UnaryExpression): Wwa.UnaryOperation
   }
   return {
     type: "UnaryOperation",
-    operator: node.operator,
+    operator: <"!"|"+"|"-">node.operator,
     argument
   }
 }

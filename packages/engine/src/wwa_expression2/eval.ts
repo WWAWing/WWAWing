@@ -677,6 +677,8 @@ export class EvalCalcWwaNode {
         return this.evalWwaNode(node.argument);
       case "-":
         return - this.evalWwaNode(node.argument);
+      case "!":
+        return !this.evalWwaNode(node.argument);
       default:
           throw new Error("存在しない単項演算子です");
     }
