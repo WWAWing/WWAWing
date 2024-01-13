@@ -181,6 +181,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "URL_JUMPGATE":
     case "HIDE_STATUS":
     case "PARTS":
+    case "FACE":
     case "EFFECT":
     case "CHANGE_PLAYER_IMAGE":
     case "HAS_ITEM":
