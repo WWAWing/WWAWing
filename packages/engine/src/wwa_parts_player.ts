@@ -1018,6 +1018,7 @@ export class Player extends PartsObject {
         return this._calcDamageDefault(enemyStatus, playerStatus);
     }
 
+
     // アルテリオス計算式によるデフォルトダメージ計算。
     // 攻撃側攻撃力 - 防御側防御力 がダメージとなる。
     private _calcDamageDefault(offenceSideStatus: Status, defenceSideStatus: Status): number {
@@ -1053,6 +1054,29 @@ export class Player extends PartsObject {
         var enemyStatus = this._enemy.status;
 
         if (this._isPlayerTurn) {
+            // デフォルトのダメージ計算式を使用している場合に限り、
+            // プレイヤーが敵にダメージを与えられず、敵もプレイヤーにダメージを与えられない場合
+            // プレイヤーが最初に攻撃する前にシステムメッセージ CANNOT_DAMAGE_MONSTER（相手の防御能力が高すぎる！）を表示して戦闘終了する。
+            // カスタムダメージ計算式を利用した場合は、ダメージ量がターンによって変わる可能性があるため、事前にこのようなダメージ判定を実施するのは困難なためこの判定を実施しない。
+            // まつゆき個人としては、デフォルトのダメージ計算式の場合についてもこの仕様はなくてもいいと感じているが、生命力が 0 でダメージが通らないモンスターに対して
+            // 倒せる判定になるかどうかが過去のバージョンと異なってしまうため、無念ではあるがこの仕様を残す判断をした。
+            if (
+                this._battleTurnLength === 1 &&
+                this._wwa.isUsingDefaultDamageCalcFunction() &&
+                playerStatus.strength <= enemyStatus.defence &&
+                playerStatus.defence >= enemyStatus.strength
+            ) {
+                this._enemy.battleEndProcess();
+                const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
+                if (systemMessage !== "BLANK") {
+                    this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
+                }
+                this._battleTurnLength = 0;
+                this._enemy = null;
+                this._state = PlayerState.CONTROLLABLE;
+                return;
+            }
+
             const damage = this.calcDamagePlayerToEnemy(playerStatus, enemyStatus);
             // プレイヤーターン
             this._enemy.damage(damage);
@@ -1118,7 +1142,7 @@ export class Player extends PartsObject {
         if(this._battleNoDamageTurnLength > Consts.FIGHT_DRAW_TURN) {
             // 戦闘開始から規定ターン、プレイヤーも敵もノーダメージなら戦闘を強制終了する
             this._enemy.battleEndProcess();
-            const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
+            const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.BATTLE_NOT_SETTLED);
             if (systemMessage !== "BLANK") {
                 this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
             }

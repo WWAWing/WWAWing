@@ -74,7 +74,9 @@ class EstimateDisplayElements {
         this.energyDispElem.textContent = "生命力 " + enemyStatus.energy;
         this.strengthDispElem.textContent = "攻撃力 " + enemyStatus.strength;
         this.defenceDispElem.textContent = "防御力 " + enemyStatus.defence;
-        if (result.noSettled) {
+        if (result.cannotDamageMonster) {
+            this.damageDispElem.textContent = "攻撃無効";
+        } else if (result.noSettled) {
             this.damageDispElem.textContent = "決着がつきません";
         } else if (result.isOverMaxTurn) {
             this.damageDispElem.textContent = "長期戦が予想されます";
@@ -110,6 +112,7 @@ export class BattleEstimateWindow {
         monsters: Monster[],
         calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => number,
         calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => number,
+        usingDefaultDamageFunction: boolean
     ): void {
         // モンスターの種類が8種類を超える場合は、先頭の8種類のみ処理
         for (let i = 0; i < WWAConsts.BATTLE_ESTIMATE_MONSTER_TYPE_MAX; i++) {
@@ -130,6 +133,7 @@ export class BattleEstimateWindow {
                 monsters[i],
                 calcDamagePlayerToEnemy,
                 calcDamageEnemyToPlayer,
+                usingDefaultDamageFunction,
             );
             this._edes[i].setResult(imgPos, enemyStatus, result);
 
@@ -150,6 +154,7 @@ export class BattleEstimateWindow {
 interface EstimatedBattleResult {
   noSettled?: boolean,
   isOverMaxTurn?: boolean,
+  cannotDamageMonster?: boolean,
   estimatedDamage: number
 }
 
@@ -159,12 +164,22 @@ function calc(
     monster: Monster,
     calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => number,
     calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => number,
+    usingDefaultDamageFunction: boolean
  ): EstimatedBattleResult {
     const clonedMonster = monster.clone();
 
     let damage = 0;
     let turnLength = 0;
     let noDamageTurnLength = 0;
+
+    // デフォルトダメージ関数を使っている場合の攻撃無効判定
+    if(
+        usingDefaultDamageFunction &&
+        playerStatus.strength <= monster.status.defence &&
+        playerStatus.defence >= monster.status.strength
+    ) {
+        return { cannotDamageMonster: true, estimatedDamage: 0 }
+    }
 
     // FIXME: プレイヤー生命力などのステータスが計算式に入っている場合に正しく戦闘結果予測が動作しない
     // 生命力をシミュレーションする環境構築が必要
