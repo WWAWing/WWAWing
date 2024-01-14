@@ -1181,11 +1181,15 @@ export class WWA {
 
     /**
      * Item関連のReadOnly値をセットする
-     * @param item_id 使用・取得したITEMのID
-     * @param item_pos 使用・取得したITEMのID
+     * @param itemObjectId 使用・取得したITEMのID
+     * @param itemPos 使用・取得したITEMのID
      */
-    public setEvalCalCWwaNodeReadOnlyItemValue(item_id: number, item_pos: number) {
-        this.evalCalcWwaNodeGenerator.setReadOnlyItemValue(item_id, item_pos);
+    public setEvalCalcWwaNodeEarnedItem(itemObjectId: number, itemPos: number) {
+        this.evalCalcWwaNodeGenerator.setEarnedItem(itemObjectId, itemPos);
+    }
+
+    public clearEvalCalcWwaNodeEarnedItem() {
+        this.evalCalcWwaNodeGenerator.clearEarnedItem()
     }
 
     /** アイテムを取得した際のユーザ定義独自関数を呼び出す */
@@ -1224,14 +1228,17 @@ export class WWA {
      * 戦闘でPlayerToEnemyのダメージ発生時のユーザ定義独自関数を呼び出す
      * @returns 定義されていればその結果, 未定義なら undefined. 
      **/
-    public callCalcPlayerToEnemyUserDefineFunction(): number | undefined {
+    public callCalcPlayerToEnemyUserDefineFunction(isEstimating: boolean = false): { damage: number; aborted?: boolean } | undefined {
         const calcPlayerToEnemyFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_PLAYER_TO_ENEMY_DAMAGE"];
         if (calcPlayerToEnemyFunc) {
+            this.evalCalcWwaNodeGenerator.setBattleDamageCalculationMode(isEstimating);
             const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcPlayerToEnemyFunc);
+            const aborted = this.evalCalcWwaNodeGenerator.state.battleDamageCalculation.aborted;
+            this.evalCalcWwaNodeGenerator.clearBattleDamageCalculationMode();
             if (typeof damage !== "number") {
                 throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
             }
-            return damage;
+            return { damage, aborted };
         }
         return undefined;
     }
@@ -1240,14 +1247,17 @@ export class WWA {
      * 戦闘でEnemyToPlayerのダメージ発生時のユーザ定義独自関数を呼び出す
      * @returns 定義されていればその結果, 未定義なら undefined. 
      */
-    public callCalcEnemyToPlayerUserDefineFunction(): number | undefined {
+    public callCalcEnemyToPlayerUserDefineFunction(isEstimating: boolean = false): { damage: number; aborted?: boolean} | undefined {
         const calcEnemyToPlayerFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_ENEMY_TO_PLAYER_DAMAGE"];
         if (calcEnemyToPlayerFunc) {
+            this.evalCalcWwaNodeGenerator.setBattleDamageCalculationMode(isEstimating);
             const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);
+            const aborted = this.evalCalcWwaNodeGenerator.state.battleDamageCalculation.aborted;
+            this.evalCalcWwaNodeGenerator.clearBattleDamageCalculationMode();
             if (typeof damage !== "number") {
                 throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
             }
-            return damage;
+            return { damage, aborted };
         }
         return undefined;
     }
@@ -5403,14 +5413,14 @@ export class WWA {
             (playerStatus: Status, monster: Monster) => {
                 // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
                 this._monster = monster;
-                const damage =  this._player.calcDamagePlayerToEnemy(playerStatus, monster.status);
+                const damage =  this._player.calcDamagePlayerToEnemy(playerStatus, monster.status, true);
                 this._monster = undefined;
                 return damage;
             },
             (monster: Monster, playerStatus: Status) => {
                 // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
                 this._monster = monster;
-                const damage = this._player.calcDamageEnemyToPlayer(monster.status, playerStatus)
+                const damage = this._player.calcDamageEnemyToPlayer(monster.status, playerStatus, true);
                 this._monster = undefined;
                 return damage;
             },
@@ -5852,11 +5862,6 @@ export class WWA {
             this._wwaData.gameoverX,
             this._wwaData.gameoverY
         )
-    }
-
-    // 戦闘を強制的に打ち切る
-    public setAbortBattle(isAbort: boolean): void {
-        this._player.setAbortBattle(isAbort);
     }
 
     // 負値, 数値でない値, NaN は 0にする。

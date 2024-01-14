@@ -8,17 +8,28 @@ export class EvalCalcWwaNodeGenerator {
   /** for文上限回数 */
   loop_limit: number;
 
-  /** 読み込み専用の特殊値 */
-  readonly_value: {
-    /** 使用・取得したアイテムのID */
-    item_id: number,
-    /** 使用・取得したアイテムの位置 */
-    item_pos: number
+  state: {
+    /** アイテム取得時の計算ならオブジェクトあり, さもなくば undefined. */
+    readonly earnedItem?: {
+      /** 使用・取得したアイテムのID */
+      partsId?: number,
+      /** 使用・取得したアイテムの位置 */
+      itemPos?: number
+    }
+    /** 戦闘ダメージのための計算ならオブジェクトあり, さもなくば undefined */
+    readonly battleDamageCalculation?: {
+      /** 計算結果に中断が含まれている */
+      aborted?: boolean;
+      /** この計算は見積もりであり、実際の戦闘ではない */
+      estimating?: boolean;
+    }
   }
+
   constructor(wwa: WWA) {
     this.wwa = wwa;
     /** 初期処理上限を10万回にする */
     this.loop_limit = 100000;
+    this.state = {}
   }
 
   /**
@@ -26,12 +37,20 @@ export class EvalCalcWwaNodeGenerator {
    * @param item_id 使用・取得したITEMのID
    * @param item_pos 使用・取得したITEMのID
    */
-  public setReadOnlyItemValue(item_id: number, item_pos: number) {
-    this.readonly_value = {
-      ...this.readonly_value,
-      item_id: item_id,
-      item_pos: item_pos
-    }
+  public setEarnedItem(partsId: number, itemPos: number) {
+    this.state = { ...this.state, earnedItem: { partsId, itemPos } };
+  }
+
+  public clearEarnedItem() {
+    this.state = { ...this.state, earnedItem: undefined };
+  }
+
+  public setBattleDamageCalculationMode(estimating: boolean) {
+    this.state = { ...this.state, battleDamageCalculation: { estimating } }
+  }
+
+  public clearBattleDamageCalculationMode() {
+    this.state = { ...this.state, battleDamageCalculation: undefined }
   }
 
   public evalWwaNodes(nodes: Wwa.WWANode[]) {
@@ -567,7 +586,7 @@ export class EvalCalcWwaNode {
       }
       /** ダメージカスタマイズ関数中で、戦闘を即座に打ち切る */
       case "ABORT_BATTLE": {
-        this.generator.wwa.setAbortBattle(true);
+        this.generator.state.battleDamageCalculation.aborted = true;
         return 0;
       }
       default:
@@ -820,9 +839,9 @@ export class EvalCalcWwaNode {
       case 'LOOPLIMIT':
         return this.generator.loop_limit;
       case 'ITEM_ID':
-        return this.generator.readonly_value.item_id;
+        return this.generator.state.earnedItem.partsId ?? -1;
       case 'ITEM_POS':
-        return this.generator.readonly_value.item_pos;
+        return this.generator.state.earnedItem.itemPos ?? -1;
       case 'ENEMY_HP':
         return typeof enemyStatus === 'number'? -1: enemyStatus.energy;
       case 'ENEMY_AT':

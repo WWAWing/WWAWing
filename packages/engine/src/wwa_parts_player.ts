@@ -111,9 +111,6 @@ export class Player extends PartsObject {
     // 戦闘していない場合は 0。
     protected _battleNoDamageTurnLength: number;
 
-    // 戦闘を強制打ち切りするか
-    protected _isAbortBattle: boolean;
-
     public move(): void {
         if (this.isControllable()) {
             this.controll(this._dir);
@@ -757,8 +754,9 @@ export class Player extends PartsObject {
 
             if (insertPos === Consts.ITEMBOX_IS_FULL) {
                 /** ユーザ定義関数用処理 */
-                this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(objID, -1);
+                this._wwa.setEvalCalcWwaNodeEarnedItem(objID, -1);
                 this._wwa.callGetItemFullUserDefineFunction();
+                this._wwa.clearEvalCalcWwaNodeEarnedItem();
                 throw new Error("これ以上、アイテムを持てません。");
             }
             overwrittenObjectId = this._itemBox[insertPos - 1];
@@ -776,8 +774,9 @@ export class Player extends PartsObject {
                     this._forceSetItemBox(insertPos, objID);
                 } else {
                     /** ユーザ定義関数用処理 */
-                    this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(objID, -1);
+                    this._wwa.setEvalCalcWwaNodeEarnedItem(objID, -1);
                     this._wwa.callGetItemFullUserDefineFunction();
+                    this._wwa.clearEvalCalcWwaNodeEarnedItem();
                     throw new Error("これ以上、アイテムを持てません。");
                 }
             } else {
@@ -808,8 +807,9 @@ export class Player extends PartsObject {
         this.removeItemByItemPosition(pos);
         this._itemBox[pos - 1] = id;
         // カスタムイベント関数処理
-        this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(id, pos);
+        this._wwa.setEvalCalcWwaNodeEarnedItem(id, pos);
         this._wwa.callGetItemUserDefineFunction();
+        this._wwa.clearEvalCalcWwaNodeEarnedItem();
         if (id !== 0 && itemType !== ItemMode.NORMAL) {
             const mes = this._wwa.resolveSystemMessage(SystemMessage.Key.ITEM_SELECT_TUTORIAL);
             if (!this._isClickableItemGot) {
@@ -895,10 +895,10 @@ export class Player extends PartsObject {
         }, Consts.DEFAULT_FRAME_INTERVAL);
 
         /** アイテム関係の値を独自関数で使用できるようセットする */
-        this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(itemID, this._readyToUseItemPos - 1);
+        this._wwa.setEvalCalcWwaNodeEarnedItem(itemID, this._readyToUseItemPos - 1);
         /** アイテムを使用した際のユーザ定義独自関数を呼び出す */
         this._wwa.callUseItemUserDefineFunction();
-
+        this._wwa.clearEvalCalcWwaNodeEarnedItem();
         this._isReadyToUseItem = false;
         this._readyToUseItemPos = void 0;
 
@@ -985,14 +985,8 @@ export class Player extends PartsObject {
         this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
         this._battleTurnLength = 0;
         this._battleNoDamageTurnLength = 0;
-        this._isAbortBattle = false;
         this._enemy = enemy;
         this._state = PlayerState.BATTLE;
-    }
-
-    /** 戦闘を打ち切り判定を切り替える */
-    public setAbortBattle(isAbort: boolean): void {
-        this._isAbortBattle = isAbort;
     }
 
     public isFighting(): boolean {
@@ -1011,20 +1005,20 @@ export class Player extends PartsObject {
         return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnLength === 0;
     }
 
-    public calcDamagePlayerToEnemy(playerStatus: Status, enemyStatus: Status): number {
-        const userDefinedDamage = this._wwa.callCalcPlayerToEnemyUserDefineFunction();
-        if (typeof userDefinedDamage === "number") {
-            return userDefinedDamage;
+    public calcDamagePlayerToEnemy(playerStatus: Status, enemyStatus: Status, estimating: boolean = false): { damage: number; aborted?: boolean } {
+        const userDefinedDamageResult = this._wwa.callCalcPlayerToEnemyUserDefineFunction(estimating);
+        if (userDefinedDamageResult) {
+            return userDefinedDamageResult;
         }
-        return this._calcDamageDefault(playerStatus, enemyStatus);
+        return { damage: this._calcDamageDefault(playerStatus, enemyStatus) };
     }
 
-    public calcDamageEnemyToPlayer(enemyStatus: Status, playerStatus: Status): number {
-        const userDefinedDamage = this._wwa.callCalcEnemyToPlayerUserDefineFunction();
-        if (typeof userDefinedDamage === "number") {
-            return userDefinedDamage;
+    public calcDamageEnemyToPlayer(enemyStatus: Status, playerStatus: Status, estimating: boolean = false): { damage: number; aborted?: boolean} {
+        const userDefinedDamageResult = this._wwa.callCalcEnemyToPlayerUserDefineFunction(estimating);
+        if (userDefinedDamageResult) {
+            return userDefinedDamageResult;
         }
-        return this._calcDamageDefault(enemyStatus, playerStatus);
+        return { damage: this._calcDamageDefault(enemyStatus, playerStatus) };
     }
 
 
@@ -1061,6 +1055,7 @@ export class Player extends PartsObject {
 
         var playerStatus = this.getStatus();
         var enemyStatus = this._enemy.status;
+        let abortedByDamageCalculation = false;
 
         if (this._isPlayerTurn) {
             // デフォルトのダメージ計算式を使用している場合に限り、
@@ -1085,10 +1080,10 @@ export class Player extends PartsObject {
                 this._state = PlayerState.CONTROLLABLE;
                 return;
             }
-
-            const damage = this.calcDamagePlayerToEnemy(playerStatus, enemyStatus);
+            const { damage, aborted} = this.calcDamagePlayerToEnemy(playerStatus, enemyStatus);
             // プレイヤーターン
             this._enemy.damage(damage);
+            abortedByDamageCalculation = Boolean(aborted);
             // プレイヤー勝利
             if(this._enemy.status.energy <= 0) {
                 this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
@@ -1121,8 +1116,9 @@ export class Player extends PartsObject {
             this._isPlayerTurn = false;
         } else {
             // モンスターターン
-            const damage = this.calcDamageEnemyToPlayer(enemyStatus, playerStatus);
+            const {damage, aborted} = this.calcDamageEnemyToPlayer(enemyStatus, playerStatus);
             this.damage(damage);
+            abortedByDamageCalculation = Boolean(aborted);
             // プレイヤーがまだ生きてる
             // playerStatus.energy - defaultDamageValue < 0
             if (this._status.energy <= 0) {
@@ -1146,11 +1142,10 @@ export class Player extends PartsObject {
             this._isPlayerTurn = true;
         }
 
-        // 勝負がつかないときの処理
-        // 規定ターンを超えた場合
-        const isAbortBattle = (this._battleNoDamageTurnLength > Consts.FIGHT_DRAW_TURN) || this._isAbortBattle;
-        if(isAbortBattle) {
-            // 戦闘開始から規定ターン、プレイヤーも敵もノーダメージなら戦闘を強制終了する
+        // 勝負がつかないと判定する処理 (規定ターンを超えた場合・強制終了)
+        // 戦闘開始から規定ターン、プレイヤーも敵もノーダメージなら戦闘を強制終了する
+        const aborted = (this._battleNoDamageTurnLength > Consts.FIGHT_DRAW_TURN) || abortedByDamageCalculation;
+        if (aborted) {
             this._enemy.battleEndProcess();
             const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.BATTLE_NOT_SETTLED);
             if (systemMessage !== "BLANK") {
