@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { Coord, MacroStatusIndex, PartsType  } from "../wwa_data";
+import { Coord, Face, MacroStatusIndex, PartsType  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -407,6 +407,30 @@ export class EvalCalcWwaNode {
         }
         // TODO: パーツ番号が最大値を超えていないかチェックする
         this.generator.wwa.replaceParts(srcID, destID, partsType, onlyThisSight);
+        break;
+      }
+      case "FACE": {
+        this._checkArgsLength(6, node);
+        const destPosX = Number(this.evalWwaNode(node.value[0]));
+        const destPosY = Number(this.evalWwaNode(node.value[1]));
+        const srcPosX = Number(this.evalWwaNode(node.value[2]));
+        const srcPosY = Number(this.evalWwaNode(node.value[3]));
+        const srcWidth = Number(this.evalWwaNode(node.value[4]));
+        const srcHeight = Number(this.evalWwaNode(node.value[5]));
+        if (
+          destPosX < 0 || destPosY < 0 ||
+          srcPosX < 0 || srcPosY < 0 ||
+          srcWidth < 0 || srcHeight < 0
+        ) {
+          throw new Error("各引数は0以上の整数でなければなりません。");
+        }
+        this.generator.wwa.addFace(
+          new Face(
+            new Coord(destPosX, destPosY),
+            new Coord(srcPosX, srcPosY),
+            new Coord(srcWidth, srcHeight)
+          )
+        );
         break;
       }
       case "EFFECT": {
