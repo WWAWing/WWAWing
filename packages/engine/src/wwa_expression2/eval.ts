@@ -565,6 +565,11 @@ export class EvalCalcWwaNode {
         const pos = this.generator.wwa.getGemeOverPosition();
         return pos.y;
       }
+      /** ダメージカスタマイズ関数中で、戦闘を即座に打ち切る */
+      case "ABORT_BATTLE": {
+        this.generator.wwa.setAbortBattle(true);
+        return 0;
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }

@@ -104,6 +104,10 @@ function CALL_JUMPGATE() {
  * プレイヤーから敵に与えるダメージ計算式
  */
 function CALC_PLAYER_TO_ENEMY_DAMAGE() {
+  // 試験的にHPが10000以上なら先頭を即座に打ち切る
+  if (HP > 10000) {
+    ABORT_BATTLE();
+  }
   if (AT >= ENEMY_DF) {
     return AT - ENEMY_DF;
   } else {

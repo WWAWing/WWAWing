@@ -111,6 +111,9 @@ export class Player extends PartsObject {
     // 戦闘していない場合は 0。
     protected _battleNoDamageTurnLength: number;
 
+    // 戦闘を強制打ち切りするか
+    protected _isAbortBattle: boolean;
+
     public move(): void {
         if (this.isControllable()) {
             this.controll(this._dir);
@@ -982,8 +985,14 @@ export class Player extends PartsObject {
         this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
         this._battleTurnLength = 0;
         this._battleNoDamageTurnLength = 0;
+        this._isAbortBattle = false;
         this._enemy = enemy;
         this._state = PlayerState.BATTLE;
+    }
+
+    /** 戦闘を打ち切り判定を切り替える */
+    public setAbortBattle(isAbort: boolean): void {
+        this._isAbortBattle = isAbort;
     }
 
     public isFighting(): boolean {
@@ -1139,7 +1148,8 @@ export class Player extends PartsObject {
 
         // 勝負がつかないときの処理
         // 規定ターンを超えた場合
-        if(this._battleNoDamageTurnLength > Consts.FIGHT_DRAW_TURN) {
+        const isAbortBattle = (this._battleNoDamageTurnLength > Consts.FIGHT_DRAW_TURN) || this._isAbortBattle;
+        if(isAbortBattle) {
             // 戦闘開始から規定ターン、プレイヤーも敵もノーダメージなら戦闘を強制終了する
             this._enemy.battleEndProcess();
             const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.BATTLE_NOT_SETTLED);

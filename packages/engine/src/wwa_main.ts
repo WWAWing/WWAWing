@@ -5854,6 +5854,11 @@ export class WWA {
         )
     }
 
+    // 戦闘を強制的に打ち切る
+    public setAbortBattle(isAbort: boolean): void {
+        this._player.setAbortBattle(isAbort);
+    }
+
     // 負値, 数値でない値, NaN は 0にする。
     // 小数部分を含む場合は、整数部分だけ取り出す。
     private toValidStatusValue(x: number): number {
