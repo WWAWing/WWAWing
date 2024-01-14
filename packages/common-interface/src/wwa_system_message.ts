@@ -60,7 +60,11 @@ const _systemMessage = Object.freeze({
   },
   CANNOT_DAMAGE_MONSTER: {
     code: 301,
-    defaultText: "勝負がつかない！",
+    defaultText: "相手の防御能力が高すぎる！",
+  },
+  BATTLE_NOT_SETTLED: {
+    code: 302,
+    defaultText: "勝負がつかない！"
   },
   CONFIRM_ENTER_URL_GATE: {
     code: 401,

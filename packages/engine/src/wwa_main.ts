@@ -5413,7 +5413,8 @@ export class WWA {
                 const damage = this._player.calcDamageEnemyToPlayer(monster.status, playerStatus)
                 this._monster = undefined;
                 return damage;
-            }
+            },
+            this.isUsingDefaultDamageCalcFunction()
         );
         this._battleEstimateWindow.show();
         this._player.setEstimateWindowWating();
@@ -5424,6 +5425,13 @@ export class WWA {
             this.evalCalcWwaNodeGenerator.evalWwaNode(battleReportFunc);
         }
         return true;
+    }
+
+    public isUsingDefaultDamageCalcFunction(): boolean {
+        return (
+            this.callCalcPlayerToEnemyUserDefineFunction() === undefined &&
+            this.callCalcEnemyToPlayerUserDefineFunction() === undefined
+        );
     }
 
     private _createMonster(partsId: number, coord: Coord, battleEndCallback?: () => void ): Monster {
