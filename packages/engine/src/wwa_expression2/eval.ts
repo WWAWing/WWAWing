@@ -839,9 +839,9 @@ export class EvalCalcWwaNode {
       case 'LOOPLIMIT':
         return this.generator.loop_limit;
       case 'ITEM_ID':
-        return this.generator.state.earnedItem.partsId ?? -1;
+        return this.generator.state.earnedItem?.partsId ?? -1;
       case 'ITEM_POS':
-        return this.generator.state.earnedItem.itemPos ?? -1;
+        return this.generator.state.earnedItem?.itemPos ?? -1;
       case 'ENEMY_HP':
         return typeof enemyStatus === 'number'? -1: enemyStatus.energy;
       case 'ENEMY_AT':
