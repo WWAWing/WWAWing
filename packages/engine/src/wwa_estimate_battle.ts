@@ -77,7 +77,7 @@ class EstimateDisplayElements {
         if (result.cannotDamageMonster) {
             this.damageDispElem.textContent = "攻撃無効";
         } else if (result.noSettled) {
-            this.damageDispElem.textContent = "決着がつきません";
+            this.damageDispElem.textContent = "勝負がつきません";
         } else if (result.isOverMaxTurn) {
             this.damageDispElem.textContent = "長期戦が予想されます";
         } else {
