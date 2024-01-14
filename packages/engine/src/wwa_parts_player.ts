@@ -724,16 +724,31 @@ export class Player extends PartsObject {
      *  既に指定位置にあるパーツの格納位置設定が、追加するアイテムと同じなら上書きされます。
      *  違う場合は既に格納位置にあるパーツが、小さい順で一番小さい空きの場所に移動した上で、
      *  新たに追加しようとするパーツが itemPos 番目に格納されます。
-     * 
-     * @param objID 持たせる物体パーツの番号
-     * @param itemPos アイテムボックス格納位置 
-     * @param isOverwrite itemPosが0でない場合に使用される上書き設定。詳しくはdoc本文を参照
-     * @param animationOption オブジェクトが与えられる場合は 画面座標 screenPixelCoord からアイテムボックスまでのアニメーションが発生します。また、itemBoxBackgroundImageCoord をアイテムボックス背景画像のゲーム使用画像内座標[px]として利用します。
      */
-    public addItem(objID: number, itemPos: number = 0, isOverwrite: boolean = false, animationOption?: {
+    public addItem({
+        objID,
+        itemPos = 0,
+        isOverwrite = false,
+        animationOption = undefined,
+        callingUserDefinedFunction = false
+    }: {
+        /** 持たせる物体パーツの番号 */
+        objID: number;
+        /** アイテムボックス格納位置 */
+        itemPos?: number;
+        /** itemPosが0でない場合に使用される上書き設定。詳しくはdoc本文を参照 */
+        isOverwrite?: boolean;
+        /**
+         * オブジェクトが与えられる場合は 画面座標 screenPixelCoord からアイテムボックスまでのアニメーションが発生します。
+         *  また、itemBoxBackgroundImageCoord をアイテムボックス背景画像のゲーム使用画像内座標[px]として利用します。
+         */
+        animationOption?: {
             screenPixelCoord: Coord,
             itemBoxBackgroundImageCoord: Coord
-        }): void {
+        };
+        /** アイテム取得・アイテムが持てない場合にユーザ定義関数を呼ぶかどうか（ロードで状態を復元するなどのシステム都合で呼び出す場合はfalseにしてください） */
+        callingUserDefinedFunction?: boolean
+    }): void {
         var insertPos: number;
         var oldInsertPos: number;
         var oldObjID: number;
@@ -755,10 +770,15 @@ export class Player extends PartsObject {
             if (insertPos === Consts.ITEMBOX_IS_FULL) {
                 /** ユーザ定義関数用処理 */
                 this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(objID, -1);
-                this._wwa.callGetItemFullUserDefineFunction();
+                if (callingUserDefinedFunction) {
+                    this._wwa.callGetItemFullUserDefineFunction();
+                }
                 throw new Error("これ以上、アイテムを持てません。");
             }
             overwrittenObjectId = this._itemBox[insertPos - 1];
+            if (callingUserDefinedFunction) {
+                this._wwa.callGetItemUserDefineFunction();
+            }
             this._forceSetItemBox(insertPos, objID);
 
             // 特定位置挿入 (上書きしない: 取得しているアイテムはずらす)
@@ -769,16 +789,24 @@ export class Player extends PartsObject {
                 this._wwa.getObjectAttributeById(objID, Consts.ATR_NUMBER)) {
                 oldInsertPos = this._getBlankItemPos();
                 if (oldInsertPos !== Consts.ITEMBOX_IS_FULL) {
+                    if (callingUserDefinedFunction) {
+                        this._wwa.callGetItemUserDefineFunction();
+                    }
                     this._forceSetItemBox(oldInsertPos, oldObjID);
                     this._forceSetItemBox(insertPos, objID);
                 } else {
                     /** ユーザ定義関数用処理 */
                     this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(objID, -1);
-                    this._wwa.callGetItemFullUserDefineFunction();
+                    if (callingUserDefinedFunction) {
+                        this._wwa.callGetItemFullUserDefineFunction();
+                    }
                     throw new Error("これ以上、アイテムを持てません。");
                 }
             } else {
                 overwrittenObjectId = this._itemBox[insertPos - 1];
+                if (callingUserDefinedFunction) {
+                    this._wwa.callGetItemFullUserDefineFunction();
+                }
                 this._forceSetItemBox(insertPos, objID);
             }
             // 特定位置挿入（上書きする）
@@ -804,9 +832,7 @@ export class Player extends PartsObject {
         var itemType = this._wwa.getObjectAttributeById(id, Consts.ATR_MODE);
         this.removeItemByItemPosition(pos);
         this._itemBox[pos - 1] = id;
-        // カスタムイベント関数処理
         this._wwa.setEvalCalCWwaNodeReadOnlyItemValue(id, pos);
-        this._wwa.callGetItemUserDefineFunction();
         if (id !== 0 && itemType !== ItemMode.NORMAL) {
             const mes = this._wwa.resolveSystemMessage(SystemMessage.Key.ITEM_SELECT_TUTORIAL);
             if (!this._isClickableItemGot) {
