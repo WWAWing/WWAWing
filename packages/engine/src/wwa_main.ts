@@ -3525,16 +3525,19 @@ export class WWA {
             var screenTopCoord = this._camera.getPosition().getScreenTopPosition().getPartsCoord();
             var screenXPixel = (pos.x - screenTopCoord.x) * Consts.CHIP_SIZE;
             var screenYPixel = (pos.y - screenTopCoord.y) * Consts.CHIP_SIZE;
-            this._player.addItem(
-                partsID, this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER], false,
-                this._wwaData.isItemEffectEnabled ? {
+            this._player.addItem({
+                objID: partsID,
+                itemPos: this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER],
+                isOverwrite: false,
+                animationOption: this._wwaData.isItemEffectEnabled ? {
                     screenPixelCoord: new Coord(screenXPixel, screenYPixel),
                     itemBoxBackgroundImageCoord: new Coord(
                         this._wwaData.imgItemboxX * Consts.CHIP_SIZE,
                         this._wwaData.imgItemboxY * Consts.CHIP_SIZE
                     )
-                } : undefined
-            );
+                } : undefined,
+                callingUserDefinedFunction: true
+            });
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
             if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 // 使用型アイテム の場合は、処理は使用時です。
@@ -3700,13 +3703,18 @@ export class WWA {
             const itemObjectItemPos = this._wwaData.objectAttribute[itemObjectId][Consts.ATR_NUMBER];
             try {
                 // アイテムがこれ以上持てない場合はエラーが throw される
-                this._player.addItem(itemObjectId, itemObjectItemPos, false, this._wwaData.isItemEffectEnabled ? {
-                    screenPixelCoord: new Coord(screenXPixel, screenYPixel),
-                    itemBoxBackgroundImageCoord: new Coord(
-                        this._wwaData.imgItemboxX * Consts.CHIP_SIZE,
-                        this._wwaData.imgItemboxY * Consts.CHIP_SIZE
-                    )
-                } : undefined);
+                this._player.addItem({
+                    objID: itemObjectId,
+                    itemPos: itemObjectItemPos,
+                    animationOption:  this._wwaData.isItemEffectEnabled ? {
+                        screenPixelCoord: new Coord(screenXPixel, screenYPixel),
+                        itemBoxBackgroundImageCoord: new Coord(
+                            this._wwaData.imgItemboxX * Consts.CHIP_SIZE,
+                            this._wwaData.imgItemboxY * Consts.CHIP_SIZE
+                        )
+                    } : undefined,
+                    callingUserDefinedFunction: true
+                });
             } catch (error) {
                 // アイテムボックスがいっぱい
                 const systemMessage = this.resolveSystemMessage(SystemMessage.Key.ITEM_BOX_FULL);
@@ -4933,7 +4941,11 @@ export class WWA {
         this._player.setFrameCount(newData.frameCount);
         this._player.clearItemBox();
         for (var i = 0; i < newData.itemBox.length; i++) {
-            this._player.addItem(newData.itemBox[i], i + 1, true);
+            this._player.addItem({
+                objID: newData.itemBox[i],
+                itemPos: i + 1,
+                isOverwrite: true
+            });
         }
 
         this._player.systemJumpTo(new Position(this, newData.playerX, newData.playerY, 0, 0));
@@ -5890,7 +5902,12 @@ export class WWA {
     }
     public setPlayerGetItem(pos: number, id: number): void {
         try {
-            this._player.addItem(id, pos, true);
+            this._player.addItem({
+                objID: id,
+                itemPos: pos,
+                isOverwrite: true,
+                callingUserDefinedFunction:  true
+            });
         } catch (e) {
             // アイテムを持てない時、メッセージを出さない。
         }
