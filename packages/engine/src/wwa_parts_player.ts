@@ -12,6 +12,7 @@ import {
     SystemSound,
     AppearanceTriggerType,
     Coord,
+    type BattleTurnResult,
 } from "./wwa_data";
 import { Camera } from "./wwa_camera";
 import { Monster } from "./wwa_monster";
@@ -1005,7 +1006,7 @@ export class Player extends PartsObject {
         return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnLength === 0;
     }
 
-    public calcDamagePlayerToEnemy(playerStatus: Status, enemyStatus: Status, estimating: boolean = false): { damage: number; aborted?: boolean } {
+    public calcDamagePlayerToEnemy(playerStatus: Status, enemyStatus: Status, estimating: boolean = false): BattleTurnResult {
         const userDefinedDamageResult = this._wwa.callCalcPlayerToEnemyUserDefineFunction(estimating);
         if (userDefinedDamageResult) {
             return userDefinedDamageResult;
@@ -1013,7 +1014,7 @@ export class Player extends PartsObject {
         return { damage: this._calcDamageDefault(playerStatus, enemyStatus) };
     }
 
-    public calcDamageEnemyToPlayer(enemyStatus: Status, playerStatus: Status, estimating: boolean = false): { damage: number; aborted?: boolean} {
+    public calcDamageEnemyToPlayer(enemyStatus: Status, playerStatus: Status, estimating: boolean = false): BattleTurnResult {
         const userDefinedDamageResult = this._wwa.callCalcEnemyToPlayerUserDefineFunction(estimating);
         if (userDefinedDamageResult) {
             return userDefinedDamageResult;

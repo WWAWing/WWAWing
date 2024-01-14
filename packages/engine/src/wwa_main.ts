@@ -9,7 +9,7 @@ import {
     SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, type UserVariableKind
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, type UserVariableKind, type BattleTurnResult
 } from "./wwa_data";
 
 import {
@@ -1228,7 +1228,7 @@ export class WWA {
      * 戦闘でPlayerToEnemyのダメージ発生時のユーザ定義独自関数を呼び出す
      * @returns 定義されていればその結果, 未定義なら undefined. 
      **/
-    public callCalcPlayerToEnemyUserDefineFunction(isEstimating: boolean = false): { damage: number; aborted?: boolean } | undefined {
+    public callCalcPlayerToEnemyUserDefineFunction(isEstimating: boolean = false): BattleTurnResult | undefined {
         const calcPlayerToEnemyFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_PLAYER_TO_ENEMY_DAMAGE"];
         if (calcPlayerToEnemyFunc) {
             this.evalCalcWwaNodeGenerator.setBattleDamageCalculationMode(isEstimating);
@@ -1247,7 +1247,7 @@ export class WWA {
      * 戦闘でEnemyToPlayerのダメージ発生時のユーザ定義独自関数を呼び出す
      * @returns 定義されていればその結果, 未定義なら undefined. 
      */
-    public callCalcEnemyToPlayerUserDefineFunction(isEstimating: boolean = false): { damage: number; aborted?: boolean} | undefined {
+    public callCalcEnemyToPlayerUserDefineFunction(isEstimating: boolean = false): BattleTurnResult | undefined {
         const calcEnemyToPlayerFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_ENEMY_TO_PLAYER_DAMAGE"];
         if (calcEnemyToPlayerFunc) {
             this.evalCalcWwaNodeGenerator.setBattleDamageCalculationMode(isEstimating);

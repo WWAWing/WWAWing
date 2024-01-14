@@ -1,5 +1,5 @@
 import { WWA } from "./wwa_main";
-import { Coord, Status, WWAConsts } from "./wwa_data";
+import { type BattleTurnResult, Coord, Status, WWAConsts } from "./wwa_data";
 import { Monster } from "./wwa_monster";
 
 class EstimateDisplayElements {
@@ -110,8 +110,8 @@ export class BattleEstimateWindow {
     public update(
         playerStatus: Status,
         monsters: Monster[],
-        calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => { damage: number, aborted?: boolean },
-        calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => { damage: number, aborted?: boolean },
+        calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => BattleTurnResult,
+        calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => BattleTurnResult,
         usingDefaultDamageFunction: boolean
     ): void {
         // モンスターの種類が8種類を超える場合は、先頭の8種類のみ処理
@@ -162,8 +162,8 @@ interface EstimatedBattleResult {
 function calc(
     playerStatus: Status,
     monster: Monster,
-    calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => { damage: number, aborted?: boolean },
-    calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => { damage: number, aborted?: boolean },
+    calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => BattleTurnResult,
+    calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => BattleTurnResult,
     usingDefaultDamageFunction: boolean
  ): EstimatedBattleResult {
     const clonedMonster = monster.clone();
