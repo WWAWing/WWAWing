@@ -338,8 +338,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         if (left.name === "DF_TOTAL") {
           throw new Error(`"装備品込みの防御力(DF_TOTAL)への代入はできません。"`);
         }
-        if (left.name === "ENEMY_HP" || left.name === "ENEMY_AT" || left.name === "ENEMY_DF") {
-          throw new Error("敵ステータス (ENEMY_HP, ENEMY_AT, ENEMY_DF) への代入はできません。");
+        if (left.name === "ENEMY_HP" || left.name === "ENEMY_AT" || left.name === "ENEMY_DF" || left.name === "ENEMY_GD") {
+          throw new Error("敵ステータス (ENEMY_HP, ENEMY_AT, ENEMY_DF, ENEMY_GD) への代入はできません。");
         }
         return {
           type: "SpecialParameterAssignment",

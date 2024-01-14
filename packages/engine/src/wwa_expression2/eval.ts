@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { Coord, Face, MacroStatusIndex, PartsType  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -20,8 +20,13 @@ export class EvalCalcWwaNodeGenerator {
     readonly battleDamageCalculation?: {
       /** 計算結果に中断が含まれている */
       aborted?: boolean;
-      /** この計算は見積もりであり、実際の戦闘ではない */
-      estimating?: boolean;
+      /**
+       * 戦闘予測用パラメータ.
+       * 値が設定されている場合、 処理中に HP, AT_TOTAL, DF_TOTAL, GD, ENEMY_HP, ENEMY_AT, ENEMY_DF, ENEMY_GD を読む時はこの値を使用します。
+       * なお、戦闘予測中にHPを書き換えた場合は、実際のプレイヤーの生命力が書き換わるので注意してください。
+       * undefined の場合は実際の戦闘です。
+       */
+      estimatingParams?: BattleEstimateParameters;
     }
   }
 
@@ -45,8 +50,8 @@ export class EvalCalcWwaNodeGenerator {
     this.state = { ...this.state, earnedItem: undefined };
   }
 
-  public setBattleDamageCalculationMode(estimating: boolean) {
-    this.state = { ...this.state, battleDamageCalculation: { estimating } }
+  public setBattleDamageCalculationMode(estimatingParams: BattleEstimateParameters) {
+    this.state = { ...this.state, battleDamageCalculation: { estimatingParams } }
   }
 
   public clearBattleDamageCalculationMode() {
@@ -812,15 +817,19 @@ export class EvalCalcWwaNode {
       case "AT":
         return gameStatus.bareStatus.strength;
       case "AT_TOTAL":
-        return gameStatus.totalStatus.strength;
+        // 戦闘予測の場合は戦闘予測用ステータスで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.playerStatus.strength ?? gameStatus.totalStatus.strength;
       case "DF":
         return gameStatus.bareStatus.defence;
       case "DF_TOTAL":
-        return gameStatus.totalStatus.defence;
+        // 戦闘予測の場合は戦闘予測用ステータスで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.playerStatus.defence ?? gameStatus.totalStatus.defence;
       case "GD":      
-        return gameStatus.totalStatus.gold;
-      case "HP":      
-        return gameStatus.totalStatus.energy;
+        // 戦闘予測の場合は戦闘予測用ステータスで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.playerStatus.gold ?? gameStatus.totalStatus.gold;
+      case "HP":
+        // 戦闘予測の場合は戦闘予測用ステータスで計算
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.playerStatus.energy ?? gameStatus.totalStatus.energy;
       case "HPMAX":
         return gameStatus.energyMax;
       case "STEP":
@@ -843,11 +852,17 @@ export class EvalCalcWwaNode {
       case 'ITEM_POS':
         return this.generator.state.earnedItem?.itemPos ?? -1;
       case 'ENEMY_HP':
-        return typeof enemyStatus === 'number'? -1: enemyStatus.energy;
+        // 戦闘予測の場合は戦闘予測用HPで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.energy ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.energy);
       case 'ENEMY_AT':
-        return typeof enemyStatus === 'number'? -1: enemyStatus.strength;
+        // 戦闘予測の場合は戦闘予測用HPで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.strength ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.strength);
       case 'ENEMY_DF':
-        return typeof enemyStatus === 'number'? -1: enemyStatus.defence;
+        // 戦闘予測の場合は戦闘予測用HPで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.defence ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.defence);
+      case 'ENEMY_GD':
+        // 戦闘予測の場合は戦闘予測用HPで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
       default:
         throw new Error("このシンボルは取得できません")
     }

@@ -1074,3 +1074,12 @@ export interface BattleTurnResult {
      */
     aborted?: boolean;
 }
+
+
+/**
+ * 戦闘予測用パラメータ
+ */
+export interface BattleEstimateParameters {
+    playerStatus: Status;
+    enemyStatus: Status
+}
