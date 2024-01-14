@@ -5413,16 +5413,16 @@ export class WWA {
             (playerStatus: Status, monster: Monster) => {
                 // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
                 this._monster = monster;
-                const damage =  this._player.calcDamagePlayerToEnemy(playerStatus, monster.status, true);
+                const battleResult =  this._player.calcBattleResultForPlayerTurn(playerStatus, monster.status, true);
                 this._monster = undefined;
-                return damage;
+                return battleResult;
             },
             (monster: Monster, playerStatus: Status) => {
                 // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
                 this._monster = monster;
-                const damage = this._player.calcDamageEnemyToPlayer(monster.status, playerStatus, true);
+                const battleResult = this._player.calcBattleResultForEnemyTurn(monster.status, playerStatus, true);
                 this._monster = undefined;
-                return damage;
+                return battleResult;
             },
             this.isUsingDefaultDamageCalcFunction()
         );

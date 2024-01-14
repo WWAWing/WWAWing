@@ -1006,7 +1006,7 @@ export class Player extends PartsObject {
         return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnLength === 0;
     }
 
-    public calcDamagePlayerToEnemy(playerStatus: Status, enemyStatus: Status, estimating: boolean = false): BattleTurnResult {
+    public calcBattleResultForPlayerTurn(playerStatus: Status, enemyStatus: Status, estimating: boolean = false): BattleTurnResult {
         const userDefinedDamageResult = this._wwa.callCalcPlayerToEnemyUserDefineFunction(estimating);
         if (userDefinedDamageResult) {
             return userDefinedDamageResult;
@@ -1014,7 +1014,7 @@ export class Player extends PartsObject {
         return { damage: this._calcDamageDefault(playerStatus, enemyStatus) };
     }
 
-    public calcDamageEnemyToPlayer(enemyStatus: Status, playerStatus: Status, estimating: boolean = false): BattleTurnResult {
+    public calcBattleResultForEnemyTurn(enemyStatus: Status, playerStatus: Status, estimating: boolean = false): BattleTurnResult {
         const userDefinedDamageResult = this._wwa.callCalcEnemyToPlayerUserDefineFunction(estimating);
         if (userDefinedDamageResult) {
             return userDefinedDamageResult;
@@ -1081,7 +1081,7 @@ export class Player extends PartsObject {
                 this._state = PlayerState.CONTROLLABLE;
                 return;
             }
-            const { damage, aborted} = this.calcDamagePlayerToEnemy(playerStatus, enemyStatus);
+            const { damage, aborted} = this.calcBattleResultForPlayerTurn(playerStatus, enemyStatus);
             // プレイヤーターン
             this._enemy.damage(damage);
             abortedByDamageCalculation = Boolean(aborted);
@@ -1117,7 +1117,7 @@ export class Player extends PartsObject {
             this._isPlayerTurn = false;
         } else {
             // モンスターターン
-            const {damage, aborted} = this.calcDamageEnemyToPlayer(enemyStatus, playerStatus);
+            const {damage, aborted} = this.calcBattleResultForEnemyTurn(enemyStatus, playerStatus);
             this.damage(damage);
             abortedByDamageCalculation = Boolean(aborted);
             // プレイヤーがまだ生きてる
