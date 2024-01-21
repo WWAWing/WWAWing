@@ -492,8 +492,23 @@ export class EvalCalcWwaNode {
         } else {
           throw new Error("この値は文字列に変換できないため、システムメッセージを表示できません。");
         }
+        break;
       }
-      break;
+      case "PICTURE": {
+        this._checkArgsLength(1, node);
+        const layerNumber = Number(this.evalWwaNode(node.value[0]));
+        const propertyDefinition = node.value.length >= 2 ? this.evalWwaNode(node.value[1]) : undefined;
+        if (propertyDefinition === undefined) {
+          this.generator.wwa.deletePictureRegistory(layerNumber);
+          return;
+        }
+        if (typeof propertyDefinition !== "string") {
+          throw new Error("ピクチャのプロパティ定義は文字列である必要があります。")
+        }
+        // TODO パーツ座標は本来なら実行元パーツの座標にすべきだが、イベント関数では判別できない。
+        this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition, 0, 0, this.generator.wwa.getPlayerPositon().getPartsCoord())
+        break;
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }

@@ -5968,16 +5968,20 @@ export class WWA {
             throw new Error("対応していないパーツ番号です。");
         }
         const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
+        this.setPictureRegistryFromRawText(layerNumber, messageText, partsNumber, partsType, partsPosition, attributes);
+    }
+
+    public setPictureRegistryFromRawText(layerNumber: number, propertiesText: string, partsNumber?: number, partsType?: PartsType, partsPosition?: Coord, attributes?: number[]) {
         const data = this._cgManager.picture.registerPictureFromText(
             {
                 layerNumber,
-                imgPosX: (attributes[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE) ?? 0,
-                imgPosX2: (attributes[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE) ?? 0,
-                imgPosY: (attributes[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE) ?? 0,
-                imgPosY2: (attributes[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE) ?? 0,
+                imgPosX: (attributes?.[WWAConsts.ATR_X] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosX2: (attributes?.[WWAConsts.ATR_X2] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY: (attributes?.[WWAConsts.ATR_Y] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY2: (attributes?.[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
                 triggerPartsX: partsPosition.x,
                 triggerPartsY: partsPosition.y,
-                propertiesText: messageText,
+                propertiesText,
             },
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
             partsNumber,
