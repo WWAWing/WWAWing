@@ -2,7 +2,6 @@
 import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
-import * as util from "./wwa_util";
 import { WWA } from "./wwa_main";
 
 export class CacheCanvas {
@@ -26,16 +25,11 @@ export class CacheCanvas {
             width, height
         );
     }
-    public drawFont(text: string, canvasX: number, canvasY: number, customFont?: string, colorR = 0, colorG = 0, colorB = 0, textAlign?: CanvasTextAlign): void {
-        this.ctx.save();
-        const wwaStyle = getComputedStyle(util.$id("wwa-wrapper"));
-        this.ctx.font = customFont ?? wwaStyle.font;
-        if (textAlign) {
-            this.ctx.textAlign = textAlign;
-        }
-        this.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
+    /**
+     * フォントを描画します。色などの設定はあらかじめ ctx フィールドに設定しておいてください。
+     */
+    public drawFont(text: string, canvasX: number, canvasY: number): void {
         this.ctx.fillText(text, canvasX, canvasY);
-        this.ctx.restore();
     }
     public clear() {
         this.clearRect(0, 0, this.cvs.width, this.cvs.height);
@@ -176,7 +170,7 @@ export class CGManager {
     public updatePictures(regitories: PictureRegistory[]): void {
         this.picture.clearAllPictures();
         regitories.forEach((registory) => {
-            this.picture.registPicture(registory);
+            this.picture.registerPicture(registory);
         });
     }
     public updatePicturesCache(isMainAnimation = true): void {

@@ -1,6 +1,7 @@
 import { PictureRegistory } from "@wwawing/common-interface";
 import { CacheCanvas } from "../wwa_cgmanager";
-import { WWAConsts } from "../wwa_data";
+import { Coord, WWAConsts } from "../wwa_data";
+import * as util from "../wwa_util";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -11,6 +12,10 @@ export default class WWAPictureItem {
 
     private readonly _posX: number;
     private readonly _posY: number;
+    private readonly _imgMainX: number;
+    private readonly _imgMainY: number;
+    private readonly _imgSubX: number;
+    private readonly _imgSubY: number;
     private readonly _chipWidth: number;
     private readonly _chipHeight: number;
     private readonly _totalWidth: number;
@@ -19,7 +24,6 @@ export default class WWAPictureItem {
     private readonly _repeatY: number;
     private readonly _cropX: number;
     private readonly _cropY: number;
-    private readonly _textAlign: CanvasTextAlign;
     
     private _displayStockTime?: number;
 
@@ -27,6 +31,8 @@ export default class WWAPictureItem {
         const { properties } = _registory;
         this._posX = properties.pos?.[0] ?? 0;
         this._posY = properties.pos?.[1] ?? 0;
+        [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registory, true);
+        [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registory, false);
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._cropX = properties.crop?.[0] ?? 1;
@@ -35,9 +41,21 @@ export default class WWAPictureItem {
         this._totalHeight = (properties.size?.[1] ?? WWAConsts.CHIP_SIZE) * this._cropY;
         this._chipWidth = Math.floor(this._totalWidth / this._cropX);
         this._chipHeight = Math.floor(this._totalHeight / this._cropY);
-        this._textAlign = properties.textAlign ? WWAPictureItem._convertTextAlign(properties.textAlign) : undefined;
-
+        
         this._displayStockTime = properties.time;
+        
+        // Canvas の ctx を色々いじる
+        this._canvas.ctx.globalAlpha = properties.opacity
+            ? WWAPictureItem._roundPercentage(properties.opacity) / 100
+            : 1;
+        this._canvas.ctx.font = properties.font ?? getComputedStyle(util.$id("wwa-wrapper")).font;
+        if (properties.textAlign) {
+            this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
+        }
+        const colorR = properties.color?.[0] ?? 0;
+        const colorG = properties.color?.[1] ?? 0;
+        const colorB = properties.color?.[2] ?? 0;
+        this._canvas.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
     }
 
     public get layerNumber() {
@@ -48,13 +66,21 @@ export default class WWAPictureItem {
         return this._canvas.cvs;
     }
 
+    public get nextPictureNumber() {
+        return this._registory.properties.next;
+    }
+
+    public get appearPartsInfo() {
+        return this._registory.properties.map;
+    }
+
     /**
      * ピクチャを描画します。
      * 毎フレーム処理されるため、プロパティから直接引き出される値以外はあらかじめフィールドに数値などをキャッシュしてください。
      */
     public draw(image: HTMLImageElement, isMainAnimation: boolean) {
-        // TODO これらもフィールドに移行してキャッシュにしたい
-        const [imgPosX, imgPosY] = WWAPictureItem._getImgPosByPicture(this._registory, isMainAnimation);
+        const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
+        const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;
         
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
@@ -62,12 +88,7 @@ export default class WWAPictureItem {
                     this._canvas.drawFont(
                         this._registory.properties.text,
                         this._posX + (this._totalWidth * rx),
-                        this._posY + (this._totalHeight * ry),
-                        this._registory.properties.font,
-                        this._registory.properties.color?.[0],
-                        this._registory.properties.color?.[1],
-                        this._registory.properties.color?.[2],
-                        this._textAlign
+                        this._posY + (this._totalHeight * ry)
                     );
                 }
                 const chipX = this._posX + (this._totalWidth * rx);
@@ -109,6 +130,10 @@ export default class WWAPictureItem {
         return this._registory;
     }
 
+    public getTriggerPartsCoord() {
+        return new Coord(this._registory.triggerPartsX, this._registory.triggerPartsY);
+    }
+
     private static _getImgPosByPicture(registory: PictureRegistory, isMainTime: boolean) {
         const { properties } = registory;
         if (properties.img?.[0] !== undefined && properties.img?.[1] !== undefined) {
@@ -133,5 +158,15 @@ export default class WWAPictureItem {
         // TODO 例外を投げるべき？
         console.warn(`textAlign プロパティで不正な値が検出されました。: ${value}`);
         return undefined;
+    }
+
+    private static _roundPercentage(value: number): number {
+        if (value < 0) {
+            return 0;
+        }
+        if (value > 100) {
+            return 100;
+        }
+        return value;
     }
 }
