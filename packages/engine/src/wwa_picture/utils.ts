@@ -1,11 +1,11 @@
-import { PictureRegistory, RawPictureRegistory, WWAData } from "@wwawing/common-interface/lib/wwa_data";
-import { PictureRegistoryParts } from "./typedef";
+import { PictureRegistry, RawPictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
+import { PictureRegistryParts } from "./typedef";
 import { PicturePropertyDefinitions } from "./config";
 import { TokenValues, evaluateMacroArgExpression, regPictureTemplate } from "../wwa_expression";
 
-export const convertPictureRegistoryFromText = (partsRegistory: PictureRegistoryParts): RawPictureRegistory => {
+export const convertPictureRegistryFromText = (partsRegistry: PictureRegistryParts): RawPictureRegistry => {
     try {
-        const jsonObject = JSON.parse(partsRegistory.propertiesText);
+        const jsonObject = JSON.parse(partsRegistry.propertiesText);
         if (Array.isArray(jsonObject)) {
             throw new Error("配列形式ではなくオブジェクト形式で記述してください。");
         }
@@ -13,7 +13,7 @@ export const convertPictureRegistoryFromText = (partsRegistory: PictureRegistory
             throw new Error("オブジェクト形式で記述してください。");
         }
         return {
-            ...partsRegistory,
+            ...partsRegistry,
             properties: jsonObject
         };
     } catch (e) {
@@ -21,7 +21,7 @@ export const convertPictureRegistoryFromText = (partsRegistory: PictureRegistory
     }
 };
 
-export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory, tokenValues: TokenValues): PictureRegistory => {
+export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, tokenValues: TokenValues): PictureRegistry => {
     // 数値専用形式で数値あるいは文字列が来た場合、正規表現で置き換えて処理する関数
     const stringToNumberForNumericValue = (value: string | number): number | string => {
         // 数値そのままの場合
@@ -31,7 +31,7 @@ export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory,
         // 変数参照などの場合
         return evaluateMacroArgExpression(value, tokenValues);
     }
-    const propertiesArray = Object.entries(registory.properties).map(([key, value]) => {
+    const propertiesArray = Object.entries(registry.properties).map(([key, value]) => {
         const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
         if (!definitions) {
             // 本来ならエラーにすべきだが、あらかじめバリデーションを通している関係でそのままスルーする。ただし警告は出す。
@@ -73,7 +73,7 @@ export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory,
         }
     });
     return {
-        ...registory,
+        ...registry,
         properties: Object.fromEntries(propertiesArray)
     };
 };

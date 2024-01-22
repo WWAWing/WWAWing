@@ -1,5 +1,5 @@
 
-import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
+import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord } from "./wwa_data";
 import WWAPicutre from "./wwa_picture";
 import { WWA } from "./wwa_main";
@@ -167,10 +167,10 @@ export class CGManager {
         }
     }
 
-    public updatePictures(regitories: PictureRegistory[]): void {
+    public updatePictures(regitories: PictureRegistry[]): void {
         this.picture.clearAllPictures();
-        regitories.forEach((registory) => {
-            this.picture.registerPicture(registory);
+        regitories.forEach((registry) => {
+            this.picture.registerPicture(registry);
         });
     }
     public updatePicturesCache(isMainAnimation = true): void {

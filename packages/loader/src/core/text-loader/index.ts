@@ -136,7 +136,7 @@ export class TextLoader {
 
     wwaData.bgmDelayDurationMs = 0;
 
-    wwaData.pictureRegistory = [];
+    wwaData.pictureRegistry = [];
 
     return wwaData;
   }

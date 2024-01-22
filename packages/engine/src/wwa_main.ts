@@ -4498,7 +4498,7 @@ export class WWA {
 
         this.updateCSSRule();
         this.updateEffect();
-        this._cgManager.updatePictures(this._wwaData.pictureRegistory);
+        this._cgManager.updatePictures(this._wwaData.pictureRegistry);
         this.updatePicturesCache();
         this._player.updateStatusValueBox();
         this._wwaSave.quickSaveButtonUpdate(this._wwaData);
@@ -5521,13 +5521,13 @@ export class WWA {
             partsType,
         );
         // _cgManager 内のデータと _wwaData 内のデータで同期を取る
-        this._wwaData.pictureRegistory = data;
+        this._wwaData.pictureRegistry = data;
         this.updatePicturesCache();
     }
 
-    public deletePictureRegistory(layerNumber: number) {
+    public deletePictureRegistry(layerNumber: number) {
         const data = this._cgManager.picture.deletePicture(layerNumber);
-        this._wwaData.pictureRegistory = data;
+        this._wwaData.pictureRegistry = data;
     };
 
     private _stylePos: number[]; // w
