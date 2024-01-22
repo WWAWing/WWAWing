@@ -5978,10 +5978,10 @@ export class WWA {
         const data = this._cgManager.picture.registerPictureFromText(
             {
                 layerNumber,
-                imgPosX: (attributes?.[WWAConsts.ATR_X] ?? 0) / WWAConsts.CHIP_SIZE,
-                imgPosX2: (attributes?.[WWAConsts.ATR_X2] ?? 0) / WWAConsts.CHIP_SIZE,
-                imgPosY: (attributes?.[WWAConsts.ATR_Y] ?? 0) / WWAConsts.CHIP_SIZE,
-                imgPosY2: (attributes?.[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosX: (attributes[WWAConsts.ATR_X] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosX2: (attributes[WWAConsts.ATR_X2] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY: (attributes[WWAConsts.ATR_Y] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY2: (attributes[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
                 triggerPartsX: partsPosition.x,
                 triggerPartsY: partsPosition.y,
                 propertiesText: messageText,
