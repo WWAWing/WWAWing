@@ -1,4 +1,4 @@
-import { PictureRegistory } from "@wwawing/common-interface";
+import { PictureRegistry } from "@wwawing/common-interface";
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
@@ -27,12 +27,12 @@ export default class WWAPictureItem {
     
     private _displayStockTime?: number;
 
-    constructor(private _registory: PictureRegistory, private _canvas: CacheCanvas) {
-        const { properties } = _registory;
+    constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas) {
+        const { properties } = _registry;
         this._posX = properties.pos?.[0] ?? 0;
         this._posY = properties.pos?.[1] ?? 0;
-        [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registory, true);
-        [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registory, false);
+        [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
+        [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._cropX = properties.crop?.[0] ?? 1;
@@ -59,7 +59,7 @@ export default class WWAPictureItem {
     }
 
     public get layerNumber() {
-        return this._registory.layerNumber;
+        return this._registry.layerNumber;
     }
 
     public get cvs() {
@@ -67,11 +67,11 @@ export default class WWAPictureItem {
     }
 
     public get nextPictureNumber() {
-        return this._registory.properties.next;
+        return this._registry.properties.next;
     }
 
     public get appearPartsInfo() {
-        return this._registory.properties.map;
+        return this._registry.properties.map;
     }
 
     /**
@@ -84,9 +84,9 @@ export default class WWAPictureItem {
         
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
-                if (this._registory.properties.text) {
+                if (this._registry.properties.text) {
                     this._canvas.drawFont(
-                        this._registory.properties.text,
+                        this._registry.properties.text,
                         this._posX + (this._totalWidth * rx),
                         this._posY + (this._totalHeight * ry)
                     );
@@ -126,16 +126,16 @@ export default class WWAPictureItem {
         this._canvas.clear();
     }
 
-    public getRegistoryData() {
-        return this._registory;
+    public getRegistryData() {
+        return this._registry;
     }
 
     public getTriggerPartsCoord() {
-        return new Coord(this._registory.triggerPartsX, this._registory.triggerPartsY);
+        return new Coord(this._registry.triggerPartsX, this._registry.triggerPartsY);
     }
 
-    private static _getImgPosByPicture(registory: PictureRegistory, isMainTime: boolean) {
-        const { properties } = registory;
+    private static _getImgPosByPicture(registry: PictureRegistry, isMainTime: boolean) {
+        const { properties } = registry;
         if (properties.img?.[0] !== undefined && properties.img?.[1] !== undefined) {
             if (isMainTime) {
                 return [properties.img[0], properties.img[1]];
@@ -145,10 +145,10 @@ export default class WWAPictureItem {
             }
             return [properties.img[0], properties.img[1]];
         }
-        if (isMainTime || (registory.imgPosX2 === 0 && registory.imgPosY2 === 0)) {
-            return [registory.imgPosX, registory.imgPosY];
+        if (isMainTime || (registry.imgPosX2 === 0 && registry.imgPosY2 === 0)) {
+            return [registry.imgPosX, registry.imgPosY];
         }
-        return [registory.imgPosX2, registory.imgPosY2];
+        return [registry.imgPosX2, registry.imgPosY2];
     }
 
     private static _convertTextAlign(value: string): CanvasTextAlign | undefined {

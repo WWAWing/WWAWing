@@ -14,7 +14,7 @@ export interface Coord {
  */
 export type GameOverPolicy = "default" | "never" | "except-macro";
 
-type PictureRegistoryBase<N> = {
+type PictureRegistryBase<N> = {
     layerNumber: number,
     imgPosX: number,
     imgPosY: number,
@@ -30,9 +30,9 @@ type PictureRegistoryBase<N> = {
     triggerPartsY: number,
     properties: PictureProperties<N>
 };
-export type PictureRegistory = PictureRegistoryBase<number>;
-// 変数参照がまだ残っている状態の PictureRegistory
-export type RawPictureRegistory = PictureRegistoryBase<number | string>;
+export type PictureRegistry = PictureRegistryBase<number>;
+// 変数参照がまだ残っている状態の PictureRegistry
+export type RawPictureRegistry = PictureRegistryBase<number | string>;
 
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
@@ -182,6 +182,6 @@ export interface WWAData {
      */
     customSystemMessages: Partial<Record<Key, string>>;
 
-    pictureRegistory: PictureRegistory[];
+    pictureRegistry: PictureRegistry[];
 
 }

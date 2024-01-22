@@ -1,9 +1,9 @@
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, PartsType, WWAConsts } from "../wwa_data";
 import { MAX_PICTURE_LAYERS_COUNT, PicturePropertyDefinitions } from "./config";
-import { PictureRegistoryParts } from "./typedef";
-import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
-import { checkValuesFromRawRegistory, convertPictureRegistoryFromText, convertVariablesFromRawRegistory } from "./utils";
+import { PictureRegistryParts } from "./typedef";
+import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
+import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVariablesFromRawRegistry } from "./utils";
 import { WWA } from "../wwa_main";
 import WWAPictureItem from "./WWAPictureItem";
 
@@ -12,7 +12,7 @@ import WWAPictureItem from "./WWAPictureItem";
  * 
  * # メッセージからピクチャを表示する場合
  * 1. 入力したテキストを基に登録する -> registerPictureFromText
- * 2. 登録後の状態を wwaData に記録できるように出力する -> getPictureRegistoryData
+ * 2. 登録後の状態を wwaData に記録できるように出力する -> getPictureRegistryData
  * 3. ピクチャの CacheCanvas を更新する -> updatePictures
  * 
  * # Quick Load でピクチャを読み込む場合
@@ -35,8 +35,8 @@ export default class WWAPicutre {
         return performance.now();
     }
 
-    public registerPicture(registory: PictureRegistory) {
-        if (registory.layerNumber > MAX_PICTURE_LAYERS_COUNT) {
+    public registerPicture(registry: PictureRegistry) {
+        if (registry.layerNumber > MAX_PICTURE_LAYERS_COUNT) {
             throw new Error(`ピクチャの最大レイヤー ${MAX_PICTURE_LAYERS_COUNT} の範囲を超えています。`);
         }
         const canvas = new CacheCanvas(
@@ -44,12 +44,12 @@ export default class WWAPicutre {
             WWAConsts.CHIP_SIZE * WWAConsts.V_PARTS_NUM_IN_WINDOW,
             true
         );
-        const invalidPropertyNames = Object.keys(registory.properties)
+        const invalidPropertyNames = Object.keys(registry.properties)
             .filter((propertyName) => !PicturePropertyDefinitions.some(({ name }) => name === propertyName));
         if (invalidPropertyNames.length > 0) {
             throw new Error(`不明なプロパティ名 ${invalidPropertyNames.map(str => `"${str}"`).join(", ")} が検出されました。`);
         }
-        this._pictures.set(registory.layerNumber, new WWAPictureItem(registory, canvas));
+        this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas));
     }
 
     /**
@@ -62,17 +62,17 @@ export default class WWAPicutre {
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
     public registerPictureFromText(
-        registory: PictureRegistoryParts,
+        registry: PictureRegistryParts,
         targetPartsID: number,
         targetPartsType: PartsType,
     ) {
-        const rawRegistory = convertPictureRegistoryFromText(registory);
-        this.registerPicture(convertVariablesFromRawRegistory(rawRegistory, this._wwa.generateTokenValues({
+        const rawRegistry = convertPictureRegistryFromText(registry);
+        this.registerPicture(convertVariablesFromRawRegistry(rawRegistry, this._wwa.generateTokenValues({
             id: targetPartsID,
             type: targetPartsType,
-            position: new Coord(registory.triggerPartsX, registory.triggerPartsY)
+            position: new Coord(registry.triggerPartsX, registry.triggerPartsY)
         })));
-        return this.getPictureRegistoryData();
+        return this.getPictureRegistryData();
     }
 
     /**
@@ -88,7 +88,7 @@ export default class WWAPicutre {
         layerNumber: number,
         propertiesText: string
     ) {
-        const registory = convertPictureRegistoryFromText({
+        const registry = convertPictureRegistryFromText({
             imgPosX: 0,
             imgPosY: 0,
             imgPosX2: 0,
@@ -98,8 +98,8 @@ export default class WWAPicutre {
             triggerPartsY: 0,
             propertiesText,
         });
-        this.registerPicture(checkValuesFromRawRegistory(registory));
-        return this.getPictureRegistoryData();
+        this.registerPicture(checkValuesFromRawRegistry(registry));
+        return this.getPictureRegistryData();
     }
 
     /**
@@ -114,7 +114,7 @@ export default class WWAPicutre {
         }
         this._pictures.get(layerNumber).clearCanvas();
         this._pictures.delete(layerNumber);
-        return this.getPictureRegistoryData();
+        return this.getPictureRegistryData();
     }
 
     public clearAllPictures() {
@@ -175,7 +175,7 @@ export default class WWAPicutre {
         });
     }
 
-    public getPictureRegistoryData(): PictureRegistory[] {
-        return Array.from(this._pictures.values()).map(picture => picture.getRegistoryData());
+    public getPictureRegistryData(): PictureRegistry[] {
+        return Array.from(this._pictures.values()).map(picture => picture.getRegistryData());
     }
 }

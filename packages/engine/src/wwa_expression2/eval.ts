@@ -499,7 +499,7 @@ export class EvalCalcWwaNode {
         const layerNumber = Number(this.evalWwaNode(node.value[0]));
         const propertyDefinition = node.value.length >= 2 ? this.evalWwaNode(node.value[1]) : undefined;
         if (propertyDefinition === undefined) {
-          this.generator.wwa.deletePictureRegistory(layerNumber);
+          this.generator.wwa.deletePictureRegistry(layerNumber);
           return;
         }
         if (typeof propertyDefinition !== "string") {

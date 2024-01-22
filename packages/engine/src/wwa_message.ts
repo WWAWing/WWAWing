@@ -1177,7 +1177,7 @@ export class Macro {
         const definePartsNumberString = this.macroArgs[1].length > 0 ? this.macroArgs[1] : "+0";
         // 0: パーツを消去
         if (definePartsNumberString === "0") {
-            this._wwa.deletePictureRegistory(layerNumber);
+            this._wwa.deletePictureRegistry(layerNumber);
             return;
         }
         const definePartsNumber = convertRelativeValue(definePartsNumberString, this._triggerPartsID);
