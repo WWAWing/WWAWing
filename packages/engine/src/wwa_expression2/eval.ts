@@ -506,7 +506,7 @@ export class EvalCalcWwaNode {
           throw new Error("ピクチャのプロパティ定義は文字列である必要があります。")
         }
         // TODO パーツ座標は本来なら実行元パーツの座標にすべきだが、イベント関数では判別できない。
-        this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition, 0, 0, this.generator.wwa.getPlayerPositon().getPartsCoord())
+        this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition);
         break;
       }
       default:

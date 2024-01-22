@@ -3,7 +3,7 @@ import { Coord, PartsType, WWAConsts } from "../wwa_data";
 import { MAX_PICTURE_LAYERS_COUNT, PicturePropertyDefinitions } from "./config";
 import { PictureRegistoryParts } from "./typedef";
 import { PictureRegistory } from "@wwawing/common-interface/lib/wwa_data";
-import { convertPictureRegistoryFromText, convertVariablesFromRawRegistory } from "./utils";
+import { checkValuesFromRawRegistory, convertPictureRegistoryFromText, convertVariablesFromRawRegistory } from "./utils";
 import { WWA } from "../wwa_main";
 import WWAPictureItem from "./WWAPictureItem";
 
@@ -72,6 +72,33 @@ export default class WWAPicutre {
             type: targetPartsType,
             position: new Coord(registory.triggerPartsX, registory.triggerPartsY)
         })));
+        return this.getPictureRegistoryData();
+    }
+
+    /**
+     * ピクチャをテキストデータから登録し、追加後のピクチャをデータにして返します。
+     * プロパティは変換されずそのままの値として評価されます。外部のシステムで JSON テキストを評価している場合に使用します。
+     *
+     * その際含まれないパーツ定義についてはすべて 0 として扱います。
+     * imgPos 関連については img プロパティで補填してください。
+     * triggerParts 関連についてはシステム上対応できません。
+     * @param text プロパティが記載された JSON テキスト
+     */
+    public registerPictureFromRawText(
+        layerNumber: number,
+        propertiesText: string
+    ) {
+        const registory = convertPictureRegistoryFromText({
+            imgPosX: 0,
+            imgPosY: 0,
+            imgPosX2: 0,
+            imgPosY2: 0,
+            layerNumber,
+            triggerPartsX: 0,
+            triggerPartsY: 0,
+            propertiesText,
+        });
+        this.registerPicture(checkValuesFromRawRegistory(registory));
         return this.getPictureRegistoryData();
     }
 

@@ -21,6 +21,37 @@ export const convertPictureRegistoryFromText = (partsRegistory: PictureRegistory
     }
 };
 
+const validatePropertyValue = (key: string, value: unknown): boolean => {
+    const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
+    if (!definitions) {
+        // 本来ならエラーにすべきだが、あらかじめバリデーションを通している関係でそのままスルーする。ただし警告は出す。
+        // TODO フィルターをかけて定義街のプロパティを排除してもいいかもしれない
+        console.warn(`定義外のプロパティ ${key} を見つけました。`);
+        return false;
+    }
+    switch (definitions.type) {
+        case "string":
+            if (typeof value !== "string") {
+                if (typeof value !== "number") {
+                    console.warn(`プロパティ ${key} では文字列形式である必要があります。実際に入った値は ${value} です。`);
+                }
+                return false;
+            }
+    }
+    return true;
+};
+
+export const checkValuesFromRawRegistory = (registory: RawPictureRegistory): PictureRegistory => {
+    const propertiesArray = Object.entries(registory.properties).map(([key, value]) => {
+        validatePropertyValue(key, value);
+        return [key, value];
+    })
+    return {
+        ...registory,
+        properties: Object.fromEntries(propertiesArray)
+    };
+};
+
 export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory, tokenValues: TokenValues): PictureRegistory => {
     // 数値専用形式で数値あるいは文字列が来た場合、正規表現で置き換えて処理する関数
     const stringToNumberForNumericValue = (value: string | number): number | string => {
@@ -32,13 +63,10 @@ export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory,
         return evaluateMacroArgExpression(value, tokenValues);
     }
     const propertiesArray = Object.entries(registory.properties).map(([key, value]) => {
-        const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
-        if (!definitions) {
-            // 本来ならエラーにすべきだが、あらかじめバリデーションを通している関係でそのままスルーする。ただし警告は出す。
-            // TODO フィルターをかけて定義街のプロパティを排除してもいいかもしれない
-            console.warn(`定義外のプロパティ ${key} を見つけました。`);
+        if (!validatePropertyValue(key, value)) {
             return [key, value];
         }
+        const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
         switch (definitions.type) {
             case "number":
                 return [key, stringToNumberForNumericValue(value)];
@@ -46,9 +74,7 @@ export const convertVariablesFromRawRegistory = (registory: RawPictureRegistory,
                 return [key, value.map(stringToNumberForNumericValue)]
             case "string":
                 if (typeof value !== "string") {
-                    if (typeof value !== "number") {
-                        console.warn(`プロパティ ${key} では文字列形式である必要があります。実際に入った値は ${value} です。`);
-                    }
+                    // 細かいバリデーションは validatePropertyValue で実行済みなのでここでは簡潔に
                     return [key, value];
                 }
                 let evaluatedString = String(value);

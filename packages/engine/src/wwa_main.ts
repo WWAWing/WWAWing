@@ -5959,6 +5959,13 @@ export class WWA {
         this._wwaData.bgmDelayDurationMs = delayMs;
     }
 
+    /**
+     * パーツ番号からピクチャーを登録します。
+     * @param layerNumber ピクチャーを登録するレイヤー番号
+     * @param partsNumber プロパティが記載された JSON テキストを有しているパーツの番号
+     * @param partsType そのパーツの種類
+     * @param partsPosition このピクチャー登録の実行元のパーツ座標。プレイヤーの座標ではない
+     */
     public setPictureRegistry(layerNumber: number, partsNumber: number, partsType: PartsType, partsPosition: Coord) {
         const attributes =
             partsType === PartsType.OBJECT ? this._wwaData.objectAttribute[partsNumber] :
@@ -5968,10 +5975,6 @@ export class WWA {
             throw new Error("対応していないパーツ番号です。");
         }
         const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
-        this.setPictureRegistryFromRawText(layerNumber, messageText, partsNumber, partsType, partsPosition, attributes);
-    }
-
-    public setPictureRegistryFromRawText(layerNumber: number, propertiesText: string, partsNumber?: number, partsType?: PartsType, partsPosition?: Coord, attributes?: number[]) {
         const data = this._cgManager.picture.registerPictureFromText(
             {
                 layerNumber,
@@ -5981,13 +5984,24 @@ export class WWA {
                 imgPosY2: (attributes?.[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
                 triggerPartsX: partsPosition.x,
                 triggerPartsY: partsPosition.y,
-                propertiesText,
+                propertiesText: messageText,
             },
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
             partsNumber,
             partsType,
         );
         // _cgManager 内のデータと _wwaData 内のデータで同期を取る
+        this._wwaData.pictureRegistory = data;
+        this.updatePicturesCache();
+    }
+
+    /**
+     * JSON テキストをそのまま評価してピクチャーを登録します。
+     * @param layerNumber ピクチャーを登録するレイヤー番号
+     * @param propertiesText プロパティが記載された JSON テキスト (変数評価済みの状態)
+     */
+    public setPictureRegistryFromRawText(layerNumber: number, propertiesText: string) {
+        const data = this._cgManager.picture.registerPictureFromRawText(layerNumber, propertiesText);
         this._wwaData.pictureRegistory = data;
         this.updatePicturesCache();
     }
