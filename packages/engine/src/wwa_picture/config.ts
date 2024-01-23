@@ -1,7 +1,5 @@
 import { PictureProperties } from "@wwawing/common-interface/lib/wwa_picture";
 
-export const MAX_PICTURE_LAYERS_COUNT = 16;
-
 type PicturePropertyType = "number" | "numberArray" | "string";
 
 type PicturePropertyDefinitionItem = {
