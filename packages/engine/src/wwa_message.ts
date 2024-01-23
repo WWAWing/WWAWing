@@ -29,7 +29,6 @@ import {
     WWASaveData
 } from "./wwa_save";
 import { type TokenValues, type Descriminant, evaluateDescriminant, evaluateMacroArgExpression } from "./wwa_expression";
-import { MAX_PICTURE_LAYERS_COUNT } from "./wwa_picture/config";
 import { convertRelativeValue } from "./wwa_message/utils";
 
 /**
@@ -1188,9 +1187,6 @@ export class Macro {
             throw new Error("パーツ番号は0以上の整数でなければなりません。");
         }
         const definePartsType = this._evaluateIntValue(2, PartsType.OBJECT);
-        if (layerNumber < 0 || layerNumber > MAX_PICTURE_LAYERS_COUNT) {
-            throw new Error("レイヤー番号が範囲外です。");
-        }
         this._wwa.setPictureRegistry(layerNumber, definePartsNumber, definePartsType, this._triggerPartsPosition);
     }
 

@@ -1,6 +1,6 @@
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, PartsType, WWAConsts } from "../wwa_data";
-import { MAX_PICTURE_LAYERS_COUNT, PicturePropertyDefinitions } from "./config";
+import { PicturePropertyDefinitions } from "./config";
 import { PictureRegistryParts } from "./typedef";
 import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { convertPictureRegistryFromText, convertVariablesFromRawRegistry } from "./utils";
@@ -36,9 +36,6 @@ export default class WWAPicutre {
     }
 
     public registerPicture(registry: PictureRegistry) {
-        if (registry.layerNumber > MAX_PICTURE_LAYERS_COUNT) {
-            throw new Error(`ピクチャの最大レイヤー ${MAX_PICTURE_LAYERS_COUNT} の範囲を超えています。`);
-        }
         const canvas = new CacheCanvas(
             WWAConsts.CHIP_SIZE * WWAConsts.H_PARTS_NUM_IN_WINDOW,
             WWAConsts.CHIP_SIZE * WWAConsts.V_PARTS_NUM_IN_WINDOW,
