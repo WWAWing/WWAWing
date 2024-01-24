@@ -25,6 +25,9 @@ export class CacheCanvas {
             width, height
         );
     }
+    public drawCanvasFree(image: HTMLImageElement, canvasX: number, canvasY: number): void {
+        this.ctx.drawImage(image, canvasX, canvasY);
+    }
     /**
      * フォントを描画します。色などの設定はあらかじめ ctx フィールドに設定しておいてください。
      */
@@ -369,13 +372,20 @@ export class CGManager {
         this.createFrame();
     }
 
-    public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, wwa: WWA, loadCompleteCallBack: () => void) {
+    public constructor(
+        ctx: CanvasRenderingContext2D,
+        fileName: string,
+        _frameCoord: Coord,
+        wwa: WWA,
+        pictureImageNamesFile: string | null,
+        loadCompleteCallBack: () => void
+    ) {
 
         this._frameCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);
         this._backCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, false);
         this._objectCanvases = [];
         this._effectCanvases = [];
-        this.picture = new WWAPicutre(wwa);
+        this.picture = new WWAPicutre(wwa, pictureImageNamesFile);
         var i;
         for (i = 0; i < 2; i++) {
             this._objectCanvases[i] = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);

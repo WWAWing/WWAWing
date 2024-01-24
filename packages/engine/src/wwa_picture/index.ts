@@ -6,6 +6,7 @@ import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { convertPictureRegistryFromText, convertVariablesFromRawRegistry } from "./utils";
 import { WWA } from "../wwa_main";
 import WWAPictureItem from "./WWAPictureItem";
+import { fetchJsonFile } from "../json_api_client";
 
 /**
  * ピクチャ機能の表示や制御を行うクラスです。
@@ -23,12 +24,48 @@ import WWAPictureItem from "./WWAPictureItem";
 export default class WWAPicutre {
     private _wwa: WWA;
     private _pictures: Map<number, WWAPictureItem>;
+    private _externalImageFiles: Map<string, HTMLImageElement>;
     private _frameTimerValue: number;
 
-    constructor(wwa: WWA) {
+    constructor(wwa: WWA, pictureImageNamesFile: string | null) {
         this._wwa = wwa;
         this._pictures = new Map();
+        this._externalImageFiles = new Map();
         this._frameTimerValue = WWAPicutre._getNowFrameValue();
+        this._setupExternalImageFiles(pictureImageNamesFile);
+    }
+
+    private async _setupExternalImageFiles(pictureImageNamesFile: string | null) {
+        if (!pictureImageNamesFile) {
+            return;
+        }
+        const status = await fetchJsonFile(pictureImageNamesFile);
+        if (!status) {
+            return;
+        }
+        if (status.kind !== "data") {
+            alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が見つかりませんでした。エラーメッセージ: ${status.errorMessage}`);
+            return;
+        }
+        if (!status.data || typeof status.data !== "object") {
+            alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が正しい形式で書かれていません。`);
+            return;
+        }
+        if ("files" in status.data) {
+            const { files } = status.data;
+            if (typeof files === "object") {
+                Object.entries(status.data.files).forEach(([name, path]) => {
+                    const element = new Image();
+                    element.src = path;
+                    element.onerror = (err) => {
+                        alert(`ピクチャ画像ファイル ${path} が見つかりませんでした。エラーメッセージ: ${err.toString()}`);
+                    };
+                    this._externalImageFiles.set(name, element);
+                });
+            } else {
+                alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} の files が正しい形式で書かれていません。`);
+            }
+        }
     }
 
     private static _getNowFrameValue() {
@@ -46,7 +83,13 @@ export default class WWAPicutre {
         if (invalidPropertyNames.length > 0) {
             throw new Error(`不明なプロパティ名 ${invalidPropertyNames.map(str => `"${str}"`).join(", ")} が検出されました。`);
         }
-        this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas));
+        const externalImageFile = registry.properties.imgFile
+            ? this._externalImageFiles.get(registry.properties.imgFile)
+            : undefined;
+        if (registry.properties.imgFile && !externalImageFile) {
+            console.warn(`ピクチャ画像ファイル ${registry.properties.imgFile} が定義に含まれていません。定義ファイルがあるかご確認ください。`);
+        }
+        this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
     }
 
     /**
