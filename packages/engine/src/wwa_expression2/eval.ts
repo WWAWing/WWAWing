@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { Coord, Face, MacroStatusIndex, PartsType  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -8,17 +8,33 @@ export class EvalCalcWwaNodeGenerator {
   /** for文上限回数 */
   loop_limit: number;
 
-  /** 読み込み専用の特殊値 */
-  readonly_value: {
-    /** 使用・取得したアイテムのID */
-    item_id: number,
-    /** 使用・取得したアイテムの位置 */
-    item_pos: number
+  state: {
+    /** アイテム取得時の計算ならオブジェクトあり, さもなくば undefined. */
+    readonly earnedItem?: {
+      /** 使用・取得したアイテムのID */
+      partsId?: number,
+      /** 使用・取得したアイテムの位置 */
+      itemPos?: number
+    }
+    /** 戦闘ダメージのための計算ならオブジェクトあり, さもなくば undefined */
+    readonly battleDamageCalculation?: {
+      /** 計算結果に中断が含まれている */
+      aborted?: boolean;
+      /**
+       * 戦闘予測用パラメータ.
+       * 値が設定されている場合、 処理中に HP, AT_TOTAL, DF_TOTAL, GD, ENEMY_HP, ENEMY_AT, ENEMY_DF, ENEMY_GD を読む時はこの値を使用します。
+       * なお、戦闘予測中にHPを書き換えた場合は、実際のプレイヤーの生命力が書き換わるので注意してください。
+       * undefined の場合は実際の戦闘です。
+       */
+      estimatingParams?: BattleEstimateParameters;
+    }
   }
+
   constructor(wwa: WWA) {
     this.wwa = wwa;
     /** 初期処理上限を10万回にする */
     this.loop_limit = 100000;
+    this.state = {}
   }
 
   /**
@@ -26,12 +42,20 @@ export class EvalCalcWwaNodeGenerator {
    * @param item_id 使用・取得したITEMのID
    * @param item_pos 使用・取得したITEMのID
    */
-  public setReadOnlyItemValue(item_id: number, item_pos: number) {
-    this.readonly_value = {
-      ...this.readonly_value,
-      item_id: item_id,
-      item_pos: item_pos
-    }
+  public setEarnedItem(partsId: number, itemPos: number) {
+    this.state = { ...this.state, earnedItem: { partsId, itemPos } };
+  }
+
+  public clearEarnedItem() {
+    this.state = { ...this.state, earnedItem: undefined };
+  }
+
+  public setBattleDamageCalculationMode(estimatingParams: BattleEstimateParameters) {
+    this.state = { ...this.state, battleDamageCalculation: { estimatingParams } }
+  }
+
+  public clearBattleDamageCalculationMode() {
+    this.state = { ...this.state, battleDamageCalculation: undefined }
   }
 
   public evalWwaNodes(nodes: Wwa.WWANode[]) {
@@ -580,6 +604,11 @@ export class EvalCalcWwaNode {
         const pos = this.generator.wwa.getGemeOverPosition();
         return pos.y;
       }
+      /** ダメージカスタマイズ関数中で、戦闘を即座に打ち切る */
+      case "ABORT_BATTLE": {
+        this.generator.state.battleDamageCalculation.aborted = true;
+        return 0;
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
@@ -803,15 +832,19 @@ export class EvalCalcWwaNode {
       case "AT":
         return gameStatus.bareStatus.strength;
       case "AT_TOTAL":
-        return gameStatus.totalStatus.strength;
+        // 戦闘予測の場合は戦闘予測用ステータスで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.playerStatus.strength ?? gameStatus.totalStatus.strength;
       case "DF":
         return gameStatus.bareStatus.defence;
       case "DF_TOTAL":
-        return gameStatus.totalStatus.defence;
+        // 戦闘予測の場合は戦闘予測用ステータスで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.playerStatus.defence ?? gameStatus.totalStatus.defence;
       case "GD":      
-        return gameStatus.totalStatus.gold;
-      case "HP":      
-        return gameStatus.totalStatus.energy;
+        // 戦闘予測の場合は戦闘予測用ステータスで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.playerStatus.gold ?? gameStatus.totalStatus.gold;
+      case "HP":
+        // 戦闘予測の場合は戦闘予測用ステータスで計算
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.playerStatus.energy ?? gameStatus.totalStatus.energy;
       case "HPMAX":
         return gameStatus.energyMax;
       case "STEP":
@@ -830,15 +863,21 @@ export class EvalCalcWwaNode {
       case 'LOOPLIMIT':
         return this.generator.loop_limit;
       case 'ITEM_ID':
-        return this.generator.readonly_value.item_id;
+        return this.generator.state.earnedItem?.partsId ?? -1;
       case 'ITEM_POS':
-        return this.generator.readonly_value.item_pos;
+        return this.generator.state.earnedItem?.itemPos ?? -1;
       case 'ENEMY_HP':
-        return typeof enemyStatus === 'number'? -1: enemyStatus.energy;
+        // 戦闘予測の場合は戦闘予測用HPで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.energy ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.energy);
       case 'ENEMY_AT':
-        return typeof enemyStatus === 'number'? -1: enemyStatus.strength;
+        // 戦闘予測の場合は戦闘予測用HPで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.strength ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.strength);
       case 'ENEMY_DF':
-        return typeof enemyStatus === 'number'? -1: enemyStatus.defence;
+        // 戦闘予測の場合は戦闘予測用HPで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.defence ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.defence);
+      case 'ENEMY_GD':
+        // 戦闘予測の場合は戦闘予測用HPで計算       
+        return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
       default:
         throw new Error("このシンボルは取得できません")
     }

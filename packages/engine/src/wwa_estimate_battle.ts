@@ -1,5 +1,5 @@
 import { WWA } from "./wwa_main";
-import { Coord, Status, WWAConsts } from "./wwa_data";
+import { type BattleTurnResult, Coord, Status, WWAConsts } from "./wwa_data";
 import { Monster } from "./wwa_monster";
 
 class EstimateDisplayElements {
@@ -110,8 +110,8 @@ export class BattleEstimateWindow {
     public update(
         playerStatus: Status,
         monsters: Monster[],
-        calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => number,
-        calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => number,
+        calcPlayerTurnResult: (playerStatus: Status, monster: Monster) => BattleTurnResult,
+        calcEnemyTurnResult: (monster: Monster, playerStatus: Status) => BattleTurnResult,
         usingDefaultDamageFunction: boolean
     ): void {
         // モンスターの種類が8種類を超える場合は、先頭の8種類のみ処理
@@ -131,8 +131,8 @@ export class BattleEstimateWindow {
             const result = calc(
                 playerStatus,
                 monsters[i],
-                calcDamagePlayerToEnemy,
-                calcDamageEnemyToPlayer,
+                calcPlayerTurnResult,
+                calcEnemyTurnResult,
                 usingDefaultDamageFunction,
             );
             this._edes[i].setResult(imgPos, enemyStatus, result);
@@ -162,21 +162,22 @@ interface EstimatedBattleResult {
 function calc(
     playerStatus: Status,
     monster: Monster,
-    calcDamagePlayerToEnemy: (playerStatus: Status, monster: Monster) => number,
-    calcDamageEnemyToPlayer: (monster: Monster, playerStatus: Status) => number,
+    calcPlayerTurnResult: (playerStatus: Status, monster: Monster) => BattleTurnResult,
+    calcEnemyTurnResult: (monster: Monster, playerStatus: Status) => BattleTurnResult,
     usingDefaultDamageFunction: boolean
  ): EstimatedBattleResult {
     const clonedMonster = monster.clone();
+    const clonedPlayerStatus = playerStatus.clone();
 
-    let damage = 0;
+    let estimatedDamage = 0;
     let turnLength = 0;
     let noDamageTurnLength = 0;
 
     // デフォルトダメージ関数を使っている場合の攻撃無効判定
     if(
         usingDefaultDamageFunction &&
-        playerStatus.strength <= monster.status.defence &&
-        playerStatus.defence >= monster.status.strength
+        clonedPlayerStatus.strength <= clonedMonster.status.defence &&
+        clonedPlayerStatus.defence >= clonedMonster.status.strength
     ) {
         return { cannotDamageMonster: true, estimatedDamage: 0 }
     }
@@ -186,31 +187,33 @@ function calc(
     // 根本的には、ダメージ関数については参照できる変数などのシンボルに制約を入れることになりそう
     while (1) {
         turnLength++;
-        const playerToEnemyDamage = calcDamagePlayerToEnemy(playerStatus, clonedMonster);
-        clonedMonster.status.energy -= playerToEnemyDamage;
+        const playerTurnResult = calcPlayerTurnResult(clonedPlayerStatus, clonedMonster);
+        clonedMonster.status.energy -= playerTurnResult.damage;
 
-        if (playerToEnemyDamage === 0) {
+        if (playerTurnResult.damage === 0) {
             noDamageTurnLength++;
         } else {
             noDamageTurnLength = 0;
         }
         if (clonedMonster.status.energy <= 0) {
-            return { estimatedDamage: damage };
-        } else if (noDamageTurnLength > WWAConsts.FIGHT_DRAW_TURN)  {
-            return { noSettled: true, estimatedDamage: damage }
+            return { estimatedDamage };
+        } else if (noDamageTurnLength > WWAConsts.FIGHT_DRAW_TURN || playerTurnResult.aborted)  {
+            return { noSettled: true, estimatedDamage }
         } else if (turnLength > 20000) {
             return { isOverMaxTurn: true, estimatedDamage: 0 };
         }
         turnLength++;
-        const enemyToPlayerDamage = calcDamageEnemyToPlayer(clonedMonster, playerStatus);
-        if (enemyToPlayerDamage === 0) {
+        const enemyTurnResult = calcEnemyTurnResult(clonedMonster, clonedPlayerStatus);
+        const damageEnemyToPlayer = Math.max(enemyTurnResult.damage, 0)
+        if (damageEnemyToPlayer === 0) {
             noDamageTurnLength++;
         } else {
             noDamageTurnLength = 0;
         }
-        damage += Math.max(0, enemyToPlayerDamage);
-        if (noDamageTurnLength > WWAConsts.FIGHT_DRAW_TURN)  {
-            return { noSettled: true, estimatedDamage: damage }
+        estimatedDamage += damageEnemyToPlayer;
+        clonedPlayerStatus.energy = Math.max(clonedPlayerStatus.energy - damageEnemyToPlayer, 0);
+        if (noDamageTurnLength > WWAConsts.FIGHT_DRAW_TURN || enemyTurnResult.aborted)  {
+            return { noSettled: true, estimatedDamage }
         } else if (turnLength > 20000) {
             return { isOverMaxTurn: true, estimatedDamage: 0 };
         }

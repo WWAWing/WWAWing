@@ -1061,3 +1061,27 @@ export interface TriggerParts {
  * - numbered: 添字が数値の変数
  */
 export type UserVariableKind = "named" | "numbered";
+
+/**
+ * 戦闘における1ターンの結果
+ */
+export interface BattleTurnResult {
+    /**
+     * ダメージ量
+     */
+    damage: number;
+    /**
+     * 中断の場合は true
+     * 中断した場合でも該当ターンのダメージは入ります。
+     */
+    aborted?: boolean;
+}
+
+
+/**
+ * 戦闘予測用パラメータ
+ */
+export interface BattleEstimateParameters {
+    playerStatus: Status;
+    enemyStatus: Status
+}
