@@ -589,9 +589,11 @@ export class EvalCalcWwaNode {
         const pos = this.generator.wwa.getGemeOverPosition();
         return pos.y;
       }
-      /** ダメージカスタマイズ関数中で、戦闘を即座に打ち切る */
+      /** ダメージカスタマイズ関数中で、戦闘を即座に打ち切る その他の場合は何もしない*/
       case "ABORT_BATTLE": {
-        this.generator.state.battleDamageCalculation.aborted = true;
+        if (this.generator.state.battleDamageCalculation) {
+          this.generator.state.battleDamageCalculation.aborted = true;
+        }
         return 0;
       }
       default:
