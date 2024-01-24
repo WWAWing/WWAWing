@@ -41,6 +41,8 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertForStatement(node as Acorn.ForStatement);
       case "BreakStatement":
         return convertBreakStatement(node as Acorn.BreakStatement);
+      case "ReturnStatement":
+        return convertReturnStatement(node as Acorn.ReturnStatement)
       case "ContinueStatement":
         return convertContinueStatment(node as Acorn.ContinueStatement);
       case "UpdateExpression":
@@ -51,6 +53,8 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertTemplateLiteral(node as Acorn.TemplateLiteral);
       case "TemplateElement":
         return convertTemplateElement(node as Acorn.TemplateElement);
+      case "ConditionalExpression":
+        return convertConditionalExpression(node as Acorn.ConditionalExpression)
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -108,6 +112,13 @@ function convertBreakStatement(node: Acorn.BreakStatement): Wwa.WWANode {
   return {
     type: "Break",
     label: node.label
+  }
+}
+
+function convertReturnStatement(node: Acorn.ReturnStatement): Wwa.WWANode {
+  return {
+    type: "Return",
+    argument: convertNodeAcornToWwa(node.argument)
   }
 }
 
@@ -170,6 +181,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "URL_JUMPGATE":
     case "HIDE_STATUS":
     case "PARTS":
+    case "FACE":
     case "EFFECT":
     case "CHANGE_PLAYER_IMAGE":
     case "HAS_ITEM":
@@ -182,8 +194,15 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_DAY":
     case "GET_DATE_HOUR":
     case "GET_DATE_MINUTES":
+    case "GET_DATE_SECONDS":
+    case "GET_DATE_MILLISECONDS":
+    case "GET_DATE_WEEKDAY":
     case "CHANGE_SYSMSG":
     case "PICTURE":
+    case "SHOW_USER_DEF_VAR":
+    case "ABS":
+    case "GET_GAMEOVER_POS_X":
+    case "GET_GAMEOVER_POS_Y":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -314,10 +333,13 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           throw new Error("このシンボルには代入できません");
         }
         if (left.name === "AT_TOTAL") {
-            throw new Error(`"装備品込みの攻撃力(AT_TOTAL)への代入はできません。"`);
+          throw new Error(`"装備品込みの攻撃力(AT_TOTAL)への代入はできません。"`);
         }
         if (left.name === "DF_TOTAL") {
           throw new Error(`"装備品込みの防御力(DF_TOTAL)への代入はできません。"`);
+        }
+        if (left.name === "ENEMY_HP" || left.name === "ENEMY_AT" || left.name === "ENEMY_DF") {
+          throw new Error("敵ステータス (ENEMY_HP, ENEMY_AT, ENEMY_DF) への代入はできません。");
         }
         return {
           type: "SpecialParameterAssignment",
@@ -325,7 +347,7 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           value: right,
           operator: node.operator
         }
-      } else if (left.type === "Number") {
+      } else if (left.type === "Literal") {
         throw new Error("数値には代入できません");
       } else {
         throw new Error("代入できません");
@@ -337,7 +359,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
 
 function convertUnaryExpression(node: Acorn.UnaryExpression): Wwa.UnaryOperation {
   const argument = convertNodeAcornToWwa(node.argument);
-  if(node.operator !== "+" && node.operator !== "-") {
+  const allowOperatorList = ["+", "-", "!"];
+  if(!allowOperatorList.includes(node.operator)) {
     throw new Error("未定義の演算子です :"+node.operator);
   }
   if(!Wwa.isCalcurable(argument)) {
@@ -345,7 +368,7 @@ function convertUnaryExpression(node: Acorn.UnaryExpression): Wwa.UnaryOperation
   }
   return {
     type: "UnaryOperation",
-    operator: node.operator,
+    operator: <"!"|"+"|"-">node.operator,
     argument
   }
 }
@@ -388,7 +411,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
     if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM") {
       throw new Error("このシンボルは配列にできません");
     }
-    if(property.type === "Number" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
+    if(property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
       // m, o については一次元分適用
       return {
         type: "Array1D",
@@ -404,7 +427,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
       throw new Error("この配列は2次元以上にはできません。");
     }
     // 1次元配列 + 1次元分の index を合成
-    if (property.type === "Number" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
+    if (property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
       return {
         type: "Array2D",
         name: object.name,
@@ -418,7 +441,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
   }
 }
 
-function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
+function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
   switch(node.name) {
     case "m":
     case "o":
@@ -444,6 +467,9 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
     case "LOOPLIMIT":
     case "ITEM_ID":
     case "ITEM_POS":
+    case "ENEMY_HP":
+    case "ENEMY_AT":
+    case "ENEMY_DF":
       return {
         type: "Symbol",
         name: node.name
@@ -453,12 +479,24 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Number {
   }
 }
 
-function convertLiteral(node: Acorn.Literal): Wwa.Number {
+function convertLiteral(node: Acorn.Literal): Wwa.Literal {
   // UNDONE: 小数点以下の処理をする
   // UNDONE: boolean 値の取り扱いをする. 多分 Wwa.Boolean を作ることになる.
   // typeof node.value が number でも boolean でもないならエラーにする. (nullやらundefinedやら書かれると困る)
   return {
-    type: "Number",
+    type: "Literal",
     value: node.value
   }
+}
+
+function convertConditionalExpression(node: Acorn.ConditionalExpression): Wwa.WWANode {
+  const consequent = convertNodeAcornToWwa(node.consequent);
+  const alternate = convertNodeAcornToWwa(node.alternate);
+  const test = convertNodeAcornToWwa(node.test);
+  return {
+    type: "ConditionalExpression",
+    consequent: consequent,
+    test: test,
+    alternate: alternate
+  };
 }

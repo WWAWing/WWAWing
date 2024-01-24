@@ -97,6 +97,11 @@ export interface BreakStatement extends Node {
   type: "BreakExpression"
 }
 
+export interface ReturnStatement extends Node {
+  type: "ReturnStatement";
+  argument?: Node;
+}
+
 export interface ContinueStatement extends Node {
   label: string;
   type: "ContinueExpression"
@@ -116,4 +121,12 @@ export interface TemplateElement extends Node {
     cooked: string,
     raw: string
   }
+}
+
+export interface ConditionalExpression extends Node {
+  label: string;
+  type: "ConditionalExpression";
+  test: Node;
+  consequent: Node;
+  alternate: Node;
 }

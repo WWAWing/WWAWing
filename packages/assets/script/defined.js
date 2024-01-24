@@ -99,3 +99,25 @@ function CALL_CHANGE_SPEED() {
 function CALL_JUMPGATE() {
   MSG("jumpgate移動しました")
 }
+
+/**
+ * プレイヤーから敵に与えるダメージ計算式
+ */
+function CALC_PLAYER_TO_ENEMY_DAMAGE() {
+  if (AT >= ENEMY_DF) {
+    return AT - ENEMY_DF;
+  } else {
+    return 0;
+  }
+}
+
+/**
+ * 敵からプレイヤーに与えるダメージ計算式
+ */
+function CALC_ENEMY_TO_PLAYER_DAMAGE() {
+  if (ENEMY_AT >= DF) {
+    return ENEMY_AT - DF;
+  } else {
+    return 0;
+  }
+}

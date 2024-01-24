@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { Coord, MacroStatusIndex, PartsType } from "../wwa_data";
+import { Coord, Face, MacroStatusIndex, PartsType  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -44,8 +44,18 @@ export class EvalCalcWwaNodeGenerator {
     if(node.type === "BlockStatement" && Array.isArray(node.value) && node.value.length === 0 ) {
       return;
     }
-    const evalNode = new EvalCalcWwaNode(this);
-    evalNode.evalWwaNode(node)
+    try {
+      const evalNode = new EvalCalcWwaNode(this);
+      return evalNode.evalWwaNode(node);
+    } catch (caughtThing) {
+      if (caughtThing instanceof ReturnedInformation) {
+        // return で関数が強制終了した場合のケア
+        return caughtThing.value;
+      } else {
+        // 一般エラー
+        throw caughtThing;
+      }
+    }
   }
 
   public updateLoopLimit(limit: number) {
@@ -103,7 +113,7 @@ export class EvalCalcWwaNode {
         return this.evalArray1D(node);
       case "Array2D":
         return this.evalArray2D(node);
-      case "Number":
+      case "Literal":
         return this.evalNumber(node);
       case "UserVariableAssignment":
         return this.evalSetUserVariable(node);
@@ -131,6 +141,8 @@ export class EvalCalcWwaNode {
         return this.callDefinedFunction(node);
       case "Break":
         return this.breakStatement(node);
+      case "Return":
+        throw new ReturnedInformation(this.returnStatement(node));
       case "Continue":
         return this.contunueStatment(node);
       case "UpdateExpression":
@@ -139,6 +151,8 @@ export class EvalCalcWwaNode {
         return this.logicalExpression(node);
       case "TemplateLiteral":
         return this.convertTemplateLiteral(node);
+      case "ConditionalExpression":
+        return this.convertConditionalExpression(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -172,7 +186,7 @@ export class EvalCalcWwaNode {
         type: "SpecialParameterAssignment",
         kind: <any>node.argument.name,
         value: {
-          type: "Number",
+          type: "Literal",
           value: addValue
         }
       }
@@ -227,6 +241,11 @@ export class EvalCalcWwaNode {
     // TODO: node.labelを活用したい
     /** Breakフラグを立てる */
     this.for_id.break_flag = true;
+  }
+
+  // return文を処理する。 ここでは値を返すだけ。
+  returnStatement(node: Wwa.Return) {
+    return this.evalWwaNode(node.argument);
   }
 
   /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
@@ -390,6 +409,30 @@ export class EvalCalcWwaNode {
         this.generator.wwa.replaceParts(srcID, destID, partsType, onlyThisSight);
         break;
       }
+      case "FACE": {
+        this._checkArgsLength(6, node);
+        const destPosX = Number(this.evalWwaNode(node.value[0]));
+        const destPosY = Number(this.evalWwaNode(node.value[1]));
+        const srcPosX = Number(this.evalWwaNode(node.value[2]));
+        const srcPosY = Number(this.evalWwaNode(node.value[3]));
+        const srcWidth = Number(this.evalWwaNode(node.value[4]));
+        const srcHeight = Number(this.evalWwaNode(node.value[5]));
+        if (
+          destPosX < 0 || destPosY < 0 ||
+          srcPosX < 0 || srcPosY < 0 ||
+          srcWidth < 0 || srcHeight < 0
+        ) {
+          throw new Error("各引数は0以上の整数でなければなりません。");
+        }
+        this.generator.wwa.addFace(
+          new Face(
+            new Coord(destPosX, destPosY),
+            new Coord(srcPosX, srcPosY),
+            new Coord(srcWidth, srcHeight)
+          )
+        );
+        break;
+      }
       case "EFFECT": {
         // ex) EFFECT(6, 9, 15)
         this._checkArgsLength(1, node);
@@ -473,6 +516,19 @@ export class EvalCalcWwaNode {
         return (new Date()).getHours();
       case "GET_DATE_MINUTES":
         return (new Date()).getMinutes();
+      case "GET_DATE_SECONDS":
+        return (new Date()).getSeconds();
+      case "GET_DATE_MILLISECONDS":
+        return (new Date()).getMilliseconds();
+      case "GET_DATE_WEEKDAY":
+        return (new Date()).getDay();
+      /** ユーザー定義名前付き変数をconsole.log出力する */
+      case "SHOW_USER_DEF_VAR":
+        {
+          console.log(this.generator.wwa.getAllUserNameVar());
+          return;
+        }
+      /** システムメッセージを変更する */
       case "CHANGE_SYSMSG": {
         this._checkArgsLength(1, node);
         const rawTarget = this.evalWwaNode(node.value[0]);
@@ -509,6 +565,21 @@ export class EvalCalcWwaNode {
         this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition);
         break;
       }
+      /** 絶対値を返す関数 */
+      case "ABS": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.abs(value);
+      }
+      /** ゲームオーバー座標取得関数たち */
+      case "GET_GAMEOVER_POS_X": {
+        const pos = this.generator.wwa.getGemeOverPosition();
+        return pos.x;
+      }
+      case "GET_GAMEOVER_POS_Y":{
+        const pos = this.generator.wwa.getGemeOverPosition();
+        return pos.y;
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
@@ -543,6 +614,7 @@ export class EvalCalcWwaNode {
     this.evalWwaNodes(node.value);
   }
 
+  /** ifステートメントを実行する */
   ifStatement(node: Wwa.IfStatement) {
     const ifResult = this.evalWwaNode(node.test);
     if(ifResult) {
@@ -554,6 +626,14 @@ export class EvalCalcWwaNode {
       this.evalWwaNode(node.alternate);
     }
     return 0;
+  }
+
+  /** 三項演算子を実行する */
+  convertConditionalExpression(node: Wwa.ConditionalExpression) {
+    const ifResult = this.evalWwaNode(node.test);
+    const target = ifResult? node.consequent: node.alternate;
+    const value = this.evalWwaNode(target)
+    return value;
   }
 
   /**
@@ -656,13 +736,10 @@ export class EvalCalcWwaNode {
 
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
     const right = this.evalWwaNode(node.value);
-    if(!this.generator.wwa || isNaN(right)) {
+    if(!this.generator.wwa) {
       return 0;
     }
     const userVarIndex = this.evalWwaNode(node.index);
-    if (typeof userVarIndex !== "number") {
-      throw new Error("代入先の添字が数値になりませんでした");
-    }
     this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
     return 0;
   }
@@ -673,6 +750,8 @@ export class EvalCalcWwaNode {
         return this.evalWwaNode(node.argument);
       case "-":
         return - this.evalWwaNode(node.argument);
+      case "!":
+        return !this.evalWwaNode(node.argument);
       default:
           throw new Error("存在しない単項演算子です");
     }
@@ -710,36 +789,37 @@ export class EvalCalcWwaNode {
   }
 
   evalSymbol(node: Wwa.Symbol) {
-    const game_status = this.generator.wwa.getGameStatus();
+    const gameStatus = this.generator.wwa.getGameStatus();
+    const enemyStatus = this.generator.wwa.getEnemyStatus();
     switch(node.name) {
       case "X":
       case "Y":
         // UNDONE: WWAから値を取得する
         return 0;
       case "PX":
-        return game_status.playerCoord.x;
+        return gameStatus.playerCoord.x;
       case "PY":
-        return game_status.playerCoord.y;
+        return gameStatus.playerCoord.y;
       case "AT":
-        return game_status.bareStatus.strength;
+        return gameStatus.bareStatus.strength;
       case "AT_TOTAL":
-        return game_status.totalStatus.strength;
+        return gameStatus.totalStatus.strength;
       case "DF":
-        return game_status.bareStatus.defence;
+        return gameStatus.bareStatus.defence;
       case "DF_TOTAL":
-        return game_status.totalStatus.defence;
+        return gameStatus.totalStatus.defence;
       case "GD":      
-        return game_status.totalStatus.gold;
+        return gameStatus.totalStatus.gold;
       case "HP":      
-        return game_status.totalStatus.energy;
+        return gameStatus.totalStatus.energy;
       case "HPMAX":
-        return game_status.energyMax;
+        return gameStatus.energyMax;
       case "STEP":
-        return game_status.moveCount;
+        return gameStatus.moveCount;
       case "TIME":
-        return game_status.playTime;
+        return gameStatus.playTime;
       case "PDIR":
-        return game_status.playerDirection
+        return gameStatus.playerDirection
       /** for文用（暫定） */
       case 'i':
         return this.for_id.i;
@@ -753,6 +833,12 @@ export class EvalCalcWwaNode {
         return this.generator.readonly_value.item_id;
       case 'ITEM_POS':
         return this.generator.readonly_value.item_pos;
+      case 'ENEMY_HP':
+        return typeof enemyStatus === 'number'? -1: enemyStatus.energy;
+      case 'ENEMY_AT':
+        return typeof enemyStatus === 'number'? -1: enemyStatus.strength;
+      case 'ENEMY_DF':
+        return typeof enemyStatus === 'number'? -1: enemyStatus.defence;
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -761,7 +847,12 @@ export class EvalCalcWwaNode {
   evalArray1D(node: Wwa.Array1D) {
     const userVarIndex = this.evalWwaNode(node.index0);
     if (typeof userVarIndex !== "number") {
-      throw new Error("添字の計算結果が数値になりませんでした");
+      switch(node.name) {
+        case "v":
+          return this.generator.wwa.getUserNameVar(userVarIndex);
+        default:
+          throw new Error("このシンボルは取得できません");
+      }
     }
     const game_status = this.generator.wwa.getGameStatus();
     switch (node.name) {
@@ -795,7 +886,17 @@ export class EvalCalcWwaNode {
     }
   }
 
-  evalNumber(node: Wwa.Number) {
+  evalNumber(node: Wwa.Literal) {
     return node.value;
   }
+}
+
+/**
+ * return が呼び出された場合に throw されるインスタンスのクラス
+ * 以降の処理を打ち切って関数の外に出るための情報。
+ */
+class ReturnedInformation {
+  // HACK: evalWwaNode の型つけが any になっているのでそれに準じる形で妥協。
+  // evalWwaNode の型つけは改善されるべき。
+  constructor(public value: any) {}
 }

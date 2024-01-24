@@ -9,7 +9,7 @@ import {
     SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, WWAConsts,
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, WWAConsts, type UserVariableKind
 } from "./wwa_data";
 
 import {
@@ -56,6 +56,7 @@ import * as ExpressionParser from "./wwa_expression";
 import * as ExpressionParser2 from "./wwa_expression2";
 import { UserScriptResponse, fetchScriptFile } from "./load_script_file";
 import { WWANode } from "./wwa_expression2/wwa";
+import * as VarDump from "./wwa_vardump"
 
 let wwa: WWA
 
@@ -166,18 +167,32 @@ export class WWA {
     private _useLookingAround: boolean = true;  //待機時にプレイヤーが自動回転するか
     private _isDisallowLoadOldSave: boolean = false;
 
+    private _userVar: {
+        named: Map<string, number | string | boolean>
+        numbered: (number | string | boolean)[];
+    };
+
     /**
      * ゲーム内ユーザ変数ビューワの設定
      */
     private _inlineUserVarViewer: {
         /**
+         * 変数種別
+         * - numbered: 数字添字
+         * - named: 文字列添字
+         */
+        kind: UserVariableKind 
+        /**
          * 表示されているかどうか
          */
         isVisible: boolean
         /**
-         * 表示中の先頭にあるユーザ変数の添字
+         * 表示中の先頭にあるユーザ変数の添字 
+         * numbered と named で個別に保持します
+         * named は map を配列化した時の順番を添字とします。
+         * 
          */
-        topUserVarIndex: number;
+        topUserVarIndex: {[KEY in UserVariableKind]: number };
     }
     /**
      * ユーザ変数の名前 (wwaData のユーザ変数と添字が対応)
@@ -516,6 +531,10 @@ export class WWA {
                 this._wwaData.statusEnergy, this._wwaData.statusStrength,
                 this._wwaData.statusDefence, this._wwaData.statusGold);
             this._player = new Player(this, playerPosition, this._camera, status, this._wwaData.statusEnergyMax, this._wwaData.moves, this._wwaData.gameSpeedIndex);
+            this._userVar = {
+                numbered: Array.from({length: Consts.USER_VAR_NUM}).map(() => 0),
+                named: new Map()
+            };
             this._objectMovingDataManager = new ObjectMovingDataManager(this, this._player);
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
@@ -1114,7 +1133,7 @@ export class WWA {
             this._canDisplayUserVars = canDisplayUserVars;
             this._userVarNameList = [];
             if (this._canDisplayUserVars) {
-                this._inlineUserVarViewer = { topUserVarIndex: 0, isVisible: false };
+                this._inlineUserVarViewer = { topUserVarIndex:  {named: 0, numbered: 0}, isVisible: false, kind: "numbered" };
                 // ユーザー変数ファイルを読み込む
                 const userVarStatus = await (userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
                     kind: "noFileSpecified" as const,
@@ -1201,6 +1220,38 @@ export class WWA {
         }
     }
 
+    /**
+     * 戦闘でPlayerToEnemyのダメージ発生時のユーザ定義独自関数を呼び出す
+     * @returns 定義されていればその結果, 未定義なら undefined. 
+     **/
+    public callCalcPlayerToEnemyUserDefineFunction(): number | undefined {
+        const calcPlayerToEnemyFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_PLAYER_TO_ENEMY_DAMAGE"];
+        if (calcPlayerToEnemyFunc) {
+            const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcPlayerToEnemyFunc);
+            if (typeof damage !== "number") {
+                throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
+            }
+            return damage;
+        }
+        return undefined;
+    }
+
+    /**
+     * 戦闘でEnemyToPlayerのダメージ発生時のユーザ定義独自関数を呼び出す
+     * @returns 定義されていればその結果, 未定義なら undefined. 
+     */
+    public callCalcEnemyToPlayerUserDefineFunction(): number | undefined {
+        const calcEnemyToPlayerFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_ENEMY_TO_PLAYER_DAMAGE"];
+        if (calcEnemyToPlayerFunc) {
+            const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);
+            if (typeof damage !== "number") {
+                throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
+            }
+            return damage;
+        }
+        return undefined;
+    }
+
     /** プレイヤーが動いた際のユーザ定義独自関数を呼び出す */
     public callMoveUserDefineFunction() {
         const moveFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_MOVE"];
@@ -1245,12 +1296,12 @@ export class WWA {
         }
         if (userVarStatus.kind === "noFileSpecified") {
             // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
-            this._updateVarDumpInformationArea(userVarStatus.errorMessage, false);
+            VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, userVarStatus.errorMessage, false);
             return;
         }
         if(userVarStatus.kind !== "data") {
             this._userVarNameListRequestError = userVarStatus;
-            this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+            VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
             return;
         }
         if (!userVarStatus.data || typeof userVarStatus.data !== "object") {
@@ -1258,27 +1309,11 @@ export class WWA {
                 kind: "notObject",
                 errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
             }
-            this._updateVarDumpInformationArea(this._userVarNameListRequestError.errorMessage, true);
+            VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
             return;
         }
         this._userVarNameList = this.convertUserVariableNameListToArray(userVarStatus.data);
-        if (this._dumpElement === null) {
-            return;
-        }
-        // 以下は変数一覧に変数名を流し込む処理
-        for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-            const varNum = i.toString(10);
-            if (!this._userVarNameList[i]) {
-                continue;
-            }
-            const varIndexQuery = `.var-index${varNum}`;
-            const varIndexElement = this._dumpElement.querySelector(varIndexQuery);
-            const varLabelElement = varIndexElement.querySelector(`${varIndexQuery} > div`);
-            varLabelElement.textContent = this._userVarNameList[i];
-            varIndexElement.setAttribute("data-labelled-var-index", "true");
-            varIndexElement.addEventListener("mouseover", () => varLabelElement.removeAttribute("aria-hidden"))
-            varIndexElement.addEventListener("mouseleave", () => varLabelElement.setAttribute("aria-hidden", "true"));
-        }
+        VarDump.Api.NumberedUserVariable.updateLabels(this._dumpElement, this._userVarNameList);
     }
 
     /**
@@ -2534,37 +2569,48 @@ export class WWA {
 
             // ユーザー変数表示モードの場合
             if (this._inlineUserVarViewer?.isVisible) {
+                const kind =this._inlineUserVarViewer.kind;
                 let isInputKey = false;
+                const varNum = kind === "named"
+                        ? this._userVar.named.size
+                        : Consts.USER_VAR_NUM;
+ 
                 if (this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex++;
+                    this._inlineUserVarViewer.topUserVarIndex[kind]++;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex--;
+                    this._inlineUserVarViewer.topUserVarIndex[kind]--;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex += Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
+                    this._inlineUserVarViewer.topUserVarIndex[kind] += Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
                 if (this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN) {
-                    this._inlineUserVarViewer.topUserVarIndex -= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
+                    this._inlineUserVarViewer.topUserVarIndex[kind] -= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;
                     isInputKey = true;
                 }
-                // 0 - USER_VAR_NUMの範囲外ならループさせる
-                if (this._inlineUserVarViewer.topUserVarIndex < 0) {
-                    this._inlineUserVarViewer.topUserVarIndex += (Consts.USER_VAR_NUM);
+                if (this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
+                    if (this._inlineUserVarViewer.kind === "named") {
+                        this._inlineUserVarViewer.kind = "numbered";
+                    } else if (this._inlineUserVarViewer.kind === "numbered") {
+                        this._inlineUserVarViewer.kind = "named";
+                    }
+                    isInputKey = true;
                 }
-                if (this._inlineUserVarViewer.topUserVarIndex > Consts.USER_VAR_NUM) {
-                    this._inlineUserVarViewer.topUserVarIndex -= (Consts.USER_VAR_NUM);
+
+                // 0 - varNum の範囲外ならループさせる
+                if (this._inlineUserVarViewer.topUserVarIndex[kind] < 0) {
+                    this._inlineUserVarViewer.topUserVarIndex[kind] += varNum;
+                }
+                if (this._inlineUserVarViewer.topUserVarIndex[kind] > varNum) {
+                    this._inlineUserVarViewer.topUserVarIndex[kind] -= varNum;
                 }
                 if (isInputKey) {
                     this._setNextPage();
                     this._inlineUserVarViewer.isVisible = true;
                     this._displayUserVars();
-                }
-                if (this._keyStore.getKeyState(KeyCode.KEY_V) === KeyState.KEYDOWN) {
-                    this._setNextPage();
                 }
             }
         } else if (this._player.isWaitingEstimateWindow()) {
@@ -2708,12 +2754,11 @@ export class WWA {
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
-        if (this._dumpElement !== null) {
-            for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-                const varNum = i.toString(10);
-                this._dumpElement.querySelector(`.var${varNum}`).textContent = this._wwaData.userVar[i] + "";
-            }
-        }
+        VarDump.Api.updateAllVariables({
+          dumpElement: this._dumpElement,
+          userVar: this._userVar.numbered,
+          namedUserVar: this._userVar.named,
+        });
 
         /** フレームごとにユーザー定義独自関数を呼び出す */
         const frameFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_FRAME"];
@@ -3441,28 +3486,14 @@ export class WWA {
     }
 
     private _execObjectMonsterEvent(pos: Coord, partsID: number, objAttr: number): void {
-        var monsterImgCoord = new Coord(
-            this._wwaData.objectAttribute[partsID][Consts.ATR_X],
-            this._wwaData.objectAttribute[partsID][Consts.ATR_Y]);
-
-        var monsterStatus = new Status(
-            this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
-            this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
-            this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
-            this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]);
-
-        var monsterMessage = this._wwaData.message[
-            this._wwaData.objectAttribute[partsID][Consts.ATR_STRING]];
-
-        var monsterItemID = this._wwaData.objectAttribute[partsID][Consts.ATR_ITEM];
-
-        this._monster = new Monster(
-            partsID, pos, monsterImgCoord, monsterStatus, monsterMessage, monsterItemID,
+        this._monster = this._createMonster(
+            partsID, pos,
             () => {
+                this._monster = undefined;
                 this._monsterWindow.hide();
                 this._dispatchWindowClosedTimeRequests();
-            });
-
+            }
+        );
         this._player.startBattleWith(this._monster);
         //↓待ち時間の前にやるのはよくないので、戦闘開始時にやります。
         //            this._monsterWindow.show();
@@ -4754,6 +4785,8 @@ export class WWA {
         qd.frameCount = this._player.getFrameCount();
         qd.gameSpeedIndex = this._player.getSpeedIndex();
         qd.playTime = this._playTimeCalculator?.calculateTimeMs() ?? 0;
+        qd.userVar = this._userVar.numbered.slice();
+        qd.userNamedVar = [...this._userVar.named];
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
@@ -4906,6 +4939,8 @@ export class WWA {
     }
 
     private _applyQuickLoad(newData: WWAData): void {
+        this._userVar.named = new Map(newData.userNamedVar);
+        this._userVar.numbered = newData.userVar;
         this._player.setEnergyMax(newData.statusEnergyMax);
         this._player.setEnergy(newData.statusEnergy);
         this._player.setStrength(newData.statusStrength);
@@ -5354,21 +5389,23 @@ export class WWA {
     }
 
     public launchBattleEstimateWindow(): boolean {
-        var cpParts = this._camera.getPosition().getPartsCoord();
-        var xLeft = Math.max(0, cpParts.x);
-        var xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1);
-        var yTop = Math.max(0, cpParts.y);
-        var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
-        var monsterList: number[] = [];
+        const cpParts = this._camera.getPosition().getPartsCoord();
+        const xLeft = Math.max(0, cpParts.x);
+        const xRight = Math.min(this._wwaData.mapWidth - 1, cpParts.x + Consts.H_PARTS_NUM_IN_WINDOW - 1);
+        const yTop = Math.max(0, cpParts.y);
+        const yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
+        const monsterList: Monster[] = [];
         this.playSound(SystemSound.DECISION);
-        for (var x: number = xLeft; x <= xRight; x++) {
-            for (var y: number = yTop; y <= yBottom; y++) {
-                var pid = this._wwaData.mapObject[y][x];
-                if (this._wwaData.objectAttribute[pid][Consts.ATR_TYPE] === Consts.OBJECT_MONSTER) {
-                    if (monsterList.indexOf(pid) === -1) {
-                        monsterList.push(pid);
-                    }
+        for (let x = xLeft; x <= xRight; x++) {
+            for (let y= yTop; y <= yBottom; y++) {
+                const partsId = this._wwaData.mapObject[y][x];
+                if (
+                    this._wwaData.objectAttribute[partsId][Consts.ATR_TYPE] !== Consts.OBJECT_MONSTER ||
+                    monsterList.find(monster => monster.partsID === partsId )
+                ) {
+                    continue;
                 }
+                monsterList.push(this._createMonster(partsId, new Coord(x, y)));
             }
         }
         if (this._bottomButtonType === ControlPanelBottomButton.BATTLE_REPORT) {
@@ -5379,7 +5416,25 @@ export class WWA {
             this.hideBattleEstimateWindow();
             return false;
         }
-        this._battleEstimateWindow.update(this._player.getStatus(), monsterList);
+        this._battleEstimateWindow.update(
+            this._player.getStatus(),
+            monsterList,
+            (playerStatus: Status, monster: Monster) => {
+                // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
+                this._monster = monster;
+                const damage =  this._player.calcDamagePlayerToEnemy(playerStatus, monster.status);
+                this._monster = undefined;
+                return damage;
+            },
+            (monster: Monster, playerStatus: Status) => {
+                // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
+                this._monster = monster;
+                const damage = this._player.calcDamageEnemyToPlayer(monster.status, playerStatus)
+                this._monster = undefined;
+                return damage;
+            },
+            this.isUsingDefaultDamageCalcFunction()
+        );
         this._battleEstimateWindow.show();
         this._player.setEstimateWindowWating();
         
@@ -5389,6 +5444,33 @@ export class WWA {
             this.evalCalcWwaNodeGenerator.evalWwaNode(battleReportFunc);
         }
         return true;
+    }
+
+    public isUsingDefaultDamageCalcFunction(): boolean {
+        return (
+            this.callCalcPlayerToEnemyUserDefineFunction() === undefined &&
+            this.callCalcEnemyToPlayerUserDefineFunction() === undefined
+        );
+    }
+
+    private _createMonster(partsId: number, coord: Coord, battleEndCallback?: () => void ): Monster {
+        return new Monster(
+            partsId,
+            coord,
+            new Coord(
+                this._wwaData.objectAttribute[partsId][Consts.ATR_X],
+                this._wwaData.objectAttribute[partsId][Consts.ATR_Y]
+            ),
+            new Status(
+                this._wwaData.objectAttribute[partsId][Consts.ATR_ENERGY],
+                this._wwaData.objectAttribute[partsId][Consts.ATR_STRENGTH],
+                this._wwaData.objectAttribute[partsId][Consts.ATR_DEFENCE],
+                this._wwaData.objectAttribute[partsId][Consts.ATR_GOLD]
+            ),
+            this._wwaData.message[this._wwaData.objectAttribute[partsId][Consts.ATR_STRING]],
+            this._wwaData.objectAttribute[partsId][Consts.ATR_ITEM],
+            battleEndCallback
+        );
     }
 
     public hideBattleEstimateWindow(): void {
@@ -5425,32 +5507,58 @@ export class WWA {
             return;
         }
         // 表示中フラグをONにする
+        let helpMessage: string = "";
         this._inlineUserVarViewer.isVisible = true;
         if (this._player.isControllable()) {
-            let helpMessage: string = '変数一覧\n';
+          const namedUserVars = [...this._userVar.named];
+          if (this._inlineUserVarViewer.kind === "named") {
+            helpMessage = "名前つき変数一覧\n";
+            if (namedUserVars.length === 0) {
+              helpMessage += "名前つき変数はありません\n";
+            } else if (namedUserVars.length <= Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM) {
+              helpMessage += namedUserVars
+                .map(
+                  ([key, value]) =>
+                    `${key}: ${util.formatUserVarForDisplay(value)}`
+                )
+                .join("\n");
+              helpMessage += "\n";
+            } else {
+              /** 終端まで行った際にはループして0番目から参照する */
+              for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
+                let currentIndex =
+                  (this._inlineUserVarViewer.topUserVarIndex[this._inlineUserVarViewer.kind] + i) %
+                  namedUserVars.length;
+                helpMessage += `${namedUserVars[currentIndex][0]}: ${util.formatUserVarForDisplay(namedUserVars[currentIndex][1], true)}\n`;
+              }
+            }
+          } else if (this._inlineUserVarViewer.kind === "numbered") {
+            helpMessage = "変数一覧\n";
             if (this._userVarNameListRequestError) {
-                if (this._userVarNameListRequestError.kind === "noFileSpecified") {
-                    helpMessage += this._userVarNameListRequestError.errorMessage + "\n";
-                } else {
-                    helpMessage += "【変数名取得失敗】\n";
-                    helpMessage += "  すべての変数を名無しとしています。\n";
-                    helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.errorMessage}\n`
-                }
+              if (this._userVarNameListRequestError.kind === "noFileSpecified") {
+                helpMessage += this._userVarNameListRequestError.errorMessage + "\n";
+              } else {
+                helpMessage += "【変数名取得失敗】\n";
+                helpMessage += "  すべての変数を名無しとしています。\n";
+                helpMessage += `  エラー詳細: ${this._userVarNameListRequestError.errorMessage}\n`;
+              }
             }
-            for (let i = 0; i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM; i++) {
-                /** 終端まで行った際にはループして0番目から参照する */
-                let currentIndex = (this._inlineUserVarViewer.topUserVarIndex + i) % Consts.USER_VAR_NUM;
-                const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ?
-                    this._userVarNameList[currentIndex] : "名無し";
-                const label = `変数 ${currentIndex}: ${displayName}`;
-                helpMessage += `${label}: ${this._wwaData.userVar[currentIndex]}\n`;
+            for (let i = 0;  i < Consts.INLINE_USER_VAR_VIEWER_DISPLAY_NUM;  i++) {
+              /** 終端まで行った際にはループして0番目から参照する */
+              let currentIndex = (this._inlineUserVarViewer.topUserVarIndex[this._inlineUserVarViewer.kind] + i) % Consts.USER_VAR_NUM;
+              const displayName = this._userVarNameList && this._userVarNameList[currentIndex] ? this._userVarNameList[currentIndex] : "名無し";
+              const label = `変数 ${currentIndex}: ${displayName}`;
+              helpMessage += `${label}: ${util.formatUserVarForDisplay(this._userVar.numbered[currentIndex], true)}\n`;
             }
-            helpMessage += "\n操作方法\n";
-            helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
-            helpMessage += "左キー：１０つ戻す　右キー：１０つ進める\n";
-            this.generatePageAndReserveExecution(helpMessage, false, true);
+          }
+          helpMessage += "\n操作方法\n";
+          helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
+          helpMessage += "左キー：１０個戻す　右キー：１０個進める\n";
+          helpMessage += "Vキー: 名前付き変数/通常変数の切り替え";
+          this.generatePageAndReserveExecution(helpMessage, false, true);
         }
     }
+
 
     private _displayHelp(): void {
         if (this._player.isControllable()) {
@@ -5755,6 +5863,14 @@ export class WWA {
         this._wwaData.gameoverX = pos.x;
         this._wwaData.gameoverY = pos.y;
         return pos;
+    }
+
+    // ゲームオーバー座標を取得する
+    public getGemeOverPosition(): Coord {
+        return new Coord(
+            this._wwaData.gameoverX,
+            this._wwaData.gameoverY
+        )
     }
 
     // 負値, 数値でない値, NaN は 0にする。
@@ -6098,32 +6214,112 @@ font-weight: bold;
         }
     }
     // User変数記憶
-    public setUserVar(index: number, value: number, operator?: string): void {
-        // number 型でない変数, NaN, 範囲外の index を弾く
-        if (this.isNotNumberTypeOrNaN(index) || !this.isValidUserVarIndex(index)) {
-            throw new Error (`代入先のユーザ変数の番号 が 0 以上 ${Consts.USER_VAR_NUM - 1} 以下の数値になっていません!`)
+    public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
+
+       const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
+            if (typeof indexOrName === "number") {
+                if (typeof value !== "number") {
+                    throw new TypeError("数字index変数への数値以外の代入は今のところできません。あらかじめご了承ください。");
+                }
+                this._userVar.numbered[indexOrName] = typeof value === "number" ? this.toAssignableValue(value) : value;
+            } else { // indexOrName === "string"
+                this._userVar.named.set(indexOrName, value);
+            }
         }
-        switch(operator) {
-            case "+=":
-                this._wwaData.userVar[index] += this.toAssignableValue(value);
-                break;
-            case "-=":
-                this._wwaData.userVar[index] -= this.toAssignableValue(value);
-                break;
-            case "*=":
-                this._wwaData.userVar[index] *= this.toAssignableValue(value);
-                break;
-            case "/=":
-                this._wwaData.userVar[index] /= this.toAssignableValue(value);
-                break;
-            case "=":
-            default:
-                this._wwaData.userVar[index] = this.toAssignableValue(value);
+
+        const _get = (indexOrName: number | string,): number | string | boolean => {
+            if (typeof indexOrName === "number") {
+                return this._userVar.numbered[indexOrName];
+            } else { // indexOrName === "string"
+                return this._userVar.named.get(indexOrName);
+            }
         }
-        
+
+        const currentValue = _get(index);
+        if (typeof assignee === "number") {
+            switch (operator) {
+                case "+=": {
+                    if (typeof currentValue === "number") {
+                        // number += number
+                        _assign(index, currentValue + assignee);
+                    } else if (typeof currentValue === "string") {
+                        // string += number
+                        _assign(index, String(currentValue) + assignee);
+                    } else {
+                        // boolean += number
+                        throw new TypeError("boolean に number は足せません");
+                    }
+                    break;
+                }
+                case "-=": {
+                    if (typeof currentValue === "number") {
+                        // number -= number
+                        _assign(index, currentValue - assignee);
+                    } else {
+                        // string -= number
+                        // boolean -= number
+                        throw new TypeError("string/boolean から number は引けません")
+                    }
+                    break;
+                }
+                case "*=":
+                    if (typeof currentValue === "number") {
+                        // number *= number
+                        _assign(index, currentValue * assignee);
+                    } else {
+                        // string *= number
+                        // boolean *= number
+                        throw new TypeError("string/boolean に number はかけられません")
+                    }
+                    break;
+                case "/=":
+                    if (typeof currentValue === "number") {
+                        // number /= number
+                        _assign(index, currentValue / assignee);
+                    } else {
+                        // string /= number
+                        // boolean /= number
+                        throw new TypeError("string/boolean は number で割れません")
+                    }
+                    break;
+                case "=":
+                default:
+                    _assign(index, assignee);
+                    break;
+            }
+        } else if (typeof assignee === "string") {
+            switch (operator) {
+                case "+=": // 文字列連結
+                    // string += string
+                   _assign(index, currentValue + assignee);
+                   break;
+                case "=":
+                    _assign(index, assignee);
+                    break;
+                default:
+                    throw new TypeError("文字列を -=, *=, /= で複合代入することはできません");
+            }
+        } else { // typeof assignee === "boolean"
+             switch (operator) {
+                case "+=":
+                    if (typeof currentValue === "string") {
+                        // string += boolean
+                        _assign(index, currentValue + assignee);
+                    } else {
+                        throw new TypeError("number/boolean に boolean を足せません")
+                    }
+                   break;
+                case "=":
+                    _assign(index, assignee);
+                    break;
+                default:
+                    throw new TypeError("booleanを -=, *=, /= で複合代入することはできません");
+            }
+        }
         // メッセージボックスに表示されている変数を更新
         this._messageWindow.update();
     }
+
     /**
      * 数値 x を代入可能な変数に変換する。
      * 
@@ -6158,8 +6354,16 @@ font-weight: bold;
     }
 
     // User変数取得
-    public getUserVar(no: number): number {
-        return this._wwaData.userVar[no];
+    public getUserVar(no: number): number | string | boolean {
+        return this._userVar.numbered[no];
+    }
+    // User名称変数取得
+    public getUserNameVar(id: number | string): number | string | boolean {
+        return this._userVar.named.get(id.toString());
+    }
+    // User名称変数の一覧を取得
+    public getAllUserNameVar() {
+        return Array.from(this._userVar.named);
     }
     // 現在の位置情報記憶
     public recUserPosition(x: number, y: number): void {
@@ -6169,7 +6373,12 @@ font-weight: bold;
     }
     // 記憶していた座標にジャンプ
     public jumpRecUserPosition(x: number, y: number): void {
-        this.forcedJumpGate(this._wwaData.userVar[x], this._wwaData.userVar[y]);
+        const jx = this._userVar.numbered[x]
+        const jy = this._userVar.numbered[y];
+        if(!util.assertNumber(jx, `v[${x}]`) || !util.assertNumber(jy, `v[${y}]`)) {
+            return;
+        }
+        this.forcedJumpGate(jx, jy);
     }
     /**
      * 指定のX座標にジャンプ（Y座標は現在の座標）
@@ -6187,7 +6396,7 @@ font-weight: bold;
     }
     // 変数デバッグ出力
     public outputUserVar(num: number): void {
-        console.log("Var[" + num + "] = " + this._wwaData.userVar[num]);
+        console.log("Var[" + num + "] = " + this._userVar.numbered[num]);
     }
     // ユーザ変数 <= HP
     public setUserVarHP(num: number): void {
@@ -6237,7 +6446,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setEnergy(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setEnergy(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
         // 0 になった場合はゲームオーバー
         if (
@@ -6254,7 +6467,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setEnergyMax(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setEnergyMax(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
     }
     // AT (装備品以外) <- ユーザ変数
@@ -6262,7 +6479,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setStrength(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setStrength(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
     }
     // DF (装備品以外) <- ユーザ変数
@@ -6270,7 +6491,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setDefence(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setDefence(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
     }
     // MONEY <- ユーザ変数
@@ -6278,7 +6503,11 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(index)) {
             throw new Error("ユーザ変数の添字が範囲外です。");
         }
-        this._player.setGold(this.toValidStatusValue(this._wwaData.userVar[index]));
+        const assignee = this._userVar.numbered[index];
+        if (!util.assertNumber(assignee, `v[${index}]`)) {
+            return;
+        }
+        this._player.setGold(this.toValidStatusValue(assignee));
         this._player.updateStatusValueBox();
     }
     // ユーザ変数 <- 歩数
@@ -6291,29 +6520,50 @@ font-weight: bold;
     }
     // ユーザ変数X <- ユーザ変数Y
     public setUserValOtherUserVal(x: number, y: number): void {
-        this.setUserVar(x, this._wwaData.userVar[y]);
+        this.setUserVar(x, this._userVar.numbered[y]);
     }
     // ユーザ変数X <- ユーザ変数X + ユーザ変数Y
     public setUserValAdd(x: number, y: number): void {
-        this.setUserVar(x, this._wwaData.userVar[x] + this._wwaData.userVar[y])
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(typeof vx !== "boolean" && typeof vy !== "boolean") {
+           // @ts-expect-error (number | string) + (number | string) の演算はどれも成立するが型が通らない
+            this.setUserVar(x, vx + vy)
+        }
     }
     // ユーザ変数X <- ユーザ変数X - ユーザ変数Y
     public setUserValSub(x: number, y: number): void {
-        this.setUserVar(x, this._wwaData.userVar[x] - this._wwaData.userVar[y]);
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
+            this.setUserVar(x, vx - vy);
+        }
     }
     // ユーザ変数X <- ユーザ変数X * ユーザ変数Y
     public setUserValMul(x: number, y: number): void {
-        this.setUserVar(x, this._wwaData.userVar[x] * this._wwaData.userVar[y]);
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
+            this.setUserVar(x, vx * vy);
+        }
     }
     // ユーザ変数X <- ユーザ変数X / ユーザ変数Y
     public setUserValDiv(x: number, y: number): void {
-        // 商の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
-        this.setUserVar(x, this._wwaData.userVar[y] === 0 ? 0 : this._wwaData.userVar[x] / this._wwaData.userVar[y]);
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
+            // 商の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
+            this.setUserVar(x, vy === 0 ? 0 : vx / vy);
+        }
     }
     // ユーザ変数X <- ユーザ変数X % ユーザ変数Y
     public setUserValMod(x: number, y: number): void {
-        // 剰余の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
-        this.setUserVar(x, this._wwaData.userVar[y] === 0 ? 0 : this._wwaData.userVar[x] % this._wwaData.userVar[y]);
+        const vx = this._userVar.numbered[x];
+        const vy = this._userVar.numbered[y];
+        if(util.assertNumber(vx, `v[${x}]`) && util.assertNumber(vy, `v[${y}]`)) {
+            // 剰余の整数部分を取り出す処理は、setUserVar に任せるのでここではしない。
+            this.setUserVar(x, vy === 0 ? 0 : vx % vy);
+        }
     }
     // ユーザ変数X <- rand
     public setUserValRandNum(x: number, num: number, bias: number): void {
@@ -6334,7 +6584,7 @@ font-weight: bold;
             if (!isNaN(parsedNumber)) {
                 // バージョン1 かつ 数値の場合は、該当するユーザ変数の添字と解釈する
                 // バージョン2 の場合は数値をそのまま出力する
-                return () => option.version === 1 ? this._wwaData.userVar[parsedNumber] : parsedNumber;
+                return () => option.version === 1 ? this._userVar.numbered[parsedNumber] : parsedNumber;
             }
             // ExpressionParser で解釈できる表現 (HPMAX, RAND(x)など)を解釈する。
             // なお、数値の場合は前段で弾かれているので、定数になることはない。
@@ -6420,7 +6670,7 @@ font-weight: bold;
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
             playTime: this._playTimeCalculator?.calculateTimeMs() ?? 0,
-            userVars: this._wwaData.userVar,
+            userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox(),
@@ -6443,9 +6693,13 @@ font-weight: bold;
         if(!this.isValidUserVarIndex(userVar1Index) || !this.isValidUserVarIndex(userVar2Index)) {
             throw new Error("判定対象のユーザ変数の添字が範囲外です!")
         }
-        const userVar1 = this._wwaData.userVar[userVar1Index];
+        const userVar1 = this._userVar.numbered[userVar1Index];
         const opeCode = args[1];
-        const userVar2 = this._wwaData.userVar[userVar2Index];
+        const userVar2 = this._userVar.numbered[userVar2Index];
+
+        if(!util.assertNumber(userVar1, `v[${userVar1Index}]`) || !util.assertNumber(userVar2, `v[${userVar2Index}]`)) {
+            return;
+        }
 
         /**
          *  partsTypeArgument が 0 以外の数値として解釈できるなら 背景パーツ
@@ -6532,7 +6786,10 @@ font-weight: bold;
         if (!this.isValidUserVarIndex(partsID)) {
             throw new Error("対象のユーザ変数の添字が範囲外です");
         }
-        const targetPartsID = this._wwaData.userVar[partsID];
+        const targetPartsID = this._userVar.numbered[partsID];
+        if (typeof targetPartsID !== "number") {
+            throw new Error("数値でないパーツ番号は指定できません");
+        }
         if (targetPartsID < 0) {
             throw new Error("負のパーツ番号は指定できません");
         }
@@ -6708,17 +6965,6 @@ font-weight: bold;
         }
     }
 
-    private _updateVarDumpInformationArea(content: string, isError: boolean = false) {
-        if(!this._dumpElement) {
-            return;
-        }
-        const elm = this._dumpElement.querySelector(".varlist-information");
-        if (!elm) {
-            return;
-        }
-        elm.textContent = `${isError ? "【エラー】" : ""}${content}`;
-    }
-
     public shouldApplyGameOver({ isCalledByMacro }: { isCalledByMacro: boolean }) {
         if(isCalledByMacro) {
             return this._wwaData.gameOverPolicy === "default";
@@ -6726,6 +6972,22 @@ font-weight: bold;
             return this._wwaData.gameOverPolicy === "default" || this._wwaData.gameOverPolicy ==="except-macro";
         }
     }
+
+    public getEnemyStatus(): Status | number {
+        if(!this._monster) {
+            return -1;
+        }
+        return this._monster.status;
+    }
+
+    public setEnemyStatus(status: Status) {
+        if(this._monster) {
+            this._monster.setStatus(status);
+        }
+        else {
+            throw new Error("敵が存在しません");
+        }
+    } 
 
     // TODO: 適切な場所に移す
     public getGameStatus() {
@@ -6736,7 +6998,7 @@ font-weight: bold;
             energyMax: this._player.getEnergyMax(),
             moveCount: this._player.getMoveCount(),
             playTime: this._playTimeCalculator?.calculateTimeMs() ?? 0,
-            userVars: this._wwaData.userVar,
+            userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox()
@@ -6862,90 +7124,7 @@ font-weight: bold;
 
 var isCopyRightClick = false;
 
-function setupVarDumpElement(dumpElmQuery: string): HTMLElement | null {
-    const dumpElm = util.$qs(dumpElmQuery) as HTMLElement | null;
-    if (!dumpElm) {
-        // 要素がない場合は何もしない
-        return null;
-    }
-    dumpElm.classList.add("wwa-vardump-wrapper")
-    const tableElm = document.createElement("table");
-    const headerTrElm = document.createElement("tr");
-    const headerThElm = document.createElement("th");
-    const hideButton = document.createElement("button");
-    const informationElm = document.createElement("td");
-    hideButton.textContent = "隠す";
-    headerThElm.textContent = "変数一覧";
-    headerThElm.setAttribute("colspan", "10");
-    headerThElm.classList.add("varlist-header");
-    headerThElm.appendChild(hideButton);
-    headerTrElm.appendChild(headerThElm);
-    informationElm.setAttribute("colspan", "10");
-    informationElm.classList.add("varlist-information");
-    informationElm.textContent = "強調されている番号にカーソルを乗せると説明が表示されます。";
-    tableElm.appendChild(headerTrElm);
-    tableElm.appendChild(informationElm);
-    let trNumElm: HTMLElement = null;
-    let trValElm: HTMLElement = null;
-    for (var i = 0; i < Consts.USER_VAR_NUM; i++) {
-        if (i % 10 === 0) {
-            if (trNumElm !== null) {
-                tableElm.appendChild(trNumElm);
-                tableElm.appendChild(trValElm);
-            }
-            trNumElm = document.createElement("tr");
-            trNumElm.classList.add("var-number");
-            trValElm = document.createElement("tr");
-            trValElm.classList.add("var-val");
-        }
-        const thNumElm = document.createElement("th");
-        const varLabelElm = document.createElement("div");
-        varLabelElm.textContent = "-";
-        varLabelElm.setAttribute("aria-hidden", "true");
-        thNumElm.classList.add(`var-index${i}`);
-        const tdValElm = document.createElement("td");
-        thNumElm.textContent = i + "";
-        thNumElm.appendChild(varLabelElm);
-        tdValElm.classList.add(`var${i}`);
-        tdValElm.textContent = "-";
-        trNumElm.appendChild(thNumElm);
-        trValElm.appendChild(tdValElm);
-    }
-    if (Consts.USER_VAR_NUM % 10 !== 0) {
-        tableElm.appendChild(trNumElm);
-        tableElm.appendChild(trValElm);
-    }
-    dumpElm.appendChild(tableElm);
-    var varDispStatus = true;
-    hideButton.addEventListener("click", function (e) {
-        if (varDispStatus) {
-            this.textContent = "表示";
-            informationElm.style.display = "none";
-            Array.prototype.forEach.call(
-                tableElm.querySelectorAll("tr.var-number"), function (etr) {
-                    etr.style.display = "none";
-                });
-            Array.prototype.forEach.call(
-                tableElm.querySelectorAll("tr.var-val"), function (etr) {
-                    etr.style.display = "none";
-                });
-            varDispStatus = false;
-        } else {
-            this.textContent = "隠す";
-            informationElm.style.display = "";
-            Array.prototype.forEach.call(
-                tableElm.querySelectorAll("tr.var-number"), function (etr) {
-                    etr.style.display = "";
-                });
-            Array.prototype.forEach.call(
-                tableElm.querySelectorAll("tr.var-val"), function (etr) {
-                    etr.style.display = "";
-                });
-            varDispStatus = true;
-        }
-    });
-    return dumpElm;
-}
+
 
 function setUpVirtualPadController(controllerElm: HTMLElement | null, clickHander: VoidFunction) {
     if (controllerElm === null) {
@@ -6970,7 +7149,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `if(v[0] ==0 || AT == 80) {\n    MSG("HOGE");\n}`;
+    consoleTextareaElement.textContent = `v["money"] = 100;\nv["name"] = "ヤツロウ";\nMSG(v["name"]+"「俺の所持金は"+v["money"]+"ゴールドだ」");\nSHOW_USER_DEF_VAR();`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();
@@ -7029,7 +7208,7 @@ function start() {
     /** WWAの変数命名データを読み込む */
     var userVarNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-var-names-file");
     if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm") && canDisplayUserVars) {
-        dumpElm = setupVarDumpElement(dumpElmQuery);
+        dumpElm = VarDump.setup(dumpElmQuery);
     }
     var urlgateEnabled = true;
     if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
