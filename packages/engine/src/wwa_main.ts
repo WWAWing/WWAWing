@@ -319,6 +319,7 @@ export class WWA {
         canDisplayUserVars: boolean,
         enableVirtualPad: boolean = false,
         virtualpadControllerElm: HTMLElement = null,
+        pictureImageNamesFile: string | null,
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -1010,7 +1011,7 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, this, (): void => {
+            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, this, pictureImageNamesFile, (): void => {
                 this._isSkippedSoundMessage = true;
                 const setGameStartingMessageWhenPcOrSP = () => {
                     switch (this.userDevice.device) {
@@ -7237,6 +7238,7 @@ function start() {
     }
     const virtualPadContollerQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-controller-elm");
     const virtualPadControllerElm: HTMLElement | null = virtualPadEnable && virtualPadContollerQuery ? util.$qsh(virtualPadContollerQuery) : null;
+    const pictureImageNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-picture-image-names-file");
     const disallowLoadOldSave = (() => {
         const disallowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
         if (disallowLoadOldSaveAttribute !== null && disallowLoadOldSaveAttribute.match(/^true$/i)) {
@@ -7257,7 +7259,8 @@ function start() {
         userVarNamesFile,
         canDisplayUserVars,
         virtualPadEnable,
-        virtualPadControllerElm
+        virtualPadControllerElm,
+        pictureImageNamesFile
     );
 }
 

@@ -22,12 +22,13 @@ export default class WWAPictureItem {
     private readonly _totalHeight: number;
     private readonly _repeatX: number;
     private readonly _repeatY: number;
+    private readonly _imgFile?: HTMLImageElement;
     private readonly _cropX: number;
     private readonly _cropY: number;
     
     private _displayStockTime?: number;
 
-    constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas) {
+    constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
         this._posX = properties.pos?.[0] ?? 0;
         this._posY = properties.pos?.[1] ?? 0;
@@ -35,10 +36,14 @@ export default class WWAPictureItem {
         [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
-        this._cropX = properties.crop?.[0] ?? 1;
-        this._cropY = properties.crop?.[1] ?? 1;
-        this._totalWidth = (properties.size?.[0] ?? WWAConsts.CHIP_SIZE) * this._cropX;
-        this._totalHeight = (properties.size?.[1] ?? WWAConsts.CHIP_SIZE) * this._cropY;
+        this._imgFile = externalFile;
+        // 外部画像ファイルを使用した場合、 crop は無効となる
+        this._cropX = this._imgFile ? 1 : properties.crop?.[0] ?? 1;
+        this._cropY = this._imgFile ? 1 : properties.crop?.[1] ?? 1;
+        this._totalWidth =
+            (properties.size?.[0] ?? (this._imgFile ? this._imgFile.width : WWAConsts.CHIP_SIZE)) * this._cropX;
+        this._totalHeight =
+            (properties.size?.[1] ?? (this._imgFile ? this._imgFile.height : WWAConsts.CHIP_SIZE)) * this._cropY;
         this._chipWidth = Math.floor(this._totalWidth / this._cropX);
         this._chipHeight = Math.floor(this._totalHeight / this._cropY);
         
@@ -84,26 +89,30 @@ export default class WWAPictureItem {
         
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
+                const chipX = this._posX + (this._totalWidth * rx);
+                const chipY = this._posY + (this._totalHeight * ry);
                 if (this._registry.properties.text) {
                     this._canvas.drawFont(
                         this._registry.properties.text,
-                        this._posX + (this._totalWidth * rx),
-                        this._posY + (this._totalHeight * ry)
+                        chipX,
+                        chipY
                     );
                 }
-                const chipX = this._posX + (this._totalWidth * rx);
-                const chipY = this._posY + (this._totalHeight * ry);
-                for (let cy = 0; cy < this._cropY; cy++) {
-                    for (let cx = 0; cx < this._cropX; cx++) {
-                        this._canvas.drawCanvas(
-                            image,
-                            imgPosX + cx,
-                            imgPosY + cy,
-                            chipX + (this._chipWidth * cx),
-                            chipY + (this._chipHeight * cy),
-                            this._chipWidth,
-                            this._chipHeight
-                        );
+                if (this._imgFile) {
+                    this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
+                } else {
+                    for (let cy = 0; cy < this._cropY; cy++) {
+                        for (let cx = 0; cx < this._cropX; cx++) {
+                            this._canvas.drawCanvas(
+                                image,
+                                imgPosX + cx,
+                                imgPosY + cy,
+                                chipX + (this._chipWidth * cx),
+                                chipY + (this._chipHeight * cy),
+                                this._chipWidth,
+                                this._chipHeight
+                            );
+                        }
                     }
                 }
             }
