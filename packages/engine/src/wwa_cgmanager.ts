@@ -25,8 +25,8 @@ export class CacheCanvas {
             width, height
         );
     }
-    public drawCanvasFree(image: HTMLImageElement, canvasX: number, canvasY: number): void {
-        this.ctx.drawImage(image, canvasX, canvasY);
+    public drawCanvasFree(image: HTMLImageElement, canvasX: number, canvasY: number, width: number, height: number): void {
+        this.ctx.drawImage(image, canvasX, canvasY, width, height);
     }
     /**
      * フォントを描画します。色などの設定はあらかじめ ctx フィールドに設定しておいてください。

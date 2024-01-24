@@ -38,6 +38,7 @@ export interface TemplateValues {
             "data-wwa-virtualpad-enable"?: string;
             "data-wwa-virtualpad-viewport-fit-enable"?: string;
             "data-wwa-virtualpad-controller-elm"?: string;
+            "data-wwa-picture-image-names-file"?: string;
         };
     };
     varDumpElement?: {
@@ -77,6 +78,7 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-virtualpad-enable": Helper.toStringBooleanOptional(wwa.gameOption?.virtualPad?.enable),
                 "data-wwa-virtualpad-viewport-fit-enable": Helper.toStringBooleanOptional(wwa.gameOption?.virtualPad?.viewportFitEnable),
                 "data-wwa-virtualpad-controller-elm": wwa.gameOption?.virtualPad?.controllerId ? `#${wwa.gameOption.virtualPad.controllerId}` : undefined,
+                "data-wwa-picture-image-names-file": wwa.resources.pictureImageNamesFile,
             }
         },
         varDumpElement: wwa.gameOption?.userVars?.dumpElementId ? { id: wwa.gameOption.userVars.dumpElementId } : undefined,

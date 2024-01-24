@@ -52,7 +52,7 @@ export default async function makeDistribution(
             copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
             copy("debug-server", path.join("bin", "wwa-server.exe"), "mapdata"),
             copy("styles", path.join("output", "*.css"), "mapdata"),
-            copy("assets", path.join("vars", "*.json"), "mapdata"),
+            copy("assets", path.join("defs", "*.json"), "mapdata"),
         ];
     }
     await Promise.all(tasks);
@@ -140,6 +140,7 @@ export default async function makeDistribution(
 
     function createConfig(mapDataName: string): InputConfig {
         const canIncludeUserVarOptions = (mapDataName === "wwamap");
+        const canIncludePictureOptions = (mapDataName === "picture_test");
         return {
             page: {
                 additionalCssFiles: ["style.css"]
@@ -165,7 +166,10 @@ export default async function makeDistribution(
                     titleImage: "cover.gif",
                     ...(canIncludeUserVarOptions ? {
                         userVarNamesFile: `${mapDataName}-vars.json`
-                    } : {})
+                    } : {}),
+                    ...(canIncludePictureOptions ? {
+                        pictureImageNamesFile: `${mapDataName}-picture.json`
+                    } : {}),
                 },
             },
             copyrights: "official-and-wing"

@@ -37,10 +37,13 @@ export default class WWAPictureItem {
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._imgFile = externalFile;
-        this._cropX = properties.crop?.[0] ?? 1;
-        this._cropY = properties.crop?.[1] ?? 1;
-        this._totalWidth = (properties.size?.[0] ?? WWAConsts.CHIP_SIZE) * this._cropX;
-        this._totalHeight = (properties.size?.[1] ?? WWAConsts.CHIP_SIZE) * this._cropY;
+        // 外部画像ファイルを使用した場合、 crop は無効となる
+        this._cropX = this._imgFile ? 1 : properties.crop?.[0] ?? 1;
+        this._cropY = this._imgFile ? 1 : properties.crop?.[1] ?? 1;
+        this._totalWidth =
+            (properties.size?.[0] ?? (this._imgFile ? this._imgFile.width : WWAConsts.CHIP_SIZE)) * this._cropX;
+        this._totalHeight =
+            (properties.size?.[1] ?? (this._imgFile ? this._imgFile.height : WWAConsts.CHIP_SIZE)) * this._cropY;
         this._chipWidth = Math.floor(this._totalWidth / this._cropX);
         this._chipHeight = Math.floor(this._totalHeight / this._cropY);
         
@@ -96,8 +99,7 @@ export default class WWAPictureItem {
                     );
                 }
                 if (this._imgFile) {
-                    // TODO size プロパティで拡大縮小したい
-                    this._canvas.drawCanvasFree(this._imgFile, chipX, chipY);
+                    this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
                 } else {
                     for (let cy = 0; cy < this._cropY; cy++) {
                         for (let cx = 0; cx < this._cropX; cx++) {
