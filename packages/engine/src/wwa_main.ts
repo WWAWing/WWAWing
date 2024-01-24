@@ -9,7 +9,7 @@ import {
     SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, type UserVariableKind
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters
 } from "./wwa_data";
 
 import {
@@ -1181,11 +1181,15 @@ export class WWA {
 
     /**
      * Item関連のReadOnly値をセットする
-     * @param item_id 使用・取得したITEMのID
-     * @param item_pos 使用・取得したITEMのID
+     * @param itemObjectId 使用・取得したITEMのID
+     * @param itemPos 使用・取得したITEMのID
      */
-    public setEvalCalCWwaNodeReadOnlyItemValue(item_id: number, item_pos: number) {
-        this.evalCalcWwaNodeGenerator.setReadOnlyItemValue(item_id, item_pos);
+    public setEvalCalcWwaNodeEarnedItem(itemObjectId: number, itemPos: number) {
+        this.evalCalcWwaNodeGenerator.setEarnedItem(itemObjectId, itemPos);
+    }
+
+    public clearEvalCalcWwaNodeEarnedItem() {
+        this.evalCalcWwaNodeGenerator.clearEarnedItem()
     }
 
     /** アイテムを取得した際のユーザ定義独自関数を呼び出す */
@@ -1224,14 +1228,17 @@ export class WWA {
      * 戦闘でPlayerToEnemyのダメージ発生時のユーザ定義独自関数を呼び出す
      * @returns 定義されていればその結果, 未定義なら undefined. 
      **/
-    public callCalcPlayerToEnemyUserDefineFunction(): number | undefined {
+    public callCalcPlayerToEnemyUserDefineFunction(estimatingParams?: BattleEstimateParameters): BattleTurnResult | undefined {
         const calcPlayerToEnemyFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_PLAYER_TO_ENEMY_DAMAGE"];
         if (calcPlayerToEnemyFunc) {
+            this.evalCalcWwaNodeGenerator.setBattleDamageCalculationMode(estimatingParams);
             const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcPlayerToEnemyFunc);
+            const aborted = this.evalCalcWwaNodeGenerator.state.battleDamageCalculation.aborted;
+            this.evalCalcWwaNodeGenerator.clearBattleDamageCalculationMode();
             if (typeof damage !== "number") {
                 throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
             }
-            return damage;
+            return { damage, aborted };
         }
         return undefined;
     }
@@ -1240,14 +1247,17 @@ export class WWA {
      * 戦闘でEnemyToPlayerのダメージ発生時のユーザ定義独自関数を呼び出す
      * @returns 定義されていればその結果, 未定義なら undefined. 
      */
-    public callCalcEnemyToPlayerUserDefineFunction(): number | undefined {
+    public callCalcEnemyToPlayerUserDefineFunction(estimatingParams?: BattleEstimateParameters): BattleTurnResult | undefined {
         const calcEnemyToPlayerFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_ENEMY_TO_PLAYER_DAMAGE"];
         if (calcEnemyToPlayerFunc) {
+            this.evalCalcWwaNodeGenerator.setBattleDamageCalculationMode(estimatingParams);
             const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);
+            const aborted = this.evalCalcWwaNodeGenerator.state.battleDamageCalculation.aborted;
+            this.evalCalcWwaNodeGenerator.clearBattleDamageCalculationMode();
             if (typeof damage !== "number") {
                 throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
             }
-            return damage;
+            return { damage, aborted };
         }
         return undefined;
     }
@@ -5400,20 +5410,8 @@ export class WWA {
         this._battleEstimateWindow.update(
             this._player.getStatus(),
             monsterList,
-            (playerStatus: Status, monster: Monster) => {
-                // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
-                this._monster = monster;
-                const damage =  this._player.calcDamagePlayerToEnemy(playerStatus, monster.status);
-                this._monster = undefined;
-                return damage;
-            },
-            (monster: Monster, playerStatus: Status) => {
-                // 戦闘シミュレーションで敵ステータスを参照するためモンスターを一時的に設定
-                this._monster = monster;
-                const damage = this._player.calcDamageEnemyToPlayer(monster.status, playerStatus)
-                this._monster = undefined;
-                return damage;
-            },
+            (playerStatus: Status, monster: Monster) => this._player.calcBattleResultForPlayerTurn(playerStatus, monster.status, true),
+            (monster: Monster, playerStatus: Status) => this._player.calcBattleResultForEnemyTurn(monster.status, playerStatus, true),
             this.isUsingDefaultDamageCalcFunction()
         );
         this._battleEstimateWindow.show();
