@@ -172,6 +172,7 @@ function calc(
     let estimatedDamage = 0;
     let turnLength = 0;
     let noDamageTurnLength = 0;
+    const playerEnergyBeforeBattle = playerStatus.energy;
 
     // デフォルトダメージ関数を使っている場合の攻撃無効判定
     if(
@@ -198,7 +199,9 @@ function calc(
         if (clonedMonster.status.energy <= 0) {
             return { estimatedDamage };
         } else if (noDamageTurnLength > WWAConsts.FIGHT_DRAW_TURN || playerTurnResult.aborted)  {
-            return { noSettled: true, estimatedDamage }
+            // プレイヤー生命力が負になってもダメージシミュレーションは継続するため、中断が呼ばれた時にプレイヤーがゲームオーバーなら勝負がついているので注意
+            // ただし、戦闘開始前にプレイヤー生命力が 0 (以下) だった場合は、初手で中断を食らってもゲームオーバー判定にならないので勝負がつかない判定となる
+            return { noSettled: (playerEnergyBeforeBattle <= 0 || clonedPlayerStatus.energy > 0) && clonedMonster.status.energy > 0, estimatedDamage }
         } else if (turnLength > 20000) {
             return { isOverMaxTurn: true, estimatedDamage: 0 };
         }
@@ -213,7 +216,7 @@ function calc(
         estimatedDamage += damageEnemyToPlayer;
         clonedPlayerStatus.energy = Math.max(clonedPlayerStatus.energy - damageEnemyToPlayer, 0);
         if (noDamageTurnLength > WWAConsts.FIGHT_DRAW_TURN || enemyTurnResult.aborted)  {
-            return { noSettled: true, estimatedDamage }
+            return { noSettled: (playerEnergyBeforeBattle <= 0 || clonedPlayerStatus.energy > 0) && clonedMonster.status.energy > 0, estimatedDamage }
         } else if (turnLength > 20000) {
             return { isOverMaxTurn: true, estimatedDamage: 0 };
         }

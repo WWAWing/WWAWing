@@ -1007,7 +1007,7 @@ export class Player extends PartsObject {
     }
 
     public calcBattleResultForPlayerTurn(playerStatus: Status, enemyStatus: Status, estimating: boolean = false): BattleTurnResult {
-        const userDefinedDamageResult = this._wwa.callCalcPlayerToEnemyUserDefineFunction((estimating || undefined) && {
+        const userDefinedDamageResult = this._wwa.callUserDefinedBattleDamageFunction("playerToEnemy", (estimating || undefined) && {
             playerStatus,
             enemyStatus
         });
@@ -1018,7 +1018,7 @@ export class Player extends PartsObject {
     }
 
     public calcBattleResultForEnemyTurn(enemyStatus: Status, playerStatus: Status, estimating: boolean = false): BattleTurnResult {
-        const userDefinedDamageResult = this._wwa.callCalcEnemyToPlayerUserDefineFunction((estimating || undefined) && {
+        const userDefinedDamageResult = this._wwa.callUserDefinedBattleDamageFunction("enemyToPlayer", (estimating || undefined) && {
             playerStatus,
             enemyStatus
         });
