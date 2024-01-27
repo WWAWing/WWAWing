@@ -1073,6 +1073,12 @@ export interface BattleTurnResult {
      * 中断した場合でも該当ターンのダメージは入ります。
      */
     aborted?: boolean;
+    /**
+     * ユーザー定義関数で予期せぬエラーがあった場合 true
+     * ほとんど起きないと思いますが念のため。
+     * エラーがあった場合はダメージは 0 となります。
+     */
+    hasError?: boolean
 }
 
 
@@ -1083,3 +1089,9 @@ export interface BattleEstimateParameters {
     playerStatus: Status;
     enemyStatus: Status
 }
+
+
+/**
+ * 戦闘ダメージ方向の定義
+ */
+export type BattleDamageDirection = "playerToEnemy" | "enemyToPlayer";
