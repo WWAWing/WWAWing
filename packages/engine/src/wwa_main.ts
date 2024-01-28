@@ -9,7 +9,7 @@ import {
     SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, WWAConsts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, WWAConsts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection
 } from "./wwa_data";
 
 import {
@@ -1226,41 +1226,40 @@ export class WWA {
     }
 
     /**
-     * 戦闘でPlayerToEnemyのダメージ発生時のユーザ定義独自関数を呼び出す
+     * damageDirection に応じた のユーザ定義ダメージ関数を呼び出す
+     * ユーザ定義ダメージ関数の結果が数値でない場合は 0 とします。
+     * ダメージ計算結果に小数部分が含まれる場合は整数部分をダメージとします。
      * @returns 定義されていればその結果, 未定義なら undefined. 
      **/
-    public callCalcPlayerToEnemyUserDefineFunction(estimatingParams?: BattleEstimateParameters): BattleTurnResult | undefined {
-        const calcPlayerToEnemyFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_PLAYER_TO_ENEMY_DAMAGE"];
-        if (calcPlayerToEnemyFunc) {
+    public callUserDefinedBattleDamageFunction(damageDirection: BattleDamageDirection, estimatingParams?: BattleEstimateParameters): BattleTurnResult | undefined {
+        const userDefinedFunctionNode = this.getUserDefinedDamageFunctionNode(damageDirection);
+        if (userDefinedFunctionNode) {
             this.evalCalcWwaNodeGenerator.setBattleDamageCalculationMode(estimatingParams);
-            const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcPlayerToEnemyFunc);
-            const aborted = this.evalCalcWwaNodeGenerator.state.battleDamageCalculation.aborted;
-            this.evalCalcWwaNodeGenerator.clearBattleDamageCalculationMode();
-            if (typeof damage !== "number") {
-                throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
+            try {
+                const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(userDefinedFunctionNode);
+                const aborted = this.evalCalcWwaNodeGenerator.state.battleDamageCalculation.aborted;
+                this.evalCalcWwaNodeGenerator.clearBattleDamageCalculationMode();
+                if (typeof damage === "number") {
+                    return { damage: this.toAssignableValue(damage), aborted };
+                } else {
+                    console.warn(`${damageDirection} のダメージ計算結果が数値になりませんでした。(結果: ${damage})。このターンのダメージは無効になります。`);
+                    return { damage: 0, aborted };
+                }
+            } catch (error) {
+                console.warn(`${damageDirection} のダメージ計算中にエラーが発生しました。このターンのダメージは無効になります。`);
+                console.warn(error);
+                return { damage: 0, hasError: true };
             }
-            return { damage, aborted };
         }
         return undefined;
     }
 
-    /**
-     * 戦闘でEnemyToPlayerのダメージ発生時のユーザ定義独自関数を呼び出す
-     * @returns 定義されていればその結果, 未定義なら undefined. 
-     */
-    public callCalcEnemyToPlayerUserDefineFunction(estimatingParams?: BattleEstimateParameters): BattleTurnResult | undefined {
-        const calcEnemyToPlayerFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALC_ENEMY_TO_PLAYER_DAMAGE"];
-        if (calcEnemyToPlayerFunc) {
-            this.evalCalcWwaNodeGenerator.setBattleDamageCalculationMode(estimatingParams);
-            const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(calcEnemyToPlayerFunc);
-            const aborted = this.evalCalcWwaNodeGenerator.state.battleDamageCalculation.aborted;
-            this.evalCalcWwaNodeGenerator.clearBattleDamageCalculationMode();
-            if (typeof damage !== "number") {
-                throw new Error(`ダメージ方程式の結果が数値になっていません: ${damage}`);
-            }
-            return { damage, aborted };
-        }
-        return undefined;
+    private getUserDefinedDamageFunctionNode(damageDirection: BattleDamageDirection): WWANode | undefined {
+        const directionFunctionMap: {[KEY in BattleDamageDirection]: string} = {
+            "playerToEnemy": "CALC_PLAYER_TO_ENEMY_DAMAGE",
+            "enemyToPlayer": "CALC_ENEMY_TO_PLAYER_DAMAGE"
+        };
+        return this.userDefinedFunctions?.[directionFunctionMap[damageDirection]];
     }
 
     /** プレイヤーが動いた際のユーザ定義独自関数を呼び出す */
@@ -5447,8 +5446,8 @@ export class WWA {
 
     public isUsingDefaultDamageCalcFunction(): boolean {
         return (
-            this.callCalcPlayerToEnemyUserDefineFunction() === undefined &&
-            this.callCalcEnemyToPlayerUserDefineFunction() === undefined
+            this.getUserDefinedDamageFunctionNode("enemyToPlayer") === undefined &&
+            this.getUserDefinedDamageFunctionNode("playerToEnemy") === undefined
         );
     }
 
