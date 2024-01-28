@@ -59,27 +59,16 @@ export class EvalCalcWwaNodeGenerator {
   }
 
   public evalWwaNodes(nodes: Wwa.WWANode[]) {
-    return nodes.map((node) => {
-      return this.evalWwaNode(node)
-    })
+    // BlockStatement で囲ってそれを実行
+    return this.evalWwaNode({ type: "BlockStatement", value: nodes });
   }
 
   public evalWwaNode(node: Wwa.WWANode) {
     if(node.type === "BlockStatement" && Array.isArray(node.value) && node.value.length === 0 ) {
       return;
     }
-    try {
-      const evalNode = new EvalCalcWwaNode(this);
-      return evalNode.evalWwaNode(node);
-    } catch (caughtThing) {
-      if (caughtThing instanceof ReturnedInformation) {
-        // return で関数が強制終了した場合のケア
-        return caughtThing.value;
-      } else {
-        // 一般エラー
-        throw caughtThing;
-      }
-    }
+    const evalNode = new EvalCalcWwaNode(this);
+    return evalNode.evalWwaNode(node);
   }
 
   public updateLoopLimit(limit: number) {
@@ -115,10 +104,12 @@ export class EvalCalcWwaNode {
     }
   }
 
-  private evalWwaNodes(nodes: Wwa.WWANode[]) {
-    return nodes.map((node) => {
-      return this.evalWwaNode(node)
-    })
+  public evalWwaNodes(nodes: Wwa.WWANode[]) {
+    let result: any /* HACK */ = undefined;
+    nodes.forEach((node) => {
+      result = this.evalWwaNode(node)
+    });
+    return result;
   }
   
   public evalWwaNode(node: Wwa.WWANode) {
@@ -126,61 +117,71 @@ export class EvalCalcWwaNode {
     if(this.for_id.break_flag || this.for_id.continue_flag) {
       return;
     }
-    switch (node.type) {
-      case "UnaryOperation":
-        return this.evalUnaryOperation(node);
-      case "BinaryOperation":
-        return this.evalBinaryOperation(node);
-      case "Symbol":
-        return this.evalSymbol(node);
-      case "Array1D":
-        return this.evalArray1D(node);
-      case "Array2D":
-        return this.evalArray2D(node);
-      case "Literal":
-        return this.evalNumber(node);
-      case "UserVariableAssignment":
-        return this.evalSetUserVariable(node);
-      case "SpecialParameterAssignment":
-        return this.evalSetSpecialParameter(node);
-      case "Random":
-        return this.evalRandom(node);
-      case "Jumpgate":
-        return this.evalJumpgate(node);
-      case "Msg":
-        return this.evalMessage(node);
-      case "ItemAssignment":
-        return this.itemAssignment(node);
-      case "IfStatement":
-        return this.ifStatement(node);
-      case "BlockStatement":
-        return this.blockStatement(node);
-      case "PartsAssignment":
-        return this.partsAssignment(node);
-      case "ForStatement":
-        return this.forStateMent(node);
-      case "AnyFunction":
-        return this.evalAnyFunction(node);
-      case "CallDefinedFunction":
-        return this.callDefinedFunction(node);
-      case "Break":
-        return this.breakStatement(node);
-      case "Return":
-        throw new ReturnedInformation(this.returnStatement(node));
-      case "Continue":
-        return this.contunueStatment(node);
-      case "UpdateExpression":
-        return this.updateExpression(node);
-      case "LogicalExpression":
-        return this.logicalExpression(node);
-      case "TemplateLiteral":
-        return this.convertTemplateLiteral(node);
-      case "ConditionalExpression":
-        return this.convertConditionalExpression(node);
-      default:
-        console.log(node);
-        throw new Error("未定義または未実装のノードです");
-    }
+    try {
+      switch (node.type) {
+        case "UnaryOperation":
+          return this.evalUnaryOperation(node);
+        case "BinaryOperation":
+          return this.evalBinaryOperation(node);
+        case "Symbol":
+          return this.evalSymbol(node);
+        case "Array1D":
+          return this.evalArray1D(node);
+        case "Array2D":
+          return this.evalArray2D(node);
+        case "Literal":
+          return this.evalNumber(node);
+        case "UserVariableAssignment":
+          return this.evalSetUserVariable(node);
+        case "SpecialParameterAssignment":
+          return this.evalSetSpecialParameter(node);
+        case "Random":
+          return this.evalRandom(node);
+        case "Jumpgate":
+          return this.evalJumpgate(node);
+        case "Msg":
+          return this.evalMessage(node);
+        case "ItemAssignment":
+          return this.itemAssignment(node);
+        case "IfStatement":
+          return this.ifStatement(node);
+        case "BlockStatement":
+          return this.blockStatement(node);
+        case "PartsAssignment":
+          return this.partsAssignment(node);
+        case "ForStatement":
+          return this.forStateMent(node);
+        case "AnyFunction":
+          return this.evalAnyFunction(node);
+        case "CallDefinedFunction":
+          return this.callDefinedFunction(node);
+        case "Break":
+          return this.breakStatement(node);
+        case "Return":
+          throw new ReturnedInformation(this.returnStatement(node));
+        case "Continue":
+          return this.contunueStatment(node);
+        case "UpdateExpression":
+          return this.updateExpression(node);
+        case "LogicalExpression":
+          return this.logicalExpression(node);
+        case "TemplateLiteral":
+          return this.convertTemplateLiteral(node);
+        case "ConditionalExpression":
+          return this.convertConditionalExpression(node);
+        default:
+          console.log(node);
+          throw new Error("未定義または未実装のノードです");
+      }
+    } catch (caughtThing) {
+      if (caughtThing instanceof ReturnedInformation) {
+        // return で関数が強制終了した場合のケア
+        return caughtThing.value;
+      } else {
+        // 一般エラー
+        throw caughtThing;
+      }
+    }    
   }
 
   /** 関数の呼び出し */
@@ -189,7 +190,7 @@ export class EvalCalcWwaNode {
     if(func === null) {
       throw new Error(`未定義の関数が呼び出されました: ${node.functionName}`);
     }
-    this.evalWwaNode(func);
+    return this.evalWwaNode(func);
   }
 
   /** i++ などが実行された時の処理 */
@@ -357,33 +358,33 @@ export class EvalCalcWwaNode {
         const soundNumber = this.evalWwaNode(node.value[0]);
         // 曲を鳴らす
         this.generator.wwa.playSound(soundNumber);
-        break;
+        return soundNumber;
       }
       case "SAVE": {
         this._checkArgsLength(1, node);
         // SAVEは引数を一つだけ取る
         const saveNumber = Boolean(this.evalWwaNode(node.value[0]));
         this.generator.wwa.disableSave(saveNumber);
-        break;
+        return saveNumber;
       }
       case "LOG": {
         this._checkArgsLength(1, node);
         // 指定した引数の文字列をログ出力する
         const value = this.evalWwaNode(node.value[0]);
         console.log(value);
-        break;
+        return undefined;
       }
       case "ABLE_CHANGE_SPEED": {
         this._checkArgsLength(1, node);
         const isAbleChangeSpeed = Boolean(this.evalWwaNode(node.value[0]));
         this.generator.wwa.speedChangeJudge(isAbleChangeSpeed);
-        break;
+        return isAbleChangeSpeed;
       }
       case "SET_SPEED": {
         this._checkArgsLength(1, node);
         const gameSpeedValue = Number(this.evalWwaNode(node.value[0]));
         this.generator.wwa.setPlayerSpeedIndex(gameSpeedValue);
-        break;
+        return undefined;
       }
       case "CHANGE_GAMEOVER_POS": {
         this._checkArgsLength(2, node);
@@ -395,17 +396,17 @@ export class EvalCalcWwaNode {
           throw new Error("マップの範囲外が指定されています!");
         }
         this.generator.wwa.setGameOverPosition(new Coord(gameover_pos.x, gameover_pos.y));
-        break;
+        return undefined;
       }
       case "DEL_PLAYER": {
         this._checkArgsLength(1, node);
         const isDelPlayer = Boolean(this.evalWwaNode(node.value[0]));
         this.generator.wwa.setDelPlayer(isDelPlayer);
-        break;
+        return undefined;
       }
       case "RESTART_GAME": {
         this.generator.wwa.restartGame();
-        break;
+        return undefined;
       }
       case "URL_JUMPGATE":
         throw new Error("URL_JUMPGATE 関数は調整中のためご利用になれません");
@@ -414,7 +415,7 @@ export class EvalCalcWwaNode {
         const target = Number(this.evalWwaNode(node.value[0]));
         const isHide = Boolean(this.evalWwaNode(node.value[1]));
         this.generator.wwa.hideStatus(target, isHide);
-        break;
+        return undefined;
       }
       case "PARTS": {
         this._checkArgsLength(2, node);
@@ -431,7 +432,7 @@ export class EvalCalcWwaNode {
         }
         // TODO: パーツ番号が最大値を超えていないかチェックする
         this.generator.wwa.replaceParts(srcID, destID, partsType, onlyThisSight);
-        break;
+        return undefined;
       }
       case "FACE": {
         this._checkArgsLength(6, node);
@@ -455,7 +456,7 @@ export class EvalCalcWwaNode {
             new Coord(srcWidth, srcHeight)
           )
         );
-        break;
+        return undefined;
       }
       case "EFFECT": {
         // ex) EFFECT(6, 9, 15)
@@ -484,7 +485,7 @@ export class EvalCalcWwaNode {
           coords.push(new Coord(cropX, cropY));
         }
         this.generator.wwa.setEffect(waitTime, coords);
-        break;
+        return undefined;
       }
       case "CHANGE_PLAYER_IMAGE": {
         this._checkArgsLength(2, node);
@@ -492,7 +493,7 @@ export class EvalCalcWwaNode {
         const y = Number(this.evalWwaNode(node.value[1]));
         const coord = new Coord(x, y);
         this.generator.wwa.setPlayerImgCoord(coord);
-        break;
+        return undefined;
       }
       case "HAS_ITEM": {
         this._checkArgsLength(1, node);
@@ -504,16 +505,17 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         const targetItemID = Number(this.evalWwaNode(node.value[0]));
         const isRemoveAll = node.value[1] ? this.evalWwaNode(node.value[1]) === 1 : false;
+        let removedItemNum = 0;
         for (let idx = 0; idx < game_status.itemBox.length; idx++) {
-          const item = game_status.itemBox[idx];
-          if (targetItemID === item) {
+          if (targetItemID === game_status.itemBox[idx]) {
             this.generator.wwa.setPlayerGetItem(idx + 1, 0);
+            removedItemNum++;
             if (!isRemoveAll) {
-              break;
+              return removedItemNum;
             }
           }
         }
-        break;
+        return removedItemNum;
       }
       case "MOVE": {
           this._checkArgsLength(1, node);
@@ -523,8 +525,8 @@ export class EvalCalcWwaNode {
           }
           this.generator.wwa.movePlayer(direction);
           this.generator.wwa.movePlayer(direction);
-        }
-        break;
+          return 0;
+      }
       case "IS_PLAYER_WAITING_MESSAGE": {
         return this.generator.wwa.isPlayerWaitingMessage();
       }
@@ -550,7 +552,7 @@ export class EvalCalcWwaNode {
       case "SHOW_USER_DEF_VAR":
         {
           console.log(this.generator.wwa.getAllUserNameVar());
-          return;
+          return undefined;
         }
       /** システムメッセージを変更する */
       case "CHANGE_SYSMSG": {
@@ -627,21 +629,21 @@ export class EvalCalcWwaNode {
   }
 
   blockStatement(node: Wwa.BlockStatement) {
-    this.evalWwaNodes(node.value);
+    return this.evalWwaNodes(node.value);
   }
 
   /** ifステートメントを実行する */
   ifStatement(node: Wwa.IfStatement) {
     const ifResult = this.evalWwaNode(node.test);
-    if(ifResult) {
+    if (ifResult) {
       // IFがTRUEの場合には以下を実行する
-      this.evalWwaNode(node.consequent);
+      return this.evalWwaNode(node.consequent);
     }
-    // ELSEの場合には以下条件を繰り返し実行する
-    else if(node.alternate) {
-      this.evalWwaNode(node.alternate);
+    // ELSEの場合には以下を実行する
+    if (node.alternate) {
+      return this.evalWwaNode(node.alternate);
     }
-    return 0;
+    return undefined;
   }
 
   /** 三項演算子を実行する */
@@ -661,14 +663,14 @@ export class EvalCalcWwaNode {
     const idx = this.evalWwaNode(node.itemBoxPosition1to12);
     const itemID = this.evalWwaNode(node.value);
     this.generator.wwa.setPlayerGetItem(idx, itemID);
-    return 0;
+    return undefined;
   }
 
   evalMessage(node: Wwa.Msg) {
     const value = this.evalWwaNode(node.value);
     const showString = isNaN(value)? value: value.toString();
     this.generator.wwa.reserveMessageDisplayWhenShouldOpen(showString);
-    return 0;
+    return undefined;
   }
 
   evalJumpgate(node: Wwa.Jumpgate) {
@@ -678,6 +680,7 @@ export class EvalCalcWwaNode {
       throw new Error(`飛び先の値が数値になっていません。 x=${x} / y=${y}`);
     }
     this.generator.wwa.forcedJumpGate(x, y);
+    return undefined;
   }
 
   evalRandom(node: Wwa.Random) {
@@ -688,13 +691,13 @@ export class EvalCalcWwaNode {
   evalSetSpecialParameter(node: Wwa.SpecialParameterAssignment) {
     const right = this.evalWwaNode(node.value);
     if(!this.generator.wwa || isNaN(right)) {
-      return 0;
+      return right;
     }
     const currentValue = this.evalSymbol({
       type: "Symbol",
       name: node.kind
     })
-    const setValue = (()=>{
+    const targetValue = (()=>{
       switch(node.operator) {
         case "+=":
           return currentValue + right;
@@ -711,53 +714,55 @@ export class EvalCalcWwaNode {
     })()
     switch(node.kind) {
       case 'PX':
-        this.generator.wwa.jumpSpecifiedXPos(setValue);
-        return 0;
+        this.generator.wwa.jumpSpecifiedXPos(targetValue);
+        return targetValue;
       case 'PY':
-        this.generator.wwa.jumpSpecifiedYPos(setValue);
-        return 0;
+        this.generator.wwa.jumpSpecifiedYPos(targetValue);
+        return targetValue;
       case 'AT':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, setValue, false);
-        return 0;
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, targetValue, false);
+        return targetValue;
       case 'DF':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, setValue, false);
-        return 0;
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, targetValue, false);
+        return targetValue;
       case 'GD':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.GOLD, setValue, false);
-        return 0;
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.GOLD, targetValue, false);
+        return targetValue;
       case 'HP':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, setValue, false);
-        return 0;
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, targetValue, false);
+        return targetValue;
       case 'HPMAX':
-        this.generator.wwa.setPlayerEnergyMax(setValue);
-        return 0;
+        this.generator.wwa.setPlayerEnergyMax(targetValue);
+        return targetValue;
       /** for文用; 左辺値iに値を代入する場合: ex) i=i+2 */
       case 'i':
         this.for_id.i = this.evalWwaNode(node.value);
-        return 0;
+        return this.for_id.i;
       case 'j':
         this.for_id.j = this.evalWwaNode(node.value);
-        return 0;
+        return this.for_id.j;
       case 'k':
         this.for_id.k = this.evalWwaNode(node.value);
-        return 0;
-      case 'LOOPLIMIT':
-        this.generator.updateLoopLimit(this.evalWwaNode(node.value));
-        return 0;
+        return this.for_id.k;
+      case 'LOOPLIMIT': {
+        const loopLimit = this.evalWwaNode(node.value);
+        this.generator.updateLoopLimit(loopLimit);
+        return loopLimit;
+      }
       default:
         console.error("未実装の要素です: "+node.kind);
-        return 0;
+        return undefined;
     }
   }
 
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
     const right = this.evalWwaNode(node.value);
     if(!this.generator.wwa) {
-      return 0;
+      return right;
     }
     const userVarIndex = this.evalWwaNode(node.index);
     this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
-    return 0;
+    return right;
   }
 
   evalUnaryOperation(node: Wwa.UnaryOperation) {
