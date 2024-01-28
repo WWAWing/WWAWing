@@ -67,8 +67,16 @@ export class EvalCalcWwaNodeGenerator {
     if(node.type === "BlockStatement" && Array.isArray(node.value) && node.value.length === 0 ) {
       return;
     }
-    const evalNode = new EvalCalcWwaNode(this);
-    return evalNode.evalWwaNode(node);
+    try {
+      const evalNode = new EvalCalcWwaNode(this);
+      return evalNode.evalWwaNode(node);
+    } catch (caughtThing) {
+      if (caughtThing instanceof ExitInformation) {
+        return caughtThing.value;
+      } else {
+        throw caughtThing;
+      }
+    }
   }
 
   public updateLoopLimit(limit: number) {
@@ -178,7 +186,7 @@ export class EvalCalcWwaNode {
         // return で関数が強制終了した場合のケア
         return caughtThing.value;
       } else {
-        // 一般エラー
+        // 一般エラー (ExitInformationも含む)
         throw caughtThing;
       }
     }    
@@ -596,8 +604,10 @@ export class EvalCalcWwaNode {
         if (this.generator.state.battleDamageCalculation) {
           this.generator.state.battleDamageCalculation.aborted = true;
         }
-        return 0;
+        throw new ExitInformation("ABORT_BATTLE");
       }
+      case "EXIT": 
+        throw new ExitInformation("EXIT", this.evalWwaNode(node.value[0]));
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
@@ -929,5 +939,15 @@ export class EvalCalcWwaNode {
 class ReturnedInformation {
   // HACK: evalWwaNode の型つけが any になっているのでそれに準じる形で妥協。
   // evalWwaNode の型つけは改善されるべき。
-  constructor(public value: any) {}
+  constructor(public value?: any) {}
+}
+
+/**
+ * スクリプト強制終了系の関数が呼ばれた場合に throw されるインスタンスのクラス
+ * 能動的な取り消しであることを示すために JavaScript の Error は使わない。
+ */
+class ExitInformation {
+  // HACK: evalWwaNode の型つけが any になっているのでそれに準じる形で妥協。
+  // evalWwaNode の型つけは改善されるべき。
+  constructor(public reason: "ABORT_BATTLE" | "EXIT", public value?: any) {}
 }

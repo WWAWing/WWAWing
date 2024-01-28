@@ -203,6 +203,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_GAMEOVER_POS_X":
     case "GET_GAMEOVER_POS_Y":
     case "ABORT_BATTLE":
+    case "EXIT":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
