@@ -71,7 +71,7 @@ export class EvalCalcWwaNodeGenerator {
       const evalNode = new EvalCalcWwaNode(this);
       return evalNode.evalWwaNode(node);
     } catch (caughtThing) {
-      if (caughtThing instanceof ExitInformation) {
+      if (caughtThing instanceof ReturnedInformation || caughtThing instanceof ExitInformation) {
         return caughtThing.value;
       } else {
         throw caughtThing;
@@ -125,62 +125,66 @@ export class EvalCalcWwaNode {
     if(this.for_id.break_flag || this.for_id.continue_flag) {
       return;
     }
+    switch (node.type) {
+      case "UnaryOperation":
+        return this.evalUnaryOperation(node);
+      case "BinaryOperation":
+        return this.evalBinaryOperation(node);
+      case "Symbol":
+        return this.evalSymbol(node);
+      case "Array1D":
+        return this.evalArray1D(node);
+      case "Array2D":
+        return this.evalArray2D(node);
+      case "Literal":
+        return this.evalNumber(node);
+      case "UserVariableAssignment":
+        return this.evalSetUserVariable(node);
+      case "SpecialParameterAssignment":
+        return this.evalSetSpecialParameter(node);
+      case "Random":
+        return this.evalRandom(node);
+      case "Jumpgate":
+        return this.evalJumpgate(node);
+      case "Msg":
+        return this.evalMessage(node);
+      case "ItemAssignment":
+        return this.itemAssignment(node);
+      case "IfStatement":
+        return this.ifStatement(node);
+      case "BlockStatement":
+        return this.blockStatement(node);
+      case "PartsAssignment":
+        return this.partsAssignment(node);
+      case "ForStatement":
+        return this.forStateMent(node);
+      case "AnyFunction":
+        return this.wrapCallFunction(node, node => this.evalAnyFunction(node));
+      case "CallDefinedFunction":
+        return this.wrapCallFunction(node, node => this.callDefinedFunction(node));
+      case "Break":
+        return this.breakStatement(node);
+      case "Return":
+        throw new ReturnedInformation(this.returnStatement(node));
+      case "Continue":
+        return this.contunueStatment(node);
+      case "UpdateExpression":
+        return this.updateExpression(node);
+      case "LogicalExpression":
+        return this.logicalExpression(node);
+      case "TemplateLiteral":
+        return this.convertTemplateLiteral(node);
+      case "ConditionalExpression":
+        return this.convertConditionalExpression(node);
+      default:
+        console.log(node);
+        throw new Error("未定義または未実装のノードです");
+    }
+  }
+
+  private wrapCallFunction<N extends Wwa.WWANode, RV>(node: N, callFunction: (node: N) => RV): RV {
     try {
-      switch (node.type) {
-        case "UnaryOperation":
-          return this.evalUnaryOperation(node);
-        case "BinaryOperation":
-          return this.evalBinaryOperation(node);
-        case "Symbol":
-          return this.evalSymbol(node);
-        case "Array1D":
-          return this.evalArray1D(node);
-        case "Array2D":
-          return this.evalArray2D(node);
-        case "Literal":
-          return this.evalNumber(node);
-        case "UserVariableAssignment":
-          return this.evalSetUserVariable(node);
-        case "SpecialParameterAssignment":
-          return this.evalSetSpecialParameter(node);
-        case "Random":
-          return this.evalRandom(node);
-        case "Jumpgate":
-          return this.evalJumpgate(node);
-        case "Msg":
-          return this.evalMessage(node);
-        case "ItemAssignment":
-          return this.itemAssignment(node);
-        case "IfStatement":
-          return this.ifStatement(node);
-        case "BlockStatement":
-          return this.blockStatement(node);
-        case "PartsAssignment":
-          return this.partsAssignment(node);
-        case "ForStatement":
-          return this.forStateMent(node);
-        case "AnyFunction":
-          return this.evalAnyFunction(node);
-        case "CallDefinedFunction":
-          return this.callDefinedFunction(node);
-        case "Break":
-          return this.breakStatement(node);
-        case "Return":
-          throw new ReturnedInformation(this.returnStatement(node));
-        case "Continue":
-          return this.contunueStatment(node);
-        case "UpdateExpression":
-          return this.updateExpression(node);
-        case "LogicalExpression":
-          return this.logicalExpression(node);
-        case "TemplateLiteral":
-          return this.convertTemplateLiteral(node);
-        case "ConditionalExpression":
-          return this.convertConditionalExpression(node);
-        default:
-          console.log(node);
-          throw new Error("未定義または未実装のノードです");
-      }
+      return callFunction(node);
     } catch (caughtThing) {
       if (caughtThing instanceof ReturnedInformation) {
         // return で関数が強制終了した場合のケア
