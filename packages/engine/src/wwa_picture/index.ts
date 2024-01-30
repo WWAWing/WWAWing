@@ -198,19 +198,30 @@ export default class WWAPicutre {
             picture.decrementDisplayTimeStock(frameMs);
             if (picture.isDeadlineOver()) {
                 const layerNumber = picture.layerNumber;
-                const nextPictureNumber = picture.nextPictureNumber;
+                const nextPictureParts = picture.nextPictureParts;
+                const mapPictureInfo = picture.appearParts;
                 const triggerPartsCoord = picture.getTriggerPartsCoord();
                 this.deletePicture(layerNumber);
-                if (nextPictureNumber?.[0] !== undefined) {
+                if (nextPictureParts !== undefined) {
                     // TODO 座標を算出したい
                     this._wwa.setPictureRegistry(
                         layerNumber,
-                        nextPictureNumber[0],
-                        nextPictureNumber[1] ?? PartsType.OBJECT,
+                        nextPictureParts.partsNumber,
+                        nextPictureParts.partsType,
                         triggerPartsCoord
                     );
                 }
-                // TODO map プロパティの機能を実装する
+                if (mapPictureInfo !== undefined) {
+                    // TODO ピクチャ機能の数値算出システムに依存しているため、
+                    //      消去時点での座標を計算して配置することができない
+                    //      例えば、消去時点でのプレイヤー位置に任意のパーツを配置とするようなことはできない
+                    //      WWA Script 対応後は任意の関数を呼び出す機能で実現できるようになるつもり
+                    this._wwa.setPartsOnPosition(
+                        mapPictureInfo.partsType,
+                        mapPictureInfo.partsNumber,
+                        new Coord(mapPictureInfo.x, mapPictureInfo.y)
+                    );
+                }
             }
         });
     }

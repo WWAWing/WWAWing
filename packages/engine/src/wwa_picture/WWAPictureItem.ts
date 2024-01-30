@@ -1,4 +1,5 @@
 import { PictureRegistry } from "@wwawing/common-interface";
+import { PartsType } from "@wwawing/loader";
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
@@ -71,12 +72,28 @@ export default class WWAPictureItem {
         return this._canvas.cvs;
     }
 
-    public get nextPictureNumber() {
-        return this._registry.properties.next;
+    public get nextPictureParts() {
+        if (!this._registry.properties.next || this._registry.properties.next[0] === undefined) {
+            return undefined;
+        }
+        return {
+            partsNumber: this._registry.properties.next[0],
+            partsType: this._registry.properties.next[1] ?? PartsType.OBJECT,
+        };
     }
 
-    public get appearPartsInfo() {
-        return this._registry.properties.map;
+    public get appearParts() {
+        if (
+            !this._registry.properties.map || this._registry.properties.map.length < 3
+        ) {
+            return undefined;
+        }
+        return {
+            partsNumber: this._registry.properties.map[0],
+            x: this._registry.properties.map[1],
+            y: this._registry.properties.map[2],
+            partsType: this._registry.properties.map[3] ?? PartsType.OBJECT,
+        };
     }
 
     /**
