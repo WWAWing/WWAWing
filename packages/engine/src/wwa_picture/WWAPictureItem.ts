@@ -96,6 +96,10 @@ export default class WWAPictureItem {
         };
     }
 
+    public get executeScriptFunctionName() {
+        return this._registry.properties.script;
+    }
+
     /**
      * ピクチャを描画します。
      * 毎フレーム処理されるため、プロパティから直接引き出される値以外はあらかじめフィールドに数値などをキャッシュしてください。

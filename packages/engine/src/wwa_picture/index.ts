@@ -200,6 +200,7 @@ export default class WWAPicutre {
                 const layerNumber = picture.layerNumber;
                 const nextPictureParts = picture.nextPictureParts;
                 const mapPictureInfo = picture.appearParts;
+                const executeScriptFunctionName = picture.executeScriptFunctionName;
                 const triggerPartsCoord = picture.getTriggerPartsCoord();
                 this.deletePicture(layerNumber);
                 if (nextPictureParts !== undefined) {
@@ -221,6 +222,9 @@ export default class WWAPicutre {
                         mapPictureInfo.partsNumber,
                         new Coord(mapPictureInfo.x, mapPictureInfo.y)
                     );
+                }
+                if (executeScriptFunctionName) {
+                    this._wwa.callUserScript(executeScriptFunctionName);
                 }
             }
         });

@@ -25,5 +25,6 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "textAlign", type: "string" },
     { name: "opacity", type: "number" },
     { name: "next", type: "numberArray" },
-    { name: "map", type: "numberArray" }
+    { name: "map", type: "numberArray" },
+    { name: "script", type: "string" },
 ];

@@ -1290,6 +1290,13 @@ export class WWA {
         })
     }
 
+    public callUserScript(functionName: string) {
+        const userFunc = this.getUserScript(functionName);
+        if (userFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
+        }
+    }
+
     private convertWwaNodes = (scriptString: string): WWANode[] => {
         const acornNode = ExpressionParser2.parse(scriptString);
         return ExpressionParser2.convertNodeAcornToWwaArray(acornNode);
