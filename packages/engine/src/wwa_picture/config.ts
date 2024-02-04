@@ -23,6 +23,7 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "font", type: "string" },
     { name: "color", type: "numberArray" },
     { name: "textAlign", type: "string" },
+    { name: "lineHeight", type: "number" },
     { name: "opacity", type: "number" },
     { name: "next", type: "numberArray" },
     { name: "map", type: "numberArray" },

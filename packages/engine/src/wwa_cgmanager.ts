@@ -1,7 +1,7 @@
 
 import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord } from "./wwa_data";
-import WWAPicutre from "./wwa_picture";
+import WWAPicutre from "./wwa_picture/WWAPicture";
 import { WWA } from "./wwa_main";
 
 export class CacheCanvas {
@@ -31,8 +31,17 @@ export class CacheCanvas {
     /**
      * フォントを描画します。色などの設定はあらかじめ ctx フィールドに設定しておいてください。
      */
-    public drawFont(text: string, canvasX: number, canvasY: number): void {
-        this.ctx.fillText(text, canvasX, canvasY);
+    public drawFont(text: string, canvasX: number, canvasY: number, lineHeight?: number): void {
+        if (lineHeight !== undefined) {
+            const lines = text.split("\n");
+            lines.forEach((line, index) => {
+                // Canvas API では描画しているテキストから1行分の高さを簡単に算出することはできない (できても px 単位じゃなかったりする)
+                // 引数 lineHeight の指定が必要
+                this.ctx.fillText(line, canvasX, canvasY + (index * lineHeight));
+            });
+        } else {
+            this.ctx.fillText(text, canvasX, canvasY);
+        }
     }
     public clear() {
         this.clearRect(0, 0, this.cvs.width, this.cvs.height);
