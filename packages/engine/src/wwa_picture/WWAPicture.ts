@@ -58,7 +58,14 @@ export default class WWAPicutre {
                     const element = new Image();
                     element.src = path;
                     element.onerror = (err) => {
-                        alert(`ピクチャ画像ファイル ${path} が見つかりませんでした。エラーメッセージ: ${err.toString()}`);
+                        if (typeof err === "string") {
+                            alert(`ピクチャ画像ファイル ${path} が見つかりませんでした。エラーメッセージ: ${err}`);
+                        } else {
+                            // onerror の引数にあたる ErrorEvent では理由を示すエラーメッセージが含まれていない
+                            // TODO より正確なエラーメッセージを出力するに fetch で画像データを取得すると良いのだが、
+                            //      取得したデータが画像形式なのか判別したり変換したりする機能の開発コストが大きいため、しばらくはこの状態で維持
+                            alert(`ピクチャ画像ファイル ${path} が見つかりませんでした。`);
+                        }
                     };
                     this._externalImageFiles.set(name, element);
                 });
