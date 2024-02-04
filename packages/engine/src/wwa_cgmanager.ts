@@ -1,7 +1,7 @@
 
 import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord } from "./wwa_data";
-import WWAPicutre from "./wwa_picture";
+import WWAPicutre from "./wwa_picture/WWAPicture";
 import { WWA } from "./wwa_main";
 
 export class CacheCanvas {
