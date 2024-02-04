@@ -11,6 +11,7 @@ export interface PictureProperties<N = number> {
   color?: [N, N, N];
   // CanvasTextAlign そのままの値
   textAlign?: "center" | "end" | "left" | "right" | "start";
+  lineHeight?: N;
   opacity?: N;
   next?: [N] | [N, N],
   // TODO map プロパティの座標で PX と PY を指定するとピクチャ作成時の座標が評価されてしまい、移動後はプレイヤーの位置通りにパーツが配置されない。

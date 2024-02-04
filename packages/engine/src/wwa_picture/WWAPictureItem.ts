@@ -41,6 +41,7 @@ export default class WWAPictureItem {
         // 外部画像ファイルを使用した場合、 crop は無効となる
         this._cropX = this._imgFile ? 1 : properties.crop?.[0] ?? 1;
         this._cropY = this._imgFile ? 1 : properties.crop?.[1] ?? 1;
+
         this._totalWidth =
             (properties.size?.[0] ?? (this._imgFile ? this._imgFile.width : WWAConsts.CHIP_SIZE)) * this._cropX;
         this._totalHeight =
@@ -112,7 +113,8 @@ export default class WWAPictureItem {
                     this._canvas.drawFont(
                         this._registry.properties.text,
                         chipX,
-                        chipY
+                        chipY,
+                        this._registry.properties.lineHeight
                     );
                 }
                 if (this._imgFile) {
