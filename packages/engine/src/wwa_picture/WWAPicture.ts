@@ -1,7 +1,7 @@
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, PartsType, WWAConsts } from "../wwa_data";
 import { PicturePropertyDefinitions } from "./config";
-import { PictureRegistryParts } from "./typedef";
+import { PictureExternalImageItem, PictureRegistryParts } from "./typedef";
 import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVariablesFromRawRegistry } from "./utils";
 import { WWA } from "../wwa_main";
@@ -24,7 +24,7 @@ import { fetchJsonFile } from "../json_api_client";
 export default class WWAPicutre {
     private _wwa: WWA;
     private _pictures: Map<number, WWAPictureItem>;
-    private _externalImageFiles: Map<string, HTMLImageElement>;
+    private _externalImageFiles: Map<string, PictureExternalImageItem>;
     private _frameTimerValue: number;
 
     constructor(wwa: WWA, pictureImageNamesFile: string | null) {
@@ -55,6 +55,7 @@ export default class WWAPicutre {
             const { files } = status.data;
             if (typeof files === "object") {
                 Object.entries(status.data.files).forEach(([name, path]) => {
+                    this._externalImageFiles.set(name, { status: "loading" });
                     const element = new Image();
                     element.src = path;
                     element.onerror = (err) => {
@@ -66,8 +67,11 @@ export default class WWAPicutre {
                             //      取得したデータが画像形式なのか判別したり変換したりする機能の開発コストが大きいため、しばらくはこの状態で維持
                             alert(`ピクチャ画像ファイル ${path} が見つかりませんでした。`);
                         }
+                        this._externalImageFiles.set(name, { status: "failed" })
                     };
-                    this._externalImageFiles.set(name, element);
+                    element.onload = () => {
+                        this._externalImageFiles.set(name, { status: "success", element });
+                    };
                 });
             } else {
                 alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} の files が正しい形式で書かれていません。`);
@@ -90,11 +94,18 @@ export default class WWAPicutre {
         if (invalidPropertyNames.length > 0) {
             throw new Error(`不明なプロパティ名 ${invalidPropertyNames.map(str => `"${str}"`).join(", ")} が検出されました。`);
         }
-        const externalImageFile = registry.properties.imgFile
-            ? this._externalImageFiles.get(registry.properties.imgFile)
-            : undefined;
-        if (registry.properties.imgFile && !externalImageFile) {
-            console.warn(`ピクチャ画像ファイル ${registry.properties.imgFile} が定義に含まれていません。定義ファイルがあるかご確認ください。`);
+        let externalImageFile = undefined;
+        if (registry.properties.imgFile) {
+            const item = this._externalImageFiles.get(registry.properties.imgFile);
+            if (!item) {
+                console.warn(`ピクチャ画像ファイル ${registry.properties.imgFile} が定義に含まれていません。定義ファイルがあるかご確認ください。`);
+            } else if (item.status === "loading") {
+                console.warn(`ピクチャ画像ファイル ${registry.properties.imgFile} はまだ読み込みを完了していません。`);
+            } else if (item.status === "failed") {
+                console.warn(`ピクチャ画像ファイル ${registry.properties.imgFile} を表示することができません。画像ファイルの Path が間違っていないかご確認ください。`);
+            } else {
+                externalImageFile = item.element;
+            }
         }
         this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
     }
