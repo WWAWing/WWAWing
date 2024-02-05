@@ -2,6 +2,7 @@ import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
+import { PARTS_TYPE_LIST } from "./utils";
 
 export class EvalCalcWwaNodeGenerator {
   wwa: WWA;
@@ -435,7 +436,6 @@ export class EvalCalcWwaNode {
         const destID = Number(this.evalWwaNode(node.value[1]));
         let partsType = node.value[2]? Number(this.evalWwaNode(node.value[2])): 0;
         let onlyThisSight = node.value[3]? Boolean(this.evalWwaNode(node.value[3])): true;
-        const PARTS_TYPE_LIST = [PartsType.OBJECT, PartsType.MAP];
         if(srcID < 0 || destID < 0 ) {
           throw new Error("パーツ番号が不正です");
         }
@@ -601,6 +601,19 @@ export class EvalCalcWwaNode {
         }
         // TODO パーツ座標は本来なら実行元パーツの座標にすべきだが、イベント関数では判別できない。
         this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition);
+        break;
+      }
+      case "PICTURE_FROM_PARTS": {
+        this._checkArgsLength(2, node);
+        const layerNumber = Number(this.evalWwaNode(node.value[0]));
+        const propertyPartsNumber = Number(this.evalWwaNode(node.value[1]));
+        const propertyPartsType = node.value.length >= 3 ? Number(this.evalWwaNode(node.value[2])) : PartsType.OBJECT;
+        if (!PARTS_TYPE_LIST.includes(propertyPartsType)) {
+          throw new Error("パーツ種別が不明です");
+        }
+        const gameStatus = this.generator.wwa.getGameStatus();
+        // 実行元パーツ座標はプレイヤーの座標として評価する
+        this.generator.wwa.setPictureRegistry(layerNumber, propertyPartsNumber, propertyPartsType, gameStatus.playerCoord);
         break;
       }
       /** 絶対値を返す関数 */

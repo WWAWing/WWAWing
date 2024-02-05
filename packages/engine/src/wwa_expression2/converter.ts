@@ -199,6 +199,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_WEEKDAY":
     case "CHANGE_SYSMSG":
     case "PICTURE":
+    case "PICTURE_FROM_PARTS":
     case "SHOW_USER_DEF_VAR":
     case "ABS":
     case "GET_GAMEOVER_POS_X":
