@@ -1302,6 +1302,18 @@ export class WWA {
         return ExpressionParser2.convertNodeAcornToWwaArray(acornNode);
     }
 
+    /**
+     * テンプレート文字列を評価して評価後のテキストを出力します。
+     * @param targetText 対象のテキスト (` 抜き)
+     * @returns 評価後のテキスト
+     */
+    public evaluateTemplateText = (targetText: string): string => {
+        const templateText = "`" + targetText.replace("`", "\`") + "`";
+        const acornNode = ExpressionParser2.parse(templateText);
+        const wwaNode = ExpressionParser2.convertNodeAcornToWwa(acornNode);
+        return this.evalCalcWwaNodeGenerator.evalWwaNode(wwaNode);
+    }
+
     /** ユーザ変数読み込み関数 */
     private setUserVarStatus(userVarStatus: (JsonResponseData | JsonResponseError<JsonResponseErrorKind> | {
         kind: "noFileSpecified";
@@ -6110,6 +6122,37 @@ export class WWA {
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
             partsNumber,
             partsType,
+        );
+        // _cgManager 内のデータと _wwaData 内のデータで同期を取る
+        this._wwaData.pictureRegistry = data;
+        this.updatePicturesCache();
+    }
+
+    /**
+     * {@link setPictureRegistry} の後継です。
+     */
+    public setPictureRegistryNew(layerNumber: number, partsNumber, partsType: PartsType) {
+        const attributes =
+            partsType === PartsType.OBJECT ? this._wwaData.objectAttribute[partsNumber] :
+            partsType === PartsType.MAP ? this._wwaData.mapAttribute[partsNumber] :
+            null;
+        if (attributes === null) {
+            throw new Error("対応していないパーツ番号です。");
+        }
+        const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
+        const data = this._cgManager.picture.registerPictureFromText(
+            {
+                layerNumber,
+                imgPosX: (attributes[WWAConsts.ATR_X] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosX2: (attributes[WWAConsts.ATR_X2] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY: (attributes[WWAConsts.ATR_Y] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY2: (attributes[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
+                triggerPartsX: 0,
+                triggerPartsY: 0,
+                propertiesText: this.evaluateTemplateText(messageText),
+            },
+            partsNumber,
+            partsType
         );
         // _cgManager 内のデータと _wwaData 内のデータで同期を取る
         this._wwaData.pictureRegistry = data;
