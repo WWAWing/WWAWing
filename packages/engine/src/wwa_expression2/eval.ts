@@ -9,6 +9,15 @@ export class EvalCalcWwaNodeGenerator {
   loop_limit: number;
 
   state: {
+    /** パーツから呼び出した場合ならオブジェクトあり，さもなくば undefined */
+    readonly triggerParts?: {
+      /** パーツ番号 */
+      id?: number,
+      /** パーツ種類 */
+      type?: PartsType,
+      /** 呼び出したパーツの座標 */
+      position?: Coord,
+    }
     /** アイテム取得時の計算ならオブジェクトあり, さもなくば undefined. */
     readonly earnedItem?: {
       /** 使用・取得したアイテムのID */
@@ -35,6 +44,14 @@ export class EvalCalcWwaNodeGenerator {
     /** 初期処理上限を10万回にする */
     this.loop_limit = 100000;
     this.state = {}
+  }
+
+  public setTriggerParts(partsId: number, partsType: PartsType, position: Coord) {
+    this.state = { ...this.state, triggerParts: { id: partsId, type: partsType, position } };
+  }
+
+  public clearTriggerParts() {
+    this.state = { ...this.state, triggerParts: undefined };
   }
 
   /**
@@ -828,9 +845,9 @@ export class EvalCalcWwaNode {
     const enemyStatus = this.generator.wwa.getEnemyStatus();
     switch(node.name) {
       case "X":
+        return this.generator.state.triggerParts?.position.x ?? gameStatus.playerCoord.x;
       case "Y":
-        // UNDONE: WWAから値を取得する
-        return 0;
+        return this.generator.state.triggerParts?.position.y ?? gameStatus.playerCoord.y;
       case "PX":
         return gameStatus.playerCoord.x;
       case "PY":
