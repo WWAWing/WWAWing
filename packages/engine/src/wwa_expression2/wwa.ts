@@ -1,4 +1,4 @@
-import { ReturnStatement } from "./acorn";
+import { Identifier, ReturnStatement } from "./acorn";
 
 export type Calcurable = Array1D | Array2D | Literal | Symbol | UnaryOperation | BinaryOperation;
 
@@ -175,6 +175,18 @@ export interface ConditionalExpression {
   alternate: WWANode
 }
 
+export interface Property {
+  type: "Property",
+  key: Identifier,
+  value: WWANode,
+  // TODO 他にもありそう
+}
+
+export interface ObjectExpression {
+  type: "ObjectExpression",
+  properties: Property[],
+}
+
 export type WWANode = |
   PartsAssignment |
   ItemAssignment |
@@ -203,4 +215,6 @@ export type WWANode = |
   LogicalExpression |
   TemplateLiteral |
   TemplateElement |
-  ConditionalExpression;
+  ConditionalExpression |
+  Property |
+  ObjectExpression;

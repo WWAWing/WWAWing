@@ -177,6 +177,7 @@ export class EvalCalcWwaNode {
         return this.convertTemplateLiteral(node);
       case "ConditionalExpression":
         return this.convertConditionalExpression(node);
+      // TODO ObjectExpression を実装する
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
