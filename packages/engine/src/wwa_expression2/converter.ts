@@ -482,7 +482,10 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
         name: node.name
       }
     default:  
-      throw new Error("未定義のシンボルです :\n"+ node.name);
+      return {
+        type: "Literal",
+        value: node.name
+      };
   }
 }
 
@@ -509,9 +512,13 @@ function convertConditionalExpression(node: Acorn.ConditionalExpression): Wwa.WW
 }
 
 function convertProperty(node: Acorn.Property): Wwa.Property {
+  const keyIdentifier = convertIdentifer(node.key);
+  if (keyIdentifier.type === "Symbol") {
+    throw new Error(`Object のキー ${keyIdentifier.name} は予約されているため、使用できません。`);
+  }
   return {
     type: "Property",
-    key: node.key,
+    key: keyIdentifier,
     value: convertNodeAcornToWwa(node.value),
   };
 }

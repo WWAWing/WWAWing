@@ -177,7 +177,10 @@ export class EvalCalcWwaNode {
         return this.convertTemplateLiteral(node);
       case "ConditionalExpression":
         return this.convertConditionalExpression(node);
-      // TODO ObjectExpression を実装する
+      case "Property":
+        return this.property(node);
+      case "ObjectExpression":
+        return this.objectExpression(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -597,11 +600,14 @@ export class EvalCalcWwaNode {
           this.generator.wwa.deletePictureRegistry(layerNumber);
           return;
         }
-        if (typeof propertyDefinition !== "string") {
-          throw new Error("ピクチャのプロパティ定義は文字列である必要があります。")
+        if (typeof propertyDefinition === "object") {
+          this.generator.wwa.setPictureRegistryFromObject(layerNumber, propertyDefinition);
+        } else if (typeof propertyDefinition === "string") {
+          // TODO パーツ座標は本来なら実行元パーツの座標にすべきだが、イベント関数では判別できない。
+          this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition);
+        } else {
+          throw new Error("ピクチャのプロパティ定義は文字列あるいはオブジェクトである必要があります。")
         }
-        // TODO パーツ座標は本来なら実行元パーツの座標にすべきだが、イベント関数では判別できない。
-        this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition);
         break;
       }
       case "PICTURE_FROM_PARTS": {
@@ -695,6 +701,17 @@ export class EvalCalcWwaNode {
     const target = ifResult? node.consequent: node.alternate;
     const value = this.evalWwaNode(target)
     return value;
+  }
+
+  property(node: Wwa.Property) {
+    return [this.evalWwaNode(node.key), this.evalWwaNode(node.value)];
+  }
+
+  objectExpression(node: Wwa.ObjectExpression) {
+    return Object.fromEntries(
+      // TODO もし properties に Properties 以外の Node が混入したら？
+      node.properties.map((property) => this.evalWwaNode(property))
+    );
   }
 
   /**

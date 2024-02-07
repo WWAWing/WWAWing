@@ -160,6 +160,25 @@ export default class WWAPicutre {
         return this.getPictureRegistryData();
     }
 
+    public registerPictureFromObject(
+        layerNumber: number,
+        properties: object
+    ) {
+        this.registerPicture(
+            checkValuesFromRawRegistry({
+                imgPosX: 0,
+                imgPosY: 0,
+                imgPosX2: 0,
+                imgPosY2: 0,
+                layerNumber,
+                triggerPartsX: 0,
+                triggerPartsY: 0,
+                properties
+            })
+        );
+        return this.getPictureRegistryData();
+    }
+
     /**
      * ピクチャの登録を削除し、削除後のピクチャをデータにして返します。
      * @param layerNumber 削除したいレイヤーの番号

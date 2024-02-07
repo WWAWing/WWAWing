@@ -6127,6 +6127,12 @@ export class WWA {
         this.updatePicturesCache();
     }
 
+    public setPictureRegistryFromObject(layerNumber: number, properties: object) {
+        const data = this._cgManager.picture.registerPictureFromObject(layerNumber, properties);
+        this._wwaData.pictureRegistry = data;
+        this.updatePicturesCache();
+    }
+
     public deletePictureRegistry(layerNumber: number) {
         const data = this._cgManager.picture.deletePicture(layerNumber);
         this._wwaData.pictureRegistry = data;

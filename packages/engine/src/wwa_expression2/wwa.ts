@@ -1,5 +1,3 @@
-import { Identifier, ReturnStatement } from "./acorn";
-
 export type Calcurable = Array1D | Array2D | Literal | Symbol | UnaryOperation | BinaryOperation;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
@@ -177,7 +175,7 @@ export interface ConditionalExpression {
 
 export interface Property {
   type: "Property",
-  key: Identifier,
+  key: Literal,
   value: WWANode,
   // TODO 他にもありそう
 }
