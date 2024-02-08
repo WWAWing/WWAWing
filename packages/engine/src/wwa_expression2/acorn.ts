@@ -138,5 +138,11 @@ export interface Property extends Node {
 }
 
 export interface ObjectExpression extends Node {
+  type: "ObjectExpression";
   properties: Property[];
+}
+
+export interface ArrayExpression extends Node {
+  type: "ArrayExpression";
+  elements: Node[];
 }

@@ -185,6 +185,11 @@ export interface ObjectExpression {
   properties: Property[],
 }
 
+export interface ArrayExpression {
+  type: "ArrayExpression",
+  elements: WWANode[]
+}
+
 export type WWANode = |
   PartsAssignment |
   ItemAssignment |
@@ -215,4 +220,5 @@ export type WWANode = |
   TemplateElement |
   ConditionalExpression |
   Property |
-  ObjectExpression;
+  ObjectExpression |
+  ArrayExpression;

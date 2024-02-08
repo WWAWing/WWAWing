@@ -181,6 +181,8 @@ export class EvalCalcWwaNode {
         return this.property(node);
       case "ObjectExpression":
         return this.objectExpression(node);
+      case "ArrayExpression":
+        return this.arrayExpression(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -712,6 +714,10 @@ export class EvalCalcWwaNode {
       // TODO もし properties に Properties 以外の Node が混入したら？
       node.properties.map((property) => this.evalWwaNode(property))
     );
+  }
+
+  arrayExpression(node: Wwa.ArrayExpression) {
+    return node.elements.map((element) => this.evalWwaNode(element));
   }
 
   /**
