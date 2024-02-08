@@ -1,6 +1,7 @@
 export type Calcurable = Array1D | Array2D | Literal | Symbol | UnaryOperation | BinaryOperation;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
+  // ObjectExpression と ArrayExpression はピクチャ機能でしか使用しないためサポート対象外
   const supportType = ["Array1D", "Array2D", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression"];
   return supportType.includes(node.type);
 }
