@@ -6096,7 +6096,15 @@ export class WWA {
             throw new Error("対応していないパーツ番号です。");
         }
         const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
-        const data = this._cgManager.picture.registerPictureFromText(
+        if (!messageText) {
+            if (partsType === PartsType.OBJECT) {
+                throw new Error(`物体パーツ ${partsNumber} 番に対応したテキストが見つかりませんでした。`);
+            } else {
+                throw new Error(`背景パーツ ${partsNumber} 番に対応したテキストが見つかりませんでした。`);
+            }
+        }
+        const properties = this._returnEvalString("(" + messageText + ")");
+        const data = this._cgManager.picture.registerPictureFromRawRegistry(
             {
                 layerNumber,
                 imgPosX: (attributes[WWAConsts.ATR_X] ?? 0) / WWAConsts.CHIP_SIZE,
@@ -6105,7 +6113,7 @@ export class WWA {
                 imgPosY2: (attributes[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
                 triggerPartsX: partsPosition.x,
                 triggerPartsY: partsPosition.y,
-                propertiesText: messageText,
+                properties,
             },
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
             partsNumber,
@@ -6120,6 +6128,7 @@ export class WWA {
      * JSON テキストをそのまま評価してピクチャーを登録します。
      * @param layerNumber ピクチャーを登録するレイヤー番号
      * @param propertiesText プロパティが記載された JSON テキスト (変数評価済みの状態)
+     * @deprecated JSON によるパースはプロパティ記載の自由度が低いため、今後使用しません。一応互換性確保で残していますが、不安定版のうちに削除する予定です。
      */
     public setPictureRegistryFromRawText(layerNumber: number, propertiesText: string) {
         const data = this._cgManager.picture.registerPictureFromRawText(layerNumber, propertiesText);
@@ -6127,6 +6136,11 @@ export class WWA {
         this.updatePicturesCache();
     }
 
+    /**
+     * Object 形式をプロパティとして扱いピクチャを登録します。
+     * @param layerNumber ピクチャを登録するレイヤー番号
+     * @param properties プロパティが記載された Object (RawRegistry と一緒です)
+     */
     public setPictureRegistryFromObject(layerNumber: number, properties: object) {
         const data = this._cgManager.picture.registerPictureFromObject(layerNumber, properties);
         this._wwaData.pictureRegistry = data;
@@ -7043,6 +7057,21 @@ font-weight: bold;
         try {
             const nodes = this.convertWwaNodes(evalString);
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
+        }
+        catch(e) {
+            console.error(e);
+            this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
+        }
+    }
+
+    /**
+     * WWA Script の Node を評価して対応した値にします。
+     */
+    private _returnEvalString(evalString: string) {
+        try {
+            const acornNode = ExpressionParser2.parse("(" + evalString + ")");
+            const nodes = ExpressionParser2.convertNodeAcornToWwa(acornNode);
+            return this.evalCalcWwaNodeGenerator.evalWwaNode(nodes);
         }
         catch(e) {
             console.error(e);

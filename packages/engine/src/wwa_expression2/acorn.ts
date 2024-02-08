@@ -133,7 +133,7 @@ export interface ConditionalExpression extends Node {
 
 export interface Property extends Node {
   type: "Property";
-  key: Identifier;
+  key: Identifier | Literal;
   value: Node;
 }
 

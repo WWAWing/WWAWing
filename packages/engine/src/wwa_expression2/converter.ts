@@ -514,13 +514,16 @@ function convertConditionalExpression(node: Acorn.ConditionalExpression): Wwa.WW
 }
 
 function convertProperty(node: Acorn.Property): Wwa.Property {
-  const keyIdentifier = convertIdentifer(node.key);
-  if (keyIdentifier.type === "Symbol") {
-    throw new Error(`Object のキー ${keyIdentifier.name} は予約されているため、使用できません。`);
+  const key = convertNodeAcornToWwa(node.key);
+  if (key.type === "Symbol") {
+    throw new Error(`Object のキー ${key.name} は予約されているため、使用できません。`);
+  }
+  if (key.type !== "Literal") {
+    throw new Error(`Object のキーが不正です。 Literal を期待していましたが、実際は ${key.type} でした。`);
   }
   return {
     type: "Property",
-    key: keyIdentifier,
+    key,
     value: convertNodeAcornToWwa(node.value),
   };
 }
