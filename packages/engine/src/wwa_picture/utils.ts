@@ -49,7 +49,7 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
                     if (typeof value !== "number") {
                         console.warn(`プロパティ ${key} では文字列形式である必要があります。実際に入った値は ${value} です。`);
                     }
-                    return [key, value];
+                    return [key, value.toString()];
                 }
                 let evaluatedString = String(value);
                 // spread 構文の使用には tsconfig の変更が必要
