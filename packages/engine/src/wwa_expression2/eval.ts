@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, WWAConsts  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -612,6 +612,40 @@ export class EvalCalcWwaNode {
       }
       case "EXIT": 
         throw new ExitInformation("EXIT", this.evalWwaNode(node.value[0]));
+      case "GET_IMG_POS_X": {
+        this._checkArgsLength(1, node);
+        const parts_id = Number(this.evalWwaNode(node.value[0]));
+        const parts_type = Number(this.evalWwaNode(node.value[1])) === 0? PartsType.OBJECT: PartsType.MAP;
+        const is_first_motion = Number(this.evalWwaNode(node.value[2])) === 0;
+        if(parts_type === PartsType.OBJECT) {
+          // 物体パーツの情報を取得する
+          const obj_info = this.generator.wwa.getObjectInfo(parts_id);
+          return is_first_motion? obj_info[WWAConsts.ATR_X]: obj_info[WWAConsts.ATR_X2];
+        }
+        else if(parts_type === PartsType.MAP) {
+          // 背景パーツの情報を取得する
+          const map_info = this.generator.wwa.getMapInfo(parts_id);
+          return map_info[WWAConsts.ATR_X]
+        }
+        throw new Error("GET_IMG_POS_X: 指定したIDのパーツのTypeが異常です。");
+      }
+      case "GET_IMG_POS_Y": {
+        this._checkArgsLength(1, node);
+        const parts_id = Number(this.evalWwaNode(node.value[0]));
+        const parts_type = Number(this.evalWwaNode(node.value[1])) === 0? PartsType.OBJECT: PartsType.MAP;
+        const is_first_motion = Number(this.evalWwaNode(node.value[2])) === 0;
+        if(parts_type === PartsType.OBJECT) {
+          // 物体パーツの情報を取得する
+          const obj_info = this.generator.wwa.getObjectInfo(parts_id);
+          return is_first_motion? obj_info[WWAConsts.ATR_Y]: obj_info[WWAConsts.ATR_Y2];
+        }
+        else if(parts_type === PartsType.MAP) {
+          // 背景パーツの情報を取得する
+          const map_info = this.generator.wwa.getMapInfo(parts_id);
+          return map_info[WWAConsts.ATR_Y]
+        }
+        throw new Error("GET_IMG_POS_Y: 指定したIDのパーツのTypeが異常です。");
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
