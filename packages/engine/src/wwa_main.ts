@@ -6137,37 +6137,6 @@ export class WWA {
     }
 
     /**
-     * {@link setPictureRegistry} の後継です。
-     */
-    public setPictureRegistryNew(layerNumber: number, partsNumber, partsType: PartsType) {
-        const attributes =
-            partsType === PartsType.OBJECT ? this._wwaData.objectAttribute[partsNumber] :
-            partsType === PartsType.MAP ? this._wwaData.mapAttribute[partsNumber] :
-            null;
-        if (attributes === null) {
-            throw new Error("対応していないパーツ番号です。");
-        }
-        const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
-        const data = this._cgManager.picture.registerPictureFromText(
-            {
-                layerNumber,
-                imgPosX: (attributes[WWAConsts.ATR_X] ?? 0) / WWAConsts.CHIP_SIZE,
-                imgPosX2: (attributes[WWAConsts.ATR_X2] ?? 0) / WWAConsts.CHIP_SIZE,
-                imgPosY: (attributes[WWAConsts.ATR_Y] ?? 0) / WWAConsts.CHIP_SIZE,
-                imgPosY2: (attributes[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
-                triggerPartsX: 0,
-                triggerPartsY: 0,
-                propertiesText: this.evaluateTemplateText(messageText),
-            },
-            partsNumber,
-            partsType
-        );
-        // _cgManager 内のデータと _wwaData 内のデータで同期を取る
-        this._wwaData.pictureRegistry = data;
-        this.updatePicturesCache();
-    }
-
-    /**
      * JSON テキストをそのまま評価してピクチャーを登録します。
      * @param layerNumber ピクチャーを登録するレイヤー番号
      * @param propertiesText プロパティが記載された JSON テキスト (変数評価済みの状態)
