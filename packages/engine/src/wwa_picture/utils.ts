@@ -43,7 +43,17 @@ const validatePropertyValue = (key: string, value: unknown): boolean => {
 
 export const checkValuesFromRawRegistry = (registry: RawPictureRegistry): PictureRegistry => {
     const propertiesArray = Object.entries(registry.properties).map(([key, value]) => {
-        validatePropertyValue(key, value);
+        if (!validatePropertyValue(key, value)) {
+            return [key, value];
+        }
+        // "v[10]" のような文字列からの変換はしないものの、 string であるはずなのに number で来た場合は string に変えるなど、最低限変換は行うようにする。
+        const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
+        switch (definitions.type) {
+            case "string":
+                if (typeof value !== "string") {
+                    return [key, value.toString()];
+                }
+        }
         return [key, value];
     })
     return {
@@ -75,7 +85,7 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
             case "string":
                 if (typeof value !== "string") {
                     // 細かいバリデーションは validatePropertyValue で実行済みなのでここでは簡潔に
-                    return [key, value];
+                    return [key, value.toString()];
                 }
                 let evaluatedString = String(value);
                 // spread 構文の使用には tsconfig の変更が必要
