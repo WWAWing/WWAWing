@@ -615,9 +615,14 @@ export class EvalCalcWwaNode {
       case "GET_IMG_POS_X": {
         this._checkArgsLength(1, node);
         const parts_id = Number(this.evalWwaNode(node.value[0]));
-        const parts_type = Number(this.evalWwaNode(node.value[1])) === 0? PartsType.OBJECT: PartsType.MAP;
-        const is_first_motion = Number(this.evalWwaNode(node.value[2])) === 0;
+        const parts_type_number = (node.value[1] !== undefined)?
+          Number(this.evalWwaNode(node.value[1])):
+          0;
+        const parts_type = parts_type_number === 0? PartsType.OBJECT: PartsType.MAP;
         if(parts_type === PartsType.OBJECT) {
+          const is_first_motion: boolean = (node.value[2] !== undefined)?
+            Number(this.evalWwaNode(node.value[2])) === 0:
+            true;
           // 物体パーツの情報を取得する
           const obj_info = this.generator.wwa.getObjectInfo(parts_id);
           return is_first_motion? obj_info[WWAConsts.ATR_X]: obj_info[WWAConsts.ATR_X2];
@@ -632,9 +637,14 @@ export class EvalCalcWwaNode {
       case "GET_IMG_POS_Y": {
         this._checkArgsLength(1, node);
         const parts_id = Number(this.evalWwaNode(node.value[0]));
-        const parts_type = Number(this.evalWwaNode(node.value[1])) === 0? PartsType.OBJECT: PartsType.MAP;
-        const is_first_motion = Number(this.evalWwaNode(node.value[2])) === 0;
+        const parts_type_number = (node.value[1] !== undefined)?
+          Number(this.evalWwaNode(node.value[1])):
+          0;
+        const parts_type = parts_type_number === 0? PartsType.OBJECT: PartsType.MAP;
         if(parts_type === PartsType.OBJECT) {
+          const is_first_motion: boolean = (node.value[2] !== undefined)?
+            Number(this.evalWwaNode(node.value[2])) === 0:
+            true;
           // 物体パーツの情報を取得する
           const obj_info = this.generator.wwa.getObjectInfo(parts_id);
           return is_first_motion? obj_info[WWAConsts.ATR_Y]: obj_info[WWAConsts.ATR_Y2];
