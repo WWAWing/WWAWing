@@ -17,6 +17,7 @@ export default class WWAPictureItem {
     private readonly _imgMainY: number;
     private readonly _imgSubX: number;
     private readonly _imgSubY: number;
+    private readonly _drawChip: boolean;
     private readonly _chipWidth: number;
     private readonly _chipHeight: number;
     private readonly _totalWidth: number;
@@ -35,6 +36,8 @@ export default class WWAPictureItem {
         this._posY = properties.pos?.[1] ?? 0;
         [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
         [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
+        // イメージ画像がどれも 0, 0 の場合は何も描画しない（PICTURE 関数から呼び出す場合に黒四角が現れる対策）
+        this._drawChip = this._imgMainX !== 0 || this._imgMainY !== 0 || this._imgSubX !== 0 || this._imgSubY !== 0;
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._imgFile = externalFile;
@@ -123,7 +126,7 @@ export default class WWAPictureItem {
                 }
                 if (this._imgFile) {
                     this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
-                } else {
+                } else if (this._drawChip) {
                     for (let cy = 0; cy < this._cropY; cy++) {
                         for (let cx = 0; cx < this._cropX; cx++) {
                             this._canvas.drawCanvas(

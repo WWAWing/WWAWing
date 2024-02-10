@@ -1,8 +1,8 @@
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, PartsType, WWAConsts } from "../wwa_data";
 import { PicturePropertyDefinitions } from "./config";
-import { PictureExternalImageItem, PictureRegistryParts } from "./typedef";
-import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
+import { PictureExternalImageItem } from "./typedef";
+import { PictureRegistry, RawPictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVariablesFromRawRegistry } from "./utils";
 import { WWA } from "../wwa_main";
 import WWAPictureItem from "./WWAPictureItem";
@@ -111,24 +111,22 @@ export default class WWAPicutre {
     }
 
     /**
-     * ピクチャをテキストデータから登録し、追加後のピクチャをデータにして返します。
+     * ピクチャを Object 形式のデータから登録し、追加後のピクチャをデータにして返します。
      * プロパティの変換は WWAPicture クラス内で行われます。
-     * @param regitory ピクチャの登録情報
+     * @param rawRegitry ピクチャの登録情報 (プロパティの変数参照は未変換の状態とする)
      * @param targetPartsID 対象のパーツ番号
      * @param targetPartsType 対象のパーツ種類
-     * @param triggerPartsPosition 実行元パーツの座標
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
-    public registerPictureFromText(
-        registry: PictureRegistryParts,
+    public registerPictureFromRawRegistry(
+        rawRegistry: RawPictureRegistry,
         targetPartsID: number,
         targetPartsType: PartsType,
     ) {
-        const rawRegistry = convertPictureRegistryFromText(registry);
         this.registerPicture(convertVariablesFromRawRegistry(rawRegistry, this._wwa.generateTokenValues({
             id: targetPartsID,
             type: targetPartsType,
-            position: new Coord(registry.triggerPartsX, registry.triggerPartsY)
+            position: new Coord(rawRegistry.triggerPartsX, rawRegistry.triggerPartsY)
         })));
         return this.getPictureRegistryData();
     }
@@ -157,6 +155,25 @@ export default class WWAPicutre {
             propertiesText,
         });
         this.registerPicture(checkValuesFromRawRegistry(registry));
+        return this.getPictureRegistryData();
+    }
+
+    public registerPictureFromObject(
+        layerNumber: number,
+        properties: object
+    ) {
+        this.registerPicture(
+            checkValuesFromRawRegistry({
+                imgPosX: 0,
+                imgPosY: 0,
+                imgPosX2: 0,
+                imgPosY2: 0,
+                layerNumber,
+                triggerPartsX: 0,
+                triggerPartsY: 0,
+                properties
+            })
+        );
         return this.getPictureRegistryData();
     }
 
