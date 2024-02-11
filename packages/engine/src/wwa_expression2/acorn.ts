@@ -146,3 +146,9 @@ export interface ArrayExpression extends Node {
   type: "ArrayExpression";
   elements: Node[];
 }
+
+export interface ArrowFunctionExpression extends Node {
+  type: "ArrowFunctionExpression";
+  params: Node[];
+  body: Node;
+}

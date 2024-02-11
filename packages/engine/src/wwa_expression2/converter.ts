@@ -61,6 +61,8 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertObjectExpression(node as Acorn.ObjectExpression);
       case "ArrayExpression":
         return convertArrayExpression(node as Acorn.ArrayExpression);
+      case "ArrowFunctionExpression":
+        return convertArrowFunctionExpression(node as Acorn.ArrowFunctionExpression);
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -338,7 +340,7 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           throw new Error("");
         }
       } else if (left.type === "Symbol") {
-        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM") {
+        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM" || left.name === "f") {
           throw new Error("このシンボルには代入できません");
         }
         if (left.name === "AT_TOTAL") {
@@ -479,6 +481,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_HP":
     case "ENEMY_AT":
     case "ENEMY_DF":
+    case "f":
       return {
         type: "Symbol",
         name: node.name
@@ -539,5 +542,23 @@ function convertArrayExpression(node: Acorn.ArrayExpression): Wwa.ArrayExpressio
   return {
     type: "ArrayExpression",
     elements: node.elements.map(convertNodeAcornToWwa),
+  }
+}
+
+function convertArrowFunctionExpression(node: Acorn.ArrowFunctionExpression): Wwa.ArrowFunctionExpression {
+  const params = node.params.map((paramNode) => {
+    const paramWwaNode = convertNodeAcornToWwa(paramNode);
+    if (paramWwaNode.type === "Symbol") {
+      return paramWwaNode;
+    }
+    if (paramWwaNode.type === "Literal") {
+      throw new Error(`パラメーターの引数 ${paramWwaNode.value} はシンボルではありません。`);
+    }
+    throw new Error("パラメーターの引数が間違っています。");
+  });
+  return {
+    type: "ArrowFunctionExpression",
+    params,
+    body: convertNodeAcornToWwa(node.body),
   }
 }
