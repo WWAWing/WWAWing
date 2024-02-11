@@ -123,13 +123,19 @@ export default class WWAPicutre {
         registry: PictureRegistryParts,
         targetPartsID: number,
         targetPartsType: PartsType,
+        previousPictureProperties?: PictureRegistry["properties"],
     ) {
         const rawRegistry = convertPictureRegistryFromText(registry);
-        this.registerPicture(convertVariablesFromRawRegistry(rawRegistry, this._wwa.generateTokenValues({
-            id: targetPartsID,
-            type: targetPartsType,
-            position: new Coord(registry.triggerPartsX, registry.triggerPartsY)
-        })));
+        this.registerPicture(convertVariablesFromRawRegistry(
+            previousPictureProperties
+                ? { ...rawRegistry, properties: { ...previousPictureProperties, ...rawRegistry.properties } }
+                : rawRegistry,
+            this._wwa.generateTokenValues({
+                id: targetPartsID,
+                type: targetPartsType,
+                position: new Coord(registry.triggerPartsX, registry.triggerPartsY)
+            })
+        ));
         return this.getPictureRegistryData();
     }
 
@@ -191,6 +197,8 @@ export default class WWAPicutre {
                 const layerNumber = picture.layerNumber;
                 const nextPictureParts = picture.nextPictureParts;
                 const mapPictureInfo = picture.appearParts;
+                // next プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
+                const pictureProperties = picture.getRegistryData(true).properties;
                 const triggerPartsCoord = picture.getTriggerPartsCoord();
                 this.deletePicture(layerNumber);
                 if (nextPictureParts !== undefined) {
@@ -199,7 +207,8 @@ export default class WWAPicutre {
                         layerNumber,
                         nextPictureParts.partsNumber,
                         nextPictureParts.partsType,
-                        triggerPartsCoord
+                        triggerPartsCoord,
+                        nextPictureParts.connectProperties ? pictureProperties : undefined,
                     );
                 }
                 if (mapPictureInfo !== undefined) {

@@ -80,6 +80,7 @@ export default class WWAPictureItem {
         return {
             partsNumber: this._registry.properties.next[0],
             partsType: this._registry.properties.next[1] ?? PartsType.OBJECT,
+            connectProperties: this._registry.properties.next[2] ?? 0,
         };
     }
 
@@ -154,7 +155,12 @@ export default class WWAPictureItem {
         this._canvas.clear();
     }
 
-    public getRegistryData() {
+    public getRegistryData(excludeNextProperty?: boolean) {
+        if (excludeNextProperty) {
+            const newData = { ...this._registry };
+            delete this._registry.properties["next"];
+            return newData;
+        }
         return this._registry;
     }
 

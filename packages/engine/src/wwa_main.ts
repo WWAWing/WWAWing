@@ -1,6 +1,6 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
-import { SystemMessage } from "@wwawing/common-interface";
+import { PictureRegistry, SystemMessage } from "@wwawing/common-interface";
 import type { JsonResponseError } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
@@ -5496,7 +5496,13 @@ export class WWA {
         this._wwaData.bgmDelayDurationMs = delayMs;
     }
 
-    public setPictureRegistry(layerNumber: number, partsNumber: number, partsType: PartsType, partsPosition: Coord) {
+    public setPictureRegistry(
+        layerNumber: number,
+        partsNumber: number,
+        partsType: PartsType,
+        partsPosition: Coord,
+        previousPictureProperties?: PictureRegistry["properties"]
+    ) {
         const attributes =
             partsType === PartsType.OBJECT ? this._wwaData.objectAttribute[partsNumber] :
             partsType === PartsType.MAP ? this._wwaData.mapAttribute[partsNumber] :
@@ -5520,6 +5526,7 @@ export class WWA {
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
             partsNumber,
             partsType,
+            previousPictureProperties,
         );
         // _cgManager 内のデータと _wwaData 内のデータで同期を取る
         this._wwaData.pictureRegistry = data;
