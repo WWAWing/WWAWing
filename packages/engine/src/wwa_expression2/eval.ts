@@ -625,12 +625,14 @@ export class EvalCalcWwaNode {
             true;
           // 物体パーツの情報を取得する
           const obj_info = this.generator.wwa.getObjectInfo(parts_id);
-          return is_first_motion? obj_info[WWAConsts.ATR_X]: obj_info[WWAConsts.ATR_X2];
+          const ims_pos = is_first_motion? obj_info[WWAConsts.ATR_X]: obj_info[WWAConsts.ATR_X2];
+          return Math.floor(ims_pos / WWAConsts.CHIP_SIZE);
         }
         else if(parts_type === PartsType.MAP) {
           // 背景パーツの情報を取得する
           const map_info = this.generator.wwa.getMapInfo(parts_id);
-          return map_info[WWAConsts.ATR_X]
+          const ims_pos = map_info[WWAConsts.ATR_X];
+          return Math.floor(ims_pos / WWAConsts.CHIP_SIZE);
         }
         throw new Error("GET_IMG_POS_X: 指定したIDのパーツのTypeが異常です。");
       }
@@ -647,12 +649,14 @@ export class EvalCalcWwaNode {
             true;
           // 物体パーツの情報を取得する
           const obj_info = this.generator.wwa.getObjectInfo(parts_id);
-          return is_first_motion? obj_info[WWAConsts.ATR_Y]: obj_info[WWAConsts.ATR_Y2];
+          const ims_pos = is_first_motion? obj_info[WWAConsts.ATR_Y]: obj_info[WWAConsts.ATR_Y2];
+          return Math.floor(ims_pos / WWAConsts.CHIP_SIZE);
         }
         else if(parts_type === PartsType.MAP) {
           // 背景パーツの情報を取得する
           const map_info = this.generator.wwa.getMapInfo(parts_id);
-          return map_info[WWAConsts.ATR_Y]
+          const ims_pos = map_info[WWAConsts.ATR_Y];
+          return Math.floor(ims_pos / WWAConsts.CHIP_SIZE);
         }
         throw new Error("GET_IMG_POS_Y: 指定したIDのパーツのTypeが異常です。");
       }
