@@ -55,7 +55,7 @@ export default class WWAPictureItem {
         this._canvas.ctx.globalAlpha = properties.opacity
             ? WWAPictureItem._roundPercentage(properties.opacity) / 100
             : 1;
-        this._canvas.ctx.font = properties.font ?? getComputedStyle(util.$id("wwa-wrapper")).font;
+        this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
         if (properties.textAlign) {
             this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
         }
@@ -177,6 +177,27 @@ export default class WWAPictureItem {
             return [registry.imgPosX, registry.imgPosY];
         }
         return [registry.imgPosX2, registry.imgPosY2];
+    }
+
+    private static _getFontValue(properties: PictureRegistry["properties"]): string {
+        // font プロパティがある場合は優先して使用 (下位互換性確保のため)
+        if (properties.font) {
+            return properties.font;
+        }
+        const defaultStyle = getComputedStyle(util.$id("wwa-wrapper"));
+        if (
+            properties.fontSize === undefined &&
+            properties.fontFamily === undefined &&
+            properties.italic === undefined &&
+            properties.bold === undefined
+        ) {
+            return defaultStyle.font;
+        }
+        const italicValue = properties.italic ? "italic" : "";
+        const boldValue = properties.bold ? "bold" : "";
+        const fontSizeValue = properties.fontSize ? `${properties.fontSize}px` : defaultStyle.fontSize;
+        const fontFamilyValue = properties.fontFamily && properties.fontFamily.length > 0 ? properties.fontFamily : defaultStyle.fontFamily;
+        return `${italicValue} ${boldValue} ${fontSizeValue} ${fontFamilyValue}`;
     }
 
     private static _convertTextAlign(value: string): CanvasTextAlign | undefined {

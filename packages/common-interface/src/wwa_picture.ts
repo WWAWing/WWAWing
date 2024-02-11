@@ -8,6 +8,10 @@ export interface PictureProperties<N = number> {
   crop?: [N, N];
   text?: string;
   font?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  italic?: number;
+  bold?: number;
   color?: [N, N, N];
   // CanvasTextAlign そのままの値
   textAlign?: "center" | "end" | "left" | "right" | "start";
