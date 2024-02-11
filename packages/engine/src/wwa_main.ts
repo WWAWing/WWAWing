@@ -1,6 +1,6 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
-import { SystemMessage } from "@wwawing/common-interface";
+import { PictureRegistry, SystemMessage } from "@wwawing/common-interface";
 import type { JsonResponseData, JsonResponseError, JsonResponseErrorKind } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
@@ -6086,8 +6086,15 @@ export class WWA {
      * @param partsNumber プロパティが記載された JSON テキストを有しているパーツの番号
      * @param partsType そのパーツの種類
      * @param partsPosition このピクチャー登録の実行元のパーツ座標。プレイヤーの座標ではない
+     * @param previousPictureProperties next プロパティでプロパティ引き継いだまま次のピクチャを表示する場合、消去直前のピクチャのプロパティ情報
      */
-    public setPictureRegistry(layerNumber: number, partsNumber: number, partsType: PartsType, partsPosition: Coord) {
+    public setPictureRegistry(
+        layerNumber: number,
+        partsNumber: number,
+        partsType: PartsType,
+        partsPosition: Coord,
+        previousPictureProperties?: PictureRegistry["properties"]
+    ) {
         const attributes =
             partsType === PartsType.OBJECT ? this._wwaData.objectAttribute[partsNumber] :
             partsType === PartsType.MAP ? this._wwaData.mapAttribute[partsNumber] :
@@ -6118,6 +6125,7 @@ export class WWA {
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
             partsNumber,
             partsType,
+            previousPictureProperties,
         );
         // _cgManager 内のデータと _wwaData 内のデータで同期を取る
         this._wwaData.pictureRegistry = data;

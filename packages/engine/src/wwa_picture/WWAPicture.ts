@@ -116,18 +116,25 @@ export default class WWAPicutre {
      * @param rawRegitry ピクチャの登録情報 (プロパティの変数参照は未変換の状態とする)
      * @param targetPartsID 対象のパーツ番号
      * @param targetPartsType 対象のパーツ種類
+     * @param previousPictureProperties next プロパティで引き継いだ前のピクチャのプロパティ情報
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
     public registerPictureFromRawRegistry(
         rawRegistry: RawPictureRegistry,
         targetPartsID: number,
         targetPartsType: PartsType,
+        previousPictureProperties?: PictureRegistry["properties"],
     ) {
-        this.registerPicture(convertVariablesFromRawRegistry(rawRegistry, this._wwa.generateTokenValues({
-            id: targetPartsID,
-            type: targetPartsType,
-            position: new Coord(rawRegistry.triggerPartsX, rawRegistry.triggerPartsY)
-        })));
+        this.registerPicture(convertVariablesFromRawRegistry(
+            previousPictureProperties
+                ? { ...rawRegistry, properties: { ...previousPictureProperties, ...rawRegistry.properties } }
+                : rawRegistry,
+            this._wwa.generateTokenValues({
+                id: targetPartsID,
+                type: targetPartsType,
+                position: new Coord(rawRegistry.triggerPartsX, rawRegistry.triggerPartsY)
+            })
+        ));
         return this.getPictureRegistryData();
     }
 
@@ -236,6 +243,8 @@ export default class WWAPicutre {
                 const nextPictureParts = picture.nextPictureParts;
                 const mapPictureInfo = picture.appearParts;
                 const executeScriptFunctionName = picture.executeScriptFunctionName;
+                // next プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
+                const pictureProperties = picture.getRegistryData(true).properties;
                 const triggerPartsCoord = picture.getTriggerPartsCoord();
                 this.deletePicture(layerNumber);
                 if (nextPictureParts !== undefined) {
@@ -244,7 +253,8 @@ export default class WWAPicutre {
                         layerNumber,
                         nextPictureParts.partsNumber,
                         nextPictureParts.partsType,
-                        triggerPartsCoord
+                        triggerPartsCoord,
+                        nextPictureParts.connectProperties ? pictureProperties : undefined,
                     );
                 }
                 if (mapPictureInfo !== undefined) {
