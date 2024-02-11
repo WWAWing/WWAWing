@@ -25,8 +25,8 @@ function makeRandomPartsAllMaps() {
   MSG("配置完了");
 }
 
-function checkTriggerPartsPos() {
-  MSG(`（ユーザー定義関数）\nこのパーツの座標は X:${X} Y:${Y} です。`);
+function checkTriggerParts() {
+  MSG(`（ユーザー定義関数）\nこのパーツの座標は X:${X} Y:${Y} です。\nパーツ番号は ${ID} で、種類は ${TYPE} です。`);
 }
 
 function CALL_SAVE() {

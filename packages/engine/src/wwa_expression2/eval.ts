@@ -277,7 +277,7 @@ export class EvalCalcWwaNode {
     let return_string = "";
     quasis.forEach((q, id) => {
       return_string += q;
-      if(expressions[id]) {
+      if(expressions[id] !== undefined) {
         return_string += expressions[id];
       }
     });
@@ -848,6 +848,10 @@ export class EvalCalcWwaNode {
         return this.generator.state.triggerParts?.position.x ?? gameStatus.playerCoord.x;
       case "Y":
         return this.generator.state.triggerParts?.position.y ?? gameStatus.playerCoord.y;
+      case "ID":
+        return this.generator.state.triggerParts?.id ?? -1;
+      case "TYPE":
+        return this.generator.state.triggerParts?.type ?? -1;
       case "PX":
         return gameStatus.playerCoord.x;
       case "PY":
