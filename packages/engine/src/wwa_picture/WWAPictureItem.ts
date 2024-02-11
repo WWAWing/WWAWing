@@ -110,14 +110,6 @@ export default class WWAPictureItem {
             for (let rx = 0; rx < this._repeatX; rx++) {
                 const chipX = this._posX + (this._totalWidth * rx);
                 const chipY = this._posY + (this._totalHeight * ry);
-                if (this._registry.properties.text) {
-                    this._canvas.drawFont(
-                        this._registry.properties.text,
-                        chipX,
-                        chipY,
-                        this._registry.properties.lineHeight
-                    );
-                }
                 if (this._imgFile) {
                     this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
                 } else {
@@ -134,6 +126,14 @@ export default class WWAPictureItem {
                             );
                         }
                     }
+                }
+                if (this._registry.properties.text) {
+                    this._canvas.drawFont(
+                        this._registry.properties.text,
+                        chipX,
+                        chipY,
+                        this._registry.properties.lineHeight
+                    );
                 }
             }
         }
