@@ -15,6 +15,13 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "pos", type: "numberArray" },
     { name: "time", type: "number" },
     { name: "size", type: "numberArray" },
+    { name: "move", type: "numberArray" },
+    { name: "accel", type: "numberArray" },
+    { name: "zoom", type: "numberArray" },
+    { name: "zoomAccel", type: "numberArray" },
+    { name: "zoom_accel", type: "numberArray" },
+    { name: "anchor", type: "number" },
+    { name: "circle", type: "numberArray" },
     { name: "repeat", type: "numberArray" },
     { name: "img", type: "numberArray" },
     { name: "imgFile", type: "string" },
@@ -29,6 +36,9 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "textAlign", type: "string" },
     { name: "lineHeight", type: "number" },
     { name: "opacity", type: "number" },
+    { name: "fade", type: "number" },
+    { name: "angle", type: "number" },
+    { name: "rotate", type: "number" },
     { name: "next", type: "numberArray" },
     { name: "map", type: "numberArray" }
 ];
