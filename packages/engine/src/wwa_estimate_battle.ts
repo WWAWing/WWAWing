@@ -1,5 +1,6 @@
 import { WWA } from "./wwa_main";
-import { Coord, Status, WWAConsts } from "./wwa_data";
+import { type BattleTurnResult, Coord, Status, WWAConsts } from "./wwa_data";
+import { Monster } from "./wwa_monster";
 
 class EstimateDisplayElements {
     public elem: HTMLElement;
@@ -68,17 +69,19 @@ class EstimateDisplayElements {
         this.elem.style.display = "block";
     }
 
-    public setResult(enemyImgPos: Coord, enemyStatus: Status, result: EstimateResult): void {
+    public setResult(enemyImgPos: Coord, enemyStatus: Status, result: EstimatedBattleResult): void {
         this.imgElem.style.backgroundPosition = "-" + enemyImgPos.x + "px -" + enemyImgPos.y + "px";
         this.energyDispElem.textContent = "生命力 " + enemyStatus.energy;
         this.strengthDispElem.textContent = "攻撃力 " + enemyStatus.strength;
         this.defenceDispElem.textContent = "防御力 " + enemyStatus.defence;
-        if (result.isNoEffect) {
+        if (result.cannotDamageMonster) {
             this.damageDispElem.textContent = "攻撃無効";
+        } else if (result.noSettled) {
+            this.damageDispElem.textContent = "勝負がつきません";
         } else if (result.isOverMaxTurn) {
             this.damageDispElem.textContent = "長期戦が予想されます";
         } else {
-            this.damageDispElem.textContent = "予測ダメージ " + result.damage;
+            this.damageDispElem.textContent = "予測ダメージ " + result.estimatedDamage;
         }
     }
 }
@@ -104,22 +107,34 @@ export class BattleEstimateWindow {
         this._parent.appendChild(this._element);
     }
 
-    public update(playerStatus: Status, monsters: number[]): void {
+    public update(
+        playerStatus: Status,
+        monsters: Monster[],
+        calcPlayerTurnResult: (playerStatus: Status, monster: Monster) => BattleTurnResult,
+        calcEnemyTurnResult: (monster: Monster, playerStatus: Status) => BattleTurnResult,
+        usingDefaultDamageFunction: boolean
+    ): void {
         // モンスターの種類が8種類を超える場合は、先頭の8種類のみ処理
-        for (var i = 0; i < WWAConsts.BATTLE_ESTIMATE_MONSTER_TYPE_MAX; i++) {
+        for (let i = 0; i < WWAConsts.BATTLE_ESTIMATE_MONSTER_TYPE_MAX; i++) {
             if (i >= monsters.length) {
                 // 非表示処理
                 this._edes[i].hide()
                 continue;
             }
-            var imgx = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_X);
-            var imgy = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_Y);
-            var imgPos = new Coord(imgx, imgy);
-            var eng = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_ENERGY);
-            var str = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_STRENGTH);
-            var def = this._wwa.getObjectAttributeById(monsters[i], WWAConsts.ATR_DEFENCE);
-            var enemyStatus = new Status(eng, str, def, 0);
-            var result = calc(playerStatus, enemyStatus);
+            const imgx = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_X);
+            const imgy = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_Y);
+            const imgPos = new Coord(imgx, imgy);
+            const eng = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_ENERGY);
+            const str = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_STRENGTH);
+            const def = this._wwa.getObjectAttributeById(monsters[i].partsID, WWAConsts.ATR_DEFENCE);
+            const enemyStatus = new Status(eng, str, def, 0);
+            const result = calc(
+                playerStatus,
+                monsters[i],
+                calcPlayerTurnResult,
+                calcEnemyTurnResult,
+                usingDefaultDamageFunction,
+            );
             this._edes[i].setResult(imgPos, enemyStatus, result);
 
             this._edes[i].show();
@@ -136,36 +151,74 @@ export class BattleEstimateWindow {
     }
 }
 
-class EstimateResult {
-    constructor(
-        public isNoEffect: boolean,
-        public isOverMaxTurn: boolean,
-        public damage: number
-    ) { }
+interface EstimatedBattleResult {
+  noSettled?: boolean,
+  isOverMaxTurn?: boolean,
+  cannotDamageMonster?: boolean,
+  estimatedDamage: number
 }
 
-function calc(playerStatus: Status, enemyStatus: Status): EstimateResult {
-    var energyE = enemyStatus.energy;
+// 戦闘結果を予測します。プレイヤーの生命力は考慮されない点に注意してください。
+function calc(
+    playerStatus: Status,
+    monster: Monster,
+    calcPlayerTurnResult: (playerStatus: Status, monster: Monster) => BattleTurnResult,
+    calcEnemyTurnResult: (monster: Monster, playerStatus: Status) => BattleTurnResult,
+    usingDefaultDamageFunction: boolean
+ ): EstimatedBattleResult {
+    const clonedMonster = monster.clone();
+    const clonedPlayerStatus = playerStatus.clone();
 
-    var attackP = playerStatus.strength - enemyStatus.defence;
-    var attackE = Math.max(0, enemyStatus.strength - playerStatus.defence);
-    var turn = 0;
-    var damage = 0;
+    let estimatedDamage = 0;
+    let turnLength = 0;
+    let noDamageTurnLength = 0;
+    const playerEnergyBeforeBattle = playerStatus.energy;
 
-    if (attackP > 0) {
-        while (1) {
-            turn++;
-            energyE -= attackP;
-            if (energyE <= 0) {
-                return new EstimateResult(false, false, damage);
-            }
-            damage += attackE;
-            if (turn > 10000) {
-                return new EstimateResult(false, true, 0);
-            }
-        }
-    } else {
-        return new EstimateResult(true, false, 0);
+    // デフォルトダメージ関数を使っている場合の攻撃無効判定
+    if(
+        usingDefaultDamageFunction &&
+        clonedPlayerStatus.strength <= clonedMonster.status.defence &&
+        clonedPlayerStatus.defence >= clonedMonster.status.strength
+    ) {
+        return { cannotDamageMonster: true, estimatedDamage: 0 }
     }
 
+    // FIXME: プレイヤー生命力などのステータスが計算式に入っている場合に正しく戦闘結果予測が動作しない
+    // 生命力をシミュレーションする環境構築が必要
+    // 根本的には、ダメージ関数については参照できる変数などのシンボルに制約を入れることになりそう
+    while (1) {
+        turnLength++;
+        const playerTurnResult = calcPlayerTurnResult(clonedPlayerStatus, clonedMonster);
+        clonedMonster.status.energy -= playerTurnResult.damage;
+
+        if (playerTurnResult.damage === 0) {
+            noDamageTurnLength++;
+        } else {
+            noDamageTurnLength = 0;
+        }
+        if (clonedMonster.status.energy <= 0) {
+            return { estimatedDamage };
+        } else if (noDamageTurnLength > WWAConsts.FIGHT_DRAW_TURN || playerTurnResult.aborted)  {
+            // プレイヤー生命力が負になってもダメージシミュレーションは継続するため、中断が呼ばれた時にプレイヤーがゲームオーバーなら勝負がついているので注意
+            // ただし、戦闘開始前にプレイヤー生命力が 0 (以下) だった場合は、初手で中断を食らってもゲームオーバー判定にならないので勝負がつかない判定となる
+            return { noSettled: (playerEnergyBeforeBattle <= 0 || clonedPlayerStatus.energy > 0) && clonedMonster.status.energy > 0, estimatedDamage }
+        } else if (turnLength > 20000) {
+            return { isOverMaxTurn: true, estimatedDamage: 0 };
+        }
+        turnLength++;
+        const enemyTurnResult = calcEnemyTurnResult(clonedMonster, clonedPlayerStatus);
+        const damageEnemyToPlayer = Math.max(enemyTurnResult.damage, 0)
+        if (damageEnemyToPlayer === 0) {
+            noDamageTurnLength++;
+        } else {
+            noDamageTurnLength = 0;
+        }
+        estimatedDamage += damageEnemyToPlayer;
+        clonedPlayerStatus.energy = Math.max(clonedPlayerStatus.energy - damageEnemyToPlayer, 0);
+        if (noDamageTurnLength > WWAConsts.FIGHT_DRAW_TURN || enemyTurnResult.aborted)  {
+            return { noSettled: (playerEnergyBeforeBattle <= 0 || clonedPlayerStatus.energy > 0) && clonedMonster.status.energy > 0, estimatedDamage }
+        } else if (turnLength > 20000) {
+            return { isOverMaxTurn: true, estimatedDamage: 0 };
+        }
+    }
 }

@@ -1,13 +1,14 @@
-import * as Header from "./header";
-import type * as UserVariableCard from "../user-variable-card";
+import type { UserVariableKind } from "../../../wwa_data";
 import * as UserVariableList from "../user-variable-list";
+
+import * as Header from "./header";
 
 export const CLASS_NAME = "user-variable-list-section";
 
 export { Header };
 
 export interface Props {
-  kind: UserVariableCard.Kind;
+  kind: UserVariableKind;
 }
 
 export function createElement({ kind }: Props): HTMLElement {

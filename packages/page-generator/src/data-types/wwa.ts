@@ -16,6 +16,8 @@ export interface GameOption {
         viewportFitEnable?: boolean,
         controllerId?: string;
     },
+    debugConsole?: {
+    }
 }
 
 export interface Resources {

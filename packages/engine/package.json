@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/engine",
-  "version": "3.12.11",
+  "version": "3.13.0-unstable.based-on.3.12.11.p.12",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "./lib/wwa.js",
   "files": [
@@ -21,6 +21,7 @@
     "deploy:common:mapdata": "shx cp ../../node_modules/@wwawing/assets/mapdata/*.* lib/",
     "deploy:common:vars": "shx cp ../../node_modules/@wwawing/assets/vars/*.* lib/",
     "deploy:common:style": "shx cp ../../node_modules/@wwawing/styles/output/*.* lib/ && shx cp ../../node_modules/@wwawing/assets/style/*.* lib/",
+    "deploy:common:scripts": "shx mkdir -p lib/script && shx cp ../../node_modules/@wwawing/assets/script/*.* lib/script",
     "deploy:prod:html": "ts-node ./debug/make-debug-pages",
     "deploy:dev:html": "ts-node ./debug/make-debug-pages dev",
     "clean": "shx rm -rf lib",

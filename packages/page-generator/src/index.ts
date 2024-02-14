@@ -40,6 +40,9 @@ export interface TemplateValues {
             "data-wwa-virtualpad-controller-elm"?: string;
         };
     };
+    debugConsoleElement?: {
+        id: string;
+    }
     varDumpElement?: {
         id: string;
     };
@@ -79,6 +82,8 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-virtualpad-controller-elm": wwa.gameOption?.virtualPad?.controllerId ? `#${wwa.gameOption.virtualPad.controllerId}` : undefined,
             }
         },
+        // HACK: デバッグコンソールエリアの要素名は変更できるようにする
+        debugConsoleElement: wwa.gameOption?.debugConsole ? { id: "wwa-debug-console-area" } : undefined,
         varDumpElement: wwa.gameOption?.userVars?.dumpElementId ? { id: wwa.gameOption.userVars.dumpElementId } : undefined,
         virtualPadController: wwa.gameOption?.virtualPad?.controllerId ? { id: wwa.gameOption.virtualPad.controllerId } : undefined,
         footer: {

@@ -12,6 +12,7 @@ import {
     SystemSound,
     AppearanceTriggerType,
     Coord,
+    type BattleTurnResult,
 } from "./wwa_data";
 import { Camera } from "./wwa_camera";
 import { Monster } from "./wwa_monster";
@@ -84,7 +85,7 @@ export class Player extends PartsObject {
 
     protected _battleFrameCounter: number;
     protected _isPlayerTurn: boolean;
-    protected _battleTurnNum: number;
+    protected _battleTurnLength: number;
 
     protected _enemy: Monster;
     protected _moves: number;
@@ -105,6 +106,11 @@ export class Player extends PartsObject {
 
     protected _messageDelayFrameCount: number;
 
+    // ダメージが発生していないターンの長さ (0ダメージターンがあるごとに加算)
+    // プレイヤーターン, 敵ターンともに1ターンとしてカウントする。
+    // 戦闘開始からでなくとも、途中から0ダメージターンが規定回数が超えた場合も終了。
+    // 戦闘していない場合は 0。
+    protected _battleNoDamageTurnLength: number;
 
     public move(): void {
         if (this.isControllable()) {
@@ -134,6 +140,8 @@ export class Player extends PartsObject {
                 this._isPartsEventExecuted = false;
                 this._samePosLastExecutedMapID = void 0;
                 this._samePosLastExecutedObjID = void 0;
+                /** プレイヤーが動いた歳ユーザ定義独自関数を呼び出す */
+                this._wwa.callMoveUserDefineFunction();
             }
             this._position = next;
         }
@@ -362,7 +370,7 @@ export class Player extends PartsObject {
         this._state = PlayerState.ESTIMATE_WINDOW_WAITING;
     }
 
-    public isWatingEstimateWindow(): boolean {
+    public isWaitingEstimateWindow(): boolean {
         return this._state === PlayerState.ESTIMATE_WINDOW_WAITING;
     }
 
@@ -453,6 +461,9 @@ export class Player extends PartsObject {
             this._isPreparedForLookingAround = true;
             this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         }
+
+        // ジャンプゲートで移動した際に呼ばれるユーザ定義独自関数
+        this._wwa.callJumpGateUserDefineFunction();
 
         return true;
     }
@@ -743,6 +754,10 @@ export class Player extends PartsObject {
             insertPos = this._getBlankItemPos();
 
             if (insertPos === Consts.ITEMBOX_IS_FULL) {
+                /** ユーザ定義関数用処理 */
+                this._wwa.setEvalCalcWwaNodeEarnedItem(objID, -1);
+                this._wwa.callGetItemFullUserDefineFunction();
+                this._wwa.clearEvalCalcWwaNodeEarnedItem();
                 throw new Error("これ以上、アイテムを持てません。");
             }
             overwrittenObjectId = this._itemBox[insertPos - 1];
@@ -759,6 +774,10 @@ export class Player extends PartsObject {
                     this._forceSetItemBox(oldInsertPos, oldObjID);
                     this._forceSetItemBox(insertPos, objID);
                 } else {
+                    /** ユーザ定義関数用処理 */
+                    this._wwa.setEvalCalcWwaNodeEarnedItem(objID, -1);
+                    this._wwa.callGetItemFullUserDefineFunction();
+                    this._wwa.clearEvalCalcWwaNodeEarnedItem();
                     throw new Error("これ以上、アイテムを持てません。");
                 }
             } else {
@@ -788,6 +807,10 @@ export class Player extends PartsObject {
         var itemType = this._wwa.getObjectAttributeById(id, Consts.ATR_MODE);
         this.removeItemByItemPosition(pos);
         this._itemBox[pos - 1] = id;
+        // カスタムイベント関数処理
+        this._wwa.setEvalCalcWwaNodeEarnedItem(id, pos);
+        this._wwa.callGetItemUserDefineFunction();
+        this._wwa.clearEvalCalcWwaNodeEarnedItem();
         if (id !== 0 && itemType !== ItemMode.NORMAL) {
             const mes = this._wwa.resolveSystemMessage(SystemMessage.Key.ITEM_SELECT_TUTORIAL);
             if (!this._isClickableItemGot) {
@@ -872,6 +895,11 @@ export class Player extends PartsObject {
             }
         }, Consts.DEFAULT_FRAME_INTERVAL);
 
+        /** アイテム関係の値を独自関数で使用できるようセットする */
+        this._wwa.setEvalCalcWwaNodeEarnedItem(itemID, this._readyToUseItemPos - 1);
+        /** アイテムを使用した際のユーザ定義独自関数を呼び出す */
+        this._wwa.callUseItemUserDefineFunction();
+        this._wwa.clearEvalCalcWwaNodeEarnedItem();
         this._isReadyToUseItem = false;
         this._readyToUseItemPos = void 0;
 
@@ -956,7 +984,8 @@ export class Player extends PartsObject {
     public startBattleWith(enemy: Monster): void {
         this._isPlayerTurn = true;
         this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
-        this._battleTurnNum = 0;
+        this._battleTurnLength = 0;
+        this._battleNoDamageTurnLength = 0;
         this._enemy = enemy;
         this._state = PlayerState.BATTLE;
     }
@@ -970,27 +999,57 @@ export class Player extends PartsObject {
     }
 
     public getTurnNum(): number {
-        return this._battleTurnNum;
+        return this._battleTurnLength;
     }
 
     public isBattleStartFrame(): boolean {
-        return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnNum === 0;
+        return this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM && this._battleTurnLength === 0;
+    }
+
+    public calcBattleResultForPlayerTurn(playerStatus: Status, enemyStatus: Status, estimating: boolean = false): BattleTurnResult {
+        const userDefinedDamageResult = this._wwa.callUserDefinedBattleDamageFunction("playerToEnemy", (estimating || undefined) && {
+            playerStatus,
+            enemyStatus
+        });
+        if (userDefinedDamageResult) {
+            return userDefinedDamageResult;
+        }
+        return { damage: this._calcDamageDefault(playerStatus, enemyStatus) };
+    }
+
+    public calcBattleResultForEnemyTurn(enemyStatus: Status, playerStatus: Status, estimating: boolean = false): BattleTurnResult {
+        const userDefinedDamageResult = this._wwa.callUserDefinedBattleDamageFunction("enemyToPlayer", (estimating || undefined) && {
+            playerStatus,
+            enemyStatus
+        });
+        if (userDefinedDamageResult) {
+            return userDefinedDamageResult;
+        }
+        return { damage: this._calcDamageDefault(enemyStatus, playerStatus) };
+    }
+
+
+    // アルテリオス計算式によるデフォルトダメージ計算。
+    // 攻撃側攻撃力 - 防御側防御力 がダメージとなる。
+    private _calcDamageDefault(offenceSideStatus: Status, defenceSideStatus: Status): number {
+        const damage = offenceSideStatus.strength - defenceSideStatus.defence
+        return damage > 0? damage: 0;
     }
 
     public fight(): void {
         if (!this.isFighting()) {
             throw new Error("バトルが開始されていません。");
         }
-        if (this._battleTurnNum === 0 && this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM) {
+        if (this._battleTurnLength === 0 && this._battleFrameCounter === Consts.BATTLE_INTERVAL_FRAME_NUM) {
             this._wwa.showMonsterWindow();
         }
         if (--this._battleFrameCounter > 0) {
             return;
         }
 
-        this._battleTurnNum++;
-        if (this._wwa.isBattleSpeedIndexForQuickBattle(this._speedIndex) || this._battleTurnNum > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
-            if (this._battleTurnNum === 1) {
+        this._battleTurnLength++;
+        if (this._wwa.isBattleSpeedIndexForQuickBattle(this._speedIndex) || this._battleTurnLength > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
+            if (this._battleTurnLength === 1) {
                 this._wwa.playSound(SystemSound.ATTACK);
                 this._wwa.vibration(false);
             }
@@ -1003,71 +1062,106 @@ export class Player extends PartsObject {
 
         var playerStatus = this.getStatus();
         var enemyStatus = this._enemy.status;
-
+        let abortedByDamageCalculation = false;
 
         if (this._isPlayerTurn) {
-            // プレイヤーターン
-            if (playerStatus.strength > enemyStatus.defence ||
-                playerStatus.defence < enemyStatus.strength) {
-
-                // モンスターがこのターンで死なない場合
-                if (enemyStatus.energy > playerStatus.strength - enemyStatus.defence) {
-                    if (playerStatus.strength > enemyStatus.defence) {
-                        this._enemy.damage(playerStatus.strength - enemyStatus.defence);
-                    }
-
-                    // プレイヤー勝利
-                } else {
-                    this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
-                    //                        this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
-                    this.earnGold(enemyStatus.gold);
-                    this._wwa.setStatusChangedEffect(new Status(0, 0, 0, enemyStatus.gold));
-                    if (this._enemy.item !== 0) {
-                        this._wwa.setPartsOnPosition(PartsType.OBJECT, this._enemy.item, this._enemy.position);
-                    } else {
-                        // 本当はif文でわける必要ないけど、可読性のため設置。
-                        this._wwa.setPartsOnPosition(PartsType.OBJECT, 0, this._enemy.position);
-                    }
-                    // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
-                    this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
-                    this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-                    this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
-                    this._enemy.battleEndProcess();
-                    this._battleTurnNum = 0;
-                    this._enemy = null;
+            // デフォルトのダメージ計算式を使用している場合に限り、
+            // プレイヤーが敵にダメージを与えられず、敵もプレイヤーにダメージを与えられない場合
+            // プレイヤーが最初に攻撃する前にシステムメッセージ CANNOT_DAMAGE_MONSTER（相手の防御能力が高すぎる！）を表示して戦闘終了する。
+            // カスタムダメージ計算式を利用した場合は、ダメージ量がターンによって変わる可能性があるため、事前にこのようなダメージ判定を実施するのは困難なためこの判定を実施しない。
+            // まつゆき個人としては、デフォルトのダメージ計算式の場合についてもこの仕様はなくてもいいと感じているが、生命力が 0 でダメージが通らないモンスターに対して
+            // 倒せる判定になるかどうかが過去のバージョンと異なってしまうため、無念ではあるがこの仕様を残す判断をした。
+            if (
+                this._battleTurnLength === 1 &&
+                this._wwa.isUsingDefaultDamageCalcFunction() &&
+                playerStatus.strength <= enemyStatus.defence &&
+                playerStatus.defence >= enemyStatus.strength
+            ) {
+                this._enemy.battleEndProcess();
+                const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
+                if (systemMessage !== "BLANK") {
+                    this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
                 }
-                this._isPlayerTurn = false;
+                this._battleTurnLength = 0;
+                this._enemy = null;
+                this._state = PlayerState.CONTROLLABLE;
                 return;
             }
+            const { damage, aborted} = this.calcBattleResultForPlayerTurn(playerStatus, enemyStatus);
+            // プレイヤーターン
+            this._enemy.damage(damage);
+            abortedByDamageCalculation = Boolean(aborted);
+            // プレイヤー勝利
+            if(this._enemy.status.energy <= 0) {
+                this._wwa.playSound(this._wwa.getObjectAttributeById(this._enemy.partsID, Consts.ATR_SOUND));
+                //                        this._wwa.appearParts(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
+                this.earnGold(enemyStatus.gold);
+                this._wwa.setStatusChangedEffect(new Status(0, 0, 0, enemyStatus.gold));
+                if (this._enemy.item !== 0) {
+                    this._wwa.setPartsOnPosition(PartsType.OBJECT, this._enemy.item, this._enemy.position);
+                } else {
+                    // 本当はif文でわける必要ないけど、可読性のため設置。
+                    this._wwa.setPartsOnPosition(PartsType.OBJECT, 0, this._enemy.position);
+                }
+                // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
+                this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
+                this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
+                this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
+                this._enemy.battleEndProcess();
+                this._battleTurnLength = 0;
+                this._battleNoDamageTurnLength = 0;
+                this._enemy = null;
+            }
+            // 前回のダメージログを記録
+            if (this._enemy !== null) {
+                if (damage === 0) {
+                    this._battleNoDamageTurnLength++;
+                } else {
+                    this._battleNoDamageTurnLength = 0;
+                }
+            }
+            this._isPlayerTurn = false;
+        } else {
+            // モンスターターン
+            const {damage, aborted} = this.calcBattleResultForEnemyTurn(enemyStatus, playerStatus);
+            this.damage(damage);
+            abortedByDamageCalculation = Boolean(aborted);
+            // プレイヤーがまだ生きてる
+            // playerStatus.energy - defaultDamageValue < 0
+            if (this._status.energy <= 0) {
+                // モンスター勝利
+                this.setEnergy(0);
+                this._enemy.battleEndProcess();
+                this._state = PlayerState.CONTROLLABLE;
+                this._battleTurnLength = 0;
+                this._battleNoDamageTurnLength = 0;
+                this._enemy = null;
+                if (this._wwa.shouldApplyGameOver({ isCalledByMacro: false })) {
+                    this._wwa.gameover();
+                }
+            }
+            // 前回のダメージログを記録
+            if (damage === 0) {
+                this._battleNoDamageTurnLength++;
+            } else {
+                this._battleNoDamageTurnLength = 0;
+            }
+            this._isPlayerTurn = true;
+        }
+
+        // 勝負がつかないと判定する処理 (規定ターンを超えた場合・強制終了)
+        // 戦闘開始から規定ターン、プレイヤーも敵もノーダメージなら戦闘を強制終了する
+        const aborted = (this._battleNoDamageTurnLength > Consts.FIGHT_DRAW_TURN) || abortedByDamageCalculation;
+        if (aborted) {
             this._enemy.battleEndProcess();
-            const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
+            const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.BATTLE_NOT_SETTLED);
             if (systemMessage !== "BLANK") {
                 this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
             }
-            this._battleTurnNum = 0;
+            this._battleTurnLength = 0;
+            this._battleNoDamageTurnLength = 0;
             this._enemy = null;
-        } else {
-            // モンスターターン
-            if (enemyStatus.strength > playerStatus.defence) {
-                // プレイヤーがまだ生きてる
-                if (playerStatus.energy > enemyStatus.strength - playerStatus.defence) {
-                    this.damage(enemyStatus.strength - playerStatus.defence);
-                    // モンスター勝利
-                } else {
-                    this.setEnergy(0);
-                    this._enemy.battleEndProcess();
-                    this._state = PlayerState.CONTROLLABLE;
-                    this._battleTurnNum = 0;
-                    this._enemy = null;
-                    if (this._wwa.shouldApplyGameOver({ isCalledByMacro: false })) {
-                        this._wwa.gameover();
-                    }
-                }
-            }
-
         }
-        this._isPlayerTurn = true;
-
     }
 
     public readyToUseItem(itemPos: number): void {
@@ -1223,6 +1317,7 @@ export class Player extends PartsObject {
         this._lookingAroundTimer = Consts.PLAYER_LOOKING_AROUND_START_FRAME;
         this._speedIndex = gameSpeedIndex;
         this._messageDelayFrameCount = 0;
+        this._battleNoDamageTurnLength = 0;
     }
 
 }

@@ -1,3 +1,4 @@
+import { assertNumber } from "../wwa_util";
 import type { Descriminant, TokenValues, Comparable } from "./typedef";
 
 export function evaluateDescriminant(d: Descriminant, tokenValues: TokenValues, fallbackValue: number = 0): boolean {
@@ -31,8 +32,15 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, 
       return tokenValues.totalStatus.gold;
     case 'STEP':
       return tokenValues.moveCount;
-    case 'VARIABLE':
-      return tokenValues.userVars[comparable.index];
+    case 'VARIABLE': {
+      const v = tokenValues.userVars[comparable.index];
+      // 旧 wwa_expression は廃止予定コードなので、 string | boolean 型には対応しません。予めご了承ください。
+      // $if が wwa_expression2 に移行したらコードごと消えます。
+      if (!assertNumber(v, `v${comparable.index}`)) {
+        return 0;
+      }
+      return v;
+    }
     case 'MAP': 
       if (
         comparable.y < 0 ||

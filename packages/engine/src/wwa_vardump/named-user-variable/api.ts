@@ -13,12 +13,15 @@ export function updateValues(
   if (!(dumpElement instanceof HTMLElement)) {
     return;
   }
+  const removeTargetUserVarIndexSet = createDisplayingUserVarSet(dumpElement);
   const listElement = getUserVariableListElement(dumpElement);
   if (!(listElement instanceof HTMLElement)) {
     return;
   }
+  // 既存ユーザ変数カードの更新・追加
   for (const [index, value] of userVar) {
     const maybeElement = getCardValueElement(dumpElement, index);
+    removeTargetUserVarIndexSet.delete(index);
     if (maybeElement instanceof HTMLElement) {
       // 既に変数が一覧にあるときは、既存の UserVariableCard の値を更新する。
       UserVariableCard.setValue(maybeElement, value);
@@ -30,14 +33,24 @@ export function updateValues(
       });
     }
   }
+  // 不要なユーザ変数カードの削除
+  for (const index of removeTargetUserVarIndexSet) {
+   const removeTarget = getCardElement(dumpElement, index).parentElement; // カード親の li 要素が削除対象
+   // 安全のため li 要素以外は削除しない
+   if (removeTarget instanceof HTMLLIElement) {
+     getUserVariableListElement(dumpElement).removeChild(removeTarget);
+   }
+  }
 }
 
 const LIST_SECTION_SELECTOR = `.${UserVariableListSection.CLASS_NAME}[data-kind="named"]`;
+const USER_VARITABLE_CARD_SELECTOR = `${LIST_SECTION_SELECTOR} > .${UserVariableList.CLASS_NAME} > li > .${
+    UserVariableCard.CLASS_NAME
+  }`;
+
 
 function generateCardSelector(index: string) {
-  return `${LIST_SECTION_SELECTOR} > .${UserVariableList.CLASS_NAME} > li > .${
-    UserVariableCard.CLASS_NAME
-  }[data-var-index="${CSS.escape(index)}"]`;
+  return `${USER_VARITABLE_CARD_SELECTOR}[data-var-index="${CSS.escape(index)}"]`;
 }
 
 function getUserVariableListElement(dumpElement: HTMLElement) {
@@ -46,6 +59,17 @@ function getUserVariableListElement(dumpElement: HTMLElement) {
   );
 }
 
+function getCardElement(dumpElement: HTMLElement, index: string) {
+  return dumpElement.querySelector(generateCardSelector(index));
+}
+
 function getCardValueElement(dumpElement: HTMLElement, index: string) {
   return dumpElement.querySelector(`${generateCardSelector(index)} > .value`);
+}
+
+function createDisplayingUserVarSet(dumpElement: HTMLElement): Set<string> {
+  return new Set([...dumpElement.querySelectorAll(USER_VARITABLE_CARD_SELECTOR)].map(element => 
+     element instanceof HTMLElement ? element.dataset.varIndex : undefined
+     // HACK: strict: true でないので string | undefined を string にする処理は書いていないので妥協している。
+  ).filter(Boolean))
 }
