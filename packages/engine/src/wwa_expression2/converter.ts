@@ -212,6 +212,8 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_GAMEOVER_POS_Y":
     case "ABORT_BATTLE":
     case "EXIT":
+    case "GET_IMG_POS_X":
+    case "GET_IMG_POS_Y":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -457,6 +459,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ITEM":
     case "X":
     case "Y":
+    case "ID":
+    case "TYPE":
     case "PX":
     case "PY":
     case "v":

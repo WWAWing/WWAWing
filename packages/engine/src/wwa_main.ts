@@ -1281,7 +1281,6 @@ export class WWA {
             return;
         }
         const readScriptWWANodes = this.convertWwaNodes(userScriptStrings.data);
-        console.log(readScriptWWANodes);
         readScriptWWANodes.forEach((currentNode) => {
             if(currentNode.type === 'DefinedFunction' && this.userDefinedFunctions) {
                 const functionName = currentNode.functionName;
@@ -3231,12 +3230,18 @@ export class WWA {
         return this._wwaData.systemMessage[messageID];
     }
 
+    // 背景パーツ情報取得
+    public getMapInfo(partsID: number): number[] {
+        return this._wwaData.mapAttribute[partsID];
+    }
+
     // 背景パーツ判定
     public checkMap(pos?: Coord): boolean {
         var playerPos = this._player.getPosition().getPartsCoord();
         pos = (pos !== void 0 && pos !== null) ? pos : playerPos;
         var partsID: number = this._wwaData.map[pos.y][pos.x];
-        var mapAttr: number = this._wwaData.mapAttribute[partsID][Consts.ATR_TYPE];
+        const mapInfo = this.getMapInfo(partsID);
+        var mapAttr: number = mapInfo[Consts.ATR_TYPE];
         var isPlayerPositionExec = (pos.x === playerPos.x && pos.y === playerPos.y);
         var eventExecuted: boolean = false;
         if (isPlayerPositionExec) {
@@ -3265,12 +3270,18 @@ export class WWA {
 
     }
 
+    // 物体パーツ情報取得
+    public getObjectInfo(partsID: number): number[] {
+        return this._wwaData.objectAttribute[partsID];
+    }
+
     // 物体パーツ判定
     public checkObject(pos?: Coord): void {
         var playerPos = this._player.getPosition().getPartsCoord();
         pos = (pos !== void 0 && pos !== null) ? pos : playerPos;
         var partsID: number = this._wwaData.mapObject[pos.y][pos.x];
-        var objAttr: number = this._wwaData.objectAttribute[partsID][Consts.ATR_TYPE];
+        const objInfo = this.getObjectInfo(partsID);
+        var objAttr: number = objInfo[Consts.ATR_TYPE];
         var isPlayerPositionExec = (pos.x === playerPos.x && pos.y === playerPos.y);
         if (isPlayerPositionExec) {
             if (this._player.getLastExecPartsIDOnSamePosition(PartsType.OBJECT) === partsID) {
@@ -4070,7 +4081,7 @@ export class WWA {
         /** <script> タグが含まれる場合中身を実行する。 */
         if(messageMainSplit.length > 1) {
             const scriptStrings = messageMainSplit[1];
-            this._execEvalString(scriptStrings);
+            this._execEvalString(scriptStrings, partsId, partsType, partsPosition);
         }
 
         if (messageMain === "") {
@@ -7034,7 +7045,8 @@ font-weight: bold;
             userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
-            itemBox: this._player.getCopyOfItemBox()
+            itemBox: this._player.getCopyOfItemBox(),
+            wwaData: this._wwaData
         }
     }
     
@@ -7061,10 +7073,14 @@ font-weight: bold;
      * Script要素実行部分
      * @param evalString 
      */
-    private _execEvalString(evalString: string) {
+    private _execEvalString(evalString: string, triggerPartsId?: number, triggerPartsType?: PartsType, triggerPartsPosition?: Coord) {
         try {
             const nodes = this.convertWwaNodes(evalString);
+            if (triggerPartsId && triggerPartsPosition) {
+                this.evalCalcWwaNodeGenerator.setTriggerParts(triggerPartsId, triggerPartsType ?? PartsType.OBJECT, triggerPartsPosition);
+            }
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
+            this.evalCalcWwaNodeGenerator.clearTriggerParts();
         }
         catch(e) {
             console.error(e);
