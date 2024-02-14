@@ -4081,7 +4081,7 @@ export class WWA {
         /** <script> タグが含まれる場合中身を実行する。 */
         if(messageMainSplit.length > 1) {
             const scriptStrings = messageMainSplit[1];
-            this._execEvalString(scriptStrings);
+            this._execEvalString(scriptStrings, partsId, partsType, partsPosition);
         }
 
         if (messageMain === "") {
@@ -7065,10 +7065,14 @@ font-weight: bold;
      * Script要素実行部分
      * @param evalString 
      */
-    private _execEvalString(evalString: string) {
+    private _execEvalString(evalString: string, triggerPartsId?: number, triggerPartsType?: PartsType, triggerPartsPosition?: Coord) {
         try {
             const nodes = this.convertWwaNodes(evalString);
+            if (triggerPartsId && triggerPartsPosition) {
+                this.evalCalcWwaNodeGenerator.setTriggerParts(triggerPartsId, triggerPartsType ?? PartsType.OBJECT, triggerPartsPosition);
+            }
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
+            this.evalCalcWwaNodeGenerator.clearTriggerParts();
         }
         catch(e) {
             console.error(e);

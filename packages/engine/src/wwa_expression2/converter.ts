@@ -459,6 +459,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ITEM":
     case "X":
     case "Y":
+    case "ID":
+    case "TYPE":
     case "PX":
     case "PY":
     case "v":
