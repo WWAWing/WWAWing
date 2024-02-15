@@ -1,6 +1,6 @@
 import { PictureRegistry, RawPictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { PictureRegistryParts } from "./typedef";
-import { PicturePropertyDefinitions } from "./config";
+import { PicturePropertyDefinitions, PicturePropertyName, propertySnakeCaseTable } from "./config";
 import { TokenValues, evaluateMacroArgExpression, regPictureTemplate } from "../wwa_expression";
 
 export const convertPictureRegistryFromText = (partsRegistry: PictureRegistryParts): RawPictureRegistry => {
@@ -41,20 +41,25 @@ const validatePropertyValue = (key: string, value: unknown): boolean => {
     return true;
 };
 
+const matchToSnakeCaseProperty = (propertyName: PicturePropertyName) => {
+    return propertySnakeCaseTable[propertyName] ?? propertyName;
+};
+
 export const checkValuesFromRawRegistry = (registry: RawPictureRegistry): PictureRegistry => {
     const propertiesArray = Object.entries(registry.properties).map(([key, value]) => {
-        if (!validatePropertyValue(key, value)) {
-            return [key, value];
+        const camelCaseKey = matchToSnakeCaseProperty(key as PicturePropertyName);
+        if (!validatePropertyValue(camelCaseKey, value)) {
+            return [camelCaseKey, value];
         }
         // "v[10]" のような文字列からの変換はしないものの、 string であるはずなのに number で来た場合は string に変えるなど、最低限変換は行うようにする。
-        const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
+        const definitions = PicturePropertyDefinitions.find(({ name }) => name === camelCaseKey);
         switch (definitions.type) {
             case "string":
                 if (typeof value !== "string") {
-                    return [key, value.toString()];
+                    return [camelCaseKey, value.toString()];
                 }
         }
-        return [key, value];
+        return [camelCaseKey, value];
     })
     return {
         ...registry,
@@ -73,19 +78,20 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
         return evaluateMacroArgExpression(value, tokenValues);
     }
     const propertiesArray = Object.entries(registry.properties).map(([key, value]) => {
-        if (!validatePropertyValue(key, value)) {
-            return [key, value];
+        const camelCaseKey = matchToSnakeCaseProperty(key as PicturePropertyName);
+        if (!validatePropertyValue(camelCaseKey, value)) {
+            return [camelCaseKey, value];
         }
-        const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
+        const definitions = PicturePropertyDefinitions.find(({ name }) => name === camelCaseKey);
         switch (definitions.type) {
             case "number":
-                return [key, stringToNumberForNumericValue(value)];
+                return [camelCaseKey, stringToNumberForNumericValue(value)];
             case "numberArray":
-                return [key, value.map(stringToNumberForNumericValue)]
+                return [camelCaseKey, value.map(stringToNumberForNumericValue)]
             case "string":
                 if (typeof value !== "string") {
                     // 細かいバリデーションは validatePropertyValue で実行済みなのでここでは簡潔に
-                    return [key, value.toString()];
+                    return [camelCaseKey, value.toString()];
                 }
                 let evaluatedString = String(value);
                 // spread 構文の使用には tsconfig の変更が必要
@@ -103,9 +109,9 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
                         typeof evaluatedValue === "number" ? evaluatedValue.toString() : evaluatedValue
                     );
                 });
-                return [key, evaluatedString];
+                return [camelCaseKey, evaluatedString];
             default:
-                return [key, value];
+                return [camelCaseKey, value];
         }
     });
     return {

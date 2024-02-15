@@ -5,17 +5,23 @@ export interface PictureProperties<N = number> {
   repeat?: [N, N];
   img?: ([N, N] | [N, N, N, N]);
   imgFile?: string;
+  // スネークケースになっているだけで、内容は上記と同じ
+  img_file?: string;
   crop?: [N, N];
   text?: string;
   font?: string;
   fontSize?: number;
+  font_size?: number;
   fontFamily?: string;
+  font_family?: string;
   italic?: number;
   bold?: number;
   color?: [N, N, N];
   // CanvasTextAlign そのままの値
   textAlign?: "center" | "end" | "left" | "right" | "start";
+  text_align?: "center" | "end" | "left" | "right" | "start";
   lineHeight?: N;
+  line_height?: N;
   opacity?: N;
   next?: [N] | [N, N] | [N, N, N],
   // TODO map プロパティの座標で PX と PY を指定するとピクチャ作成時の座標が評価されてしまい、移動後はプレイヤーの位置通りにパーツが配置されない。
