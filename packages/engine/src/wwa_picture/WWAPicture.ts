@@ -207,6 +207,7 @@ export default class WWAPicutre {
     }
 
     public forEachPictures(caller: (picture: WWAPictureItem) => void) {
+        // FIXME ID 順で描画すべき
         this._pictures.forEach(caller);
     }
 
