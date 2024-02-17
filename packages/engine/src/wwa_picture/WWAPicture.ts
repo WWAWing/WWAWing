@@ -232,6 +232,19 @@ export default class WWAPicutre {
         this._frameTimerValue = WWAPicutre._getNowFrameValue();
     }
 
+    /**
+     * 各ピクチャのプロパティを更新します。
+     * 
+     * ## 現状の課題点
+     * - アニメーション関連のプロパティがないピクチャには余計な実行になる
+     * - アニメーションがガタガタ動く
+     */
+    public updatePictures() {
+        this.forEachPictures(picture => {
+            picture.update();
+        });
+    }
+
     public decrementPictureDisplayTimeStock() {
         const newFrameValue = WWAPicutre._getNowFrameValue();
         const frameMs = newFrameValue - this._frameTimerValue;

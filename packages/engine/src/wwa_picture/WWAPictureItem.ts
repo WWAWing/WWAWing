@@ -11,8 +11,8 @@ import * as util from "../wwa_util";
  */
 export default class WWAPictureItem {
 
-    private readonly _posX: number;
-    private readonly _posY: number;
+    private _posX: number;
+    private _posY: number;
     private readonly _imgMainX: number;
     private readonly _imgMainY: number;
     private readonly _imgSubX: number;
@@ -22,6 +22,10 @@ export default class WWAPictureItem {
     private readonly _chipHeight: number;
     private readonly _totalWidth: number;
     private readonly _totalHeight: number;
+    private _moveX: number;
+    private _moveY: number;
+    private readonly _accelX: number;
+    private readonly _accelY: number;
     private readonly _repeatX: number;
     private readonly _repeatY: number;
     private readonly _imgFile?: HTMLImageElement;
@@ -51,6 +55,12 @@ export default class WWAPictureItem {
             (properties.size?.[1] ?? (this._imgFile ? this._imgFile.height : WWAConsts.CHIP_SIZE)) * this._cropY;
         this._chipWidth = Math.floor(this._totalWidth / this._cropX);
         this._chipHeight = Math.floor(this._totalHeight / this._cropY);
+
+        // アニメーション関連のプロパティをセット
+        this._moveX = properties.move?.[0] ?? 0;
+        this._moveY = properties.move?.[1] ?? 0;
+        this._accelX = properties.accel?.[0] ?? 0;
+        this._accelY = properties.accel?.[1] ?? 0;
         
         this._displayStockTime = properties.time;
         
@@ -144,6 +154,16 @@ export default class WWAPictureItem {
                 }
             }
         }
+    }
+
+    /**
+     * ピクチャのプロパティを更新します。
+     */
+    public update() {
+        this._posX = this._posX + this._moveX;
+        this._posY = this._posY + this._moveY;
+        this._moveX = this._moveX + this._accelX;
+        this._moveY = this._moveY + this._accelY;
     }
 
     public hasDisplayTimeStock() {
