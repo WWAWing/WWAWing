@@ -2439,6 +2439,7 @@ export class WWA {
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
             this._cgManager.picture.updatePictures();
+            this.updatePicturesCache();
             this._cgManager.picture.decrementPictureDisplayTimeStock();
         } else if (this._player.isJumped()) {
             if (!this._camera.isResetting()) {
