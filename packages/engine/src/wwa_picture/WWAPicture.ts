@@ -237,7 +237,6 @@ export default class WWAPicutre {
      * 
      * ## 現状の課題点
      * - アニメーション関連のプロパティがないピクチャには余計な実行になる
-     * - プレイヤー移動中に動作が遅くなる
      */
     public updatePictures() {
         this.forEachPictures(picture => {

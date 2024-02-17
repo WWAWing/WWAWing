@@ -2451,6 +2451,10 @@ export class WWA {
             if (this._player.getPosition().isJustPosition()) {
                 this._dispatchPlayerAndObjectsStopTimeRequests();
             }
+            // TODO 上にも同じ処理が書いてある、できれば一つにまとめられないか
+            this._cgManager.picture.updatePictures();
+            this.updatePicturesCache();
+            this._cgManager.picture.decrementPictureDisplayTimeStock();
         } else if (this._player.isWaitingMessage()) {
 
             if (!this._messageWindow.isVisible()) {
