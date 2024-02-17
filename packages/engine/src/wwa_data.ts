@@ -88,7 +88,11 @@ export class Status extends EquipmentStatus {
         return (Object.keys(scoreOption.rates) as Key[]).reduce((prev, key) =>  prev + scoreOption.rates[key] * this[key], 0);
     }
 
-    public constructor( e: number, s: number, d: number, g: number) {
+    public clone() {
+        return new Status(this.energy, this.strength, this.defence, this.gold);
+    }
+
+    public constructor(e: number, s: number, d: number, g: number) {
         super(s, d);
         this.energy = e;
         this.gold = g;
@@ -901,6 +905,9 @@ export class WWAConsts {
      */
     static INLINE_USER_VAR_VIEWER_DISPLAY_NUM = 10;
 
+    // 戦闘でお互いノーダメージが指定ターン続いた場合、引き分けとする。
+    // ここでいうターンは プレイヤーターンと敵ターンの合計であることに注意。
+    static readonly FIGHT_DRAW_TURN: number = 40;
 }
 export class WWASaveConsts {
     static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数
@@ -1047,3 +1054,46 @@ export interface TriggerParts {
     type: PartsType;
     position: Coord;
 }
+
+/**
+ * ユーザ変数の種類
+ * - named: 名前つき変数
+ * - numbered: 添字が数値の変数
+ */
+export type UserVariableKind = "named" | "numbered";
+
+/**
+ * 戦闘における1ターンの結果
+ */
+export interface BattleTurnResult {
+    /**
+     * ダメージ量
+     */
+    damage: number;
+    /**
+     * 中断の場合は true
+     * 中断した場合でも該当ターンのダメージは入ります。
+     */
+    aborted?: boolean;
+    /**
+     * ユーザー定義関数で予期せぬエラーがあった場合 true
+     * ほとんど起きないと思いますが念のため。
+     * エラーがあった場合はダメージは 0 となります。
+     */
+    hasError?: boolean
+}
+
+
+/**
+ * 戦闘予測用パラメータ
+ */
+export interface BattleEstimateParameters {
+    playerStatus: Status;
+    enemyStatus: Status
+}
+
+
+/**
+ * 戦闘ダメージ方向の定義
+ */
+export type BattleDamageDirection = "playerToEnemy" | "enemyToPlayer";

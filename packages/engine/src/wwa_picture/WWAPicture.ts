@@ -1,9 +1,9 @@
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, PartsType, WWAConsts } from "../wwa_data";
 import { PicturePropertyDefinitions } from "./config";
-import { PictureExternalImageItem, PictureRegistryParts } from "./typedef";
-import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
-import { convertPictureRegistryFromText, convertVariablesFromRawRegistry } from "./utils";
+import { PictureExternalImageItem } from "./typedef";
+import { PictureRegistry, RawPictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
+import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVariablesFromRawRegistry } from "./utils";
 import { WWA } from "../wwa_main";
 import WWAPictureItem from "./WWAPictureItem";
 import { fetchJsonFile } from "../json_api_client";
@@ -108,24 +108,25 @@ export default class WWAPicutre {
             }
         }
         this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
+        // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
+        this._pictures = new Map([...this._pictures.entries()].sort());
     }
 
     /**
-     * ピクチャをテキストデータから登録し、追加後のピクチャをデータにして返します。
+     * ピクチャを Object 形式のデータから登録し、追加後のピクチャをデータにして返します。
      * プロパティの変換は WWAPicture クラス内で行われます。
-     * @param regitory ピクチャの登録情報
+     * @param rawRegitry ピクチャの登録情報 (プロパティの変数参照は未変換の状態とする)
      * @param targetPartsID 対象のパーツ番号
      * @param targetPartsType 対象のパーツ種類
-     * @param triggerPartsPosition 実行元パーツの座標
+     * @param previousPictureProperties next プロパティで引き継いだ前のピクチャのプロパティ情報
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
-    public registerPictureFromText(
-        registry: PictureRegistryParts,
+    public registerPictureFromRawRegistry(
+        rawRegistry: RawPictureRegistry,
         targetPartsID: number,
         targetPartsType: PartsType,
         previousPictureProperties?: PictureRegistry["properties"],
     ) {
-        const rawRegistry = convertPictureRegistryFromText(registry);
         this.registerPicture(convertVariablesFromRawRegistry(
             previousPictureProperties
                 ? { ...rawRegistry, properties: { ...previousPictureProperties, ...rawRegistry.properties } }
@@ -133,9 +134,55 @@ export default class WWAPicutre {
             this._wwa.generateTokenValues({
                 id: targetPartsID,
                 type: targetPartsType,
-                position: new Coord(registry.triggerPartsX, registry.triggerPartsY)
+                position: new Coord(rawRegistry.triggerPartsX, rawRegistry.triggerPartsY)
             })
         ));
+        return this.getPictureRegistryData();
+    }
+
+    /**
+     * ピクチャをテキストデータから登録し、追加後のピクチャをデータにして返します。
+     * プロパティは変換されずそのままの値として評価されます。外部のシステムで JSON テキストを評価している場合に使用します。
+     *
+     * その際含まれないパーツ定義についてはすべて 0 として扱います。
+     * imgPos 関連については img プロパティで補填してください。
+     * triggerParts 関連についてはシステム上対応できません。
+     * @param text プロパティが記載された JSON テキスト
+     */
+    public registerPictureFromRawText(
+        layerNumber: number,
+        propertiesText: string
+    ) {
+        const registry = convertPictureRegistryFromText({
+            imgPosX: 0,
+            imgPosY: 0,
+            imgPosX2: 0,
+            imgPosY2: 0,
+            layerNumber,
+            triggerPartsX: 0,
+            triggerPartsY: 0,
+            propertiesText,
+        });
+        this.registerPicture(checkValuesFromRawRegistry(registry));
+        return this.getPictureRegistryData();
+    }
+
+    public registerPictureFromObject(
+        layerNumber: number,
+        properties: object
+    ) {
+        this.registerPicture(
+            checkValuesFromRawRegistry({
+                imgPosX: 0,
+                imgPosY: 0,
+                imgPosX2: 0,
+                imgPosY2: 0,
+                layerNumber,
+                triggerPartsX: 0,
+                triggerPartsY: 0,
+                properties
+            })
+        );
         return this.getPictureRegistryData();
     }
 
@@ -197,6 +244,7 @@ export default class WWAPicutre {
                 const layerNumber = picture.layerNumber;
                 const nextPictureParts = picture.nextPictureParts;
                 const mapPictureInfo = picture.appearParts;
+                const executeScriptFunctionName = picture.executeScriptFunctionName;
                 // next プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
                 const pictureProperties = picture.getRegistryData(true).properties;
                 const triggerPartsCoord = picture.getTriggerPartsCoord();
@@ -221,6 +269,9 @@ export default class WWAPicutre {
                         mapPictureInfo.partsNumber,
                         new Coord(mapPictureInfo.x, mapPictureInfo.y)
                     );
+                }
+                if (executeScriptFunctionName) {
+                    this._wwa.callUserScript(executeScriptFunctionName);
                 }
             }
         });

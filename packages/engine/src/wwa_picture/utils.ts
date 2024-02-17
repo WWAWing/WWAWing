@@ -1,6 +1,6 @@
 import { PictureRegistry, RawPictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { PictureRegistryParts } from "./typedef";
-import { PicturePropertyDefinitions } from "./config";
+import { PicturePropertyDefinitions, PicturePropertyName, propertySnakeCaseTable } from "./config";
 import { TokenValues, evaluateMacroArgExpression, regPictureTemplate } from "../wwa_expression";
 
 export const convertPictureRegistryFromText = (partsRegistry: PictureRegistryParts): RawPictureRegistry => {
@@ -21,6 +21,52 @@ export const convertPictureRegistryFromText = (partsRegistry: PictureRegistryPar
     }
 };
 
+const validatePropertyValue = (key: string, value: unknown): boolean => {
+    const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
+    if (!definitions) {
+        // 本来ならエラーにすべきだが、あらかじめバリデーションを通している関係でそのままスルーする。ただし警告は出す。
+        // TODO フィルターをかけて定義街のプロパティを排除してもいいかもしれない
+        console.warn(`定義外のプロパティ ${key} を見つけました。`);
+        return false;
+    }
+    switch (definitions.type) {
+        case "string":
+            if (typeof value !== "string") {
+                if (typeof value !== "number") {
+                    console.warn(`プロパティ ${key} では文字列形式である必要があります。実際に入った値は ${value} です。`);
+                }
+                return false;
+            }
+    }
+    return true;
+};
+
+const matchToSnakeCaseProperty = (propertyName: PicturePropertyName) => {
+    return propertySnakeCaseTable[propertyName] ?? propertyName;
+};
+
+export const checkValuesFromRawRegistry = (registry: RawPictureRegistry): PictureRegistry => {
+    const propertiesArray = Object.entries(registry.properties).map(([key, value]) => {
+        const camelCaseKey = matchToSnakeCaseProperty(key as PicturePropertyName);
+        if (!validatePropertyValue(camelCaseKey, value)) {
+            return [camelCaseKey, value];
+        }
+        // "v[10]" のような文字列からの変換はしないものの、 string であるはずなのに number で来た場合は string に変えるなど、最低限変換は行うようにする。
+        const definitions = PicturePropertyDefinitions.find(({ name }) => name === camelCaseKey);
+        switch (definitions.type) {
+            case "string":
+                if (typeof value !== "string") {
+                    return [camelCaseKey, value.toString()];
+                }
+        }
+        return [camelCaseKey, value];
+    })
+    return {
+        ...registry,
+        properties: Object.fromEntries(propertiesArray)
+    };
+};
+
 export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, tokenValues: TokenValues): PictureRegistry => {
     // 数値専用形式で数値あるいは文字列が来た場合、正規表現で置き換えて処理する関数
     const stringToNumberForNumericValue = (value: string | number): number | string => {
@@ -32,24 +78,20 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
         return evaluateMacroArgExpression(value, tokenValues);
     }
     const propertiesArray = Object.entries(registry.properties).map(([key, value]) => {
-        const definitions = PicturePropertyDefinitions.find(({ name }) => name === key);
-        if (!definitions) {
-            // 本来ならエラーにすべきだが、あらかじめバリデーションを通している関係でそのままスルーする。ただし警告は出す。
-            // TODO フィルターをかけて定義街のプロパティを排除してもいいかもしれない
-            console.warn(`定義外のプロパティ ${key} を見つけました。`);
-            return [key, value];
+        const camelCaseKey = matchToSnakeCaseProperty(key as PicturePropertyName);
+        if (!validatePropertyValue(camelCaseKey, value)) {
+            return [camelCaseKey, value];
         }
+        const definitions = PicturePropertyDefinitions.find(({ name }) => name === camelCaseKey);
         switch (definitions.type) {
             case "number":
-                return [key, stringToNumberForNumericValue(value)];
+                return [camelCaseKey, stringToNumberForNumericValue(value)];
             case "numberArray":
-                return [key, value.map(stringToNumberForNumericValue)]
+                return [camelCaseKey, value.map(stringToNumberForNumericValue)]
             case "string":
                 if (typeof value !== "string") {
-                    if (typeof value !== "number") {
-                        console.warn(`プロパティ ${key} では文字列形式である必要があります。実際に入った値は ${value} です。`);
-                    }
-                    return [key, value.toString()];
+                    // 細かいバリデーションは validatePropertyValue で実行済みなのでここでは簡潔に
+                    return [camelCaseKey, value.toString()];
                 }
                 let evaluatedString = String(value);
                 // spread 構文の使用には tsconfig の変更が必要
@@ -67,9 +109,9 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
                         typeof evaluatedValue === "number" ? evaluatedValue.toString() : evaluatedValue
                     );
                 });
-                return [key, evaluatedString];
+                return [camelCaseKey, evaluatedString];
             default:
-                return [key, value];
+                return [camelCaseKey, value];
         }
     });
     return {

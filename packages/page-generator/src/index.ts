@@ -41,6 +41,9 @@ export interface TemplateValues {
             "data-wwa-picture-image-names-file"?: string;
         };
     };
+    debugConsoleElement?: {
+        id: string;
+    }
     varDumpElement?: {
         id: string;
     };
@@ -81,6 +84,8 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-picture-image-names-file": wwa.resources.pictureImageNamesFile,
             }
         },
+        // HACK: デバッグコンソールエリアの要素名は変更できるようにする
+        debugConsoleElement: wwa.gameOption?.debugConsole ? { id: "wwa-debug-console-area" } : undefined,
         varDumpElement: wwa.gameOption?.userVars?.dumpElementId ? { id: wwa.gameOption.userVars.dumpElementId } : undefined,
         virtualPadController: wwa.gameOption?.virtualPad?.controllerId ? { id: wwa.gameOption.virtualPad.controllerId } : undefined,
         footer: {

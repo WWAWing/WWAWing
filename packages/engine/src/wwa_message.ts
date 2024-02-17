@@ -34,7 +34,7 @@ import { convertRelativeValue } from "./wwa_message/utils";
 /**
  * 値が更新された時に、再評価されるべき値を返す関数の型。
  */
-export type LazyEvaluateValue = () => number;
+export type LazyEvaluateValue = () => number | string | boolean;
 /**
  * 通常のメッセージ文字列と LazyEvaluateValue が混在した配列の型。
  * 例: ["変数 10 番の値は", () => userVar[10], "です。\n文字列中に改行も入りえます。"]
