@@ -22,7 +22,6 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "accel", type: "numberArray" },
     { name: "zoom", type: "numberArray" },
     { name: "zoomAccel", type: "numberArray" },
-    { name: "zoom_accel", type: "numberArray" },
     { name: "anchor", type: "number" },
     { name: "circle", type: "numberArray" },
     { name: "repeat", type: "numberArray" },
@@ -52,6 +51,7 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
  * スネークケースとキャメルケースが混在する場合はこのオブジェクトにプロパティを追加してください。
  */
 export const propertySnakeCaseTable: { [key: string]: PicturePropertyName } = {
+    "zoom_accel": "zoomAccel",
     "img_file": "imgFile",
     "font_size": "fontSize",
     "font_family": "fontFamily",
