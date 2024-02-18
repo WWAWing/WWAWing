@@ -40,7 +40,7 @@ import { Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import { parseMacro } from "./wwa_macro";
-import { ParsedMessage,  MessageSegments, isEmptyMessageTree, Node, Junction, Page, generatePagesByRawMessage } from "./wwa_message";
+import { ParsedMessage, isEmptyMessageTree, Node, Junction, Page, generatePagesByRawMessage } from "./wwa_message";
 import { MessageWindow, MonsterWindow, ScoreWindow } from "./wwa_window"
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -1841,8 +1841,11 @@ export class WWA {
     private _executeNode(node: Node | undefined, triggerParts?: TriggerParts): ParsedMessage[] {
         if (node instanceof ParsedMessage) {
             node.macro?.forEach(macro=>{
-                const { isGameOver } = macro.execute();
-                if (isGameOver) {
+                const result = macro.execute();
+                if(result === undefined) {
+                    debugger;
+                }
+                if (result.isGameOver) {
                     throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。");
                 }
             });
@@ -4008,6 +4011,7 @@ export class WWA {
             isSystemMessage,
             showChoice,
             scoreOption,
+            (macroStr: string) => parseMacro(this, partsID, partsType, partsPosition, macroStr),
             // HACK: WWA Script の呼び出し順変更が終わったら消せる
             (scriptStrings: string) => this._execEvalString(scriptStrings, partsID, partsType, partsPosition),
             // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)

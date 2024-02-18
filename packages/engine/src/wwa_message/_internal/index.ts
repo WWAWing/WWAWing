@@ -1,5 +1,5 @@
-import { PartsType, Coord, MacroType, TriggerParts } from "../../wwa_data";
-import { parseMacro } from "../../wwa_macro";
+import { MacroType, type TriggerParts } from "../../wwa_data";
+import type { Macro } from "../../wwa_macro";
 import {
   Node,
   MessageLineType,
@@ -23,9 +23,7 @@ export const messageLineIsText = (lineType: MessageLineType) =>
  */
 export function parseMessageLines(
   pageContent: string,
-  partsID: number,
-  partsType: PartsType,
-  partsPosition: Coord
+  parseMacro: (macroStr: string) => Macro
 ): MessageLine[] {
   return pageContent
     .split("\n")
@@ -36,13 +34,7 @@ export function parseMessageLines(
           ? undefined
           : { type: "text" as const, text: line };
       }
-      const macro = parseMacro(
-        this,
-        partsID,
-        partsType,
-        partsPosition,
-        matchInfo[1]
-      );
+      const macro = parseMacro(matchInfo[1]);
       switch (macro.macroType) {
         case MacroType.IF:
         case MacroType.ELSE_IF:

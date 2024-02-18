@@ -8,6 +8,7 @@ import * as util from "../wwa_util";
 import { Junction, Node, ParsedMessage, Page, } from "./data";
 import { parseMessageLines, createNewNode, processConditionalExecuteMacroLine, connectOrMergeToPreviousNode, messageLineIsText } from "./_internal";
 import * as ExpressionParser from "../wwa_expression";
+import { Macro } from "../wwa_macro";
 
 export * from "./data";
 
@@ -19,6 +20,7 @@ export function generatePagesByRawMessage(
   isSystemMessage: boolean,
   showChoice: boolean,
   scoreOption: ScoreOptions,
+  parseMacro: (macroStr: string) => Macro,
   // HACK: WWA Script 呼び出し順変更が完了したらこのコールバックは消せる
   execEvalStringCallback: (scriptSettings: string) => void,
   // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
@@ -92,12 +94,7 @@ export function generatePagesByRawMessage(
       type: partsType,
       position: partsPosition,
     };
-    const lines = parseMessageLines(
-      pageContent,
-      partsId,
-      partsType,
-      partsPosition
-    );
+    const lines = parseMessageLines(pageContent, parseMacro);
     const junctionNodeStack: Junction[] = [];
 
     lines.forEach((line, index) => {
