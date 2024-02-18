@@ -81,7 +81,7 @@ const LIST_SECTION_SELECTOR = `.${UserVariableListSection.CLASS_NAME}[data-kind=
 
 function getInformationElement(dumpElement: HTMLElement) {
   return dumpElement.querySelector(
-    `.${LIST_SECTION_SELECTOR} > header > .${UserVariableListSection.Header.Information.CLASS_NAME}`
+    `${LIST_SECTION_SELECTOR} > header > .${UserVariableListSection.Header.Information.CLASS_NAME}`
   );
 }
 
