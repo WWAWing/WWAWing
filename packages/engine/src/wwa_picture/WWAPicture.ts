@@ -212,14 +212,8 @@ export default class WWAPicutre {
         this._pictures.forEach(caller);
     }
 
-    public updatePicturesCache(image: HTMLImageElement, isMainAnimation: boolean) {
+    public updateAllPicturesCache(image: HTMLImageElement, isMainAnimation: boolean) {
         this.forEachPictures((picture) => {
-            // layerNumber が 0 の場合はいわゆる無名ピクチャという扱いのため、既存のピクチャ定義を上書きしない挙動となっている。
-            // このことを想定して、 canvas のクリアを除外しているのだが、これだと変化前の画像データが残ってしまうことになる。
-            // TODO WWAeval の実装では無名ピクチャをどのように実装しているのかソースを確認する
-            if (picture.layerNumber !== 0) {
-                picture.clearCanvas();
-            }
             picture.draw(image, isMainAnimation);
         })
     }
@@ -234,57 +228,55 @@ export default class WWAPicutre {
 
     /**
      * 各ピクチャのプロパティを更新します。
-     * 
-     * ## 現状の課題点
-     * - アニメーション関連のプロパティがないピクチャには余計な実行になる
+     * 表示時間が過ぎたピクチャは削除し、プロパティに応じた適切な処理を実行します。
+     * 毎フレーム実行されることを想定しています。
      */
-    public updatePictures() {
-        this.forEachPictures(picture => {
-            picture.update();
-        });
-    }
-
-    public decrementPictureDisplayTimeStock() {
+    public updatePicturesAnimation(image: HTMLImageElement, isMainAnimation: boolean) {
         const newFrameValue = WWAPicutre._getNowFrameValue();
         const frameMs = newFrameValue - this._frameTimerValue;
         this.forEachPictures(picture => {
-            if (!picture.hasDisplayTimeStock()) {
-                return;
+            if (picture.hasDisplayTimeStock()) {
+                picture.decrementDisplayTimeStock(frameMs);
+                // TODO ネストが深くなってる、そろそろなんとかせねば
+                if (picture.isDeadlineOver()) {
+                    const layerNumber = picture.layerNumber;
+                    const nextPictureParts = picture.nextPictureParts;
+                    const mapPictureInfo = picture.appearParts;
+                    const executeScriptFunctionName = picture.executeScriptFunctionName;
+                    // next プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
+                    const pictureProperties = picture.getRegistryData(true).properties;
+                    const triggerPartsCoord = picture.getTriggerPartsCoord();
+                    this.deletePicture(layerNumber);
+                    if (nextPictureParts !== undefined) {
+                        // TODO 座標を算出したい
+                        this._wwa.setPictureRegistry(
+                            layerNumber,
+                            nextPictureParts.partsNumber,
+                            nextPictureParts.partsType,
+                            triggerPartsCoord,
+                            nextPictureParts.connectProperties ? pictureProperties : undefined,
+                        );
+                    }
+                    if (mapPictureInfo !== undefined) {
+                        // TODO ピクチャ機能の数値算出システムに依存しているため、
+                        //      消去時点での座標を計算して配置することができない
+                        //      例えば、消去時点でのプレイヤー位置に任意のパーツを配置とするようなことはできない
+                        //      WWA Script 対応後は任意の関数を呼び出す機能で実現できるようになるつもり
+                        this._wwa.setPartsOnPosition(
+                            mapPictureInfo.partsType,
+                            mapPictureInfo.partsNumber,
+                            new Coord(mapPictureInfo.x, mapPictureInfo.y)
+                        );
+                    }
+                    if (executeScriptFunctionName) {
+                        this._wwa.callUserScript(executeScriptFunctionName);
+                    }
+                    return;
+                }
             }
-            picture.decrementDisplayTimeStock(frameMs);
-            if (picture.isDeadlineOver()) {
-                const layerNumber = picture.layerNumber;
-                const nextPictureParts = picture.nextPictureParts;
-                const mapPictureInfo = picture.appearParts;
-                const executeScriptFunctionName = picture.executeScriptFunctionName;
-                // next プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
-                const pictureProperties = picture.getRegistryData(true).properties;
-                const triggerPartsCoord = picture.getTriggerPartsCoord();
-                this.deletePicture(layerNumber);
-                if (nextPictureParts !== undefined) {
-                    // TODO 座標を算出したい
-                    this._wwa.setPictureRegistry(
-                        layerNumber,
-                        nextPictureParts.partsNumber,
-                        nextPictureParts.partsType,
-                        triggerPartsCoord,
-                        nextPictureParts.connectProperties ? pictureProperties : undefined,
-                    );
-                }
-                if (mapPictureInfo !== undefined) {
-                    // TODO ピクチャ機能の数値算出システムに依存しているため、
-                    //      消去時点での座標を計算して配置することができない
-                    //      例えば、消去時点でのプレイヤー位置に任意のパーツを配置とするようなことはできない
-                    //      WWA Script 対応後は任意の関数を呼び出す機能で実現できるようになるつもり
-                    this._wwa.setPartsOnPosition(
-                        mapPictureInfo.partsType,
-                        mapPictureInfo.partsNumber,
-                        new Coord(mapPictureInfo.x, mapPictureInfo.y)
-                    );
-                }
-                if (executeScriptFunctionName) {
-                    this._wwa.callUserScript(executeScriptFunctionName);
-                }
+            if (picture.hasAnimation) {
+                picture.updateAnimation();
+                picture.draw(image, isMainAnimation);
             }
         });
     }

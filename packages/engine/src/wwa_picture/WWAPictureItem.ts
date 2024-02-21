@@ -31,6 +31,7 @@ export default class WWAPictureItem {
     private readonly _imgFile?: HTMLImageElement;
     private readonly _cropX: number;
     private readonly _cropY: number;
+    private readonly _hasAnimation: boolean;
     
     private _displayStockTime?: number;
 
@@ -76,10 +77,16 @@ export default class WWAPictureItem {
         const colorG = properties.color?.[1] ?? 0;
         const colorB = properties.color?.[2] ?? 0;
         this._canvas.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
+
+        this._hasAnimation = this.getHasAnimation();
     }
 
     public get layerNumber() {
         return this._registry.layerNumber;
+    }
+
+    public get hasAnimation() {
+        return this._hasAnimation;
     }
 
     public get cvs() {
@@ -120,6 +127,14 @@ export default class WWAPictureItem {
      * 毎フレーム処理されるため、プロパティから直接引き出される値以外はあらかじめフィールドに数値などをキャッシュしてください。
      */
     public draw(image: HTMLImageElement, isMainAnimation: boolean) {
+        // layerNumber が 0 の場合はいわゆる無名ピクチャという扱いのため、既存のピクチャ定義を上書きしない挙動となっている。
+        // このことを想定して、 canvas のクリアを除外しているのだが、これだと変化前の画像データが残ってしまうことになる。
+        // TODO WWAeval の実装では無名ピクチャをどのように実装しているのかソースを確認する
+        if (this.layerNumber !== 0) {
+            // TODO これをオフにするオプションがあっても良さそう
+            this.clearCanvas();
+        }
+
         const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
         const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;
         
@@ -157,9 +172,9 @@ export default class WWAPictureItem {
     }
 
     /**
-     * ピクチャのプロパティを更新します。
+     * アニメーションに応じてピクチャのプロパティを更新します。
      */
-    public update() {
+    public updateAnimation() {
         this._posX = this._posX + this._moveX;
         this._posY = this._posY + this._moveY;
         this._moveX = this._moveX + this._accelX;
@@ -193,6 +208,15 @@ export default class WWAPictureItem {
 
     public getTriggerPartsCoord() {
         return new Coord(this._registry.triggerPartsX, this._registry.triggerPartsY);
+    }
+
+    private getHasAnimation() {
+        return (
+            this._moveX !== 0 ||
+            this._moveY !== 0 ||
+            this._accelX !== 0 ||
+            this._accelY !== 0
+        );
     }
 
     private static _getImgPosByPicture(registry: PictureRegistry, isMainTime: boolean) {
