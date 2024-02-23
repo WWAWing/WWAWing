@@ -107,6 +107,10 @@ export default class WWAPicutre {
                 externalImageFile = item.element;
             }
         }
+        const soundNumber = registry.properties.sound ?? registry.soundNumber;
+        if (soundNumber) {
+            this._wwa.playSound(soundNumber);
+        }
         this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
         // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
         this._pictures = new Map([...this._pictures.entries()].sort());
@@ -161,6 +165,7 @@ export default class WWAPicutre {
             layerNumber,
             triggerPartsX: 0,
             triggerPartsY: 0,
+            soundNumber: 0,
             propertiesText,
         });
         this.registerPicture(checkValuesFromRawRegistry(registry));
@@ -180,6 +185,7 @@ export default class WWAPicutre {
                 layerNumber,
                 triggerPartsX: 0,
                 triggerPartsY: 0,
+                soundNumber: 0,
                 properties
             })
         );

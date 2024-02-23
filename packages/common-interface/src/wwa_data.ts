@@ -28,6 +28,7 @@ type PictureRegistryBase<N> = {
      * ピクチャ作成を呼び出したパーツの Y 座標。
      */
     triggerPartsY: number,
+    soundNumber: number,
     properties: PictureProperties<N>
 };
 export type PictureRegistry = PictureRegistryBase<number>;

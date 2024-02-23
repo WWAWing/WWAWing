@@ -21,6 +21,7 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "repeat", type: "numberArray" },
     { name: "img", type: "numberArray" },
     { name: "imgFile", type: "string" },
+    { name: "sound", type: "number" },
     { name: "crop", type: "numberArray" },
     { name: "text", type: "string" },
     { name: "font", type: "string" },

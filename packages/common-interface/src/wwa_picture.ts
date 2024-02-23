@@ -7,6 +7,7 @@ export interface PictureProperties<N = number> {
   imgFile?: string;
   // スネークケースになっているだけで、内容は上記と同じ
   img_file?: string;
+  sound?: N;
   crop?: [N, N];
   text?: string;
   font?: string;

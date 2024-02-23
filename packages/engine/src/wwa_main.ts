@@ -5839,6 +5839,7 @@ export class WWA {
                 imgPosY2: (attributes[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
                 triggerPartsX: partsPosition.x,
                 triggerPartsY: partsPosition.y,
+                soundNumber: attributes[WWAConsts.ATR_SOUND] ?? 0,
                 properties,
             },
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
