@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, WWAConsts  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 import { PARTS_TYPE_LIST } from "./utils";
@@ -1005,6 +1005,8 @@ export class EvalCalcWwaNode {
       case 'ENEMY_GD':
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
+      case 'MOVE_SPEED':
+        return speedList[gameStatus.wwaData.gameSpeedIndex];
       default:
         throw new Error("このシンボルは取得できません")
     }
