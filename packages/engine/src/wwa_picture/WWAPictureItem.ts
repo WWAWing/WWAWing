@@ -56,6 +56,8 @@ export default class WWAPictureItem {
     private readonly _imgFile?: HTMLImageElement;
     private readonly _cropX: number;
     private readonly _cropY: number;
+    private _opacity: number;
+    private readonly _fade: number;
     private readonly _hasAnimation: boolean;
     
     private _displayStockTime?: number;
@@ -97,12 +99,13 @@ export default class WWAPictureItem {
         this._anchor = properties.anchor ?? 7;
         this._circleSpeed = properties.circle?.[3] ?? 0;
         
+        this._opacity = properties.opacity ?? 100;
+        this._fade = properties.fade ?? 0;
+        
         this._displayStockTime = properties.time;
         
         // Canvas の ctx を色々いじる
-        this._canvas.ctx.globalAlpha = properties.opacity
-            ? WWAPictureItem._roundPercentage(properties.opacity) / 100
-            : 1;
+        this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
         this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
         if (properties.textAlign) {
             this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
@@ -229,6 +232,10 @@ export default class WWAPictureItem {
         this._zoomY = this._zoomY + this._zoomAccelY;
         this._updateSizeCache();
         this._circleAngle = this._circleAngle + this._circleSpeed;
+        if (this._fade !== 0) {
+            this._opacity = this._opacity + this._fade;
+            this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+        }
     }
 
     private _updateSizeCache() {
@@ -277,7 +284,8 @@ export default class WWAPictureItem {
             this._zoomY !== 0 ||
             this._zoomAccelX !== 0 ||
             this._zoomAccelY !== 0 ||
-            this._circleSpeed !== 0
+            this._circleSpeed !== 0 ||
+            this._fade !== 0
         );
     }
 
