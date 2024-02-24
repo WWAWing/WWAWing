@@ -149,6 +149,20 @@ export const getHorizontalCorrectionBySizeAnchor = (x: number, zoomX: number, an
 };
 
 /**
+ * 円運動の X 座標を算出します。
+ * @param x 現在の X 座標
+ * @param radius 半径
+ * @param angle 角度
+ */
+export const getHorizontalCirclePosition = (x: number, radius: number, angle: number) => {
+    if (radius === 0) {
+        return x;
+    }
+    const rad = angle * Math.PI / 180.0;
+    return x + (radius * Math.cos(rad));
+};
+
+/**
  * anchor の値に応じて拡大時の Y 座標を補正します。
  * @param y 現在の Y 座標
  * @param zoomY 拡大値
@@ -173,4 +187,18 @@ export const getVerticalCorrectionBySizeAnchor = (y: number, zoomY: number, anch
         default:
             return y;
     }
+};
+
+/**
+ * 円運動の Y 座標を算出します。
+ * @param y 現在の Y 座標
+ * @param radius 半径
+ * @param angle 角度
+ */
+export const getVerticalCirclePosition = (y: number, radius: number, angle: number) => {
+    if (radius === 0) {
+        return y;
+    }
+    const rad = angle * Math.PI / 180.0;
+    return y + (radius * Math.sin(rad));
 };

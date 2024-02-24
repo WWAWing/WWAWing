@@ -3,7 +3,7 @@ import { PartsType } from "@wwawing/loader";
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
-import { getHorizontalCorrectionBySizeAnchor, getVerticalCorrectionBySizeAnchor } from "./utils";
+import { getHorizontalCirclePosition, getHorizontalCorrectionBySizeAnchor, getVerticalCirclePosition, getVerticalCorrectionBySizeAnchor } from "./utils";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -12,8 +12,18 @@ import { getHorizontalCorrectionBySizeAnchor, getVerticalCorrectionBySizeAnchor 
  */
 export default class WWAPictureItem {
 
-    private _posX: number;
-    private _posY: number;
+    /**
+     * 基準 X 座標。 circle プロパティによる円運動では、基準となる座標がないと同じ座標上での円運動を維持できない。
+     * 円運動以外で座標が変わる場合は、この値を改変すること。
+     */
+    private _posBaseX: number;
+    private _posBaseY: number;
+    /**
+     * 出力 X 座標。 circle プロパティによる円運動によって改変された値。
+     * ピクチャ画面上で表示する場合はこの値を使用すること。
+     */
+    private _posDestX: number;
+    private _posDestY: number;
     private readonly _imgMainX: number;
     private readonly _imgMainY: number;
     private readonly _imgSubX: number;
@@ -37,6 +47,10 @@ export default class WWAPictureItem {
     private readonly _zoomAccelX: number;
     private readonly _zoomAccelY: number;
     private readonly _anchor: number;
+    private readonly _circleRadiusX: number;
+    private readonly _circleRadiusY: number;
+    private _circleAngle: number;
+    private readonly _circleSpeed: number;
     private readonly _repeatX: number;
     private readonly _repeatY: number;
     private readonly _imgFile?: HTMLImageElement;
@@ -48,8 +62,8 @@ export default class WWAPictureItem {
 
     constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
-        this._posX = properties.pos?.[0] ?? 0;
-        this._posY = properties.pos?.[1] ?? 0;
+        this._posBaseX = properties.pos?.[0] ?? 0;
+        this._posBaseY = properties.pos?.[1] ?? 0;
         [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
         [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
         // イメージ画像がどれも 0, 0 の場合は何も描画しない（PICTURE 関数から呼び出す場合に黒四角が現れる対策）
@@ -65,6 +79,12 @@ export default class WWAPictureItem {
         this._sizeY = properties.size?.[1] ?? (this._imgFile ? this._imgFile.height : WWAConsts.CHIP_SIZE);
         this._updateSizeCache();
 
+        this._circleRadiusX = properties.circle?.[0] ?? 0;
+        this._circleRadiusY = properties.circle?.[1] ?? this._circleRadiusX;
+        this._circleAngle = properties.circle?.[2] ?? 0;
+        this._posDestX = getHorizontalCirclePosition(this._posBaseX, this._circleRadiusX, this._circleAngle);
+        this._posDestY = getVerticalCirclePosition(this._posBaseY, this._circleRadiusY, this._circleAngle);
+
         // アニメーション関連のプロパティをセット
         this._moveX = properties.move?.[0] ?? 0;
         this._moveY = properties.move?.[1] ?? 0;
@@ -75,6 +95,7 @@ export default class WWAPictureItem {
         this._zoomAccelX = properties.zoomAccel?.[0] ?? 0;
         this._zoomAccelY = properties.zoomAccel?.[1] ?? 0;
         this._anchor = properties.anchor ?? 7;
+        this._circleSpeed = properties.circle?.[3] ?? 0;
         
         this._displayStockTime = properties.time;
         
@@ -153,8 +174,8 @@ export default class WWAPictureItem {
         
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
-                const chipX = this._posX + (this._totalWidth * rx);
-                const chipY = this._posY + (this._totalHeight * ry);
+                const chipX = this._posDestX + (this._totalWidth * rx);
+                const chipY = this._posDestY + (this._totalHeight * ry);
                 if (this._imgFile) {
                     this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
                 } else if (this._drawChip) {
@@ -188,8 +209,18 @@ export default class WWAPictureItem {
      * アニメーションに応じてピクチャのプロパティを更新します。
      */
     public updateAnimation() {
-        this._posX = getHorizontalCorrectionBySizeAnchor(this._posX + this._moveX, this._zoomX, this._anchor);
-        this._posY = getVerticalCorrectionBySizeAnchor(this._posY + this._moveY, this._zoomY, this._anchor);
+        this._posBaseX = getHorizontalCorrectionBySizeAnchor(this._posBaseX + this._moveX, this._zoomX, this._anchor);
+        this._posDestX = getHorizontalCirclePosition(
+            this._posBaseX,
+            this._circleRadiusX,
+            this._circleAngle
+        );
+        this._posBaseY = getVerticalCorrectionBySizeAnchor(this._posBaseY + this._moveY, this._zoomY, this._anchor);
+        this._posDestY = getVerticalCirclePosition(
+            this._posBaseY,
+            this._circleRadiusY,
+            this._circleAngle
+        );
         this._moveX = this._moveX + this._accelX;
         this._moveY = this._moveY + this._accelY;
         this._sizeX = this._sizeX + this._zoomX;
@@ -197,6 +228,7 @@ export default class WWAPictureItem {
         this._zoomX = this._zoomX + this._zoomAccelX;
         this._zoomY = this._zoomY + this._zoomAccelY;
         this._updateSizeCache();
+        this._circleAngle = this._circleAngle + this._circleSpeed;
     }
 
     private _updateSizeCache() {
@@ -244,7 +276,8 @@ export default class WWAPictureItem {
             this._zoomX !== 0 ||
             this._zoomY !== 0 ||
             this._zoomAccelX !== 0 ||
-            this._zoomAccelY !== 0
+            this._zoomAccelY !== 0 ||
+            this._circleSpeed !== 0
         );
     }
 

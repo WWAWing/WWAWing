@@ -6,15 +6,14 @@ export interface PictureProperties<N = number> {
   accel?: [N, N];
   zoom?: [N, N];
   zoomAccel?: [N, N];
-  // スネークケースになっただけ。機能は zoomAccel と同じ。
+  // スネークケースになっているだけで、内容は上記と同じ
   zoom_accel?: [N, N];
   // テンキーの並びと一致する。 0 は左上 (7 と同じ扱い)。
   anchor?: N;
-  circle?: [N, N];
+  circle?: [N] | [N, N] | [N, N, N] | [N, N, N, N];
   repeat?: [N, N];
   img?: ([N, N] | [N, N, N, N]);
   imgFile?: string;
-  // スネークケースになっているだけで、内容は上記と同じ
   img_file?: string;
   crop?: [N, N];
   text?: string;
