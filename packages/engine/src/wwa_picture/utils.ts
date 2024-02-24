@@ -119,3 +119,58 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
         properties: Object.fromEntries(propertiesArray)
     };
 };
+
+/**
+ * anchor の値に応じて拡大時の X 座標を補正します。
+ * @param x 現在の X 座標
+ * @param zoomX 拡大値
+ * @param anchor 軸 (テンキーの位置と連動)
+ */
+export const getHorizontalCorrectionBySizeAnchor = (x: number, zoomX: number, anchor: number) => {
+    switch (anchor) {
+        // 左
+        case 1:
+        case 4:
+        case 7:
+            return x;
+        // 中
+        case 2:
+        case 5:
+        case 8:
+            return x - (zoomX / 2);
+        // 右
+        case 3:
+        case 6:
+        case 9:
+            return x - zoomX;
+        default:
+            return x;
+    }
+};
+
+/**
+ * anchor の値に応じて拡大時の Y 座標を補正します。
+ * @param y 現在の Y 座標
+ * @param zoomY 拡大値
+ * @param anchor 軸 (テンキーの位置と連動)
+ */
+export const getVerticalCorrectionBySizeAnchor = (y: number, zoomY: number, anchor: number) => {
+    switch (anchor) {
+        // 下
+        case 1:
+        case 2:
+        case 3:
+            return y - zoomY;
+        // 中
+        case 4:
+        case 5:
+        case 6:
+            return y - (zoomY / 2);
+        // 上
+        case 7:
+        case 8:
+        case 9:
+        default:
+            return y;
+    }
+};
