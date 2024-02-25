@@ -76,9 +76,9 @@ export function generatePagesByRawMessage(
     return scoreOption
       ? [
           new Page(undefined, true, false, false, scoreOption, {
-            partsId,
-            partsType,
-            partsPosition,
+            id: partsId,
+            type: partsType,
+            position: partsPosition,
           }),
         ]
       : [];
@@ -142,6 +142,7 @@ export function generatePagesByRawMessage(
         console.error(error);
       }
     });
+    console.log("firstNode", firstNode);
 
     return new Page(
       firstNode,
@@ -150,9 +151,9 @@ export function generatePagesByRawMessage(
       isSystemMessage,
       pageId === 0 && scoreOption,
       {
-        partsId,
-        partsType,
-        partsPosition,
+        id: partsId,
+        type: partsType,
+        position: partsPosition,
       }
     );
   });

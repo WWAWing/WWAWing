@@ -1837,44 +1837,6 @@ export class WWA {
         this._keyStore.checkHitKey(KeyCode.KEY_N)
     );
 
-
-    private _executeNode(node: Node | undefined, triggerParts?: TriggerParts): ParsedMessage[] {
-        if (node instanceof ParsedMessage) {
-            node.macro?.forEach(macro=>{
-                const result = macro.execute();
-                if(result === undefined) {
-                    debugger;
-                }
-                if (result.isGameOver) {
-                    throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。");
-                }
-            });
-            return [node, ...this._executeNode(node.next, triggerParts)];
-        } else if (node instanceof Junction) {
-            if (!triggerParts) {
-                // HACK: 理想は、tokenValues のパーツ起因パラメータが optional になるべき。
-                // システムメッセージなどが Junction ノードを含んでいいようになるのが望ましい。
-                throw new Error("パーツ起因ページによる実行ではないため、Junctionノードの利用を想定していません。");
-            }
-            const next = node.evaluateAndGetNextNode(() => this.generateTokenValues(triggerParts));
-            return next ? this._executeNode(next, triggerParts) : [];
-        }
-        // node === undefined
-        return [];
-    }
-
-    private _executeNodes(firstNode: Node | undefined, triggerParts?: TriggerParts): { isError: false, messages: ParsedMessage[] } | { isError: true } {
-        try {
-            return  {
-                isError: false,
-                messages: this._executeNode(firstNode, triggerParts)
-            };
-        } catch (error) {
-            // ゲームオーバーなど、ページの実行が継続できなくなった場合
-            return { isError: true }
-        }
-    }
-
     private _main(): void {
 
         this._temporaryInputDisable = false;
@@ -1927,11 +1889,7 @@ export class WWA {
                 //  (this._pages の後尾にシステムメッセージのページが追加されるため)
                 // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
                 // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
-                const executedResult = this._executeNodes(executingPage.firstNode, executingPage.extraInfo ? {
-                    position: executingPage.extraInfo.partsPosition,
-                    type: executingPage.extraInfo.partsType,
-                    id: executingPage.extraInfo.partsId
-                } : undefined);
+                const executedResult = Node.executeNodes(executingPage.firstNode, executingPage.triggerParts);
                 if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
                     // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
                     this._isLastPage = false;
@@ -1944,9 +1902,10 @@ export class WWA {
                 const messageLinesToDisplay = executedResult.messages.filter(line => !line.isEmpty());
                 const isScoreDisplayingPage = Boolean(executingPage.scoreOptions);
 
-                // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える
+                // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える。
+                // システムメッセージ扱いではなく、パーツが表示している扱いになります。
                 if (isScoreDisplayingPage && messageLinesToDisplay.length === 0) {
-                    messageLinesToDisplay.push(new ParsedMessage("スコアを表示します。"));
+                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", executingPage.triggerParts));
                 }
 
                 // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
@@ -3706,10 +3665,7 @@ export class WWA {
     private _execChoiceWindowObjectSellEvent(): { isGameOver?: true } {
         // 所持金が足りない
         if (!this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
-            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.NO_MONEY)
-            if (systemMessage !== "BLANK") {
-                this._pages.push(new Page(new ParsedMessage(systemMessage), true, false, true));
-            }
+            this._appendSystemMessagePage(SystemMessage.Key.NO_MONEY);
             return {};
         }
 
@@ -3732,10 +3688,7 @@ export class WWA {
                 } : undefined);
             } catch (error) {
                 // アイテムボックスがいっぱい
-                const systemMessage = this.resolveSystemMessage(SystemMessage.Key.ITEM_BOX_FULL);
-                if (systemMessage !== "BLANK") {
-                    this._pages.push(new Page(new ParsedMessage(systemMessage), true, false, true))
-               }
+                this._appendSystemMessagePage(SystemMessage.Key.ITEM_BOX_FULL);
                 return {};
             }
         }
@@ -3788,11 +3741,7 @@ export class WWA {
                             this.setStatusChangedEffect(new Status(0, 0, 0, gold));
                             this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                         } else {
-                            // アイテムを持っていない
-                            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.NO_ITEM)
-                            if (systemMessage !== "BLANK") {
-                                this._pages.push(new Page((new ParsedMessage(systemMessage)), true, false, true));
-                            };
+                            this._appendSystemMessagePage(SystemMessage.Key.NO_ITEM)
                         }
                     } else if (partsType === Consts.OBJECT_SELL) {
                         const { isGameOver } = this._execChoiceWindowObjectSellEvent();
@@ -6276,7 +6225,7 @@ font-weight: bold;
         return {};
     }
 
-    public generateTokenValues(triggerParts: TriggerParts): ExpressionParser.TokenValues {
+    public generateTokenValues(triggerParts?: TriggerParts): ExpressionParser.TokenValues {
         return {
             totalStatus: this._player.getStatus(),
             bareStatus: this._player.getStatusWithoutEquipments(),
@@ -6288,11 +6237,22 @@ font-weight: bold;
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox(),
-            partsId: triggerParts.id,
-            partsType: triggerParts.type,
-            partsPosition: triggerParts.position,
+            partsId: triggerParts?.id,
+            partsType: triggerParts?.type,
+            partsPosition: triggerParts?.position,
             map: this._wwaData.map,
             mapObject: this._wwaData.mapObject
+        }
+    }
+
+    private _createSimpleMessage(message: string, triggerParts?: TriggerParts): ParsedMessage {
+        return new ParsedMessage(message, () => this.generateTokenValues(triggerParts))
+    }
+
+    private _appendSystemMessagePage(systemMessageKey: SystemMessage.Key): void {
+        const systemMessage = this.resolveSystemMessage(systemMessageKey);
+        if (systemMessage !== "BLANK") {
+            this._pages.push(Page.createSystemMessagePage(this._createSimpleMessage(systemMessage)));
         }
     }
 
