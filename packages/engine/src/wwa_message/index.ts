@@ -170,18 +170,3 @@ export function getLastMessage(node: Node | undefined): Node | undefined {
     return node.next === undefined ? node : getLastMessage(node.next);
   }
 }
-
-// 使われてない？
-export function concatMessage(
-  node1: Node | undefined,
-  node2: Node | undefined
-): Node | undefined {
-  if (node1 === undefined) {
-    return node2;
-  } else {
-    const lastMessage = getLastMessage(node1);
-    if (lastMessage instanceof ParsedMessage) {
-      lastMessage.next = node2;
-    }
-  }
-}
