@@ -340,7 +340,7 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           throw new Error("");
         }
       } else if (left.type === "Symbol") {
-        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM") {
+        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM" || left.name === "X" || left.name === "Y" || left.name === "ID" || left.name === "TYPE") {
           throw new Error("このシンボルには代入できません");
         }
         if (left.name === "AT_TOTAL") {

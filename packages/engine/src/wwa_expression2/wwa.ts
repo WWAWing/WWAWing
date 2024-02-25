@@ -31,7 +31,7 @@ export interface UserVariableAssignment {
 
 export interface SpecialParameterAssignment {
   type: "SpecialParameterAssignment";
-  kind: "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS";
+  kind: "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS";
   value: Calcurable;
   operator?: "=" | "+=" | "-=" | "*=" | "/=";
 }
