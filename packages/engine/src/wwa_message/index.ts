@@ -14,9 +14,7 @@ export * from "./data";
 
 export function generatePagesByRawMessage(
   message: string,
-  partsId: number,
-  partsType: PartsType,
-  partsPosition: Coord,
+  triggerParts: TriggerParts,
   isSystemMessage: boolean,
   showChoice: boolean,
   scoreOption: ScoreOptions,
@@ -74,13 +72,7 @@ export function generatePagesByRawMessage(
   if (messageMain === "") {
     // 空メッセージの場合は何も処理しないが、スコア表示の場合はメッセージを出すのでノードなしのページを生成
     return scoreOption
-      ? [
-          new Page(undefined, true, false, false, scoreOption, {
-            id: partsId,
-            type: partsType,
-            position: partsPosition,
-          }),
-        ]
+      ? [new Page(undefined, true, false, false, scoreOption, triggerParts)]
       : [];
   }
   const pageContents = messageMain.split(/\<p\>/gi);
@@ -89,11 +81,7 @@ export function generatePagesByRawMessage(
     let firstNode: Node | undefined = undefined;
     let nodeByPrevLine: Node | undefined = undefined;
     let lastPoppedJunction: Junction | undefined = undefined;
-    const triggerParts: TriggerParts = {
-      id: partsId,
-      type: partsType,
-      position: partsPosition,
-    };
+
     const lines = parseMessageLines(pageContent, parseMacro);
     const junctionNodeStack: Junction[] = [];
 
@@ -150,11 +138,7 @@ export function generatePagesByRawMessage(
       pageId === 0 && showChoice,
       isSystemMessage,
       pageId === 0 && scoreOption,
-      {
-        id: partsId,
-        type: partsType,
-        position: partsPosition,
-      }
+      triggerParts
     );
   });
 }
