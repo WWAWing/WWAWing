@@ -120,13 +120,20 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
     };
 };
 
+export const adjustPositiveValue = (value: number) => {
+    if (value < 0) {
+        return 0;
+    }
+    return value;
+}
+
 /**
  * anchor の値に応じて拡大時の X 座標を補正します。
  * @param x 現在の X 座標
- * @param zoomX 拡大値
+ * @param width 横幅 (ピクセル単位)
  * @param anchor 軸 (テンキーの位置と連動)
  */
-export const getHorizontalCorrectionBySizeAnchor = (x: number, zoomX: number, anchor: number) => {
+export const getHorizontalCorrectionBySizeAnchor = (x: number, width: number, anchor: number) => {
     switch (anchor) {
         // 左
         case 1:
@@ -137,12 +144,12 @@ export const getHorizontalCorrectionBySizeAnchor = (x: number, zoomX: number, an
         case 2:
         case 5:
         case 8:
-            return x - (zoomX / 2);
+            return x - (width / 2);
         // 右
         case 3:
         case 6:
         case 9:
-            return x - zoomX;
+            return x - width;
         default:
             return x;
     }
@@ -165,21 +172,21 @@ export const getHorizontalCirclePosition = (x: number, radius: number, angle: nu
 /**
  * anchor の値に応じて拡大時の Y 座標を補正します。
  * @param y 現在の Y 座標
- * @param zoomY 拡大値
+ * @param height 縦幅 (ピクセル単位)
  * @param anchor 軸 (テンキーの位置と連動)
  */
-export const getVerticalCorrectionBySizeAnchor = (y: number, zoomY: number, anchor: number) => {
+export const getVerticalCorrectionBySizeAnchor = (y: number, height: number, anchor: number) => {
     switch (anchor) {
         // 下
         case 1:
         case 2:
         case 3:
-            return y - zoomY;
+            return y - height;
         // 中
         case 4:
         case 5:
         case 6:
-            return y - (zoomY / 2);
+            return y - (height / 2);
         // 上
         case 7:
         case 8:

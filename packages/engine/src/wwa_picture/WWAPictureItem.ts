@@ -3,7 +3,7 @@ import { PartsType } from "@wwawing/loader";
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
-import { getHorizontalCirclePosition, getHorizontalCorrectionBySizeAnchor, getVerticalCirclePosition, getVerticalCorrectionBySizeAnchor } from "./utils";
+import { adjustPositiveValue, getHorizontalCirclePosition, getHorizontalCorrectionBySizeAnchor, getVerticalCirclePosition, getVerticalCorrectionBySizeAnchor } from "./utils";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -80,13 +80,10 @@ export default class WWAPictureItem {
 
         this._sizeX = properties.size?.[0] ?? (this._imgFile ? this._imgFile.width : WWAConsts.CHIP_SIZE);
         this._sizeY = properties.size?.[1] ?? (this._imgFile ? this._imgFile.height : WWAConsts.CHIP_SIZE);
-        this._updateSizeCache();
-
+        
         this._circleRadiusX = properties.circle?.[0] ?? 0;
         this._circleRadiusY = properties.circle?.[1] ?? this._circleRadiusX;
         this._circleAngle = properties.circle?.[2] ?? 0;
-        this._posDestX = getHorizontalCirclePosition(this._posBaseX, this._circleRadiusX, this._circleAngle);
-        this._posDestY = getVerticalCirclePosition(this._posBaseY, this._circleRadiusY, this._circleAngle);
 
         // アニメーション関連のプロパティをセット
         this._moveX = properties.move?.[0] ?? 0;
@@ -102,6 +99,8 @@ export default class WWAPictureItem {
         
         this._opacity = properties.opacity ?? 100;
         this._fade = properties.fade ?? 0;
+
+        this._updatePictureCache();
         
         this._timeType = properties.time ? "milisecond" : properties.timeFrame ? "frame" : undefined;
         this._displayStockTime = properties.time ?? properties.timeFrame;
@@ -214,25 +213,15 @@ export default class WWAPictureItem {
      * アニメーションに応じてピクチャのプロパティを更新します。
      */
     public updateAnimation() {
-        this._posBaseX = getHorizontalCorrectionBySizeAnchor(this._posBaseX + this._moveX, this._zoomX, this._anchor);
-        this._posDestX = getHorizontalCirclePosition(
-            this._posBaseX,
-            this._circleRadiusX,
-            this._circleAngle
-        );
-        this._posBaseY = getVerticalCorrectionBySizeAnchor(this._posBaseY + this._moveY, this._zoomY, this._anchor);
-        this._posDestY = getVerticalCirclePosition(
-            this._posBaseY,
-            this._circleRadiusY,
-            this._circleAngle
-        );
+        this._posBaseX = this._posBaseX + this._moveX;
+        this._posBaseY = this._posBaseY + this._moveY;
         this._moveX = this._moveX + this._accelX;
         this._moveY = this._moveY + this._accelY;
         this._sizeX = this._sizeX + this._zoomX;
         this._sizeY = this._sizeY + this._zoomY;
         this._zoomX = this._zoomX + this._zoomAccelX;
         this._zoomY = this._zoomY + this._zoomAccelY;
-        this._updateSizeCache();
+        this._updatePictureCache();
         this._circleAngle = this._circleAngle + this._circleSpeed;
         if (this._fade !== 0) {
             this._opacity = this._opacity + this._fade;
@@ -240,11 +229,29 @@ export default class WWAPictureItem {
         }
     }
 
-    private _updateSizeCache() {
-        this._totalWidth = this._sizeX * this._cropX;
-        this._totalHeight = this._sizeY * this._cropY;
+    private _updatePictureCache() {
+        this._totalWidth = adjustPositiveValue(this._sizeX) * this._cropX;
+        this._totalHeight = adjustPositiveValue(this._sizeY) * this._cropY;
         this._chipWidth = Math.floor(this._totalWidth / this._cropX);
         this._chipHeight = Math.floor(this._totalHeight / this._cropY);
+        this._posDestX = getHorizontalCorrectionBySizeAnchor(
+            getHorizontalCirclePosition(
+                this._posBaseX,
+                this._circleRadiusX,
+                this._circleAngle
+            ),
+            this._totalWidth,
+            this._anchor
+        );
+        this._posDestY = getVerticalCorrectionBySizeAnchor(
+            getVerticalCirclePosition(
+                this._posBaseY,
+                this._circleRadiusY,
+                this._circleAngle
+            ),
+            this._totalHeight,
+            this._anchor
+        );
     }
 
     public hasDisplayTimeStock() {
