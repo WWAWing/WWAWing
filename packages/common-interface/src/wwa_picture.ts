@@ -17,6 +17,7 @@ export interface PictureProperties<N = number> {
   img?: ([N, N] | [N, N, N, N]);
   imgFile?: string;
   img_file?: string;
+  sound?: N;
   crop?: [N, N];
   text?: string;
   font?: string;
