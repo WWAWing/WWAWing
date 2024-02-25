@@ -340,7 +340,7 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           throw new Error("");
         }
       } else if (left.type === "Symbol") {
-        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM" || left.name === "MOVE_SPEED") {
+        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM" || left.name === "MOVE_SPEED" || left.name === "MOVE_FRAME_TIME") {
           throw new Error("このシンボルには代入できません");
         }
         if (left.name === "AT_TOTAL") {
@@ -484,6 +484,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_AT":
     case "ENEMY_DF":
     case "MOVE_SPEED":
+    case "MOVE_FRAME_TIME":
       return {
         type: "Symbol",
         name: node.name

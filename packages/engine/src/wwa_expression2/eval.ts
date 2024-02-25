@@ -1007,6 +1007,8 @@ export class EvalCalcWwaNode {
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
       case 'MOVE_SPEED':
         return speedList[gameStatus.wwaData.gameSpeedIndex];
+      case 'MOVE_FRAME_TIME':
+        return WWAConsts.CHIP_SIZE / speedList[gameStatus.wwaData.gameSpeedIndex];
       default:
         throw new Error("このシンボルは取得できません")
     }

@@ -60,6 +60,7 @@ export default class WWAPictureItem {
     private readonly _fade: number;
     private readonly _hasAnimation: boolean;
     
+    private readonly _timeType?: "milisecond" | "frame";
     private _displayStockTime?: number;
 
     constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
@@ -102,7 +103,8 @@ export default class WWAPictureItem {
         this._opacity = properties.opacity ?? 100;
         this._fade = properties.fade ?? 0;
         
-        this._displayStockTime = properties.time;
+        this._timeType = properties.time ? "milisecond" : properties.timeFrame ? "frame" : undefined;
+        this._displayStockTime = properties.time ?? properties.timeFrame;
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
@@ -246,11 +248,16 @@ export default class WWAPictureItem {
     }
 
     public hasDisplayTimeStock() {
-        return this._displayStockTime !== undefined;
+        return this._timeType !== undefined && this._displayStockTime !== undefined && this._displayStockTime > 0;
     }
 
     public decrementDisplayTimeStock(frameMs: number) {
-        return this._displayStockTime -= frameMs;
+        switch (this._timeType) {
+            case "milisecond":
+                this._displayStockTime -= frameMs;
+            case "frame":
+                this._displayStockTime -= 1;
+        }
     }
 
     public isDeadlineOver() {

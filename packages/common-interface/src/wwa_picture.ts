@@ -1,12 +1,14 @@
 export interface PictureProperties<N = number> {
   pos?: [N, N];
   time?: N,
+  timeFrame?: N;
+  // スネークケースになっているだけで、内容は上記と同じ
+  time_frame?: N;
   size?: [N, N];
   move?: [N, N];
   accel?: [N, N];
   zoom?: [N, N];
   zoomAccel?: [N, N];
-  // スネークケースになっているだけで、内容は上記と同じ
   zoom_accel?: [N, N];
   // テンキーの並びと一致する。 0 は左上 (7 と同じ扱い)。
   anchor?: N;
