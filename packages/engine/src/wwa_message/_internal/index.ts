@@ -57,7 +57,7 @@ export function parseMessageLines(
 export function createNewNode(
   currentLine: MessageLine,
   shouldCreateParsedMessage: boolean,
-  generateTokenValues: (triggerParts: TriggerParts) => ExpressionParser.TokenValues,
+  generateTokenValues: (triggerParts?: TriggerParts) => ExpressionParser.TokenValues,
   option: {
     triggerParts: TriggerParts;
   }
@@ -70,7 +70,7 @@ export function createNewNode(
             currentLine.macro.macroArgs[0]
           ),
         },
-      ]);
+      ], generateTokenValues);
     case MacroType.SHOW_STR:
     case MacroType.SHOW_STR2:
       return shouldCreateParsedMessage
@@ -78,16 +78,17 @@ export function createNewNode(
             generateShowStrString(currentLine.macro.macroArgs, generateTokenValues, {
               triggerParts: option.triggerParts,
               version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1,
-            })
+            }),
+            generateTokenValues
           )
         : undefined;
     case "text":
       return shouldCreateParsedMessage
-        ? new ParsedMessage(currentLine.text)
+        ? new ParsedMessage(currentLine.text, generateTokenValues)
         : undefined;
     case "normalMacro":
       return shouldCreateParsedMessage
-        ? new ParsedMessage("", [currentLine.macro])
+        ? new ParsedMessage("", generateTokenValues, [currentLine.macro])
         : undefined;
     default:
       return undefined;
@@ -177,7 +178,7 @@ export function connectOrMergeToPreviousNode(
         for (let i = 0; i < endIfTargetJunction.branches.length; i++) {
           let node: Node | undefined = endIfTargetJunction.branches[i].next;
           if (!node) {
-            endIfTargetJunction.branches[i] = newNode;
+            endIfTargetJunction.branches[i].next = newNode;
             continue;
           }
           connectToFinalNode(node, newNode);
@@ -270,7 +271,7 @@ export function connectToFinalNode(firstNode: Node, targetNode: Node) {
 // バージョン1 の場合は、整数値は添字として認識される。 例: 210 と書かれていると v[210] と扱われる。
 export function generateShowStrString(
   macroArgs: string[],
-  generateTokenValues: (triggerParts: TriggerParts) => ExpressionParser.TokenValues,
+  generateTokenValues: (triggerParts?: TriggerParts) => ExpressionParser.TokenValues,
   option: {
     triggerParts: TriggerParts;
     version: 1 | 2;

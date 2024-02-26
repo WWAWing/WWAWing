@@ -1015,10 +1015,10 @@ export class WWA {
                 const setGameStartingMessageWhenPcOrSP = () => {
                     switch (this.userDevice.device) {
                         case DEVICE_TYPE.PC:
-                            this.generatePageAndReserveExecution("ゲームを開始します。\n画面をクリックしてください。", false, true);
+                            this.registerSystemMessagePage("ゲームを開始します。\n画面をクリックしてください。", false);
                             break;
                         case DEVICE_TYPE.SP:
-                            this.generatePageAndReserveExecution("ゲームを開始します。\n画面にふれてください。", false, true);
+                            this.registerSystemMessagePage("ゲームを開始します。\n画面にふれてください。", false);
                             break;
                     }
                 };
@@ -1656,12 +1656,20 @@ export class WWA {
                 this._player.readyToUseItem(itemPos);
                 var itemID = this._player.useItem();
                 var mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
-                this.generatePageAndReserveExecution(
+                this.registerPageByMessage(
                     this.getMessageById(mesID),
-                    false, false, itemID, PartsType.OBJECT,
-                    this._player.getPosition().getPartsCoord());
+                    {
+                        showChoice: false,
+                        isSystemMessage: false,
+                        triggerParts: {
+                            id: itemID,
+                            type: PartsType.OBJECT,
+                            position: this._player.getPosition().getPartsCoord()
+                        }
+                    }
+                );
             } else {
-                this.generatePageAndReserveExecution(systemMessage, true, true);
+                this.registerPageByMessage(systemMessage, {showChoice: true, isSystemMessage: true});
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_ITEM_USE;
                 this._yesNoUseItemPos = itemPos;
             }
@@ -1696,13 +1704,13 @@ export class WWA {
                     this._messageWindow.createSaveDom();
                     switch (secondCallInfo) {
                         case ChoiceCallInfo.CALL_BY_LOG_QUICK_LOAD:
-                            this.generatePageAndReserveExecution(loadTest+"\n→Ｎｏでオートセーブ復帰画面に移ります。", true, true);
+                            this.registerSystemMessagePage(loadTest+"\n→Ｎｏでオートセーブ復帰画面に移ります。", true);
                             break;
                         case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
-                            this.generatePageAndReserveExecution(loadTest +"\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
+                            this.registerSystemMessagePage(loadTest +"\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true);
                             break;
                         case ChoiceCallInfo.NONE:
-                            this.generatePageAndReserveExecution(loadTest, true, true);
+                            this.registerSystemMessagePage(loadTest, true);
                             break;
                     }
                     break;
@@ -1715,17 +1723,17 @@ export class WWA {
                 this._wwaSave.selectDBSaveDataList();
                 this._messageWindow.createSaveDom();
                 if (this._usePassword) {
-                    this.generatePageAndReserveExecution("データの一時保存先を選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true, true);
+                    this.registerSystemMessagePage("データの一時保存先を選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　表示選択ができます。", true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 } else {
-                    this.generatePageAndReserveExecution("データの一時保存先を選んでください。", true, true);
+                    this.registerSystemMessagePage("データの一時保存先を選んでください。", true);
                     this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_QUICK_SAVE;
                 }
             } else {
-                this.generatePageAndReserveExecution("ここではセーブ機能は\n使用できません。", false, true);
+                this.registerSystemMessagePage("ここではセーブ機能は\n使用できません。");
             }
         } else if (button === SidebarButton.RESTART_GAME) {
-            this.generatePageAndReserveExecution("初めからスタートしなおしますか？", true, true);
+            this.registerSystemMessagePage("初めからスタートしなおしますか？", true);
             this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_RESTART_GAME;
         } else if (button === SidebarButton.GOTO_WWA) {
             if (forceGoToWWA) {
@@ -1734,17 +1742,17 @@ export class WWA {
                 if (this._bottomButtonType !== ControlPanelBottomButton.GOTO_WWA) {
                     (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
                 }
-                this.generatePageAndReserveExecution("ＷＷＡの公式サイトを開きますか？", true, true);
+                this.registerSystemMessagePage("ＷＷＡの公式サイトを開きますか？", true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
             } else {
                 switch (this._bottomButtonType) {
                     case ControlPanelBottomButton.GOTO_WWA:
                         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_GOTO_WWA;
-                        this.generatePageAndReserveExecution("ＷＷＡの公式サイトを開きますか？", true, true);
+                        this.registerSystemMessagePage("ＷＷＡの公式サイトを開きますか？", true);
                         break;
                     case ControlPanelBottomButton.GAME_END:
                         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_END_GAME;
-                        this.generatePageAndReserveExecution("ＷＷＡゲームを終了しますか？", true, true);
+                        this.registerSystemMessagePage("ＷＷＡゲームを終了しますか？", true);
                         break;
                     case ControlPanelBottomButton.BATTLE_REPORT:
                         this.launchBattleEstimateWindow();
@@ -1757,10 +1765,10 @@ export class WWA {
         if (this._usePassword) {
             var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_LOAD]));
             bg.classList.add("onpress");
-            this.generatePageAndReserveExecution("データ復帰用のパスワードを入力しますか？", true, true);
+            this.registerSystemMessagePage("データ復帰用のパスワードを入力しますか？", true);
             this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_PASSWORD_LOAD;
         } else {
-            this.generatePageAndReserveExecution("セーブデータがありません。", false, true);
+            this.registerSystemMessagePage("セーブデータがありません。");
         }
     }
 
@@ -1769,29 +1777,29 @@ export class WWA {
         bg.classList.add("onpress");
         if (!this._wwaData.disableSaveFlag) {
             if (this._useSuspend) {//中断モード
-                this.generatePageAndReserveExecution("ゲームを中断しますか？", true, true);
+                this.registerSystemMessagePage("ゲームを中断しますか？", true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
             } else if (this._usePassword) {
-                this.generatePageAndReserveExecution("データ復帰用のパスワードを表示しますか？", true, true);
+                this.registerSystemMessagePage("データ復帰用のパスワードを表示しますか？", true);
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_PASSWORD_SAVE;
             }
         } else {
-            this.generatePageAndReserveExecution("ここではセーブ機能は\n使用できません。", false, true);
+            this.registerSystemMessagePage("ここではセーブ機能は\n使用できません。");
         }
     }
     public onpasssuspendsavecalled() {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.QUICK_SAVE]));
         bg.classList.add("onpress");
         if (!this._wwaData.disableSaveFlag) {
-            this.generatePageAndReserveExecution("ゲームを中断しますか？", true, true);
+            this.registerSystemMessagePage("ゲームを中断しますか？", true);
             this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_SUSPEND;
         } else {
-            this.generatePageAndReserveExecution("ここではセーブ機能は\n使用できません。", false, true);
+            this.registerSystemMessagePage("ここではセーブ機能は\n使用できません。");
         }
 
     }
     public onitemmenucalled() {
-        this.generatePageAndReserveExecution("右のメニューを選択してください。", false, true);
+        this.registerSystemMessagePage("右のメニューを選択してください。");
         this._messageWindow.setItemMenuChoice(true);
         this.playSound(SystemSound.DECISION);
         this._itemMenu.openView();
@@ -1799,10 +1807,7 @@ export class WWA {
 
     public onchangespeed(type: SpeedChange) {
         if (!this._wwaData.permitChangeGameSpeed) {
-            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.GAME_SPEED_CHANGE_DISABLED);
-            if (systemMessage !== "BLANK") {
-                this.generatePageAndReserveExecution(systemMessage, false, true);
-            }
+            this.registerSystemMessagePageByKey(SystemMessage.Key.GAME_SPEED_CHANGE_DISABLED);
             return;
         }
         switch (type) {
@@ -1818,10 +1823,7 @@ export class WWA {
         if(callChangeSpeedFunc) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(callChangeSpeedFunc);
         }
-        const systemMessage = this.resolveSystemMessage(SystemMessage.Key.GAME_SPEED_CHANGED);
-        if (systemMessage !== "BLANK") {
-            this.generatePageAndReserveExecution(systemMessage, false, true);
-        }
+        this.registerSystemMessagePageByKey(SystemMessage.Key.GAME_SPEED_CHANGED);
     }
 
     public isBattleSpeedIndexForQuickBattle(battleSpeedIndex: number): boolean {
@@ -1836,44 +1838,6 @@ export class WWA {
         this._keyStore.checkHitKey(KeyCode.KEY_SHIFT) ||
         this._keyStore.checkHitKey(KeyCode.KEY_N)
     );
-
-
-    private _executeNode(node: Node | undefined, triggerParts?: TriggerParts): ParsedMessage[] {
-        if (node instanceof ParsedMessage) {
-            node.macro?.forEach(macro=>{
-                const result = macro.execute();
-                if(result === undefined) {
-                    debugger;
-                }
-                if (result.isGameOver) {
-                    throw new Error("ゲームオーバーのため、メッセージ・マクロの実行を打ち切ります。");
-                }
-            });
-            return [node, ...this._executeNode(node.next, triggerParts)];
-        } else if (node instanceof Junction) {
-            if (!triggerParts) {
-                // HACK: 理想は、tokenValues のパーツ起因パラメータが optional になるべき。
-                // システムメッセージなどが Junction ノードを含んでいいようになるのが望ましい。
-                throw new Error("パーツ起因ページによる実行ではないため、Junctionノードの利用を想定していません。");
-            }
-            const next = node.evaluateAndGetNextNode(() => this.generateTokenValues(triggerParts));
-            return next ? this._executeNode(next, triggerParts) : [];
-        }
-        // node === undefined
-        return [];
-    }
-
-    private _executeNodes(firstNode: Node | undefined, triggerParts?: TriggerParts): { isError: false, messages: ParsedMessage[] } | { isError: true } {
-        try {
-            return  {
-                isError: false,
-                messages: this._executeNode(firstNode, triggerParts)
-            };
-        } catch (error) {
-            // ゲームオーバーなど、ページの実行が継続できなくなった場合
-            return { isError: true }
-        }
-    }
 
     private _main(): void {
 
@@ -1927,11 +1891,7 @@ export class WWA {
                 //  (this._pages の後尾にシステムメッセージのページが追加されるため)
                 // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
                 // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
-                const executedResult = this._executeNodes(executingPage.firstNode, executingPage.extraInfo ? {
-                    position: executingPage.extraInfo.partsPosition,
-                    type: executingPage.extraInfo.partsType,
-                    id: executingPage.extraInfo.partsId
-                } : undefined);
+                const executedResult = Node.executeNodes(executingPage.firstNode, executingPage.triggerParts);
                 if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
                     // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
                     this._isLastPage = false;
@@ -1944,9 +1904,10 @@ export class WWA {
                 const messageLinesToDisplay = executedResult.messages.filter(line => !line.isEmpty());
                 const isScoreDisplayingPage = Boolean(executingPage.scoreOptions);
 
-                // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える
+                // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える。
+                // システムメッセージ扱いではなく、パーツが表示している扱いになります。
                 if (isScoreDisplayingPage && messageLinesToDisplay.length === 0) {
-                    messageLinesToDisplay.push(new ParsedMessage("スコアを表示します。"));
+                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", executingPage.triggerParts));
                 }
 
                 // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
@@ -3324,7 +3285,13 @@ export class WWA {
         // 待ち時間
         this._waitFrame += additionalWaitFrameCount * Consts.WAIT_TIME_FRAME_NUM;
         this._temporaryInputDisable = true;
-        this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.MAP, pos.clone());
+        this.registerPageByMessage(message, {
+             triggerParts: {
+                id: partsID,
+                type: PartsType.MAP,
+                position: pos.clone()
+            }
+        });
         this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
 
         // 表示されるべきメッセージがあると推定される場合, もしくは 待ち時間が 0 でなければイベントが実行されたとみなす。
@@ -3358,7 +3325,7 @@ export class WWA {
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             var message = this._wwaData.message[messageID];
 
-            this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.MAP, pos.clone());
+            this.registerPageByMessage(message, { triggerParts: { id: partsID, type: PartsType.MAP, position: pos.clone() } });
             this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
             return false;
         }
@@ -3400,7 +3367,7 @@ export class WWA {
             location.href = util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0])
             return;
         }
-        this.generatePageAndReserveExecution(systemMessage, true, true);
+        this.registerSystemMessagePage(systemMessage, true)
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_MAP_PARTS;
@@ -3424,7 +3391,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験的に踏み潰し判定と処理の順序を入れ替えています。不具合があるようなら戻します。 150415
-        this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.OBJECT, pos);
+        this.registerPageByMessage(message, {triggerParts: {id: partsID, type: PartsType.OBJECT, position: pos }});
         // 待ち時間
         this._waitFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
         this._temporaryInputDisable = true;
@@ -3482,10 +3449,8 @@ export class WWA {
             return;
         }
 
-        this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.OBJECT, pos.clone());
+        this.registerPageByMessage(message, { triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
 
-
-        //this._wwaData.mapObject[pos.y][pos.x] = 0;
         this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
@@ -3516,7 +3481,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験的に(ry
-        this.generatePageAndReserveExecution(message, true, false, partsID, PartsType.OBJECT, pos.clone());
+        this.registerPageByMessage(message, { showChoice: true,  triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -3534,7 +3499,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験的に(ry
-        this.generatePageAndReserveExecution(message, true, false, partsID, PartsType.OBJECT, pos.clone());
+        this.registerPageByMessage(message, { showChoice: true,  triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -3562,20 +3527,12 @@ export class WWA {
             if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 // 使用型アイテム の場合は、処理は使用時です。
             } else {
-                this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.OBJECT, pos.clone());
+                this.registerPageByMessage(message, { triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
                 this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
             }
         } catch (e) {
-            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.ITEM_BOX_FULL);
             // これ以上、アイテムを持てません
-            if (systemMessage !== "BLANK") {
-                this.generatePageAndReserveExecution(
-                  systemMessage,
-                  false,
-                  true
-                );
-            }
-
+            this.registerSystemMessagePageByKey(SystemMessage.Key.ITEM_BOX_FULL);
         }
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
     }
@@ -3589,8 +3546,7 @@ export class WWA {
                 this._player.removeItemByPartsID(itemID);
             }
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
-            this.generatePageAndReserveExecution(message, false, false, partsID, PartsType.OBJECT, pos.clone());
-            //this._wwaData.mapObject[pos.y][pos.x] = 0;
+            this.registerPageByMessage(message, {triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
             this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
             this._paintSkipByDoorOpen = true;
@@ -3605,11 +3561,10 @@ export class WWA {
 
         // プレイヤー座標と同一なら削除（踏み潰し判定）
         if (pos.x === playerPos.x && pos.y === playerPos.y && !this._wwaData.objectNoCollapseDefaultFlag) {
-            //this._wwaData.mapObject[pos.y][pos.x] = 0;
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験(ry
-        this.generatePageAndReserveExecution(message, true, false, partsID, PartsType.OBJECT, pos.clone());
+        this.registerPageByMessage(message, { showChoice: true,  triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -3654,7 +3609,7 @@ export class WWA {
             location.href = util.$escapedURI(this._wwaData.message[messageID].split(/\s/g)[0]);
             return;
         }
-        this.generatePageAndReserveExecution(systemMessage, true, true);
+        this.registerSystemMessagePage(systemMessage, true);
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -3678,14 +3633,17 @@ export class WWA {
      */
     private _execObjectScoreEvent(pos: Coord, partsID: number, mapAttr: number): void {
         const messageID = this._wwaData.objectAttribute[partsID][Consts.ATR_STRING];
-        this.generatePageAndReserveExecution(this._wwaData.message[messageID], false, false, partsID, PartsType.OBJECT, pos, {
-            rates: {
-                energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
-                strength: this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
-                defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
-                gold: this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]
+        this.registerPageByMessage(this._wwaData.message[messageID], {
+            triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos},
+            scoreOption: {
+                rates: {
+                    energy: this._wwaData.objectAttribute[partsID][Consts.ATR_ENERGY],
+                    strength: this._wwaData.objectAttribute[partsID][Consts.ATR_STRENGTH],
+                    defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
+                    gold: this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]
+                }
             }
-        } )
+        });
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
     }
 
@@ -3706,10 +3664,7 @@ export class WWA {
     private _execChoiceWindowObjectSellEvent(): { isGameOver?: true } {
         // 所持金が足りない
         if (!this._player.hasGold(this._wwaData.objectAttribute[this._yesNoChoicePartsID][Consts.ATR_GOLD])) {
-            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.NO_MONEY)
-            if (systemMessage !== "BLANK") {
-                this._pages.push(new Page(new ParsedMessage(systemMessage), true, false, true));
-            }
+            this.registerSystemMessagePageByKey(SystemMessage.Key.NO_MONEY);
             return {};
         }
 
@@ -3732,10 +3687,7 @@ export class WWA {
                 } : undefined);
             } catch (error) {
                 // アイテムボックスがいっぱい
-                const systemMessage = this.resolveSystemMessage(SystemMessage.Key.ITEM_BOX_FULL);
-                if (systemMessage !== "BLANK") {
-                    this._pages.push(new Page(new ParsedMessage(systemMessage), true, false, true))
-               }
+                this.registerSystemMessagePageByKey(SystemMessage.Key.ITEM_BOX_FULL);
                 return {};
             }
         }
@@ -3788,11 +3740,7 @@ export class WWA {
                             this.setStatusChangedEffect(new Status(0, 0, 0, gold));
                             this.reserveAppearPartsInNextFrame(this._yesNoChoicePartsCoord, AppearanceTriggerType.OBJECT, this._yesNoChoicePartsID);
                         } else {
-                            // アイテムを持っていない
-                            const systemMessage = this.resolveSystemMessage(SystemMessage.Key.NO_ITEM)
-                            if (systemMessage !== "BLANK") {
-                                this._pages.push(new Page((new ParsedMessage(systemMessage)), true, false, true));
-                            };
+                            this.registerSystemMessagePageByKey(SystemMessage.Key.NO_ITEM)
                         }
                     } else if (partsType === Consts.OBJECT_SELL) {
                         const { isGameOver } = this._execChoiceWindowObjectSellEvent();
@@ -3892,10 +3840,10 @@ export class WWA {
                             this._yesNoJudge = YesNoState.UNSELECTED;
                             switch (secondCallInfo) {
                                 case ChoiceCallInfo.CALL_BY_PASSWORD_LOAD:
-                                    this.generatePageAndReserveExecution("読み込むオートセーブを選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true, true);
+                                    this.registerSystemMessagePage("読み込むオートセーブを選んでください。\n→Ｎｏでデータ復帰用パスワードの\n　入力選択ができます。", true);
                                     break;
                                 case ChoiceCallInfo.NONE:
-                                    this.generatePageAndReserveExecution("読み込むオートセーブを選んでください。", true, true);
+                                    this.registerSystemMessagePage("読み込むオートセーブを選んでください。", true);
                                     break;
                             }
 
@@ -3952,7 +3900,7 @@ export class WWA {
         }
         if (this._windowCloseWaitingMessageDisplayRequests.length > 0) {
             const message = this._windowCloseWaitingMessageDisplayRequests.shift();
-            this.generatePageAndReserveExecution(message, false, false);
+            this.registerPageByMessage(message);
         }
     }
 
@@ -3965,7 +3913,7 @@ export class WWA {
         if (this._playerAndObjectsStopWaitingMessageDisplayRequests.length > 0) {
             // 移動後のプレイヤーが justPosition ならメッセージを表示する
             // HACK: <P> で発生したメッセージを無理やり連結しているが、配列を直接受け取れるようになるべき
-            this.generatePageAndReserveExecution(this._playerAndObjectsStopWaitingMessageDisplayRequests.join("<p>"), false, false);
+            this.registerPageByMessage(this._playerAndObjectsStopWaitingMessageDisplayRequests.join("<p>"));
             this._playerAndObjectsStopWaitingMessageDisplayRequests = [];
         }
     }
@@ -3990,30 +3938,60 @@ export class WWA {
         } else if (this._player.isMoving() || this._player.isWaitingMoveMacro()) {
             this._playerAndObjectsStopWaitingMessageDisplayRequests.push(message);
         } else {
-            this.generatePageAndReserveExecution(message, false, false);
+            this.registerPageByMessage(message);
         }
     }
 
-    public generatePageAndReserveExecution(
+    // HACK: private にしたい
+    public registerSystemMessagePage(message: string, showChoice: boolean = false): void {
+        this.registerPageByMessage(message, {
+            showChoice,
+            isSystemMessage: true
+        })
+    }
+
+    // HACK: private にしたい
+    public registerSystemMessagePageByKey(systemMessageKey: SystemMessage.Key): void {
+        const systemMessage = this.resolveSystemMessage(systemMessageKey);
+        if (systemMessage !== "BLANK") {
+            this._pages.push(Page.createSystemMessagePage(this._createSimpleMessage(systemMessage)));
+        }
+    }
+
+    private _createSimpleMessage(message: string, triggerParts?: TriggerParts): ParsedMessage {
+        return new ParsedMessage(message, () => this.generateTokenValues(triggerParts))
+    }
+
+    // HACK: private にしたい
+    public registerPageByMessage(
         message: string,
-        showChoice: boolean,
-        isSystemMessage: boolean,
-        partsID: number = 0,
-        partsType: PartsType = PartsType.OBJECT,
-        partsPosition: Coord = new Coord(0, 0),
-        scoreOption: ScoreOptions | undefined =  undefined
+        {
+            showChoice = false,
+            isSystemMessage = false,
+            triggerParts = {
+                // HACK: 歴史的経緯でデフォルト値が設定されているが、
+                // システムメッセージの場合は undefined とされるべき
+                id: 0,
+                type: PartsType.OBJECT,
+                position: new Coord(0, 0)
+            },
+            scoreOption = undefined
+        }: {
+            showChoice?: boolean,
+            isSystemMessage?: boolean,
+            triggerParts?: TriggerParts,
+            scoreOption?: ScoreOptions
+        } = {}
     ): void {
         const generatedPage = generatePagesByRawMessage(
             message,
-            partsID,
-            partsType,
-            partsPosition,
+            triggerParts,
             isSystemMessage,
             showChoice,
             scoreOption,
-            (macroStr: string) => parseMacro(this, partsID, partsType, partsPosition, macroStr),
+            (macroStr: string) => parseMacro(this, triggerParts, macroStr),
             // HACK: WWA Script の呼び出し順変更が終わったら消せる
-            (scriptStrings: string) => this._execEvalString(scriptStrings, partsID, partsType, partsPosition),
+            (scriptStrings: string) => this._execEvalString(scriptStrings, triggerParts),
             // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
             // 型が any になってしまうのであえて bind 使ってません
             (triggerParts: TriggerParts) => this.generateTokenValues(triggerParts)
@@ -5252,7 +5230,7 @@ export class WWA {
           helpMessage += "上キー：１つ戻す　下キー：１つ進める\n";
           helpMessage += "左キー：１０個戻す　右キー：１０個進める\n";
           helpMessage += "Vキー: 名前付き変数/通常変数の切り替え";
-          this.generatePageAndReserveExecution(helpMessage, false, true);
+          this.registerSystemMessagePage(helpMessage);
         }
     }
 
@@ -5348,7 +5326,7 @@ export class WWA {
                     return;
             }
             if (helpMessage) {
-                this.generatePageAndReserveExecution(helpMessage, false, true);
+                this.registerSystemMessagePage(helpMessage);
             }
 
         }
@@ -5390,10 +5368,16 @@ export class WWA {
             this._player.clearMessageWaiting();
             return { newPageGenerated: false };
         } else {
-            this.generatePageAndReserveExecution(
+            this.registerPageByMessage(
                 this.getMessageById(mesID),
-                false, false, itemID, PartsType.OBJECT,
-                this._player.getPosition().getPartsCoord());
+                {
+                    triggerParts: {
+                        id: itemID,
+                        type: PartsType.OBJECT,
+                        position: this._player.getPosition().getPartsCoord()
+                    }
+                }
+            );
             return { newPageGenerated: this._pages.length !== 0 }
         }
     }
@@ -6276,7 +6260,7 @@ font-weight: bold;
         return {};
     }
 
-    public generateTokenValues(triggerParts: TriggerParts): ExpressionParser.TokenValues {
+    public generateTokenValues(triggerParts?: TriggerParts): ExpressionParser.TokenValues {
         return {
             totalStatus: this._player.getStatus(),
             bareStatus: this._player.getStatusWithoutEquipments(),
@@ -6288,9 +6272,9 @@ font-weight: bold;
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox(),
-            partsId: triggerParts.id,
-            partsType: triggerParts.type,
-            partsPosition: triggerParts.position,
+            partsId: triggerParts?.id,
+            partsType: triggerParts?.type,
+            partsPosition: triggerParts?.position,
             map: this._wwaData.map,
             mapObject: this._wwaData.mapObject
         }
@@ -6635,7 +6619,7 @@ font-weight: bold;
             this._execEvalString(getElement.value);
         } catch(e) {
             console.error(e);
-            this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
+            this.registerSystemMessagePage("解析中にエラーが発生しました :\n" + e.message);
         }
     }
 
@@ -6643,18 +6627,18 @@ font-weight: bold;
      * Script要素実行部分
      * @param evalString 
      */
-    private _execEvalString(evalString: string, triggerPartsId?: number, triggerPartsType?: PartsType, triggerPartsPosition?: Coord) {
+    private _execEvalString(evalString: string, triggerParts?: TriggerParts) {
         try {
             const nodes = this.convertWwaNodes(evalString);
-            if (triggerPartsId && triggerPartsPosition) {
-                this.evalCalcWwaNodeGenerator.setTriggerParts(triggerPartsId, triggerPartsType ?? PartsType.OBJECT, triggerPartsPosition);
+            if (triggerParts) {
+                this.evalCalcWwaNodeGenerator.setTriggerParts(triggerParts.id, triggerParts.type, triggerParts.position);
             }
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
             this.evalCalcWwaNodeGenerator.clearTriggerParts();
         }
         catch(e) {
             console.error(e);
-            this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
+            this.registerSystemMessagePage("解析中にエラーが発生しました :\n" + e.message);
         }
     }
 

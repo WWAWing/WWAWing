@@ -9,6 +9,7 @@ import {
     MacroImgFrameIndex,
     macrotable,
     StatusSolutionKind,
+    TriggerParts,
 } from "./wwa_data";
 import { evaluateMacroArgExpression } from "./wwa_expression";
 
@@ -16,9 +17,7 @@ import { evaluateMacroArgExpression } from "./wwa_expression";
 export class Macro {
     constructor(
         private _wwa: WWA,
-        private _triggerPartsID: number,
-        private _triggerPartsType: number,
-        private _triggerPartsPosition: Coord,
+        private _triggerParts: TriggerParts,
         public macroType: MacroType,
         public macroArgs: string[]
     ) { }
@@ -361,11 +360,7 @@ export class Macro {
         if (!isNaN(intParsedValue)) {
             return intParsedValue;
         }
-        return evaluateMacroArgExpression(targetString, this._wwa.generateTokenValues({
-            id: this._triggerPartsID,
-            type: this._triggerPartsType,
-            position: this._triggerPartsPosition
-        }), fallbackValue);
+        return evaluateMacroArgExpression(targetString, this._wwa.generateTokenValues(this._triggerParts), fallbackValue);
     }
 
     // JumpGateマクロ実行部
@@ -555,7 +550,7 @@ export class Macro {
         for (var i = 0; i < 10; i++) {
             str[i] = this.macroArgs[i];
         }
-        this._wwa.userVarUserIf(this._triggerPartsPosition, str);
+        this._wwa.userVarUserIf(this._triggerParts.position, str);
     }
     
    // SET_SPEEDマクロ実行部
@@ -590,7 +585,7 @@ export class Macro {
         if (partsID < 0) {
             throw new Error("入力変数が不正です");
         }
-        this._wwa.varMap(this._triggerPartsPosition, xstr, ystr, partsID, partsType);
+        this._wwa.varMap(this._triggerParts.position, xstr, ystr, partsID, partsType);
         // this._wwa.appearPartsEval( this._triggerPartsPosition, xstr, ystr, partsID, partsType);
     }
     // executeImgPlayerMacro
@@ -697,7 +692,7 @@ export class Macro {
             // バージョン 1 では符号がある場合に相対指定, Pの場合にプレイヤー座標での出現が可能
             // $map=75,+10,-10,1
             // $map=75,P,P,1
-            this._wwa.appearPartsEval(this._triggerPartsPosition, xstr, ystr, partsId, partsType);
+            this._wwa.appearPartsEval(this._triggerParts.position, xstr, ystr, partsId, partsType);
         } else if (version === 2) {
             // バージョン 2 では X, Y の絶対指定のみ対応
             // 相対指定は下記のように行われるべき
@@ -710,7 +705,7 @@ export class Macro {
                 throw new Error("出現先座標が不正です")
             }
             // x, y の範囲外判定は appearPartsEval に任せる
-            this._wwa.appearPartsEval(this._triggerPartsPosition, `${x}`, `${y}`, partsId, partsType);
+            this._wwa.appearPartsEval(this._triggerParts.position, `${x}`, `${y}`, partsId, partsType);
         }
     }
 
@@ -950,15 +945,9 @@ export class Macro {
     }
 
     private _executeSetMacro(): { isGameOver?: true } {
-        return this._wwa.execSetMacro(this.macroArgs[0], 
-            {
-                triggerParts: {
-                    position: this._triggerPartsPosition,
-                    id: this._triggerPartsID,
-                    type: this._triggerPartsType
-                }
-            }
-        );
+        return this._wwa.execSetMacro(this.macroArgs[0], {
+          triggerParts: this._triggerParts,
+        });
     }
 
     private _executeDelayBgmMacro(): void {
@@ -992,9 +981,7 @@ export class Macro {
 
 export function parseMacro(
     wwa: WWA,
-    partsID: number,
-    partsType: PartsType,
-    position: Coord,
+    triggerParts: TriggerParts,
     macroStr: string
 ): Macro {
     let matchInfo = macroStr.match(/^\$([a-zA-Z_][a-zA-Z0-9_]*)\=(.*)$/);
@@ -1015,9 +1002,7 @@ export function parseMacro(
     const macroArgs = (matchInfo[2] ?? "").split(",").map(arg => shouldTrimWhiteSpace ? arg.trim() : arg);
     return new Macro(
         wwa,
-        partsID,
-        partsType,
-        position,
+        triggerParts,
         macroIndex === undefined ? MacroType.UNDEFINED : macroIndex,
         macroArgs
     );
