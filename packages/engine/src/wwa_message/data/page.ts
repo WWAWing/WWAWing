@@ -1,19 +1,30 @@
-import { ScoreOptions as ScoreOptions, TriggerParts } from "../../wwa_data";
+import type { ScoreOption, TriggerParts } from "../../wwa_data";
+
 import { Node } from "./node";
+
+export interface PageOption {
+  // パーツIDと種別の情報
+  triggerParts: TriggerParts;
+  isSystemMessage: boolean;
+  showChoice: boolean;
+  // score オブジェクトがあるときスコア表示
+  scoreOption?: ScoreOption;
+}
+
+export type PartialPageOption = Partial<PageOption>;
 
 export class Page {
   constructor(
-    public firstNode?: Node,
-    public isLastPage?: boolean, // 旧 endOfPartsEvent相当
-    public showChoice?: boolean,
-    public isSystemMessage?: boolean,
-    // score オブジェクトがあるときスコア表示
-    public scoreOptions?: ScoreOptions,
-    // パーツIDと種別の情報
-    public triggerParts?: TriggerParts
+    public firstNode: Node,
+    public isLastPage: boolean,
+    public option: PartialPageOption
   ) {}
 
   static createSystemMessagePage(firstNode?: Node): Page {
-      return new Page(firstNode, true, false, true)
+    return new Page(firstNode, true, { isSystemMessage: true});
+  }
+
+  static createEmptyPage(pageOption: PageOption): Page {
+    return new Page(undefined, true, pageOption);
   }
 }
