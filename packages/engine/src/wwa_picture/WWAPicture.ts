@@ -249,8 +249,7 @@ export default class WWAPicutre {
                     const nextPictureParts = picture.nextPictureParts;
                     const mapPictureInfo = picture.appearParts;
                     const executeScriptFunctionName = picture.executeScriptFunctionName;
-                    // next プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
-                    const pictureProperties = picture.getRegistryData(true).properties;
+                    const pictureProperties = picture.getNextPictureProperties();
                     const triggerPartsCoord = picture.getTriggerPartsCoord();
                     this.deletePicture(layerNumber);
                     if (nextPictureParts !== undefined) {

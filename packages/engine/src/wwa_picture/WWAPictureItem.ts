@@ -275,13 +275,23 @@ export default class WWAPictureItem {
         this._canvas.clear();
     }
 
-    public getRegistryData(excludeNextProperty?: boolean) {
-        if (excludeNextProperty) {
-            const newData = { ...this._registry };
-            delete this._registry.properties["next"];
-            return newData;
-        }
+    public getRegistryData() {
         return this._registry;
+    }
+
+    public getNextPictureProperties(): PictureRegistry["properties"] {
+        const properties = { ...this._registry.properties };
+        // next プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
+        delete properties["next"];
+        return {
+            ...properties,
+            pos: [this._posBaseX, this._posBaseY],
+            move: [this._moveX, this._moveY],
+            size: [this._sizeX, this._sizeY],
+            zoom: [this._zoomX, this._zoomY],
+            circle: [this._circleRadiusX, this._circleRadiusY, this._circleAngle, this._circleSpeed],
+            opacity: this._opacity,
+        };
     }
 
     public getTriggerPartsCoord() {
