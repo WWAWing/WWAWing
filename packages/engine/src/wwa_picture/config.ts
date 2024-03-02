@@ -44,7 +44,7 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "angle", type: "number" },
     { name: "rotate", type: "number" },
     { name: "next", type: "numberArray" },
-    { name: "next", type: "numberArray2D" },
+    { name: "create", type: "numberArray2D" },
     { name: "map", type: "numberArray" },
     { name: "script", type: "string" },
 ];

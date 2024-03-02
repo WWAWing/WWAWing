@@ -246,20 +246,22 @@ export default class WWAPicutre {
                 // TODO ネストが深くなってる、そろそろなんとかせねば
                 if (picture.isDeadlineOver()) {
                     const layerNumber = picture.layerNumber;
-                    const nextPictureParts = picture.nextPictureParts;
+                    const nextPictures = picture.createPicturesInfo.concat(picture.nextPictureParts);
                     const mapPictureInfo = picture.appearParts;
                     const executeScriptFunctionName = picture.executeScriptFunctionName;
                     const pictureProperties = picture.getNextPictureProperties();
                     const triggerPartsCoord = picture.getTriggerPartsCoord();
                     this.deletePicture(layerNumber);
-                    if (nextPictureParts !== undefined) {
-                        // TODO 座標を算出したい
+                    for (const nextPictureInfo of nextPictures) {
+                        if (!nextPictureInfo) {
+                            continue;
+                        }
                         this._wwa.setPictureRegistry(
-                            layerNumber,
-                            nextPictureParts.partsNumber,
-                            nextPictureParts.partsType,
+                            nextPictureInfo.layerNumber,
+                            nextPictureInfo.partsNumber,
+                            nextPictureInfo.partsType,
                             triggerPartsCoord,
-                            nextPictureParts.connectProperties ? pictureProperties : undefined,
+                            nextPictureInfo.connectProperties ? pictureProperties : undefined,
                         );
                     }
                     if (mapPictureInfo !== undefined) {

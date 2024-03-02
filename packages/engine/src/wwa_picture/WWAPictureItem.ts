@@ -136,10 +136,26 @@ export default class WWAPictureItem {
             return undefined;
         }
         return {
+            layerNumber: this._registry.layerNumber,
             partsNumber: this._registry.properties.next[0],
             partsType: this._registry.properties.next[1] ?? PartsType.OBJECT,
             connectProperties: this._registry.properties.next[2] ?? 0,
         };
+    }
+
+    public get createPicturesInfo() {
+        if (!Array.isArray(this._registry.properties.create)) {
+            return [];
+        }
+        // TODO 1次元配列だった場合は二次元配列に補正するのも良いかもしれない
+        return this._registry.properties.create
+            .filter(Array.isArray)
+            .map((partsInfo) => ({
+                layerNumber: partsInfo[0],
+                partsNumber: partsInfo[1],
+                partsType: partsInfo[2] ?? PartsType.OBJECT,
+                connectProperties: partsInfo[3] ?? 0,
+            }));
     }
 
     public get appearParts() {
