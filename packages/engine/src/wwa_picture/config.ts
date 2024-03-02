@@ -1,6 +1,6 @@
 import { PictureProperties } from "@wwawing/common-interface/lib/wwa_picture";
 
-type PicturePropertyType = "number" | "numberArray" | "string";
+type PicturePropertyType = "number" | "numberArray" | "numberArray2D" | "string";
 
 export type PicturePropertyName = keyof PictureProperties;
 
@@ -44,6 +44,7 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "angle", type: "number" },
     { name: "rotate", type: "number" },
     { name: "next", type: "numberArray" },
+    { name: "next", type: "numberArray2D" },
     { name: "map", type: "numberArray" },
     { name: "script", type: "string" },
 ];

@@ -30,6 +30,19 @@ const validatePropertyValue = (key: string, value: unknown): boolean => {
         return false;
     }
     switch (definitions.type) {
+        case "numberArray2D": {
+            if (!Array.isArray(value)) {
+                console.warn(`プロパティ ${key} は配列形式である必要がありますが、配列形式になっていません。`);
+                return false;
+            }
+            const invalidValueIndexes = value
+                .map((xValue, index) => !Array.isArray(xValue) ? index + 1 : null)
+                .filter((index) => index !== null)
+            if (invalidValueIndexes.length > 0) {
+                console.warn(`プロパティ ${key} は配列の配列である必要がありますが、 ${invalidValueIndexes.join(", ")} の要素が配列形式になっていません。`);
+                return false;
+            }
+        }
         case "string":
             if (typeof value !== "string") {
                 if (typeof value !== "number") {
@@ -87,10 +100,15 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
             case "number":
                 return [camelCaseKey, stringToNumberForNumericValue(value)];
             case "numberArray":
-                return [camelCaseKey, value.map(stringToNumberForNumericValue)]
+                return [camelCaseKey, value.map(stringToNumberForNumericValue)];
+            case "numberArray2D":
+                // 細かいバリデーションは validatePropertyValue で実行済みなのでここでは簡潔に
+                if (!Array.isArray(value) || value.some(Array.isArray)) {
+                    return [camelCaseKey, value];
+                }
+                return [camelCaseKey, value.map((xValue) => xValue.map(stringToNumberForNumericValue))];
             case "string":
                 if (typeof value !== "string") {
-                    // 細かいバリデーションは validatePropertyValue で実行済みなのでここでは簡潔に
                     return [camelCaseKey, value.toString()];
                 }
                 let evaluatedString = String(value);
