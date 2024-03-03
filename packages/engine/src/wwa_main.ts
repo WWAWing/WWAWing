@@ -6741,6 +6741,8 @@ font-weight: bold;
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox(),
+            gameSpeedIndex: this._player.getSpeedIndex(),
+            // TODO ステータスが変わっても更新されていない？
             wwaData: this._wwaData
         }
     }

@@ -1006,10 +1006,9 @@ export class EvalCalcWwaNode {
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
       case 'MOVE_SPEED':
-        // FIXME gameStatus.wwaData が更新されていないのでゲームスピードを変更しても変化しない
-        return speedList[gameStatus.wwaData.gameSpeedIndex];
+        return speedList[gameStatus.gameSpeedIndex];
       case 'MOVE_FRAME_TIME':
-        return WWAConsts.CHIP_SIZE / speedList[gameStatus.wwaData.gameSpeedIndex];
+        return WWAConsts.CHIP_SIZE / speedList[gameStatus.gameSpeedIndex];
       default:
         throw new Error("このシンボルは取得できません")
     }
