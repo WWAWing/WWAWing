@@ -42,6 +42,7 @@ const validatePropertyValue = (key: string, value: unknown): boolean => {
                 console.warn(`プロパティ ${key} は配列の配列である必要がありますが、 ${invalidValueIndexes.join(", ")} の要素が配列形式になっていません。`);
                 return false;
             }
+            break;
         }
         case "string":
             if (typeof value !== "string") {

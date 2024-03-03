@@ -4,6 +4,7 @@ import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
 import { adjustPositiveValue, getHorizontalCirclePosition, getHorizontalCorrectionBySizeAnchor, getVerticalCirclePosition, getVerticalCorrectionBySizeAnchor } from "./utils";
+import { NextPicturePartsInfo } from "./typedef";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -129,33 +130,6 @@ export default class WWAPictureItem {
 
     public get cvs() {
         return this._canvas.cvs;
-    }
-
-    public get nextPictureParts() {
-        if (!this._registry.properties.next || this._registry.properties.next[0] === undefined) {
-            return undefined;
-        }
-        return {
-            layerNumber: this._registry.layerNumber,
-            partsNumber: this._registry.properties.next[0],
-            partsType: this._registry.properties.next[1] ?? PartsType.OBJECT,
-            connectProperties: this._registry.properties.next[2] ?? 0,
-        };
-    }
-
-    public get createPicturesInfo() {
-        if (!Array.isArray(this._registry.properties.create)) {
-            return [];
-        }
-        // TODO 1次元配列だった場合は二次元配列に補正するのも良いかもしれない
-        return this._registry.properties.create
-            .filter(Array.isArray)
-            .map((partsInfo) => ({
-                layerNumber: partsInfo[0],
-                partsNumber: partsInfo[1],
-                partsType: partsInfo[2] ?? PartsType.OBJECT,
-                connectProperties: partsInfo[3] ?? 0,
-            }));
     }
 
     public get appearParts() {
@@ -295,10 +269,37 @@ export default class WWAPictureItem {
         return this._registry;
     }
 
+    public getNextPicturePartsInfo(): NextPicturePartsInfo[] {
+        const nextPicture = Array.isArray(this._registry.properties.next) && this._registry.properties.next[0]
+            ? {
+                layerNumber: this._registry.layerNumber,
+                partsNumber: this._registry.properties.next[0],
+                partsType: this._registry.properties.next[1] ?? PartsType.OBJECT,
+                connectProperties: this._registry.properties.next[2] ? true : false,
+            }
+            : undefined;
+        // TODO 1次元配列だった場合は二次元配列に補正するのも良いかもしれない
+        const createPictures = Array.isArray(this._registry.properties.create)
+            ? this._registry.properties.create
+                .filter(Array.isArray)
+                .map((partsInfo) => ({
+                    layerNumber: partsInfo[0],
+                    partsNumber: partsInfo[1],
+                    partsType: partsInfo[2] ?? PartsType.OBJECT,
+                    connectProperties: partsInfo[3] ? true : false,
+                }))
+            : [];
+        if (!nextPicture) {
+            return createPictures;
+        }
+        return createPictures.concat(nextPicture);
+    }
+
     public getNextPictureProperties(): PictureRegistry["properties"] {
         const properties = { ...this._registry.properties };
-        // next プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
+        // next プロパティや create プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
         delete properties["next"];
+        delete properties["create"];
         return {
             ...properties,
             pos: [this._posBaseX, this._posBaseY],
