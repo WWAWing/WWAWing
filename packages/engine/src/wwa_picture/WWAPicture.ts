@@ -255,7 +255,8 @@ export default class WWAPicutre {
                 // next プロパティを継ぐとピクチャが表示されっぱなしになるので取り除く
                 const pictureProperties = picture.getRegistryData(true).properties;
                 const triggerPartsCoord = picture.getTriggerPartsCoord();
-                this.deletePicture(layerNumber);
+                // WWAMain から実行しないと削除した分がセーブデータに残る
+                this._wwa.deletePictureRegistry(layerNumber);
                 if (nextPictureParts !== undefined) {
                     // TODO 座標を算出したい
                     this._wwa.setPictureRegistry(
