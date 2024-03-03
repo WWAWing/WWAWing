@@ -114,7 +114,6 @@ export default class WWAPicutre {
         this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
         // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
         this._pictures = new Map([...this._pictures.entries()].sort(([, a], [, b]) => a.layerNumber - b.layerNumber));
-        console.log(this._pictures);
     }
 
     /**
