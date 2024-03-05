@@ -6764,7 +6764,7 @@ font-weight: bold;
         }
         catch(e) {
             console.error(e);
-            this.generatePageAndReserveExecution("解析中にエラーが発生しました :\n" + e.message, false, true);
+            this.registerSystemMessagePage("解析中にエラーが発生しました :\n" + e.message, false);
         }
     }
 
