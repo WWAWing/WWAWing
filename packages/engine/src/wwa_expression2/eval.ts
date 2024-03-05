@@ -2,6 +2,7 @@ import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, WWAConsts  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
+import { PARTS_TYPE_LIST } from "./utils";
 
 export class EvalCalcWwaNodeGenerator {
   wwa: WWA;
@@ -193,6 +194,12 @@ export class EvalCalcWwaNode {
         return this.convertTemplateLiteral(node);
       case "ConditionalExpression":
         return this.convertConditionalExpression(node);
+      case "Property":
+        return this.property(node);
+      case "ObjectExpression":
+        return this.objectExpression(node);
+      case "ArrayExpression":
+        return this.arrayExpression(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -452,7 +459,6 @@ export class EvalCalcWwaNode {
         const destID = Number(this.evalWwaNode(node.value[1]));
         let partsType = node.value[2]? Number(this.evalWwaNode(node.value[2])): 0;
         let onlyThisSight = node.value[3]? Boolean(this.evalWwaNode(node.value[3])): true;
-        const PARTS_TYPE_LIST = [PartsType.OBJECT, PartsType.MAP];
         if(srcID < 0 || destID < 0 ) {
           throw new Error("パーツ番号が不正です");
         }
@@ -603,8 +609,39 @@ export class EvalCalcWwaNode {
         } else {
           throw new Error("この値は文字列に変換できないため、システムメッセージを表示できません。");
         }
+        break;
       }
-      break;
+      case "PICTURE": {
+        this._checkArgsLength(1, node);
+        const layerNumber = Number(this.evalWwaNode(node.value[0]));
+        const propertyDefinition = node.value.length >= 2 ? this.evalWwaNode(node.value[1]) : undefined;
+        if (propertyDefinition === undefined) {
+          this.generator.wwa.deletePictureRegistry(layerNumber);
+          return;
+        }
+        if (typeof propertyDefinition === "object") {
+          this.generator.wwa.setPictureRegistryFromObject(layerNumber, propertyDefinition);
+        } else if (typeof propertyDefinition === "string") {
+          // TODO パーツ座標は本来なら実行元パーツの座標にすべきだが、イベント関数では判別できない。
+          this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition);
+        } else {
+          throw new Error("ピクチャのプロパティ定義は文字列あるいはオブジェクトである必要があります。")
+        }
+        break;
+      }
+      case "PICTURE_FROM_PARTS": {
+        this._checkArgsLength(2, node);
+        const layerNumber = Number(this.evalWwaNode(node.value[0]));
+        const propertyPartsNumber = Number(this.evalWwaNode(node.value[1]));
+        const propertyPartsType = node.value.length >= 3 ? Number(this.evalWwaNode(node.value[2])) : PartsType.OBJECT;
+        if (!PARTS_TYPE_LIST.includes(propertyPartsType)) {
+          throw new Error("パーツ種別が不明です");
+        }
+        const gameStatus = this.generator.wwa.getGameStatus();
+        // 実行元パーツ座標はプレイヤーの座標として評価する
+        this.generator.wwa.setPictureRegistry(layerNumber, propertyPartsNumber, propertyPartsType, gameStatus.playerCoord);
+        break;
+      }
       /** 絶対値を返す関数 */
       case "ABS": {
         this._checkArgsLength(1, node);
@@ -731,6 +768,21 @@ export class EvalCalcWwaNode {
     const target = ifResult? node.consequent: node.alternate;
     const value = this.evalWwaNode(target)
     return value;
+  }
+
+  property(node: Wwa.Property) {
+    return [this.evalWwaNode(node.key), this.evalWwaNode(node.value)];
+  }
+
+  objectExpression(node: Wwa.ObjectExpression) {
+    return Object.fromEntries(
+      // TODO もし properties に Properties 以外の Node が混入したら？
+      node.properties.map((property) => this.evalWwaNode(property))
+    );
+  }
+
+  arrayExpression(node: Wwa.ArrayExpression) {
+    return node.elements.map((element) => this.evalWwaNode(element));
   }
 
   /**

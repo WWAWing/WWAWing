@@ -1,5 +1,8 @@
 
+import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord } from "./wwa_data";
+import WWAPicutre from "./wwa_picture/WWAPicture";
+import { WWA } from "./wwa_main";
 
 export class CacheCanvas {
     public cvs: HTMLCanvasElement;
@@ -10,15 +13,35 @@ export class CacheCanvas {
         this.cvs.width = width;
         this.cvs.height = height;
         this.ctx = this.cvs.getContext("2d", { alpha: isTransparent });
+        // TODO オプションでオフにできるようにしたい
+        this.ctx.imageSmoothingEnabled = false;
         this._isTransparent = isTransparent;
         //document.body.appendChild(this.cvs);
     }
-    public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number): void {
+    public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
         this.ctx.drawImage(
             _image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
             Consts.CHIP_SIZE, Consts.CHIP_SIZE, canvasX, canvasY,
-            Consts.CHIP_SIZE, Consts.CHIP_SIZE
+            width, height
         );
+    }
+    public drawCanvasFree(image: HTMLImageElement, canvasX: number, canvasY: number, width: number, height: number): void {
+        this.ctx.drawImage(image, canvasX, canvasY, width, height);
+    }
+    /**
+     * フォントを描画します。色などの設定はあらかじめ ctx フィールドに設定しておいてください。
+     */
+    public drawFont(text: string, canvasX: number, canvasY: number, lineHeight?: number): void {
+        if (lineHeight !== undefined) {
+            const lines = text.split("\n");
+            lines.forEach((line, index) => {
+                // Canvas API では描画しているテキストから1行分の高さを簡単に算出することはできない (できても px 単位じゃなかったりする)
+                // 引数 lineHeight の指定が必要
+                this.ctx.fillText(line, canvasX, canvasY + (index * lineHeight));
+            });
+        } else {
+            this.ctx.fillText(text, canvasX, canvasY);
+        }
     }
     public clear() {
         this.clearRect(0, 0, this.cvs.width, this.cvs.height);
@@ -52,6 +75,7 @@ export class CGManager {
     private _backCanvas: CacheCanvas;
     private _objectCanvases: CacheCanvas[];
     private _effectCanvases: CacheCanvas[];
+    public picture: WWAPicutre;
     public mapCache: number[] = void 0;
     public mapObjectCache: number[] = void 0;
     public mapCacheYLimit: number = 0;
@@ -155,6 +179,16 @@ export class CGManager {
         }
     }
 
+    public updatePictures(regitories: PictureRegistry[]): void {
+        this.picture.clearAllPictures();
+        regitories.forEach((registry) => {
+            this.picture.registerPicture(registry);
+        });
+    }
+    public updatePicturesCache(isMainAnimation = true): void {
+        this.picture.updatePicturesCache(this._image, isMainAnimation);
+    }
+
     public drawFrame(): void {
         // 全
         //this._ctx.drawImage(this._frameCanvas.cvs,
@@ -187,6 +221,14 @@ export class CGManager {
         this._ctx.drawImage(effectCanvas.cvs,
             0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW,
             0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
+    }
+
+    public drawPictures(): void {
+        this.picture.forEachPictures((picture) => {
+            this._ctx.drawImage(picture.cvs,
+                0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW,
+                0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
+        });
     }
 
     public drawCanvas(chipX: number, chipY: number, canvasX: number, canvasY: number): void {
@@ -339,12 +381,20 @@ export class CGManager {
         this.createFrame();
     }
 
-    public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {
+    public constructor(
+        ctx: CanvasRenderingContext2D,
+        fileName: string,
+        _frameCoord: Coord,
+        wwa: WWA,
+        pictureImageNamesFile: string | null,
+        loadCompleteCallBack: () => void
+    ) {
 
         this._frameCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);
         this._backCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, false);
         this._objectCanvases = [];
         this._effectCanvases = [];
+        this.picture = new WWAPicutre(wwa, pictureImageNamesFile);
         var i;
         for (i = 0; i < 2; i++) {
             this._objectCanvases[i] = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);

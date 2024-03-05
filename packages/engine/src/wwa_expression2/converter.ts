@@ -54,7 +54,13 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
       case "TemplateElement":
         return convertTemplateElement(node as Acorn.TemplateElement);
       case "ConditionalExpression":
-        return convertConditionalExpression(node as Acorn.ConditionalExpression)
+        return convertConditionalExpression(node as Acorn.ConditionalExpression);
+      case "Property":
+        return convertProperty(node as Acorn.Property);
+      case "ObjectExpression":
+        return convertObjectExpression(node as Acorn.ObjectExpression);
+      case "ArrayExpression":
+        return convertArrayExpression(node as Acorn.ArrayExpression);
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -198,6 +204,8 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_MILLISECONDS":
     case "GET_DATE_WEEKDAY":
     case "CHANGE_SYSMSG":
+    case "PICTURE":
+    case "PICTURE_FROM_PARTS":
     case "SHOW_USER_DEF_VAR":
     case "ABS":
     case "GET_GAMEOVER_POS_X":
@@ -480,7 +488,10 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
         name: node.name
       }
     default:  
-      throw new Error("未定義のシンボルです :\n"+ node.name);
+      return {
+        type: "Literal",
+        value: node.name
+      };
   }
 }
 
@@ -504,4 +515,33 @@ function convertConditionalExpression(node: Acorn.ConditionalExpression): Wwa.WW
     test: test,
     alternate: alternate
   };
+}
+
+function convertProperty(node: Acorn.Property): Wwa.Property {
+  const key = convertNodeAcornToWwa(node.key);
+  if (key.type === "Symbol") {
+    throw new Error(`Object のキー ${key.name} は予約されているため、使用できません。`);
+  }
+  if (key.type !== "Literal") {
+    throw new Error(`Object のキーが不正です。 Literal を期待していましたが、実際は ${key.type} でした。`);
+  }
+  return {
+    type: "Property",
+    key,
+    value: convertNodeAcornToWwa(node.value),
+  };
+}
+
+function convertObjectExpression(node: Acorn.ObjectExpression): Wwa.ObjectExpression {
+  return {
+    type: "ObjectExpression",
+    properties: node.properties.map(convertProperty),
+  };
+}
+
+function convertArrayExpression(node: Acorn.ArrayExpression): Wwa.ArrayExpression {
+  return {
+    type: "ArrayExpression",
+    elements: node.elements.map(convertNodeAcornToWwa),
+  }
 }
