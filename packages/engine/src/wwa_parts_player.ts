@@ -815,7 +815,7 @@ export class Player extends PartsObject {
             const mes = this._wwa.resolveSystemMessage(SystemMessage.Key.ITEM_SELECT_TUTORIAL);
             if (!this._isClickableItemGot) {
                 if (mes !== "BLANK") {
-                    this._wwa.generatePageAndReserveExecution(mes, false, true);
+                    this._wwa.registerSystemMessagePage(mes);
                 }
                 this._isClickableItemGot = true;
             }
@@ -1078,10 +1078,7 @@ export class Player extends PartsObject {
                 playerStatus.defence >= enemyStatus.strength
             ) {
                 this._enemy.battleEndProcess();
-                const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
-                if (systemMessage !== "BLANK") {
-                    this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
-                }
+                this._wwa.registerSystemMessagePageByKey(SystemMessage.Key.CANNOT_DAMAGE_MONSTER);
                 this._battleTurnLength = 0;
                 this._enemy = null;
                 this._state = PlayerState.CONTROLLABLE;
@@ -1106,7 +1103,7 @@ export class Player extends PartsObject {
                 // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
                 this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
                 this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-                this._wwa.generatePageAndReserveExecution(this._enemy.message, false, false, this._enemy.partsID, PartsType.OBJECT, this._enemy.position);
+                this._wwa.registerPageByMessage(this._enemy.message, {triggerParts: { id: this._enemy.partsID, type: PartsType.OBJECT, position: this._enemy.position } });
                 this._enemy.battleEndProcess();
                 this._battleTurnLength = 0;
                 this._battleNoDamageTurnLength = 0;
@@ -1154,10 +1151,7 @@ export class Player extends PartsObject {
         const aborted = (this._battleNoDamageTurnLength > Consts.FIGHT_DRAW_TURN) || abortedByDamageCalculation;
         if (aborted) {
             this._enemy.battleEndProcess();
-            const systemMessage = this._wwa.resolveSystemMessage(SystemMessage.Key.BATTLE_NOT_SETTLED);
-            if (systemMessage !== "BLANK") {
-                this._wwa.generatePageAndReserveExecution(systemMessage, false, true);
-            }
+            this._wwa.registerSystemMessagePageByKey(SystemMessage.Key.BATTLE_NOT_SETTLED);
             this._battleTurnLength = 0;
             this._battleNoDamageTurnLength = 0;
             this._enemy = null;
