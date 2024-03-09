@@ -8,7 +8,7 @@ import {
   Junction,
   MessageLine,
   MessageSegments,
-  PageOption,
+  PageGeneratingOption,
 } from "../data";
 import * as ExpressionParser from "../../wwa_expression";
 import * as util from "../../wwa_util";
@@ -57,26 +57,43 @@ export function normalizeMessage(message: string): string {
 }
 
 /**
- * メッセージを `<P>` タグで分割します。
+ * メッセージを `<P>`, `<script>` タグで分割します。
  * 大文字と小文字は区別されません。
  * @param message
  */
-export function splitMessageByPTag(message: string): string[] {
-  return message.split(/\<p\>/gi);
+export function splitMessageByTags(message: string): { pageContents: string[], script?: string } {
+  if (message === "") {
+    return { pageContents: [] }
+  }
+  const scriptTagSplitMessages = message.split(/\<script\>/i)
+  const [messageMainSection, scriptSection] =
+    scriptTagSplitMessages.length > 1
+      ? [scriptTagSplitMessages[0], scriptTagSplitMessages[1]]
+      : [scriptTagSplitMessages[0]];
+
+  return {
+    pageContents: messageMainSection.split(/\<p\>/gi),
+    script: scriptSection
+  }
 }
 
 export function createPage({
-  pageContent,
-  pageOption,
+  content,
+  script,
+  generatingOption,
   pageType,
   parseMacro,
+  evalScript,
   // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
-  generateTokenValuesCallback
+  generateTokenValuesCallback,
+
 }: {
-  pageContent: string;
-  pageOption: PageOption;
+  content: string;
+  script?: string
+  generatingOption: PageGeneratingOption;
   pageType: "first" | "last" | "other",
   parseMacro: (macroStr: string) => Macro,
+  evalScript: (script: string, triggerParts?: TriggerParts) => void,
   // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
   generateTokenValuesCallback: (triggerParts: TriggerParts) => ExpressionParser.TokenValues
 
@@ -85,7 +102,7 @@ export function createPage({
     let nodeByPrevLine: Node | undefined = undefined;
     let lastPoppedJunction: Junction | undefined = undefined;
 
-    const lines = parseMessageLines(pageContent, parseMacro);
+    const lines = parseMessageLines(content, parseMacro);
     const junctionNodeStack: Junction[] = [];
 
     lines.forEach((line, index) => {
@@ -97,7 +114,8 @@ export function createPage({
           line,
           !firstNode || !messageLineIsText(previousLineType),
           generateTokenValuesCallback,
-          { triggerParts: pageOption.triggerParts }
+          evalScript,
+          { triggerParts: generatingOption.triggerParts }
         );
 
         const endIfPoppedJunction = processConditionalExecuteMacroLine(
@@ -118,7 +136,7 @@ export function createPage({
             parentJunction,
             lastPoppedJunction,
             generateTokenValuesCallback,
-            { triggerParts: pageOption.triggerParts }
+            { triggerParts: generatingOption.triggerParts }
           );
         } else {
           firstNode = newNode;
@@ -134,15 +152,22 @@ export function createPage({
       }
     });
 
-    return new Page(
+    // ページで必ず実行されるスクリプトがある場合は先頭ノードの手前に挿入 (先頭ページに限る)
+    if (script && pageType === "first") {
+      const scriptNode = ParsedMessage.createEmptyMessage(generateTokenValuesCallback, evalScript, script);
+      scriptNode.next = firstNode;
+      firstNode = scriptNode;
+    }
+
+    return {
       firstNode,
-      pageType === "last",
-      {
-        ...pageOption,
-        showChoice: pageType === "first" ? pageOption.showChoice: undefined,
-        scoreOption: pageType === "first" ? pageOption.scoreOption: undefined
-      }
-    );
+      isLastPage: pageType === "last",
+      triggerParts: generatingOption.triggerParts,
+      isSystemMessage: generatingOption.isSystemMessage,
+      showChoice: pageType === "first" ? generatingOption.showChoice: undefined,
+      scoreOption: pageType === "first" ? generatingOption.scoreOption: undefined,
+      script
+    };
   }
 
 export const messageLineIsText = (lineType: MessageLineType) =>
@@ -193,6 +218,7 @@ export function createNewNode(
   generateTokenValues: (
     triggerParts?: TriggerParts
   ) => ExpressionParser.TokenValues,
+  evalScript: (script: string, triggerParts?: TriggerParts) => void,
   option: {
     triggerParts: TriggerParts;
   }
@@ -221,16 +247,17 @@ export function createNewNode(
                 version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1,
               }
             ),
-            generateTokenValues
+            generateTokenValues,
+            evalScript,
           )
         : undefined;
     case "text":
       return shouldCreateParsedMessage
-        ? new ParsedMessage(currentLine.text, generateTokenValues)
+        ? new ParsedMessage(currentLine.text, generateTokenValues, evalScript)
         : undefined;
     case "normalMacro":
       return shouldCreateParsedMessage
-        ? new ParsedMessage("", generateTokenValues, [currentLine.macro])
+        ? new ParsedMessage("", generateTokenValues, evalScript, [currentLine.macro])
         : undefined;
     default:
       return undefined;
