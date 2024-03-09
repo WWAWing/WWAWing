@@ -43,6 +43,8 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "fade", type: "number" },
     { name: "angle", type: "number" },
     { name: "rotate", type: "number" },
+    { name: "wait", type: "number" },
+    { name: "waitFrame", type: "number" },
     { name: "next", type: "numberArray" },
     { name: "create", type: "numberArray2D" },
     { name: "map", type: "numberArray" },
@@ -60,5 +62,6 @@ export const propertySnakeCaseTable: { [key: string]: PicturePropertyName } = {
     "font_size": "fontSize",
     "font_family": "fontFamily",
     "text_align": "textAlign",
-    "line_height": "lineHeight"
+    "line_height": "lineHeight",
+    "wait_frame": "waitFrame",
 };

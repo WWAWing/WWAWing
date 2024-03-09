@@ -37,6 +37,9 @@ export interface PictureProperties<N = number> {
   fade?: N;
   angle?: N;
   rotate?: N;
+  wait?: N;
+  waitFrame?: N;
+  wait_frame?: N;
   next?: [N] | [N, N] | [N, N, N],
   create?: ([N] | [N, N] | [N, N, N] | [N, N, N, N])[],
   // TODO map プロパティの座標で PX と PY を指定するとピクチャ作成時の座標が評価されてしまい、移動後はプレイヤーの位置通りにパーツが配置されない。
