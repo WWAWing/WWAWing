@@ -73,9 +73,9 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, 
     case 'TIME':
       return tokenValues.playTime;
     case 'X':
-      return tokenValues.partsPosition.x ?? tokenValues.playerCoord.x;
+      return tokenValues.partsPosition?.x ?? tokenValues.playerCoord.x;
     case 'Y':
-      return tokenValues.partsPosition.y ?? tokenValues.playerCoord.y;
+      return tokenValues.partsPosition?.y ?? tokenValues.playerCoord.y;
     case 'PX':
       return tokenValues.playerCoord.x;
     case 'PY':
