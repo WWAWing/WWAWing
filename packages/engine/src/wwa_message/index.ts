@@ -130,7 +130,6 @@ export function generatePagesByRawMessage(
         console.error(error);
       }
     });
-    console.log("firstNode", firstNode);
 
     return new Page(
       firstNode,
