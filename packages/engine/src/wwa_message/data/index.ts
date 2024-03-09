@@ -1,7 +1,7 @@
 import { PreprocessMacroType } from "../../wwa_data"
 import { Macro } from "../../wwa_macro";
 export { Node, Branch, Junction, LazyEvaluateValue, ParsedMessage, MessageSegments } from "./node";
-export { Page } from "./page";
+export { Page, PageOption } from "./page";
 
 export type MessageLineType = PreprocessMacroType | "text" | "normalMacro";
 export type MessageLine =

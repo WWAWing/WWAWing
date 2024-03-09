@@ -9,7 +9,7 @@ import {
     SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
+    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
 } from "./wwa_data";
 
 import {
@@ -251,7 +251,7 @@ export class WWA {
      * 最後のスコア表示に使用されたオプション
      * 一度も表示されていない場合は undefiuned.
      */
-    private _lastScoreOptions?: ScoreOptions;
+    private _lastScoreOptions?: ScoreOption;
 
     /**
      * ゲームスピード変更リクエスト.
@@ -1893,7 +1893,7 @@ export class WWA {
                 //  (this._pages の後尾にシステムメッセージのページが追加されるため)
                 // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
                 // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
-                const executedResult = Node.executeNodes(executingPage.firstNode, executingPage.triggerParts);
+                const executedResult = Node.executeNodes(executingPage.firstNode, executingPage.option.triggerParts);
                 if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
                     // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
                     this._isLastPage = false;
@@ -1904,12 +1904,12 @@ export class WWA {
                     this._reservedMoveMacroTurn = void 0;
                 }
                 const messageLinesToDisplay = executedResult.messages.filter(line => !line.isEmpty());
-                const isScoreDisplayingPage = Boolean(executingPage.scoreOptions);
+                const isScoreDisplayingPage = Boolean(executingPage.option.scoreOption);
 
                 // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える。
                 // システムメッセージ扱いではなく、パーツが表示している扱いになります。
                 if (isScoreDisplayingPage && messageLinesToDisplay.length === 0) {
-                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", executingPage.triggerParts));
+                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", executingPage.option.triggerParts));
                 }
 
                 // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
@@ -1917,17 +1917,17 @@ export class WWA {
                 if (existsMessageToDisplay) {
                     const message = messageLinesToDisplay.map(line => line.generatePrintableMessage()).join("\n");
                     this._messageWindow.setMessage(message);
-                    this._messageWindow.setYesNoChoice(executingPage.showChoice);
+                    this._messageWindow.setYesNoChoice(executingPage.option.showChoice);
                     this._messageWindow.setPositionByPlayerPosition(
                         this._faces.length !== 0,
                         isScoreDisplayingPage,
-                        executingPage.isSystemMessage,
+                        executingPage.option.isSystemMessage,
                         this._player.getPosition(),
                         this._camera.getPosition()
                     );
                     if (isScoreDisplayingPage) {
-                        this._lastScoreOptions = executingPage.scoreOptions;
-                        this.updateScore(executingPage.scoreOptions);
+                        this._lastScoreOptions = executingPage.option.scoreOption;
+                        this.updateScore(executingPage.option.scoreOption);
                         this._scoreWindow.show();
                     }
                     this._player.setMessageWaiting();
@@ -3649,7 +3649,7 @@ export class WWA {
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
     }
 
-    public updateScore(scoreOption?: ScoreOptions) {
+    public updateScore(scoreOption?: ScoreOption) {
         const option = scoreOption || this._lastScoreOptions;
         // 一度もスコアを表示しておらず、今回スコアを新たに表示しようとしていない場合は何もしない
         if (!option) {
@@ -3985,21 +3985,19 @@ export class WWA {
             showChoice?: boolean,
             isSystemMessage?: boolean,
             triggerParts?: TriggerParts,
-            scoreOption?: ScoreOptions
+            scoreOption?: ScoreOption
         } = {}
     ): void {
         const generatedPage = generatePagesByRawMessage(
-            message,
-            triggerParts,
-            isSystemMessage,
-            showChoice,
-            scoreOption,
-            (macroStr: string) => parseMacro(this, triggerParts, macroStr),
-            // HACK: WWA Script の呼び出し順変更が終わったら消せる
-            (scriptStrings: string) => this._execEvalString(scriptStrings, triggerParts),
-            // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
-            // 型が any になってしまうのであえて bind 使ってません
-            (triggerParts: TriggerParts) => this.generateTokenValues(triggerParts)
+          message,
+          { triggerParts, isSystemMessage, showChoice, scoreOption },
+          (macroStr: string) => parseMacro(this, triggerParts, macroStr),
+          // HACK: WWA Script の呼び出し順変更が終わったら消せる
+          (scriptStrings: string) =>
+            this._execEvalString(scriptStrings, triggerParts),
+          // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
+          // 型が any になってしまうのであえて bind 使ってません
+          (triggerParts: TriggerParts) => this.generateTokenValues(triggerParts)
         );
         this._pages = this._pages.concat(generatedPage);
         this._shouldSetNextPage = true;
