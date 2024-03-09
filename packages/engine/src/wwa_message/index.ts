@@ -1,4 +1,4 @@
-import { ScoreOption, TriggerParts } from "../wwa_data";
+import { TriggerParts } from "../wwa_data";
 import { Junction, Node, ParsedMessage, Page, PageOption } from "./data";
 import {
   normalizeMessage,
@@ -44,7 +44,6 @@ export function generatePagesByRawMessage(
   return pageContents.map((pageContent, pageId) =>
     createPage({
       pageContent,
-      pageId,
       pageOption,
       pageType: resolvePageType(pageId, pageContents.length),
       parseMacro,

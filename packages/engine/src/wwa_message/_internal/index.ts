@@ -67,7 +67,6 @@ export function splitMessageByPTag(message: string): string[] {
 
 export function createPage({
   pageContent,
-  pageId,
   pageOption,
   pageType,
   parseMacro,
@@ -75,7 +74,6 @@ export function createPage({
   generateTokenValuesCallback
 }: {
   pageContent: string;
-  pageId: number;
   pageOption: PageOption;
   pageType: "first" | "last" | "other",
   parseMacro: (macroStr: string) => Macro,
