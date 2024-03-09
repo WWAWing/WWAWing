@@ -12,8 +12,4 @@ export class Page {
     // パーツIDと種別の情報
     public triggerParts?: TriggerParts
   ) {}
-
-  static createSystemMessagePage(firstNode?: Node): Page {
-      return new Page(firstNode, true, false, true)
-  }
 }
