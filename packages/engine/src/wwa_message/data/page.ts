@@ -2,26 +2,22 @@ import type { ScoreOption, TriggerParts } from "../../wwa_data";
 
 import { Node } from "./node";
 
-export interface PageOption {
-  // パーツIDと種別の情報
+export interface Page {
+  /** ページの最初のノード */
+  firstNode?: Node,
+  /** このページが最後のページか */
+  isLastPage: boolean,
+  /** 実行元パーツ情報 */
   triggerParts: TriggerParts;
+  /** システムメッセージかどうか */
   isSystemMessage: boolean;
+  /** 二者択一ページかどうか */
   showChoice: boolean;
-  // score オブジェクトがあるときスコア表示
+  /** オブジェクトがあるときスコア表示ページ */
   scoreOption?: ScoreOption;
 }
 
-export type PartialPageOption = Partial<PageOption>;
-
-export class Page {
-  constructor(
-    public firstNode: Node,
-    public isLastPage: boolean,
-    public option: PartialPageOption
-  ) {}
-
-
-  static createEmptyPage(pageOption: PageOption): Page {
-    return new Page(undefined, true, pageOption);
-  }
-}
+/**
+ * ページ生成のためのオプション
+ */
+export type PageGeneratingOption = Pick<Page, "triggerParts" | "isSystemMessage" | "showChoice" | "scoreOption">;
