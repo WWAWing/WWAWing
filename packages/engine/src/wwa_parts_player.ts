@@ -1151,6 +1151,7 @@ export class Player extends PartsObject {
         const aborted = (this._battleNoDamageTurnLength > Consts.FIGHT_DRAW_TURN) || abortedByDamageCalculation;
         if (aborted) {
             this._enemy.battleEndProcess();
+            this._state = PlayerState.CONTROLLABLE;
             this._wwa.registerSystemMessagePageByKey(SystemMessage.Key.BATTLE_NOT_SETTLED);
             this._battleTurnLength = 0;
             this._battleNoDamageTurnLength = 0;

@@ -1238,7 +1238,9 @@ export class WWA {
                 const damage = this.evalCalcWwaNodeGenerator.evalWwaNode(userDefinedFunctionNode);
                 const aborted = this.evalCalcWwaNodeGenerator.state.battleDamageCalculation.aborted;
                 this.evalCalcWwaNodeGenerator.clearBattleDamageCalculationMode();
-                if (typeof damage === "number") {
+                if (aborted) {
+                    return { damage: 0, aborted };
+                } else if (typeof damage === "number") {
                     return { damage: this.toAssignableValue(damage), aborted };
                 } else {
                     console.warn(`${damageDirection} のダメージ計算結果が数値になりませんでした。(結果: ${damage})。このターンのダメージは無効になります。`);
@@ -3954,7 +3956,10 @@ export class WWA {
     public registerSystemMessagePageByKey(systemMessageKey: SystemMessage.Key): void {
         const systemMessage = this.resolveSystemMessage(systemMessageKey);
         if (systemMessage !== "BLANK") {
-            this._pages.push(Page.createSystemMessagePage(this._createSimpleMessage(systemMessage)));
+            // NOTE: 二者択一型システムメッセージに対応する場合は拡張が必要
+            this.registerPageByMessage(systemMessage, {
+                isSystemMessage: true
+            })
         }
     }
 

@@ -62,7 +62,6 @@ function resolvePageType(pageId: number, length: number): "first" | "last" | "ot
   } else {
     return "other";
   }
-
 }
 
 export function isEmptyMessageTree(node: Node | undefined): boolean {

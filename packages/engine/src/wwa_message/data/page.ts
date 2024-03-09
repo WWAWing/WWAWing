@@ -20,9 +20,6 @@ export class Page {
     public option: PartialPageOption
   ) {}
 
-  static createSystemMessagePage(firstNode?: Node): Page {
-    return new Page(firstNode, true, { isSystemMessage: true});
-  }
 
   static createEmptyPage(pageOption: PageOption): Page {
     return new Page(undefined, true, pageOption);
