@@ -1,10 +1,14 @@
 export interface PictureProperties<N = number> {
   pos?: [N, N];
-  time?: N,
-  timeFrame?: N;
+  time?: N | [N] | [N, N];
+  timeFrame?: N | [N] | [N, N];
   // スネークケースになっているだけで、内容は上記と同じ
-  time_frame?: N;
+  time_frame?: N | [N] | [N, N];
   size?: [N, N];
+  animTime?: [N, N];
+  anim_time?: [N, N];
+  animTimeFrame?: [N, N];
+  animTime_frame?: [N, N];
   move?: [N, N];
   accel?: [N, N];
   zoom?: [N, N];

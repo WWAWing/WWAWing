@@ -102,6 +102,11 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
                 return [camelCaseKey, stringToNumberForNumericValue(value)];
             case "numberArray":
                 return [camelCaseKey, value.map(stringToNumberForNumericValue)];
+            case "numberOrArray":
+                if (Array.isArray(value)) {
+                    return [camelCaseKey, value.map(stringToNumberForNumericValue)];
+                }
+                return [camelCaseKey, [stringToNumberForNumericValue(value)]];
             case "numberArray2D":
                 // 細かいバリデーションは validatePropertyValue で実行済みなのでここでは簡潔に
                 if (!Array.isArray(value) || value.some(Array.isArray)) {

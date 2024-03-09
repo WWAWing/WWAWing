@@ -104,7 +104,8 @@ export default class WWAPictureItem {
         this._updatePictureCache();
         
         this._timeType = properties.time ? "milisecond" : properties.timeFrame ? "frame" : undefined;
-        this._displayStockTime = properties.time || properties.timeFrame;
+        const timeValue = properties.time || properties.timeFrame;
+        this._displayStockTime = Array.isArray(timeValue) ? timeValue[0] ?? 0 : timeValue;
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
