@@ -1274,6 +1274,17 @@ export class Player extends PartsObject {
         return this._speedIndex;
     }
 
+    public isPausing() {
+        return (
+            this.isJumped() ||
+            this.isWaitingMessage() ||
+            this.isWaitingPasswordWindow() ||
+            this.isWaitingEstimateWindow() ||
+            this.isWaitingMoveMacro() ||
+            this.isFighting()
+        );
+    }
+
     constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number, gameSpeedIndex: number) {
         super(pos);
         // どっかで定数化させたい

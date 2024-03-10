@@ -2402,7 +2402,6 @@ export class WWA {
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
-            this.updatePicturesAnimation();
         } else if (this._player.isJumped()) {
             if (!this._camera.isResetting()) {
                 this._player.processAfterJump();
@@ -2413,7 +2412,6 @@ export class WWA {
             if (this._player.getPosition().isJustPosition()) {
                 this._dispatchPlayerAndObjectsStopTimeRequests();
             }
-            this.updatePicturesAnimation();
         } else if (this._player.isWaitingMessage()) {
 
             if (!this._messageWindow.isVisible()) {
@@ -2613,17 +2611,13 @@ export class WWA {
             this._objectMovingDataManager.update();
         }
 
+        this.updatePicturesAnimation();
         this._cgManager.picture.updateFrameTimerValue();
         this._prevFrameEventExected = false;
         if (this._player.getPosition().isJustPosition() && this._camera.getPosition().isScreenTopPosition()) {
 
-            if (
-                !this._shouldTreatWillMessageDisplay(this._pages) && // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
-                !this._player.isJumped() &&
-                !this._player.isWaitingMessage() &&
-                !this._player.isWaitingEstimateWindow() &&
-                !this._player.isWaitingMoveMacro() &&
-                !this._player.isFighting()) {
+            // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
+            if (!this._shouldTreatWillMessageDisplay(this._pages) && !this._player.isPausing()) {
 
                 if (this._player.isPartsAppearedTime()) {
                     this._player.clearPartsAppearedFlag();
@@ -5694,7 +5688,7 @@ export class WWA {
     }
 
     public canInput(): boolean {
-        return !this._temporaryInputDisable;
+        return !this._temporaryInputDisable && !this._cgManager.picture.isWaiting();
     }
 
     /*public setWaitTime( time: number): void {
@@ -5731,6 +5725,9 @@ export class WWA {
      * また、カウントダウンも行い、タイムオーバーした場合は消去も行います。
      */
     public updatePicturesAnimation(): void {
+        if (this._player.isPausing()) {
+            return;
+        }
         this._cgManager.updatePicturesAnimation(this._isMainAnimation());
     }
 

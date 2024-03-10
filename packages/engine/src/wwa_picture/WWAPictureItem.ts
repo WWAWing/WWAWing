@@ -5,6 +5,7 @@ import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
 import { adjustPositiveValue, getHorizontalCirclePosition, getHorizontalCorrectionBySizeAnchor, getVerticalCirclePosition, getVerticalCorrectionBySizeAnchor } from "./utils";
 import { NextPicturePartsInfo } from "./typedef";
+import { WWATimer } from "./WWATimer";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -61,8 +62,8 @@ export default class WWAPictureItem {
     private readonly _fade: number;
     private readonly _hasAnimation: boolean;
     
-    private readonly _timeType?: "milisecond" | "frame";
-    private _displayStockTime?: number;
+    private _displayStockTime?: WWATimer;
+    private _waitStockTime?: WWATimer;
 
     constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
@@ -103,9 +104,8 @@ export default class WWAPictureItem {
 
         this._updatePictureCache();
         
-        this._timeType = properties.time ? "milisecond" : properties.timeFrame ? "frame" : undefined;
-        const timeValue = properties.time || properties.timeFrame;
-        this._displayStockTime = Array.isArray(timeValue) ? timeValue[0] ?? 0 : timeValue;
+        this._displayStockTime = WWATimer.createTimerOrArray(properties.time, properties.timeFrame);
+        this._waitStockTime = WWATimer.createTimer(properties.wait, properties.waitFrame);
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
@@ -246,20 +246,23 @@ export default class WWAPictureItem {
     }
 
     public hasDisplayTimeStock() {
-        return this._timeType !== undefined && this._displayStockTime !== undefined && this._displayStockTime > 0;
+        return this._displayStockTime !== undefined && !this._displayStockTime.isTimeOver();
     }
 
-    public decrementDisplayTimeStock(frameMs: number) {
-        switch (this._timeType) {
-            case "milisecond":
-                this._displayStockTime -= frameMs;
-            case "frame":
-                this._displayStockTime -= 1;
-        }
+    public tickDisplayTimeStock(frameMs: number) {
+        this._displayStockTime?.tick(frameMs);
+    }
+    
+    public tickWaitTimeStock(frameMs: number) {
+        this._waitStockTime?.tick(frameMs);
     }
 
     public isDeadlineOver() {
-        return this._displayStockTime <= 0;
+        return this._displayStockTime.isTimeOver();
+    }
+
+    public isWaiting() {
+        return this._waitStockTime && !this._waitStockTime.isTimeOver();
     }
 
     public clearCanvas() {
