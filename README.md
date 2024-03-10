@@ -1,3 +1,5 @@
+test
+
 # WWA Wing
 インターネット RPG 「[World Wide Adventure](http://wwajp.com/)」 の TypeScript / JavaScript 実装です。
 
