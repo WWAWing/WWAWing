@@ -179,18 +179,14 @@ export class CGManager {
         }
     }
 
-    public restorePictures(regitories: PictureRegistry[]): void {
+    public updatePictures(regitories: PictureRegistry[]): void {
         this.picture.clearAllPictures();
         regitories.forEach((registry) => {
             this.picture.registerPicture(registry);
         });
     }
-    public updateAllPicturesCache(isMainAnimation = true): void {
-        this.picture.updateAllPicturesCache(this._image, isMainAnimation);
-    }
-
-    public updatePicturesAnimation(isMainAnimation = true): void {
-        this.picture.updatePicturesAnimation(this._image, isMainAnimation);
+    public updatePicturesCache(isMainAnimation = true): void {
+        this.picture.updatePicturesCache(this._image, isMainAnimation);
     }
 
     public drawFrame(): void {
