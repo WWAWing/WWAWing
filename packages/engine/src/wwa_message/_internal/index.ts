@@ -1,16 +1,149 @@
-import { MacroType, type TriggerParts } from "../../wwa_data";
+import { MacroType, type TriggerParts, type ScoreOption } from "../../wwa_data";
 import type { Macro } from "../../wwa_macro";
 import {
   Node,
+  Page,
   MessageLineType,
   ParsedMessage,
   Junction,
   MessageLine,
   MessageSegments,
+  PageOption,
 } from "../data";
 import * as ExpressionParser from "../../wwa_expression";
+import * as util from "../../wwa_util";
 
 // このファイルの関数は wwa_message の外で使わないようにしてください
+
+/**
+ * メッセージを正規化します。具体的には下記の処理が実行されます。
+ *
+ * - コメント (`<c>`, `<C>`, `//`) の削除 (`$` によるコメントアウトはマクロ処理時に行うためここでは対応しません)
+ * - `<p>`, `<P>` 周辺の改行の削除, 大文字への統一 (やるなら連続改行の削除までやるべきな気がするがそこまで対応していない。HACK: 経緯が謎なので慎重に検討して直す)
+ *
+ */
+export function normalizeMessage(message: string): string {
+  return message
+    .split(/\n\<c\>/i)[0]
+    .split(/\<c\>/i)[0]
+    .replace(/\n\<p\>\n/gi, "<P>")
+    .replace(/\n\<p\>/gi, "<P>")
+    .replace(/\<p\>\n/gi, "<P>")
+    .replace(/\<p\>/gi, "<P>")
+    .split("\n")
+    .map((line) => {
+      if (line.startsWith("//")) {
+        // 行の最初から // の場合はその行がなかったことにする
+        return undefined;
+      }
+      if (!line.match(/\/\//)) {
+        // 計算量削減のため、// を含まない列は何もせず終了
+        return line;
+      }
+      /**
+       * 行内の http:// https:// でない「//」以降の文字列を削除する。
+       * http:///////// のようなケースは、http:/「//」以降が削除対象になるため「 http:/」 になる。
+       * 本当は line.replace(/(?<!https?:)\/\/.*$/ig, "") と書きたいが、後読みにSafariが対応していないので、
+       * 否定後読みを、文字列を右から左に読んだ否定先読みとして処理する。
+       * 参考: https://qiita.com/yumarule/items/a37520974e39b25b7a6f#%E5%90%A6%E5%AE%9A%E5%BE%8C%E8%AA%AD%E3%81%BF%E3%81%AE%E4%BB%A3%E6%9B%BF-%E3%81%9D%E3%81%AE2
+       */
+      return util.reverse(
+        util.reverse(line).replace(/^.*\/\/(?!:s?ptth)/gi, "")
+      );
+    })
+    .filter((line) => line !== undefined)
+    .join("\n")
+    .replace(/\\\/\\\//gi, "//"); // エスケープ対応: 「\/\/」 を 「//」 にする。
+}
+
+/**
+ * メッセージを `<P>` タグで分割します。
+ * 大文字と小文字は区別されません。
+ * @param message
+ */
+export function splitMessageByPTag(message: string): string[] {
+  return message.split(/\<p\>/gi);
+}
+
+export function createPage({
+  pageContent,
+  pageOption,
+  pageType,
+  parseMacro,
+  // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
+  generateTokenValuesCallback
+}: {
+  pageContent: string;
+  pageOption: PageOption;
+  pageType: "first" | "last" | "other",
+  parseMacro: (macroStr: string) => Macro,
+  // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
+  generateTokenValuesCallback: (triggerParts: TriggerParts) => ExpressionParser.TokenValues
+
+})  {
+    let firstNode: Node | undefined = undefined;
+    let nodeByPrevLine: Node | undefined = undefined;
+    let lastPoppedJunction: Junction | undefined = undefined;
+
+    const lines = parseMessageLines(pageContent, parseMacro);
+    const junctionNodeStack: Junction[] = [];
+
+    lines.forEach((line, index) => {
+      try {
+        const previousLineType =
+          index === 0 ? undefined : lines[index - 1].type;
+        const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
+        const newNode = createNewNode(
+          line,
+          !firstNode || !messageLineIsText(previousLineType),
+          generateTokenValuesCallback,
+          { triggerParts: pageOption.triggerParts }
+        );
+
+        const endIfPoppedJunction = processConditionalExecuteMacroLine(
+          newNode,
+          line,
+          parentJunction,
+          junctionNodeStack
+        );
+        if (endIfPoppedJunction) {
+          lastPoppedJunction = endIfPoppedJunction;
+        }
+        if (previousLineType) {
+          connectOrMergeToPreviousNode(
+            line,
+            previousLineType,
+            nodeByPrevLine,
+            newNode,
+            parentJunction,
+            lastPoppedJunction,
+            generateTokenValuesCallback,
+            { triggerParts: pageOption.triggerParts }
+          );
+        } else {
+          firstNode = newNode;
+        }
+        if (newNode) {
+          nodeByPrevLine = newNode;
+        }
+      } catch (error) {
+        console.error(
+          `$if-$else_if-$else-$endif マクロの解析中にエラーが発生しました。ページ ${index}`
+        );
+        console.error(error);
+      }
+    });
+
+    return new Page(
+      firstNode,
+      pageType === "last",
+      {
+        ...pageOption,
+        showChoice: pageType === "first" ? pageOption.showChoice: undefined,
+        scoreOption: pageType === "first" ? pageOption.scoreOption: undefined
+      }
+    );
+  }
 
 export const messageLineIsText = (lineType: MessageLineType) =>
   lineType === MacroType.SHOW_STR ||
@@ -52,33 +185,42 @@ export function parseMessageLines(
 }
 
 /**
- * メッセージ行に対するノードを生成する。 
+ * メッセージ行に対するノードを生成する。
  */
 export function createNewNode(
   currentLine: MessageLine,
   shouldCreateParsedMessage: boolean,
-  generateTokenValues: (triggerParts?: TriggerParts) => ExpressionParser.TokenValues,
+  generateTokenValues: (
+    triggerParts?: TriggerParts
+  ) => ExpressionParser.TokenValues,
   option: {
     triggerParts: TriggerParts;
   }
 ): Node | undefined {
   switch (currentLine.type) {
     case MacroType.IF:
-      return new Junction([
-        {
-          descriminant: ExpressionParser.parseDescriminant(
-            currentLine.macro.macroArgs[0]
-          ),
-        },
-      ], generateTokenValues);
+      return new Junction(
+        [
+          {
+            descriminant: ExpressionParser.parseDescriminant(
+              currentLine.macro.macroArgs[0]
+            ),
+          },
+        ],
+        generateTokenValues
+      );
     case MacroType.SHOW_STR:
     case MacroType.SHOW_STR2:
       return shouldCreateParsedMessage
         ? new ParsedMessage(
-            generateShowStrString(currentLine.macro.macroArgs, generateTokenValues, {
-              triggerParts: option.triggerParts,
-              version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1,
-            }),
+            generateShowStrString(
+              currentLine.macro.macroArgs,
+              generateTokenValues,
+              {
+                triggerParts: option.triggerParts,
+                version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1,
+              }
+            ),
             generateTokenValues
           )
         : undefined;
@@ -148,7 +290,9 @@ export function connectOrMergeToPreviousNode(
   newNode: Node | undefined,
   parentJunction: Junction,
   endIfTargetJunction: Junction | undefined,
-  generateTokenValues: (triggerParts: TriggerParts) => ExpressionParser.TokenValues,
+  generateTokenValues: (
+    triggerParts: TriggerParts
+  ) => ExpressionParser.TokenValues,
   option: {
     triggerParts: TriggerParts;
   }
@@ -222,10 +366,12 @@ export function connectOrMergeToPreviousNode(
         nodeByPrevLine.appendMessage(
           generateShowStrString(
             currentLine.macro.macroArgs,
-            generateTokenValues, {
-            triggerParts: option.triggerParts,
-            version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1,
-          }),
+            generateTokenValues,
+            {
+              triggerParts: option.triggerParts,
+              version: currentLine.type === MacroType.SHOW_STR2 ? 2 : 1,
+            }
+          ),
           shouldInsertNewLine
         );
       } else if (currentLine.type === "text") {
@@ -271,7 +417,9 @@ export function connectToFinalNode(firstNode: Node, targetNode: Node) {
 // バージョン1 の場合は、整数値は添字として認識される。 例: 210 と書かれていると v[210] と扱われる。
 export function generateShowStrString(
   macroArgs: string[],
-  generateTokenValues: (triggerParts?: TriggerParts) => ExpressionParser.TokenValues,
+  generateTokenValues: (
+    triggerParts?: TriggerParts
+  ) => ExpressionParser.TokenValues,
   option: {
     triggerParts: TriggerParts;
     version: 1 | 2;
@@ -285,7 +433,7 @@ export function generateShowStrString(
       return () => {
         const userVars = generateTokenValues(option.triggerParts).userVars;
         return option.version === 1 ? userVars[parsedNumber] : parsedNumber;
-      }
+      };
     }
     // ExpressionParser で解釈できる表現 (HPMAX, RAND(x)など)を解釈する。
     // なお、数値の場合は前段で弾かれているので、定数になることはない。
