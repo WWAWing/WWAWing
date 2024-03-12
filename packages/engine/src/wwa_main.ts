@@ -2404,7 +2404,7 @@ export class WWA {
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
-            this._cgManager.picture.decrementPictureDisplayTimeStock();
+            this.updatePicturesAnimation();
         } else if (this._player.isJumped()) {
             if (!this._camera.isResetting()) {
                 this._player.processAfterJump();
@@ -2415,6 +2415,7 @@ export class WWA {
             if (this._player.getPosition().isJustPosition()) {
                 this._dispatchPlayerAndObjectsStopTimeRequests();
             }
+            this.updatePicturesAnimation();
         } else if (this._player.isWaitingMessage()) {
 
             if (!this._messageWindow.isVisible()) {
@@ -2673,7 +2674,7 @@ export class WWA {
             // ANIMATION_REP_HALF_FRAME の剰余だけで算出すると、常時非 sub のアニメーションが流れることになるため、
             // sub の判定については 1 フレーム分判定を後ろにずらしている
             if (this._animationCounter === 0 || this._animationCounter === Consts.ANIMATION_REP_HALF_FRAME + 1) {
-                this.updatePicturesCache();
+                this.updateAllPicturesCache();
             }
         }
         if (this._camera.isResetting()) {
@@ -4697,8 +4698,8 @@ export class WWA {
 
         this.updateCSSRule();
         this.updateEffect();
-        this._cgManager.updatePictures(this._wwaData.pictureRegistry);
-        this.updatePicturesCache();
+        this._cgManager.restorePictures(this._wwaData.pictureRegistry);
+        this.updateAllPicturesCache();
         this._player.updateStatusValueBox();
         this._wwaSave.quickSaveButtonUpdate(this._wwaData);
     }
@@ -5719,8 +5720,21 @@ export class WWA {
         this._cgManager.updateEffects(<Coord[]>this._wwaData.effectCoords);
     }
 
-    public updatePicturesCache(): void {
-        this._cgManager.updatePicturesCache(this._isMainAnimation());
+    /**
+     * 全ピクチャ内の CacheCanvas を更新します。
+     * ピクチャが一つでも更新された場合は必ず実行してください。
+     * 比較的負荷の高い処理になるため、アニメーションでピクチャが動いた場合は {@link updatePicturesAnimation} をご使用ください。
+     */
+    public updateAllPicturesCache(): void {
+        this._cgManager.updateAllPicturesCache(this._isMainAnimation());
+    }
+
+    /**
+     * 各ピクチャのアニメーションを動かし、 CacheCanvas を更新します。
+     * また、カウントダウンも行い、タイムオーバーした場合は消去も行います。
+     */
+    public updatePicturesAnimation(): void {
+        this._cgManager.updatePicturesAnimation(this._isMainAnimation());
     }
 
     public setImgClick(pos: Coord): void {
@@ -5836,7 +5850,7 @@ export class WWA {
         );
         // _cgManager 内のデータと _wwaData 内のデータで同期を取る
         this._wwaData.pictureRegistry = data;
-        this.updatePicturesCache();
+        this.updateAllPicturesCache();
     }
 
     /**
@@ -5848,7 +5862,7 @@ export class WWA {
     public setPictureRegistryFromRawText(layerNumber: number, propertiesText: string) {
         const data = this._cgManager.picture.registerPictureFromRawText(layerNumber, propertiesText);
         this._wwaData.pictureRegistry = data;
-        this.updatePicturesCache();
+        this.updateAllPicturesCache();
     }
 
     /**
@@ -5859,7 +5873,7 @@ export class WWA {
     public setPictureRegistryFromObject(layerNumber: number, properties: object) {
         const data = this._cgManager.picture.registerPictureFromObject(layerNumber, properties);
         this._wwaData.pictureRegistry = data;
-        this.updatePicturesCache();
+        this.updateAllPicturesCache();
     }
 
     public deletePictureRegistry(layerNumber: number) {
@@ -6714,6 +6728,8 @@ font-weight: bold;
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox(),
+            gameSpeedIndex: this._player.getSpeedIndex(),
+            // TODO ステータスが変わっても更新されていない？
             wwaData: this._wwaData
         }
     }
