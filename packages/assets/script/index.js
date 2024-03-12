@@ -29,10 +29,6 @@ function checkTriggerParts() {
   MSG(`（ユーザー定義関数）\nこのパーツの座標は X:${X} Y:${Y} です。\nパーツ番号は ${ID} で、種類は ${TYPE} です。`);
 }
 
-function afterDeletePicture() {
-  MSG("ユーザー定義関数を実行しました。");
-}
-
 function CALL_SAVE() {
   MSG("セーブしました！")
 }

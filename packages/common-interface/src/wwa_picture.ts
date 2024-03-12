@@ -1,21 +1,11 @@
 export interface PictureProperties<N = number> {
   pos?: [N, N];
   time?: N,
-  timeFrame?: N;
-  // スネークケースになっているだけで、内容は上記と同じ
-  time_frame?: N;
   size?: [N, N];
-  move?: [N, N];
-  accel?: [N, N];
-  zoom?: [N, N];
-  zoomAccel?: [N, N];
-  zoom_accel?: [N, N];
-  // テンキーの並びと一致する。 0 は左上 (7 と同じ扱い)。
-  anchor?: N;
-  circle?: [N] | [N, N] | [N, N, N] | [N, N, N, N];
   repeat?: [N, N];
   img?: ([N, N] | [N, N, N, N]);
   imgFile?: string;
+  // スネークケースになっているだけで、内容は上記と同じ
   img_file?: string;
   sound?: N;
   crop?: [N, N];
@@ -34,11 +24,7 @@ export interface PictureProperties<N = number> {
   lineHeight?: N;
   line_height?: N;
   opacity?: N;
-  fade?: N;
-  angle?: N;
-  rotate?: N;
   next?: [N] | [N, N] | [N, N, N],
-  create?: ([N] | [N, N] | [N, N, N] | [N, N, N, N])[],
   // TODO map プロパティの座標で PX と PY を指定するとピクチャ作成時の座標が評価されてしまい、移動後はプレイヤーの位置通りにパーツが配置されない。
   //      消去後に評価する特殊な表記方法を設けるか考えているが・・・。
   map?: [N, N, N] | [N, N, N, N],
