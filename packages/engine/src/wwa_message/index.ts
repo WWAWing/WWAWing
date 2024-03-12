@@ -1,12 +1,10 @@
+import { TriggerParts } from "../wwa_data";
+import { Junction, Node, ParsedMessage, Page, PageOption } from "./data";
 import {
-  PartsType,
-  Coord,
-  ScoreOptions,
-  TriggerParts,
-} from "../wwa_data";
-import * as util from "../wwa_util";
-import { Junction, Node, ParsedMessage, Page, } from "./data";
-import { parseMessageLines, createNewNode, processConditionalExecuteMacroLine, connectOrMergeToPreviousNode, messageLineIsText } from "./_internal";
+  normalizeMessage,
+  splitMessageByPTag,
+  createPage,
+} from "./_internal";
 import * as ExpressionParser from "../wwa_expression";
 import { Macro } from "../wwa_macro";
 
@@ -14,132 +12,55 @@ export * from "./data";
 
 export function generatePagesByRawMessage(
   message: string,
-  triggerParts: TriggerParts,
-  isSystemMessage: boolean,
-  showChoice: boolean,
-  scoreOption: ScoreOptions,
+  pageOption: PageOption,
   parseMacro: (macroStr: string) => Macro,
   // HACK: WWA Script 呼び出し順変更が完了したらこのコールバックは消せる
   execEvalStringCallback: (scriptSettings: string) => void,
   // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
-  generateTokenValuesCallback: (triggerParts: TriggerParts) => ExpressionParser.TokenValues
+  generateTokenValuesCallback: (
+    triggerParts: TriggerParts
+  ) => ExpressionParser.TokenValues
 ): Page[] {
-  // コメント削除
-  const messageMainAll = message
-    .split(/\n\<c\>/i)[0]
-    .split(/\<c\>/i)[0]
-    .replace(/\n\<p\>\n/gi, "<P>")
-    .replace(/\n\<p\>/gi, "<P>")
-    .replace(/\<p\>\n/gi, "<P>")
-    .replace(/\<p\>/gi, "<P>")
-    .split("\n")
-    .map((line) => {
-      if (line.startsWith("//")) {
-        // 行の最初から // の場合はその行がなかったことにする
-        return undefined;
-      }
-      if (!line.match(/\/\//)) {
-        // 計算量削減のため、// を含まない列は何もせず終了
-        return line;
-      }
-      /**
-       * 行内の http:// https:// でない「//」以降の文字列を削除する。
-       * http:///////// のようなケースは、http:/「//」以降が削除対象になるため「 http:/」 になる。
-       * 本当は line.replace(/(?<!https?:)\/\/.*$/ig, "") と書きたいが、後読みにSafariが対応していないので、
-       * 否定後読みを、文字列を右から左に読んだ否定先読みとして処理する。
-       * 参考: https://qiita.com/yumarule/items/a37520974e39b25b7a6f#%E5%90%A6%E5%AE%9A%E5%BE%8C%E8%AA%AD%E3%81%BF%E3%81%AE%E4%BB%A3%E6%9B%BF-%E3%81%9D%E3%81%AE2
-       */
-      return util.reverse(
-        util.reverse(line).replace(/^.*\/\/(?!:s?ptth)/gi, "")
-      );
-    })
-    .filter((line) => line !== undefined)
-    .join("\n")
-    .replace(/\\\/\\\//ig, "//"); // エスケープ対応: 「\/\/」 を 「//」 にする。
-  
-    /**
-     * <script> タグ仮対応
-     * TODO: 後で直してください
-     **/
-    const messageMainSplit = messageMainAll.split("<script>");
-    const messageMain = messageMainSplit[0];
+  /**
+   * <script> タグ仮対応
+   * UNDONE: script タグは各ページで処理されるようになるためここでは何もしなくなります。
+   **/
+  const messageMainSplit = normalizeMessage(message).split("<script>");
+  const messageMain = messageMainSplit[0];
 
-    /** <script> タグが含まれる場合中身を実行する。 */
-    if (messageMainSplit.length > 1) {
-        execEvalStringCallback(messageMainSplit[1]);
-    }
+  /** <script> タグが含まれる場合中身を実行する。 */
+  if (messageMainSplit.length > 1) {
+    execEvalStringCallback(messageMainSplit[1]);
+  }
 
+  // 空メッセージの場合は何も処理しないが、スコア表示の場合はメッセージを出すのでノードなしのページを生成
   if (messageMain === "") {
-    // 空メッセージの場合は何も処理しないが、スコア表示の場合はメッセージを出すのでノードなしのページを生成
-    return scoreOption
-      ? [new Page(undefined, true, false, false, scoreOption, triggerParts)]
+    return pageOption.scoreOption
+      ? [Page.createEmptyPage(pageOption)]
       : [];
   }
-  const pageContents = messageMain.split(/\<p\>/gi);
+  const pageContents = splitMessageByPTag(messageMain);
 
-  return pageContents.map((pageContent, pageId) => {
-    let firstNode: Node | undefined = undefined;
-    let nodeByPrevLine: Node | undefined = undefined;
-    let lastPoppedJunction: Junction | undefined = undefined;
+  return pageContents.map((pageContent, pageId) =>
+    createPage({
+      pageContent,
+      pageOption,
+      pageType: resolvePageType(pageId, pageContents.length),
+      parseMacro,
+      // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
+      generateTokenValuesCallback,
+    })
+  );
+}
 
-    const lines = parseMessageLines(pageContent, parseMacro);
-    const junctionNodeStack: Junction[] = [];
-
-    lines.forEach((line, index) => {
-      try {
-        const previousLineType =
-          index === 0 ? undefined : lines[index - 1].type;
-        const parentJunction = junctionNodeStack[junctionNodeStack.length - 1];
-        const newNode = createNewNode(
-          line,
-          !firstNode || !messageLineIsText(previousLineType),
-          generateTokenValuesCallback,
-          { triggerParts }
-        );
-
-        const endIfPoppedJunction = processConditionalExecuteMacroLine(
-          newNode,
-          line,
-          parentJunction,
-          junctionNodeStack
-        );
-        if (endIfPoppedJunction) {
-          lastPoppedJunction = endIfPoppedJunction;
-        }
-        if (previousLineType) {
-          connectOrMergeToPreviousNode(
-            line,
-            previousLineType,
-            nodeByPrevLine,
-            newNode,
-            parentJunction,
-            lastPoppedJunction,
-            generateTokenValuesCallback,
-            { triggerParts }
-          );
-        } else {
-          firstNode = newNode;
-        }
-        if (newNode) {
-          nodeByPrevLine = newNode;
-        }
-      } catch (error) {
-        console.error(
-          `$if-$else_if-$else-$endif マクロの解析中にエラーが発生しました。ページ ${index}`
-        );
-        console.error(error);
-      }
-    });
-
-    return new Page(
-      firstNode,
-      pageId === pageContents.length - 1,
-      pageId === 0 && showChoice,
-      isSystemMessage,
-      pageId === 0 && scoreOption,
-      triggerParts
-    );
-  });
+function resolvePageType(pageId: number, length: number): "first" | "last" | "other" {
+  if (pageId === 0) {
+    return "first";
+  } else if (pageId === length - 1) {
+    return "last";
+  } else {
+    return "other";
+  }
 }
 
 export function isEmptyMessageTree(node: Node | undefined): boolean {
