@@ -34,6 +34,8 @@ jobs:
           npm install
           npm run build
           npm run generate
+          file ./packages/all/dist/wwawing-dist/wwa.js
+          file ./packages/all/dist/wwawing-update/wwa.js
 
       - name: "Upload distributions"
         env:

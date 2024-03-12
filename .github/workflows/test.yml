@@ -26,6 +26,11 @@ jobs:
           npm i -g npm@8
           npm install
           npm run build
+          npm run generate
+          unzip -d . ./packages/all/dist/wwawing-dist.zip
+          unzip -d . ./packages/all/dist/wwawing-update.zip
+          file ./wwawing-dist/mapdata/wwa.js
+          file ./wwawing-update/wwa.js
 
       - name: "test"
         run: |
