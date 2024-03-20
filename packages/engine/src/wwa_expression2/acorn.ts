@@ -130,3 +130,19 @@ export interface ConditionalExpression extends Node {
   consequent: Node;
   alternate: Node;
 }
+
+export interface Property extends Node {
+  type: "Property";
+  key: Identifier | Literal;
+  value: Node;
+}
+
+export interface ObjectExpression extends Node {
+  type: "ObjectExpression";
+  properties: Property[];
+}
+
+export interface ArrayExpression extends Node {
+  type: "ArrayExpression";
+  elements: Node[];
+}
