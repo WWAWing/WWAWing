@@ -3,7 +3,15 @@ import { PartsType } from "@wwawing/loader";
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
-import { adjustPositiveValue, getHorizontalCirclePosition, getHorizontalCorrectionBySizeAnchor, getVerticalCirclePosition, getVerticalCorrectionBySizeAnchor } from "./utils";
+import {
+    getFirstValueFromSingleOrArray,
+    getArrayItemFromSingleOrArray,
+    adjustPositiveValue,
+    getHorizontalCirclePosition,
+    getHorizontalCorrectionBySizeAnchor,
+    getVerticalCirclePosition,
+    getVerticalCorrectionBySizeAnchor
+} from "./utils";
 import { NextPicturePartsInfo } from "./typedef";
 import { WWATimer } from "./WWATimer";
 
@@ -62,6 +70,7 @@ export default class WWAPictureItem {
     private readonly _fade: number;
     private readonly _hasAnimation: boolean;
     
+    private _startTime?: WWATimer;
     private _displayStockTime?: WWATimer;
     private _waitStockTime?: WWATimer;
 
@@ -104,7 +113,15 @@ export default class WWAPictureItem {
 
         this._updatePictureCache();
         
-        this._displayStockTime = WWATimer.createTimerOrArray(properties.time, properties.timeFrame);
+        // TODO タイマーがまだ開始していない状態を定義したい。
+        this._displayStockTime = WWATimer.createTimer(
+            getFirstValueFromSingleOrArray(properties.time),
+            getFirstValueFromSingleOrArray(properties.timeFrame)
+        );
+        this._startTime = WWATimer.createTimer(
+            getArrayItemFromSingleOrArray(properties.time, 1),
+            getArrayItemFromSingleOrArray(properties.timeFrame, 1)
+        );
         this._waitStockTime = WWATimer.createTimer(properties.wait, properties.waitFrame);
         
         // Canvas の ctx を色々いじる
@@ -243,6 +260,10 @@ export default class WWAPictureItem {
             this._totalHeight,
             this._anchor
         );
+    }
+
+    public isNotStarted() {
+        return this._startTime !== undefined && !this._startTime.isTimeOver();
     }
 
     public hasDisplayTimeStock() {

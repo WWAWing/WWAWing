@@ -22,17 +22,6 @@ export class WWATimer {
             return new WWATimer(frameTimeValue, "frame");
         }
     }
-    
-    private static _getTimeValue (value: PictureProperties["time"] | PictureProperties["timeFrame"]) {
-        return Array.isArray(value) ? value[0] : value;
-    }
-
-    public static createTimerOrArray(
-        msTimeValue?: PictureProperties["time"],
-        frameTimeValue?: PictureProperties["timeFrame"]
-    ) {
-        return WWATimer.createTimer(this._getTimeValue(msTimeValue), this._getTimeValue(frameTimeValue));
-    }
 
     public tick(frameMs: number) {
         // タイムオーバーの場合は、余計な処理を回避するために無効にする
