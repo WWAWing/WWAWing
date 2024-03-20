@@ -7,7 +7,7 @@ import {
 import { Macro } from "../../wwa_macro";
 
 export abstract class Node {
-  constructor(protected generateTokenValues: () => TokenValues) {}
+  constructor(protected generateTokenValues: (triggerParts?: TriggerParts) => TokenValues) {}
   abstract execute(triggerParts?: TriggerParts): ParsedMessage[];
 
   static executeNodes(
@@ -68,13 +68,13 @@ export class Junction extends Node {
     }
     return undefined;
   }
-  evaluateAndGetNextNode(): Node | undefined {
+  evaluateAndGetNextNode(triggerParts?: TriggerParts): Node | undefined {
     for (let branch of this.branches) {
       // 判別式が undefined の場合は $else 節に相当するのでそのまま次の Node を返す
       // 判別式が null の場合はエラーなので、仕方なく次の Node を返す
       if (
         !branch.descriminant ||
-        evaluateDescriminant(branch.descriminant, this.generateTokenValues())
+        evaluateDescriminant(branch.descriminant, this.generateTokenValues(triggerParts))
       ) {
         return branch.next;
       }
@@ -96,7 +96,7 @@ export class Junction extends Node {
         "パーツ起因ページによる実行ではないため、Junctionノードの利用を想定していません。"
       );
     }
-    const next = this.evaluateAndGetNextNode();
+    const next = this.evaluateAndGetNextNode(triggerParts);
     return next ? next.execute(triggerParts) : [];
   }
 }
