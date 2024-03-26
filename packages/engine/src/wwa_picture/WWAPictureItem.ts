@@ -123,6 +123,13 @@ export default class WWAPictureItem {
             getArrayItemFromSingleOrArray(properties.timeFrame, 1)
         );
         this._waitStockTime = WWATimer.createTimer(properties.wait, properties.waitFrame);
+
+        if (this._startTime) {
+            this._startTime.start();
+        } else if (this._displayStockTime) {
+            this._displayStockTime.start();
+        }
+        this._waitStockTime?.start();
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
@@ -270,6 +277,10 @@ export default class WWAPictureItem {
         return this._displayStockTime !== undefined && !this._displayStockTime.isTimeOver();
     }
 
+    public tickStartTimeStock(frameMs: number) {
+        this._startTime?.tick(frameMs);
+    }
+
     public tickDisplayTimeStock(frameMs: number) {
         this._displayStockTime?.tick(frameMs);
     }
@@ -279,11 +290,19 @@ export default class WWAPictureItem {
     }
 
     public isDeadlineOver() {
-        return this._displayStockTime.isTimeOver();
+        return this._displayStockTime && this._displayStockTime.isTimeOver();
+    }
+
+    public isStartTimeOver() {
+        return !this._startTime || this._startTime.isTimeOver();
     }
 
     public isWaiting() {
         return this._waitStockTime && !this._waitStockTime.isTimeOver();
+    }
+
+    public startDisplayTimeStock() {
+        this._displayStockTime.start();
     }
 
     public clearCanvas() {

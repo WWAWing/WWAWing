@@ -8,6 +8,7 @@ type TimeType = "milisecond" | "frame";
 export class WWATimer {
 
     private _timer = 0;
+    private _enabled = false;
 
     constructor(
         private _limitTime: number,
@@ -21,11 +22,16 @@ export class WWATimer {
         } else if (frameTimeValue) {
             return new WWATimer(frameTimeValue, "frame");
         }
+        return undefined;
+    }
+
+    public start() {
+        this._enabled = true;
     }
 
     public tick(frameMs: number) {
         // タイムオーバーの場合は、余計な処理を回避するために無効にする
-        if (this.isTimeOver()) {
+        if (!this._enabled || this.isTimeOver()) {
             return;
         }
         switch (this._timeType) {

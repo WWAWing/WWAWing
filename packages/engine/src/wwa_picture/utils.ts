@@ -158,7 +158,7 @@ export const getFirstValueFromSingleOrArray = <T>(value: T | T[]) => {
  * 配列か単体の値かわからない値から項目を取得します。配列以外の場合は undefined を返します。
  */
 export const getArrayItemFromSingleOrArray = <T>(value: T | T[], index: number) => {
-    if (!Array.isArray) {
+    if (!Array.isArray(value)) {
         return undefined;
     }
     return value[index];

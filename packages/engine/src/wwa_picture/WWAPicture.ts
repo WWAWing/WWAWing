@@ -220,6 +220,9 @@ export default class WWAPicutre {
 
     public updateAllPicturesCache(image: HTMLImageElement, isMainAnimation: boolean) {
         this.forEachPictures((picture) => {
+            if (picture.isNotStarted()) {
+                return;
+            }
             picture.draw(image, isMainAnimation);
         })
     }
@@ -241,6 +244,14 @@ export default class WWAPicutre {
         const newFrameValue = WWAPicutre._getNowFrameValue();
         const frameMs = newFrameValue - this._frameTimerValue;
         this.forEachPictures(picture => {
+            if (picture.isNotStarted()) {
+                picture.tickStartTimeStock(frameMs);
+                if (picture.isStartTimeOver()) {
+                    picture.startDisplayTimeStock();
+                } else {
+                    return;
+                }
+            }
             if (picture.hasDisplayTimeStock()) {
                 picture.tickDisplayTimeStock(frameMs);
                 // TODO ネストが深くなってる、そろそろなんとかせねば
