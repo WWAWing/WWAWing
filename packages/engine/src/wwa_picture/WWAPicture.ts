@@ -225,7 +225,7 @@ export default class WWAPicutre {
     }
 
     /**
-     * decrementPictureDisplayTimeStock の後に実行するようにしてください。
+     * updatePicturesAnimation の後に実行するようにしてください。
      * メッセージ表示中においても常時実行する必要があります。
      */
     public updateFrameTimerValue() {
@@ -242,7 +242,7 @@ export default class WWAPicutre {
         const frameMs = newFrameValue - this._frameTimerValue;
         this.forEachPictures(picture => {
             if (picture.hasDisplayTimeStock()) {
-                picture.decrementDisplayTimeStock(frameMs);
+                picture.tickDisplayTimeStock(frameMs);
                 // TODO ネストが深くなってる、そろそろなんとかせねば
                 if (picture.isDeadlineOver()) {
                     const layerNumber = picture.layerNumber;
@@ -283,7 +283,19 @@ export default class WWAPicutre {
                 picture.updateAnimation();
                 picture.draw(image, isMainAnimation);
             }
+            if (picture.isWaiting()) {
+                picture.tickWaitTimeStock(frameMs);
+            }
         });
+    }
+
+    public isWaiting() {
+        for (const picture of this._pictures.values()) {
+            if (picture.isWaiting()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public getPictureRegistryData(): PictureRegistry[] {
