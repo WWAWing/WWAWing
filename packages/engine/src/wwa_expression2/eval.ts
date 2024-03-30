@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, WWAConsts  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
@@ -702,9 +702,15 @@ export class EvalCalcWwaNode {
     const game_status = this.generator.wwa.getGameStatus();
     const x = this.evalWwaNode(node.destinationX);
     const y = this.evalWwaNode(node.destinationY);
+    if(typeof x !== "number" || typeof y !== "number") {
+      throw new Error(`座標は数値で指定してください (${x}, ${y})`)
+    }
+    // 範囲外で例外を投げる用
+    new Position(this.generator.wwa, x, y);
+
     const value = this.evalWwaNode(node.value);
     const partsKind = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
-    this.generator.wwa.appearPartsEval(game_status.playerCoord, x, y, value, partsKind);
+    this.generator.wwa.appearPartsEval(game_status.playerCoord, `${x}`, `${y}`, value, partsKind);
   }
 
   blockStatement(node: Wwa.BlockStatement) {
@@ -740,6 +746,9 @@ export class EvalCalcWwaNode {
    */
   itemAssignment(node: Wwa.ItemAssignment) {
     const idx = this.evalWwaNode(node.itemBoxPosition1to12);
+    if(typeof idx !== "number" || idx < 1 || idx > 12 ) {
+      throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+ idx);
+    }
     const itemID = this.evalWwaNode(node.value);
     this.generator.wwa.setPlayerGetItem(idx, itemID);
     return undefined;
@@ -992,6 +1001,11 @@ export class EvalCalcWwaNode {
       case "o":
         const x = this.evalWwaNode(node.index0);
         const y = this.evalWwaNode(node.index1);
+        if(typeof x !== "number" || typeof y !== "number") {
+          throw new Error(`座標は数値で指定してください (${x}, ${y})`)
+        }
+        // 範囲外で例外を投げる用
+        new Position(this.generator.wwa, x, y);
         const partsType = node.name === 'o'? PartsType.OBJECT: PartsType.MAP;
         const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
