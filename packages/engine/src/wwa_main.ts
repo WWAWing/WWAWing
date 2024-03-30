@@ -1182,10 +1182,10 @@ export class WWA {
     /**
      * Item関連のReadOnly値をセットする
      * @param itemObjectId 使用・取得したITEMのID
-     * @param itemPos 使用・取得したITEMのID
+     * @param itemPos1To12 使用・取得したITEMの格納位置 [1,12]
      */
-    public setEvalCalcWwaNodeEarnedItem(itemObjectId: number, itemPos: number) {
-        this.evalCalcWwaNodeGenerator.setEarnedItem(itemObjectId, itemPos);
+    public setEvalCalcWwaNodeEarnedItem(itemObjectId: number, itemPos1To12: number) {
+        this.evalCalcWwaNodeGenerator.setEarnedItem(itemObjectId, itemPos1To12);
     }
 
     public clearEvalCalcWwaNodeEarnedItem() {
@@ -1645,17 +1645,17 @@ export class WWA {
 
     /**
      * アイテムを使用。
-     * @param itemPos アイテムのID
+     * @param itemPos1To12 アイテムのID
      * @returns {boolean} 使用できる場合
      */
-    public onselectitem(itemPos: number): boolean {
-        if (this._player.canUseItem(itemPos)) {
-            var bg = <HTMLDivElement>(util.$id("item" + (itemPos - 1)));
+    public onselectitem(itemPos1To12: number): boolean {
+        if (this._player.canUseItem(itemPos1To12)) {
+            var bg = <HTMLDivElement>(util.$id("item" + (itemPos1To12 - 1)));
             bg.classList.add("onpress");
             this.playSound(SystemSound.DECISION);
             const systemMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_USE_ITEM);
             if (systemMessage === "BLANK") {
-                this._player.readyToUseItem(itemPos);
+                this._player.readyToUseItem(itemPos1To12);
                 var itemID = this._player.useItem();
                 var mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
                 this.registerPageByMessage(
@@ -1673,7 +1673,7 @@ export class WWA {
             } else {
                 this.registerPageByMessage(systemMessage, {showChoice: true, isSystemMessage: true});
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_ITEM_USE;
-                this._yesNoUseItemPos = itemPos;
+                this._yesNoUseItemPos = itemPos1To12;
             }
             return true;
         }
