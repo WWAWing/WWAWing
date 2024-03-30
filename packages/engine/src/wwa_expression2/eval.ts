@@ -23,7 +23,7 @@ export class EvalCalcWwaNodeGenerator {
       /** 使用・取得したアイテムのID */
       partsId?: number,
       /** 使用・取得したアイテムの位置 */
-      itemPos?: number
+      itemPos1To12?: number
     }
     /** 戦闘ダメージのための計算ならオブジェクトあり, さもなくば undefined */
     readonly battleDamageCalculation?: {
@@ -57,10 +57,10 @@ export class EvalCalcWwaNodeGenerator {
   /**
    * Item関連のReadOnly値をセットする
    * @param item_id 使用・取得したITEMのID
-   * @param item_pos 使用・取得したITEMのID
+   * @param item_pos 使用・取得したITEMのID [1,12]
    */
-  public setEarnedItem(partsId: number, itemPos: number) {
-    this.state = { ...this.state, earnedItem: { partsId, itemPos } };
+  public setEarnedItem(partsId: number, itemPos1To12: number) {
+    this.state = { ...this.state, earnedItem: { partsId, itemPos1To12 } };
   }
 
   public clearEarnedItem() {
@@ -940,7 +940,7 @@ export class EvalCalcWwaNode {
       case 'ITEM_ID':
         return this.generator.state.earnedItem?.partsId ?? -1;
       case 'ITEM_POS':
-        return this.generator.state.earnedItem?.itemPos ?? -1;
+        return this.generator.state.earnedItem?.itemPos1To12 ?? -1;
       case 'ENEMY_HP':
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.energy ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.energy);
@@ -973,10 +973,10 @@ export class EvalCalcWwaNode {
       case "v":
         return this.generator.wwa.getUserVar(userVarIndex);
       case "ITEM":
-        if(game_status.itemBox[userVarIndex] === undefined) {
-          throw new Error("ITEMの添字に想定外の値が入っています。: "+userVarIndex);
+        if (userVarIndex < 1 || userVarIndex > 12) {
+          throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+userVarIndex);
         }
-        return game_status.itemBox[userVarIndex];
+        return game_status.itemBox[userVarIndex - 1];
       default:
         throw new Error("このシンボルは取得できません")
     }
