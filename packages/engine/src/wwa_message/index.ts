@@ -1,10 +1,12 @@
 import { TriggerParts } from "../wwa_data";
-import { Junction, Node, ParsedMessage, Page, PageOption } from "./data";
 import {
-  normalizeMessage,
-  splitMessageByPTag,
-  createPage,
-} from "./_internal";
+  Junction,
+  Node,
+  ParsedMessage,
+  Page,
+  PageGeneratingOption,
+} from "./data";
+import { normalizeMessage, splitMessageByTags, createPage } from "./_internal";
 import * as ExpressionParser from "../wwa_expression";
 import { Macro } from "../wwa_macro";
 
@@ -12,48 +14,53 @@ export * from "./data";
 
 export function generatePagesByRawMessage(
   message: string,
-  pageOption: PageOption,
+  generatingOption: PageGeneratingOption,
   parseMacro: (macroStr: string) => Macro,
-  // HACK: WWA Script 呼び出し順変更が完了したらこのコールバックは消せる
-  execEvalStringCallback: (scriptSettings: string) => void,
+  evalScript: (script: string, triggerParts?: TriggerParts) => void,
   // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
   generateTokenValuesCallback: (
     triggerParts: TriggerParts
   ) => ExpressionParser.TokenValues
 ): Page[] {
-  /**
-   * <script> タグ仮対応
-   * UNDONE: script タグは各ページで処理されるようになるためここでは何もしなくなります。
-   **/
-  const messageMainSplit = normalizeMessage(message).split("<script>");
-  const messageMain = messageMainSplit[0];
+  const normalizedMessage = normalizeMessage(message);
+  const { pageContents, script } = splitMessageByTags(normalizedMessage);
 
-  /** <script> タグが含まれる場合中身を実行する。 */
-  if (messageMainSplit.length > 1) {
-    execEvalStringCallback(messageMainSplit[1]);
+  // 空メッセージの場合は何も処理しないが、
+  // スコア表示の場合はメッセージを出すのでノードなしのページを生成する必要がある 
+  // (generatingOption.scoreOption があるとメッセージが出る)
+  // スコア表示がなくてもスクリプトがある可能性があるのでノードなしページを作成する必要がある
+  if (pageContents.length === 0) {
+    return [
+      {
+        firstNode: ParsedMessage.createEmptyMessage(
+          generateTokenValuesCallback,
+          evalScript,
+          script
+        ),
+        isLastPage: true,
+        ...generatingOption,
+      },
+    ];
   }
 
-  // 空メッセージの場合は何も処理しないが、スコア表示の場合はメッセージを出すのでノードなしのページを生成
-  if (messageMain === "") {
-    return pageOption.scoreOption
-      ? [Page.createEmptyPage(pageOption)]
-      : [];
-  }
-  const pageContents = splitMessageByPTag(messageMain);
-
-  return pageContents.map((pageContent, pageId) =>
+  return pageContents.map((content, pageId) =>
     createPage({
-      pageContent,
-      pageOption,
+      script,
+      content,
+      generatingOption,
       pageType: resolvePageType(pageId, pageContents.length),
       parseMacro,
+      evalScript,
       // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
       generateTokenValuesCallback,
     })
   );
 }
 
-function resolvePageType(pageId: number, length: number): "first" | "last" | "other" {
+function resolvePageType(
+  pageId: number,
+  length: number
+): "first" | "last" | "other" {
   if (pageId === 0) {
     return "first";
   } else if (pageId === length - 1) {
