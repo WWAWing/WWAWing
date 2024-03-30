@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, WWAConsts, speedList  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 import { PARTS_TYPE_LIST } from "./utils";
@@ -24,7 +24,7 @@ export class EvalCalcWwaNodeGenerator {
       /** 使用・取得したアイテムのID */
       partsId?: number,
       /** 使用・取得したアイテムの位置 */
-      itemPos?: number
+      itemPos1To12?: number
     }
     /** 戦闘ダメージのための計算ならオブジェクトあり, さもなくば undefined */
     readonly battleDamageCalculation?: {
@@ -58,10 +58,10 @@ export class EvalCalcWwaNodeGenerator {
   /**
    * Item関連のReadOnly値をセットする
    * @param item_id 使用・取得したITEMのID
-   * @param item_pos 使用・取得したITEMのID
+   * @param item_pos 使用・取得したITEMのID [1,12]
    */
-  public setEarnedItem(partsId: number, itemPos: number) {
-    this.state = { ...this.state, earnedItem: { partsId, itemPos } };
+  public setEarnedItem(partsId: number, itemPos1To12: number) {
+    this.state = { ...this.state, earnedItem: { partsId, itemPos1To12 } };
   }
 
   public clearEarnedItem() {
@@ -739,9 +739,15 @@ export class EvalCalcWwaNode {
     const game_status = this.generator.wwa.getGameStatus();
     const x = this.evalWwaNode(node.destinationX);
     const y = this.evalWwaNode(node.destinationY);
+    if(typeof x !== "number" || typeof y !== "number") {
+      throw new Error(`座標は数値で指定してください (${x}, ${y})`)
+    }
+    // 範囲外で例外を投げる用
+    new Position(this.generator.wwa, x, y);
+
     const value = this.evalWwaNode(node.value);
     const partsKind = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
-    this.generator.wwa.appearPartsEval(game_status.playerCoord, x, y, value, partsKind);
+    this.generator.wwa.appearPartsEval(game_status.playerCoord, `${x}`, `${y}`, value, partsKind);
   }
 
   blockStatement(node: Wwa.BlockStatement) {
@@ -792,6 +798,9 @@ export class EvalCalcWwaNode {
    */
   itemAssignment(node: Wwa.ItemAssignment) {
     const idx = this.evalWwaNode(node.itemBoxPosition1to12);
+    if(typeof idx !== "number" || idx < 1 || idx > 12 ) {
+      throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+ idx);
+    }
     const itemID = this.evalWwaNode(node.value);
     this.generator.wwa.setPlayerGetItem(idx, itemID);
     return undefined;
@@ -992,7 +1001,7 @@ export class EvalCalcWwaNode {
       case 'ITEM_ID':
         return this.generator.state.earnedItem?.partsId ?? -1;
       case 'ITEM_POS':
-        return this.generator.state.earnedItem?.itemPos ?? -1;
+        return this.generator.state.earnedItem?.itemPos1To12 ?? -1;
       case 'ENEMY_HP':
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.energy ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.energy);
@@ -1029,10 +1038,10 @@ export class EvalCalcWwaNode {
       case "v":
         return this.generator.wwa.getUserVar(userVarIndex);
       case "ITEM":
-        if(game_status.itemBox[userVarIndex] === undefined) {
-          throw new Error("ITEMの添字に想定外の値が入っています。: "+userVarIndex);
+        if (userVarIndex < 1 || userVarIndex > 12) {
+          throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+userVarIndex);
         }
-        return game_status.itemBox[userVarIndex];
+        return game_status.itemBox[userVarIndex - 1];
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -1048,6 +1057,11 @@ export class EvalCalcWwaNode {
       case "o":
         const x = this.evalWwaNode(node.index0);
         const y = this.evalWwaNode(node.index1);
+        if(typeof x !== "number" || typeof y !== "number") {
+          throw new Error(`座標は数値で指定してください (${x}, ${y})`)
+        }
+        // 範囲外で例外を投げる用
+        new Position(this.generator.wwa, x, y);
         const partsType = node.name === 'o'? PartsType.OBJECT: PartsType.MAP;
         const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
