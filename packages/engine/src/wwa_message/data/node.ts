@@ -186,7 +186,7 @@ export class ParsedMessage extends Node {
 
   override execute(triggerParts?: TriggerParts): ParsedMessage[] {
     if (this.script) {
-      this.evalScript(this.script);
+      this.evalScript(this.script, triggerParts);
     }
     this.macro?.forEach((macro) => {
       const result = macro.execute();
