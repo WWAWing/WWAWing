@@ -74,6 +74,9 @@ export default class WWAPictureItem {
     private _displayStockTime?: WWATimer;
     private _waitStockTime?: WWATimer;
 
+    private _startAnimTime?: WWATimer;
+    private _endAnimTime?: WWATimer;
+
     constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
@@ -123,6 +126,14 @@ export default class WWAPictureItem {
             getArrayItemFromSingleOrArray(properties.timeFrame, 1)
         );
         this._waitStockTime = WWATimer.createTimer(properties.wait, properties.waitFrame);
+        this._startAnimTime = WWATimer.createTimer(
+            getFirstValueFromSingleOrArray(properties.animTime),
+            getFirstValueFromSingleOrArray(properties.animTimeFrame)
+        );
+        this._endAnimTime = WWATimer.createTimer(
+            getArrayItemFromSingleOrArray(properties.animTime, 1),
+            getArrayItemFromSingleOrArray(properties.animTimeFrame, 1)
+        );
 
         if (this._startTime) {
             this._startTime.start();
@@ -130,6 +141,8 @@ export default class WWAPictureItem {
             this._displayStockTime.start();
         }
         this._waitStockTime?.start();
+        this._startAnimTime?.start();
+        this._endAnimTime?.start();
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
@@ -228,6 +241,9 @@ export default class WWAPictureItem {
      * アニメーションに応じてピクチャのプロパティを更新します。
      */
     public updateAnimation() {
+        if ((this._startAnimTime && !this._startAnimTime.isTimeOver()) || (this._endAnimTime && this._endAnimTime.isTimeOver())) {
+            return;
+        }
         this._posBaseX = this._posBaseX + this._moveX;
         this._posBaseY = this._posBaseY + this._moveY;
         this._moveX = this._moveX + this._accelX;
@@ -287,6 +303,11 @@ export default class WWAPictureItem {
     
     public tickWaitTimeStock(frameMs: number) {
         this._waitStockTime?.tick(frameMs);
+    }
+
+    public tickAnimTimeStock(frameMs: number) {
+        this._startAnimTime?.tick(frameMs);
+        this._endAnimTime?.tick(frameMs);
     }
 
     public isDeadlineOver() {

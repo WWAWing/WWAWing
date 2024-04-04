@@ -292,6 +292,7 @@ export default class WWAPicutre {
             }
             if (picture.hasAnimation) {
                 picture.updateAnimation();
+                picture.tickAnimTimeStock(frameMs);
                 picture.draw(image, isMainAnimation);
             }
             if (picture.isWaiting()) {
