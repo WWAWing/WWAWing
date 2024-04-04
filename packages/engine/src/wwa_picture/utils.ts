@@ -144,6 +144,26 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
     };
 };
 
+/**
+ * 配列の場合は最初の値を取得します。単体の値はそのまま取得します。
+ */
+export const getFirstValueFromSingleOrArray = <T>(value: T | T[]) => {
+    if (Array.isArray(value)) {
+        return value[0];
+    }
+    return value;
+};
+
+/**
+ * 配列か単体の値かわからない値から項目を取得します。配列以外の場合は undefined を返します。
+ */
+export const getArrayItemFromSingleOrArray = <T>(value: T | T[], index: number) => {
+    if (!Array.isArray(value)) {
+        return undefined;
+    }
+    return value[index];
+};
+
 export const adjustPositiveValue = (value: number) => {
     if (value < 0) {
         return 0;
