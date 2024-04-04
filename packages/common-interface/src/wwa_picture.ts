@@ -8,7 +8,7 @@ export interface PictureProperties<N = number> {
   animTime?: [N, N];
   anim_time?: [N, N];
   animTimeFrame?: [N, N];
-  animTime_frame?: [N, N];
+  anim_time_frame?: [N, N];
   move?: [N, N];
   accel?: [N, N];
   zoom?: [N, N];
