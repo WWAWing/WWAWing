@@ -60,6 +60,8 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
  */
 export const propertySnakeCaseTable: { [key: string]: PicturePropertyName } = {
     "time_frame": "timeFrame",
+    "anim_time": "animTime",
+    "anim_time_frame": "animTimeFrame",
     "zoom_accel": "zoomAccel",
     "img_file": "imgFile",
     "font_size": "fontSize",
