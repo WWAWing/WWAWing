@@ -46,6 +46,7 @@ export class Sound {
         }
     }
 
+    // TODO この実行を必要に応じて実行するようにしたい
     private async load(errorCount: number = 0): Promise<void> {
         if (errorCount >= 10) {
             console.log(`サウンド ${this.id} 番の音声ファイルの取得失敗 (最大リトライ回数超過)`);
