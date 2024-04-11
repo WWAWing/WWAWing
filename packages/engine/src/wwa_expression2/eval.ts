@@ -451,7 +451,7 @@ export class EvalCalcWwaNode {
         const srcID = Number(this.evalWwaNode(node.value[0]));
         const destID = Number(this.evalWwaNode(node.value[1]));
         let partsType = node.value[2]? Number(this.evalWwaNode(node.value[2])): 0;
-        let onlyThisSight = node.value[3]? Boolean(this.evalWwaNode(node.value[3])): true;
+        let onlyThisSight = node.value[3]? Boolean(this.evalWwaNode(node.value[3])): false;
         const PARTS_TYPE_LIST = [PartsType.OBJECT, PartsType.MAP];
         if(srcID < 0 || destID < 0 ) {
           throw new Error("パーツ番号が不正です");
