@@ -1,49 +1,88 @@
-import { PictureProperties } from "@wwawing/common-interface/lib/wwa_picture";
-
-type TimeType = "milisecond" | "frame";
+import { TimePointName, TimePoint } from "./typedef";
 
 /**
- * ピクチャ機能内部でフレームあるいはミリ秒でカウントするタイマーです。
+ * ピクチャ機能内部でフレームとミリ秒でカウントするタイマーです。
  */
 export class WWATimer {
 
-    private _timer = 0;
-    private _enabled = false;
+    private _milisecondTimer = 0;
+    private _frameTimer = 0;
+    private _points = new Map<TimePointName, TimePoint>();
+    private _milisecondLimit: number;
+    private _frameLimit: number;
 
-    constructor(
-        private _limitTime: number,
-        private _timeType: TimeType
-    ) {
+    constructor() {
     }
 
-    public static createTimer(msTimeValue?: number, frameTimeValue?: number) {
-        if (msTimeValue) {
-            return new WWATimer(msTimeValue, "milisecond");
-        } else if (frameTimeValue) {
-            return new WWATimer(frameTimeValue, "frame");
+    public addPoint(name: TimePointName, milisecondValue?: number, frameValue?: number) {
+        if (!milisecondValue && !frameValue) {
+            return;
         }
-        return undefined;
-    }
+        const newTimePoint = createTimePoint(milisecondValue, frameValue);
+        this._points.set(name, newTimePoint);
+    };
 
-    public start() {
-        this._enabled = true;
+    public enabled() {
+        return this._points.size > 0;
     }
 
     public tick(frameMs: number) {
         // タイムオーバーの場合は、余計な処理を回避するために無効にする
-        if (!this._enabled || this.isTimeOver()) {
+        if (!this.enabled() || this.isTimeOver()) {
             return;
         }
-        switch (this._timeType) {
-            case "milisecond":
-                this._timer += frameMs;
-                break;
-            case "frame":
-                this._timer++;
+        this._milisecondTimer += frameMs;
+        this._frameTimer++;
+    }
+
+    public isOver(name: TimePointName, noPointResult: boolean) {
+        if (this._points.has(name)) {
+            const point = this._points.get(name);
+            switch (point.type) {
+                case "milisecond":
+                    return this._milisecondTimer >= point.value;
+                case "frame":
+                    return this._frameTimer >= point.value;
+                default:
+                    return false;
+            }
         }
+        return noPointResult;
+    }
+
+    public isNotOver(name: TimePointName, noPointResult: boolean) {
+        if (this._points.has(name)) {
+            const point = this._points.get(name);
+            switch (point.type) {
+                case "milisecond":
+                    return this._milisecondTimer < point.value;
+                case "frame":
+                    return this._frameTimer < point.value;
+                default:
+                    return false;
+            }
+        }
+        return noPointResult;
     }
 
     public isTimeOver() {
-        return this._timer >= this._limitTime;
+        // TODO 実装する
+        return false;
     }
+}
+
+export const createTimePoint = (milisecondValue?: number, frameValue?: number): TimePoint | undefined => {
+    if (milisecondValue) {
+        return {
+            value: milisecondValue,
+            type: "milisecond",
+        };
+    }
+    if (frameValue) {
+        return {
+            value: frameValue,
+            type: "frame",
+        };
+    }
+    return undefined;
 }

@@ -4,7 +4,6 @@ import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
 import {
-    getFirstValueFromSingleOrArray,
     getArrayItemFromSingleOrArray,
     adjustPositiveValue,
     getHorizontalCirclePosition,
@@ -69,13 +68,8 @@ export default class WWAPictureItem {
     private _opacity: number;
     private readonly _fade: number;
     private readonly _hasAnimation: boolean;
-    
-    private _startTime?: WWATimer;
-    private _displayStockTime?: WWATimer;
-    private _waitStockTime?: WWATimer;
 
-    private _startAnimTime?: WWATimer;
-    private _endAnimTime?: WWATimer;
+    private _timer: WWATimer;
 
     constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
@@ -116,33 +110,20 @@ export default class WWAPictureItem {
 
         this._updatePictureCache();
         
-        // TODO タイマーがまだ開始していない状態を定義したい。
-        this._displayStockTime = WWATimer.createTimer(
-            getFirstValueFromSingleOrArray(properties.time),
-            getFirstValueFromSingleOrArray(properties.timeFrame)
+        this._timer = new WWATimer();
+        this._timer.addPoint(
+            "start",
+            getArrayItemFromSingleOrArray(properties.time, 1, false),
+            getArrayItemFromSingleOrArray(properties.timeFrame, 1, false)
         );
-        this._startTime = WWATimer.createTimer(
-            getArrayItemFromSingleOrArray(properties.time, 1),
-            getArrayItemFromSingleOrArray(properties.timeFrame, 1)
+        this._timer.addPoint(
+            "end",
+            getArrayItemFromSingleOrArray(properties.time, 0, true),
+            getArrayItemFromSingleOrArray(properties.timeFrame, 0, true)
         );
-        this._waitStockTime = WWATimer.createTimer(properties.wait, properties.waitFrame);
-        this._startAnimTime = WWATimer.createTimer(
-            getFirstValueFromSingleOrArray(properties.animTime),
-            getFirstValueFromSingleOrArray(properties.animTimeFrame)
-        );
-        this._endAnimTime = WWATimer.createTimer(
-            getArrayItemFromSingleOrArray(properties.animTime, 1),
-            getArrayItemFromSingleOrArray(properties.animTimeFrame, 1)
-        );
-
-        if (this._startTime) {
-            this._startTime.start();
-        } else if (this._displayStockTime) {
-            this._displayStockTime.start();
-        }
-        this._waitStockTime?.start();
-        this._startAnimTime?.start();
-        this._endAnimTime?.start();
+        this._timer.addPoint("startAnim", properties.animTime?.[0], properties.animTimeFrame?.[0]);
+        this._timer.addPoint("endAnim", properties.animTime?.[1], properties.animTimeFrame?.[1]);
+        this._timer.addPoint("wait", properties.wait, properties.waitFrame);
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
@@ -241,7 +222,7 @@ export default class WWAPictureItem {
      * アニメーションに応じてピクチャのプロパティを更新します。
      */
     public updateAnimation() {
-        if ((this._startAnimTime && !this._startAnimTime.isTimeOver()) || (this._endAnimTime && this._endAnimTime.isTimeOver())) {
+        if (this._timer.isNotOver("startAnim", false) || this._timer.isOver("endAnim", false)) {
             return;
         }
         this._posBaseX = this._posBaseX + this._moveX;
@@ -286,44 +267,23 @@ export default class WWAPictureItem {
     }
 
     public isNotStarted() {
-        return this._startTime !== undefined && !this._startTime.isTimeOver();
+        return this._timer.isNotOver("start", false);
     }
 
-    public hasDisplayTimeStock() {
-        return this._displayStockTime !== undefined && !this._displayStockTime.isTimeOver();
-    }
-
-    public tickStartTimeStock(frameMs: number) {
-        this._startTime?.tick(frameMs);
-    }
-
-    public tickDisplayTimeStock(frameMs: number) {
-        this._displayStockTime?.tick(frameMs);
-    }
-    
-    public tickWaitTimeStock(frameMs: number) {
-        this._waitStockTime?.tick(frameMs);
-    }
-
-    public tickAnimTimeStock(frameMs: number) {
-        this._startAnimTime?.tick(frameMs);
-        this._endAnimTime?.tick(frameMs);
+    public tickTime(frameMs: number) {
+        this._timer.tick(frameMs);
     }
 
     public isDeadlineOver() {
-        return this._displayStockTime && this._displayStockTime.isTimeOver();
+        return this._timer.isOver("end", false);
     }
 
     public isStartTimeOver() {
-        return !this._startTime || this._startTime.isTimeOver();
+        return this._timer.isOver("start", true);
     }
 
     public isWaiting() {
-        return this._waitStockTime && !this._waitStockTime.isTimeOver();
-    }
-
-    public startDisplayTimeStock() {
-        this._displayStockTime.start();
+        return this._timer.isNotOver("wait", false);
     }
 
     public clearCanvas() {

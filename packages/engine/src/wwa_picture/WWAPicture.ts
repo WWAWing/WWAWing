@@ -244,59 +244,47 @@ export default class WWAPicutre {
         const newFrameValue = WWAPicutre._getNowFrameValue();
         const frameMs = newFrameValue - this._frameTimerValue;
         this.forEachPictures(picture => {
+            picture.tickTime(frameMs);
             if (picture.isNotStarted()) {
-                picture.tickStartTimeStock(frameMs);
-                if (picture.isStartTimeOver()) {
-                    picture.startDisplayTimeStock();
-                } else {
-                    return;
-                }
+                return;
             }
-            if (picture.hasDisplayTimeStock()) {
-                picture.tickDisplayTimeStock(frameMs);
-                // TODO ネストが深くなってる、そろそろなんとかせねば
-                if (picture.isDeadlineOver()) {
-                    const layerNumber = picture.layerNumber;
-                    const nextPicturesInfo = picture.getNextPicturePartsInfo();
-                    const mapPictureInfo = picture.appearParts;
-                    const executeScriptFunctionName = picture.executeScriptFunctionName;
-                    const pictureProperties = picture.getNextPictureProperties();
-                    const triggerPartsCoord = picture.getTriggerPartsCoord();
-                    // WWAMain から実行しないと削除した分がセーブデータに残る
-                    this._wwa.deletePictureRegistry(layerNumber);
-                    for (const nextPictureInfo of nextPicturesInfo) {
-                        this._wwa.setPictureRegistry(
-                            nextPictureInfo.layerNumber,
-                            nextPictureInfo.partsNumber,
-                            nextPictureInfo.partsType,
-                            triggerPartsCoord,
-                            nextPictureInfo.connectProperties ? pictureProperties : undefined,
-                        );
-                    }
-                    if (mapPictureInfo !== undefined) {
-                        // TODO ピクチャ機能の数値算出システムに依存しているため、
-                        //      消去時点での座標を計算して配置することができない
-                        //      例えば、消去時点でのプレイヤー位置に任意のパーツを配置とするようなことはできない
-                        //      WWA Script 対応後は任意の関数を呼び出す機能で実現できるようになるつもり
-                        this._wwa.setPartsOnPosition(
-                            mapPictureInfo.partsType,
-                            mapPictureInfo.partsNumber,
-                            new Coord(mapPictureInfo.x, mapPictureInfo.y)
-                        );
-                    }
-                    if (executeScriptFunctionName) {
-                        this._wwa.callUserScript(executeScriptFunctionName);
-                    }
-                    return;
+            if (picture.isDeadlineOver()) {
+                const layerNumber = picture.layerNumber;
+                const nextPicturesInfo = picture.getNextPicturePartsInfo();
+                const mapPictureInfo = picture.appearParts;
+                const executeScriptFunctionName = picture.executeScriptFunctionName;
+                const pictureProperties = picture.getNextPictureProperties();
+                const triggerPartsCoord = picture.getTriggerPartsCoord();
+                // WWAMain から実行しないと削除した分がセーブデータに残る
+                this._wwa.deletePictureRegistry(layerNumber);
+                for (const nextPictureInfo of nextPicturesInfo) {
+                    this._wwa.setPictureRegistry(
+                        nextPictureInfo.layerNumber,
+                        nextPictureInfo.partsNumber,
+                        nextPictureInfo.partsType,
+                        triggerPartsCoord,
+                        nextPictureInfo.connectProperties ? pictureProperties : undefined,
+                    );
                 }
+                if (mapPictureInfo !== undefined) {
+                    // TODO ピクチャ機能の数値算出システムに依存しているため、
+                    //      消去時点での座標を計算して配置することができない
+                    //      例えば、消去時点でのプレイヤー位置に任意のパーツを配置とするようなことはできない
+                    //      WWA Script 対応後は任意の関数を呼び出す機能で実現できるようになるつもり
+                    this._wwa.setPartsOnPosition(
+                        mapPictureInfo.partsType,
+                        mapPictureInfo.partsNumber,
+                        new Coord(mapPictureInfo.x, mapPictureInfo.y)
+                    );
+                }
+                if (executeScriptFunctionName) {
+                    this._wwa.callUserScript(executeScriptFunctionName);
+                }
+                return;
             }
             if (picture.hasAnimation) {
                 picture.updateAnimation();
-                picture.tickAnimTimeStock(frameMs);
                 picture.draw(image, isMainAnimation);
-            }
-            if (picture.isWaiting()) {
-                picture.tickWaitTimeStock(frameMs);
             }
         });
     }
