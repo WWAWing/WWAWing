@@ -1,6 +1,7 @@
 import { PictureProperties } from "@wwawing/common-interface/lib/wwa_picture";
 
-type PicturePropertyType = "number" | "numberArray" | "numberArray2D" | "string";
+// numberOrArray は numberArray と同じ扱いだが、無配列で記入した場合は配列に変換して使用する。
+type PicturePropertyType = "number" | "numberArray" | "numberOrArray" | "numberArray2D" | "string";
 
 export type PicturePropertyName = keyof PictureProperties;
 
@@ -16,9 +17,11 @@ type PicturePropertyDefinitionItem = {
  */
 export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "pos", type: "numberArray" },
-    { name: "time", type: "number" },
-    { name: "timeFrame", type: "number" },
+    { name: "time", type: "numberOrArray" },
+    { name: "timeFrame", type: "numberOrArray" },
     { name: "size", type: "numberArray" },
+    { name: "animTime", type: "numberArray" },
+    { name: "animTimeFrame", type: "numberArray" },
     { name: "move", type: "numberArray" },
     { name: "accel", type: "numberArray" },
     { name: "zoom", type: "numberArray" },
@@ -43,6 +46,8 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
     { name: "fade", type: "number" },
     { name: "angle", type: "number" },
     { name: "rotate", type: "number" },
+    { name: "wait", type: "number" },
+    { name: "waitFrame", type: "number" },
     { name: "next", type: "numberArray" },
     { name: "create", type: "numberArray2D" },
     { name: "map", type: "numberArray" },
@@ -55,10 +60,13 @@ export const PicturePropertyDefinitions: PicturePropertyDefinitionItem[] = [
  */
 export const propertySnakeCaseTable: { [key: string]: PicturePropertyName } = {
     "time_frame": "timeFrame",
+    "anim_time": "animTime",
+    "anim_time_frame": "animTimeFrame",
     "zoom_accel": "zoomAccel",
     "img_file": "imgFile",
     "font_size": "fontSize",
     "font_family": "fontFamily",
     "text_align": "textAlign",
-    "line_height": "lineHeight"
+    "line_height": "lineHeight",
+    "wait_frame": "waitFrame",
 };

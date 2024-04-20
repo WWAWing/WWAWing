@@ -102,6 +102,11 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
                 return [camelCaseKey, stringToNumberForNumericValue(value)];
             case "numberArray":
                 return [camelCaseKey, value.map(stringToNumberForNumericValue)];
+            case "numberOrArray":
+                if (Array.isArray(value)) {
+                    return [camelCaseKey, value.map(stringToNumberForNumericValue)];
+                }
+                return [camelCaseKey, [stringToNumberForNumericValue(value)]];
             case "numberArray2D":
                 // 細かいバリデーションは validatePropertyValue で実行済みなのでここでは簡潔に
                 if (!Array.isArray(value) || value.some(Array.isArray)) {
@@ -137,6 +142,22 @@ export const convertVariablesFromRawRegistry = (registry: RawPictureRegistry, to
         ...registry,
         properties: Object.fromEntries(propertiesArray)
     };
+};
+
+/**
+ * 配列か単体の値かわからない値から項目を取得します。
+ * @param value 対象の配列、あるいは値単体
+ * @param index 配列の場合、何番を取得するか？
+ * @param isDefaultValue 単体の場合、そのまま返してよいか？
+ */
+export const getArrayItemFromSingleOrArray = <T>(value: T | T[], index: number, isDefaultValue: boolean) => {
+    if (!Array.isArray(value)) {
+        if (isDefaultValue) {
+            return value;
+        }
+        return undefined;
+    }
+    return value[index];
 };
 
 export const adjustPositiveValue = (value: number) => {

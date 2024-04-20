@@ -1,10 +1,14 @@
 export interface PictureProperties<N = number> {
   pos?: [N, N];
-  time?: N,
-  timeFrame?: N;
+  time?: N | [N] | [N, N];
+  timeFrame?: N | [N] | [N, N];
   // スネークケースになっているだけで、内容は上記と同じ
-  time_frame?: N;
+  time_frame?: N | [N] | [N, N];
   size?: [N, N];
+  animTime?: [N, N];
+  anim_time?: [N, N];
+  animTimeFrame?: [N, N];
+  anim_time_frame?: [N, N];
   move?: [N, N];
   accel?: [N, N];
   zoom?: [N, N];
@@ -37,6 +41,9 @@ export interface PictureProperties<N = number> {
   fade?: N;
   angle?: N;
   rotate?: N;
+  wait?: N;
+  waitFrame?: N;
+  wait_frame?: N;
   next?: [N] | [N, N] | [N, N, N],
   create?: ([N] | [N, N] | [N, N, N] | [N, N, N, N])[],
   // TODO map プロパティの座標で PX と PY を指定するとピクチャ作成時の座標が評価されてしまい、移動後はプレイヤーの位置通りにパーツが配置されない。
