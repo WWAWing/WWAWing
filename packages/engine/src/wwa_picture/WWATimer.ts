@@ -20,10 +20,31 @@ export class WWATimer {
         }
         const newTimePoint = createTimePoint(milisecondValue, frameValue);
         this._points.set(name, newTimePoint);
+        switch (newTimePoint.type) {
+            case "milisecond": {
+                const milisecondTimes = [...(this._points.values())]
+                    .filter(({ type }) => type === "milisecond")
+                    .map(({ value }) => value);
+                this._milisecondLimit = Math.max(...milisecondTimes);
+                break;
+            }
+            case "frame": {
+                const frameTimes = [...(this._points.values())]
+                    .filter(({ type }) => type === "frame")
+                    .map(({ value }) => value);
+                this._frameLimit = Math.max(...frameTimes);
+            }
+        }
     };
 
     public enabled() {
-        return this._points.size > 0;
+        return (
+            this._points.size > 0 &&
+            (
+                (this._milisecondTimer < this._milisecondLimit) ||
+                (this._frameTimer < this._frameLimit)
+            )
+        );
     }
 
     public tick(frameMs: number) {
@@ -68,6 +89,16 @@ export class WWATimer {
     public isTimeOver() {
         // TODO 実装する
         return false;
+    }
+
+    /**
+     * テスト用
+     */
+    public get timeLimit() {
+        return {
+            milisecond: this._milisecondLimit,
+            frame: this._frameLimit,
+        };
     }
 }
 
