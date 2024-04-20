@@ -740,14 +740,15 @@ export class EvalCalcWwaNode {
   }
 
   /**
-   * 保持しているITMEを変更する
+   * 保持しているITEMを変更する
+   * ITEM[0] に対する代入で、任意位置挿入ができます。
    * @param node 
    * @returns 
    */
   itemAssignment(node: Wwa.ItemAssignment) {
     const idx = this.evalWwaNode(node.itemBoxPosition1to12);
-    if(typeof idx !== "number" || idx < 1 || idx > 12 ) {
-      throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+ idx);
+    if(typeof idx !== "number" || idx < 0 || idx > 12 ) {
+      throw new Error("ITEMの添字に想定外の値が入っています。0以上12以下の添字を指定してください。: "+ idx);
     }
     const itemID = this.evalWwaNode(node.value);
     this.generator.wwa.setPlayerGetItem(idx, itemID);
