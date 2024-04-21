@@ -3,8 +3,16 @@ import { PartsType } from "@wwawing/loader";
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
-import { adjustPositiveValue, getHorizontalCirclePosition, getHorizontalCorrectionBySizeAnchor, getVerticalCirclePosition, getVerticalCorrectionBySizeAnchor } from "./utils";
+import {
+    getArrayItemFromSingleOrArray,
+    adjustPositiveValue,
+    getHorizontalCirclePosition,
+    getHorizontalCorrectionBySizeAnchor,
+    getVerticalCirclePosition,
+    getVerticalCorrectionBySizeAnchor
+} from "./utils";
 import { NextPicturePartsInfo } from "./typedef";
+import { WWATimer } from "./WWATimer";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -60,9 +68,8 @@ export default class WWAPictureItem {
     private _opacity: number;
     private readonly _fade: number;
     private readonly _hasAnimation: boolean;
-    
-    private readonly _timeType?: "milisecond" | "frame";
-    private _displayStockTime?: number;
+
+    private _timer: WWATimer;
 
     constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
@@ -103,8 +110,20 @@ export default class WWAPictureItem {
 
         this._updatePictureCache();
         
-        this._timeType = properties.time ? "milisecond" : properties.timeFrame ? "frame" : undefined;
-        this._displayStockTime = properties.time || properties.timeFrame;
+        this._timer = new WWATimer();
+        this._timer.addPoint(
+            "start",
+            getArrayItemFromSingleOrArray(properties.time, 1, false),
+            getArrayItemFromSingleOrArray(properties.timeFrame, 1, false)
+        );
+        this._timer.addPoint(
+            "end",
+            getArrayItemFromSingleOrArray(properties.time, 0, true),
+            getArrayItemFromSingleOrArray(properties.timeFrame, 0, true)
+        );
+        this._timer.addPoint("startAnim", properties.animTime?.[0], properties.animTimeFrame?.[0]);
+        this._timer.addPoint("endAnim", properties.animTime?.[1], properties.animTimeFrame?.[1]);
+        this._timer.addPoint("wait", properties.wait, properties.waitFrame);
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
@@ -203,6 +222,9 @@ export default class WWAPictureItem {
      * アニメーションに応じてピクチャのプロパティを更新します。
      */
     public updateAnimation() {
+        if (this._timer.isNotOver("startAnim", false) || this._timer.isOver("endAnim", false)) {
+            return;
+        }
         this._posBaseX = this._posBaseX + this._moveX;
         this._posBaseY = this._posBaseY + this._moveY;
         this._moveX = this._moveX + this._accelX;
@@ -244,21 +266,24 @@ export default class WWAPictureItem {
         );
     }
 
-    public hasDisplayTimeStock() {
-        return this._timeType !== undefined && this._displayStockTime !== undefined && this._displayStockTime > 0;
+    public isNotStarted() {
+        return this._timer.isNotOver("start", false);
     }
 
-    public decrementDisplayTimeStock(frameMs: number) {
-        switch (this._timeType) {
-            case "milisecond":
-                this._displayStockTime -= frameMs;
-            case "frame":
-                this._displayStockTime -= 1;
-        }
+    public tickTime(frameMs: number) {
+        this._timer.tick(frameMs);
     }
 
     public isDeadlineOver() {
-        return this._displayStockTime <= 0;
+        return this._timer.isOver("end", false);
+    }
+
+    public isStartTimeOver() {
+        return this._timer.isOver("start", true);
+    }
+
+    public isWaiting() {
+        return this._timer.isNotOver("wait", false);
     }
 
     public clearCanvas() {

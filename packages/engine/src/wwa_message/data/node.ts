@@ -119,9 +119,11 @@ export class ParsedMessage extends Node {
   private messageSegments: MessageSegments;
   constructor(
     textOrMessageSegments: string | MessageSegments,
-    generateTokenValues: () => TokenValues,
+    generateTokenValues: (triggerParts?: TriggerParts) => TokenValues,
+    private evalScript: (script: string, triggerParts?: TriggerParts) => void,
     public macro?: Macro[],
-    public next?: Node
+    public next?: Node,
+    public script?: string
   ) {
     super(generateTokenValues);
     this.messageSegments = this.parseMessage(textOrMessageSegments);
@@ -163,11 +165,29 @@ export class ParsedMessage extends Node {
     );
   }
 
+  static createEmptyMessage(
+    generateTokenValues: (triggerParts?: TriggerParts) => TokenValues,
+    evalScript: (script: string, triggerParts?: TriggerParts) => void,
+    script?: string
+  ): ParsedMessage {
+    return new ParsedMessage(
+      [],
+      generateTokenValues,
+      evalScript,
+      undefined,
+      undefined,
+      script
+    );
+  }
+
   private parseMessage(message: string | MessageSegments): MessageSegments {
     return typeof message === "string" ? [message] : message;
   }
 
   override execute(triggerParts?: TriggerParts): ParsedMessage[] {
+    if (this.script) {
+      this.evalScript(this.script, triggerParts);
+    }
     this.macro?.forEach((macro) => {
       const result = macro.execute();
       if (result.isGameOver) {

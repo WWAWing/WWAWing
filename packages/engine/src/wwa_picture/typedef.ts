@@ -17,3 +17,21 @@ export type NextPicturePartsInfo = {
     partsType: PartsType,
     connectProperties: boolean,
 };
+
+export type TimeType = "milisecond" | "frame";
+
+/**
+ * WWATimer のポイントを一意に示す名前です。
+ * 時間制御のプロパティを追加した場合は、この PointNames に対応した名前を付与してください。
+ */
+export type TimePointName =
+    | "start"
+    | "end"
+    | "startAnim"
+    | "endAnim"
+    | "wait";
+
+export type TimePoint = {
+    value: number;
+    type: TimeType;
+};

@@ -1183,10 +1183,10 @@ export class WWA {
     /**
      * Item関連のReadOnly値をセットする
      * @param itemObjectId 使用・取得したITEMのID
-     * @param itemPos 使用・取得したITEMのID
+     * @param itemPos1To12 使用・取得したITEMの格納位置 [1,12]
      */
-    public setEvalCalcWwaNodeEarnedItem(itemObjectId: number, itemPos: number) {
-        this.evalCalcWwaNodeGenerator.setEarnedItem(itemObjectId, itemPos);
+    public setEvalCalcWwaNodeEarnedItem(itemObjectId: number, itemPos1To12: number) {
+        this.evalCalcWwaNodeGenerator.setEarnedItem(itemObjectId, itemPos1To12);
     }
 
     public clearEvalCalcWwaNodeEarnedItem() {
@@ -1653,17 +1653,17 @@ export class WWA {
 
     /**
      * アイテムを使用。
-     * @param itemPos アイテムのID
+     * @param itemPos1To12 アイテムのID
      * @returns {boolean} 使用できる場合
      */
-    public onselectitem(itemPos: number): boolean {
-        if (this._player.canUseItem(itemPos)) {
-            var bg = <HTMLDivElement>(util.$id("item" + (itemPos - 1)));
+    public onselectitem(itemPos1To12: number): boolean {
+        if (this._player.canUseItem(itemPos1To12)) {
+            var bg = <HTMLDivElement>(util.$id("item" + (itemPos1To12 - 1)));
             bg.classList.add("onpress");
             this.playSound(SystemSound.DECISION);
             const systemMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_USE_ITEM);
             if (systemMessage === "BLANK") {
-                this._player.readyToUseItem(itemPos);
+                this._player.readyToUseItem(itemPos1To12);
                 var itemID = this._player.useItem();
                 var mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
                 this.registerPageByMessage(
@@ -1681,7 +1681,7 @@ export class WWA {
             } else {
                 this.registerPageByMessage(systemMessage, {showChoice: true, isSystemMessage: true});
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_ITEM_USE;
-                this._yesNoUseItemPos = itemPos;
+                this._yesNoUseItemPos = itemPos1To12;
             }
             return true;
         }
@@ -1901,7 +1901,7 @@ export class WWA {
                 //  (this._pages の後尾にシステムメッセージのページが追加されるため)
                 // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
                 // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
-                const executedResult = Node.executeNodes(executingPage.firstNode, executingPage.option.triggerParts);
+                const executedResult = Node.executeNodes(executingPage.firstNode, executingPage.triggerParts);
                 if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
                     // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
                     this._isLastPage = false;
@@ -1912,12 +1912,12 @@ export class WWA {
                     this._reservedMoveMacroTurn = void 0;
                 }
                 const messageLinesToDisplay = executedResult.messages.filter(line => !line.isEmpty());
-                const isScoreDisplayingPage = Boolean(executingPage.option.scoreOption);
+                const isScoreDisplayingPage = Boolean(executingPage.scoreOption);
 
                 // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える。
                 // システムメッセージ扱いではなく、パーツが表示している扱いになります。
                 if (isScoreDisplayingPage && messageLinesToDisplay.length === 0) {
-                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", executingPage.option.triggerParts));
+                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", executingPage.triggerParts));
                 }
 
                 // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
@@ -1925,17 +1925,17 @@ export class WWA {
                 if (existsMessageToDisplay) {
                     const message = messageLinesToDisplay.map(line => line.generatePrintableMessage()).join("\n");
                     this._messageWindow.setMessage(message);
-                    this._messageWindow.setYesNoChoice(executingPage.option.showChoice);
+                    this._messageWindow.setYesNoChoice(executingPage.showChoice);
                     this._messageWindow.setPositionByPlayerPosition(
                         this._faces.length !== 0,
                         isScoreDisplayingPage,
-                        executingPage.option.isSystemMessage,
+                        executingPage.isSystemMessage,
                         this._player.getPosition(),
                         this._camera.getPosition()
                     );
                     if (isScoreDisplayingPage) {
-                        this._lastScoreOptions = executingPage.option.scoreOption;
-                        this.updateScore(executingPage.option.scoreOption);
+                        this._lastScoreOptions = executingPage.scoreOption;
+                        this.updateScore(executingPage.scoreOption);
                         this._scoreWindow.show();
                     }
                     this._player.setMessageWaiting();
@@ -2404,7 +2404,6 @@ export class WWA {
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
-            this.updatePicturesAnimation();
         } else if (this._player.isJumped()) {
             if (!this._camera.isResetting()) {
                 this._player.processAfterJump();
@@ -2415,7 +2414,6 @@ export class WWA {
             if (this._player.getPosition().isJustPosition()) {
                 this._dispatchPlayerAndObjectsStopTimeRequests();
             }
-            this.updatePicturesAnimation();
         } else if (this._player.isWaitingMessage()) {
 
             if (!this._messageWindow.isVisible()) {
@@ -2615,17 +2613,13 @@ export class WWA {
             this._objectMovingDataManager.update();
         }
 
+        this.updatePicturesAnimation();
         this._cgManager.picture.updateFrameTimerValue();
         this._prevFrameEventExected = false;
         if (this._player.getPosition().isJustPosition() && this._camera.getPosition().isScreenTopPosition()) {
 
-            if (
-                !this._shouldTreatWillMessageDisplay(this._pages) && // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
-                !this._player.isJumped() &&
-                !this._player.isWaitingMessage() &&
-                !this._player.isWaitingEstimateWindow() &&
-                !this._player.isWaitingMoveMacro() &&
-                !this._player.isFighting()) {
+            // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
+            if (!this._shouldTreatWillMessageDisplay(this._pages) && !this._player.isPausing()) {
 
                 if (this._player.isPartsAppearedTime()) {
                     this._player.clearPartsAppearedFlag();
@@ -3990,7 +3984,12 @@ export class WWA {
     }
 
     private _createSimpleMessage(message: string, triggerParts?: TriggerParts): ParsedMessage {
-        return new ParsedMessage(message, () => this.generateTokenValues(triggerParts))
+        return new ParsedMessage(
+          message,
+          () => this.generateTokenValues(triggerParts),
+          (script: string, triggerParts?: TriggerParts) =>
+            this._execEvalString(script, triggerParts)
+        );
     }
 
     // HACK: private にしたい
@@ -4018,9 +4017,7 @@ export class WWA {
           message,
           { triggerParts, isSystemMessage, showChoice, scoreOption },
           (macroStr: string) => parseMacro(this, triggerParts, macroStr),
-          // HACK: WWA Script の呼び出し順変更が終わったら消せる
-          (scriptStrings: string) =>
-            this._execEvalString(scriptStrings, triggerParts),
+          (script: string, triggerParts?: TriggerParts) => this._execEvalString(script, triggerParts),
           // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
           // 型が any になってしまうのであえて bind 使ってません
           (triggerParts: TriggerParts) => this.generateTokenValues(triggerParts)
@@ -5697,7 +5694,7 @@ export class WWA {
     }
 
     public canInput(): boolean {
-        return !this._temporaryInputDisable;
+        return !this._temporaryInputDisable && !this._cgManager.picture.isWaiting();
     }
 
     /*public setWaitTime( time: number): void {
@@ -5734,6 +5731,9 @@ export class WWA {
      * また、カウントダウンも行い、タイムオーバーした場合は消去も行います。
      */
     public updatePicturesAnimation(): void {
+        if (this._player.isPausing()) {
+            return;
+        }
         this._cgManager.updatePicturesAnimation(this._isMainAnimation());
     }
 

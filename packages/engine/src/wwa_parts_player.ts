@@ -80,7 +80,7 @@ export class Player extends PartsObject {
     protected _itemBox: number[];
     protected _itemBoxElement: HTMLDivElement[];
     protected _itemUsingEvent: EventListener[];
-    protected _readyToUseItemPos: number;
+    protected _readyToUseItemPos1To12: number;
     protected _isReadyToUseItem: boolean;
 
     protected _battleFrameCounter: number;
@@ -801,14 +801,14 @@ export class Player extends PartsObject {
             overwrittenObjectId
         } : undefined);
     }
-    private _forceSetItemBox(pos: number, id: number): void {
+    private _forceSetItemBox(pos1To12: number, id: number): void {
         var self = this;
-        var border = util.$qsh("#item" + (pos - 1) + ">.item-click-border");
+        var border = util.$qsh("#item" + (pos1To12 - 1) + ">.item-click-border");
         var itemType = this._wwa.getObjectAttributeById(id, Consts.ATR_MODE);
-        this.removeItemByItemPosition(pos);
-        this._itemBox[pos - 1] = id;
+        this.removeItemByItemPosition(pos1To12);
+        this._itemBox[pos1To12 - 1] = id;
         // カスタムイベント関数処理
-        this._wwa.setEvalCalcWwaNodeEarnedItem(id, pos);
+        this._wwa.setEvalCalcWwaNodeEarnedItem(id, pos1To12);
         this._wwa.callGetItemUserDefineFunction();
         this._wwa.clearEvalCalcWwaNodeEarnedItem();
         if (id !== 0 && itemType !== ItemMode.NORMAL) {
@@ -828,8 +828,8 @@ export class Player extends PartsObject {
                         self._wwa.onselectitem(pos);
                     }
                 };
-            })(pos);
-            border.addEventListener("click", this._itemUsingEvent[pos - 1]);
+            })(pos1To12);
+            border.addEventListener("click", this._itemUsingEvent[pos1To12 - 1]);
         }
     }
 
@@ -883,11 +883,11 @@ export class Player extends PartsObject {
     public useItem(): number {
         var itemID: number;
         var messageID: number;
-        itemID = this._itemBox[this._readyToUseItemPos - 1];
+        itemID = this._itemBox[this._readyToUseItemPos1To12 - 1];
         if (this._wwa.getObjectAttributeById(itemID, Consts.ATR_MODE) !== ItemMode.NOT_DISAPPEAR) {
-            this.removeItemByItemPosition(this._readyToUseItemPos);
+            this.removeItemByItemPosition(this._readyToUseItemPos1To12);
         }
-        var bg = <HTMLDivElement>(util.$id("item" + (this._readyToUseItemPos - 1)));
+        var bg = <HTMLDivElement>(util.$id("item" + (this._readyToUseItemPos1To12 - 1)));
 
         setTimeout((): void => {
             if (bg.classList.contains("onpress")) {
@@ -896,12 +896,12 @@ export class Player extends PartsObject {
         }, Consts.DEFAULT_FRAME_INTERVAL);
 
         /** アイテム関係の値を独自関数で使用できるようセットする */
-        this._wwa.setEvalCalcWwaNodeEarnedItem(itemID, this._readyToUseItemPos - 1);
+        this._wwa.setEvalCalcWwaNodeEarnedItem(itemID, this._readyToUseItemPos1To12);
         /** アイテムを使用した際のユーザ定義独自関数を呼び出す */
         this._wwa.callUseItemUserDefineFunction();
         this._wwa.clearEvalCalcWwaNodeEarnedItem();
         this._isReadyToUseItem = false;
-        this._readyToUseItemPos = void 0;
+        this._readyToUseItemPos1To12 = void 0;
 
         return itemID;
     }
@@ -1159,16 +1159,16 @@ export class Player extends PartsObject {
         }
     }
 
-    public readyToUseItem(itemPos: number): void {
+    public readyToUseItem(itemPos1To12: number): void {
         var itemID: number;
         var messageID: number;
-        if (!this.canUseItem(itemPos)) {
+        if (!this.canUseItem(itemPos1To12)) {
             throw new Error("アイテムがないか、アイテムが使えません。");
         }
-        itemID = this._itemBox[itemPos - 1];
+        itemID = this._itemBox[itemPos1To12 - 1];
         messageID = this._wwa.getObjectAttributeById(itemID, Consts.ATR_STRING);
         this._wwa.reserveAppearPartsInNextFrame(this._position.getPartsCoord(), AppearanceTriggerType.OBJECT, itemID);
-        this._readyToUseItemPos = itemPos;
+        this._readyToUseItemPos1To12 = itemPos1To12;
         this._isReadyToUseItem = true;
     }
 
@@ -1273,6 +1273,17 @@ export class Player extends PartsObject {
         }
         this._speedIndex = speedIndex;
         return this._speedIndex;
+    }
+
+    public isPausing() {
+        return (
+            this.isJumped() ||
+            this.isWaitingMessage() ||
+            this.isWaitingPasswordWindow() ||
+            this.isWaitingEstimateWindow() ||
+            this.isWaitingMoveMacro() ||
+            this.isFighting()
+        );
     }
 
     constructor(wwa: WWA, pos: Position, camera: Camera, status: Status, em: number, moves: number, gameSpeedIndex: number) {
