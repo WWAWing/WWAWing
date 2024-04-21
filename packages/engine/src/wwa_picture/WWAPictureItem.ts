@@ -4,6 +4,7 @@ import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
 import {
+    isAnonymousPicture,
     getArrayItemFromSingleOrArray,
     adjustPositiveValue,
     getHorizontalCirclePosition,
@@ -177,7 +178,7 @@ export default class WWAPictureItem {
         // layerNumber が 0 の場合はいわゆる無名ピクチャという扱いのため、既存のピクチャ定義を上書きしない挙動となっている。
         // このことを想定して、 canvas のクリアを除外しているのだが、これだと変化前の画像データが残ってしまうことになる。
         // TODO WWAeval の実装では無名ピクチャをどのように実装しているのかソースを確認する
-        if (this.layerNumber !== 0) {
+        if (isAnonymousPicture(this.layerNumber)) {
             // TODO これをオフにするオプションがあっても良さそう
             this.clearCanvas();
         }
