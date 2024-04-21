@@ -128,6 +128,7 @@ export default class WWAPictureItem {
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
         this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
+        this._canvas.ctx.textBaseline = "top";
         if (properties.textAlign) {
             this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
         }
