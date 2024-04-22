@@ -175,13 +175,8 @@ export default class WWAPictureItem {
      * 毎フレーム処理されるため、プロパティから直接引き出される値以外はあらかじめフィールドに数値などをキャッシュしてください。
      */
     public draw(image: HTMLImageElement, isMainAnimation: boolean) {
-        // layerNumber が 0 の場合はいわゆる無名ピクチャという扱いのため、既存のピクチャ定義を上書きしない挙動となっている。
-        // このことを想定して、 canvas のクリアを除外しているのだが、これだと変化前の画像データが残ってしまうことになる。
-        // TODO WWAeval の実装では無名ピクチャをどのように実装しているのかソースを確認する
-        if (isAnonymousPicture(this.layerNumber)) {
-            // TODO これをオフにするオプションがあっても良さそう
-            this.clearCanvas();
-        }
+        // TODO これをオフにするオプションがあっても良さそう
+        this.clearCanvas();
 
         const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
         const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;

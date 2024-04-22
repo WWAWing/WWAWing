@@ -3,7 +3,7 @@ import { Coord, PartsType, WWAConsts } from "../wwa_data";
 import { PicturePropertyDefinitions } from "./config";
 import { PictureExternalImageItem } from "./typedef";
 import { PictureRegistry, RawPictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
-import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVariablesFromRawRegistry } from "./utils";
+import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVariablesFromRawRegistry, isAnonymousPicture } from "./utils";
 import { WWA } from "../wwa_main";
 import WWAPictureItem from "./WWAPictureItem";
 import { fetchJsonFile } from "../json_api_client";
@@ -24,12 +24,14 @@ import { fetchJsonFile } from "../json_api_client";
 export default class WWAPicutre {
     private _wwa: WWA;
     private _pictures: Map<number, WWAPictureItem>;
+    private _anonymousPictures: WWAPictureItem[];
     private _externalImageFiles: Map<string, PictureExternalImageItem>;
     private _frameTimerValue: number;
 
     constructor(wwa: WWA, pictureImageNamesFile: string | null) {
         this._wwa = wwa;
         this._pictures = new Map();
+        this._anonymousPictures = [];
         this._externalImageFiles = new Map();
         this._frameTimerValue = WWAPicutre._getNowFrameValue();
         this._setupExternalImageFiles(pictureImageNamesFile);
@@ -83,6 +85,13 @@ export default class WWAPicutre {
         return performance.now();
     }
 
+    /**
+     * ピクチャのレジストリ情報を元にピクチャを生成します。
+     * 引数のレジストリ情報はデータの変換などが必要になるため、外からピクチャを生成したい場合は {@link registerPictureFromRawRegistry} などの用途に応じたメソッドをご利用ください。
+     * そのほかの場面では、主に QuickLoad による復元で使用します。
+     * 
+     * @param registry ピクチャのレジストリ情報
+     */
     public registerPicture(registry: PictureRegistry) {
         const canvas = new CacheCanvas(
             WWAConsts.CHIP_SIZE * WWAConsts.H_PARTS_NUM_IN_WINDOW,
@@ -111,9 +120,13 @@ export default class WWAPicutre {
         if (soundNumber) {
             this._wwa.playSound(soundNumber);
         }
-        this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
-        // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
-        this._pictures = new Map([...this._pictures.entries()].sort(([, a], [, b]) => a.layerNumber - b.layerNumber));
+        if (isAnonymousPicture(registry.layerNumber)) {
+            this._anonymousPictures.push(new WWAPictureItem(registry, canvas, externalImageFile));
+        } else {
+            this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
+            // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
+            this._pictures = new Map([...this._pictures.entries()].sort(([, a], [, b]) => a.layerNumber - b.layerNumber));
+        }
     }
 
     /**
@@ -194,13 +207,21 @@ export default class WWAPicutre {
 
     /**
      * ピクチャの登録を削除し、削除後のピクチャをデータにして返します。
+     * 無名ピクチャを指定した場合は、その無名ピクチャを全部消去します。
      * @param layerNumber 削除したいレイヤーの番号
      * @returns wwaData で使用できるピクチャの登録データ（配列形式）
      */
     public deletePicture(layerNumber: number) {
+        if (isAnonymousPicture(layerNumber)) {
+            this._anonymousPictures.forEach((picture) => {
+                picture.clearCanvas();
+            });
+            this._anonymousPictures.splice(0);
+            return this.getPictureRegistryData();
+        }
         if (!this._pictures.has(layerNumber)) {
             console.warn(`${layerNumber} 番のピクチャが見つかりませんでした。`)
-            return;
+            return this.getPictureRegistryData();
         }
         this._pictures.get(layerNumber).clearCanvas();
         this._pictures.delete(layerNumber);
@@ -211,11 +232,18 @@ export default class WWAPicutre {
         this._pictures.forEach((picture) => {
             picture.clearCanvas();
         })
+        this._anonymousPictures.forEach((picture) => {
+            picture.clearCanvas();
+        });
         this._pictures.clear();
+        // 空配列を代入した方が楽なのだが、参照されないガベージデータがメモリ上に残りそう
+        this._anonymousPictures.splice(0);
     }
 
     public forEachPictures(caller: (picture: WWAPictureItem) => void) {
         this._pictures.forEach(caller);
+        // TODO 無名ピクチャの実行順序をどうするか？
+        this._anonymousPictures.forEach(caller);
     }
 
     public updateAllPicturesCache(image: HTMLImageElement, isMainAnimation: boolean) {
@@ -291,6 +319,11 @@ export default class WWAPicutre {
 
     public isWaiting() {
         for (const picture of this._pictures.values()) {
+            if (picture.isWaiting()) {
+                return true;
+            }
+        }
+        for (const picture of this._anonymousPictures) {
             if (picture.isWaiting()) {
                 return true;
             }
