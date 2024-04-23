@@ -241,9 +241,9 @@ export default class WWAPicutre {
     }
 
     public forEachPictures(caller: (picture: WWAPictureItem) => void) {
-        this._pictures.forEach(caller);
-        // TODO 無名ピクチャの実行順序をどうするか？
+        // 無名ピクチャは原則レイヤー番号を設定したピクチャの下に描画される (WWAeval の仕様に従う)
         this._anonymousPictures.forEach(caller);
+        this._pictures.forEach(caller);
     }
 
     public updateAllPicturesCache(image: HTMLImageElement, isMainAnimation: boolean) {
