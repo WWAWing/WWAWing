@@ -3,7 +3,7 @@ import { Coord, PartsType, WWAConsts } from "../wwa_data";
 import { PicturePropertyDefinitions } from "./config";
 import { PictureExternalImageItem } from "./typedef";
 import { PictureRegistry, RawPictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
-import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVariablesFromRawRegistry, isAnonymousPicture } from "./utils";
+import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVariablesFromRawRegistry, isAnonymousPicture, isValidLayerNumber } from "./utils";
 import { WWA } from "../wwa_main";
 import WWAPictureItem from "./WWAPictureItem";
 import { fetchJsonFile } from "../json_api_client";
@@ -120,12 +120,16 @@ export default class WWAPicutre {
         if (soundNumber) {
             this._wwa.playSound(soundNumber);
         }
-        if (isAnonymousPicture(registry.layerNumber)) {
-            this._anonymousPictures.push(new WWAPictureItem(registry, canvas, externalImageFile));
+        if (isValidLayerNumber(registry.layerNumber)) {
+            if (isAnonymousPicture(registry.layerNumber)) {
+                this._anonymousPictures.push(new WWAPictureItem(registry, canvas, externalImageFile));
+            } else {
+                this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
+                // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
+                this._pictures = new Map([...this._pictures.entries()].sort(([, a], [, b]) => a.layerNumber - b.layerNumber));
+            }
         } else {
-            this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
-            // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
-            this._pictures = new Map([...this._pictures.entries()].sort(([, a], [, b]) => a.layerNumber - b.layerNumber));
+            throw new Error(`指定したレイヤー番号 ${registry.layerNumber}番はこのバージョンでは無効です！`);
         }
     }
 
