@@ -55,6 +55,8 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertTemplateElement(node as Acorn.TemplateElement);
       case "ConditionalExpression":
         return convertConditionalExpression(node as Acorn.ConditionalExpression)
+      case "ArrayExpression":
+        return convertArrayExpression(node as Acorn.ArrayExpression);
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -504,4 +506,13 @@ function convertConditionalExpression(node: Acorn.ConditionalExpression): Wwa.WW
     test: test,
     alternate: alternate
   };
+}
+
+function convertArrayExpression(node: Acorn.ArrayExpression): Wwa.WWANode {
+  return {
+    type: "UserArrayExpression",
+    elements: node.elements.map((sectionNode) => {
+      return convertNodeAcornToWwa(sectionNode)
+    })
+  }
 }

@@ -130,3 +130,9 @@ export interface ConditionalExpression extends Node {
   consequent: Node;
   alternate: Node;
 }
+
+export interface ArrayExpression extends Node {
+  label: string;
+  type: "ArrayExpression";
+  elements: Node[]
+}
