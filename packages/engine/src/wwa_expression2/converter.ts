@@ -428,7 +428,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
     }
   } else if (object.type === "Array1D") {
     // 1次元にしかできないものは排除
-    if (object.name === "ITEM" || object.name === "v") {
+    if (object.name === "ITEM") {
       throw new Error("この配列は2次元以上にはできません。");
     }
     // 1次元配列 + 1次元分の index を合成

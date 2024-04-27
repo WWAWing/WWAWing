@@ -63,7 +63,7 @@ export interface Array1D {
 
 export interface Array2D {
   type: "Array2D";
-  name: "m" | "o";
+  name: "m" | "o" | "v";
   index0: Calcurable;
   index1: Calcurable;
 }

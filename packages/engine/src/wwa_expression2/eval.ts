@@ -2,6 +2,7 @@ import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
+import { Literal } from "./wwa";
 
 export class EvalCalcWwaNodeGenerator {
   wwa: WWA;
@@ -1019,6 +1020,14 @@ export class EvalCalcWwaNode {
         const partsType = node.name === 'o'? PartsType.OBJECT: PartsType.MAP;
         const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
+      case "v":
+        const userNameKey = (<Literal>node.index0).value;
+        const userNameValue = this.generator.wwa.getUserNameVar(userNameKey);
+        if(!Array.isArray(userNameValue)) {
+          throw new Error(`指定したユーザー定義変数: v["${userNameKey}"] は配列ではありません`)
+        }
+        const userNameRightKey = this.evalWwaNode(node.index1);
+        return userNameValue[userNameRightKey];
       default:
         throw new Error("このシンボルは取得できません")
     }
