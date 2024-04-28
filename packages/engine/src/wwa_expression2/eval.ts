@@ -1036,7 +1036,7 @@ export class EvalCalcWwaNode {
       case "v":
         const userNameKey = (<Literal>node.index0).value;
         const userNameValue = this.generator.wwa.getUserNameVar(userNameKey);
-        if(!Array.isArray(userNameValue)) {
+        if(!Array.isArray(userNameValue) && !(typeof userNameValue === 'object')) {
           throw new Error(`指定したユーザー定義変数: v["${userNameKey}"] は配列ではありません`)
         }
         const userNameRightKey = this.evalWwaNode(node.index1);
