@@ -3,7 +3,7 @@ import { ReturnStatement } from "./acorn";
 export type Calcurable = Array1D | Array2D | Literal | Symbol | UnaryOperation | BinaryOperation;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
-  const supportType = ["Array1D", "Array2D", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression", "UserArrayExpression"];
+  const supportType = ["Array1D", "Array2D", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression", "UserArrayExpression", "ObjectExpression"];
   return supportType.includes(node.type);
 }
 
@@ -182,6 +182,17 @@ export interface UserArrayExpression {
   elements: WWANode[]
 }
 
+export interface ObjectExpression {
+  type: "ObjectExpression",
+  properties: WWANode[]
+}
+
+export interface Property {
+  type: "Property",
+  key: WWANode;
+  value: WWANode;
+}
+
 export type WWANode = |
   PartsAssignment |
   ItemAssignment |
@@ -211,4 +222,6 @@ export type WWANode = |
   TemplateLiteral |
   TemplateElement |
   ConditionalExpression |
-  UserArrayExpression;
+  UserArrayExpression |
+  ObjectExpression |
+  Property;

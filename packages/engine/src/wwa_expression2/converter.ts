@@ -57,6 +57,11 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertConditionalExpression(node as Acorn.ConditionalExpression)
       case "ArrayExpression":
         return convertArrayExpression(node as Acorn.ArrayExpression);
+      case "ObjectExpression":
+        return convertObjectExpression(node as Acorn.ObjectExpression);
+      case "Property":
+        return convertProperty(node as Acorn.Property)
+
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -293,6 +298,7 @@ function convertExpressionStatement(node: Acorn.ExpressionStatement): Wwa.WWANod
 function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWANode {
   const left = convertNodeAcornToWwa(node.left);
   const right = convertNodeAcornToWwa(node.right);
+  console.log(right);
   if (!Wwa.isCalcurable(right)) {
     throw new Error("値以外を代入式の右辺に設定できません");
   }
@@ -514,5 +520,22 @@ function convertArrayExpression(node: Acorn.ArrayExpression): Wwa.WWANode {
     elements: node.elements.map((sectionNode) => {
       return convertNodeAcornToWwa(sectionNode)
     })
+  }
+}
+
+function convertObjectExpression(node: Acorn.ObjectExpression): Wwa.WWANode {
+  return {
+    type: "ObjectExpression",
+    properties: node.properties.map((propery) => {
+      return convertNodeAcornToWwa(propery)
+    })
+  }
+}
+
+function convertProperty(node: Acorn.Property): Wwa.WWANode {
+  return {
+    type: "Property",
+    key: convertNodeAcornToWwa(node.key),
+    value: convertNodeAcornToWwa(node.value)
   }
 }

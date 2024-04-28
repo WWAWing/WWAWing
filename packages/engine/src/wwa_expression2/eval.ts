@@ -196,6 +196,8 @@ export class EvalCalcWwaNode {
         return this.convertConditionalExpression(node);
       case "UserArrayExpression":
         return this.convertUserArrayExpression(node);
+      case "ObjectExpression":
+        return this.convertObjectExpression(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -747,6 +749,17 @@ export class EvalCalcWwaNode {
     return node.elements.map((element) => {
       return this.evalWwaNode(element);
     })
+  }
+
+  /** ユーザー定義変数のObjectを処理する */
+  convertObjectExpression(node: Wwa.ObjectExpression) {
+    const userObject = {};
+    node.properties.forEach((property: Wwa.Property) => {
+      const key = this.evalWwaNode(property.key);
+      const value = this.evalWwaNode(property.value);
+      userObject[key] = value;
+    })
+    return userObject;
   }
 
   /**

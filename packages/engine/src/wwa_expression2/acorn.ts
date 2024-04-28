@@ -136,3 +136,16 @@ export interface ArrayExpression extends Node {
   type: "ArrayExpression";
   elements: Node[]
 }
+
+export interface ObjectExpression extends Node {
+  label: string;
+  type: "ObjectExpression";
+  properties: Node[]
+}
+
+export interface Property extends Node {
+  label: string;
+  type: "Property";
+  key: Node;
+  value: Node;
+}
