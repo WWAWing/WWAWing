@@ -413,7 +413,7 @@ function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.WWANode {
 }
 
 // WWA においては hoge.a というパターンはないので、配列系の処理しかない
-function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Wwa.Array2D {
+function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Wwa.Array2D | Wwa.Array3D {
   const object = convertNodeAcornToWwa(node.object);
   const property = convertNodeAcornToWwa(node.property);
 
@@ -447,6 +447,16 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
     } else {
       // 数値に解決できないものが index に来てはいけない
       throw new Error("WWAでは存在しない構文です")
+    }
+  }
+  // ユーザ定義名前変数のみ3次元配列が使える
+  else if(object.type === "Array2D" && object.name === "v") {
+    return {
+      type: "Array3D",
+      name: object.name,
+      index0: object.index0,
+      index1: object.index1,
+      index2: <Wwa.Calcurable>property
     }
   }
   else {

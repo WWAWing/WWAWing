@@ -154,6 +154,8 @@ export class EvalCalcWwaNode {
         return this.evalArray1D(node);
       case "Array2D":
         return this.evalArray2D(node);
+      case "Array3D":
+        return this.evalArray3D(node);
       case "Literal":
         return this.evalNumber(node);
       case "UserVariableAssignment":
@@ -1044,6 +1046,13 @@ export class EvalCalcWwaNode {
       default:
         throw new Error("このシンボルは取得できません")
     }
+  }
+
+  // 3次元配列はユーザ定義名前変数のみ使用可能
+  evalArray3D(node: Wwa.Array3D) {
+    const indexes = [node.index0, node.index1, node.index2].map((x) => this.evalWwaNode(x));
+    const userNameValue = this.generator.wwa.getUserNameVar(indexes[0]);
+    return userNameValue[indexes[1]][indexes[2]];
   }
 
   evalNumber(node: Wwa.Literal) {

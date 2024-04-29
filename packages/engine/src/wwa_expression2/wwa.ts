@@ -68,6 +68,14 @@ export interface Array2D {
   index1: Calcurable;
 }
 
+export interface Array3D {
+  type: "Array3D";
+  name: "v";
+  index0: Calcurable;
+  index1: Calcurable;
+  index2: Calcurable;
+}
+
 export interface Literal {
   type: "Literal";
   value: number | string;
@@ -175,7 +183,6 @@ export interface ConditionalExpression {
   alternate: WWANode
 }
 
-
 // TODO: Array1DまたはArray2Dと統合が望ましい
 export interface UserArrayExpression {
   type: "UserArrayExpression",
@@ -202,6 +209,7 @@ export type WWANode = |
   BinaryOperation |
   Array1D |
   Array2D |
+  Array3D |
   Literal |
   Symbol |
   Random |
