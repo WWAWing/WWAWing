@@ -5846,12 +5846,45 @@ font-weight: bold;
         }
     }
     public setUserVarIndexes(indexes: any[], assignee: number | string | boolean, operator?: string): void {
-        if(operator !== "="){
-            throw new TypeError("暫定的に3次元配列への代入以外のオペレータは使用できません")
-        }
         const currentValueObject = this._userVar.named.get(indexes[0]);
-        currentValueObject[indexes[1]][indexes[2]] = assignee;
-        this._userVar.named.set(indexes[0], currentValueObject);
+        // 3次元配列の場合
+        if(typeof currentValueObject[indexes[1]] === 'object') {
+            if (typeof assignee === "number") {
+                switch(operator) {
+                    case '=':
+                        currentValueObject[indexes[1]][indexes[2]] = assignee;
+                        break;
+                    case '+=':
+                        currentValueObject[indexes[1]][indexes[2]] += assignee;
+                        break;
+                    case '-=':
+                        currentValueObject[indexes[1]][indexes[2]] -= assignee;
+                        break;
+                    case '*=':
+                        currentValueObject[indexes[1]][indexes[2]] *= assignee;
+                        break;
+                    case '/=':
+                        currentValueObject[indexes[1]][indexes[2]] /= assignee;
+                        break;
+                    default:
+                        throw new TypeError(`その演算子は利用できません: ${assignee}`)
+                }
+            }
+            else {
+                switch(operator) {
+                    case '=':
+                        currentValueObject[indexes[1]][indexes[2]] = assignee;
+                        break;
+                    case '+=':
+                        currentValueObject[indexes[1]][indexes[2]] += assignee;
+                        break;
+                    default:
+                        throw new TypeError(`その演算子は利用できません: ${assignee}`)
+                }
+            }
+            this._userVar.named.set(indexes[0], currentValueObject);
+        }
+        // 2次元配列の場合
     }
     // User変数記憶
     public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
