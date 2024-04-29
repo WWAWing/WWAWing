@@ -331,8 +331,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         } else if (left.name === "v") {
           return {
             type: "UserVariableAssignment",
-            index: left.index0,
-            value: right,
+            index: [left.index0],
+            value: [right],
             operator: node.operator
           }
         } else {
@@ -359,6 +359,13 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         }
       } else if (left.type === "Literal") {
         throw new Error("数値には代入できません");
+      } else if (left.type === "Array3D" && left.name === "v") {
+        return {
+          type: "UserVariableAssignment",
+          index: [left.index0, left.index1, left.index2],
+          value: [right],
+          operator: node.operator
+        }
       } else {
         throw new Error("代入できません");
       }

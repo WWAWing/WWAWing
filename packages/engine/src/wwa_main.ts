@@ -5845,10 +5845,17 @@ font-weight: bold;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         }
     }
+    public setUserVarIndexes(indexes: any[], assignee: number | string | boolean, operator?: string): void {
+        if(operator !== "="){
+            throw new TypeError("暫定的に3次元配列への代入以外のオペレータは使用できません")
+        }
+        const currentValueObject = this._userVar.named.get(indexes[0]);
+        currentValueObject[indexes[1]][indexes[2]] = assignee;
+        this._userVar.named.set(indexes[0], currentValueObject);
+    }
     // User変数記憶
     public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
-
-       const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
+        const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
             if (typeof indexOrName === "number") {
                 if (typeof value !== "number") {
                     throw new TypeError("数字index変数への数値以外の代入は今のところできません。あらかじめご了承ください。");
@@ -6758,7 +6765,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `v["test"] = [1, 2, 3];\nMSG(v["test"][0])\n\nv["player"] = {"name": "マサト","age": 19}\nMSG(v["player"]["name"])\n\nv["players"] = [{"name": "マサト","age": 19},{"name": "ヤツロウ","age": 21}]\nMSG(v["players"][1]["name"])`;
+    consoleTextareaElement.textContent = `v["test"] = [1, 2, 3];\nMSG(v["test"][0])\n\nv["player"] = {"name": "マサト","age": 19}\nMSG(v["player"]["name"])\n\nv["players"] = [{"name": "マサト","age": 19},{"name": "ヤツロウ","age": 21}]\nMSG(v["players"][1]["name"])\nv["players"][1]["name"] = "トナミ"\nMSG(v["players"][1]["name"])`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();

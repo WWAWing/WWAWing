@@ -870,13 +870,23 @@ export class EvalCalcWwaNode {
   }
 
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
-    const right = this.evalWwaNode(node.value);
-    if(!this.generator.wwa) {
+    if(node.index.length > 1) {
+      const right = this.evalWwaNode(node.value[0]);
+      const userVarIndexes = node.index.map((x) => this.evalWwaNode(x));
+      this.generator.wwa.setUserVarIndexes(userVarIndexes, right, node.operator);
+      return;
+    }
+    else {
+      // TODO: 互換性保持の暫定措置
+      const right = this.evalWwaNode(node.value[0]);
+      if(!this.generator.wwa) {
+        return right;
+      }
+      // TODO: 後で直す
+      const userVarIndex = this.evalWwaNode(node.index[0]);
+      this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
       return right;
     }
-    const userVarIndex = this.evalWwaNode(node.index);
-    this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
-    return right;
   }
 
   evalUnaryOperation(node: Wwa.UnaryOperation) {
