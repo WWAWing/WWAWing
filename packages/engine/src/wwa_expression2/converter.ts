@@ -317,6 +317,12 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
             value: right,
             operator: node.operator
           }
+        } else if (left.name === "v") {
+          return {
+            type: "UserVariableAssignment",
+            index: [left.index0, left.index1],
+            value: [right]
+          }
         } else {
           throw new Error("想定していない記号が2次元配列ででてきました");
         }

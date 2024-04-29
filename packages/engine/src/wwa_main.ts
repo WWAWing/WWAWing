@@ -5845,7 +5845,7 @@ font-weight: bold;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         }
     }
-    public setUserVarIndexes(indexes: any[], assignee: number | string | boolean, operator?: string): void {
+    public setUserVarIndexes(indexes: any[], assignee: number | string | boolean, operator: string = "="): void {
         const currentValueObject = this._userVar.named.get(indexes[0]);
         // 3次元配列の場合
         if(typeof currentValueObject[indexes[1]] === 'object') {
@@ -5867,7 +5867,7 @@ font-weight: bold;
                         currentValueObject[indexes[1]][indexes[2]] /= assignee;
                         break;
                     default:
-                        throw new TypeError(`その演算子は利用できません: ${assignee}`)
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
                 }
             }
             else {
@@ -5879,12 +5879,48 @@ font-weight: bold;
                         currentValueObject[indexes[1]][indexes[2]] += assignee;
                         break;
                     default:
-                        throw new TypeError(`その演算子は利用できません: ${assignee}`)
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
                 }
             }
             this._userVar.named.set(indexes[0], currentValueObject);
         }
         // 2次元配列の場合
+        else {
+            if(typeof assignee === "number") {
+                switch(operator) {
+                    case '=':
+                        currentValueObject[indexes[1]] = assignee;
+                        break;
+                    case '+=':
+                        currentValueObject[indexes[1]] += assignee;
+                        break;
+                    case '-=':
+                        currentValueObject[indexes[1]] -= assignee;
+                        break;
+                    case '*=':
+                        currentValueObject[indexes[1]] *= assignee;
+                        break;
+                    case '/=':
+                        currentValueObject[indexes[1]] /= assignee;
+                        break;
+                    default:
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                }
+            }
+            else {
+                switch(operator) {
+                    case '=':
+                        currentValueObject[indexes[1]] = assignee;
+                        break;
+                    case '+=':
+                        currentValueObject[indexes[1]] += assignee;
+                        break;
+                    default:
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                }
+            }
+            this._userVar.named.set(indexes[0], currentValueObject);
+        }
     }
     // User変数記憶
     public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {

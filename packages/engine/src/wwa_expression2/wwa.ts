@@ -25,8 +25,8 @@ export interface ItemAssignment {
 
 export interface UserVariableAssignment {
   type: "UserVariableAssignment";
-  index: Calcurable;
-  value: Calcurable;
+  index: Calcurable[];
+  value: Calcurable[];
   operator?: "=" | "+=" | "-=" | "*=" | "/=";
 }
 
