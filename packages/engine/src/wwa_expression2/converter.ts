@@ -298,7 +298,6 @@ function convertExpressionStatement(node: Acorn.ExpressionStatement): Wwa.WWANod
 function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWANode {
   const left = convertNodeAcornToWwa(node.left);
   const right = convertNodeAcornToWwa(node.right);
-  console.log(right);
   if (!Wwa.isCalcurable(right)) {
     throw new Error("値以外を代入式の右辺に設定できません");
   }
@@ -449,6 +448,9 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
       // 数値に解決できないものが index に来てはいけない
       throw new Error("WWAでは存在しない構文です")
     }
+  }
+  else {
+    throw new Error("WWAでは存在しない構文です")
   }
 }
 
