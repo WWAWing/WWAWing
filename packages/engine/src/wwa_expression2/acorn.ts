@@ -131,10 +131,11 @@ export interface ConditionalExpression extends Node {
   alternate: Node;
 }
 
-export interface ArrayExpression extends Node {
+export interface Property extends Node {
   label: string;
-  type: "ArrayExpression";
-  elements: Node[]
+  type: "Property";
+  key: Identifier | Literal;
+  value: Node;
 }
 
 export interface ObjectExpression extends Node {
@@ -143,9 +144,8 @@ export interface ObjectExpression extends Node {
   properties: Property[]
 }
 
-export interface Property extends Node {
+export interface ArrayExpression extends Node {
   label: string;
-  type: "Property";
-  key: Identifier | Literal;
-  value: Node;
+  type: "ArrayExpression";
+  elements: Node[]
 }
