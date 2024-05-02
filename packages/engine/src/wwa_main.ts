@@ -6067,7 +6067,8 @@ font-weight: bold;
     }
     // User名称変数取得
     public getUserNameVar(id: number | string): number | string | boolean {
-        return this._userVar.named.get(id.toString());
+        const varValue = this._userVar.named.get(id.toString());
+        return varValue ?? "";
     }
     // User名称変数の一覧を取得
     public getAllUserNameVar() {
