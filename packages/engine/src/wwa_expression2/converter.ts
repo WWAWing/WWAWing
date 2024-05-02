@@ -213,6 +213,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "EXIT":
     case "GET_IMG_POS_X":
     case "GET_IMG_POS_Y":
+    case "LENGTH":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {

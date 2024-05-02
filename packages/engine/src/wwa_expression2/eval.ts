@@ -684,6 +684,20 @@ export class EvalCalcWwaNode {
         }
         throw new Error("GET_IMG_POS_Y: 指定したIDのパーツのTypeが異常です。");
       }
+      case "LENGTH": {
+        this._checkArgsLength(1, node);
+        const targetValue = this.evalWwaNode(node.value[0]);
+        switch (typeof targetValue) {
+          case "object":
+            if (Array.isArray(targetValue)) {
+              return targetValue.length;
+            }
+            return Object.keys(targetValue).length;
+          case "string":
+            return targetValue.length;
+        }
+        throw new Error("LENGTH: 対応できない値が指定されています。");
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
