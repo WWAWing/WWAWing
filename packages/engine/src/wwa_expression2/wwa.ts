@@ -1,9 +1,8 @@
-import { ReturnStatement } from "./acorn";
-
 export type Calcurable = Array1D | Array2D | Literal | Symbol | UnaryOperation | BinaryOperation;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
-  const supportType = ["Array1D", "Array2D", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression", "UserArrayExpression", "ObjectExpression"];
+  // ObjectExpression と ArrayExpression はピクチャ機能でしか使用しないためサポート対象外
+  const supportType = ["Array1D", "Array2D", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression", "ArrayExpression", "ObjectExpression"];
   return supportType.includes(node.type);
 }
 
@@ -52,7 +51,7 @@ export interface BinaryOperation {
 
 export interface Symbol {
   type: "Symbol";
-  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF" | "ENEMY_GD";
+  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF" | "ENEMY_GD" | "MOVE_SPEED" | "MOVE_FRAME_TIME";
 }
 
 export interface Array1D {
@@ -183,21 +182,22 @@ export interface ConditionalExpression {
   alternate: WWANode
 }
 
-// TODO: Array1DまたはArray2Dと統合が望ましい
-export interface UserArrayExpression {
-  type: "UserArrayExpression",
-  elements: WWANode[]
+export interface Property {
+  type: "Property",
+  key: Literal,
+  value: WWANode,
+  // TODO 他にもありそう
 }
 
 export interface ObjectExpression {
   type: "ObjectExpression",
-  properties: WWANode[]
+  properties: Property[],
 }
 
-export interface Property {
-  type: "Property",
-  key: WWANode;
-  value: WWANode;
+// TODO: Array1DまたはArray2Dと統合が望ましい
+export interface ArrayExpression {
+  type: "ArrayExpression",
+  elements: WWANode[]
 }
 
 export type WWANode = |
@@ -230,6 +230,6 @@ export type WWANode = |
   TemplateLiteral |
   TemplateElement |
   ConditionalExpression |
-  UserArrayExpression |
+  Property |
   ObjectExpression |
-  Property;
+  ArrayExpression;

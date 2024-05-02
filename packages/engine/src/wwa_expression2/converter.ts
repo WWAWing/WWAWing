@@ -55,13 +55,12 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertTemplateElement(node as Acorn.TemplateElement);
       case "ConditionalExpression":
         return convertConditionalExpression(node as Acorn.ConditionalExpression)
-      case "ArrayExpression":
-        return convertArrayExpression(node as Acorn.ArrayExpression);
+      case "Property":
+        return convertProperty(node as Acorn.Property);
       case "ObjectExpression":
         return convertObjectExpression(node as Acorn.ObjectExpression);
-      case "Property":
-        return convertProperty(node as Acorn.Property)
-
+      case "ArrayExpression":
+        return convertArrayExpression(node as Acorn.ArrayExpression);
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -205,6 +204,8 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_MILLISECONDS":
     case "GET_DATE_WEEKDAY":
     case "CHANGE_SYSMSG":
+    case "PICTURE":
+    case "PICTURE_FROM_PARTS":
     case "SHOW_USER_DEF_VAR":
     case "ABS":
     case "GET_GAMEOVER_POS_X":
@@ -346,7 +347,18 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           throw new Error("");
         }
       } else if (left.type === "Symbol") {
-        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM" || left.name === "X" || left.name === "Y" || left.name === "ID" || left.name === "TYPE") {
+        if (
+          left.name === "m" ||
+          left.name === "o" ||
+          left.name === "v" ||
+          left.name === "ITEM" ||
+          left.name === "X" ||
+          left.name === "Y" ||
+          left.name === "ID" ||
+          left.name === "TYPE" ||
+          left.name === "MOVE_SPEED" ||
+          left.name === "MOVE_FRAME_TIME"
+        ) {
           throw new Error("このシンボルには代入できません");
         }
         if (left.name === "AT_TOTAL") {
@@ -509,12 +521,17 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_HP":
     case "ENEMY_AT":
     case "ENEMY_DF":
+    case "MOVE_SPEED":
+    case "MOVE_FRAME_TIME":
       return {
         type: "Symbol",
         name: node.name
       }
     default:  
-      throw new Error("未定義のシンボルです :\n"+ node.name);
+      return {
+        type: "Literal",
+        value: node.name
+      };
   }
 }
 
@@ -540,28 +557,31 @@ function convertConditionalExpression(node: Acorn.ConditionalExpression): Wwa.WW
   };
 }
 
-function convertArrayExpression(node: Acorn.ArrayExpression): Wwa.WWANode {
-  return {
-    type: "UserArrayExpression",
-    elements: node.elements.map((sectionNode) => {
-      return convertNodeAcornToWwa(sectionNode)
-    })
+function convertProperty(node: Acorn.Property): Wwa.Property {
+  const key = convertNodeAcornToWwa(node.key);
+  if (key.type === "Symbol") {
+    throw new Error(`Object のキー ${key.name} は予約されているため、使用できません。`);
   }
-}
-
-function convertObjectExpression(node: Acorn.ObjectExpression): Wwa.WWANode {
-  return {
-    type: "ObjectExpression",
-    properties: node.properties.map((propery) => {
-      return convertNodeAcornToWwa(propery)
-    })
+  if (key.type !== "Literal") {
+    throw new Error(`Object のキーが不正です。 Literal を期待していましたが、実際は ${key.type} でした。`);
   }
-}
-
-function convertProperty(node: Acorn.Property): Wwa.WWANode {
   return {
     type: "Property",
-    key: convertNodeAcornToWwa(node.key),
-    value: convertNodeAcornToWwa(node.value)
+    key,
+    value: convertNodeAcornToWwa(node.value),
+  };
+}
+
+function convertObjectExpression(node: Acorn.ObjectExpression): Wwa.ObjectExpression {
+  return {
+    type: "ObjectExpression",
+    properties: node.properties.map(convertProperty),
+  };
+}
+
+function convertArrayExpression(node: Acorn.ArrayExpression): Wwa.ArrayExpression {
+  return {
+    type: "ArrayExpression",
+    elements: node.elements.map(convertNodeAcornToWwa),
   }
 }

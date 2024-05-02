@@ -140,12 +140,12 @@ export interface ArrayExpression extends Node {
 export interface ObjectExpression extends Node {
   label: string;
   type: "ObjectExpression";
-  properties: Node[]
+  properties: Property[]
 }
 
 export interface Property extends Node {
   label: string;
   type: "Property";
-  key: Node;
+  key: Identifier | Literal;
   value: Node;
 }

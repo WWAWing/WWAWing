@@ -1,6 +1,6 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
-import { SystemMessage } from "@wwawing/common-interface";
+import { PictureRegistry, SystemMessage } from "@wwawing/common-interface";
 import type { JsonResponseData, JsonResponseError, JsonResponseErrorKind } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
@@ -9,7 +9,7 @@ import {
     SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
+    StatusKind, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, WWAConsts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
 } from "./wwa_data";
 
 import {
@@ -319,6 +319,7 @@ export class WWA {
         canDisplayUserVars: boolean,
         enableVirtualPad: boolean = false,
         virtualpadControllerElm: HTMLElement = null,
+        pictureImageNamesFile: string | null,
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -1010,7 +1011,7 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, (): void => {
+            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, this, pictureImageNamesFile, (): void => {
                 this._isSkippedSoundMessage = true;
                 const setGameStartingMessageWhenPcOrSP = () => {
                     switch (this.userDevice.device) {
@@ -1288,6 +1289,13 @@ export class WWA {
                 this.userDefinedFunctions[functionName] = currentNode.body;
             }
         })
+    }
+
+    public callUserScript(functionName: string) {
+        const userFunc = this.getUserScript(functionName);
+        if (userFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
+        }
     }
 
     private convertWwaNodes = (scriptString: string): WWANode[] => {
@@ -2605,16 +2613,13 @@ export class WWA {
             this._objectMovingDataManager.update();
         }
 
+        this.updatePicturesAnimation();
+        this._cgManager.picture.updateFrameTimerValue();
         this._prevFrameEventExected = false;
         if (this._player.getPosition().isJustPosition() && this._camera.getPosition().isScreenTopPosition()) {
 
-            if (
-                !this._shouldTreatWillMessageDisplay(this._pages) && // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
-                !this._player.isJumped() &&
-                !this._player.isWaitingMessage() &&
-                !this._player.isWaitingEstimateWindow() &&
-                !this._player.isWaitingMoveMacro() &&
-                !this._player.isFighting()) {
+            // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
+            if (!this._shouldTreatWillMessageDisplay(this._pages) && !this._player.isPausing()) {
 
                 if (this._player.isPartsAppearedTime()) {
                     this._player.clearPartsAppearedFlag();
@@ -2659,6 +2664,12 @@ export class WWA {
         this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
         if (!this._player.isWaitingMessage() || !this._isClassicModeEnable) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
             this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
+            // isSubAnimation の定義では、 this._animationCounter > ANIMATION_REP_HALF_FRAME となっていて、
+            // ANIMATION_REP_HALF_FRAME の剰余だけで算出すると、常時非 sub のアニメーションが流れることになるため、
+            // sub の判定については 1 フレーム分判定を後ろにずらしている
+            if (this._animationCounter === 0 || this._animationCounter === Consts.ANIMATION_REP_HALF_FRAME + 1) {
+                this.updateAllPicturesCache();
+            }
         }
         if (this._camera.isResetting()) {
             this._camera.advanceTransitionStepNum();
@@ -2734,6 +2745,10 @@ export class WWA {
     }
     public vibration(isStrong: boolean) {
         this._gamePadStore.vibration(isStrong);
+    }
+
+    private _isMainAnimation() {
+        return this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
     }
 
     private _drawAll() {
@@ -2820,6 +2835,7 @@ export class WWA {
 
         // 7. マクロ文で描画されるエフェクトや顔表示、フレームなどを描画
         this._drawEffect();
+        this._drawPictures();
         this._drawFaces();
         this._drawFrame();
 
@@ -2922,7 +2938,7 @@ export class WWA {
         var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW);
         var offset: Coord;
         var count: number = 0;
-        var animationType: boolean = this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
+        var animationType: boolean = this._isMainAnimation();
         var imgType: boolean, ppxo: number, ppyo: number, canvasX: number, canvasY: number, type: number, num: number, result: Coord;
         var x: number, y: number, partsIDObj: number, savePartsIDObj: number, n: number;
         var useBattleArea: boolean = this._player.isFighting() &&
@@ -3083,6 +3099,10 @@ export class WWA {
 
     private _drawFrame(): void {
         this._cgManager.drawFrame();
+    }
+
+    private _drawPictures(): void {
+        this._cgManager.drawPictures();
     }
 
     private _checkNoDrawObject(objCoord: Coord, objType: number, atrNumber: number): boolean {
@@ -4675,6 +4695,8 @@ export class WWA {
 
         this.updateCSSRule();
         this.updateEffect();
+        this._cgManager.restorePictures(this._wwaData.pictureRegistry);
+        this.updateAllPicturesCache();
         this._player.updateStatusValueBox();
         this._wwaSave.quickSaveButtonUpdate(this._wwaData);
     }
@@ -5672,7 +5694,7 @@ export class WWA {
     }
 
     public canInput(): boolean {
-        return !this._temporaryInputDisable;
+        return !this._temporaryInputDisable && !this._cgManager.picture.isWaiting();
     }
 
     /*public setWaitTime( time: number): void {
@@ -5693,6 +5715,26 @@ export class WWA {
     }
     public updateEffect(): void {
         this._cgManager.updateEffects(<Coord[]>this._wwaData.effectCoords);
+    }
+
+    /**
+     * 全ピクチャ内の CacheCanvas を更新します。
+     * ピクチャが一つでも更新された場合は必ず実行してください。
+     * 比較的負荷の高い処理になるため、アニメーションでピクチャが動いた場合は {@link updatePicturesAnimation} をご使用ください。
+     */
+    public updateAllPicturesCache(): void {
+        this._cgManager.updateAllPicturesCache(this._isMainAnimation());
+    }
+
+    /**
+     * 各ピクチャのアニメーションを動かし、 CacheCanvas を更新します。
+     * また、カウントダウンも行い、タイムオーバーした場合は消去も行います。
+     */
+    public updatePicturesAnimation(): void {
+        if (this._player.isPausing()) {
+            return;
+        }
+        this._cgManager.updatePicturesAnimation(this._isMainAnimation());
     }
 
     public setImgClick(pos: Coord): void {
@@ -5758,6 +5800,86 @@ export class WWA {
         this._wwaData.bgmDelayDurationMs = delayMs;
     }
 
+    /**
+     * パーツ番号からピクチャーを登録します。
+     * @param layerNumber ピクチャーを登録するレイヤー番号
+     * @param partsNumber プロパティが記載された JSON テキストを有しているパーツの番号
+     * @param partsType そのパーツの種類
+     * @param partsPosition このピクチャー登録の実行元のパーツ座標。プレイヤーの座標ではない
+     * @param previousPictureProperties next プロパティでプロパティ引き継いだまま次のピクチャを表示する場合、消去直前のピクチャのプロパティ情報
+     */
+    public setPictureRegistry(
+        layerNumber: number,
+        partsNumber: number,
+        partsType: PartsType,
+        partsPosition: Coord,
+        previousPictureProperties?: PictureRegistry["properties"]
+    ) {
+        const attributes =
+            partsType === PartsType.OBJECT ? this._wwaData.objectAttribute[partsNumber] :
+            partsType === PartsType.MAP ? this._wwaData.mapAttribute[partsNumber] :
+            null;
+        if (attributes === null) {
+            throw new Error("対応していないパーツ番号です。");
+        }
+        const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
+        if (!messageText) {
+            if (partsType === PartsType.OBJECT) {
+                throw new Error(`物体パーツ ${partsNumber} 番に対応したテキストが見つかりませんでした。`);
+            } else {
+                throw new Error(`背景パーツ ${partsNumber} 番に対応したテキストが見つかりませんでした。`);
+            }
+        }
+        const properties = this._returnEvalString("(" + messageText + ")");
+        const data = this._cgManager.picture.registerPictureFromRawRegistry(
+            {
+                layerNumber,
+                imgPosX: (attributes[WWAConsts.ATR_X] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosX2: (attributes[WWAConsts.ATR_X2] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY: (attributes[WWAConsts.ATR_Y] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY2: (attributes[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
+                triggerPartsX: partsPosition.x,
+                triggerPartsY: partsPosition.y,
+                soundNumber: attributes[WWAConsts.ATR_SOUND] ?? 0,
+                properties,
+            },
+            // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
+            partsNumber,
+            partsType,
+            previousPictureProperties,
+        );
+        // _cgManager 内のデータと _wwaData 内のデータで同期を取る
+        this._wwaData.pictureRegistry = data;
+        this.updateAllPicturesCache();
+    }
+
+    /**
+     * JSON テキストをそのまま評価してピクチャーを登録します。
+     * @param layerNumber ピクチャーを登録するレイヤー番号
+     * @param propertiesText プロパティが記載された JSON テキスト (変数評価済みの状態)
+     * @deprecated JSON によるパースはプロパティ記載の自由度が低いため、今後使用しません。一応互換性確保で残していますが、不安定版のうちに削除する予定です。
+     */
+    public setPictureRegistryFromRawText(layerNumber: number, propertiesText: string) {
+        const data = this._cgManager.picture.registerPictureFromRawText(layerNumber, propertiesText);
+        this._wwaData.pictureRegistry = data;
+        this.updateAllPicturesCache();
+    }
+
+    /**
+     * Object 形式をプロパティとして扱いピクチャを登録します。
+     * @param layerNumber ピクチャを登録するレイヤー番号
+     * @param properties プロパティが記載された Object (RawRegistry と一緒です)
+     */
+    public setPictureRegistryFromObject(layerNumber: number, properties: object) {
+        const data = this._cgManager.picture.registerPictureFromObject(layerNumber, properties);
+        this._wwaData.pictureRegistry = data;
+        this.updateAllPicturesCache();
+    }
+
+    public deletePictureRegistry(layerNumber: number) {
+        const data = this._cgManager.picture.deletePicture(layerNumber);
+        this._wwaData.pictureRegistry = data;
+    };
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;
@@ -6683,6 +6805,8 @@ font-weight: bold;
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
             itemBox: this._player.getCopyOfItemBox(),
+            gameSpeedIndex: this._player.getSpeedIndex(),
+            // TODO ステータスが変わっても更新されていない？
             wwaData: this._wwaData
         }
     }
@@ -6722,6 +6846,21 @@ font-weight: bold;
         catch(e) {
             console.error(e);
             this.registerSystemMessagePage("解析中にエラーが発生しました :\n" + e.message);
+        }
+    }
+
+    /**
+     * WWA Script の Node を評価して対応した値にします。
+     */
+    private _returnEvalString(evalString: string) {
+        try {
+            const acornNode = ExpressionParser2.parse("(" + evalString + ")");
+            const nodes = ExpressionParser2.convertNodeAcornToWwa(acornNode);
+            return this.evalCalcWwaNodeGenerator.evalWwaNode(nodes);
+        }
+        catch(e) {
+            console.error(e);
+            this.registerSystemMessagePage("解析中にエラーが発生しました :\n" + e.message, false);
         }
     }
 
@@ -6923,6 +7062,7 @@ function start() {
     }
     const virtualPadContollerQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-controller-elm");
     const virtualPadControllerElm: HTMLElement | null = virtualPadEnable && virtualPadContollerQuery ? util.$qsh(virtualPadContollerQuery) : null;
+    const pictureImageNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-picture-image-names-file");
     const disallowLoadOldSave = (() => {
         const disallowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
         if (disallowLoadOldSaveAttribute !== null && disallowLoadOldSaveAttribute.match(/^true$/i)) {
@@ -6943,7 +7083,8 @@ function start() {
         userVarNamesFile,
         canDisplayUserVars,
         virtualPadEnable,
-        virtualPadControllerElm
+        virtualPadControllerElm,
+        pictureImageNamesFile
     );
 }
 
