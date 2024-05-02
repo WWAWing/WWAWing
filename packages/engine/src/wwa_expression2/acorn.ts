@@ -141,11 +141,11 @@ export interface Property extends Node {
 export interface ObjectExpression extends Node {
   label: string;
   type: "ObjectExpression";
-  properties: Property[]
+  properties: Property[];
 }
 
 export interface ArrayExpression extends Node {
   label: string;
   type: "ArrayExpression";
-  elements: Node[]
+  elements: Node[];
 }
