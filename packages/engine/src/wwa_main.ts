@@ -1506,7 +1506,7 @@ export class WWA {
             }
 
             total++;
-            if (!instance.hasData()) {
+            if (!instance.checkLoadDone()) {
                 continue;
             }
             loadedNum++;
@@ -1590,19 +1590,21 @@ export class WWA {
             return;
         }
         const audioInstance = this.sounds[id];
+        if (id >= SystemSound.BGM_LB) {
+            /* 
+               音源がロードされていなくても、QuickLoad などでゲーム状態を復元したときにはBGMを復元しなければならない。
+               ので、ゲームデータ上にはBGM設定を反映する
+             */
+            this._wwaData.bgm = id;
+        }
         if (!audioInstance.hasData()) {
-            if (id >= SystemSound.BGM_LB) {
-               /* 
-                  音源がロードされていなくても、QuickLoad などでゲーム状態を復元したときにはBGMを復元しなければならない。
-                  ので、ゲームデータ上にはBGM設定を反映する
-                */
-                this._wwaData.bgm = id;
-                this._setSoundLoadedCheckTimer(id);
-            }
+            this._setSoundLoadedCheckTimer(id);
+            audioInstance.load().then(() => {
+                audioInstance.play();
+            });
         } else {
             if (id >= SystemSound.BGM_LB) {
                 this.sounds[id].play(bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
-                this._wwaData.bgm = id;
             } else {
                 this.sounds[id].play();
             }
