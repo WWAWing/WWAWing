@@ -4,6 +4,7 @@ import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 import { Literal } from "./wwa";
 import { PARTS_TYPE_LIST } from "./utils";
+import { evalLengthFunction } from "./functions/length";
 
 export class EvalCalcWwaNodeGenerator {
   wwa: WWA;
@@ -720,16 +721,7 @@ export class EvalCalcWwaNode {
       case "LENGTH": {
         this._checkArgsLength(1, node);
         const targetValue = this.evalWwaNode(node.value[0]);
-        switch (typeof targetValue) {
-          case "object":
-            if (Array.isArray(targetValue)) {
-              return targetValue.length;
-            }
-            return Object.keys(targetValue).length;
-          case "string":
-            return targetValue.length;
-        }
-        throw new Error("LENGTH: 対応できない値が指定されています。");
+        return evalLengthFunction(targetValue);
       }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
