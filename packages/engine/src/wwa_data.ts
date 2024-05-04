@@ -1,10 +1,9 @@
+import { type WWAData } from "@wwawing/common-interface";
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
-import { KeyCode } from "./wwa_input";
-import { WWAData } from "@wwawing/common-interface";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
-export { WWAData };
+export { type WWAData };
 
 export class EquipmentStatus {
     public strength: number;
@@ -83,18 +82,17 @@ export class Status extends EquipmentStatus {
         return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
     }
 
-    public calculateScore(weight: {
-        energy: number;
-        strength: number;
-        defence: number;
-        gold: number;
-    }): number {
-        type Key = keyof typeof weight;
+    public calculateScore(scoreOption: ScoreOption): number {
+        type Key = keyof ScoreRates;
         // TODO: this[key] など型が効いていない部分があるが、一旦目を瞑る。
-        return (Object.keys(weight) as Key[]).reduce((prev, key) =>  prev + weight[key] * this[key], 0);
+        return (Object.keys(scoreOption.rates) as Key[]).reduce((prev, key) =>  prev + scoreOption.rates[key] * this[key], 0);
     }
 
-    public constructor( e: number, s: number, d: number, g: number) {
+    public clone() {
+        return new Status(this.energy, this.strength, this.defence, this.gold);
+    }
+
+    public constructor(e: number, s: number, d: number, g: number) {
         super(s, d);
         this.energy = e;
         this.gold = g;
@@ -324,25 +322,40 @@ export enum ControlPanelBottomButton {
     GAME_END = 2
 };
 
+/**
+ * 向きに合わせた数字
+ * テンキーに合わせた付番
+ * ```
+ *     ^
+ *   7 8 9 
+ * < 4 5 6 >
+ *   1 2 3
+ *     v
+ * ```
+ */
 export enum Direction {
-    LEFT = 0,
-    RIGHT = 1,
+    // 0 は使わない
+    UNUSED = 0,
+
+    // プレイヤーの向き
+    LEFT = 4,
+    RIGHT = 6,
     DOWN = 2,
-    UP = 3,
+    UP = 8,
+
     // ここから下はプレイヤー使用不可
-    LEFT_DOWN = 4,
-    LEFT_UP = 5,
-    RIGHT_DOWN = 6,
-    RIGHT_UP = 7,
+    LEFT_DOWN = 1,
+    LEFT_UP = 7,
+    RIGHT_DOWN = 3,
+    RIGHT_UP = 9,
 
     // 向きなしは、マクロ$movesで「プレイヤーの動きなしに物体を動かす」時に使う
-    NO_DIRECTION = 8
+    NO_DIRECTION = 5
 };
-export var vx = [-1, 1, 0, 0, -1, -1, 1, 1, 0];
-export var vy = [0, 0, 1, -1, 1, -1, 1, -1, 0];
-export var dirToPos = [4, 6, 2, 0]; // 仮
-export var dirToKey = [KeyCode.KEY_LEFT, KeyCode.KEY_RIGHT, KeyCode.KEY_DOWN, KeyCode.KEY_UP];
 
+// テンキーベースの方向 (Direction) から2次元のベクトルに変換 (Y軸下向き)
+export const vx = [ 0, -1, 0, 1, -1, 0, 1, -1, 0, 1];
+export const vy = [ 0, 1, 1, 1, 0, 0, 0, -1, -1, -1]
 
 export enum YesNoState {
     YES,
@@ -524,19 +537,6 @@ export enum SecondCandidateMoveType {
 export var sidebarButtonCellElementID = ["cell-load", "cell-save", "cell-restart", "cell-gotowwa"];
 
 
-export enum SystemMessage1 {
-    ASK_LINK = 5,
-    NO_MONEY = 6,
-    NO_ITEM = 7,
-    USE_ITEM = 8
-}
-
-export enum SystemMessage2 {
-    CLICKABLE_ITEM = 0,
-    FULL_ITEM = 1,
-    LOAD_SE = 2
-}
-
 export enum MacroType {
     UNDEFINED = 0,
     IMGPLAYER = 1,
@@ -575,7 +575,7 @@ export enum MacroType {
     COPY_DF_TO = 34,
     SET_DF = 35,
     COPY_MONEY_TO = 36,
-    SET_MOENEY = 37,
+    SET_MONEY = 37,
     COPY_STEP_COUNT_TO = 38,
     VAR_SET_VAL = 39,
     VAR_SET = 40,
@@ -597,9 +597,18 @@ export enum MacroType {
     ELSE = 58,
     END_IF = 59,
     SET = 60,
+    MAP2 = 61,
+    SHOW_STR2 = 62,
+    CONSOLE_LOG2 = 63,
+    DELAYBGM = 64,
+    SYSMSG = 65,
     GAMEPAD_BUTTON = 100,
-    OLDMOVE = 101
+    OLDMOVE = 101,
+    LEGACY_IF = 10050
 }
+
+export type ConditionalExecuteMacroType = MacroType.IF | MacroType.ELSE_IF | MacroType.ELSE | MacroType.END_IF;
+export type PreprocessMacroType = ConditionalExecuteMacroType | MacroType.SHOW_STR | MacroType.SHOW_STR2;
 
 export var macrotable = {
     "": 0,
@@ -661,9 +670,15 @@ export var macrotable = {
     "$else": 58,
     "$endif": 59,
     "$set": 60,
+    "$map2": 61,
+    "$show_str2": 62,
+    "$console_log2": 63,
+    "$delaybgm": 64,
+    "$sysmsg": 65,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
+
 
 export enum MacroStatusIndex {
     ENERGY = 0,
@@ -888,6 +903,9 @@ export class WWAConsts {
      */
     static INLINE_USER_VAR_VIEWER_DISPLAY_NUM = 10;
 
+    // 戦闘でお互いノーダメージが指定ターン続いた場合、引き分けとする。
+    // ここでいうターンは プレイヤーターンと敵ターンの合計であることに注意。
+    static readonly FIGHT_DRAW_TURN: number = 40;
 }
 export class WWASaveConsts {
     static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数
@@ -1010,10 +1028,70 @@ export type StatusSolutionKind = "all" | "bare" | "equipment";
 export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject" | "noFileSpecified";
 
 /**
- * if-elseマクロにて該当するマクロ文を実行するかを決める
- * outside-ifelse: if文の内側ではない
- * can-execute: 該当ブロックで処理を実行する
- * cannot-execute: if文の中だが、該当ブロックでは実行しない
- * execed: if文の中で、既に実行済みのため実行しない
+ * スコア表示で使用されるオプション
  */
-export type ConditionalMacroExecStatus = "outside-ifelse" | "can-execute" | "cannot-execute" | "executed";
+export interface ScoreOption {
+    rates: ScoreRates
+}
+
+/**
+ * スコア表示で使用するレート
+ */
+export interface ScoreRates {
+    energy: number;
+    strength: number;
+    defence: number;
+    gold: number;
+}
+
+/**
+ * メッセージを表示しているパーツ
+ */
+export interface TriggerParts {
+    id: number;
+    type: PartsType;
+    position: Coord;
+}
+
+/**
+ * ユーザ変数の種類
+ * - named: 名前つき変数
+ * - numbered: 添字が数値の変数
+ */
+export type UserVariableKind = "named" | "numbered";
+
+/**
+ * 戦闘における1ターンの結果
+ */
+export interface BattleTurnResult {
+    /**
+     * ダメージ量
+     */
+    damage: number;
+    /**
+     * 中断の場合は true
+     * 中断した場合でも該当ターンのダメージは入ります。
+     */
+    aborted?: boolean;
+    /**
+     * ユーザー定義関数で予期せぬエラーがあった場合 true
+     * ほとんど起きないと思いますが念のため。
+     * エラーがあった場合はダメージは 0 となります。
+     */
+    hasError?: boolean
+}
+
+
+/**
+ * 戦闘予測用パラメータ
+ */
+export interface BattleEstimateParameters {
+    playerStatus: Status;
+    enemyStatus: Status
+}
+
+
+/**
+ * 戦闘ダメージ方向の定義
+ */
+export type BattleDamageDirection = "playerToEnemy" | "enemyToPlayer";

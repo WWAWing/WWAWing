@@ -1,11 +1,13 @@
 import { WWAConsts } from "./wwa_data";
 import * as util from "./wwa_util";
+import { makeInject as makeInjectVirtualPad } from "@wwawing/virtual-pad";
 
 // FIXME: innerHTML使う実装、あんまりよくないけど、許して。
 // 入力値を扱う時はセキュリティに気をつける!!
-function makeInjectHtml(hasTitleImg: boolean): string {
+function makeInjectHtml(hasTitleImg: boolean, enableVirtualPad: boolean): string {
     const coverHtml = hasTitleImg ? `
         <div id="wwa-cover">
+            <div id="unstable-version-warning"></div>
             <div id="version"></div>
             <div id="progress-message-container">開始しています...</div>
             <div id="progress-bar-bg"></div>
@@ -17,6 +19,8 @@ function makeInjectHtml(hasTitleImg: boolean): string {
         <div id="wwa-cover">
             <canvas id="progress-panel" width="${WWAConsts.SCREEN_WIDTH}" height="${WWAConsts.SCREEN_HEIGHT}"></canvas>
         </div>`;
+
+    const virtualPadHtml = enableVirtualPad ? makeInjectVirtualPad() : "";
 
     return `
         <canvas id="wwa-map" class="wwa-canvas" width="440" height="440">
@@ -47,16 +51,26 @@ function makeInjectHtml(hasTitleImg: boolean): string {
         </div>
         <div id="wwa-controller"></div>
         <div id="wwa-fader"></div>
-${coverHtml}`;
+${coverHtml}
+${virtualPadHtml}
+`;
 }
 
-export function inject(parent: HTMLDivElement, titleImgName: string): void {
+/**
+ * タッチできるデバイスかどうかを判別します。
+ * @returns {boolean}
+ */
+export function checkTouchDevice(): boolean {
+    return ("ontouchstart" in window) && ("ontouchend" in window) && ("ontouchmove" in window);
+}
+
+export function inject(parent: HTMLDivElement, titleImgName: string, enableVirtualPad: boolean): void {
     var style = document.createElement("style");
     style.type = "text/css";
     style.setAttribute("id", WWAConsts.WWA_STYLE_TAG_ID);
     util.$tag("head")[0].appendChild(style);
 
-    parent.innerHTML = makeInjectHtml(titleImgName !== null);
+    parent.innerHTML = makeInjectHtml(titleImgName !== null, enableVirtualPad);
     if (titleImgName !== null) {
         util.$id("wwa-cover").style.backgroundImage = `url(${titleImgName})`;
         util.$id("wwa-cover").style.backgroundRepeat = "no-repeat";

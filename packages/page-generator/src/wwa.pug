@@ -26,7 +26,17 @@ html(lang="ja")
                 data-wwa-var-dump-elm=wwa.attributes["data-wwa-var-dump-elm"]
                 data-wwa-user-var-names-file=wwa.attributes["data-wwa-user-var-names-file"]
                 data-wwa-display-user-vars=wwa.attributes["data-wwa-display-user-vars"]
+                data-wwa-virtualpad-enable=wwa.attributes["data-wwa-virtualpad-enable"]
+                data-wwa-virtualpad-viewport-fit-enable=wwa.attributes["data-wwa-virtualpad-viewport-fit-enable"]
+                data-wwa-virtualpad-controller-elm=wwa.attributes["data-wwa-virtualpad-controller-elm"]
             )
+
+        if virtualPadController
+            div(id=virtualPadController.id)
+
+        if debugConsoleElement
+            // 下記 div 要素内にデバッグコンソールが出ます。実際に公開する WWA では表示させないよう、次の行は消してください。
+            div(id=debugConsoleElement.id)
         
         if varDumpElement
             // 下記 div 要素内に変数一覧が出ます。実際に公開する WWA では、変数一覧を表示させないよう、次の行は消してください。

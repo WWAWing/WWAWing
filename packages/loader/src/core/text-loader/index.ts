@@ -121,10 +121,8 @@ export class TextLoader {
     wwaData.moves = WWAConsts.DEFAULT_MOVES;
     wwaData.gameSpeedIndex = WWAConsts.DEFAULT_SPEED_INDEX;
     wwaData.permitChangeGameSpeed = true;
-    wwaData.userVar = new Array(WWAConsts.USER_VAR_NUM);
-    for (let i = 0; i < WWAConsts.USER_VAR_NUM; i++) {
-      wwaData.userVar[i] = 0;
-    }
+    wwaData.userVar = Array.from({length: WWAConsts.USER_VAR_NUM}).map(() => 0);
+    wwaData.userNamedVar = [];
     wwaData.playTime = 0;
 
     wwaData.isVisibleStatusEnergy = true;
@@ -133,6 +131,8 @@ export class TextLoader {
     wwaData.isVisibleStatusGold = true;
 
     wwaData.gameOverPolicy = "default";
+
+    wwaData.bgmDelayDurationMs = 0;
 
     return wwaData;
   }

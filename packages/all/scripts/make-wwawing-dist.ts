@@ -103,7 +103,11 @@ export default async function makeDistribution(
                                 }
                                 resolve({
                                     target,
-                                    content: convertLfToCrlf(data.toString("utf8"))
+                                    content: target.endsWith("wwa.js") ?
+                                        // wwa.js は minify されているため、バイト数を少しでも減らすため改行コードLFを維持する
+                                        data.toString("utf8"):
+                                        // それ以外のファイルは Windows のメモ帳(の古い版)で開かれることを想定し改行コードをCRLFとする
+                                        convertLfToCrlf(data.toString("utf8"))
                                 });
                             })
                         })
@@ -149,11 +153,17 @@ export default async function makeDistribution(
                     autoSave: {
                         intervalSteps: 200,
                     },
-                    ... (canIncludeUserVarOptions ? {
+                    virtualPad: {
+                        enable: false,
+                    },
+                    debugConsole: {
+                        
+                    },
+                    ...(canIncludeUserVarOptions ? {
                         userVars: {
                             dumpElementId: "vardump",
                             canDisplay: true
-                        }
+                        },
                     } : {})
                 },
                 resources: {

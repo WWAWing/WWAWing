@@ -1,26 +1,11 @@
-import { EquipmentStatus, Status, Coord } from "../wwa_data";
-import { regNumber, regRand, regRandCapture, regUserVar, regUserVarCapture } from "./regexp";
+import { regItemByBoxId, regItemCount, regMapByCoord, regNumber, regObjectByCoord, regRand, regUserVar } from "./regexp";
+import type { Comparable, CValue } from "./typedef";
 
-export interface TokenValues {
-  totalStatus: Status;
-  bareStatus: EquipmentStatus;
-  itemStatus: EquipmentStatus;
-  energyMax: number;
-  moveCount: number;
-  playTime: number;
-  userVars: number[];
-  playerCoord: Coord;
+export function isCValue(c: Comparable): c is CValue {
+  return c.type !== "RAND" && c.type !== "ITEM_COUNT";
 }
 
-/**
- * AT_TOTAL: 素手攻撃力 + 所持アイテム攻撃力
- * DF_TOTAL: 素手防御力 + 所持アイテム防御力
- * AT_ITEMS: 所持アイテム攻撃力の合計
- * DF_ITEMS: 所持アイテム防御力の合計
- */
-export type SetMacroType = 'VARIABLE' | 'NUMBER' | 'HP' | 'HPMAX' | 'AT' | 'AT_TOTAL' | 'AT_ITEMS' | 'DF' | 'DF_TOTAL' | 'DF_ITEMS' | 'GD' | 'TIME' | 'STEP' | 'PX' | 'PY' |'RAND';
-
-export function parseType(str: string): SetMacroType | null {
+export function parseType(str: string): Comparable | null {
   switch (str) {
     case "HP":
     case "HPMAX":
@@ -33,82 +18,68 @@ export function parseType(str: string): SetMacroType | null {
     case "GD":
     case "STEP":
     case "TIME":
+    case "X":
+    case "Y":
     case "PX":
     case "PY":
-      return str;
+    case "PDIR":
+    case "ID":
+    case "TYPE":
+    case "ITEM_COUNT_ALL":
+      return { type: str };
     default:
-      if (regUserVar.test(str)) {
-        return 'VARIABLE';
-      } else if (regNumber.test(str)) {
-        return 'NUMBER';
-      } else if (regRand.test(str)) {
-        return 'RAND';
-      } else {
-        return null;
+      const userVarMatch = str.match(regUserVar);
+      if (userVarMatch) {
+        const index = parseArg1Value(userVarMatch)
+        return index === null ? null : { type: "VARIABLE", index };
       }
+      const mapMatch = str.match(regMapByCoord);
+      if(mapMatch) {
+        const coord = parseArg2Values(mapMatch);
+        return coord === null ? null : { type: "MAP", x: coord[0], y: coord[1] };
+      }
+      const objectMatch = str.match(regObjectByCoord);
+      if (objectMatch) {
+        const coord = parseArg2Values(objectMatch);
+        return coord === null ? null : { type: "OBJECT", x: coord[0], y: coord[1] };
+      }
+      const itemMatch = str.match(regItemByBoxId);
+      if (itemMatch) {
+        const index = parseArg1Value(itemMatch)
+        return index === null ? null : { type: "ITEM", boxIndex1To12: index };
+      }
+      const numberMatch = str.match(regNumber)
+      if (numberMatch) {
+        const rawValue = parseInt(str, 10);
+        return (rawValue !== null && !isNaN(rawValue)) ? { type: "NUMBER", rawValue } : null;
+      } 
+      const randMatch = str.match(regRand);
+      if (randMatch) {
+        const argument = randMatch.length >= 2 ? parseType(randMatch[1]) : null;
+        return (argument !== null && isCValue(argument)) ? { type: "RAND", argument } : null;
+      }
+      const itemCountMatch = str.match(regItemCount);
+      if (itemCountMatch) {
+        const argument = itemCountMatch.length >= 2 ? parseType(itemCountMatch[1]) : null;
+        return (argument !== null && isCValue(argument)) ? { type: "ITEM_COUNT", argument } : null;
+      }
+      return null;
   }
 }
 
-/**
- * 変数か定数かを判断し、該当する値を返す
- * @param value 変数か定数を表す文字列 0, 10, v[100] など
- */
-export function parseValue(value: string, tokenValues: TokenValues): number {
-  switch (parseType(value)) {
-    case 'HP':
-      return tokenValues.totalStatus.energy;
-    case 'HPMAX':
-      return tokenValues.energyMax;
-    case 'AT':
-      return tokenValues.bareStatus.strength;
-    case 'AT_TOTAL':
-      return tokenValues.totalStatus.strength;
-    case 'AT_ITEMS':
-      return tokenValues.itemStatus.strength;
-    case 'DF':
-      return tokenValues.bareStatus.defence;
-    case 'DF_TOTAL':
-      return tokenValues.totalStatus.defence;
-    case 'DF_ITEMS':
-      return tokenValues.itemStatus.defence;
-    case 'GD':
-      return tokenValues.totalStatus.gold;
-    case 'STEP':
-      return tokenValues.moveCount;
-    case 'VARIABLE':
-      return parseVariable(value, tokenValues);
-    case 'NUMBER':
-      return parseNumber(value);
-    case 'TIME':
-      return tokenValues.playTime;
-    case 'PX':
-      return tokenValues.playerCoord.x;
-    case 'PY':
-      return tokenValues.playerCoord.y;
-    case 'RAND':
-      const randMaxList = value.match(regRandCapture);
-      const target = randMaxList[1];
-      const randMax = parseValue(target, tokenValues);
-      return Math.floor(Math.random() * randMax);
-    default:
-      // 未定義は 0 とする
-      return 0;
-  }
+function parseArg1Value(regExpMatchArray: RegExpMatchArray): number | null {
+    const arg = regExpMatchArray.length >= 2 ? Number(regExpMatchArray[1]) : null;
+    return (arg !== null && !isNaN(arg)) ? arg : null;
 }
 
-export function parseVariable(value: string, tokenValues: TokenValues): number {
-  const variable = value.match(regUserVarCapture);
-  if (variable === null) {
-    throw new Error("変数のフォーマットではありません。");
-  }
-  const index = parseInt(variable[1], 10);
-  return tokenValues.userVars[index];
-}
-
-export function parseNumber(value: string): number {
-  const parsedValue = parseInt(value, 10);
-  if (isNaN(parsedValue)) {
-    throw new Error(`数値として解釈できません: ${value}`);
-  }
-  return parsedValue;
+function parseArg2Values(regExpMatchArray: RegExpMatchArray): [number, number] | null {
+    if(regExpMatchArray.length < 3) {
+      return null;
+    }
+    const arg1 =  Number(regExpMatchArray[1]) ;
+    const arg2 =  Number(regExpMatchArray[2]) ;
+    if(isNaN(arg1) || isNaN(arg2)) {
+      return null;
+    }
+    return [arg1, arg2];
 }

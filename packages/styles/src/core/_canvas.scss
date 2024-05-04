@@ -15,7 +15,7 @@ canvas.wwa-canvas {
     bottom: $line * $wwa_cover_row_height;
     height: $wwa_cover_row_height;
     text-align: left;
-    padding-left: 4px;
+    padding: 0 4px;
 }
 
 @mixin progress_bar($width: $wwa_screen_width, $color: transparent) {
@@ -36,6 +36,13 @@ canvas.wwa-canvas {
     line-height: $wwa_cover_row_height;
     font-size: 12px;
     background-color: #FFFFFF;
+
+    > #unstable-version-warning {
+        @include cover_message(3);
+        font-weight: bold;
+        background-color: red;
+        color: white;
+    }
 
     > #version {
         @include cover_message(2);

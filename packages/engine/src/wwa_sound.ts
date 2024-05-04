@@ -5,6 +5,8 @@ export class Sound {
     private bufferSources: AudioBufferSourceNode[];
     private isLoaded: boolean;
     private isExceededMaxRetryCount?: true;
+    // NOTE: 現状ブラウザで動くことを前提にしているので、もしNodeで動かすとかがあれば setTimeout まわりのラッパーを作る必要がありそうです。
+    private delayBgmTimeoutId: number | null;
 
     public constructor(
         /**
@@ -21,6 +23,7 @@ export class Sound {
         this.bufferSources = [];
 
         this.isLoaded = false;
+        this.delayBgmTimeoutId = null;
         // floating promise だが仕方ない
         this.load()
     }
@@ -75,7 +78,7 @@ export class Sound {
     }
 
     private retry(errorCount: number) {
-        setTimeout(async () => { await this.load(errorCount + 1); }, 100)
+        window.setTimeout(async () => { await this.load(errorCount + 1); }, 100)
     }
 
     private setData(data: AudioBuffer): void {
@@ -91,8 +94,9 @@ export class Sound {
     /**
      * 音声を再生します。
      * 一時停止した場合でも、最初から再生します。
+     * @param delayDurationMs 遅延時間
      */
-    public play(): void {
+    public play(delayDurationMs = 0): void {
         const bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
         this.bufferSources.push(bufferSource);
 
@@ -108,14 +112,17 @@ export class Sound {
             duration = 0;
         }
 
-        bufferSource.start();
         bufferSource.onended = () => {
             const id = this.bufferSources.indexOf(bufferSource);
             if (id !== -1) {
                 this.bufferSources.splice(id, 1);
             }
             this.disposeBufferSource(bufferSource);
-       }
+        }
+        this.delayBgmTimeoutId = window.setTimeout(() => {
+            this.delayBgmTimeoutId = null;
+            bufferSource.start();
+        }, delayDurationMs);
 
         this.audioGain.connect(this.audioContext.destination);
     }
@@ -125,6 +132,10 @@ export class Sound {
      * 主にBGMを99番指定で止める場合に利用します。
      */
     public pause(): void {
+        if (this.delayBgmTimeoutId !== null) {
+            window.clearTimeout(this.delayBgmTimeoutId);
+            this.delayBgmTimeoutId = null;
+        }
         this.bufferSources.forEach(this.disposeBufferSource)
         this.bufferSources.length = 0;
     }
@@ -145,6 +156,10 @@ export class Sound {
      */
     public hasData(): boolean {
         return this.audioBuffer !== null;
+    }
+
+    public isPlaying(): boolean {
+        return this.hasData() || this.delayBgmTimeoutId !== null;
     }
     
     public isLoading(): boolean {

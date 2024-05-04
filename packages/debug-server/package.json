@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/debug-server",
-  "version": "3.9.0",
+  "version": "3.13.0-unstable.based-on.3.12.11.p.12",
   "description": "wwawing debug server",
   "main": "lib/index.js",
   "files": [
@@ -10,26 +10,28 @@
   "scripts": {
     "start": "npm run build && node lib debug",
     "build": "tsc -p .",
-    "generate": "shx mkdir -p bin && pkg -t node16-win-x64 ./lib/index.js --output bin/wwa-server.exe",
+    "generate": "shx mkdir -p bin && pkg -t node18-win-x64 ./lib/index.js --output bin/wwa-server.exe",
     "clean": "shx rm -rf debug lib bin",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/express": "4.17.13",
-    "@types/node": "^16.11.41",
+    "@types/express": "4.17.14",
+    "@types/node": "^18.11.9",
+    "@types/serve-index": "1.9.1",
     "express": "^4.18.1",
-    "pkg": "^5.7.0",
+    "pkg": "^5.8.0",
+    "serve-index": "1.9.1",
     "shelljs": "^0.8.5",
     "shx": "^0.3.4",
-    "typescript": "^4.7.3"
+    "typescript": "^5.3.3"
   },
   "publishConfig": {
     "access": "public"
   },
   "engines": {
-    "node": ">=16",
+    "node": ">=18",
     "npm": ">=8"
   }
 }

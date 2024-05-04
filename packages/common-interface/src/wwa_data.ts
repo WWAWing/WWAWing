@@ -1,3 +1,5 @@
+import type { Key } from "./wwa_system_message";
+
 export interface Coord {
     x: number;
     y: number;
@@ -126,7 +128,8 @@ export interface WWAData {
      */
     gamePadButtonItemTable: number[];
 
-    userVar: number[];
+    userVar: (string | number | boolean)[];
+    userNamedVar: [string, string | number | boolean][];
     permitChangeGameSpeed: boolean;
     gameSpeedIndex: number;
     playTime: number;
@@ -144,7 +147,20 @@ export interface WWAData {
      */
     isGameOverDisabled?: boolean;
 
-    gameOverPolicy: GameOverPolicy
+    gameOverPolicy: GameOverPolicy;
+
+    bgmDelayDurationMs: number;
+
+    /**
+     * ゲーム中に書き換えられたシステムメッセージ群
+     * SystemMessageKeyごとにデータが保存されています。
+     * キーに対する値が未定義の場合はマップデータで決められたシステムメッセージ
+     * (WWAData の message もしくは systemMessage) を使用します。
+     * 
+     * 本当は WWAData の systemMessage を使いたいがセーブデータの互換性が損なわれる問題があるため
+     * キーを増やす対応をしています。
+     */
+    customSystemMessages: Partial<Record<Key, string>>;
 
 }
 

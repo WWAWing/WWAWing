@@ -10,6 +10,13 @@ export interface GameOption {
     userVars?: {
         dumpElementId: string
         canDisplay?: boolean
+    },
+    virtualPad?: {
+        enable: boolean,
+        viewportFitEnable?: boolean,
+        controllerId?: string;
+    },
+    debugConsole?: {
     }
 }
 
