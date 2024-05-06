@@ -172,6 +172,9 @@ export class WWA {
         numbered: (number | string | boolean)[];
     };
 
+    private _msgOutputBuffer: string[]; // MSG関数実行結果のバッファ
+    private _pageExecuting: boolean; // ページ実行中かどうか
+
     /**
      * ゲーム内ユーザ変数ビューワの設定
      */
@@ -584,6 +587,8 @@ export class WWA {
             this._reservedJumpDestination = undefined;
             this._shouldSetNextPage = false;
             this._passwordLoadExecInNextFrame = false;
+            this._pageExecuting = false;
+            this._msgOutputBuffer = [];
 
             //ロード処理の前に追加
             this._messageWindow = new MessageWindow(
@@ -1891,17 +1896,20 @@ export class WWA {
             this._clearFacesInNextFrame = false;
         }
 
+        this._pageExecuting = true;
+
         // ページ（メッセージ・マクロが含まれる <P>で区切られた単位）の処理
         if (this._pages.length > 0 && this._shouldSetNextPage) {
             this._shouldSetNextPage = false;
             while (this._pages.length > 0) {
-                const executingPage = this._pages.shift();
+               const currentPage = this._pages.shift();
 
                 // executeNodes の結果、新たなメッセージが発生した場合、既に開かれているメッセージウィンドウが閉じた後に表示される。
                 //  (this._pages の後尾にシステムメッセージのページが追加されるため)
                 // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
                 // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
-                const executedResult = Node.executeNodes(executingPage.firstNode, executingPage.triggerParts);
+                const executedResult = Node.executeNodes(currentPage.firstNode, currentPage.triggerParts);
+
                 if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
                     // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
                     this._isLastPage = false;
@@ -1912,12 +1920,12 @@ export class WWA {
                     this._reservedMoveMacroTurn = void 0;
                 }
                 const messageLinesToDisplay = executedResult.messages.filter(line => !line.isEmpty());
-                const isScoreDisplayingPage = Boolean(executingPage.scoreOption);
+                const isScoreDisplayingPage = Boolean(currentPage.scoreOption);
 
                 // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える。
                 // システムメッセージ扱いではなく、パーツが表示している扱いになります。
                 if (isScoreDisplayingPage && messageLinesToDisplay.length === 0) {
-                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", executingPage.triggerParts));
+                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", currentPage.triggerParts));
                 }
 
                 // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
@@ -1925,21 +1933,21 @@ export class WWA {
                 if (existsMessageToDisplay) {
                     const message = messageLinesToDisplay.map(line => line.generatePrintableMessage()).join("\n");
                     this._messageWindow.setMessage(message);
-                    this._messageWindow.setYesNoChoice(executingPage.showChoice);
+                    this._messageWindow.setYesNoChoice(currentPage.showChoice);
                     this._messageWindow.setPositionByPlayerPosition(
                         this._faces.length !== 0,
                         isScoreDisplayingPage,
-                        executingPage.isSystemMessage,
+                        currentPage.isSystemMessage,
                         this._player.getPosition(),
                         this._camera.getPosition()
                     );
                     if (isScoreDisplayingPage) {
-                        this._lastScoreOptions = executingPage.scoreOption;
-                        this.updateScore(executingPage.scoreOption);
+                        this._lastScoreOptions = currentPage.scoreOption;
+                        this.updateScore(currentPage.scoreOption);
                         this._scoreWindow.show();
                     }
                     this._player.setMessageWaiting();
-                    this._isLastPage = executingPage.isLastPage
+                    this._isLastPage = currentPage.isLastPage
                     break;
                 }
                 // このフレームで処理されるべきページがもうないのでループから抜ける
@@ -1952,6 +1960,15 @@ export class WWA {
                 }
             }
         }
+
+        this._pageExecuting = false;
+        // メッセージ処理中に発生したメッセージを新たに積む
+        while (this._msgOutputBuffer.length > 0) {
+            console.log(this._msgOutputBuffer);
+            this.reserveMessageDisplayWhenShouldOpen(this._msgOutputBuffer.shift());
+        }
+
+
         // ジャンプゲートは、指定位置にパーツを出現やメッセージより後に処理する必要がある
         if(this._reservedJumpDestination) {
             this._player.jumpTo(this._reservedJumpDestination);
@@ -3961,6 +3978,15 @@ export class WWA {
             this._playerAndObjectsStopWaitingMessageDisplayRequests.push(message);
         } else {
             this.registerPageByMessage(message);
+        }
+    }
+
+    // MSG() 関数の実行結果をハンドリングします。
+    public handleMsgFunction(message: string): void{
+        if (this._pageExecuting) {
+            this._msgOutputBuffer.push(message);
+        } else {
+            this.reserveMessageDisplayWhenShouldOpen(message);
         }
     }
 
