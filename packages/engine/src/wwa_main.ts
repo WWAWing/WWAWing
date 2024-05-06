@@ -172,7 +172,6 @@ export class WWA {
         numbered: (number | string | boolean)[];
     };
 
-    private _msgOutputBuffer: string[]; // MSG関数実行結果のバッファ
     private _pageExecuting: boolean; // ページ実行中かどうか
 
     /**
@@ -587,7 +586,6 @@ export class WWA {
             this._shouldSetNextPage = false;
             this._passwordLoadExecInNextFrame = false;
             this._pageExecuting = false;
-            this._msgOutputBuffer = [];
 
             //ロード処理の前に追加
             this._messageWindow = new MessageWindow(
@@ -1942,24 +1940,24 @@ export class WWA {
                     this._isLastPage = currentPage.isLastPage
                     break;
                 }
-                // このフレームで処理されるべきページがもうないのでループから抜ける
+                // このフレームで処理されるべきページがもうない
                 if (this._pages.length === 0) {
-                    const { newPageGenerated } = this._hideMessageWindow();
-                    if (!newPageGenerated) {
-                        this._dispatchWindowClosedTimeRequests();
+                    // ページがまだ生成される場合はループを継続
+                    const resultOfHideMessageWindowResult = this._hideMessageWindow();
+                    if (resultOfHideMessageWindowResult.newPageGenerated) {
+                        continue;
                     }
+                    const resultOfDispatchWindowClosedTimeRequests = this._dispatchWindowClosedTimeRequests();
+                    if( resultOfDispatchWindowClosedTimeRequests.newPageGenerated) {
+                        continue;
+                    }
+                    // ページが生成されなくなったらループを抜ける
                     break;
                 }
             }
         }
 
         this._pageExecuting = false;
-        // メッセージ処理中に発生したメッセージを新たに積む
-        while (this._msgOutputBuffer.length > 0) {
-            console.log(this._msgOutputBuffer);
-            this.reserveMessageDisplayWhenShouldOpen(this._msgOutputBuffer.shift());
-        }
-
 
         // ジャンプゲートは、指定位置にパーツを出現やメッセージより後に処理する必要がある
         if(this._reservedJumpDestination) {
@@ -3912,7 +3910,7 @@ export class WWA {
         }
     }
 
-    private _dispatchWindowClosedTimeRequests(): void {
+    private _dispatchWindowClosedTimeRequests(): { newPageGenerated: boolean } {
         // メッセージ表示中に積まれたリクエストをさらに消化
         if (this._windowCloseWaitingJumpGateRequest) {
             this.forcedJumpGate(this._windowCloseWaitingJumpGateRequest.x, this._windowCloseWaitingJumpGateRequest.y);
@@ -3920,7 +3918,9 @@ export class WWA {
         if (this._windowCloseWaitingMessageDisplayRequests.length > 0) {
             const message = this._windowCloseWaitingMessageDisplayRequests.shift();
             this.registerPageByMessage(message);
+            return { newPageGenerated: true };
         }
+        return {newPageGenerated: false };
     }
 
     private _dispatchPlayerAndObjectsStopTimeRequests(): void {
@@ -3964,7 +3964,7 @@ export class WWA {
     // MSG() 関数の実行結果をハンドリングします。
     public handleMsgFunction(message: string): void{
         if (this._pageExecuting) {
-            this._msgOutputBuffer.push(message);
+            this._windowCloseWaitingMessageDisplayRequests.push(message)
         } else {
             this.reserveMessageDisplayWhenShouldOpen(message);
         }
