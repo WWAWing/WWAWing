@@ -73,9 +73,9 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, 
     case 'TIME':
       return tokenValues.playTime;
     case 'X':
-      return tokenValues.partsPosition.x;
+      return tokenValues.partsPosition?.x ?? tokenValues.playerCoord.x;
     case 'Y':
-      return tokenValues.partsPosition.y;
+      return tokenValues.partsPosition?.y ?? tokenValues.playerCoord.y;
     case 'PX':
       return tokenValues.playerCoord.x;
     case 'PY':
@@ -83,9 +83,9 @@ export function evaluateValue(comparable: Comparable, tokenValues: TokenValues, 
     case 'PDIR':
       return tokenValues.playerDirection;
     case 'ID':
-      return tokenValues.partsId;
+      return tokenValues.partsId ?? -1;
     case 'TYPE':
-      return tokenValues.partsType;
+      return tokenValues.partsType ?? -1;
     case 'RAND':
       return Math.floor(Math.random() * evaluateValue(comparable.argument, tokenValues));
     case 'ITEM_COUNT':

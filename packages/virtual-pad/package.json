@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/virtual-pad",
-  "version": "4.1.0-unstable.based-on.3.12.11.p.4",
+  "version": "4.1.0-unstable.based-on.3.12.11.p.20",
   "description": "WWA Wing Virtual Pad for mobile phone",
   "main": "lib/index.js",
   "scripts": {
@@ -11,7 +11,7 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.0.4"
+    "typescript": "^5.3.3"
   },
   "publishConfig": {
     "access": "public"

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/page-generator",
-  "version": "4.1.0-unstable.based-on.3.12.11.p.4",
+  "version": "4.1.0-unstable.based-on.3.12.11.p.20",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -31,7 +31,7 @@
     "npm-run-all": "^4.1.5",
     "shelljs": "^0.8.5",
     "shx": "^0.3.4",
-    "typescript": "^5.0.4"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
     "pug": "^3.0.2"

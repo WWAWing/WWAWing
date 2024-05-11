@@ -214,6 +214,8 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_GAMEOVER_POS_Y":
     case "ABORT_BATTLE":
     case "EXIT":
+    case "GET_IMG_POS_X":
+    case "GET_IMG_POS_Y":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -340,7 +342,19 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           throw new Error("");
         }
       } else if (left.type === "Symbol") {
-        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM" || left.name === "f") {
+        if (
+          left.name === "m" ||
+          left.name === "o" ||
+          left.name === "v" ||
+          left.name === "ITEM" ||
+          left.name === "X" ||
+          left.name === "Y" ||
+          left.name === "ID" ||
+          left.name === "TYPE" ||
+          left.name === "MOVE_SPEED" ||
+          left.name === "MOVE_FRAME_TIME" ||
+          left.name === "f"
+        ) {
           throw new Error("このシンボルには代入できません");
         }
         if (left.name === "AT_TOTAL") {
@@ -459,6 +473,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ITEM":
     case "X":
     case "Y":
+    case "ID":
+    case "TYPE":
     case "PX":
     case "PY":
     case "v":
@@ -481,6 +497,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_HP":
     case "ENEMY_AT":
     case "ENEMY_DF":
+    case "MOVE_SPEED":
+    case "MOVE_FRAME_TIME":
     case "f":
       return {
         type: "Symbol",

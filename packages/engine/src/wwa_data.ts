@@ -1,6 +1,6 @@
+import { type WWAData } from "@wwawing/common-interface";
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
-import { type WWAData } from "@wwawing/common-interface";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
 export { type WWAData };
@@ -82,7 +82,7 @@ export class Status extends EquipmentStatus {
         return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
     }
 
-    public calculateScore(scoreOption: ScoreOptions): number {
+    public calculateScore(scoreOption: ScoreOption): number {
         type Key = keyof ScoreRates;
         // TODO: this[key] など型が効いていない部分があるが、一旦目を瞑る。
         return (Object.keys(scoreOption.rates) as Key[]).reduce((prev, key) =>  prev + scoreOption.rates[key] * this[key], 0);
@@ -1032,7 +1032,7 @@ export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject
 /**
  * スコア表示で使用されるオプション
  */
-export interface ScoreOptions {
+export interface ScoreOption {
     rates: ScoreRates
 }
 

@@ -1,5 +1,5 @@
 import { SystemMessage } from "@wwawing/common-interface";
-import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 import { PARTS_TYPE_LIST } from "./utils";
@@ -10,12 +10,21 @@ export class EvalCalcWwaNodeGenerator {
   loop_limit: number;
 
   state: {
+    /** パーツから呼び出した場合ならオブジェクトあり，さもなくば undefined */
+    readonly triggerParts?: {
+      /** パーツ番号 */
+      id?: number,
+      /** パーツ種類 */
+      type?: PartsType,
+      /** 呼び出したパーツの座標 */
+      position?: Coord,
+    }
     /** アイテム取得時の計算ならオブジェクトあり, さもなくば undefined. */
     readonly earnedItem?: {
       /** 使用・取得したアイテムのID */
       partsId?: number,
       /** 使用・取得したアイテムの位置 */
-      itemPos?: number
+      itemPos1To12?: number
     }
     /** 戦闘ダメージのための計算ならオブジェクトあり, さもなくば undefined */
     readonly battleDamageCalculation?: {
@@ -38,13 +47,21 @@ export class EvalCalcWwaNodeGenerator {
     this.state = {}
   }
 
+  public setTriggerParts(partsId: number, partsType: PartsType, position: Coord) {
+    this.state = { ...this.state, triggerParts: { id: partsId, type: partsType, position } };
+  }
+
+  public clearTriggerParts() {
+    this.state = { ...this.state, triggerParts: undefined };
+  }
+
   /**
    * Item関連のReadOnly値をセットする
    * @param item_id 使用・取得したITEMのID
-   * @param item_pos 使用・取得したITEMのID
+   * @param item_pos 使用・取得したITEMのID [1,12]
    */
-  public setEarnedItem(partsId: number, itemPos: number) {
-    this.state = { ...this.state, earnedItem: { partsId, itemPos } };
+  public setEarnedItem(partsId: number, itemPos1To12: number) {
+    this.state = { ...this.state, earnedItem: { partsId, itemPos1To12 } };
   }
 
   public clearEarnedItem() {
@@ -270,7 +287,7 @@ export class EvalCalcWwaNode {
     let return_string = "";
     quasis.forEach((q, id) => {
       return_string += q;
-      if(expressions[id]) {
+      if(expressions[id] !== undefined) {
         return_string += expressions[id];
       }
     });
@@ -444,7 +461,7 @@ export class EvalCalcWwaNode {
         const srcID = Number(this.evalWwaNode(node.value[0]));
         const destID = Number(this.evalWwaNode(node.value[1]));
         let partsType = node.value[2]? Number(this.evalWwaNode(node.value[2])): 0;
-        let onlyThisSight = node.value[3]? Boolean(this.evalWwaNode(node.value[3])): true;
+        let onlyThisSight = node.value[3]? Boolean(this.evalWwaNode(node.value[3])): false;
         if(srcID < 0 || destID < 0 ) {
           throw new Error("パーツ番号が不正です");
         }
@@ -652,6 +669,54 @@ export class EvalCalcWwaNode {
       }
       case "EXIT": 
         throw new ExitInformation("EXIT", this.evalWwaNode(node.value[0]));
+      case "GET_IMG_POS_X": {
+        this._checkArgsLength(1, node);
+        const parts_id = Number(this.evalWwaNode(node.value[0]));
+        const parts_type_number = (node.value[1] !== undefined)?
+          Number(this.evalWwaNode(node.value[1])):
+          0;
+        const parts_type = parts_type_number === 0? PartsType.OBJECT: PartsType.MAP;
+        if(parts_type === PartsType.OBJECT) {
+          const is_first_motion: boolean = (node.value[2] !== undefined)?
+            Number(this.evalWwaNode(node.value[2])) === 0:
+            true;
+          // 物体パーツの情報を取得する
+          const obj_info = this.generator.wwa.getObjectInfo(parts_id);
+          const ims_pos = is_first_motion? obj_info[WWAConsts.ATR_X]: obj_info[WWAConsts.ATR_X2];
+          return Math.floor(ims_pos / WWAConsts.CHIP_SIZE);
+        }
+        else if(parts_type === PartsType.MAP) {
+          // 背景パーツの情報を取得する
+          const map_info = this.generator.wwa.getMapInfo(parts_id);
+          const ims_pos = map_info[WWAConsts.ATR_X];
+          return Math.floor(ims_pos / WWAConsts.CHIP_SIZE);
+        }
+        throw new Error("GET_IMG_POS_X: 指定したIDのパーツのTypeが異常です。");
+      }
+      case "GET_IMG_POS_Y": {
+        this._checkArgsLength(1, node);
+        const parts_id = Number(this.evalWwaNode(node.value[0]));
+        const parts_type_number = (node.value[1] !== undefined)?
+          Number(this.evalWwaNode(node.value[1])):
+          0;
+        const parts_type = parts_type_number === 0? PartsType.OBJECT: PartsType.MAP;
+        if(parts_type === PartsType.OBJECT) {
+          const is_first_motion: boolean = (node.value[2] !== undefined)?
+            Number(this.evalWwaNode(node.value[2])) === 0:
+            true;
+          // 物体パーツの情報を取得する
+          const obj_info = this.generator.wwa.getObjectInfo(parts_id);
+          const ims_pos = is_first_motion? obj_info[WWAConsts.ATR_Y]: obj_info[WWAConsts.ATR_Y2];
+          return Math.floor(ims_pos / WWAConsts.CHIP_SIZE);
+        }
+        else if(parts_type === PartsType.MAP) {
+          // 背景パーツの情報を取得する
+          const map_info = this.generator.wwa.getMapInfo(parts_id);
+          const ims_pos = map_info[WWAConsts.ATR_Y];
+          return Math.floor(ims_pos / WWAConsts.CHIP_SIZE);
+        }
+        throw new Error("GET_IMG_POS_Y: 指定したIDのパーツのTypeが異常です。");
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
@@ -677,9 +742,15 @@ export class EvalCalcWwaNode {
     const game_status = this.generator.wwa.getGameStatus();
     const x = this.evalWwaNode(node.destinationX);
     const y = this.evalWwaNode(node.destinationY);
+    if(typeof x !== "number" || typeof y !== "number") {
+      throw new Error(`座標は数値で指定してください (${x}, ${y})`)
+    }
+    // 範囲外で例外を投げる用
+    new Position(this.generator.wwa, x, y);
+
     const value = this.evalWwaNode(node.value);
     const partsKind = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
-    this.generator.wwa.appearPartsEval(game_status.playerCoord, x, y, value, partsKind);
+    this.generator.wwa.appearPartsEval(game_status.playerCoord, `${x}`, `${y}`, value, partsKind);
   }
 
   blockStatement(node: Wwa.BlockStatement) {
@@ -724,12 +795,16 @@ export class EvalCalcWwaNode {
   }
 
   /**
-   * 保持しているITMEを変更する
+   * 保持しているITEMを変更する
+   * ITEM[0] に対する代入で、任意位置挿入ができます。
    * @param node 
    * @returns 
    */
   itemAssignment(node: Wwa.ItemAssignment) {
     const idx = this.evalWwaNode(node.itemBoxPosition1to12);
+    if(typeof idx !== "number" || idx < 0 || idx > 12 ) {
+      throw new Error("ITEMの添字に想定外の値が入っています。0以上12以下の添字を指定してください。: "+ idx);
+    }
     const itemID = this.evalWwaNode(node.value);
     this.generator.wwa.setPlayerGetItem(idx, itemID);
     return undefined;
@@ -738,7 +813,7 @@ export class EvalCalcWwaNode {
   evalMessage(node: Wwa.Msg) {
     const value = this.evalWwaNode(node.value);
     const showString = isNaN(value)? value: value.toString();
-    this.generator.wwa.reserveMessageDisplayWhenShouldOpen(showString);
+    this.generator.wwa.handleMsgFunction(showString);
     return undefined;
   }
 
@@ -883,9 +958,13 @@ export class EvalCalcWwaNode {
     const enemyStatus = this.generator.wwa.getEnemyStatus();
     switch(node.name) {
       case "X":
+        return this.generator.state.triggerParts?.position.x ?? gameStatus.playerCoord.x;
       case "Y":
-        // UNDONE: WWAから値を取得する
-        return 0;
+        return this.generator.state.triggerParts?.position.y ?? gameStatus.playerCoord.y;
+      case "ID":
+        return this.generator.state.triggerParts?.id ?? -1;
+      case "TYPE":
+        return this.generator.state.triggerParts?.type ?? -1;
       case "PX":
         return gameStatus.playerCoord.x;
       case "PY":
@@ -926,7 +1005,7 @@ export class EvalCalcWwaNode {
       case 'ITEM_ID':
         return this.generator.state.earnedItem?.partsId ?? -1;
       case 'ITEM_POS':
-        return this.generator.state.earnedItem?.itemPos ?? -1;
+        return this.generator.state.earnedItem?.itemPos1To12 ?? -1;
       case 'ENEMY_HP':
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.energy ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.energy);
@@ -939,6 +1018,10 @@ export class EvalCalcWwaNode {
       case 'ENEMY_GD':
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
+      case 'MOVE_SPEED':
+        return speedList[gameStatus.gameSpeedIndex];
+      case 'MOVE_FRAME_TIME':
+        return WWAConsts.CHIP_SIZE / speedList[gameStatus.gameSpeedIndex];
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -959,10 +1042,10 @@ export class EvalCalcWwaNode {
       case "v":
         return this.generator.wwa.getUserVar(userVarIndex);
       case "ITEM":
-        if(game_status.itemBox[userVarIndex] === undefined) {
-          throw new Error("ITEMの添字に想定外の値が入っています。: "+userVarIndex);
+        if (userVarIndex < 1 || userVarIndex > 12) {
+          throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+userVarIndex);
         }
-        return game_status.itemBox[userVarIndex];
+        return game_status.itemBox[userVarIndex - 1];
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -978,6 +1061,11 @@ export class EvalCalcWwaNode {
       case "o":
         const x = this.evalWwaNode(node.index0);
         const y = this.evalWwaNode(node.index1);
+        if(typeof x !== "number" || typeof y !== "number") {
+          throw new Error(`座標は数値で指定してください (${x}, ${y})`)
+        }
+        // 範囲外で例外を投げる用
+        new Position(this.generator.wwa, x, y);
         const partsType = node.name === 'o'? PartsType.OBJECT: PartsType.MAP;
         const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
