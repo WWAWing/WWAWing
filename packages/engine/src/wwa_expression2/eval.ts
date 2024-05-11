@@ -642,6 +642,10 @@ export class EvalCalcWwaNode {
         this.generator.wwa.setPictureRegistry(layerNumber, propertyPartsNumber, propertyPartsType, gameStatus.playerCoord);
         break;
       }
+      case "LINK": {
+        // TODO 実装する
+        break;
+      }
       /** 絶対値を返す関数 */
       case "ABS": {
         this._checkArgsLength(1, node);

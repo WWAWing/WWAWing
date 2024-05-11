@@ -206,6 +206,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "CHANGE_SYSMSG":
     case "PICTURE":
     case "PICTURE_FROM_PARTS":
+    case "LINK":
     case "SHOW_USER_DEF_VAR":
     case "ABS":
     case "GET_GAMEOVER_POS_X":
