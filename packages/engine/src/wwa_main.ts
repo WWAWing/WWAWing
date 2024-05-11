@@ -1946,6 +1946,7 @@ export class WWA {
                     }
                     this._player.setMessageWaiting();
                     this._isLastPage = currentPage.isLastPage
+                    this._shouldSetNextPage = false;
                     break;
                 }
                 // このフレームで処理されるべきページがもうない
