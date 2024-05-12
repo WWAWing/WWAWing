@@ -200,6 +200,9 @@ export class EvalCalcWwaNode {
         return this.objectExpression(node);
       case "ArrayExpression":
         return this.arrayExpression(node);
+      case "ArrowFunctionExpression":
+        // 関数については任意のタイミングで呼び出せるようにしたいので、このまま返す
+        return node;
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");

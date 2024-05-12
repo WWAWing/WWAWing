@@ -1306,6 +1306,18 @@ export class WWA {
         return ExpressionParser2.convertNodeAcornToWwaArray(acornNode);
     }
 
+    /**
+     * テンプレート文字列を評価して評価後のテキストを出力します。
+     * @param targetText 対象のテキスト (` 抜き)
+     * @returns 評価後のテキスト
+     */
+    public evaluateTemplateText = (targetText: string): string => {
+        const templateText = "`" + targetText.replace("`", "\`") + "`";
+        const acornNode = ExpressionParser2.parse(templateText);
+        const wwaNode = ExpressionParser2.convertNodeAcornToWwa(acornNode);
+        return this.evalCalcWwaNodeGenerator.evalWwaNode(wwaNode);
+    }
+
     /** ユーザ変数読み込み関数 */
     private setUserVarStatus(userVarStatus: (JsonResponseData | JsonResponseError<JsonResponseErrorKind> | {
         kind: "noFileSpecified";

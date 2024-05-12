@@ -61,6 +61,8 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertObjectExpression(node as Acorn.ObjectExpression);
       case "ArrayExpression":
         return convertArrayExpression(node as Acorn.ArrayExpression);
+      case "ArrowFunctionExpression":
+        return convertArrowFunctionExpression(node as Acorn.ArrowFunctionExpression);
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -350,7 +352,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           left.name === "ID" ||
           left.name === "TYPE" ||
           left.name === "MOVE_SPEED" ||
-          left.name === "MOVE_FRAME_TIME"
+          left.name === "MOVE_FRAME_TIME" ||
+          left.name === "f"
         ) {
           throw new Error("このシンボルには代入できません");
         }
@@ -496,6 +499,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_DF":
     case "MOVE_SPEED":
     case "MOVE_FRAME_TIME":
+    case "f":
       return {
         type: "Symbol",
         name: node.name
@@ -556,5 +560,23 @@ function convertArrayExpression(node: Acorn.ArrayExpression): Wwa.ArrayExpressio
   return {
     type: "ArrayExpression",
     elements: node.elements.map(convertNodeAcornToWwa),
+  }
+}
+
+function convertArrowFunctionExpression(node: Acorn.ArrowFunctionExpression): Wwa.ArrowFunctionExpression {
+  const params = node.params.map((paramNode) => {
+    const paramWwaNode = convertNodeAcornToWwa(paramNode);
+    if (paramWwaNode.type === "Symbol") {
+      return paramWwaNode;
+    }
+    if (paramWwaNode.type === "Literal") {
+      throw new Error(`パラメーターの引数 ${paramWwaNode.value} はシンボルではありません。`);
+    }
+    throw new Error("パラメーターの引数が間違っています。");
+  });
+  return {
+    type: "ArrowFunctionExpression",
+    params,
+    body: convertNodeAcornToWwa(node.body),
   }
 }
