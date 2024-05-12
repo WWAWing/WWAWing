@@ -1017,9 +1017,9 @@ export class EvalCalcWwaNode {
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
       case 'PLAYER_PX':
-        return getPlayerCoordPx(gameStatus.playerCoord.x);
+        return getPlayerCoordPx(gameStatus.playerCoord.x, gameStatus.cameraCoord.x);
       case 'PLAYER_PY':
-        return getPlayerCoordPy(gameStatus.playerCoord.y);
+        return getPlayerCoordPy(gameStatus.playerCoord.y, gameStatus.cameraCoord.y);
       case 'MOVE_SPEED':
         return speedList[gameStatus.gameSpeedIndex];
       case 'MOVE_FRAME_TIME':
