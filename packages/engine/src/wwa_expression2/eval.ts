@@ -117,6 +117,7 @@ export class EvalCalcWwaNode {
     break_flag: boolean;
     continue_flag: boolean;
   }
+  private currentPropertyName: string | number | null = null;
 
   constructor(generator: EvalCalcWwaNodeGenerator) {
     this.generator = generator;
@@ -643,8 +644,12 @@ export class EvalCalcWwaNode {
         break;
       }
       case "LINK": {
-        // TODO 実装する
-        break;
+        this._checkArgsLength(1, node);
+        if (this.currentPropertyName === null) {
+          throw new Error("ピクチャのプロパティでしか指定できません！");
+        }
+        // TODO currentPropertyName から linkedProperties に登録する処理を実装する
+        return this.evalWwaNode(node.value[0]);
       }
       /** 絶対値を返す関数 */
       case "ABS": {
@@ -787,7 +792,13 @@ export class EvalCalcWwaNode {
   objectExpression(node: Wwa.ObjectExpression) {
     return Object.fromEntries(
       // TODO もし properties に Properties 以外の Node が混入したら？
-      node.properties.map((property) => this.evalWwaNode(property))
+      node.properties.map((property) => {
+        // ピクチャ機能用、 LINK 関数が使用される場合は、そのプロパティとは連動して評価する
+        this.currentPropertyName = property.key.value;
+        const result = this.evalWwaNode(property)
+        this.currentPropertyName = null;
+        return result;
+      })
     );
   }
 
