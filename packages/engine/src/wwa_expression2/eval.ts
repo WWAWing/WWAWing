@@ -699,18 +699,56 @@ export class EvalCalcWwaNode {
    * 右辺値取得は evalArray2D で処理する
    **/
   partsAssignment(node: Wwa.PartsAssignment) {
-    const game_status = this.generator.wwa.getGameStatus();
+    const gameStatus = this.generator.wwa.getGameStatus();
     const x = this.evalWwaNode(node.destinationX);
     const y = this.evalWwaNode(node.destinationY);
-    if(typeof x !== "number" || typeof y !== "number") {
+    if (typeof x !== "number" || typeof y !== "number") {
       throw new Error(`座標は数値で指定してください (${x}, ${y})`)
     }
     // 範囲外で例外を投げる用
     new Position(this.generator.wwa, x, y);
 
+    const partsType = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
+    const currentValue = this.resolveParts(partsType, x, y);
     const value = this.evalWwaNode(node.value);
-    const partsKind = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
-    this.generator.wwa.appearPartsEval(game_status.playerCoord, `${x}`, `${y}`, value, partsKind);
+    const operatorOperationMap: {
+      [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
+    } = {
+      "=": (_, value) => value,
+      "+=": (currentValue, value) => currentValue + value,
+      "-=": (currentValue, value) => currentValue - value,
+      "*=": (currentValue, value) => currentValue * value,
+      "/=": (currentValue, value) => currentValue / value
+    }
+    switch (node.operator) {
+      case "=":
+      case "+=":
+      case "-=":
+      case "*=":
+      case "/=": {
+        // | 0 で小数点以下無視
+        const result = operatorOperationMap[node.operator](currentValue, value) | 0;
+        if (result < 0) {
+          throw new Error(`負値のパーツ番号 ${result} は代入できません`);
+        }
+        this.generator.wwa.appearPartsEval(gameStatus.playerCoord, `${x}`, `${y}`, result, partsType);
+        break;
+      }
+      default:
+        throw new Error(`演算子 ${node.operator} は partsAssignment では使えません`);
+    }
+  }
+
+  private resolveParts(partsType: PartsType, x: number, y: number) {
+    const gameStatus = this.generator.wwa.getGameStatus();
+    switch(partsType) {
+      case PartsType.MAP:
+        return gameStatus.wwaData.map[y][x];
+      case PartsType.OBJECT:
+        return gameStatus.wwaData.mapObject[y][x];
+      default:
+        throw new Error("存在しないPartsTypeです", partsType);
+    }
   }
 
   blockStatement(node: Wwa.BlockStatement) {
