@@ -222,34 +222,73 @@ export class EvalCalcWwaNode {
     return this.evalWwaNode(func);
   }
 
-  /** i++ などが実行された時の処理 */
+  /** i++ などが実行された時の処理. 現在後置インクリメントのみ対応しています. */
   updateExpression(node: Wwa.UpdateExpression) {
-    if(node.argument.type === "Symbol") {
-      const value = this.evalSymbol(node.argument);
-      const addValue = (()=>{
-        switch(node.operator) {
-          case '++':
-            return value+1;
-          case '--':
-            return value-1;
-          default:
-            throw new Error("想定外のOperatorが渡されました :"+node.operator);
-        }
-      })()
-      const SpecialParameterAssignment: Wwa.SpecialParameterAssignment = {
-        type: "SpecialParameterAssignment",
-        kind: <any>node.argument.name,
-        value: {
-          type: "Literal",
-          value: addValue
-        }
+    if (node.argument.type !== "Array1D" && node.argument.type !== "Array2D" && node.argument.type !== "Symbol") {
+      throw new Error(`node.argument.typeが インクリメント/デクリメントできる対象ではありません。: ${node.argument.type}`);
+    }
+    const update = (value: number) => {
+      switch(node.operator) {
+        case '++':
+          return value + 1;
+        case '--':
+          return value - 1;
+        default:
+          throw new Error("想定外のOperatorが渡されました :"+node.operator);
       }
-      this.evalSetSpecialParameter(SpecialParameterAssignment);
     }
-    else {
-      console.log(node);
-      throw new Error("node.argument.typeがSymbolではありません。:"+node.argument.type);
+    const value = this.evalWwaNode(node.argument);
+    const updatedValue = update(value);
+    const valueLiteral = { type: "Literal", value: updatedValue } as const;
+
+    switch(node.argument.type) {
+      case "Array1D": {
+        if (node.argument.name ==="v") {
+          this.evalSetUserVariable({
+            type: "UserVariableAssignment",
+            index: node.argument.index0,
+            value: valueLiteral
+          })
+        } else if (node.argument.name === "ITEM") {
+          this.itemAssignment({
+            type: "ItemAssignment",
+            itemBoxPosition1to12: node.argument.index0,
+            value: valueLiteral
+          })
+        } else {
+          throw new Error(`このリテラルはインクリメント/デクリメントできません: ${node.argument.type}`)
+        }
+        break;
+      }
+      case "Array2D": {
+        const params = {
+          type: "PartsAssignment",
+          destinationX: node.argument.index0,
+          destinationY: node.argument.index1,
+          value: valueLiteral,
+          operator: "="
+        } as const satisfies Partial<Wwa.PartsAssignment>;
+        if(node.argument.name === "m") {
+          this.partsAssignment({ ...params, partsKind: "map" });
+        } else if(node.argument.name === "o") {
+          this.partsAssignment({ ...params, partsKind: "object" });
+        } else {
+          throw new Error(`このリテラルはインクリメント/デクリメントできません: ${node.argument.type}`)
+        }
+        break;
+      }
+      case "Symbol": {
+        const SpecialParameterAssignment: Wwa.SpecialParameterAssignment = {
+          type: "SpecialParameterAssignment",
+          // @ts-expect-error 型解決する
+          kind: node.argument.name,
+          value: valueLiteral,
+        };
+        this.evalSetSpecialParameter(SpecialParameterAssignment);
+        break;
+      }
     }
+    return value; // 今実装されているのは後置インクリメントなので更新前の値を返す
   }
 
   /** && や || などの論理式が来た時の対応 */
