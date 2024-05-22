@@ -3,6 +3,17 @@ import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Pos
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
 
+const operatorOperationMap: {
+  [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
+} = Object.freeze({
+  "=": (_, value) => value,
+  "+=": (currentValue, value) => currentValue + value,
+  "-=": (currentValue, value) => currentValue - value,
+  "*=": (currentValue, value) => currentValue * value,
+  "/=": (currentValue, value) => currentValue / value
+});
+
+
 export class EvalCalcWwaNodeGenerator {
   wwa: WWA;
   /** for文上限回数 */
@@ -750,15 +761,6 @@ export class EvalCalcWwaNode {
     const partsType = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
     const currentValue = this.resolveParts(partsType, x, y);
     const value = this.evalWwaNode(node.value);
-    const operatorOperationMap: {
-      [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
-    } = {
-      "=": (_, value) => value,
-      "+=": (currentValue, value) => currentValue + value,
-      "-=": (currentValue, value) => currentValue - value,
-      "*=": (currentValue, value) => currentValue * value,
-      "/=": (currentValue, value) => currentValue / value
-    }
     switch (node.operator) {
       case "=":
       case "+=":
@@ -828,7 +830,32 @@ export class EvalCalcWwaNode {
       throw new Error("ITEMの添字に想定外の値が入っています。0以上12以下の添字を指定してください。: "+ idx);
     }
     const itemID = this.evalWwaNode(node.value);
-    this.generator.wwa.setPlayerGetItem(idx, itemID);
+    switch (node.operator) {
+      case "=": {
+        // | 0 で小数点以下無視
+        this.generator.wwa.setPlayerGetItem(idx, itemID | 0);
+        break;
+      }
+      case "+=":
+      case "-=":
+      case "*=":
+      case "/=": {
+        if (idx === 0) {
+          throw new Error("複合代入では ITEM[0] への操作はできません")
+        }
+        const currentItemId = this.generator.wwa.getGameStatus().itemBox[idx - 1] ;
+        // | 0 で小数点以下無視
+        const result = operatorOperationMap[node.operator](currentItemId, itemID) | 0;
+        if (result < 0) {
+          throw new Error(`負値のパーツ番号 ${result} は代入できません`);
+        }
+        this.generator.wwa.setPlayerGetItem(idx, result);
+        break;
+      }
+      default:
+        throw new Error(`演算子 ${node.operator} は itemAssignment では使えません`);
+    }
+
     return undefined;
   }
 
