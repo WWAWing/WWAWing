@@ -528,8 +528,7 @@ export class EvalCalcWwaNode {
         ) {
           throw new Error("各引数は0以上の整数でなければなりません。");
         }
-        this.generator.wwa.addFace(
-          new Face(
+        this.generator.wwa.handleFaceFunction(new Face(
             new Coord(destPosX, destPosY),
             new Coord(srcPosX, srcPosY),
             new Coord(srcWidth, srcHeight)
