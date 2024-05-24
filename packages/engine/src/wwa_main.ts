@@ -1952,6 +1952,7 @@ export class WWA {
                     if( resultOfDispatchWindowClosedTimeRequests.newPageGenerated) {
                         continue;
                     }
+                    this.clearFaces();
                     // ページが生成されなくなったらループを抜ける
                     break;
                 }
@@ -3971,6 +3972,18 @@ export class WWA {
         }
     }
 
+    // FACE() 関数の実行結果をハンドリングします。
+    public handleFaceFunction(face: Face): void {
+        // $face マクロを発行し、メッセージに積む。
+        if(this._pageExecuting) {
+            this._windowCloseWaitingMessageDisplayRequests.push(
+              `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`
+            );
+        } else {
+            this.addFace(face);
+        }
+    }
+
     // HACK: private にしたい
     public registerSystemMessagePage(message: string, showChoice: boolean = false): void {
         this.registerPageByMessage(message, {
@@ -5377,6 +5390,7 @@ export class WWA {
         if (this._pages.length === 0) {
             const { newPageGenerated } = this._hideMessageWindow();
             if (!newPageGenerated) {
+                this.clearFaces();
                 this._dispatchWindowClosedTimeRequests();
             }
         } else {
@@ -5390,7 +5404,6 @@ export class WWA {
     private _hideMessageWindow(): { newPageGenerated: boolean } {
         const itemID =  this._player.isReadyToUseItem() ? this._player.useItem() : 0;
         const mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
-        this.clearFaces();
         if (mesID === 0) {
             if (this._messageWindow.isVisible()) {
                 this._player.setDelayFrame();
