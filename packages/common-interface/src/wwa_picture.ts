@@ -13,8 +13,10 @@ export interface PictureProperties<N = number> {
   anchor?: N;
   circle?: [N] | [N, N] | [N, N, N] | [N, N, N, N];
   repeat?: [N, N];
-  img?: ([N, N] | [N, N, N, N]);
+  img?: ([N, N] | [N, N, N, N]) | ([N, N])[];
   imgFile?: string;
+  delay?: N[];
+  delayFrame?: N[];
   sound?: N;
   crop?: [N, N];
   text?: string;

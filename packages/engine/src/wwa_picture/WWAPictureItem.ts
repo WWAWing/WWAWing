@@ -13,6 +13,7 @@ import {
     getVerticalCorrectionBySizeAnchor
 } from "./utils";
 import { NextPicturePartsInfo } from "./typedef";
+import { WWAPictureAnimation, WWAPictureDefaultAnimation } from "./WWAPictureAnimation";
 import { WWATimer } from "./WWATimer";
 
 /**
@@ -34,10 +35,7 @@ export default class WWAPictureItem {
      */
     private _posDestX: number;
     private _posDestY: number;
-    private readonly _imgMainX: number;
-    private readonly _imgMainY: number;
-    private readonly _imgSubX: number;
-    private readonly _imgSubY: number;
+    private readonly _imgAnimation: WWAPictureAnimation;
     private readonly _drawChip: boolean;
     private _sizeX: number;
     private _sizeY: number;
@@ -76,10 +74,11 @@ export default class WWAPictureItem {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
         this._posBaseY = properties.pos?.[1] ?? 0;
-        [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
-        [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
+        const [imgMainX, imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
+        const [imgSubX, imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
+        this._imgAnimation = new WWAPictureDefaultAnimation(imgMainX, imgMainY, imgSubX, imgSubY);
         // イメージ画像がどれも 0, 0 の場合は何も描画しない（PICTURE 関数から呼び出す場合に黒四角が現れる対策）
-        this._drawChip = this._imgMainX !== 0 || this._imgMainY !== 0 || this._imgSubX !== 0 || this._imgSubY !== 0;
+        this._drawChip = this._imgAnimation.hasImg();
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._imgFile = externalFile;
@@ -179,8 +178,7 @@ export default class WWAPictureItem {
         // TODO これをオフにするオプションがあっても良さそう
         this.clearCanvas();
 
-        const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
-        const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;
+        const [imgPosX, imgPosY] = this._imgAnimation.getImgPos(isMainAnimation);
         
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
@@ -355,10 +353,16 @@ export default class WWAPictureItem {
     private static _getImgPosByPicture(registry: PictureRegistry, isMainTime: boolean) {
         const { properties } = registry;
         if (properties.img?.[0] !== undefined && properties.img?.[1] !== undefined) {
+            if (Array.isArray(properties.img[0]) || Array.isArray(properties.img[1])) {
+                throw new Error("2次元配列形式には未対応です。");
+            }
             if (isMainTime) {
                 return [properties.img[0], properties.img[1]];
             }
             if (properties.img[2] !== undefined && properties.img[3] !== undefined) {
+                if (Array.isArray(properties.img[2]) || Array.isArray(properties.img[3])) {
+                    throw new Error("2次元配列形式には未対応です。");
+                }
                 return [properties.img[2], properties.img[3]];
             }
             return [properties.img[0], properties.img[1]];
