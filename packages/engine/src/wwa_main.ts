@@ -5970,7 +5970,7 @@ font-weight: bold;
     public setUserVarIndexes(indexes: any[], assignee: number | string | boolean, operator: string = "="): void {
         const currentValueObject = this._userVar.named.get(indexes[0]);
         // 3次元配列の場合
-        if(typeof currentValueObject[indexes[1]] === 'object') {
+        if(indexes.length > 2) {
             if (typeof assignee === "number") {
                 switch(operator) {
                     case '=':
@@ -6007,7 +6007,7 @@ font-weight: bold;
             this._userVar.named.set(indexes[0], currentValueObject);
         }
         // 2次元配列の場合
-        else {
+        else if(indexes.length > 1) {
             if(typeof assignee === "number") {
                 switch(operator) {
                     case '=':
@@ -6042,6 +6042,9 @@ font-weight: bold;
                 }
             }
             this._userVar.named.set(indexes[0], currentValueObject);
+        }
+        else {
+            throw new Error(`indexesの引数が足りていません: ${indexes}`)
         }
     }
     // User変数記憶
