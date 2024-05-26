@@ -269,8 +269,8 @@ export class EvalCalcWwaNode {
         if (node.argument.name ==="v") {
           this.evalSetUserVariable({
             type: "UserVariableAssignment",
-            index: node.argument.index0,
-            value: valueLiteral
+            index: [node.argument.index0],
+            value: [valueLiteral]
           })
         } else if (node.argument.name === "ITEM") {
           this.itemAssignment({
