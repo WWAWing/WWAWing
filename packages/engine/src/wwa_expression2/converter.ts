@@ -356,6 +356,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           left.name === "Y" ||
           left.name === "ID" ||
           left.name === "TYPE" ||
+          left.name === "PLAYER_PX" ||
+          left.name === "PLAYER_PY" ||
           left.name === "MOVE_SPEED" ||
           left.name === "MOVE_FRAME_TIME"
         ) {
@@ -521,6 +523,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_HP":
     case "ENEMY_AT":
     case "ENEMY_DF":
+    case "PLAYER_PX":
+    case "PLAYER_PY":
     case "MOVE_SPEED":
     case "MOVE_FRAME_TIME":
       return {

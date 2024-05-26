@@ -172,6 +172,8 @@ export class WWA {
         numbered: (number | string | boolean)[];
     };
 
+    private _pageExecuting: boolean; // ページ実行中かどうか
+
     /**
      * ゲーム内ユーザ変数ビューワの設定
      */
@@ -584,6 +586,7 @@ export class WWA {
             this._reservedJumpDestination = undefined;
             this._shouldSetNextPage = false;
             this._passwordLoadExecInNextFrame = false;
+            this._pageExecuting = false;
 
             //ロード処理の前に追加
             this._messageWindow = new MessageWindow(
@@ -1891,17 +1894,20 @@ export class WWA {
             this._clearFacesInNextFrame = false;
         }
 
+        this._pageExecuting = true;
+
         // ページ（メッセージ・マクロが含まれる <P>で区切られた単位）の処理
         if (this._pages.length > 0 && this._shouldSetNextPage) {
             this._shouldSetNextPage = false;
             while (this._pages.length > 0) {
-                const executingPage = this._pages.shift();
+               const currentPage = this._pages.shift();
 
                 // executeNodes の結果、新たなメッセージが発生した場合、既に開かれているメッセージウィンドウが閉じた後に表示される。
                 //  (this._pages の後尾にシステムメッセージのページが追加されるため)
                 // マクロ実行の結果新たなメッセージが発生するのは稀だが、下記のようなケースが存在する。
                 // - $item マクロ実行後に発生するクリック可能アイテムの初回取得メッセージ: https://github.com/WWAWing/WWAWing/issues/212
-                const executedResult = Node.executeNodes(executingPage.firstNode, executingPage.triggerParts);
+                const executedResult = Node.executeNodes(currentPage.firstNode, currentPage.triggerParts);
+
                 if (executedResult.isError === true) { // true としっかりかかないと型推論が効かない
                     // executeNodes の結果、ゲームオーバーになるなどして、メッセージ処理が中断した場合、メッセージを出さない。
                     this._isLastPage = false;
@@ -1912,12 +1918,12 @@ export class WWA {
                     this._reservedMoveMacroTurn = void 0;
                 }
                 const messageLinesToDisplay = executedResult.messages.filter(line => !line.isEmpty());
-                const isScoreDisplayingPage = Boolean(executingPage.scoreOption);
+                const isScoreDisplayingPage = Boolean(currentPage.scoreOption);
 
                 // スコア表示ページ かつ 表示するメッセージがない場合は「スコアを表示します」を表示内容に加える。
                 // システムメッセージ扱いではなく、パーツが表示している扱いになります。
                 if (isScoreDisplayingPage && messageLinesToDisplay.length === 0) {
-                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", executingPage.triggerParts));
+                    messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", currentPage.triggerParts));
                 }
 
                 // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
@@ -1925,33 +1931,44 @@ export class WWA {
                 if (existsMessageToDisplay) {
                     const message = messageLinesToDisplay.map(line => line.generatePrintableMessage()).join("\n");
                     this._messageWindow.setMessage(message);
-                    this._messageWindow.setYesNoChoice(executingPage.showChoice);
+                    this._messageWindow.setYesNoChoice(currentPage.showChoice);
                     this._messageWindow.setPositionByPlayerPosition(
                         this._faces.length !== 0,
                         isScoreDisplayingPage,
-                        executingPage.isSystemMessage,
+                        currentPage.isSystemMessage,
                         this._player.getPosition(),
                         this._camera.getPosition()
                     );
                     if (isScoreDisplayingPage) {
-                        this._lastScoreOptions = executingPage.scoreOption;
-                        this.updateScore(executingPage.scoreOption);
+                        this._lastScoreOptions = currentPage.scoreOption;
+                        this.updateScore(currentPage.scoreOption);
                         this._scoreWindow.show();
                     }
                     this._player.setMessageWaiting();
-                    this._isLastPage = executingPage.isLastPage
+                    this._isLastPage = currentPage.isLastPage
+                    this._shouldSetNextPage = false;
                     break;
                 }
-                // このフレームで処理されるべきページがもうないのでループから抜ける
+                // このフレームで処理されるべきページがもうない
                 if (this._pages.length === 0) {
-                    const { newPageGenerated } = this._hideMessageWindow();
-                    if (!newPageGenerated) {
-                        this._dispatchWindowClosedTimeRequests();
+                    // ページがまだ生成される場合はループを継続
+                    const resultOfHideMessageWindowResult = this._hideMessageWindow();
+                    if (resultOfHideMessageWindowResult.newPageGenerated) {
+                        continue;
                     }
+                    const resultOfDispatchWindowClosedTimeRequests = this._dispatchWindowClosedTimeRequests();
+                    if( resultOfDispatchWindowClosedTimeRequests.newPageGenerated) {
+                        continue;
+                    }
+                    this.clearFaces();
+                    // ページが生成されなくなったらループを抜ける
                     break;
                 }
             }
         }
+
+        this._pageExecuting = false;
+
         // ジャンプゲートは、指定位置にパーツを出現やメッセージより後に処理する必要がある
         if(this._reservedJumpDestination) {
             this._player.jumpTo(this._reservedJumpDestination);
@@ -3915,7 +3932,7 @@ export class WWA {
         }
     }
 
-    private _dispatchWindowClosedTimeRequests(): void {
+    private _dispatchWindowClosedTimeRequests(): { newPageGenerated: boolean } {
         // メッセージ表示中に積まれたリクエストをさらに消化
         if (this._windowCloseWaitingJumpGateRequest) {
             this.forcedJumpGate(this._windowCloseWaitingJumpGateRequest.x, this._windowCloseWaitingJumpGateRequest.y);
@@ -3923,7 +3940,9 @@ export class WWA {
         if (this._windowCloseWaitingMessageDisplayRequests.length > 0) {
             const message = this._windowCloseWaitingMessageDisplayRequests.shift();
             this.registerPageByMessage(message);
+            return { newPageGenerated: true };
         }
+        return {newPageGenerated: false };
     }
 
     private _dispatchPlayerAndObjectsStopTimeRequests(): void {
@@ -3961,6 +3980,27 @@ export class WWA {
             this._playerAndObjectsStopWaitingMessageDisplayRequests.push(message);
         } else {
             this.registerPageByMessage(message);
+        }
+    }
+
+    // MSG() 関数の実行結果をハンドリングします。
+    public handleMsgFunction(message: string): void{
+        if (this._pageExecuting) {
+            this._windowCloseWaitingMessageDisplayRequests.push(message)
+        } else {
+            this.reserveMessageDisplayWhenShouldOpen(message);
+        }
+    }
+
+    // FACE() 関数の実行結果をハンドリングします。
+    public handleFaceFunction(face: Face): void {
+        // $face マクロを発行し、メッセージに積む。
+        if(this._pageExecuting) {
+            this._windowCloseWaitingMessageDisplayRequests.push(
+              `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`
+            );
+        } else {
+            this.addFace(face);
         }
     }
 
@@ -5372,6 +5412,7 @@ export class WWA {
         if (this._pages.length === 0) {
             const { newPageGenerated } = this._hideMessageWindow();
             if (!newPageGenerated) {
+                this.clearFaces();
                 this._dispatchWindowClosedTimeRequests();
             }
         } else {
@@ -5385,7 +5426,6 @@ export class WWA {
     private _hideMessageWindow(): { newPageGenerated: boolean } {
         const itemID =  this._player.isReadyToUseItem() ? this._player.useItem() : 0;
         const mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
-        this.clearFaces();
         if (mesID === 0) {
             if (this._messageWindow.isVisible()) {
                 this._player.setDelayFrame();
@@ -6807,6 +6847,7 @@ font-weight: bold;
             userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
+            cameraCoord: this._camera.getPosition().getPartsCoord(),
             itemBox: this._player.getCopyOfItemBox(),
             gameSpeedIndex: this._player.getSpeedIndex(),
             // TODO ステータスが変わっても更新されていない？

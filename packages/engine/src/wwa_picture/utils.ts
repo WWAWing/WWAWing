@@ -59,6 +59,11 @@ const matchToSnakeCaseProperty = (propertyName: PicturePropertyName) => {
     return propertySnakeCaseTable[propertyName] ?? propertyName;
 };
 
+export const isValidLayerNumber = (layerNumber: number) =>
+    Number.isInteger(layerNumber) && (layerNumber > 0 || isAnonymousPicture(layerNumber));
+
+export const isAnonymousPicture = (layerNumber: number) => layerNumber === -1;
+
 export const checkValuesFromRawRegistry = (registry: RawPictureRegistry): PictureRegistry => {
     const propertiesArray = Object.entries(registry.properties).map(([key, value]) => {
         const camelCaseKey = matchToSnakeCaseProperty(key as PicturePropertyName);
