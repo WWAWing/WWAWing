@@ -5,6 +5,17 @@ import * as Wwa from "./wwa";
 import { PARTS_TYPE_LIST } from "./utils";
 import { getPlayerCoordPx, getPlayerCoordPy } from "./symbols";
 
+const operatorOperationMap: {
+  [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
+} = Object.freeze({
+  "=": (_, value) => value,
+  "+=": (currentValue, value) => currentValue + value,
+  "-=": (currentValue, value) => currentValue - value,
+  "*=": (currentValue, value) => currentValue * value,
+  "/=": (currentValue, value) => currentValue / value
+});
+
+
 export class EvalCalcWwaNodeGenerator {
   wwa: WWA;
   /** for文上限回数 */
@@ -230,34 +241,73 @@ export class EvalCalcWwaNode {
     return this.evalWwaNode(func);
   }
 
-  /** i++ などが実行された時の処理 */
+  /** i++ などが実行された時の処理. 現在後置インクリメントのみ対応しています. */
   updateExpression(node: Wwa.UpdateExpression) {
-    if(node.argument.type === "Symbol") {
-      const value = this.evalSymbol(node.argument);
-      const addValue = (()=>{
-        switch(node.operator) {
-          case '++':
-            return value+1;
-          case '--':
-            return value-1;
-          default:
-            throw new Error("想定外のOperatorが渡されました :"+node.operator);
-        }
-      })()
-      const SpecialParameterAssignment: Wwa.SpecialParameterAssignment = {
-        type: "SpecialParameterAssignment",
-        kind: <any>node.argument.name,
-        value: {
-          type: "Literal",
-          value: addValue
-        }
+    if (node.argument.type !== "Array1D" && node.argument.type !== "Array2D" && node.argument.type !== "Symbol") {
+      throw new Error(`node.argument.typeが インクリメント/デクリメントできる対象ではありません。: ${node.argument.type}`);
+    }
+    const update = (value: number) => {
+      switch(node.operator) {
+        case '++':
+          return value + 1;
+        case '--':
+          return value - 1;
+        default:
+          throw new Error("想定外のOperatorが渡されました :"+node.operator);
       }
-      this.evalSetSpecialParameter(SpecialParameterAssignment);
     }
-    else {
-      console.log(node);
-      throw new Error("node.argument.typeがSymbolではありません。:"+node.argument.type);
+    const value = this.evalWwaNode(node.argument);
+    const updatedValue = update(value);
+    const valueLiteral = { type: "Literal", value: updatedValue } as const;
+
+    switch(node.argument.type) {
+      case "Array1D": {
+        if (node.argument.name ==="v") {
+          this.evalSetUserVariable({
+            type: "UserVariableAssignment",
+            index: node.argument.index0,
+            value: valueLiteral
+          })
+        } else if (node.argument.name === "ITEM") {
+          this.itemAssignment({
+            type: "ItemAssignment",
+            itemBoxPosition1to12: node.argument.index0,
+            value: valueLiteral
+          })
+        } else {
+          throw new Error(`このリテラルはインクリメント/デクリメントできません: ${node.argument.type}`)
+        }
+        break;
+      }
+      case "Array2D": {
+        const params = {
+          type: "PartsAssignment",
+          destinationX: node.argument.index0,
+          destinationY: node.argument.index1,
+          value: valueLiteral,
+          operator: "="
+        } as const satisfies Partial<Wwa.PartsAssignment>;
+        if(node.argument.name === "m") {
+          this.partsAssignment({ ...params, partsKind: "map" });
+        } else if(node.argument.name === "o") {
+          this.partsAssignment({ ...params, partsKind: "object" });
+        } else {
+          throw new Error(`このリテラルはインクリメント/デクリメントできません: ${node.argument.type}`)
+        }
+        break;
+      }
+      case "Symbol": {
+        const SpecialParameterAssignment: Wwa.SpecialParameterAssignment = {
+          type: "SpecialParameterAssignment",
+          // @ts-expect-error 型解決する
+          kind: node.argument.name,
+          value: valueLiteral,
+        };
+        this.evalSetSpecialParameter(SpecialParameterAssignment);
+        break;
+      }
     }
+    return value; // 今実装されているのは後置インクリメントなので更新前の値を返す
   }
 
   /** && や || などの論理式が来た時の対応 */
@@ -485,8 +535,7 @@ export class EvalCalcWwaNode {
         ) {
           throw new Error("各引数は0以上の整数でなければなりません。");
         }
-        this.generator.wwa.addFace(
-          new Face(
+        this.generator.wwa.handleFaceFunction(new Face(
             new Coord(destPosX, destPosY),
             new Coord(srcPosX, srcPosY),
             new Coord(srcWidth, srcHeight)
@@ -737,18 +786,47 @@ export class EvalCalcWwaNode {
    * 右辺値取得は evalArray2D で処理する
    **/
   partsAssignment(node: Wwa.PartsAssignment) {
-    const game_status = this.generator.wwa.getGameStatus();
+    const gameStatus = this.generator.wwa.getGameStatus();
     const x = this.evalWwaNode(node.destinationX);
     const y = this.evalWwaNode(node.destinationY);
-    if(typeof x !== "number" || typeof y !== "number") {
+    if (typeof x !== "number" || typeof y !== "number") {
       throw new Error(`座標は数値で指定してください (${x}, ${y})`)
     }
     // 範囲外で例外を投げる用
     new Position(this.generator.wwa, x, y);
 
+    const partsType = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
+    const currentValue = this.resolveParts(partsType, x, y);
     const value = this.evalWwaNode(node.value);
-    const partsKind = node.partsKind === "map"? PartsType.MAP: PartsType.OBJECT;
-    this.generator.wwa.appearPartsEval(game_status.playerCoord, `${x}`, `${y}`, value, partsKind);
+    switch (node.operator) {
+      case "=":
+      case "+=":
+      case "-=":
+      case "*=":
+      case "/=": {
+        // | 0 で小数点以下無視
+        const result = operatorOperationMap[node.operator](currentValue, value) | 0;
+        if (result < 0) {
+          throw new Error(`負値のパーツ番号 ${result} は代入できません`);
+        }
+        this.generator.wwa.appearPartsEval(gameStatus.playerCoord, `${x}`, `${y}`, result, partsType);
+        break;
+      }
+      default:
+        throw new Error(`演算子 ${node.operator} は partsAssignment では使えません`);
+    }
+  }
+
+  private resolveParts(partsType: PartsType, x: number, y: number) {
+    const gameStatus = this.generator.wwa.getGameStatus();
+    switch(partsType) {
+      case PartsType.MAP:
+        return gameStatus.wwaData.map[y][x];
+      case PartsType.OBJECT:
+        return gameStatus.wwaData.mapObject[y][x];
+      default:
+        throw new Error("存在しないPartsTypeです", partsType);
+    }
   }
 
   blockStatement(node: Wwa.BlockStatement) {
@@ -804,7 +882,32 @@ export class EvalCalcWwaNode {
       throw new Error("ITEMの添字に想定外の値が入っています。0以上12以下の添字を指定してください。: "+ idx);
     }
     const itemID = this.evalWwaNode(node.value);
-    this.generator.wwa.setPlayerGetItem(idx, itemID);
+    switch (node.operator) {
+      case "=": {
+        // | 0 で小数点以下無視
+        this.generator.wwa.setPlayerGetItem(idx, itemID | 0);
+        break;
+      }
+      case "+=":
+      case "-=":
+      case "*=":
+      case "/=": {
+        if (idx === 0) {
+          throw new Error("複合代入では ITEM[0] への操作はできません")
+        }
+        const currentItemId = this.generator.wwa.getGameStatus().itemBox[idx - 1] ;
+        // | 0 で小数点以下無視
+        const result = operatorOperationMap[node.operator](currentItemId, itemID) | 0;
+        if (result < 0) {
+          throw new Error(`負値のパーツ番号 ${result} は代入できません`);
+        }
+        this.generator.wwa.setPlayerGetItem(idx, result);
+        break;
+      }
+      default:
+        throw new Error(`演算子 ${node.operator} は itemAssignment では使えません`);
+    }
+
     return undefined;
   }
 
