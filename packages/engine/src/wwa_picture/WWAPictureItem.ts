@@ -4,7 +4,6 @@ import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import * as util from "../wwa_util";
 import {
-    isAnonymousPicture,
     getArrayItemFromSingleOrArray,
     adjustPositiveValue,
     getHorizontalCirclePosition,
@@ -68,6 +67,8 @@ export default class WWAPictureItem {
     private readonly _cropY: number;
     private _opacity: number;
     private readonly _fade: number;
+    private _angle: number;
+    private readonly _rotate: number;
     private readonly _hasAnimation: boolean;
 
     private _timer: WWATimer;
@@ -109,6 +110,9 @@ export default class WWAPictureItem {
         this._opacity = properties.opacity ?? 100;
         this._fade = properties.fade ?? 0;
 
+        this._angle = properties.angle ?? 0;
+        this._rotate = properties.rotate ?? 0;
+
         this._updatePictureCache();
         
         this._timer = new WWATimer();
@@ -128,6 +132,8 @@ export default class WWAPictureItem {
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+        // TODO これでは左上を軸に回転することになるので、 pos の座標を軸に描画するようにしたい
+        this._canvas.ctx.rotate(this._angle * Math.PI / 180);
         this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
         this._canvas.ctx.textBaseline = "top";
         if (properties.textAlign) {
@@ -235,6 +241,11 @@ export default class WWAPictureItem {
         if (this._fade !== 0) {
             this._opacity = this._opacity + this._fade;
             this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+        }
+        if (this._rotate !== 0) {
+            this._angle = this._angle + this._rotate;
+            // this._angle を加えると加速運動になってしまう
+            this._canvas.ctx.rotate(this._rotate * Math.PI / 180);
         }
     }
 
@@ -348,7 +359,8 @@ export default class WWAPictureItem {
             this._zoomAccelX !== 0 ||
             this._zoomAccelY !== 0 ||
             this._circleSpeed !== 0 ||
-            this._fade !== 0
+            this._fade !== 0 ||
+            this._rotate !== 0
         );
     }
 
