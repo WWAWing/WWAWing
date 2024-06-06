@@ -45,11 +45,14 @@ const validatePropertyValue = (key: string, value: unknown): boolean => {
             break;
         }
         case "string":
+            // TODO "text" プロパティのように文字列も数値も受け付けるプロパティと、 "textAlign" プロパティのように文字列しか受け付けないプロパティで種類を分けたい
             if (typeof value !== "string") {
-                if (typeof value !== "number") {
+                if (typeof value === "number") {
+                    console.warn(`プロパティ ${key} は文字列形式を推奨しています。実際に入った値は ${value} です。`);
+                } else {
                     console.warn(`プロパティ ${key} では文字列形式である必要があります。実際に入った値は ${value} です。`);
+                    return false;
                 }
-                return false;
             }
     }
     return true;
