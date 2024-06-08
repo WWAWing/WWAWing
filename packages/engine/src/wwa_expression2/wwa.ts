@@ -1,4 +1,4 @@
-export type Calcurable = Array1D | Array2D | Literal | Symbol | UnaryOperation | BinaryOperation;
+export type Calcurable = Array1D | Array2D | Array3DPlus | Literal | Symbol | UnaryOperation | BinaryOperation | Random | CallDefinedFunction | AnyFunction | ConditionalExpression | ArrayExpression | ObjectExpression;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
   // ObjectExpression と ArrayExpression はピクチャ機能でしか使用しないためサポート対象外
@@ -25,7 +25,7 @@ export interface ItemAssignment {
 export interface UserVariableAssignment {
   type: "UserVariableAssignment";
   index: Calcurable[];
-  value: Calcurable[];
+  value: Calcurable;
   operator?: "=" | "+=" | "-=" | "*=" | "/=";
 }
 
@@ -57,22 +57,20 @@ export interface Symbol {
 export interface Array1D {
   type: "Array1D";
   name: "ITEM" | "m" | "o" | "v"; // 2次元配列の1次元分が返ってくる可能性がある
-  index0: Calcurable;
+  indecies: Calcurable[];
 }
 
 export interface Array2D {
   type: "Array2D";
   name: "m" | "o" | "v";
-  index0: Calcurable;
-  index1: Calcurable;
+  indecies: Calcurable[];
 }
 
-export interface Array3D {
-  type: "Array3D";
+// 3次元以上の配列
+export interface Array3DPlus {
+  type: "Array3DPlus";
   name: "v";
-  index0: Calcurable;
-  index1: Calcurable;
-  index2: Calcurable;
+  indecies: Calcurable[];
 }
 
 export interface Literal {
@@ -209,7 +207,7 @@ export type WWANode = |
   BinaryOperation |
   Array1D |
   Array2D |
-  Array3D |
+  Array3DPlus |
   Literal |
   Symbol |
   Random |

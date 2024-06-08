@@ -6009,24 +6009,28 @@ font-weight: bold;
     }
     public setUserVarIndexes(indexes: any[], assignee: number | string | boolean, operator: string = "="): void {
         const currentValueObject = this._userVar.named.get(indexes[0]);
-        // 3次元配列の場合
-        if(indexes.length > 2) {
+        const lastIndex = indexes.length - 1;
+
+        // 元配列の参照から値を書き換えるため最後の index の一つ手前まで頭出し
+        // 最初の index は currentValueObject で参照済のため見ない
+        const ref = indexes.slice(1, lastIndex).reduce((prev, current) =>  prev[current], currentValueObject);
+        if(indexes.length > 1) {
             if (typeof assignee === "number") {
                 switch(operator) {
                     case '=':
-                        currentValueObject[indexes[1]][indexes[2]] = assignee;
+                        ref[indexes[lastIndex]] = assignee;
                         break;
                     case '+=':
-                        currentValueObject[indexes[1]][indexes[2]] += assignee;
+                        ref[indexes[lastIndex]] += assignee;
                         break;
                     case '-=':
-                        currentValueObject[indexes[1]][indexes[2]] -= assignee;
+                        ref[indexes[lastIndex]] -= assignee;
                         break;
                     case '*=':
-                        currentValueObject[indexes[1]][indexes[2]] *= assignee;
+                        ref[indexes[lastIndex]] *= assignee;
                         break;
                     case '/=':
-                        currentValueObject[indexes[1]][indexes[2]] /= assignee;
+                        ref[indexes[lastIndex]] /= assignee;
                         break;
                     default:
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
@@ -6035,47 +6039,10 @@ font-weight: bold;
             else {
                 switch(operator) {
                     case '=':
-                        currentValueObject[indexes[1]][indexes[2]] = assignee;
+                        ref[indexes[lastIndex]] = assignee;
                         break;
                     case '+=':
-                        currentValueObject[indexes[1]][indexes[2]] += assignee;
-                        break;
-                    default:
-                        throw new TypeError(`その演算子は利用できません: ${operator}`)
-                }
-            }
-            this._userVar.named.set(indexes[0], currentValueObject);
-        }
-        // 2次元配列の場合
-        else if(indexes.length > 1) {
-            if(typeof assignee === "number") {
-                switch(operator) {
-                    case '=':
-                        currentValueObject[indexes[1]] = assignee;
-                        break;
-                    case '+=':
-                        currentValueObject[indexes[1]] += assignee;
-                        break;
-                    case '-=':
-                        currentValueObject[indexes[1]] -= assignee;
-                        break;
-                    case '*=':
-                        currentValueObject[indexes[1]] *= assignee;
-                        break;
-                    case '/=':
-                        currentValueObject[indexes[1]] /= assignee;
-                        break;
-                    default:
-                        throw new TypeError(`その演算子は利用できません: ${operator}`)
-                }
-            }
-            else {
-                switch(operator) {
-                    case '=':
-                        currentValueObject[indexes[1]] = assignee;
-                        break;
-                    case '+=':
-                        currentValueObject[indexes[1]] += assignee;
+                        ref[indexes[lastIndex]] += assignee;
                         break;
                     default:
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
@@ -6881,6 +6848,7 @@ font-weight: bold;
     private _execEvalString(evalString: string, triggerParts?: TriggerParts) {
         try {
             const nodes = this.convertWwaNodes(evalString);
+            console.log("##", nodes);
             if (triggerParts) {
                 this.evalCalcWwaNodeGenerator.setTriggerParts(triggerParts.id, triggerParts.type, triggerParts.position);
             }
