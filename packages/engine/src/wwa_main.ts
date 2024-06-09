@@ -6884,6 +6884,7 @@ font-weight: bold;
             if (triggerParts) {
                 this.evalCalcWwaNodeGenerator.setTriggerParts(triggerParts.id, triggerParts.type, triggerParts.position);
             }
+            console.log("#", nodes)
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
             this.evalCalcWwaNodeGenerator.clearTriggerParts();
         }
