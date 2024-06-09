@@ -171,7 +171,7 @@ export class EvalCalcWwaNode {
       case "Array3DPlus":
         return this.evalArray3DPlus(node);
       case "Literal":
-        return this.evalNumber(node);
+        return this.evalLiteral(node);
       case "UserVariableAssignment":
         return this.evalSetUserVariable(node);
       case "SpecialParameterAssignment":
@@ -869,10 +869,16 @@ export class EvalCalcWwaNode {
   }
 
   objectExpression(node: Wwa.ObjectExpression) {
-    return Object.fromEntries(
-      // TODO もし properties に Properties 以外の Node が混入したら？
-      node.properties.map((property) => this.evalWwaNode(property))
-    );
+    const entries = node.properties.map((property) => this.evalWwaNode(property));
+    // Object.fromEntries を使用している限り、 __proto__ などを使ったプロトタイプ汚染は発生しないと
+    // 思われるが、念のため、 __proto__, constructor, prototype はキー名として認めない。
+    return Object.fromEntries(entries.filter(([key, _]) => {
+      const valid = key !== "__proto__" && key !== "constructor" && key !== "prototype";
+      if (!valid) {
+        console.warn(`オブジェクトからキー ${key} が除去されました。キー名に __proto__, constructor, prototype は使えません。`);
+      }
+      return valid;
+    }));
   }
 
   arrayExpression(node: Wwa.ArrayExpression) {
@@ -1217,7 +1223,7 @@ export class EvalCalcWwaNode {
     return result;
   }
 
-  evalNumber(node: Wwa.Literal) {
+  evalLiteral(node: Wwa.Literal) {
     return node.value;
   }
 }

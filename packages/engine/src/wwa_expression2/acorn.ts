@@ -141,6 +141,8 @@ export interface Property extends Node {
 export interface ObjectExpression extends Node {
   label: string;
   type: "ObjectExpression";
+  // Property の他に SpreadElement ({...hoge}) が本来は入りうる。
+  // スプレッドを実装するまでの間は Property のみとする
   properties: Property[];
 }
 
