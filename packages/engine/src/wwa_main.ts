@@ -6861,11 +6861,9 @@ font-weight: bold;
     private _execEvalString(evalString: string, triggerParts?: TriggerParts) {
         try {
             const nodes = this.convertWwaNodes(evalString);
-            console.log("##", nodes);
             if (triggerParts) {
                 this.evalCalcWwaNodeGenerator.setTriggerParts(triggerParts.id, triggerParts.type, triggerParts.position);
             }
-            console.log("#", nodes)
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
             this.evalCalcWwaNodeGenerator.clearTriggerParts();
         }
