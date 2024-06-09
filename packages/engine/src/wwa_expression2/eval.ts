@@ -1216,11 +1216,8 @@ export class EvalCalcWwaNode {
   evalArray3DPlus(node: Wwa.Array3DPlus) {
     const indecies = node.indecies.map((x) => this.evalWwaNode(x));
     const userNameValue = this.generator.wwa.getUserNameVar(indecies[0]);
-    let result = userNameValue;
-    for (const index in indecies) {
-      result = result[index];
-    }
-    return result;
+    const v = indecies.slice(1).reduce((prev, current) => prev[current], userNameValue);
+    return v;
   }
 
   evalLiteral(node: Wwa.Literal) {

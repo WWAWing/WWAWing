@@ -474,7 +474,10 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
       // 数値に解決できないものが index に来てはいけない
       throw new Error("WWAでは存在しない構文です")
     }
-  } else if(object.type === "Array2D") {
+  } else if(object.type === "Array2D" || object.type === "Array3DPlus") {
+    if (object.name === "m" || object.name === "o") {
+      throw new Error("この配列は3次元以上にはできません。");
+    }
     // ユーザ定義名前変数のみ3次元以上配列が使える
     if (object.name === "v" && Wwa.isCalcurable(property)) {
       return {
