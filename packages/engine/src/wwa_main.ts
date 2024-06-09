@@ -6007,53 +6007,66 @@ font-weight: bold;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         }
     }
-    public setUserVarIndexes(indexes: any[], assignee: number | string | boolean, operator: string = "="): void {
-        const currentValueObject = this._userVar.named.get(indexes[0]);
-        const lastIndex = indexes.length - 1;
+    public setUserVarIndecies(indecies: any[], assignee: number | string | boolean, operator: string = "="): void {
+        const currentValueObject = this._userVar.named.get(indecies[0]);
+        const lastIndex = indecies.length - 1;
 
         // 元配列の参照から値を書き換えるため最後の index の一つ手前まで頭出し
         // 最初の index は currentValueObject で参照済のため見ない
-        const ref = indexes.slice(1, lastIndex).reduce((prev, current) =>  prev[current], currentValueObject);
-        if(indexes.length > 1) {
-            if (typeof assignee === "number") {
-                switch(operator) {
-                    case '=':
-                        ref[indexes[lastIndex]] = assignee;
-                        break;
-                    case '+=':
-                        ref[indexes[lastIndex]] += assignee;
-                        break;
-                    case '-=':
-                        ref[indexes[lastIndex]] -= assignee;
-                        break;
-                    case '*=':
-                        ref[indexes[lastIndex]] *= assignee;
-                        break;
-                    case '/=':
-                        ref[indexes[lastIndex]] /= assignee;
-                        break;
-                    default:
+        const ref = indecies.slice(1, lastIndex).reduce((prev, current) =>  prev[current], currentValueObject);
+        let result = assignee;
+        const targetRefIndex = indecies[lastIndex];
+        if(indecies.length > 1) {
+            switch(operator) {
+                case '=': 
+                    result = assignee;
+                    break;
+                case '+=':
+                    result = ref[targetRefIndex] + assignee;
+                    break;
+                case '-=':
+                    if (typeof assignee !== "number") {
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
-                }
-            }
-            else {
-                switch(operator) {
-                    case '=':
-                        ref[indexes[lastIndex]] = assignee;
-                        break;
-                    case '+=':
-                        ref[indexes[lastIndex]] += assignee;
-                        break;
-                    default:
+                    }
+                    result = ref[targetRefIndex] - assignee;
+                    break;
+                case '*=':
+                    if (typeof assignee !== "number") {
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
-                }
+                    }
+                    result = ref[targetRefIndex] * assignee;
+                    break;
+                case '/=':
+                    if (typeof assignee !== "number") {
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                    }
+                    result = ref[targetRefIndex] / assignee;
+                    break;
+                default:
+                    throw new TypeError(`その演算子は利用できません: ${operator}`)
             }
-            this._userVar.named.set(indexes[0], currentValueObject);
-        }
-        else {
-            throw new Error(`indexesの引数が足りていません: ${indexes}`)
+            if (Array.isArray(ref)) {
+                if (typeof targetRefIndex === "number") {
+                    ref[targetRefIndex] = result;
+                } else {
+                    throw new TypeError(`配列の添字に数字以外は使えません: ${indecies[lastIndex]}`)
+                }
+            } else if (typeof ref === "object" && ref !== null) {
+                if (targetRefIndex === "__proto__" || targetRefIndex === "constructor" || targetRefIndex === "prototype") {
+                    console.warn(`代入先オブジェクトのキー名に __proto__, constructor, prototype は使えません: ${targetRefIndex}`);
+                    return;
+                } else {
+                    Object.defineProperties(ref, { targetRefIndex: { value: result, writable: true } });
+                }
+            } else {
+                ref[targetRefIndex] = result;
+            }
+            this._userVar.named.set(indecies[0], currentValueObject);
+        } else {
+            throw new Error(`indeciesの引数が足りていません: ${indecies}`)
         }
     }
+
     // User変数記憶
     public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
         const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {

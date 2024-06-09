@@ -1,8 +1,8 @@
-export type Calcurable = Array1D | Array2D | Array3DPlus | Literal | Symbol | UnaryOperation | BinaryOperation | Random | CallDefinedFunction | AnyFunction | ConditionalExpression | ArrayExpression | ObjectExpression;
+export type Calcurable = ArrayOrObject1D | ArrayOrObject2D | ArrayOrObject3DPlus | Literal | Symbol | UnaryOperation | BinaryOperation | Random | CallDefinedFunction | AnyFunction | ConditionalExpression | ArrayExpression | ObjectExpression;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
   // ObjectExpression と ArrayExpression はピクチャ機能でしか使用しないためサポート対象外
-  const supportType = ["Array1D", "Array2D", "Array3DPlus", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression", "ArrayExpression", "ObjectExpression"];
+  const supportType = ["ArrayOrObject1D", "ArrayOrObject2D", "ArrayOrObject3DPlus", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression", "ArrayExpression", "ObjectExpression"];
   return supportType.includes(node.type);
 }
 
@@ -54,21 +54,21 @@ export interface Symbol {
   name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF" | "ENEMY_GD" | "PLAYER_PX" | "PLAYER_PY" | "MOVE_SPEED" | "MOVE_FRAME_TIME";
 }
 
-export interface Array1D {
-  type: "Array1D";
+export interface ArrayOrObject1D {
+  type: "ArrayOrObject1D";
   name: "ITEM" | "m" | "o" | "v"; // 2次元配列の1次元分が返ってくる可能性がある
   indecies: Calcurable[];
 }
 
-export interface Array2D {
-  type: "Array2D";
+export interface ArrayOrObject2D {
+  type: "ArrayOrObject2D";
   name: "m" | "o" | "v";
   indecies: Calcurable[];
 }
 
 // 3次元以上の配列
-export interface Array3DPlus {
-  type: "Array3DPlus";
+export interface ArrayOrObject3DPlus {
+  type: "ArrayOrObject3DPlus";
   name: "v";
   indecies: Calcurable[];
 }
@@ -192,7 +192,6 @@ export interface ObjectExpression {
   properties: Property[],
 }
 
-// TODO: Array1DまたはArray2Dと統合が望ましい
 export interface ArrayExpression {
   type: "ArrayExpression",
   elements: WWANode[]
@@ -205,9 +204,9 @@ export type WWANode = |
   SpecialParameterAssignment |
   UnaryOperation |
   BinaryOperation |
-  Array1D |
-  Array2D |
-  Array3DPlus |
+  ArrayOrObject1D |
+  ArrayOrObject2D |
+  ArrayOrObject3DPlus |
   Literal |
   Symbol |
   Random |
