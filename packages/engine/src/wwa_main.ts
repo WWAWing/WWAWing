@@ -6052,11 +6052,12 @@ font-weight: bold;
                     throw new TypeError(`配列の添字に数字以外は使えません: ${indecies[lastIndex]}`)
                 }
             } else if (typeof ref === "object" && ref !== null) {
-                if (targetRefIndex === "__proto__" || targetRefIndex === "constructor" || targetRefIndex === "prototype") {
-                    console.warn(`代入先オブジェクトのキー名に __proto__, constructor, prototype は使えません: ${targetRefIndex}`);
+                const key = String(targetRefIndex);
+                if ( key === "__proto__" || key === "constructor" || key === "prototype") {
+                    console.warn(`代入先オブジェクトのキー名に __proto__, constructor, prototype は使えません: ${key}`);
                     return;
                 } else {
-                    Object.defineProperties(ref, { targetRefIndex: { value: result, writable: true } });
+                    Object.defineProperties(ref, { [key]: { value: result, writable: true } });
                 }
             } else {
                 ref[targetRefIndex] = result;
