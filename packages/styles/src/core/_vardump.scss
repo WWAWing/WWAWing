@@ -34,6 +34,11 @@
           overflow-y: hidden;
           scrollbar-width: thin;
         }
+        &.user-variable-card--is-trimmed {
+          > .index, > .value {
+            text-overflow: ellipsis;
+          }
+        }
       }
     }
 

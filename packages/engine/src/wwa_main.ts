@@ -1946,6 +1946,7 @@ export class WWA {
                     }
                     this._player.setMessageWaiting();
                     this._isLastPage = currentPage.isLastPage
+                    this._shouldSetNextPage = false;
                     break;
                 }
                 // このフレームで処理されるべきページがもうない
@@ -1959,6 +1960,7 @@ export class WWA {
                     if( resultOfDispatchWindowClosedTimeRequests.newPageGenerated) {
                         continue;
                     }
+                    this.clearFaces();
                     // ページが生成されなくなったらループを抜ける
                     break;
                 }
@@ -3990,6 +3992,18 @@ export class WWA {
         }
     }
 
+    // FACE() 関数の実行結果をハンドリングします。
+    public handleFaceFunction(face: Face): void {
+        // $face マクロを発行し、メッセージに積む。
+        if(this._pageExecuting) {
+            this._windowCloseWaitingMessageDisplayRequests.push(
+              `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`
+            );
+        } else {
+            this.addFace(face);
+        }
+    }
+
     // HACK: private にしたい
     public registerSystemMessagePage(message: string, showChoice: boolean = false): void {
         this.registerPageByMessage(message, {
@@ -5398,6 +5412,7 @@ export class WWA {
         if (this._pages.length === 0) {
             const { newPageGenerated } = this._hideMessageWindow();
             if (!newPageGenerated) {
+                this.clearFaces();
                 this._dispatchWindowClosedTimeRequests();
             }
         } else {
@@ -5411,7 +5426,6 @@ export class WWA {
     private _hideMessageWindow(): { newPageGenerated: boolean } {
         const itemID =  this._player.isReadyToUseItem() ? this._player.useItem() : 0;
         const mesID = this.getObjectAttributeById(itemID, Consts.ATR_STRING);
-        this.clearFaces();
         if (mesID === 0) {
             if (this._messageWindow.isVisible()) {
                 this._player.setDelayFrame();
@@ -5993,10 +6007,70 @@ font-weight: bold;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         }
     }
+    public setUserVarIndecies(indecies: any[], assignee: number | string | boolean, operator: string = "="): void {
+        const currentValueObject = this._userVar.named.get(indecies[0]);
+        const lastIndex = indecies.length - 1;
+
+        // 元配列の参照から値を書き換えるため最後の index の一つ手前まで頭出し
+        // 最初の index は currentValueObject で参照済のため見ない
+        const ref = indecies.slice(1, lastIndex).reduce((prev, current) =>  prev[current], currentValueObject);
+        let result = assignee;
+        const targetRefIndex = indecies[lastIndex];
+        if(indecies.length > 1) {
+            switch(operator) {
+                case '=': 
+                    result = assignee;
+                    break;
+                case '+=':
+                    result = ref[targetRefIndex] + assignee;
+                    break;
+                case '-=':
+                    if (typeof assignee !== "number") {
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                    }
+                    result = ref[targetRefIndex] - assignee;
+                    break;
+                case '*=':
+                    if (typeof assignee !== "number") {
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                    }
+                    result = ref[targetRefIndex] * assignee;
+                    break;
+                case '/=':
+                    if (typeof assignee !== "number") {
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                    }
+                    result = ref[targetRefIndex] / assignee;
+                    break;
+                default:
+                    throw new TypeError(`その演算子は利用できません: ${operator}`)
+            }
+            if (Array.isArray(ref)) {
+                if (typeof targetRefIndex === "number") {
+                    ref[targetRefIndex] = result;
+                } else {
+                    throw new TypeError(`配列の添字に数字以外は使えません: ${indecies[lastIndex]}`)
+                }
+            } else if (typeof ref === "object" && ref !== null) {
+                const key = String(targetRefIndex);
+                if ( key === "__proto__" || key === "constructor" || key === "prototype") {
+                    console.warn(`代入先オブジェクトのキー名に __proto__, constructor, prototype は使えません: ${key}`);
+                    return;
+                } else {
+                    Object.defineProperties(ref, { [key]: { value: result, writable: true } });
+                }
+            } else {
+                ref[targetRefIndex] = result;
+            }
+            this._userVar.named.set(indecies[0], currentValueObject);
+        } else {
+            throw new Error(`indeciesの引数が足りていません: ${indecies}`)
+        }
+    }
+
     // User変数記憶
     public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
-
-       const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
+        const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
             if (typeof indexOrName === "number") {
                 if (typeof value !== "number") {
                     throw new TypeError("数字index変数への数値以外の代入は今のところできません。あらかじめご了承ください。");
@@ -6139,7 +6213,8 @@ font-weight: bold;
     }
     // User名称変数取得
     public getUserNameVar(id: number | string): number | string | boolean {
-        return this._userVar.named.get(id.toString());
+        const varValue = this._userVar.named.get(id.toString());
+        return varValue ?? "";
     }
     // User名称変数の一覧を取得
     public getAllUserNameVar() {
@@ -6753,6 +6828,7 @@ font-weight: bold;
             userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
+            cameraCoord: this._camera.getPosition().getPartsCoord(),
             itemBox: this._player.getCopyOfItemBox(),
             gameSpeedIndex: this._player.getSpeedIndex(),
             // TODO ステータスが変わっても更新されていない？
@@ -6923,7 +6999,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `v["money"] = 100;\nv["name"] = "ヤツロウ";\nMSG(v["name"]+"「俺の所持金は"+v["money"]+"ゴールドだ」");\nSHOW_USER_DEF_VAR();`;
+    consoleTextareaElement.textContent = `v["test"] = [1, 2, 3];\nMSG(v["test"][0])\n\nv["player"] = {"name": "マサト","age": 19}\nMSG(v["player"]["name"])\n\nv["players"] = [{"name": "マサト","age": 19},{"name": "ヤツロウ","age": 21}]\nMSG(v["players"][1]["name"])\nv["players"][1]["name"] = "トナミ"\nMSG(v["players"][1]["name"])`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();
