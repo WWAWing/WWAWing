@@ -6007,86 +6007,67 @@ font-weight: bold;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         }
     }
-    public setUserVarIndexes(indexes: any[], assignee: number | string | boolean, operator: string = "="): void {
-        const currentValueObject = this._userVar.named.get(indexes[0]);
-        // 3次元配列の場合
-        if(indexes.length > 2) {
-            if (typeof assignee === "number") {
-                switch(operator) {
-                    case '=':
-                        currentValueObject[indexes[1]][indexes[2]] = assignee;
-                        break;
-                    case '+=':
-                        currentValueObject[indexes[1]][indexes[2]] += assignee;
-                        break;
-                    case '-=':
-                        currentValueObject[indexes[1]][indexes[2]] -= assignee;
-                        break;
-                    case '*=':
-                        currentValueObject[indexes[1]][indexes[2]] *= assignee;
-                        break;
-                    case '/=':
-                        currentValueObject[indexes[1]][indexes[2]] /= assignee;
-                        break;
-                    default:
+    public setUserVarIndecies(indecies: any[], assignee: number | string | boolean, operator: string = "="): void {
+        const currentValueObject = this._userVar.named.get(indecies[0]);
+        const lastIndex = indecies.length - 1;
+
+        // 元配列の参照から値を書き換えるため最後の index の一つ手前まで頭出し
+        // 最初の index は currentValueObject で参照済のため見ない
+        const ref = indecies.slice(1, lastIndex).reduce((prev, current) =>  prev[current], currentValueObject);
+        let result = assignee;
+        const targetRefIndex = indecies[lastIndex];
+        if(indecies.length > 1) {
+            switch(operator) {
+                case '=': 
+                    result = assignee;
+                    break;
+                case '+=':
+                    result = ref[targetRefIndex] + assignee;
+                    break;
+                case '-=':
+                    if (typeof assignee !== "number") {
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
-                }
-            }
-            else {
-                switch(operator) {
-                    case '=':
-                        currentValueObject[indexes[1]][indexes[2]] = assignee;
-                        break;
-                    case '+=':
-                        currentValueObject[indexes[1]][indexes[2]] += assignee;
-                        break;
-                    default:
+                    }
+                    result = ref[targetRefIndex] - assignee;
+                    break;
+                case '*=':
+                    if (typeof assignee !== "number") {
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
-                }
-            }
-            this._userVar.named.set(indexes[0], currentValueObject);
-        }
-        // 2次元配列の場合
-        else if(indexes.length > 1) {
-            if(typeof assignee === "number") {
-                switch(operator) {
-                    case '=':
-                        currentValueObject[indexes[1]] = assignee;
-                        break;
-                    case '+=':
-                        currentValueObject[indexes[1]] += assignee;
-                        break;
-                    case '-=':
-                        currentValueObject[indexes[1]] -= assignee;
-                        break;
-                    case '*=':
-                        currentValueObject[indexes[1]] *= assignee;
-                        break;
-                    case '/=':
-                        currentValueObject[indexes[1]] /= assignee;
-                        break;
-                    default:
+                    }
+                    result = ref[targetRefIndex] * assignee;
+                    break;
+                case '/=':
+                    if (typeof assignee !== "number") {
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
-                }
+                    }
+                    result = ref[targetRefIndex] / assignee;
+                    break;
+                default:
+                    throw new TypeError(`その演算子は利用できません: ${operator}`)
             }
-            else {
-                switch(operator) {
-                    case '=':
-                        currentValueObject[indexes[1]] = assignee;
-                        break;
-                    case '+=':
-                        currentValueObject[indexes[1]] += assignee;
-                        break;
-                    default:
-                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+            if (Array.isArray(ref)) {
+                if (typeof targetRefIndex === "number") {
+                    ref[targetRefIndex] = result;
+                } else {
+                    throw new TypeError(`配列の添字に数字以外は使えません: ${indecies[lastIndex]}`)
                 }
+            } else if (typeof ref === "object" && ref !== null) {
+                const key = String(targetRefIndex);
+                if ( key === "__proto__" || key === "constructor" || key === "prototype") {
+                    console.warn(`代入先オブジェクトのキー名に __proto__, constructor, prototype は使えません: ${key}`);
+                    return;
+                } else {
+                    Object.defineProperties(ref, { [key]: { value: result, writable: true } });
+                }
+            } else {
+                ref[targetRefIndex] = result;
             }
-            this._userVar.named.set(indexes[0], currentValueObject);
-        }
-        else {
-            throw new Error(`indexesの引数が足りていません: ${indexes}`)
+            this._userVar.named.set(indecies[0], currentValueObject);
+        } else {
+            throw new Error(`indeciesの引数が足りていません: ${indecies}`)
         }
     }
+
     // User変数記憶
     public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
         const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
@@ -6884,7 +6865,6 @@ font-weight: bold;
             if (triggerParts) {
                 this.evalCalcWwaNodeGenerator.setTriggerParts(triggerParts.id, triggerParts.type, triggerParts.position);
             }
-            console.log("#", nodes)
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
             this.evalCalcWwaNodeGenerator.clearTriggerParts();
         }

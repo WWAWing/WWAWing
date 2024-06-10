@@ -164,12 +164,12 @@ export class EvalCalcWwaNode {
         return this.evalBinaryOperation(node);
       case "Symbol":
         return this.evalSymbol(node);
-      case "Array1D":
-        return this.evalArray1D(node);
-      case "Array2D":
-        return this.evalArray2D(node);
-      case "Array3D":
-        return this.evalArray3D(node);
+      case "ArrayOrObject1D":
+        return this.evalArrayOrObject1D(node);
+      case "ArrayOrObject2D":
+        return this.evalArrayOrObject2D(node);
+      case "ArrayOrObject3DPlus":
+        return this.evalArrayOrObject3DPlus(node);
       case "Literal":
         return this.evalLiteral(node);
       case "UserVariableAssignment":
@@ -247,7 +247,7 @@ export class EvalCalcWwaNode {
 
   /** i++ などが実行された時の処理. 現在後置インクリメントのみ対応しています. */
   updateExpression(node: Wwa.UpdateExpression) {
-    if (node.argument.type !== "Array1D" && node.argument.type !== "Array2D" && node.argument.type !== "Symbol") {
+    if (node.argument.type !== "ArrayOrObject1D" && node.argument.type !== "ArrayOrObject2D" && node.argument.type !== "Symbol") {
       throw new Error(`node.argument.typeが インクリメント/デクリメントできる対象ではありません。: ${node.argument.type}`);
     }
     const update = (value: number) => {
@@ -265,17 +265,17 @@ export class EvalCalcWwaNode {
     const valueLiteral = { type: "Literal", value: updatedValue } as const;
 
     switch(node.argument.type) {
-      case "Array1D": {
+      case "ArrayOrObject1D": {
         if (node.argument.name ==="v") {
           this.evalSetUserVariable({
             type: "UserVariableAssignment",
-            index: [node.argument.index0],
-            value: [valueLiteral]
+            index: [node.argument.indecies[0]],
+            value: valueLiteral
           })
         } else if (node.argument.name === "ITEM") {
           this.itemAssignment({
             type: "ItemAssignment",
-            itemBoxPosition1to12: node.argument.index0,
+            itemBoxPosition1to12: node.argument.indecies[0],
             value: valueLiteral
           })
         } else {
@@ -283,11 +283,11 @@ export class EvalCalcWwaNode {
         }
         break;
       }
-      case "Array2D": {
+      case "ArrayOrObject2D": {
         const params = {
           type: "PartsAssignment",
-          destinationX: node.argument.index0,
-          destinationY: node.argument.index1,
+          destinationX: node.argument.indecies[0],
+          destinationY: node.argument.indecies[1],
           value: valueLiteral,
           operator: "="
         } as const satisfies Partial<Wwa.PartsAssignment>;
@@ -1017,14 +1017,14 @@ export class EvalCalcWwaNode {
 
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
     if(node.index.length > 1) {
-      const right = this.evalWwaNode(node.value[0]);
+      const right = this.evalWwaNode(node.value);
       const userVarIndexes = node.index.map((x) => this.evalWwaNode(x));
-      this.generator.wwa.setUserVarIndexes(userVarIndexes, right, node.operator);
+      this.generator.wwa.setUserVarIndecies(userVarIndexes, right, node.operator);
       return;
     }
     else {
       // TODO: 互換性保持の暫定措置
-      const right = this.evalWwaNode(node.value[0]);
+      const right = this.evalWwaNode(node.value);
       if(!this.generator.wwa) {
         return right;
       }
@@ -1157,8 +1157,8 @@ export class EvalCalcWwaNode {
     }
   }
 
-  evalArray1D(node: Wwa.Array1D) {
-    const userVarIndex = this.evalWwaNode(node.index0);
+  evalArrayOrObject1D(node: Wwa.ArrayOrObject1D) {
+    const userVarIndex = this.evalWwaNode(node.indecies[0]);
     if (typeof userVarIndex !== "number") {
       switch(node.name) {
         case "v":
@@ -1185,12 +1185,12 @@ export class EvalCalcWwaNode {
    * o[1][2]のようなobject/mapパーツを右辺値に持ってきた際に該当座標のパーツ番号を返す
    * 左辺値代入は partsAssignment で処理する
    **/
-  evalArray2D(node: Wwa.Array2D) {
+  evalArrayOrObject2D(node: Wwa.ArrayOrObject2D) {
     switch(node.name) {
       case "m":
       case "o":
-        const x = this.evalWwaNode(node.index0);
-        const y = this.evalWwaNode(node.index1);
+        const x = this.evalWwaNode(node.indecies[0]);
+        const y = this.evalWwaNode(node.indecies[1]);
         if(typeof x !== "number" || typeof y !== "number") {
           throw new Error(`座標は数値で指定してください (${x}, ${y})`)
         }
@@ -1200,23 +1200,23 @@ export class EvalCalcWwaNode {
         const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
       case "v":
-        const userNameKey = (<Literal>node.index0).value;
+        const userNameKey = (<Literal>node.indecies[0]).value;
         const userNameValue = this.generator.wwa.getUserNameVar(userNameKey);
         if(!Array.isArray(userNameValue) && !(typeof userNameValue === 'object')) {
           throw new Error(`指定したユーザー定義変数: v["${userNameKey}"] は配列ではありません`)
         }
-        const userNameRightKey = this.evalWwaNode(node.index1);
+        const userNameRightKey = this.evalWwaNode(node.indecies[1]);
         return userNameValue[userNameRightKey];
       default:
         throw new Error("このシンボルは取得できません")
     }
   }
 
-  // 3次元配列はユーザ定義名前変数のみ使用可能
-  evalArray3D(node: Wwa.Array3D) {
-    const indexes = [node.index0, node.index1, node.index2].map((x) => this.evalWwaNode(x));
-    const userNameValue = this.generator.wwa.getUserNameVar(indexes[0]);
-    return userNameValue[indexes[1]][indexes[2]];
+  // 3次元以上配列はユーザ定義名前変数のみ使用可能
+  evalArrayOrObject3DPlus(node: Wwa.ArrayOrObject3DPlus) {
+    const indecies = node.indecies.map((x) => this.evalWwaNode(x));
+    const userNameValue = this.generator.wwa.getUserNameVar(indecies[0]);
+    return indecies.slice(1).reduce((prev, current) => prev[current], userNameValue);
   }
 
   evalLiteral(node: Wwa.Literal) {

@@ -309,38 +309,38 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
     case "-=":
     case "*=":
     case "/=":
-      if (left.type === "Array2D") {
+      if (left.type === "ArrayOrObject2D") {
         if (left.name === "m" || left.name === "o") {
           return {
             type: "PartsAssignment",
             partsKind: left.name === "m" ? "map" : "object",
-            destinationX: left.index0,
-            destinationY: left.index1,
+            destinationX: left.indecies[0],
+            destinationY: left.indecies[1],
             value: right,
             operator: node.operator
           }
         } else if (left.name === "v") {
           return {
             type: "UserVariableAssignment",
-            index: [left.index0, left.index1],
-            value: [right]
+            index: [left.indecies[0], left.indecies[1]],
+            value: right
           }
         } else {
           throw new Error("想定していない記号が2次元配列ででてきました");
         }
-      } else if (left.type === "Array1D") {
+      } else if (left.type === "ArrayOrObject1D") {
         if (left.name === "ITEM") {
           return {
             type: "ItemAssignment",
-            itemBoxPosition1to12: left.index0,
+            itemBoxPosition1to12: left.indecies[0],
             value: right,
             operator: node.operator
           }
         } else if (left.name === "v") {
           return {
             type: "UserVariableAssignment",
-            index: [left.index0],
-            value: [right],
+            index: [left.indecies[0]],
+            value: right,
             operator: node.operator
           }
         } else {
@@ -380,11 +380,11 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         }
       } else if (left.type === "Literal") {
         throw new Error("数値には代入できません");
-      } else if (left.type === "Array3D" && left.name === "v") {
+      } else if (left.type === "ArrayOrObject3DPlus" && left.name === "v") {
         return {
           type: "UserVariableAssignment",
-          index: [left.index0, left.index1, left.index2],
-          value: [right],
+          index: left.indecies,
+          value: right,
           operator: node.operator
         }
       } else {
@@ -440,8 +440,7 @@ function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.WWANode {
   }
 }
 
-// WWA においては hoge.a というパターンはないので、配列系の処理しかない
-function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Wwa.Array2D | Wwa.Array3D {
+function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObject1D | Wwa.ArrayOrObject2D | Wwa.ArrayOrObject3DPlus {
   const object = convertNodeAcornToWwa(node.object);
   const property = convertNodeAcornToWwa(node.property);
 
@@ -449,42 +448,43 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
     if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM") {
       throw new Error("このシンボルは配列にできません");
     }
-    if(property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
+    if (Wwa.isCalcurable(property)) {
       // m, o については一次元分適用
       return {
-        type: "Array1D",
+        type: "ArrayOrObject1D",
         name: object.name,
-        index0: property
-      }
+        indecies: [property],
+      };
     } else {
-      throw new Error("WWAでは存在しない構文です")
+      throw new Error("WWAでは存在しない構文です");
     }
-  } else if (object.type === "Array1D") {
+  } else if (object.type === "ArrayOrObject1D") {
     // 1次元にしかできないものは排除
     if (object.name === "ITEM") {
       throw new Error("この配列は2次元以上にはできません。");
     }
-    // 1次元配列 + 1次元分の index を合成
-    if (property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
+    if (Wwa.isCalcurable(property)) {
       return {
-        type: "Array2D",
+        type: "ArrayOrObject2D",
         name: object.name,
-        index0: object.index0,
-        index1: property
+        // 1次元配列 + 1次元分の index を合成
+        indecies: [...object.indecies, property]
       }
     } else {
       // 数値に解決できないものが index に来てはいけない
       throw new Error("WWAでは存在しない構文です")
     }
-  }
-  // ユーザ定義名前変数のみ3次元配列が使える
-  else if(object.type === "Array2D" && object.name === "v") {
-    return {
-      type: "Array3D",
-      name: object.name,
-      index0: object.index0,
-      index1: object.index1,
-      index2: <Wwa.Calcurable>property
+  } else if(object.type === "ArrayOrObject2D" || object.type === "ArrayOrObject3DPlus") {
+    if (object.name === "m" || object.name === "o") {
+      throw new Error("この配列は3次元以上にはできません。");
+    }
+    // ユーザ定義名前変数のみ3次元以上配列が使える
+    if (object.name === "v" && Wwa.isCalcurable(property)) {
+      return {
+        type: "ArrayOrObject3DPlus",
+        name: object.name,
+        indecies: [ ...object.indecies, property]
+      }
     }
   }
   else {
