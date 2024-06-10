@@ -91,6 +91,8 @@ export function formatUserVarForDisplay(value: number | string | boolean, trimmi
         return `"${arrayValue.slice(0, 10).join("")}…`;
     }
     return `"${value}"`;
+  } else if (typeof value === "object") {
+    return JSON.stringify(value, null, 2);
   }
   return String(value);
 }

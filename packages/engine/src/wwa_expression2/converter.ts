@@ -54,7 +54,7 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
       case "TemplateElement":
         return convertTemplateElement(node as Acorn.TemplateElement);
       case "ConditionalExpression":
-        return convertConditionalExpression(node as Acorn.ConditionalExpression);
+        return convertConditionalExpression(node as Acorn.ConditionalExpression)
       case "Property":
         return convertProperty(node as Acorn.Property);
       case "ObjectExpression":
@@ -214,6 +214,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "EXIT":
     case "GET_IMG_POS_X":
     case "GET_IMG_POS_Y":
+    case "LENGTH":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -318,6 +319,12 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
             value: right,
             operator: node.operator
           }
+        } else if (left.name === "v") {
+          return {
+            type: "UserVariableAssignment",
+            index: [left.index0, left.index1],
+            value: [right]
+          }
         } else {
           throw new Error("想定していない記号が2次元配列ででてきました");
         }
@@ -332,8 +339,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         } else if (left.name === "v") {
           return {
             type: "UserVariableAssignment",
-            index: left.index0,
-            value: right,
+            index: [left.index0],
+            value: [right],
             operator: node.operator
           }
         } else {
@@ -373,6 +380,13 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         }
       } else if (left.type === "Literal") {
         throw new Error("数値には代入できません");
+      } else if (left.type === "Array3D" && left.name === "v") {
+        return {
+          type: "UserVariableAssignment",
+          index: [left.index0, left.index1, left.index2],
+          value: [right],
+          operator: node.operator
+        }
       } else {
         throw new Error("代入できません");
       }
@@ -427,7 +441,7 @@ function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.WWANode {
 }
 
 // WWA においては hoge.a というパターンはないので、配列系の処理しかない
-function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Wwa.Array2D {
+function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Wwa.Array2D | Wwa.Array3D {
   const object = convertNodeAcornToWwa(node.object);
   const property = convertNodeAcornToWwa(node.property);
 
@@ -447,7 +461,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
     }
   } else if (object.type === "Array1D") {
     // 1次元にしかできないものは排除
-    if (object.name === "ITEM" || object.name === "v") {
+    if (object.name === "ITEM") {
       throw new Error("この配列は2次元以上にはできません。");
     }
     // 1次元配列 + 1次元分の index を合成
@@ -462,6 +476,19 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
       // 数値に解決できないものが index に来てはいけない
       throw new Error("WWAでは存在しない構文です")
     }
+  }
+  // ユーザ定義名前変数のみ3次元配列が使える
+  else if(object.type === "Array2D" && object.name === "v") {
+    return {
+      type: "Array3D",
+      name: object.name,
+      index0: object.index0,
+      index1: object.index1,
+      index2: <Wwa.Calcurable>property
+    }
+  }
+  else {
+    throw new Error("WWAでは存在しない構文です")
   }
 }
 

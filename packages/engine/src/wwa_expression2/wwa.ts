@@ -2,7 +2,7 @@ export type Calcurable = Array1D | Array2D | Literal | Symbol | UnaryOperation |
 
 export function isCalcurable(node: WWANode): node is Calcurable {
   // ObjectExpression と ArrayExpression はピクチャ機能でしか使用しないためサポート対象外
-  const supportType = ["Array1D", "Array2D", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression"];
+  const supportType = ["Array1D", "Array2D", "Array3D", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression", "ArrayExpression", "ObjectExpression"];
   return supportType.includes(node.type);
 }
 
@@ -24,8 +24,8 @@ export interface ItemAssignment {
 
 export interface UserVariableAssignment {
   type: "UserVariableAssignment";
-  index: Calcurable;
-  value: Calcurable;
+  index: Calcurable[];
+  value: Calcurable[];
   operator?: "=" | "+=" | "-=" | "*=" | "/=";
 }
 
@@ -62,9 +62,17 @@ export interface Array1D {
 
 export interface Array2D {
   type: "Array2D";
-  name: "m" | "o";
+  name: "m" | "o" | "v";
   index0: Calcurable;
   index1: Calcurable;
+}
+
+export interface Array3D {
+  type: "Array3D";
+  name: "v";
+  index0: Calcurable;
+  index1: Calcurable;
+  index2: Calcurable;
 }
 
 export interface Literal {
@@ -186,6 +194,7 @@ export interface ObjectExpression {
   properties: Property[],
 }
 
+// TODO: Array1DまたはArray2Dと統合が望ましい
 export interface ArrayExpression {
   type: "ArrayExpression",
   elements: WWANode[]
@@ -200,6 +209,7 @@ export type WWANode = |
   BinaryOperation |
   Array1D |
   Array2D |
+  Array3D |
   Literal |
   Symbol |
   Random |

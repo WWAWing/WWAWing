@@ -23,8 +23,12 @@
         max-width: 12em;
         > .index, > .value {
           width: 100%;
-          text-overflow: ellipsis;
           overflow: hidden;
+        }
+        &.user-variable-card--is-trimmed {
+          > .index, > .value {
+            text-overflow: ellipsis;
+          }
         }
       }
     }

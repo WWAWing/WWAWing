@@ -6007,10 +6007,89 @@ font-weight: bold;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         }
     }
+    public setUserVarIndexes(indexes: any[], assignee: number | string | boolean, operator: string = "="): void {
+        const currentValueObject = this._userVar.named.get(indexes[0]);
+        // 3次元配列の場合
+        if(indexes.length > 2) {
+            if (typeof assignee === "number") {
+                switch(operator) {
+                    case '=':
+                        currentValueObject[indexes[1]][indexes[2]] = assignee;
+                        break;
+                    case '+=':
+                        currentValueObject[indexes[1]][indexes[2]] += assignee;
+                        break;
+                    case '-=':
+                        currentValueObject[indexes[1]][indexes[2]] -= assignee;
+                        break;
+                    case '*=':
+                        currentValueObject[indexes[1]][indexes[2]] *= assignee;
+                        break;
+                    case '/=':
+                        currentValueObject[indexes[1]][indexes[2]] /= assignee;
+                        break;
+                    default:
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                }
+            }
+            else {
+                switch(operator) {
+                    case '=':
+                        currentValueObject[indexes[1]][indexes[2]] = assignee;
+                        break;
+                    case '+=':
+                        currentValueObject[indexes[1]][indexes[2]] += assignee;
+                        break;
+                    default:
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                }
+            }
+            this._userVar.named.set(indexes[0], currentValueObject);
+        }
+        // 2次元配列の場合
+        else if(indexes.length > 1) {
+            if(typeof assignee === "number") {
+                switch(operator) {
+                    case '=':
+                        currentValueObject[indexes[1]] = assignee;
+                        break;
+                    case '+=':
+                        currentValueObject[indexes[1]] += assignee;
+                        break;
+                    case '-=':
+                        currentValueObject[indexes[1]] -= assignee;
+                        break;
+                    case '*=':
+                        currentValueObject[indexes[1]] *= assignee;
+                        break;
+                    case '/=':
+                        currentValueObject[indexes[1]] /= assignee;
+                        break;
+                    default:
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                }
+            }
+            else {
+                switch(operator) {
+                    case '=':
+                        currentValueObject[indexes[1]] = assignee;
+                        break;
+                    case '+=':
+                        currentValueObject[indexes[1]] += assignee;
+                        break;
+                    default:
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                }
+            }
+            this._userVar.named.set(indexes[0], currentValueObject);
+        }
+        else {
+            throw new Error(`indexesの引数が足りていません: ${indexes}`)
+        }
+    }
     // User変数記憶
     public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
-
-       const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
+        const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
             if (typeof indexOrName === "number") {
                 if (typeof value !== "number") {
                     throw new TypeError("数字index変数への数値以外の代入は今のところできません。あらかじめご了承ください。");
@@ -6153,7 +6232,8 @@ font-weight: bold;
     }
     // User名称変数取得
     public getUserNameVar(id: number | string): number | string | boolean {
-        return this._userVar.named.get(id.toString());
+        const varValue = this._userVar.named.get(id.toString());
+        return varValue ?? "";
     }
     // User名称変数の一覧を取得
     public getAllUserNameVar() {
@@ -6804,6 +6884,7 @@ font-weight: bold;
             if (triggerParts) {
                 this.evalCalcWwaNodeGenerator.setTriggerParts(triggerParts.id, triggerParts.type, triggerParts.position);
             }
+            console.log("#", nodes)
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
             this.evalCalcWwaNodeGenerator.clearTriggerParts();
         }
@@ -6938,7 +7019,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `v["money"] = 100;\nv["name"] = "ヤツロウ";\nMSG(v["name"]+"「俺の所持金は"+v["money"]+"ゴールドだ」");\nSHOW_USER_DEF_VAR();`;
+    consoleTextareaElement.textContent = `v["test"] = [1, 2, 3];\nMSG(v["test"][0])\n\nv["player"] = {"name": "マサト","age": 19}\nMSG(v["player"]["name"])\n\nv["players"] = [{"name": "マサト","age": 19},{"name": "ヤツロウ","age": 21}]\nMSG(v["players"][1]["name"])\nv["players"][1]["name"] = "トナミ"\nMSG(v["players"][1]["name"])`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();
