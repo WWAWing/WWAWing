@@ -16,14 +16,23 @@
       margin-top: 16px;
     }
 
+    &[data-kind="numbered"] > .user-variable-list {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+    }
+
+
     &[data-kind="named"] > .user-variable-list {
-      --wwa-vardump-grid-column-num: 5;
+      display: flex;
+      flex-wrap: wrap;
       > li > .user-variable-card {
         white-space: nowrap;
         max-width: 12em;
         > .index, > .value {
           width: 100%;
-          overflow: hidden;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scrollbar-width: thin;
         }
         &.user-variable-card--is-trimmed {
           > .index, > .value {
@@ -60,8 +69,6 @@
       &[aria-hidden="true"] {
         display: none;
       }
-      display: grid;
-      grid-template-columns: repeat(var(--wwa-vardump-grid-column-num, 10), 1fr);
       margin: 0 8px 8px 8px;
       padding: 0;
       width: calc(100% - 16px);
