@@ -323,7 +323,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           return {
             type: "UserVariableAssignment",
             index: [left.indecies[0], left.indecies[1]],
-            value: right
+            value: right,
+            operator: node.operator
           }
         } else {
           throw new Error("想定していない記号が2次元配列ででてきました");
