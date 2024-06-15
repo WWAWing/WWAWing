@@ -9,7 +9,7 @@ import {
     getHorizontalCirclePosition,
     getHorizontalCorrectionBySizeAnchor,
     getVerticalCirclePosition,
-    getVerticalCorrectionBySizeAnchor
+    getVerticalCorrectionBySizeAnchor,
 } from "./utils";
 import { NextPicturePartsInfo } from "./typedef";
 import { WWATimer } from "./WWATimer";
@@ -132,8 +132,9 @@ export default class WWAPictureItem {
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
-        // TODO これでは左上を軸に回転することになるので、 pos の座標を軸に描画するようにしたい
+        this._canvas.ctx.translate(this._posBaseX, this._posBaseY);
         this._canvas.ctx.rotate(this._angle * Math.PI / 180);
+        this._canvas.ctx.translate(-this._posBaseX, -this._posBaseY);
         this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
         this._canvas.ctx.textBaseline = "top";
         if (properties.textAlign) {
@@ -245,7 +246,9 @@ export default class WWAPictureItem {
         if (this._rotate !== 0) {
             this._angle = this._angle + this._rotate;
             // this._angle を加えると加速運動になってしまう
+            this._canvas.ctx.translate(this._posBaseX, this._posBaseY);
             this._canvas.ctx.rotate(this._rotate * Math.PI / 180);
+            this._canvas.ctx.translate(-this._posBaseX, -this._posBaseY);
         }
     }
 
