@@ -67,8 +67,8 @@ export default class WWAPictureItem {
     private readonly _cropY: number;
     private _opacity: number;
     private readonly _fade: number;
-    private _angle: number;
-    private readonly _rotate: number;
+    private readonly _angleRadian: number;
+    private readonly _rotateRadian: number;
     private readonly _hasAnimation: boolean;
 
     private _timer: WWATimer;
@@ -110,8 +110,8 @@ export default class WWAPictureItem {
         this._opacity = properties.opacity ?? 100;
         this._fade = properties.fade ?? 0;
 
-        this._angle = properties.angle ?? 0;
-        this._rotate = properties.rotate ?? 0;
+        this._angleRadian = properties.angle ? properties.angle * Math.PI / 180 : 0;
+        this._rotateRadian = properties.rotate ? properties.rotate * Math.PI / 180 : 0;
 
         this._updatePictureCache();
         
@@ -133,7 +133,7 @@ export default class WWAPictureItem {
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
         this._canvas.ctx.translate(this._posBaseX, this._posBaseY);
-        this._canvas.ctx.rotate(this._angle * Math.PI / 180);
+        this._canvas.ctx.rotate(this._angleRadian);
         this._canvas.ctx.translate(-this._posBaseX, -this._posBaseY);
         this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
         this._canvas.ctx.textBaseline = "top";
@@ -243,11 +243,10 @@ export default class WWAPictureItem {
             this._opacity = this._opacity + this._fade;
             this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
         }
-        if (this._rotate !== 0) {
-            this._angle = this._angle + this._rotate;
+        if (this._rotateRadian !== 0) {
             // this._angle を加えると加速運動になってしまう
             this._canvas.ctx.translate(this._posBaseX, this._posBaseY);
-            this._canvas.ctx.rotate(this._rotate * Math.PI / 180);
+            this._canvas.ctx.rotate(this._rotateRadian);
             this._canvas.ctx.translate(-this._posBaseX, -this._posBaseY);
         }
     }
@@ -363,7 +362,7 @@ export default class WWAPictureItem {
             this._zoomAccelY !== 0 ||
             this._circleSpeed !== 0 ||
             this._fade !== 0 ||
-            this._rotate !== 0
+            this._rotateRadian !== 0
         );
     }
 
