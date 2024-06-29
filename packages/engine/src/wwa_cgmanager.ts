@@ -19,12 +19,6 @@ export class CacheCanvas {
         //document.body.appendChild(this.cvs);
     }
     public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
-        if (
-            canvasX + width < 0 || canvasY + height < 0 ||
-            canvasX > this.cvs.width || canvasY > this.cvs.height
-        ) {
-            return;
-        }
         this.ctx.drawImage(
             _image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
             Consts.CHIP_SIZE, Consts.CHIP_SIZE, canvasX, canvasY,
@@ -32,12 +26,6 @@ export class CacheCanvas {
         );
     }
     public drawCanvasFree(image: HTMLImageElement, canvasX: number, canvasY: number, width: number, height: number): void {
-        if (
-            canvasX + width < 0 || canvasX + height < 0 ||
-            canvasX > this.cvs.width || canvasX > this.cvs.height
-        ) {
-            return;
-        }
         this.ctx.drawImage(image, canvasX, canvasY, width, height);
     }
     /**

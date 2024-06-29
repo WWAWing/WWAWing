@@ -70,6 +70,12 @@ export default class WWAPictureItem {
     private readonly _fade: number;
     private readonly _hasAnimation: boolean;
 
+    /**
+     * 直前描画したかどうか。
+     * これが true の場合、描画の前にクリア処理を実行する。
+     */
+    private _drawPrevious: boolean;
+
     private _timer: WWATimer;
 
     constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
@@ -138,6 +144,7 @@ export default class WWAPictureItem {
         const colorB = properties.color?.[2] ?? 0;
         this._canvas.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
 
+        this._drawPrevious = false;
         this._hasAnimation = this.getHasAnimation();
     }
 
@@ -176,8 +183,16 @@ export default class WWAPictureItem {
      * 毎フレーム処理されるため、プロパティから直接引き出される値以外はあらかじめフィールドに数値などをキャッシュしてください。
      */
     public draw(image: HTMLImageElement, isMainAnimation: boolean) {
-        // TODO これをオフにするオプションがあっても良さそう
-        this.clearCanvas();
+        if (this._drawPrevious) {
+            // TODO これをオフにするオプションがあっても良さそう
+            this.clearCanvas();
+        }
+        if (!this.isInsideOfScreen()) {
+            this._drawPrevious = false;
+            return;
+        } else {
+            this._drawPrevious = true;
+        }
 
         const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
         const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;
@@ -269,6 +284,13 @@ export default class WWAPictureItem {
 
     public tickTime(frameMs: number) {
         this._timer.tick(frameMs);
+    }
+
+    public isInsideOfScreen() {
+        return (
+            this._posDestX + this._totalWidth > 0 && this._posDestY + this._totalHeight > 0 &&
+            this._posDestX < WWAConsts.MAP_WINDOW_WIDTH && this._posDestY < WWAConsts.MAP_WINDOW_HEIGHT
+        );
     }
 
     public isDeadlineOver() {
