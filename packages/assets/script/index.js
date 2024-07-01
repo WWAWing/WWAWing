@@ -33,6 +33,11 @@ function afterDeletePicture() {
   MSG("ユーザー定義関数を実行しました。");
 }
 
+function timeOutRunning() {
+  MSG("残念！\n戻ってこい！");
+  o[PX][PY] = 113;
+}
+
 function CALL_SAVE() {
   MSG("セーブしました！")
 }
