@@ -5919,7 +5919,12 @@ export class WWA {
     public deletePictureRegistry(layerNumber: number) {
         const data = this._cgManager.picture.deletePicture(layerNumber);
         this._wwaData.pictureRegistry = data;
-    };
+    }
+
+    public clearAllPictures() {
+        this._cgManager.picture.clearAllPictures();
+        this._wwaData.pictureRegistry = [];
+    }
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;

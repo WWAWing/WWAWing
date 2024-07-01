@@ -696,6 +696,17 @@ export class EvalCalcWwaNode {
         this.generator.wwa.setPictureRegistry(layerNumber, propertyPartsNumber, propertyPartsType, gameStatus.playerCoord);
         break;
       }
+      case "CLEAR_ALL_PICTURES": {
+        this.generator.wwa.clearAllPictures();
+        break;
+      }
+      case "HAS_PICTURE": {
+        this._checkArgsLength(1, node);
+        const layerNumber = Number(this.evalWwaNode(node.value[0]));
+        // TODO もしかしたら WWAPicture から呼び出したほうが正確？
+        const hasPicture = game_status.wwaData.pictureRegistry.some((item) => item.layerNumber === layerNumber);
+        return hasPicture;
+      }
       /** 絶対値を返す関数 */
       case "ABS": {
         this._checkArgsLength(1, node);
@@ -1144,6 +1155,8 @@ export class EvalCalcWwaNode {
       case 'ENEMY_GD':
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
+      case 'PICTURE':
+        throw new Error("この機能はまだ実装されていません！");
       case 'PLAYER_PX':
         return getPlayerCoordPx(gameStatus.playerCoord.x, gameStatus.cameraCoord.x);
       case 'PLAYER_PY':
@@ -1176,6 +1189,8 @@ export class EvalCalcWwaNode {
           throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+userVarIndex);
         }
         return game_status.itemBox[userVarIndex - 1];
+      case "PICTURE":
+        throw new Error("この機能はまだ実装されていません！");
       default:
         throw new Error("このシンボルは取得できません")
     }
