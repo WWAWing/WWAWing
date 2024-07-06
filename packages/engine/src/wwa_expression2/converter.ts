@@ -206,6 +206,8 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "CHANGE_SYSMSG":
     case "PICTURE":
     case "PICTURE_FROM_PARTS":
+    case "CLEAR_ALL_PICTURES":
+    case "HAS_PICTURE":
     case "SHOW_USER_DEF_VAR":
     case "ABS":
     case "GET_GAMEOVER_POS_X":
@@ -357,6 +359,7 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           left.name === "Y" ||
           left.name === "ID" ||
           left.name === "TYPE" ||
+          left.name === "PICTURE" ||
           left.name === "PLAYER_PX" ||
           left.name === "PLAYER_PY" ||
           left.name === "MOVE_SPEED" ||
@@ -446,7 +449,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
   const property = convertNodeAcornToWwa(node.property);
 
   if (object.type === "Symbol") {
-    if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM") {
+    if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM" && object.name !== "PICTURE") {
       throw new Error("このシンボルは配列にできません");
     }
     if (Wwa.isCalcurable(property)) {
@@ -461,7 +464,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
     }
   } else if (object.type === "ArrayOrObject1D") {
     // 1次元にしかできないものは排除
-    if (object.name === "ITEM") {
+    if (object.name === "ITEM" || object.name === "PICTURE") {
       throw new Error("この配列は2次元以上にはできません。");
     }
     if (Wwa.isCalcurable(property)) {
@@ -524,6 +527,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_HP":
     case "ENEMY_AT":
     case "ENEMY_DF":
+    case "PICTURE":
     case "PLAYER_PX":
     case "PLAYER_PY":
     case "MOVE_SPEED":

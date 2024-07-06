@@ -223,12 +223,10 @@ export default class WWAPicutre {
             this._anonymousPictures.splice(0);
             return this.getPictureRegistryData();
         }
-        if (!this._pictures.has(layerNumber)) {
-            console.warn(`${layerNumber} 番のピクチャが見つかりませんでした。`)
-            return this.getPictureRegistryData();
+        if (this._pictures.has(layerNumber)) {
+            this._pictures.get(layerNumber).clearCanvas();
+            this._pictures.delete(layerNumber);
         }
-        this._pictures.get(layerNumber).clearCanvas();
-        this._pictures.delete(layerNumber);
         return this.getPictureRegistryData();
     }
 
