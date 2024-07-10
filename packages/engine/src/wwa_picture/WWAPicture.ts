@@ -122,9 +122,9 @@ export default class WWAPicutre {
         }
         if (isValidLayerNumber(registry.layerNumber)) {
             if (isAnonymousPicture(registry.layerNumber)) {
-                this._anonymousPictures.push(new WWAPictureItem(registry, canvas, externalImageFile));
+                this._anonymousPictures.push(new WWAPictureItem(this._wwa, registry, canvas, externalImageFile));
             } else {
-                this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
+                this._pictures.set(registry.layerNumber, new WWAPictureItem(this._wwa, registry, canvas, externalImageFile));
                 // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
                 this._pictures = new Map([...this._pictures.entries()].sort(([, a], [, b]) => a.layerNumber - b.layerNumber));
             }

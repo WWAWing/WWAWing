@@ -2,6 +2,7 @@ import { PictureRegistry } from "@wwawing/common-interface";
 import { PartsType } from "@wwawing/loader";
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
+import { WWA } from "../wwa_main";
 import * as util from "../wwa_util";
 import {
     getArrayItemFromSingleOrArray,
@@ -73,12 +74,12 @@ export default class WWAPictureItem {
 
     private _timer: WWATimer;
 
-    constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
+    constructor(private _wwa: WWA, private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
         this._posBaseY = properties.pos?.[1] ?? 0;
-        [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
-        [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
+        [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, this._wwa, true);
+        [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, this._wwa, false);
         // イメージ画像がどれも 0, 0 の場合は何も描画しない（PICTURE 関数から呼び出す場合に黒四角が現れる対策）
         this._drawChip = this._imgMainX !== 0 || this._imgMainY !== 0 || this._imgSubX !== 0 || this._imgSubY !== 0;
         this._repeatX = properties.repeat?.[0] ?? 1;
@@ -198,6 +199,7 @@ export default class WWAPictureItem {
                 } else if (this._drawChip) {
                     for (let cy = 0; cy < this._cropY; cy++) {
                         for (let cx = 0; cx < this._cropX; cx++) {
+                            // TODO imgMap を使用した場合、 crop は隣接するパーツのイメージを使用する
                             this._canvas.drawCanvas(
                                 image,
                                 imgPosX + cx,
@@ -366,8 +368,21 @@ export default class WWAPictureItem {
         );
     }
 
-    private static _getImgPosByPicture(registry: PictureRegistry, isMainTime: boolean) {
+    private static _getImgPosByPicture(registry: PictureRegistry, wwa: WWA, isMainTime: boolean) {
         const { properties } = registry;
+        if (properties.imgMap?.[0] !== undefined && properties.imgMap?.[1] !== undefined) {
+            const [x, y] = properties.imgMap;
+            const type = properties.imgMap?.[2] !== undefined && properties.imgMap[2] >= 1 ? PartsType.MAP : PartsType.OBJECT;
+            const id = wwa.getPartsID(new Coord(x, y), type);
+            if (id === 0) {
+                return [0, 0];
+            }
+            const info = type === PartsType.MAP ? wwa.getMapInfo(id) : wwa.getObjectInfo(id);
+            if (isMainTime || (info[WWAConsts.ATR_X2] === 0 && info[WWAConsts.ATR_Y2] === 0)) {
+                return [info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE, info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE];
+            }
+            return [info[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE, info[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE];
+        }
         if (properties.img?.[0] !== undefined && properties.img?.[1] !== undefined) {
             if (isMainTime) {
                 return [properties.img[0], properties.img[1]];
