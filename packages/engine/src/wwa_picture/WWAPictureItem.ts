@@ -66,6 +66,10 @@ export default class WWAPictureItem {
     private readonly _imgFile?: HTMLImageElement;
     private readonly _cropX: number;
     private readonly _cropY: number;
+    /**
+     * imgMap 使用時限定。各パーツのイメージ座標を記載した二次元配列のキャッシュ。
+     */
+    private readonly _mapCropCache: [number, number, number, number][][] | null;
     private _opacity: number;
     private readonly _fade: number;
     private readonly _angleRadian: number;
@@ -78,10 +82,16 @@ export default class WWAPictureItem {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
         this._posBaseY = properties.pos?.[1] ?? 0;
-        [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, this._wwa, true);
-        [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, this._wwa, false);
+        [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
+        [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
+        this._mapCropCache = WWAPictureItem._getMapImgPosArray(this._registry, this._wwa);
         // イメージ画像がどれも 0, 0 の場合は何も描画しない（PICTURE 関数から呼び出す場合に黒四角が現れる対策）
-        this._drawChip = this._imgMainX !== 0 || this._imgMainY !== 0 || this._imgSubX !== 0 || this._imgSubY !== 0;
+        this._drawChip =
+            this._imgMainX !== 0 ||
+            this._imgMainY !== 0 ||
+            this._imgSubX !== 0 ||
+            this._imgSubY !== 0 ||
+            this._mapCropCache !== null;
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._imgFile = externalFile;
@@ -197,18 +207,36 @@ export default class WWAPictureItem {
                 if (this._imgFile) {
                     this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
                 } else if (this._drawChip) {
-                    for (let cy = 0; cy < this._cropY; cy++) {
-                        for (let cx = 0; cx < this._cropX; cx++) {
-                            // TODO imgMap を使用した場合、 crop は隣接するパーツのイメージを使用する
-                            this._canvas.drawCanvas(
-                                image,
-                                imgPosX + cx,
-                                imgPosY + cy,
-                                chipX + (this._chipWidth * cx),
-                                chipY + (this._chipHeight * cy),
-                                this._chipWidth,
-                                this._chipHeight
-                            );
+                    if (this._mapCropCache !== null) {
+                        this._mapCropCache.forEach((line, y) => {
+                            line.forEach(([cx, cy, cx2, cy2], x) => {
+                                if (cx === 0 && cy === 0 && cx2 === 0 && cy2 === 0) {
+                                    return;
+                                }
+                                this._canvas.drawCanvas(
+                                    image,
+                                    isMainAnimation ? cx : cx2,
+                                    isMainAnimation ? cy : cy2,
+                                    chipX + (this._chipWidth * x),
+                                    chipY + (this._chipHeight * y),
+                                    this._chipWidth,
+                                    this._chipHeight
+                                );
+                            })
+                        })
+                    } else {
+                        for (let cy = 0; cy < this._cropY; cy++) {
+                            for (let cx = 0; cx < this._cropX; cx++) {
+                                this._canvas.drawCanvas(
+                                    image,
+                                    imgPosX + cx,
+                                    imgPosY + cy,
+                                    chipX + (this._chipWidth * cx),
+                                    chipY + (this._chipHeight * cy),
+                                    this._chipWidth,
+                                    this._chipHeight
+                                );
+                            }
                         }
                     }
                 }
@@ -368,20 +396,10 @@ export default class WWAPictureItem {
         );
     }
 
-    private static _getImgPosByPicture(registry: PictureRegistry, wwa: WWA, isMainTime: boolean) {
+    private static _getImgPosByPicture(registry: PictureRegistry, isMainTime: boolean) {
         const { properties } = registry;
         if (properties.imgMap?.[0] !== undefined && properties.imgMap?.[1] !== undefined) {
-            const [x, y] = properties.imgMap;
-            const type = properties.imgMap?.[2] !== undefined && properties.imgMap[2] >= 1 ? PartsType.MAP : PartsType.OBJECT;
-            const id = wwa.getPartsID(new Coord(x, y), type);
-            if (id === 0) {
-                return [0, 0];
-            }
-            const info = type === PartsType.MAP ? wwa.getMapInfo(id) : wwa.getObjectInfo(id);
-            if (isMainTime || (info[WWAConsts.ATR_X2] === 0 && info[WWAConsts.ATR_Y2] === 0)) {
-                return [info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE, info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE];
-            }
-            return [info[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE, info[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE];
+            return [0, 0];
         }
         if (properties.img?.[0] !== undefined && properties.img?.[1] !== undefined) {
             if (isMainTime) {
@@ -396,6 +414,46 @@ export default class WWAPictureItem {
             return [registry.imgPosX, registry.imgPosY];
         }
         return [registry.imgPosX2, registry.imgPosY2];
+    }
+
+    private static _getMapImgPosArray(registry: PictureRegistry, wwa: WWA): [number, number, number, number][][] | null {
+        const { properties } = registry;
+        if (properties.imgMap?.[0] === undefined || properties.imgMap?.[1] === undefined) {
+            return null;
+        }
+        const cropX = properties.crop?.[0] ?? 1;
+        const cropY = properties.crop?.[1] ?? 1;
+        const [x, y] = properties.imgMap;
+        const type = properties.imgMap?.[2] !== undefined && properties.imgMap[2] >= 1 ? PartsType.MAP : PartsType.OBJECT;
+        const array = [];
+        for (let my = 0; my < cropY; my++) {
+            const line = [];
+            for (let mx = 0; mx < cropX; mx++) {
+                const id = wwa.getPartsID(new Coord(x + mx, y + my), type);
+                if (id === 0) {
+                    line.push([0, 0, 0, 0]);
+                } else {
+                    const info = type === PartsType.MAP ? wwa.getMapInfo(id) : wwa.getObjectInfo(id);
+                    if (info[WWAConsts.ATR_X2] === 0 && info[WWAConsts.ATR_Y2] === 0) {
+                        line.push([
+                            info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
+                        ]);
+                    } else {
+                        line.push([
+                            info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE,
+                        ]);
+                    }
+                }
+            }
+            array.push(line);
+        }
+        return array;
     }
 
     private static _getFontValue(properties: PictureRegistry["properties"]): string {
