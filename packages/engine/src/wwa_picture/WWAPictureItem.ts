@@ -282,23 +282,27 @@ export default class WWAPictureItem {
         this._totalHeight = adjustPositiveValue(this._sizeY) * this._cropY;
         this._chipWidth = Math.floor(this._totalWidth / this._cropX);
         this._chipHeight = Math.floor(this._totalHeight / this._cropY);
-        this._posDestX = getHorizontalCorrectionBySizeAnchor(
-            getHorizontalCirclePosition(
-                this._posBaseX,
-                this._circleRadiusX,
-                this._circleAngle
-            ),
-            this._totalWidth,
-            this._anchor
+        this._posDestX = Math.floor(
+            getHorizontalCorrectionBySizeAnchor(
+                getHorizontalCirclePosition(
+                    this._posBaseX,
+                    this._circleRadiusX,
+                    this._circleAngle
+                ),
+                this._totalWidth,
+                this._anchor
+            )
         );
-        this._posDestY = getVerticalCorrectionBySizeAnchor(
-            getVerticalCirclePosition(
-                this._posBaseY,
-                this._circleRadiusY,
-                this._circleAngle
-            ),
-            this._totalHeight,
-            this._anchor
+        this._posDestY = Math.floor(
+            getVerticalCorrectionBySizeAnchor(
+                getVerticalCirclePosition(
+                    this._posBaseY,
+                    this._circleRadiusY,
+                    this._circleAngle
+                ),
+                this._totalHeight,
+                this._anchor
+            )
         );
     }
 
