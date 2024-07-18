@@ -11,6 +11,7 @@ import {
     getHorizontalCorrectionBySizeAnchor,
     getVerticalCirclePosition,
     getVerticalCorrectionBySizeAnchor,
+    canDrawChip,
 } from "./utils";
 import { NextPicturePartsInfo } from "./typedef";
 import { WWATimer } from "./WWATimer";
@@ -86,12 +87,7 @@ export default class WWAPictureItem {
         [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
         this._mapCropCache = WWAPictureItem._getMapImgPosArray(this._registry, this._wwa);
         // イメージ画像がどれも 0, 0 の場合は何も描画しない（PICTURE 関数から呼び出す場合に黒四角が現れる対策）
-        this._drawChip =
-            this._imgMainX !== 0 ||
-            this._imgMainY !== 0 ||
-            this._imgSubX !== 0 ||
-            this._imgSubY !== 0 ||
-            this._mapCropCache !== null;
+        this._drawChip = canDrawChip(this._imgMainX, this._imgMainY, this._imgSubX, this._imgSubY) || this._mapCropCache !== null;
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._imgFile = externalFile;
@@ -210,7 +206,7 @@ export default class WWAPictureItem {
                     if (this._mapCropCache !== null) {
                         this._mapCropCache.forEach((line, y) => {
                             line.forEach(([cx, cy, cx2, cy2], x) => {
-                                if (cx === 0 && cy === 0 && cx2 === 0 && cy2 === 0) {
+                                if (!canDrawChip(cx, cy, cx2, cy2)) {
                                     return;
                                 }
                                 this._canvas.drawCanvas(
