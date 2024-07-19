@@ -69,6 +69,7 @@ export default class WWAPictureItem {
     private readonly _cropY: number;
     /**
      * imgMap 使用時限定。各パーツのイメージ座標を記載した二次元配列のキャッシュ。
+     * @todo _cropX と _cropY とでどちらかしか使用しないため、両方ともまとめてクラスで管理できるようにしたい
      */
     private readonly _mapCropCache: [number, number, number, number][][] | null;
     private _opacity: number;
