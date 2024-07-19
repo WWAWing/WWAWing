@@ -79,13 +79,13 @@ export default class WWAPictureItem {
 
     private _timer: WWATimer;
 
-    constructor(private _wwa: WWA, private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
+    constructor(wwa: WWA, private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
         this._posBaseY = properties.pos?.[1] ?? 0;
         [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
         [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
-        this._mapCropCache = WWAPictureItem._getMapImgPosArray(this._registry, this._wwa);
+        this._mapCropCache = WWAPictureItem._getMapImgPosArray(this._registry, wwa);
         // イメージ画像がどれも 0, 0 の場合は何も描画しない（PICTURE 関数から呼び出す場合に黒四角が現れる対策）
         this._drawChip = canDrawChip(this._imgMainX, this._imgMainY, this._imgSubX, this._imgSubY) || this._mapCropCache !== null;
         this._repeatX = properties.repeat?.[0] ?? 1;
