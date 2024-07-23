@@ -419,18 +419,20 @@ export default class WWAPictureItem {
 
     private static _getMapImgPosArray(registry: PictureRegistry, wwa: WWA): [number, number, number, number][][] | null {
         const { properties } = registry;
-        if (properties.imgMap?.[0] === undefined || properties.imgMap?.[1] === undefined) {
+        const imgMapX = properties.imgMap?.[0] ?? -1;
+        const imgMapY = properties.imgMap?.[1] ?? -1;
+        // imgMap プロパティは [0, 0] も使用される場合があるため、負の値を指定した場合は未定義と扱うようにする
+        if (imgMapX < 0 || imgMapY < 0) {
             return null;
         }
         const cropX = properties.crop?.[0] ?? 1;
         const cropY = properties.crop?.[1] ?? 1;
-        const [x, y] = properties.imgMap;
         const type = properties.imgMap?.[2] !== undefined && properties.imgMap[2] >= 1 ? PartsType.MAP : PartsType.OBJECT;
         const array = [];
         for (let my = 0; my < cropY; my++) {
             const line = [];
             for (let mx = 0; mx < cropX; mx++) {
-                const id = wwa.getPartsID(new Coord(x + mx, y + my), type);
+                const id = wwa.getPartsID(new Coord(imgMapX + mx, imgMapY + my), type);
                 if (id === 0) {
                     line.push([0, 0, 0, 0]);
                 } else {
