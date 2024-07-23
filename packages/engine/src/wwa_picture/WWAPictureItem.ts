@@ -2,6 +2,7 @@ import { PictureRegistry } from "@wwawing/common-interface";
 import { PartsType } from "@wwawing/loader";
 import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
+import { WWA } from "../wwa_main";
 import * as util from "../wwa_util";
 import {
     getArrayItemFromSingleOrArray,
@@ -10,6 +11,7 @@ import {
     getHorizontalCorrectionBySizeAnchor,
     getVerticalCirclePosition,
     getVerticalCorrectionBySizeAnchor,
+    canDrawChip,
 } from "./utils";
 import { NextPicturePartsInfo } from "./typedef";
 import { WWATimer } from "./WWATimer";
@@ -65,6 +67,11 @@ export default class WWAPictureItem {
     private readonly _imgFile?: HTMLImageElement;
     private readonly _cropX: number;
     private readonly _cropY: number;
+    /**
+     * imgMap 使用時限定。各パーツのイメージ座標を記載した二次元配列のキャッシュ。
+     * @todo _cropX と _cropY とでどちらかしか使用しないため、両方ともまとめてクラスで管理できるようにしたい
+     */
+    private readonly _mapCropCache: [number, number, number, number][][] | null;
     private _opacity: number;
     private readonly _fade: number;
     private readonly _angleRadian: number;
@@ -73,14 +80,15 @@ export default class WWAPictureItem {
 
     private _timer: WWATimer;
 
-    constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
+    constructor(wwa: WWA, private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
         this._posBaseY = properties.pos?.[1] ?? 0;
         [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
         [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
+        this._mapCropCache = WWAPictureItem._getMapImgPosArray(this._registry, wwa);
         // イメージ画像がどれも 0, 0 の場合は何も描画しない（PICTURE 関数から呼び出す場合に黒四角が現れる対策）
-        this._drawChip = this._imgMainX !== 0 || this._imgMainY !== 0 || this._imgSubX !== 0 || this._imgSubY !== 0;
+        this._drawChip = canDrawChip(this._imgMainX, this._imgMainY, this._imgSubX, this._imgSubY) || this._mapCropCache !== null;
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._imgFile = externalFile;
@@ -196,17 +204,36 @@ export default class WWAPictureItem {
                 if (this._imgFile) {
                     this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
                 } else if (this._drawChip) {
-                    for (let cy = 0; cy < this._cropY; cy++) {
-                        for (let cx = 0; cx < this._cropX; cx++) {
-                            this._canvas.drawCanvas(
-                                image,
-                                imgPosX + cx,
-                                imgPosY + cy,
-                                chipX + (this._chipWidth * cx),
-                                chipY + (this._chipHeight * cy),
-                                this._chipWidth,
-                                this._chipHeight
-                            );
+                    if (this._mapCropCache !== null) {
+                        this._mapCropCache.forEach((line, y) => {
+                            line.forEach(([cx, cy, cx2, cy2], x) => {
+                                if (!canDrawChip(cx, cy, cx2, cy2)) {
+                                    return;
+                                }
+                                this._canvas.drawCanvas(
+                                    image,
+                                    isMainAnimation ? cx : cx2,
+                                    isMainAnimation ? cy : cy2,
+                                    chipX + (this._chipWidth * x),
+                                    chipY + (this._chipHeight * y),
+                                    this._chipWidth,
+                                    this._chipHeight
+                                );
+                            })
+                        })
+                    } else {
+                        for (let cy = 0; cy < this._cropY; cy++) {
+                            for (let cx = 0; cx < this._cropX; cx++) {
+                                this._canvas.drawCanvas(
+                                    image,
+                                    imgPosX + cx,
+                                    imgPosY + cy,
+                                    chipX + (this._chipWidth * cx),
+                                    chipY + (this._chipHeight * cy),
+                                    this._chipWidth,
+                                    this._chipHeight
+                                );
+                            }
                         }
                     }
                 }
@@ -256,23 +283,27 @@ export default class WWAPictureItem {
         this._totalHeight = adjustPositiveValue(this._sizeY) * this._cropY;
         this._chipWidth = Math.floor(this._totalWidth / this._cropX);
         this._chipHeight = Math.floor(this._totalHeight / this._cropY);
-        this._posDestX = getHorizontalCorrectionBySizeAnchor(
-            getHorizontalCirclePosition(
-                this._posBaseX,
-                this._circleRadiusX,
-                this._circleAngle
-            ),
-            this._totalWidth,
-            this._anchor
+        this._posDestX = Math.floor(
+            getHorizontalCorrectionBySizeAnchor(
+                getHorizontalCirclePosition(
+                    this._posBaseX,
+                    this._circleRadiusX,
+                    this._circleAngle
+                ),
+                this._totalWidth,
+                this._anchor
+            )
         );
-        this._posDestY = getVerticalCorrectionBySizeAnchor(
-            getVerticalCirclePosition(
-                this._posBaseY,
-                this._circleRadiusY,
-                this._circleAngle
-            ),
-            this._totalHeight,
-            this._anchor
+        this._posDestY = Math.floor(
+            getVerticalCorrectionBySizeAnchor(
+                getVerticalCirclePosition(
+                    this._posBaseY,
+                    this._circleRadiusY,
+                    this._circleAngle
+                ),
+                this._totalHeight,
+                this._anchor
+            )
         );
     }
 
@@ -368,6 +399,9 @@ export default class WWAPictureItem {
 
     private static _getImgPosByPicture(registry: PictureRegistry, isMainTime: boolean) {
         const { properties } = registry;
+        if (properties.imgMap?.[0] !== undefined && properties.imgMap?.[1] !== undefined) {
+            return [0, 0];
+        }
         if (properties.img?.[0] !== undefined && properties.img?.[1] !== undefined) {
             if (isMainTime) {
                 return [properties.img[0], properties.img[1]];
@@ -381,6 +415,48 @@ export default class WWAPictureItem {
             return [registry.imgPosX, registry.imgPosY];
         }
         return [registry.imgPosX2, registry.imgPosY2];
+    }
+
+    private static _getMapImgPosArray(registry: PictureRegistry, wwa: WWA): [number, number, number, number][][] | null {
+        const { properties } = registry;
+        const imgMapX = properties.imgMap?.[0] ?? -1;
+        const imgMapY = properties.imgMap?.[1] ?? -1;
+        // imgMap プロパティは [0, 0] も使用される場合があるため、負の値を指定した場合は未定義と扱うようにする
+        if (imgMapX < 0 || imgMapY < 0) {
+            return null;
+        }
+        const cropX = properties.crop?.[0] ?? 1;
+        const cropY = properties.crop?.[1] ?? 1;
+        const type = properties.imgMap?.[2] !== undefined && properties.imgMap[2] >= 1 ? PartsType.MAP : PartsType.OBJECT;
+        const array = [];
+        for (let my = 0; my < cropY; my++) {
+            const line = [];
+            for (let mx = 0; mx < cropX; mx++) {
+                const id = wwa.getPartsID(new Coord(imgMapX + mx, imgMapY + my), type);
+                if (id === 0) {
+                    line.push([0, 0, 0, 0]);
+                } else {
+                    const info = type === PartsType.MAP ? wwa.getMapInfo(id) : wwa.getObjectInfo(id);
+                    if (info[WWAConsts.ATR_X2] === 0 && info[WWAConsts.ATR_Y2] === 0) {
+                        line.push([
+                            info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
+                        ]);
+                    } else {
+                        line.push([
+                            info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE,
+                        ]);
+                    }
+                }
+            }
+            array.push(line);
+        }
+        return array;
     }
 
     private static _getFontValue(properties: PictureRegistry["properties"]): string {

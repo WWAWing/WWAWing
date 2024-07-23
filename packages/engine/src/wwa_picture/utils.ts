@@ -168,6 +168,9 @@ export const getArrayItemFromSingleOrArray = <T>(value: T | T[], index: number, 
     return value[index];
 };
 
+export const canDrawChip = (imgPosX: number, imgPosY: number, imgPosX2: number, imgPosY2: number) =>
+    imgPosX > 0 || imgPosY > 0 || imgPosX2 > 0 || imgPosY2 > 0;
+
 export const adjustPositiveValue = (value: number) => {
     if (value < 0) {
         return 0;
