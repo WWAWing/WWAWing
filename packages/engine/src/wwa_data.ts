@@ -602,13 +602,14 @@ export enum MacroType {
     CONSOLE_LOG2 = 63,
     DELAYBGM = 64,
     SYSMSG = 65,
+    STRING = 66,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101,
     LEGACY_IF = 10050
 }
 
 export type ConditionalExecuteMacroType = MacroType.IF | MacroType.ELSE_IF | MacroType.ELSE | MacroType.END_IF;
-export type PreprocessMacroType = ConditionalExecuteMacroType | MacroType.SHOW_STR | MacroType.SHOW_STR2;
+export type PreprocessMacroType = ConditionalExecuteMacroType | MacroType.SHOW_STR | MacroType.SHOW_STR2 | MacroType.STRING;
 
 export var macrotable = {
     "": 0,
@@ -675,6 +676,7 @@ export var macrotable = {
     "$console_log2": 63,
     "$delaybgm": 64,
     "$sysmsg": 65,
+    "$string": 66,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }

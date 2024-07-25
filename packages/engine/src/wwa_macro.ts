@@ -329,6 +329,10 @@ export class Macro {
                     this._executeSysMsgMacro();
                     return {}
                 }
+                case MacroType.STRING: {
+                    // $string マクロは、キューの組み立て時に処理されていて、既に存在しないはず
+                    return {};
+                }
                 default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     return {};

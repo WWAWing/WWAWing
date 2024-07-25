@@ -173,6 +173,7 @@ export function createPage({
 export const messageLineIsText = (lineType: MessageLineType) =>
   lineType === MacroType.SHOW_STR ||
   lineType === MacroType.SHOW_STR2 ||
+  lineType === MacroType.STRING ||
   lineType === "text" ||
   lineType === "normalMacro";
 
@@ -200,6 +201,7 @@ export function parseMessageLines(
         case MacroType.END_IF:
         case MacroType.SHOW_STR:
         case MacroType.SHOW_STR2:
+        case MacroType.STRING:
           return { type: macro.macroType, text: line, macro };
         default:
           return { type: "normalMacro" as const, text: line, macro };
@@ -251,6 +253,9 @@ export function createNewNode(
             evalScript,
           )
         : undefined;
+    case MacroType.STRING:
+      // TODO 実装する
+      return undefined;
     case "text":
       return shouldCreateParsedMessage
         ? new ParsedMessage(currentLine.text, generateTokenValues, evalScript)
