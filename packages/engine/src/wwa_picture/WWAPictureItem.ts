@@ -437,7 +437,8 @@ export default class WWAPictureItem {
                     line.push([0, 0, 0, 0]);
                 } else {
                     const info = type === PartsType.MAP ? wwa.getMapInfo(id) : wwa.getObjectInfo(id);
-                    if (info[WWAConsts.ATR_X2] === 0 && info[WWAConsts.ATR_Y2] === 0) {
+                    // 背景パーツでも ATR_X2 や ATR_Y2 に黒以外のイメージ座標が含まれている場合がある
+                    if (type === PartsType.MAP || info[WWAConsts.ATR_X2] === 0 && info[WWAConsts.ATR_Y2] === 0) {
                         line.push([
                             info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
                             info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
