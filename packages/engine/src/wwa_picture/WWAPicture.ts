@@ -46,11 +46,11 @@ export default class WWAPicutre {
             return;
         }
         if (status.kind !== "data") {
-            alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が見つかりませんでした。エラーメッセージ: ${status.errorMessage}`);
+            console.warn(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が見つかりませんでした。エラーメッセージ: ${status.errorMessage}`);
             return;
         }
         if (!status.data || typeof status.data !== "object") {
-            alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が正しい形式で書かれていません。`);
+            console.warn(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が正しい形式で書かれていません。`);
             return;
         }
         if ("files" in status.data) {
@@ -62,12 +62,12 @@ export default class WWAPicutre {
                     element.src = path;
                     element.onerror = (err) => {
                         if (typeof err === "string") {
-                            alert(`ピクチャ画像ファイル ${path} が見つかりませんでした。エラーメッセージ: ${err}`);
+                            console.warn(`ピクチャ画像ファイル ${path} が見つかりませんでした。エラーメッセージ: ${err}`);
                         } else {
                             // onerror の引数にあたる ErrorEvent では理由を示すエラーメッセージが含まれていない
                             // TODO より正確なエラーメッセージを出力するに fetch で画像データを取得すると良いのだが、
                             //      取得したデータが画像形式なのか判別したり変換したりする機能の開発コストが大きいため、しばらくはこの状態で維持
-                            alert(`ピクチャ画像ファイル ${path} が見つかりませんでした。`);
+                            console.warn(`ピクチャ画像ファイル ${path} が見つかりませんでした。`);
                         }
                         this._externalImageFiles.set(name, { status: "failed" })
                     };
@@ -76,7 +76,7 @@ export default class WWAPicutre {
                     };
                 });
             } else {
-                alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} の files が正しい形式で書かれていません。`);
+                console.warn(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} の files が正しい形式で書かれていません。`);
             }
         }
     }
