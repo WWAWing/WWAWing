@@ -691,6 +691,10 @@ export class EvalCalcWwaNode {
         if (!PARTS_TYPE_LIST.includes(propertyPartsType)) {
           throw new Error("パーツ種別が不明です");
         }
+        if (propertyPartsNumber === 0) {
+          this.generator.wwa.deletePictureRegistry(layerNumber);
+          return;
+        }
         const gameStatus = this.generator.wwa.getGameStatus();
         // 実行元パーツ座標はプレイヤーの座標として評価する
         this.generator.wwa.setPictureRegistry(layerNumber, propertyPartsNumber, propertyPartsType, gameStatus.playerCoord);
