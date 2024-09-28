@@ -687,6 +687,10 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(2, node);
         const layerNumber = Number(this.evalWwaNode(node.value[0]));
         const propertyPartsNumber = Number(this.evalWwaNode(node.value[1]));
+        if (propertyPartsNumber === 0) {
+          this.generator.wwa.deletePictureRegistry(layerNumber);
+          return;
+        }
         const propertyPartsType = node.value.length >= 3 ? Number(this.evalWwaNode(node.value[2])) : PartsType.OBJECT;
         if (!PARTS_TYPE_LIST.includes(propertyPartsType)) {
           throw new Error("パーツ種別が不明です");
