@@ -687,13 +687,13 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(2, node);
         const layerNumber = Number(this.evalWwaNode(node.value[0]));
         const propertyPartsNumber = Number(this.evalWwaNode(node.value[1]));
-        const propertyPartsType = node.value.length >= 3 ? Number(this.evalWwaNode(node.value[2])) : PartsType.OBJECT;
-        if (!PARTS_TYPE_LIST.includes(propertyPartsType)) {
-          throw new Error("パーツ種別が不明です");
-        }
         if (propertyPartsNumber === 0) {
           this.generator.wwa.deletePictureRegistry(layerNumber);
           return;
+        }
+        const propertyPartsType = node.value.length >= 3 ? Number(this.evalWwaNode(node.value[2])) : PartsType.OBJECT;
+        if (!PARTS_TYPE_LIST.includes(propertyPartsType)) {
+          throw new Error("パーツ種別が不明です");
         }
         const gameStatus = this.generator.wwa.getGameStatus();
         // 実行元パーツ座標はプレイヤーの座標として評価する
