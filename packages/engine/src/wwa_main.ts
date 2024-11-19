@@ -10,6 +10,7 @@ import {
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
     StatusKind, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, WWAConsts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
+    MessageDisplayRequest,
 } from "./wwa_data";
 
 import {
@@ -266,14 +267,17 @@ export class WWA {
      * ウィンドウが表示されている途中に発生したメッセージ表示リクエスト.
      * 現在表示されているウィンドウが全て閉じられた後にメッセージとして表示されます.
      * メッセージウィンドウ(システムメッセージ含む)に関しては、表示される予定のものが全て掃けた後にリクエスト内容のメッセージが表示されます.
+     * 
+     * - message: 本文
+     * - shouldParse: true の場合、タグとマクロをパースします。
      */
-    private _windowCloseWaitingMessageDisplayRequests: string[] = [];
+    private _windowCloseWaitingMessageDisplayRequests: MessageDisplayRequest[] = [];
 
     /**
      * プレイヤーや物体パーツが動いている途中に発生したメッセージ表示リクエスト.
      * プレイヤーが次の座標に納まってからメッセージ処理を実行します。
      */
-    private _playerAndObjectsStopWaitingMessageDisplayRequests: string[] = [];
+    private _playerAndObjectsStopWaitingMessageDisplayRequests: MessageDisplayRequest[] = [];
 
     /**
      * ウィンドウが表示されている途中に発生したジャンプゲートリクエスト.
@@ -1678,11 +1682,12 @@ export class WWA {
                             id: itemID,
                             type: PartsType.OBJECT,
                             position: this._player.getPosition().getPartsCoord()
-                        }
+                        },
+                        shouldParse: true
                     }
                 );
             } else {
-                this.registerPageByMessage(systemMessage, {showChoice: true, isSystemMessage: true});
+                this.registerPageByMessage(systemMessage, {showChoice: true, isSystemMessage: true, shouldParse: true});
                 this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_ITEM_USE;
                 this._yesNoUseItemPos = itemPos1To12;
             }
@@ -3329,7 +3334,8 @@ export class WWA {
                 id: partsID,
                 type: PartsType.MAP,
                 position: pos.clone()
-            }
+            },
+            shouldParse: true
         });
         this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
 
@@ -3364,7 +3370,7 @@ export class WWA {
             var messageID = this._wwaData.mapAttribute[partsID][Consts.ATR_STRING];
             var message = this._wwaData.message[messageID];
 
-            this.registerPageByMessage(message, { triggerParts: { id: partsID, type: PartsType.MAP, position: pos.clone() } });
+            this.registerPageByMessage(message, { triggerParts: { id: partsID, type: PartsType.MAP, position: pos.clone() }, shouldParse: true });
             this.playSound(this._wwaData.mapAttribute[partsID][Consts.ATR_SOUND]);
             return false;
         }
@@ -3430,7 +3436,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験的に踏み潰し判定と処理の順序を入れ替えています。不具合があるようなら戻します。 150415
-        this.registerPageByMessage(message, {triggerParts: {id: partsID, type: PartsType.OBJECT, position: pos }});
+        this.registerPageByMessage(message, {triggerParts: {id: partsID, type: PartsType.OBJECT, position: pos }, shouldParse: true });
         // 待ち時間
         this._waitFrame += this._wwaData.objectAttribute[partsID][Consts.ATR_NUMBER] * Consts.WAIT_TIME_FRAME_NUM;
         this._temporaryInputDisable = true;
@@ -3488,7 +3494,7 @@ export class WWA {
             return;
         }
 
-        this.registerPageByMessage(message, { triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
+        this.registerPageByMessage(message, { triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() }, shouldParse: true });
 
         this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
@@ -3520,7 +3526,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験的に(ry
-        this.registerPageByMessage(message, { showChoice: true,  triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
+        this.registerPageByMessage(message, { showChoice: true,  triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() }, shouldParse: true });
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -3538,7 +3544,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験的に(ry
-        this.registerPageByMessage(message, { showChoice: true,  triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
+        this.registerPageByMessage(message, { showChoice: true,  triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() }, shouldParse: true });
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -3566,7 +3572,7 @@ export class WWA {
             if (this._wwaData.objectAttribute[partsID][Consts.ATR_MODE] !== 0) {
                 // 使用型アイテム の場合は、処理は使用時です。
             } else {
-                this.registerPageByMessage(message, { triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
+                this.registerPageByMessage(message, { triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() }, shouldParse: true });
                 this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
             }
         } catch (e) {
@@ -3585,7 +3591,7 @@ export class WWA {
                 this._player.removeItemByPartsID(itemID);
             }
             this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
-            this.registerPageByMessage(message, {triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
+            this.registerPageByMessage(message, {triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() }, shouldParse: true });
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
             this.reserveAppearPartsInNextFrame(pos, AppearanceTriggerType.OBJECT, partsID);
             this._paintSkipByDoorOpen = true;
@@ -3603,7 +3609,7 @@ export class WWA {
             this.setPartsOnPosition(PartsType.OBJECT, 0, pos);
         }
         // 試験(ry
-        this.registerPageByMessage(message, { showChoice: true,  triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() } });
+        this.registerPageByMessage(message, { showChoice: true,  triggerParts: { id: partsID, type: PartsType.OBJECT, position: pos.clone() }, shouldParse: true });
         this._yesNoChoicePartsCoord = pos;
         this._yesNoChoicePartsID = partsID;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.CALL_BY_OBJECT_PARTS;
@@ -3681,7 +3687,8 @@ export class WWA {
                     defence: this._wwaData.objectAttribute[partsID][Consts.ATR_DEFENCE],
                     gold: this._wwaData.objectAttribute[partsID][Consts.ATR_GOLD]
                 }
-            }
+            },
+            shouldParse: true
         });
         this.playSound(this._wwaData.objectAttribute[partsID][Consts.ATR_SOUND]);
     }
@@ -3938,8 +3945,8 @@ export class WWA {
             this.forcedJumpGate(this._windowCloseWaitingJumpGateRequest.x, this._windowCloseWaitingJumpGateRequest.y);
         }
         if (this._windowCloseWaitingMessageDisplayRequests.length > 0) {
-            const message = this._windowCloseWaitingMessageDisplayRequests.shift();
-            this.registerPageByMessage(message);
+            const { message, shouldParse } = this._windowCloseWaitingMessageDisplayRequests.shift();
+            this.registerPageByMessage(message, { shouldParse });
             return { newPageGenerated: true };
         }
         return {newPageGenerated: false };
@@ -3953,8 +3960,9 @@ export class WWA {
         }
         if (this._playerAndObjectsStopWaitingMessageDisplayRequests.length > 0) {
             // 移動後のプレイヤーが justPosition ならメッセージを表示する
-            // HACK: <P> で発生したメッセージを無理やり連結しているが、配列を直接受け取れるようになるべき
-            this.registerPageByMessage(this._playerAndObjectsStopWaitingMessageDisplayRequests.join("<p>"));
+            this._playerAndObjectsStopWaitingMessageDisplayRequests.forEach(({message, shouldParse}) => {
+                this.registerPageByMessage(message, { shouldParse });
+            });
             this._playerAndObjectsStopWaitingMessageDisplayRequests = [];
         }
     }
@@ -3968,27 +3976,44 @@ export class WWA {
 
     // メッセージが表示できる場合は表示します。
     // できない場合はできるようになってからします。
-    public reserveMessageDisplayWhenShouldOpen(message: string) {
+    public reserveMessageDisplayWhenShouldOpen(request: MessageDisplayRequest) {
         if (
             this._player.isWaitingMessage() ||
             this._player.isFighting() ||
             this._player.isWaitingPasswordWindow() ||
             this._player.isWaitingEstimateWindow()
         ) {
-            this._windowCloseWaitingMessageDisplayRequests.push(message);
+            this._windowCloseWaitingMessageDisplayRequests.push(request);
         } else if (this._player.isMoving() || this._player.isWaitingMoveMacro()) {
-            this._playerAndObjectsStopWaitingMessageDisplayRequests.push(message);
+            this._playerAndObjectsStopWaitingMessageDisplayRequests.push(request);
         } else {
-            this.registerPageByMessage(message);
+            this.registerPageByMessage(request.message, {shouldParse: request.shouldParse});
         }
     }
 
     // MSG() 関数の実行結果をハンドリングします。
-    public handleMsgFunction(message: string): void{
+    // JSON.stringify が適用される場合 (文字列以外の場合は、)
+    public handleMsgFunction(_message: unknown): void{
+        const { message, jsonStringified, hasError } = WWA._stringifyMessage(_message);
+        const shouldParse = !jsonStringified && !hasError;
+        const request: MessageDisplayRequest = { message, shouldParse }
         if (this._pageExecuting) {
-            this._windowCloseWaitingMessageDisplayRequests.push(message)
+            this._windowCloseWaitingMessageDisplayRequests.push(request)
         } else {
-            this.reserveMessageDisplayWhenShouldOpen(message);
+            this.reserveMessageDisplayWhenShouldOpen(request);
+        }
+    }
+
+    private static _stringifyMessage(message: unknown): { message: string; jsonStringified?: boolean, hasError?: boolean } {
+        if (typeof message === "string") {
+          return { message };
+        }
+        try {
+            return { message: JSON.stringify(message), jsonStringified: true };
+        } catch (error) {
+            console.warn("MSG関数に文字列化できない値が与えられています! ", message);
+            console.warn(error);
+            return { message: "## この値は文字列化できません ##", hasError: true };
         }
     }
 
@@ -3996,9 +4021,10 @@ export class WWA {
     public handleFaceFunction(face: Face): void {
         // $face マクロを発行し、メッセージに積む。
         if(this._pageExecuting) {
-            this._windowCloseWaitingMessageDisplayRequests.push(
-              `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`
-            );
+            this._windowCloseWaitingMessageDisplayRequests.push({
+                message: `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`,
+                shouldParse: true
+            });
         } else {
             this.addFace(face);
         }
@@ -4008,7 +4034,8 @@ export class WWA {
     public registerSystemMessagePage(message: string, showChoice: boolean = false): void {
         this.registerPageByMessage(message, {
             showChoice,
-            isSystemMessage: true
+            isSystemMessage: true,
+            shouldParse: true
         })
     }
 
@@ -4018,7 +4045,8 @@ export class WWA {
         if (systemMessage !== "BLANK") {
             // NOTE: 二者択一型システムメッセージに対応する場合は拡張が必要
             this.registerPageByMessage(systemMessage, {
-                isSystemMessage: true
+                isSystemMessage: true,
+                shouldParse: true
             })
         }
     }
@@ -4045,15 +4073,17 @@ export class WWA {
                 type: PartsType.OBJECT,
                 position: new Coord(0, 0)
             },
-            scoreOption = undefined
+            scoreOption = undefined,
+            shouldParse
         }: {
             showChoice?: boolean,
             isSystemMessage?: boolean,
             triggerParts?: TriggerParts,
-            scoreOption?: ScoreOption
-        } = {}
+            scoreOption?: ScoreOption,
+            shouldParse: boolean
+        } 
     ): void {
-        const generatedPage = generatePagesByRawMessage(
+        const generatedPage = shouldParse ? generatePagesByRawMessage(
           message,
           { triggerParts, isSystemMessage, showChoice, scoreOption },
           (macroStr: string) => parseMacro(this, triggerParts, macroStr),
@@ -4061,7 +4091,13 @@ export class WWA {
           // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
           // 型が any になってしまうのであえて bind 使ってません
           (triggerParts: TriggerParts) => this.generateTokenValues(triggerParts)
-        );
+        ) : {
+            firstNode: this._createSimpleMessage(message, triggerParts),
+            isLastPage: true,
+            triggerParts,
+            isSystemMessage: false,
+            showChoice: false,
+        };
         this._pages = this._pages.concat(generatedPage);
         this._shouldSetNextPage = true;
     }
@@ -5443,7 +5479,8 @@ export class WWA {
                         id: itemID,
                         type: PartsType.OBJECT,
                         position: this._player.getPosition().getPartsCoord()
-                    }
+                    },
+                    shouldParse: true
                 }
             );
             return { newPageGenerated: this._pages.length !== 0 }

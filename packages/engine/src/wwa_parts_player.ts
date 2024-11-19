@@ -1103,7 +1103,7 @@ export class Player extends PartsObject {
                 // 注)ドロップアイテムがこれによって消えたり変わったりするのは原作からの仕様
                 this._wwa.reserveAppearPartsInNextFrame(this._enemy.position, AppearanceTriggerType.OBJECT, this._enemy.partsID);
                 this._state = PlayerState.CONTROLLABLE; // メッセージキューへのエンキュー前にやるのが大事!!(エンキューするとメッセージ待ちになる可能性がある）
-                this._wwa.registerPageByMessage(this._enemy.message, {triggerParts: { id: this._enemy.partsID, type: PartsType.OBJECT, position: this._enemy.position } });
+                this._wwa.registerPageByMessage(this._enemy.message, {triggerParts: { id: this._enemy.partsID, type: PartsType.OBJECT, position: this._enemy.position }, shouldParse: true });
                 this._enemy.battleEndProcess();
                 this._battleTurnLength = 0;
                 this._battleNoDamageTurnLength = 0;
