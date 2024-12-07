@@ -1,8 +1,9 @@
 /*!
- * serve-index
+ * serve-index (WWA Wing Edition)
  * Copyright(c) 2011 Sencha Inc.
  * Copyright(c) 2011 TJ Holowaychuk
  * Copyright(c) 2014-2015 Douglas Christopher Wilson
+ * Copyright(c) 2015-2024 WWA Wing Team
  * MIT Licensed
  */
 
@@ -97,6 +98,7 @@ function serveIndex(root, options) {
   var stylesheet = opts.stylesheet || defaultStylesheet;
   var template = opts.template || defaultTemplate;
   var view = opts.view || 'tiles';
+  var templateParseMode = opts.templateParseMode ?? "fileName";
 
   return function (req, res, next) {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -164,7 +166,7 @@ function serveIndex(root, options) {
 
         // not acceptable
         if (!type) return next(createError(406));
-        serveIndex[mediaType[type]](req, res, files, next, originalDir, showUp, icons, path, view, template, stylesheet);
+        serveIndex[mediaType[type]](req, res, files, next, originalDir, showUp, icons, path, view, template, stylesheet, templateParseMode);
       });
     });
   };
@@ -174,9 +176,9 @@ function serveIndex(root, options) {
  * Respond with text/html.
  */
 
-serveIndex.html = function _html(req, res, files, next, dir, showUp, icons, path, view, template, stylesheet) {
+serveIndex.html = function _html(req, res, files, next, dir, showUp, icons, path, view, template, stylesheet, templateParseMode) {
   var render = typeof template !== 'function'
-    ? createHtmlRender(template)
+    ? createHtmlRender(template, templateParseMode)
     : template
 
   if (showUp) {
@@ -190,26 +192,33 @@ serveIndex.html = function _html(req, res, files, next, dir, showUp, icons, path
     // sort file list
     fileList.sort(fileSort);
 
-    // read stylesheet
-    fs.readFile(stylesheet, 'utf8', function (err, style) {
-      if (err) return next(err);
+    // create locals for rendering
+    const locals = {
+      directory: dir,
+      displayIcons: Boolean(icons),
+      fileList: fileList,
+      path: path,
+      viewName: view
+    };
 
-      // create locals for rendering
-      var locals = {
-        directory: dir,
-        displayIcons: Boolean(icons),
-        fileList: fileList,
-        path: path,
-        style: style,
-        viewName: view
-      };
-
-      // render html
-      render(locals, function (err, body) {
+    if (templateParseMode === "fileName") {
+      // read stylesheet
+      fs.readFile(stylesheet, 'utf8', function (err, style) {
+        if (err) return next(err);
+        // render html
+        render({...locals, style }, function (err, body) {
+          if (err) return next(err);
+          send(res, 'text/html', body)
+        });
+      });
+    } else if(templateParseMode === "fileContent") {
+      render({...locals, style: stylesheet }, function (err, body) {
         if (err) return next(err);
         send(res, 'text/html', body)
       });
-    });
+    } else {
+      throw new TypeError("templateParseMode is invalid", templateParseMode)
+    }
   });
 };
 
@@ -320,21 +329,28 @@ function createHtmlFileList(files, dir, useIcons, view) {
  * Create function to render html.
  */
 
-function createHtmlRender(template) {
+function createHtmlRender(template, templateParseMode) {
   return function render(locals, callback) {
-    // read template
-    fs.readFile(template, 'utf8', function (err, str) {
-      if (err) return callback(err);
-
-      var body = str
-        .replace(/\{style\}/g, locals.style.concat(iconStyle(locals.fileList, locals.displayIcons)))
-        .replace(/\{files\}/g, createHtmlFileList(locals.fileList, locals.directory, locals.displayIcons, locals.viewName))
-        .replace(/\{directory\}/g, escapeHtml(locals.directory))
-        .replace(/\{linked-path\}/g, htmlPath(locals.directory));
-
-      callback(null, body);
-    });
+    if (templateParseMode === "fileName") {
+      // read template
+      fs.readFile(template, 'utf8', function (err, str) {
+        if (err) return callback(err);
+        callback(null, parseTemplate(str, locals));
+      });
+    } else if (templateParseMode === "fileContent") {
+      callback(null, parseTemplate(template, locals))
+    } else {
+      throw new TypeError("templateParseMode is invalid", templateParseMode)
+    }
   };
+}
+
+function parseTemplate(str, locals) {
+  return str
+    .replace(/\{style\}/g, locals.style.concat(iconStyle(locals.fileList, locals.displayIcons)))
+    .replace(/\{files\}/g, createHtmlFileList(locals.fileList, locals.directory, locals.displayIcons, locals.viewName))
+    .replace(/\{directory\}/g, escapeHtml(locals.directory))
+    .replace(/\{linked-path\}/g, htmlPath(locals.directory));
 }
 
 /**

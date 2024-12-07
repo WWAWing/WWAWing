@@ -35,6 +35,7 @@ declare namespace serveIndex {
         stylesheet?: string | undefined;
         template?: string | ((locals: Locals, callback: TemplateCallback) => void) | undefined;
         view?: string | undefined;
+        templateParseMode?: "fileName" | "fileContent" | undefined;
     }
 }
 
