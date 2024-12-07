@@ -25,6 +25,7 @@
     "@wwawing/assets": "file:../assets",
     "@wwawing/common-interface": "file:../common-interface",
     "@wwawing/debug-server": "file:../debug-server",
+    "@wwawing/serve-index": "file:../serve-index",
     "@wwawing/engine": "file:../engine",
     "@wwawing/loader": "file:../loader",
     "@wwawing/page-generator": "file:../page-generator",

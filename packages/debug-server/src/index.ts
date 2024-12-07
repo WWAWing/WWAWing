@@ -1,5 +1,5 @@
 import express from "express";
-import serveIndex from "serve-index";
+import serveIndex from "@wwawing/serve-index";
 
 const baseDir = process.argv.length < 3 ? "." : process.argv[2];
 

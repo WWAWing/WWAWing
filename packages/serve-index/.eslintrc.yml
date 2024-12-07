@@ -1,3 +1,4 @@
+# 現状 eslint は動かしていないですが、将来的には WWA Wing の monorepo 全体に適用予定です。
 root: true
 extends:
   - plugin:markdown/recommended
