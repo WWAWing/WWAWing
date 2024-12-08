@@ -6,12 +6,14 @@
 ## 準備
 - Node.js 22系
 - npm 10系
+- **Git LFS** (通常の開発をする場合は不要ですが、wwa-server の生成をする場合に必要になります。)
 
 を準備してください。
 
 この `README.md` があるディレクトリで、
 
 ``` sh
+git lfs install
 npm install
 npm run build
 ```

@@ -1,8 +1,9 @@
 /*!
- * serve-index
+ * serve-index (WWA Wing Edition)
  * Copyright(c) 2011 Sencha Inc.
  * Copyright(c) 2011 TJ Holowaychuk
  * Copyright(c) 2014-2015 Douglas Christopher Wilson
+ * Copyright(c) 2015-2024 WWA Wing Team
  * MIT Licensed
  */
 
@@ -97,6 +98,8 @@ function serveIndex(root, options) {
   var stylesheet = opts.stylesheet || defaultStylesheet;
   var template = opts.template || defaultTemplate;
   var view = opts.view || 'tiles';
+  var templateParseMode = opts.templateParseMode || "fileName";
+  var iconLoadCallback = opts.iconLoadCallback || ((icon) => fs.readFileSync(__dirname + '/public/icons/' + icon, 'base64'));
 
   return function (req, res, next) {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -164,7 +167,7 @@ function serveIndex(root, options) {
 
         // not acceptable
         if (!type) return next(createError(406));
-        serveIndex[mediaType[type]](req, res, files, next, originalDir, showUp, icons, path, view, template, stylesheet);
+        serveIndex[mediaType[type]](req, res, files, next, originalDir, showUp, icons, path, view, template, stylesheet, templateParseMode, iconLoadCallback);
       });
     });
   };
@@ -174,9 +177,9 @@ function serveIndex(root, options) {
  * Respond with text/html.
  */
 
-serveIndex.html = function _html(req, res, files, next, dir, showUp, icons, path, view, template, stylesheet) {
+serveIndex.html = function _html(req, res, files, next, dir, showUp, icons, path, view, template, stylesheet, templateParseMode, iconLoadCallback) {
   var render = typeof template !== 'function'
-    ? createHtmlRender(template)
+    ? createHtmlRender(template, templateParseMode, iconLoadCallback)
     : template
 
   if (showUp) {
@@ -190,26 +193,33 @@ serveIndex.html = function _html(req, res, files, next, dir, showUp, icons, path
     // sort file list
     fileList.sort(fileSort);
 
-    // read stylesheet
-    fs.readFile(stylesheet, 'utf8', function (err, style) {
-      if (err) return next(err);
+    // create locals for rendering
+    const locals = {
+      directory: dir,
+      displayIcons: Boolean(icons),
+      fileList: fileList,
+      path: path,
+      viewName: view
+    };
 
-      // create locals for rendering
-      var locals = {
-        directory: dir,
-        displayIcons: Boolean(icons),
-        fileList: fileList,
-        path: path,
-        style: style,
-        viewName: view
-      };
-
-      // render html
-      render(locals, function (err, body) {
+    if (templateParseMode === "fileName") {
+      // read stylesheet
+      fs.readFile(stylesheet, 'utf8', function (err, style) {
+        if (err) return next(err);
+        // render html
+        render({...locals, style }, function (err, body) {
+          if (err) return next(err);
+          send(res, 'text/html', body)
+        });
+      });
+    } else if(templateParseMode === "fileContent") {
+      render({...locals, style: stylesheet }, function (err, body) {
         if (err) return next(err);
         send(res, 'text/html', body)
       });
-    });
+    } else {
+      throw new TypeError("templateParseMode is invalid", templateParseMode)
+    }
   });
 };
 
@@ -320,21 +330,28 @@ function createHtmlFileList(files, dir, useIcons, view) {
  * Create function to render html.
  */
 
-function createHtmlRender(template) {
+function createHtmlRender(template, templateParseMode, iconLoadCallback) {
   return function render(locals, callback) {
-    // read template
-    fs.readFile(template, 'utf8', function (err, str) {
-      if (err) return callback(err);
-
-      var body = str
-        .replace(/\{style\}/g, locals.style.concat(iconStyle(locals.fileList, locals.displayIcons)))
-        .replace(/\{files\}/g, createHtmlFileList(locals.fileList, locals.directory, locals.displayIcons, locals.viewName))
-        .replace(/\{directory\}/g, escapeHtml(locals.directory))
-        .replace(/\{linked-path\}/g, htmlPath(locals.directory));
-
-      callback(null, body);
-    });
+    if (templateParseMode === "fileName") {
+      // read template
+      fs.readFile(template, 'utf8', function (err, str) {
+        if (err) return callback(err);
+        callback(null, parseTemplate(str, locals, iconLoadCallback));
+      });
+    } else if (templateParseMode === "fileContent") {
+      callback(null, parseTemplate(template, locals, iconLoadCallback))
+    } else {
+      throw new TypeError("templateParseMode is invalid", templateParseMode)
+    }
   };
+}
+
+function parseTemplate(str, locals, iconLoadCallback) {
+  return str
+    .replace(/\{style\}/g, locals.style.concat(iconStyle(locals.fileList, locals.displayIcons, iconLoadCallback)))
+    .replace(/\{files\}/g, createHtmlFileList(locals.fileList, locals.directory, locals.displayIcons, locals.viewName))
+    .replace(/\{directory\}/g, escapeHtml(locals.directory))
+    .replace(/\{linked-path\}/g, htmlPath(locals.directory));
 }
 
 /**
@@ -450,7 +467,7 @@ function iconLookup(filename) {
  * Load icon images, return css string.
  */
 
-function iconStyle(files, useIcons) {
+function iconStyle(files, useIcons, iconLoadCallback) {
   if (!useIcons) return '';
   var i;
   var list = [];
@@ -471,7 +488,7 @@ function iconStyle(files, useIcons) {
     selector = '#files .' + icon.className + ' .name';
 
     if (!rules[iconName]) {
-      rules[iconName] = 'background-image: url(data:image/png;base64,' + load(iconName) + ');'
+      rules[iconName] = 'background-image: url(data:image/png;base64,' + load(iconName, iconLoadCallback) + ');'
       selectors[iconName] = [];
       list.push(iconName);
     }
@@ -497,9 +514,9 @@ function iconStyle(files, useIcons) {
  * @api private
  */
 
-function load(icon) {
+function load(icon, iconLoadCallback) {
   if (cache[icon]) return cache[icon];
-  return cache[icon] = fs.readFileSync(__dirname + '/public/icons/' + icon, 'base64');
+  return cache[icon] = iconLoadCallback(icon)
 }
 
 /**

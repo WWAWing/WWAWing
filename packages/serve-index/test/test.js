@@ -816,6 +816,28 @@ describe('serveIndex(root)', function () {
         .expect(403, done)
     });
   });
+
+  describe('when set with file contents', function () {
+    var server;
+    beforeAll(function () {
+      server = createServer(".", {
+        template: "<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>It Works!</title><style>{style}</style></head><body><h1>It Works!</h1></body></html>",
+        stylesheet: "h1 { color: red; }",
+        templateParseMode: "fileContent"
+      });
+    });
+
+    it('should respond with given contents', function (done) {
+      request(server)
+        .get('/')
+        .set('Accept', 'text/html')
+        .expect(200)
+        .expect('Content-Type', 'text/html; charset=utf-8')
+        .expect(/color: red;/)
+        .expect(/It Works!/)
+        .end(done)
+    });
+  });
 });
 
 function alterProperty(obj, prop, val) {
@@ -830,6 +852,10 @@ function alterProperty(obj, prop, val) {
   })
 }
 
+/**
+ * @param {string} dir 
+ * @param {serveIndex.Options} opts 
+ */
 function createServer(dir, opts) {
   dir = dir || fixtures
 
