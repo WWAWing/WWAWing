@@ -25,12 +25,13 @@ app.use(
   "/",
   express.static(baseDir),
   serveIndex(baseDir, {
-//    icons: true,
-    icons: false, // UNDONE: 最終的にはアイコンも sea アセットになるべきだが、一旦実験のため後回し
+    icons: true,
     ...(sea.isSea() && {
       templateParseMode: "fileContent",
       template: decoder.decode(sea.getAsset("directory.html")),
       stylesheet: decoder.decode(sea.getAsset("style.css")),
+      iconLoadCallback: (fileName) =>
+        Buffer.from(sea.getAsset(`___ICON___${fileName}`)).toString("base64"),
     }),
   })
 );

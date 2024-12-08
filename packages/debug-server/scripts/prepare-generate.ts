@@ -44,16 +44,26 @@ function main(serveIndexDir: string) {
   const baseDir = path.join(__dirname, "..");
   const tmpDir = path.join(baseDir, "tmp");
   const binDir = path.join(baseDir, "bin");
+  const srcPublicDir = path.join(serveIndexDir, "public");
+  const destPublicDir = path.join(tmpDir, "public");
 
   shelljs.mkdir(binDir);
   shelljs.cp(path.join(nodeExePath), path.join(binDir, "wwa-server.exe"));
 
   shelljs.mkdir(tmpDir);
-  shelljs.cp(
-    "-R",
-    path.join(serveIndexDir, "public"),
-    path.join(tmpDir, "public")
-  );
+  shelljs.cp("-R", srcPublicDir, destPublicDir);
+
+  const iconFiles = fs
+    .readdirSync(path.join(destPublicDir, "icons"), {
+      withFileTypes: true,
+      recursive: false
+    })
+    .filter((dirent) => !dirent.isDirectory());
+
+  const iconEntries = {};
+  iconFiles.forEach((file) => {
+    iconEntries[`___ICON___${file.name}`] = `./tmp/public/icons/${file.name}`;
+  });
 
   fs.writeFileSync(
     path.join(tmpDir, "sea-config.json"),
@@ -64,7 +74,7 @@ function main(serveIndexDir: string) {
       assets: {
         "directory.html": "./tmp/public/directory.html",
         "style.css": "./tmp/public/style.css",
-        // UNDONE: アイコンを加える
+        ...iconEntries,
       },
     })
   );

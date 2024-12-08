@@ -27,6 +27,7 @@ declare namespace serveIndex {
     }
 
     type TemplateCallback = (error: Error | null, htmlString?: string) => void;
+    type IconLoadCallback = (fileName: string) => string;
 
     interface Options {
         filter?: ((filename: string, index: number, files: File[], dir: string) => boolean) | undefined;
@@ -36,6 +37,7 @@ declare namespace serveIndex {
         template?: string | ((locals: Locals, callback: TemplateCallback) => void) | undefined;
         view?: string | undefined;
         templateParseMode?: "fileName" | "fileContent" | undefined;
+        iconLoadCallback?: IconLoadCallback | undefined; 
     }
 }
 
