@@ -28,6 +28,7 @@ var Batch = require('batch');
 var mime = require('mime-types');
 var parseUrl = require('parseurl');
 var resolve = require('path').resolve;
+var cssEscape = require('css.escape');
 
 /**
  * Module exports.
@@ -488,7 +489,7 @@ function iconStyle(files, useIcons, iconLoadCallback) {
     selector = '#files .' + icon.className + ' .name';
 
     if (!rules[iconName]) {
-      rules[iconName] = 'background-image: url(data:image/png;base64,' + load(iconName, iconLoadCallback) + ');'
+      rules[iconName] = 'background-image: url(data:image/png;base64,' + cssEscape(load(iconName, iconLoadCallback)) + ');'
       selectors[iconName] = [];
       list.push(iconName);
     }
