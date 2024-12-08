@@ -8,10 +8,15 @@ const serveIndexDir = resolvePkg("@wwawing/serve-index");
 const baseDir = path.join(__dirname, "..");
 const tmpDir = path.join(baseDir, "tmp");
 const binDir = path.join(baseDir, "bin");
+const nodeExePath = path.join(resolvePkg("@wwawing/assets")!, "exe", "node.exe");
+
+if (!fs.existsSync(nodeExePath)) {
+    throw new Error("node.exe がありません。Git LFS をインストール後、 git lfs install を実行してください。");
+}
 
 shelljs.mkdir(binDir);
 shelljs.cp(
-  path.join(resolvePkg("@wwawing/assets")!, "exe", "node.exe"),
+  path.join(nodeExePath),
   path.join(binDir, "wwa-server.exe")
 );
 
