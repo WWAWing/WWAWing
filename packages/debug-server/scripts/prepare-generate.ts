@@ -44,17 +44,38 @@ function main(serveIndexDir: string) {
   const baseDir = path.join(__dirname, "..");
   const tmpDir = path.join(baseDir, "tmp");
   const binDir = path.join(baseDir, "bin");
-  const srcPublicDir = path.join(serveIndexDir, "public");
-  const destPublicDir = path.join(tmpDir, "public");
+  const libDir = path.join(baseDir, "lib");
+  const publicSrcDir = path.join(serveIndexDir, "public");
+  const publicDestDir = path.join(tmpDir, "public");
+  const wwaServerLicenseFileDestPath = path.join(binDir, "LICENSE");
 
   shelljs.mkdir(binDir);
   shelljs.cp(path.join(nodeExePath), path.join(binDir, "wwa-server.exe"));
+  shelljs.cp(path.join(libDir, "index.js.LICENSE.txt"), wwaServerLicenseFileDestPath);
+  const licenseText = fs.readFileSync(wwaServerLicenseFileDestPath);
+  fs.writeFileSync(wwaServerLicenseFileDestPath, `// wwa-server.exe LICENSE INFORMATION
+
+/*!
+ * Node.js 
+ * Copyright Node.js contributors. All rights reserved.
+ * MIT Licensed
+ * https://raw.githubusercontent.com/nodejs/node/refs/heads/main/LICENSE
+ */
+
+/*!
+ * @wwawing/debug-server
+ * Copyright (c) 2018-2024 WWA Wing Team
+ * MIT Licensed
+ * https://github.com/WWAWing/WWAWing/blob/develop/packages/debug-server/LICENSE
+ */
+
+ ${licenseText}`)
 
   shelljs.mkdir(tmpDir);
-  shelljs.cp("-R", srcPublicDir, destPublicDir);
+  shelljs.cp("-R", publicSrcDir, publicDestDir);
 
   const iconFiles = fs
-    .readdirSync(path.join(destPublicDir, "icons"), {
+    .readdirSync(path.join(publicDestDir, "icons"), {
       withFileTypes: true,
       recursive: false
     })

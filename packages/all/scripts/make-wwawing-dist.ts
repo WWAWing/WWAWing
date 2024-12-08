@@ -51,6 +51,7 @@ export default async function makeDistribution(
             copy("assets", path.join("images", "*.gif"), "mapdata"),
             copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
             copy("debug-server", path.join("bin", "wwa-server.exe"), "mapdata"),
+            copy("debug-server", path.join("bin", "LICENSE"), "mapdata"),
             copy("styles", path.join("output", "*.css"), "mapdata"),
             copy("assets", path.join("vars", "*.json"), "mapdata"),
         ];

@@ -2,6 +2,12 @@ import sea from "node:sea";
 import express from "express";
 import serveIndex from "@wwawing/serve-index";
 
+/*!
+ * @wwawing/debug-server
+ * Copyright (c) 2018-2024 WWA Wing Team
+ * MIT Licensed
+ */
+
 const baseDir = process.argv.length < 3 ? "." : process.argv[2];
 
 const DEFAULT_PORT = 3000;
