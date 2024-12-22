@@ -55,6 +55,12 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
         return convertTemplateElement(node as Acorn.TemplateElement);
       case "ConditionalExpression":
         return convertConditionalExpression(node as Acorn.ConditionalExpression)
+      case "Property":
+        return convertProperty(node as Acorn.Property);
+      case "ObjectExpression":
+        return convertObjectExpression(node as Acorn.ObjectExpression);
+      case "ArrayExpression":
+        return convertArrayExpression(node as Acorn.ArrayExpression);
       default:
         console.log(node);
         throw new Error("未定義の AST ノードです :" + node.type);
@@ -198,6 +204,10 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_MILLISECONDS":
     case "GET_DATE_WEEKDAY":
     case "CHANGE_SYSMSG":
+    case "PICTURE":
+    case "PICTURE_FROM_PARTS":
+    case "CLEAR_ALL_PICTURES":
+    case "HAS_PICTURE":
     case "SHOW_USER_DEF_VAR":
     case "ABS":
     case "GET_GAMEOVER_POS_X":
@@ -206,6 +216,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "EXIT":
     case "GET_IMG_POS_X":
     case "GET_IMG_POS_Y":
+    case "LENGTH":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -300,31 +311,38 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
     case "-=":
     case "*=":
     case "/=":
-      if (left.type === "Array2D") {
+      if (left.type === "ArrayOrObject2D") {
         if (left.name === "m" || left.name === "o") {
           return {
             type: "PartsAssignment",
             partsKind: left.name === "m" ? "map" : "object",
-            destinationX: left.index0,
-            destinationY: left.index1,
-            value: right,
-            operator: node.operator
-          }
-        } else {
-          throw new Error("想定していない記号が2次元配列ででてきました");
-        }
-      } else if (left.type === "Array1D") {
-        if (left.name === "ITEM") {
-          return {
-            type: "ItemAssignment",
-            itemBoxPosition1to12: left.index0,
+            destinationX: left.indecies[0],
+            destinationY: left.indecies[1],
             value: right,
             operator: node.operator
           }
         } else if (left.name === "v") {
           return {
             type: "UserVariableAssignment",
-            index: left.index0,
+            index: [left.indecies[0], left.indecies[1]],
+            value: right,
+            operator: node.operator
+          }
+        } else {
+          throw new Error("想定していない記号が2次元配列ででてきました");
+        }
+      } else if (left.type === "ArrayOrObject1D") {
+        if (left.name === "ITEM") {
+          return {
+            type: "ItemAssignment",
+            itemBoxPosition1to12: left.indecies[0],
+            value: right,
+            operator: node.operator
+          }
+        } else if (left.name === "v") {
+          return {
+            type: "UserVariableAssignment",
+            index: [left.indecies[0]],
             value: right,
             operator: node.operator
           }
@@ -332,7 +350,21 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           throw new Error("");
         }
       } else if (left.type === "Symbol") {
-        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM" || left.name === "X" || left.name === "Y" || left.name === "ID" || left.name === "TYPE") {
+        if (
+          left.name === "m" ||
+          left.name === "o" ||
+          left.name === "v" ||
+          left.name === "ITEM" ||
+          left.name === "X" ||
+          left.name === "Y" ||
+          left.name === "ID" ||
+          left.name === "TYPE" ||
+          left.name === "PICTURE" ||
+          left.name === "PLAYER_PX" ||
+          left.name === "PLAYER_PY" ||
+          left.name === "MOVE_SPEED" ||
+          left.name === "MOVE_FRAME_TIME"
+        ) {
           throw new Error("このシンボルには代入できません");
         }
         if (left.name === "AT_TOTAL") {
@@ -352,6 +384,13 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         }
       } else if (left.type === "Literal") {
         throw new Error("数値には代入できません");
+      } else if (left.type === "ArrayOrObject3DPlus" && left.name === "v") {
+        return {
+          type: "UserVariableAssignment",
+          index: left.indecies,
+          value: right,
+          operator: node.operator
+        }
       } else {
         throw new Error("代入できません");
       }
@@ -405,42 +444,55 @@ function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.WWANode {
   }
 }
 
-// WWA においては hoge.a というパターンはないので、配列系の処理しかない
-function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Wwa.Array2D {
+function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObject1D | Wwa.ArrayOrObject2D | Wwa.ArrayOrObject3DPlus {
   const object = convertNodeAcornToWwa(node.object);
   const property = convertNodeAcornToWwa(node.property);
 
   if (object.type === "Symbol") {
-    if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM") {
+    if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM" && object.name !== "PICTURE") {
       throw new Error("このシンボルは配列にできません");
     }
-    if(property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
+    if (Wwa.isCalcurable(property)) {
       // m, o については一次元分適用
       return {
-        type: "Array1D",
+        type: "ArrayOrObject1D",
         name: object.name,
-        index0: property
-      }
+        indecies: [property],
+      };
     } else {
-      throw new Error("WWAでは存在しない構文です")
+      throw new Error("WWAでは存在しない構文です");
     }
-  } else if (object.type === "Array1D") {
+  } else if (object.type === "ArrayOrObject1D") {
     // 1次元にしかできないものは排除
-    if (object.name === "ITEM" || object.name === "v") {
+    if (object.name === "ITEM" || object.name === "PICTURE") {
       throw new Error("この配列は2次元以上にはできません。");
     }
-    // 1次元配列 + 1次元分の index を合成
-    if (property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
+    if (Wwa.isCalcurable(property)) {
       return {
-        type: "Array2D",
+        type: "ArrayOrObject2D",
         name: object.name,
-        index0: object.index0,
-        index1: property
+        // 1次元配列 + 1次元分の index を合成
+        indecies: [...object.indecies, property]
       }
     } else {
       // 数値に解決できないものが index に来てはいけない
       throw new Error("WWAでは存在しない構文です")
     }
+  } else if(object.type === "ArrayOrObject2D" || object.type === "ArrayOrObject3DPlus") {
+    if (object.name === "m" || object.name === "o") {
+      throw new Error("この配列は3次元以上にはできません。");
+    }
+    // ユーザ定義名前変数のみ3次元以上配列が使える
+    if (object.name === "v" && Wwa.isCalcurable(property)) {
+      return {
+        type: "ArrayOrObject3DPlus",
+        name: object.name,
+        indecies: [ ...object.indecies, property]
+      }
+    }
+  }
+  else {
+    throw new Error("WWAでは存在しない構文です")
   }
 }
 
@@ -475,12 +527,20 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_HP":
     case "ENEMY_AT":
     case "ENEMY_DF":
+    case "PICTURE":
+    case "PLAYER_PX":
+    case "PLAYER_PY":
+    case "MOVE_SPEED":
+    case "MOVE_FRAME_TIME":
       return {
         type: "Symbol",
         name: node.name
       }
     default:  
-      throw new Error("未定義のシンボルです :\n"+ node.name);
+      return {
+        type: "Literal",
+        value: node.name
+      };
   }
 }
 
@@ -504,4 +564,33 @@ function convertConditionalExpression(node: Acorn.ConditionalExpression): Wwa.WW
     test: test,
     alternate: alternate
   };
+}
+
+function convertProperty(node: Acorn.Property): Wwa.Property {
+  const key = convertNodeAcornToWwa(node.key);
+  if (key.type === "Symbol") {
+    throw new Error(`Object のキー ${key.name} は予約されているため、使用できません。`);
+  }
+  if (key.type !== "Literal") {
+    throw new Error(`Object のキーが不正です。 Literal を期待していましたが、実際は ${key.type} でした。`);
+  }
+  return {
+    type: "Property",
+    key,
+    value: convertNodeAcornToWwa(node.value),
+  };
+}
+
+function convertObjectExpression(node: Acorn.ObjectExpression): Wwa.ObjectExpression {
+  return {
+    type: "ObjectExpression",
+    properties: node.properties.map(convertProperty),
+  };
+}
+
+function convertArrayExpression(node: Acorn.ArrayExpression): Wwa.ArrayExpression {
+  return {
+    type: "ArrayExpression",
+    elements: node.elements.map(convertNodeAcornToWwa),
+  }
 }

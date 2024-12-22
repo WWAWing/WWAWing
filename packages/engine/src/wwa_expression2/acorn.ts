@@ -130,3 +130,24 @@ export interface ConditionalExpression extends Node {
   consequent: Node;
   alternate: Node;
 }
+
+export interface Property extends Node {
+  label: string;
+  type: "Property";
+  key: Identifier | Literal;
+  value: Node;
+}
+
+export interface ObjectExpression extends Node {
+  label: string;
+  type: "ObjectExpression";
+  // Property の他に SpreadElement ({...hoge}) が本来は入りうる。
+  // スプレッドを実装するまでの間は Property のみとする
+  properties: Property[];
+}
+
+export interface ArrayExpression extends Node {
+  label: string;
+  type: "ArrayExpression";
+  elements: Node[];
+}

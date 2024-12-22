@@ -29,6 +29,17 @@ function checkTriggerParts() {
   MSG(`（ユーザー定義関数）\nこのパーツの座標は X:${X} Y:${Y} です。\nパーツ番号は ${ID} で、種類は ${TYPE} です。`);
 }
 
+function afterDeletePicture() {
+  MSG("ユーザー定義関数を実行しました。");
+}
+
+function timeOutRunning() {
+  // CALL_JUMPGATE が定義されていると、 MSG 関数によるメッセージ表示が働かないため、
+  // ユーザー定義関数においては移動だけにしておいて、メッセージ表示やお片付けは移動先に配置するパーツで何とかする
+  o[12][14] = 113;
+  JUMPGATE(12, 14);
+}
+
 function CALL_SAVE() {
   MSG("セーブしました！")
 }
