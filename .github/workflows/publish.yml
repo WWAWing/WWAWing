@@ -37,7 +37,7 @@ jobs:
 
       - name: "Install"
         run: |
-          npm i -g npm@8
+          npm i -g npm@10
           npm install
       
       - name: "Publish"

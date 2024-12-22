@@ -23,7 +23,7 @@ jobs:
 
       - name: "Install & Build"
         run: |
-          npm i -g npm@8
+          npm i -g npm@10
           npm install
           npm run build
 
