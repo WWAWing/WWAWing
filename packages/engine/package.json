@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/engine",
-  "version": "3.12.14",
+  "version": "3.12.15",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "./lib/wwa.js",
   "files": [
