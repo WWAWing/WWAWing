@@ -17,11 +17,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
         with:
-          node-version: '18.x'
+          lfs: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
       
       - name: "Configure"
@@ -30,14 +32,15 @@ jobs:
           git config user.email "matsuyuki.eca@gmail.com"
 
       - name: restore node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
 
       - name: "Install"
         run: |
-          npm i -g npm@8
+          git lfs pull
+          npm i -g npm@10
           npm install
       
       - name: "Publish"
