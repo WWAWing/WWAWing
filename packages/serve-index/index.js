@@ -3,7 +3,7 @@
  * Copyright(c) 2011 Sencha Inc.
  * Copyright(c) 2011 TJ Holowaychuk
  * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * Copyright(c) 2015-2024 WWA Wing Team
+ * Copyright(c) 2015-2025 WWA Wing Team
  * MIT Licensed
  */
 
