@@ -36,6 +36,12 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+      
+      - name: restore node.exe
+        uses: actions/cache@v4
+        with:
+          path: './packages/assets/exe/node.exe'
+          key: node-exe-${{ hashFiles('./packages/assets/exe/node.exe') }}
 
       - name: "Install"
         run: |
