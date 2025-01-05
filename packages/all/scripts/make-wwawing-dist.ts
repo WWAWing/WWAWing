@@ -24,6 +24,7 @@ export default async function makeDistribution(
     if (!isUpdate) {
         shell.mkdir("-p", path.join(destBasePath, "mapdata"));
         shell.mkdir("-p", path.join(destBasePath, "mapdata", "audio"));
+        shell.mkdir("-p", path.join(destBasePath, "mapdata", "script"));
         shell.mkdir("-p", path.join(destBasePath, "mapdata", "backup"));
     }
     let tasks = [];
@@ -54,6 +55,8 @@ export default async function makeDistribution(
             copy("debug-server", path.join("bin", "LICENSE"), "mapdata"),
             copy("styles", path.join("output", "*.css"), "mapdata"),
             copy("assets", path.join("vars", "*.json"), "mapdata"),
+            copy("assets", path.join("script", "script_file_list.json"), "mapdata"),
+            copy("assets", path.join("script", "*.js"), path.join("mapdata", "script")),
         ];
     }
     await Promise.all(tasks);
