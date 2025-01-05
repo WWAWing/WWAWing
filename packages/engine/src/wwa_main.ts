@@ -1275,11 +1275,11 @@ export class WWA {
     }
 
     /**
-     * WWA Script のユーザー定義独自関数 "CALL_CAMERAMOVE" を実行します。
+     * WWA Script のユーザー定義独自関数 "CALL_CAMERA_MOVE" を実行します。
      * カメラ画面の切り替わりが終わった時に実行されます。
      */
     public callCameraMoveUserDefineFunction() {
-        const cameraMoveFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_CAMERAMOVE"];
+        const cameraMoveFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_CAMERA_MOVE"];
         if (cameraMoveFunc) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(cameraMoveFunc);
         }
