@@ -6645,6 +6645,7 @@ font-weight: bold;
             userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
+            cameraCoord: this._camera.getPosition().getPartsCoord(),
             itemBox: this._player.getCopyOfItemBox(),
             wwaData: this._wwaData
         }
