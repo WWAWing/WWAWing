@@ -87,6 +87,13 @@ function CALL_MOVE() {
 }
 
 /**
+ * カメラ画面が動く度に呼ばれる関数
+ * CX と CY でカメラ画面の左上の座標が取得できます
+ */
+function CALL_CAMERAMOVE() {
+}
+
+/**
  * 速度変更時に呼ばれる関数
  */
 function CALL_CHANGE_SPEED() {
