@@ -359,6 +359,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           left.name === "Y" ||
           left.name === "ID" ||
           left.name === "TYPE" ||
+          left.name === "CX" ||
+          left.name === "CY" ||
           left.name === "PICTURE" ||
           left.name === "PLAYER_PX" ||
           left.name === "PLAYER_PY" ||
@@ -507,6 +509,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "TYPE":
     case "PX":
     case "PY":
+    case "CX":
+    case "CY":
     case "v":
     case "HP":
     case "HPMAX":

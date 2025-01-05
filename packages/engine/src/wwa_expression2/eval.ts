@@ -1110,6 +1110,10 @@ export class EvalCalcWwaNode {
         return gameStatus.playerCoord.x;
       case "PY":
         return gameStatus.playerCoord.y;
+      case "CX":
+        return gameStatus.cameraCoord.x;
+      case "CY":
+        return gameStatus.cameraCoord.y;
       case "AT":
         return gameStatus.bareStatus.strength;
       case "AT_TOTAL":

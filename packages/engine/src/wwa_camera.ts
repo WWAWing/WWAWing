@@ -26,6 +26,11 @@ export class Camera {
         return this._isResetting;
     }
 
+    /**
+     * カメラ座標を取得します。座標はプレイヤーのいる画面の一番左上のマスの座標が使用されます。
+     * 例えばプレイヤーの座標が X: 15, Y: 23 にいる場合、返却値は X: 10, Y: 20 となります。
+     * @returns プレイヤーのいるカメラ画面の一番左上のマスの座標
+     */
     public getPosition(): Position {
         return this._position;
     }

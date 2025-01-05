@@ -125,6 +125,8 @@ export class Player extends PartsObject {
             }
             if (this._isOnCameraStopPosition()) {
                 this._state = PlayerState.CONTROLLABLE;
+                // カメラ画面が動き終わった際にユーザー定義独自関数を呼び出す
+                this._wwa.callCameraMoveUserDefineFunction();
             }
         } else if (this._state === PlayerState.MOVING) {
             try {
