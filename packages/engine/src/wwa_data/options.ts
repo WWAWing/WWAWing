@@ -23,5 +23,6 @@ export function makeDefaultWWAOptions(): DataWWAOptions {
         virtualPadEnable: false,
         virtualPadViewportFitEnable: false,
         virtualPadControllerElm: undefined,
+        userDefinedScriptsFile: "./script/script_file_list.json",
     };
 }

@@ -1138,7 +1138,7 @@ export class WWA {
         /** 外部スクリプト関係処理 */
         (async () => {
             /** ユーザ定義関数を取得する */
-            const userScriptListJSONFileName = "./script/script_file_list.json";
+            const userScriptListJSONFileName = options.userDefinedScriptsFile ?? "./script/script_file_list.json";
             const userScriptFileNameList = await fetchJsonFile(userScriptListJSONFileName);
             let userScriptStringsPromises = [];
             console.log(userScriptFileNameList);
@@ -6895,6 +6895,9 @@ function start() {
         }
         return false;
     })();
+
+    const userDefinedScriptsFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-defined-scripts-file");
+
     wwa = new WWA(
         {
             mapdata: mapFileName,
@@ -6914,6 +6917,7 @@ function start() {
             virtualPadEnable,
             // virtualPadViewportFitEnable はすでに start 関数で使用済み
             virtualPadControllerElm,
+            userDefinedScriptsFile,
         }
     );
 }
