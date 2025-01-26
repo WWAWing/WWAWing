@@ -4,14 +4,17 @@
 このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna により自動化されています。
 
 ## 準備
-- Node.js 18系
-- npm 8系
+- Node.js 22系
+- npm 10系
+- **Git LFS** (通常の開発をする場合は不要ですが、wwa-server の生成をする場合に必要になります。)
+  - 必ず1度は `git lfs install` を実行する必要があります。詳しくは [Git LFS の Wiki 「Installation」](https://github.com/git-lfs/git-lfs/wiki/Installation) をご覧ください。
 
 を準備してください。
 
 この `README.md` があるディレクトリで、
 
 ``` sh
+git lfs pull
 npm install
 npm run build
 ```
