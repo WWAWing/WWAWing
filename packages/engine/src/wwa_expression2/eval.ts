@@ -605,6 +605,13 @@ export class EvalCalcWwaNode {
           this.generator.wwa.movePlayer(direction);
           return 0;
       }
+      case "PARTS_MOVE": {
+        // TODO メッセージ表示が無いとプレイヤーが動かない限りパーツも動かない
+        this._checkArgsLength(1, node);
+        const moveNum = Number(this.evalWwaNode(node.value[0]));
+        this.generator.wwa.setMoveMacroWaitingToPlayer(moveNum);
+        return 0;
+      }
       case "IS_PLAYER_WAITING_MESSAGE": {
         return this.generator.wwa.isPlayerWaitingMessage();
       }
