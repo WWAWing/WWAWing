@@ -41,6 +41,7 @@ import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import { parseMacro } from "./wwa_macro";
 import { ParsedMessage, isEmptyMessageTree, Node, Junction, Page, generatePagesByRawMessage } from "./wwa_message";
+import { PageAdditionalItem } from "./wwa_message/data/additional";
 import { MessageWindow, MonsterWindow, ScoreWindow } from "./wwa_window"
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -106,6 +107,7 @@ export class WWA {
     private _monsterWindow: MonsterWindow;
     private _scoreWindow: ScoreWindow;
     private _pages: Page[];
+    private _pageAdditionalQueue: PageAdditionalItem[];
     private _yesNoJudge: YesNoState;
     private _yesNoJudgeInNextFrame: YesNoState;
     private _yesNoChoicePartsCoord: Coord;
@@ -566,6 +568,7 @@ export class WWA {
 
             this._gamePadStore = new GamePadStore();
             this._pages = [];
+            this._pageAdditionalQueue = [];
             this._yesNoJudge = YesNoState.UNSELECTED;
             this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
             this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
@@ -1917,6 +1920,10 @@ export class WWA {
                 // システムメッセージ扱いではなく、パーツが表示している扱いになります。
                 if (isScoreDisplayingPage && messageLinesToDisplay.length === 0) {
                     messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", currentPage.triggerParts));
+                }
+
+                if (currentPage.additionalItem) {
+                    this.executePageAdditionalItem(currentPage.additionalItem);
                 }
 
                 // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
@@ -3973,16 +3980,31 @@ export class WWA {
         }
     }
 
-    // FACE() 関数の実行結果をハンドリングします。
-    public handleFaceFunction(face: Face): void {
-        // $face マクロを発行し、メッセージに積む。
-        if(this._pageExecuting) {
-            this._windowCloseWaitingMessageDisplayRequests.push(
-              `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`
-            );
-        } else {
-            this.addFace(face);
-        }
+    public addPageAdditionalItem(item: PageAdditionalItem) {
+        this._pageAdditionalQueue.push(item);
+    }
+
+    private executePageAdditionalItem(items: PageAdditionalItem[]) {
+        items.forEach(item => {
+            switch (item.type) {
+                case "face": {
+                    const { destPosX, destPosY, srcPosX, srcPosY, srcWidth, srcHeight } = item.data;
+                    const face = new Face(
+                        new Coord(destPosX, destPosY),
+                        new Coord(srcPosX, srcPosY),
+                        new Coord(srcWidth, srcHeight)
+                    );
+                    this.addFace(face);
+                    // this._windowCloseWaitingMessageDisplayRequests.push(
+                    //     `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`
+                    // );
+                    break;
+                }
+                case "move": {
+                    this.setMoveMacroWaitingToPlayer(item.data.moveNum);
+                }
+            }
+        });
     }
 
     // HACK: private にしたい
@@ -4036,13 +4058,14 @@ export class WWA {
     ): void {
         const generatedPage = generatePagesByRawMessage(
           message,
-          { triggerParts, isSystemMessage, showChoice, scoreOption },
+          { triggerParts, isSystemMessage, showChoice, scoreOption, additionalItem: this._pageAdditionalQueue },
           (macroStr: string) => parseMacro(this, triggerParts, macroStr),
           (script: string, triggerParts?: TriggerParts) => this._execEvalString(script, triggerParts),
           // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
           // 型が any になってしまうのであえて bind 使ってません
           (triggerParts: TriggerParts) => this.generateTokenValues(triggerParts)
         );
+        this._pageAdditionalQueue = [];
         this._pages = this._pages.concat(generatedPage);
         this._shouldSetNextPage = true;
     }
@@ -4296,6 +4319,7 @@ export class WWA {
         var jy = this._wwaData.gameoverY;
         this._yesNoJudge = YesNoState.UNSELECTED;
         this._pages = []; // force clear!!
+        this._pageAdditionalQueue = [];
         this._player.setDelayFrame();
         this._messageWindow.hide();
         this._yesNoChoicePartsCoord = void 0;
@@ -6683,6 +6707,7 @@ font-weight: bold;
             }
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
             this.evalCalcWwaNodeGenerator.clearTriggerParts();
+            this._pageAdditionalQueue = [];
         }
         catch(e) {
             console.error(e);

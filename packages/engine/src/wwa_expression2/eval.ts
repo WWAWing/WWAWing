@@ -528,12 +528,17 @@ export class EvalCalcWwaNode {
         ) {
           throw new Error("各引数は0以上の整数でなければなりません。");
         }
-        this.generator.wwa.handleFaceFunction(new Face(
-            new Coord(destPosX, destPosY),
-            new Coord(srcPosX, srcPosY),
-            new Coord(srcWidth, srcHeight)
-          )
-        );
+        this.generator.wwa.addPageAdditionalItem({
+          type: "face",
+          data: {
+            destPosX,
+            destPosY,
+            srcPosX,
+            srcPosY,
+            srcWidth,
+            srcHeight
+          }
+        });
         return undefined;
       }
       case "EFFECT": {
@@ -609,7 +614,13 @@ export class EvalCalcWwaNode {
         // TODO メッセージ表示が無いとプレイヤーが動かない限りパーツも動かない
         this._checkArgsLength(1, node);
         const moveNum = Number(this.evalWwaNode(node.value[0]));
-        this.generator.wwa.setMoveMacroWaitingToPlayer(moveNum);
+        // TODO $move マクロも <p> による改ページ制御非対応なので、無理に additionalItem に入れなくてもいいかもしれない
+        this.generator.wwa.addPageAdditionalItem({
+          type: "move",
+          data: {
+            moveNum
+          }
+        });
         return 0;
       }
       case "IS_PLAYER_WAITING_MESSAGE": {
