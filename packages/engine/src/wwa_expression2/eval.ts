@@ -48,13 +48,17 @@ export class EvalCalcWwaNodeGenerator {
        */
       estimatingParams?: BattleEstimateParameters;
     }
+    /** メッセージの各ページに追加装飾 (FACE 関数のイメージなど) を蓄えておく関数． */
+    messagePageFunctions: VoidFunction[];
   }
 
   constructor(wwa: WWA) {
     this.wwa = wwa;
     /** 初期処理上限を10万回にする */
     this.loop_limit = 100000;
-    this.state = {}
+    this.state = {
+      messagePageFunctions: [],
+    };
   }
 
   public setTriggerParts(partsId: number, partsType: PartsType, position: Coord) {
@@ -105,6 +109,16 @@ export class EvalCalcWwaNodeGenerator {
         throw caughtThing;
       }
     }
+  }
+
+  public addMessagePageFunction(callback: VoidFunction) {
+    this.state.messagePageFunctions.push(callback);
+  }
+
+  public pickMessagePageFunctions() {
+    const functions = [...this.state.messagePageFunctions];
+    this.state.messagePageFunctions = [];
+    return functions;
   }
 
   public updateLoopLimit(limit: number) {
@@ -528,16 +542,19 @@ export class EvalCalcWwaNode {
         ) {
           throw new Error("各引数は0以上の整数でなければなりません。");
         }
-        this.generator.wwa.addPageAdditionalItem({
-          type: "face",
-          data: {
-            destPosX,
-            destPosY,
-            srcPosX,
-            srcPosY,
-            srcWidth,
-            srcHeight
-          }
+        // <p> 区切りごとに処理タイミングが分けられているマクロ文と違い、 WWA Script はその区切りが無いため、この場で実行するとコード内のすべての FACE のイメージが表示されてしまう
+        // 一度 EvalCalcWwaNodeGenerator のステートで実行する処理をキープしておいて、メッセージ表示のタイミングで実行するようにしている
+        this.generator.addMessagePageFunction(() => {
+          const face = new Face(
+              new Coord(destPosX, destPosY),
+              new Coord(srcPosX, srcPosY),
+              new Coord(srcWidth, srcHeight)
+          );
+          this.generator.wwa.addFace(face);
+          // 下3行は上の行で動かなかった用
+          // this._windowCloseWaitingMessageDisplayRequests.push(
+          //     `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`
+          // );
         });
         return undefined;
       }
@@ -614,13 +631,7 @@ export class EvalCalcWwaNode {
         // TODO メッセージ表示が無いとプレイヤーが動かない限りパーツも動かない
         this._checkArgsLength(1, node);
         const moveNum = Number(this.evalWwaNode(node.value[0]));
-        // TODO $move マクロも <p> による改ページ制御非対応なので、無理に additionalItem に入れなくてもいいかもしれない
-        this.generator.wwa.addPageAdditionalItem({
-          type: "move",
-          data: {
-            moveNum
-          }
-        });
+        this.generator.wwa.setMoveMacroWaitingToPlayer(moveNum);
         return 0;
       }
       case "IS_PLAYER_WAITING_MESSAGE": {

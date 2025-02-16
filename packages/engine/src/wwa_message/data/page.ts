@@ -1,5 +1,4 @@
 import type { ScoreOption, TriggerParts } from "../../wwa_data";
-import { PageAdditionalItem } from "./additional";
 
 import { Node } from "./node";
 
@@ -16,11 +15,11 @@ export interface Page {
   showChoice: boolean;
   /** オブジェクトがあるときスコア表示ページ */
   scoreOption?: ScoreOption;
-  /** WWA Script 専用: メッセージ表示と関連して実行される処理のキュー */
-  additionalItem?: PageAdditionalItem[];
+  /** WWA Script 専用: メッセージ表示と関連して実行される処理 */
+  additionalFunctions?: VoidFunction[];
 }
 
 /**
  * ページ生成のためのオプション
  */
-export type PageGeneratingOption = Pick<Page, "triggerParts" | "isSystemMessage" | "showChoice" | "scoreOption" | "additionalItem">;
+export type PageGeneratingOption = Pick<Page, "triggerParts" | "isSystemMessage" | "showChoice" | "scoreOption" | "additionalFunctions">;
