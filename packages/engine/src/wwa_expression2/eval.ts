@@ -65,8 +65,8 @@ export class EvalCalcWwaNodeGenerator {
     this.state = { ...this.state, triggerParts: { id: partsId, type: partsType, position } };
   }
 
-  public clearTriggerParts() {
-    this.state = { ...this.state, triggerParts: undefined };
+  public clearTemporaryState() {
+    this.state = { ...this.state, triggerParts: undefined, messagePageFunctions: [] };
   }
 
   /**
