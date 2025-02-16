@@ -1919,9 +1919,13 @@ export class WWA {
                     messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", currentPage.triggerParts));
                 }
 
-                if (currentPage.additionalFunctions) {
-                    currentPage.additionalFunctions.forEach((callback) => {
-                        callback();
+                if (currentPage.additionalItems) {
+                    currentPage.additionalItems.forEach((item) => {
+                        // TODO 長くなるようであれば別メソッドへの独立も考える
+                        switch (item.type) {
+                            case "face":
+                                this.addFace(item.data.face);
+                        }
                     });
                 }
 
@@ -4028,10 +4032,10 @@ export class WWA {
             scoreOption?: ScoreOption
         } = {}
     ): void {
-        const additionalFunctions = this.evalCalcWwaNodeGenerator.pickMessagePageFunctions();
+        const additionalItems = this.evalCalcWwaNodeGenerator.pickPageAdditionalQueue();
         const generatedPage = generatePagesByRawMessage(
           message,
-          { triggerParts, isSystemMessage, showChoice, scoreOption, additionalFunctions },
+          { triggerParts, isSystemMessage, showChoice, scoreOption, additionalItems },
           (macroStr: string) => parseMacro(this, triggerParts, macroStr),
           (script: string, triggerParts?: TriggerParts) => this._execEvalString(script, triggerParts),
           // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)

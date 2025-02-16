@@ -166,7 +166,7 @@ export function createPage({
       isSystemMessage: generatingOption.isSystemMessage,
       showChoice: pageType === "first" ? generatingOption.showChoice: undefined,
       scoreOption: pageType === "first" ? generatingOption.scoreOption: undefined,
-      additionalFunctions: generatingOption.additionalFunctions,
+      additionalItems: generatingOption.additionalItems,
     };
   }
 

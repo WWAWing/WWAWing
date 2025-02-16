@@ -2,6 +2,7 @@ import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
+import { PageAdditionalItem } from "./typedef";
 
 const operatorOperationMap: {
   [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
@@ -49,7 +50,7 @@ export class EvalCalcWwaNodeGenerator {
       estimatingParams?: BattleEstimateParameters;
     }
     /** メッセージの各ページに追加装飾 (FACE 関数のイメージなど) を蓄えておく関数． */
-    messagePageFunctions: VoidFunction[];
+    messagePageAdditionalQueue: PageAdditionalItem[];
   }
 
   constructor(wwa: WWA) {
@@ -57,7 +58,7 @@ export class EvalCalcWwaNodeGenerator {
     /** 初期処理上限を10万回にする */
     this.loop_limit = 100000;
     this.state = {
-      messagePageFunctions: [],
+      messagePageAdditionalQueue: [],
     };
   }
 
@@ -66,7 +67,7 @@ export class EvalCalcWwaNodeGenerator {
   }
 
   public clearTemporaryState() {
-    this.state = { ...this.state, triggerParts: undefined, messagePageFunctions: [] };
+    this.state = { ...this.state, triggerParts: undefined };
   }
 
   /**
@@ -111,14 +112,14 @@ export class EvalCalcWwaNodeGenerator {
     }
   }
 
-  public addMessagePageFunction(callback: VoidFunction) {
-    this.state.messagePageFunctions.push(callback);
+  public addPageAdditionalItem(item: PageAdditionalItem) {
+    this.state.messagePageAdditionalQueue.push(item);
   }
 
-  public pickMessagePageFunctions() {
-    const functions = [...this.state.messagePageFunctions];
-    this.state.messagePageFunctions = [];
-    return functions;
+  public pickPageAdditionalQueue(): PageAdditionalItem[] {
+    const items = [...this.state.messagePageAdditionalQueue];
+    this.state.messagePageAdditionalQueue = [];
+    return items;
   }
 
   public updateLoopLimit(limit: number) {
@@ -544,17 +545,15 @@ export class EvalCalcWwaNode {
         }
         // <p> 区切りごとに処理タイミングが分けられているマクロ文と違い、 WWA Script はその区切りが無いため、この場で実行するとコード内のすべての FACE のイメージが表示されてしまう
         // 一度 EvalCalcWwaNodeGenerator のステートで実行する処理をキープしておいて、メッセージ表示のタイミングで実行するようにしている
-        this.generator.addMessagePageFunction(() => {
-          const face = new Face(
+        this.generator.addPageAdditionalItem({
+          type: "face",
+          data: {
+            face: new Face(
               new Coord(destPosX, destPosY),
               new Coord(srcPosX, srcPosY),
               new Coord(srcWidth, srcHeight)
-          );
-          this.generator.wwa.addFace(face);
-          // 下3行は上の行で動かなかった用
-          // this._windowCloseWaitingMessageDisplayRequests.push(
-          //     `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`
-          // );
+            )
+          }
         });
         return undefined;
       }
