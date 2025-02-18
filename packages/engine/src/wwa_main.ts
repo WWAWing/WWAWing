@@ -40,7 +40,7 @@ import { Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import { parseMacro } from "./wwa_macro";
-import { ParsedMessage, isEmptyMessageTree, Node, Junction, Page, generatePagesByRawMessage } from "./wwa_message";
+import { ParsedMessage, isEmptyMessageTree, MessageRequestPage, Node, Page, generatePagesByRawMessage } from "./wwa_message";
 import { MessageWindow, MonsterWindow, ScoreWindow } from "./wwa_window"
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -59,6 +59,7 @@ import { WWANode } from "./wwa_expression2/wwa";
 import * as VarDump from "./wwa_vardump"
 import { DataWWAOptions } from "./wwa_data/typedef";
 import { makeDefaultWWAOptions } from "./wwa_data/options";
+import { PageAdditionalItem } from "./wwa_expression2/typedef";
 
 let wwa: WWA
 
@@ -269,13 +270,13 @@ export class WWA {
      * 現在表示されているウィンドウが全て閉じられた後にメッセージとして表示されます.
      * メッセージウィンドウ(システムメッセージ含む)に関しては、表示される予定のものが全て掃けた後にリクエスト内容のメッセージが表示されます.
      */
-    private _windowCloseWaitingMessageDisplayRequests: string[] = [];
+    private _windowCloseWaitingMessageDisplayRequests: MessageRequestPage[] = [];
 
     /**
      * プレイヤーや物体パーツが動いている途中に発生したメッセージ表示リクエスト.
      * プレイヤーが次の座標に納まってからメッセージ処理を実行します。
      */
-    private _playerAndObjectsStopWaitingMessageDisplayRequests: string[] = [];
+    private _playerAndObjectsStopWaitingMessageDisplayRequests: MessageRequestPage[] = [];
 
     /**
      * ウィンドウが表示されている途中に発生したジャンプゲートリクエスト.
@@ -3930,7 +3931,7 @@ export class WWA {
         }
         if (this._windowCloseWaitingMessageDisplayRequests.length > 0) {
             const message = this._windowCloseWaitingMessageDisplayRequests.shift();
-            this.registerPageByMessage(message);
+            this.registerPageByMessage(message.message, { additionalItems: message.additionalItems });
             return { newPageGenerated: true };
         }
         return {newPageGenerated: false };
@@ -3945,7 +3946,10 @@ export class WWA {
         if (this._playerAndObjectsStopWaitingMessageDisplayRequests.length > 0) {
             // 移動後のプレイヤーが justPosition ならメッセージを表示する
             // HACK: <P> で発生したメッセージを無理やり連結しているが、配列を直接受け取れるようになるべき
-            this.registerPageByMessage(this._playerAndObjectsStopWaitingMessageDisplayRequests.join("<p>"));
+            this.registerPageByMessage(
+                this._playerAndObjectsStopWaitingMessageDisplayRequests.map(item => item.message).join("<p>"),
+                { additionalItems: this._playerAndObjectsStopWaitingMessageDisplayRequests.map(item => item.additionalItems).flat() }
+            );
             this._playerAndObjectsStopWaitingMessageDisplayRequests = [];
         }
     }
@@ -3959,27 +3963,28 @@ export class WWA {
 
     // メッセージが表示できる場合は表示します。
     // できない場合はできるようになってからします。
-    public reserveMessageDisplayWhenShouldOpen(message: string) {
+    public reserveMessageDisplayWhenShouldOpen(messageRequest: MessageRequestPage) {
         if (
             this._player.isWaitingMessage() ||
             this._player.isFighting() ||
             this._player.isWaitingPasswordWindow() ||
             this._player.isWaitingEstimateWindow()
         ) {
-            this._windowCloseWaitingMessageDisplayRequests.push(message);
+            this._windowCloseWaitingMessageDisplayRequests.push(messageRequest);
         } else if (this._player.isMoving() || this._player.isWaitingMoveMacro()) {
-            this._playerAndObjectsStopWaitingMessageDisplayRequests.push(message);
+            this._playerAndObjectsStopWaitingMessageDisplayRequests.push(messageRequest);
         } else {
-            this.registerPageByMessage(message);
+            this.registerPageByMessage(messageRequest.message, { additionalItems: messageRequest.additionalItems });
         }
     }
 
     // MSG() 関数の実行結果をハンドリングします。
     public handleMsgFunction(message: string): void{
+        const additionalItems = this.evalCalcWwaNodeGenerator.pickPageAdditionalQueue();
         if (this._pageExecuting) {
-            this._windowCloseWaitingMessageDisplayRequests.push(message)
+            this._windowCloseWaitingMessageDisplayRequests.push({ message, additionalItems })
         } else {
-            this.reserveMessageDisplayWhenShouldOpen(message);
+            this.reserveMessageDisplayWhenShouldOpen({ message, additionalItems });
         }
     }
 
@@ -4024,15 +4029,16 @@ export class WWA {
                 type: PartsType.OBJECT,
                 position: new Coord(0, 0)
             },
-            scoreOption = undefined
+            scoreOption = undefined,
+            additionalItems = [],
         }: {
             showChoice?: boolean,
             isSystemMessage?: boolean,
             triggerParts?: TriggerParts,
-            scoreOption?: ScoreOption
+            scoreOption?: ScoreOption,
+            additionalItems?: PageAdditionalItem[],
         } = {}
     ): void {
-        const additionalItems = this.evalCalcWwaNodeGenerator.pickPageAdditionalQueue();
         const generatedPage = generatePagesByRawMessage(
           message,
           { triggerParts, isSystemMessage, showChoice, scoreOption, additionalItems },

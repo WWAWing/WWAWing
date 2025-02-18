@@ -67,7 +67,7 @@ export class EvalCalcWwaNodeGenerator {
   }
 
   public clearTemporaryState() {
-    this.state = { ...this.state, triggerParts: undefined };
+    this.state = { ...this.state, triggerParts: undefined, messagePageAdditionalQueue: [] };
   }
 
   /**
