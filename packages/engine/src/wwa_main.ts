@@ -3979,12 +3979,11 @@ export class WWA {
     }
 
     // MSG() 関数の実行結果をハンドリングします。
-    public handleMsgFunction(message: string): void{
-        const additionalItems = this.evalCalcWwaNodeGenerator.pickPageAdditionalQueue();
+    public handleMsgFunction(messageRequest: MessageRequestPage): void{
         if (this._pageExecuting) {
-            this._windowCloseWaitingMessageDisplayRequests.push({ message, additionalItems })
+            this._windowCloseWaitingMessageDisplayRequests.push(messageRequest);
         } else {
-            this.reserveMessageDisplayWhenShouldOpen({ message, additionalItems });
+            this.reserveMessageDisplayWhenShouldOpen(messageRequest);
         }
     }
 
