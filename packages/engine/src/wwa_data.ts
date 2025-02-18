@@ -1097,3 +1097,10 @@ export interface BattleEstimateParameters {
  * 戦闘ダメージ方向の定義
  */
 export type BattleDamageDirection = "playerToEnemy" | "enemyToPlayer";
+
+/**
+ *  メッセージを表示するリクエスト
+ *  - message: 本文
+ *  - shouldParse: true の場合、タグとマクロをパースします。 falsy の場合、平文で表示します。
+ */
+export type MessageDisplayRequest = { message: string, shouldParse?: boolean};

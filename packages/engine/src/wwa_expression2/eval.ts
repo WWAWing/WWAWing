@@ -943,8 +943,7 @@ export class EvalCalcWwaNode {
 
   evalMessage(node: Wwa.Msg) {
     const value = this.evalWwaNode(node.value);
-    const showString = isNaN(value)? value: value.toString();
-    this.generator.wwa.handleMsgFunction(showString);
+    this.generator.wwa.handleMsgFunction(value);
     return undefined;
   }
 
