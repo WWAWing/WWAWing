@@ -57,6 +57,8 @@ import * as ExpressionParser2 from "./wwa_expression2";
 import { UserScriptResponse, fetchScriptFile } from "./load_script_file";
 import { WWANode } from "./wwa_expression2/wwa";
 import * as VarDump from "./wwa_vardump"
+import { DataWWAOptions } from "./wwa_data/typedef";
+import { makeDefaultWWAOptions } from "./wwa_data/options";
 
 let wwa: WWA
 
@@ -308,20 +310,7 @@ export class WWA {
     private userDefinedFunctions: { [key: string]: WWANode } = {};
 
     constructor(
-        mapFileName: string,
-        urlgateEnabled: boolean = false,
-        titleImgName: string,
-        classicModeEnabled: boolean,
-        itemEffectEnabled: boolean,
-        useGoToWWA: boolean,
-        audioDirectory: string = "",
-        disallowLoadOldSave: boolean = false,
-        dumpElm: HTMLElement = null,
-        userVarNamesFile: string | null,
-        canDisplayUserVars: boolean,
-        enableVirtualPad: boolean = false,
-        virtualpadControllerElm: HTMLElement = null,
-        pictureImageNamesFile: string | null,
+        options: DataWWAOptions = makeDefaultWWAOptions(),
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -334,7 +323,7 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-        if (titleImgName === null) {
+        if (options.titleImg === undefined) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
             ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
@@ -352,7 +341,7 @@ export class WWA {
                 this._setLoadingMessage(ctxCover, 0);
             }
         } catch (e) { }
-        this._dumpElement = dumpElm;
+        this._dumpElement = options.varDumpElm;
         const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
         if (_AudioContext) {
             this.audioContext = new _AudioContext();
@@ -368,19 +357,19 @@ export class WWA {
         }
         this.userDevice = new UserDevice();
 
-        this._isURLGateEnable = urlgateEnabled;
-        this._isClassicModeEnable = classicModeEnabled;
+        this._isURLGateEnable = options.urlGateEnable;
+        this._isClassicModeEnable = options.classicModeEnable;
         this._mainCallCounter = 0;
         this._animationCounter = 0;
         this._statusPressCounter = new Status(0, 0, 0, 0);
-        if (!audioDirectory) {
-            audioDirectory = "./audio/";
-        } else if (audioDirectory[audioDirectory.length - 1] !== "/") {
-            audioDirectory += "/";
+        if (!options.audioDir) {
+            options.audioDir = "./audio/";
+        } else if (options.audioDir[options.audioDir.length - 1] !== "/") {
+            options.audioDir += "/";
         }
-        this._audioDirectory = audioDirectory;
+        this._audioDirectory = options.audioDir;
         // Go To WWA を強制するオプションが無効なら、Battle Reportにする
-        this._bottomButtonType = useGoToWWA ? ControlPanelBottomButton.GOTO_WWA : ControlPanelBottomButton.BATTLE_REPORT;
+        this._bottomButtonType = options.useGoToWwa ? ControlPanelBottomButton.GOTO_WWA : ControlPanelBottomButton.BATTLE_REPORT;
 
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
@@ -437,7 +426,7 @@ export class WWA {
 
         this._loadHandler = (wwaData: WWAData): void => {
             this._wwaData = wwaData;
-            this._wwaData.isItemEffectEnabled = itemEffectEnabled;
+            this._wwaData.isItemEffectEnabled = options.itemEffectEnable;
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -542,7 +531,7 @@ export class WWA {
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
-            if (enableVirtualPad) {
+            if (options.virtualPadEnable) {
                 this._virtualPadButtonElements = {
                     BUTTON_ENTER: <HTMLButtonElement>util.$id("wwa-enter-button"),
                     BUTTON_ESC: <HTMLButtonElement>util.$id("wwa-esc-button"),
@@ -561,7 +550,7 @@ export class WWA {
                     this._setVirtualPadTouch.bind(this),
                     this._setVirtualPadLeave.bind(this)
                 );
-                setUpVirtualPadController(virtualpadControllerElm, () => {
+                setUpVirtualPadController(options.virtualPadControllerElm, () => {
                     this._virtualPadStore.toggleVisible();
                 });
             } else {
@@ -613,7 +602,7 @@ export class WWA {
                     alert(message);
                 }
             });
-            this._isDisallowLoadOldSave = disallowLoadOldSave;
+            this._isDisallowLoadOldSave = options.disallowLoadOldSave;
             this._messageWindow.setWWASave(this._wwaSave);
 
             WWACompress.setRestartData(this._restartData, this._wwaData);
@@ -985,7 +974,7 @@ export class WWA {
                 this, this._wwaData.mapCGName, util.$id("wwa-wrapper"));
 
             this._passwordWindow = new PasswordWindow(
-                this, <HTMLDivElement>util.$id("wwa-wrapper"), disallowLoadOldSave);
+                this, <HTMLDivElement>util.$id("wwa-wrapper"), options.disallowLoadOldSave);
 
             this._monsterWindow = new MonsterWindow(
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
@@ -1014,7 +1003,7 @@ export class WWA {
             */
 
 
-            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, this, pictureImageNamesFile, (): void => {
+            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, this, options.pictureImageNamesFile, (): void => {
                 this._isSkippedSoundMessage = true;
                 const setGameStartingMessageWhenPcOrSP = () => {
                     switch (this.userDevice.device) {
@@ -1047,7 +1036,7 @@ export class WWA {
 
                 if (this._usePassword) {
                     let showingMessage = soundLoadConfirmMessage;
-                    if (canDisplayUserVars) {
+                    if (options.displayUserVars) {
                         showingMessage += "\n\n※変数表示が有効になっています。\n公開前に必ずHTMLファイル内の\n data-wwa-display-user-vars=\"true\" \nを消してください。"
                     }
                     this._messageWindow.setMessage(showingMessage);
@@ -1132,24 +1121,24 @@ export class WWA {
         eventEmitter.addListener("mapData", mapDataHandler)
         eventEmitter.addListener("progress", progressHandler)
         eventEmitter.addListener("error", errorHandler)
-        const loader = new WWALoader(mapFileName, eventEmitter);
+        const loader = new WWALoader(options.mapdata, eventEmitter);
         loader.requestAndLoadMapData().then(async () => {
-            this._canDisplayUserVars = canDisplayUserVars;
+            this._canDisplayUserVars = options.displayUserVars;
             this._userVarNameList = [];
             if (this._canDisplayUserVars) {
                 this._inlineUserVarViewer = { topUserVarIndex:  {named: 0, numbered: 0}, isVisible: false, kind: "numbered" };
                 // ユーザー変数ファイルを読み込む
-                const userVarStatus = await (userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
+                const userVarStatus = await (options.userVarNamesFile ? fetchJsonFile(options.userVarNamesFile) : {
                     kind: "noFileSpecified" as const,
                     errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
                 })
-                this.setUserVarStatus(userVarStatus, userVarNamesFile);
+                this.setUserVarStatus(userVarStatus, options.userVarNamesFile);
             }
         });
         /** 外部スクリプト関係処理 */
         (async () => {
             /** ユーザ定義関数を取得する */
-            const userScriptListJSONFileName = "./script/script_file_list.json";
+            const userScriptListJSONFileName = options.userDefinedScriptsFile ?? "./script/script_file_list.json";
             const userScriptFileNameList = await fetchJsonFile(userScriptListJSONFileName);
             let userScriptStringsPromises = [];
             console.log(userScriptFileNameList);
@@ -7111,21 +7100,31 @@ function start() {
         }
         return false;
     })();
+
+    const userDefinedScriptsFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-defined-scripts-file");
+
     wwa = new WWA(
-        mapFileName,
-        urlgateEnabled,
-        titleImgName,
-        classicModeEnabled,
-        itemEffectEnabled,
-        useGoToWWA,
-        audioDirectory,
-        disallowLoadOldSave,
-        dumpElm,
-        userVarNamesFile,
-        canDisplayUserVars,
-        virtualPadEnable,
-        virtualPadControllerElm,
-        pictureImageNamesFile
+        {
+            mapdata: mapFileName,
+            urlGateEnable: urlgateEnabled,
+            titleImg: titleImgName,
+            audioDir: audioDirectory,
+            classicModeEnable: classicModeEnabled,
+            itemEffectEnable: itemEffectEnabled,
+            useGoToWwa: useGoToWWA,
+            // lookingAround は Constructor にて設定
+            // autoSave は Constructor にて設定
+            disallowLoadOldSave: disallowLoadOldSave,
+            // resumeSaveData は Constructor にて設定
+            varDumpElm: dumpElm,
+            userVarNamesFile,
+            displayUserVars: canDisplayUserVars,
+            virtualPadEnable,
+            // virtualPadViewportFitEnable はすでに start 関数で使用済み
+            virtualPadControllerElm,
+            userDefinedScriptsFile,
+            pictureImageNamesFile,
+        }
     );
 }
 
