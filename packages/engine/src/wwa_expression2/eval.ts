@@ -627,7 +627,7 @@ export class EvalCalcWwaNode {
           return 0;
       }
       case "PARTS_MOVE": {
-        // TODO メッセージ表示が無いとプレイヤーが動かない限りパーツも動かない
+        // TODO CALL_PUSH 系イベントやデバッグコンソールからメッセージなしで実行するとプレイヤーが動かない限りパーツも動かない
         this._checkArgsLength(1, node);
         const moveNum = Number(this.evalWwaNode(node.value[0]));
         this.generator.wwa.setMoveMacroWaitingToPlayer(moveNum);
