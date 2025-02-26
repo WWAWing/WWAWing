@@ -187,6 +187,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "HAS_ITEM":
     case "REMOVE_ITEM":
     case "MOVE":
+    case "PARTS_MOVE":
     case "IS_PLAYER_WAITING_MESSAGE":
     case "GET_UNIXTIME":
     case "GET_DATE_YEAR":

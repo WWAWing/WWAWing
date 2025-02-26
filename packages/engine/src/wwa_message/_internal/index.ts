@@ -97,7 +97,7 @@ export function createPage({
   // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
   generateTokenValuesCallback: (triggerParts: TriggerParts) => ExpressionParser.TokenValues
 
-})  {
+}): Page {
     let firstNode: Node | undefined = undefined;
     let nodeByPrevLine: Node | undefined = undefined;
     let lastPoppedJunction: Junction | undefined = undefined;
@@ -166,7 +166,7 @@ export function createPage({
       isSystemMessage: generatingOption.isSystemMessage,
       showChoice: pageType === "first" ? generatingOption.showChoice: undefined,
       scoreOption: pageType === "first" ? generatingOption.scoreOption: undefined,
-      script
+      additionalItems: generatingOption.additionalItems,
     };
   }
 

@@ -2,6 +2,7 @@ import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
+import { PageAdditionalItem } from "./typedef";
 
 const operatorOperationMap: {
   [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
@@ -48,21 +49,25 @@ export class EvalCalcWwaNodeGenerator {
        */
       estimatingParams?: BattleEstimateParameters;
     }
+    /** メッセージの各ページに追加装飾 (FACE 関数のイメージなど) を蓄えておく関数． */
+    messagePageAdditionalQueue: PageAdditionalItem[];
   }
 
   constructor(wwa: WWA) {
     this.wwa = wwa;
     /** 初期処理上限を10万回にする */
     this.loop_limit = 100000;
-    this.state = {}
+    this.state = {
+      messagePageAdditionalQueue: [],
+    };
   }
 
   public setTriggerParts(partsId: number, partsType: PartsType, position: Coord) {
     this.state = { ...this.state, triggerParts: { id: partsId, type: partsType, position } };
   }
 
-  public clearTriggerParts() {
-    this.state = { ...this.state, triggerParts: undefined };
+  public clearTemporaryState() {
+    this.state = { ...this.state, triggerParts: undefined, messagePageAdditionalQueue: [] };
   }
 
   /**
@@ -105,6 +110,16 @@ export class EvalCalcWwaNodeGenerator {
         throw caughtThing;
       }
     }
+  }
+
+  public addPageAdditionalItem(item: PageAdditionalItem) {
+    this.state.messagePageAdditionalQueue.push(item);
+  }
+
+  public pickPageAdditionalQueue(): PageAdditionalItem[] {
+    const items = [...this.state.messagePageAdditionalQueue];
+    this.state.messagePageAdditionalQueue = [];
+    return items;
   }
 
   public updateLoopLimit(limit: number) {
@@ -528,12 +543,18 @@ export class EvalCalcWwaNode {
         ) {
           throw new Error("各引数は0以上の整数でなければなりません。");
         }
-        this.generator.wwa.handleFaceFunction(new Face(
-            new Coord(destPosX, destPosY),
-            new Coord(srcPosX, srcPosY),
-            new Coord(srcWidth, srcHeight)
-          )
-        );
+        // <p> 区切りごとに処理タイミングが分けられているマクロ文と違い、 WWA Script はその区切りが無いため、この場で実行するとコード内のすべての FACE のイメージが表示されてしまう
+        // 一度 EvalCalcWwaNodeGenerator のステートで実行する処理をキープしておいて、メッセージ表示のタイミングで実行するようにしている
+        this.generator.addPageAdditionalItem({
+          type: "face",
+          data: {
+            face: new Face(
+              new Coord(destPosX, destPosY),
+              new Coord(srcPosX, srcPosY),
+              new Coord(srcWidth, srcHeight)
+            )
+          }
+        });
         return undefined;
       }
       case "EFFECT": {
@@ -604,6 +625,13 @@ export class EvalCalcWwaNode {
           this.generator.wwa.movePlayer(direction);
           this.generator.wwa.movePlayer(direction);
           return 0;
+      }
+      case "PARTS_MOVE": {
+        // TODO CALL_PUSH 系イベントやデバッグコンソールからメッセージなしで実行するとプレイヤーが動かない限りパーツも動かない
+        this._checkArgsLength(1, node);
+        const moveNum = Number(this.evalWwaNode(node.value[0]));
+        this.generator.wwa.setMoveMacroWaitingToPlayer(moveNum);
+        return 0;
       }
       case "IS_PLAYER_WAITING_MESSAGE": {
         return this.generator.wwa.isPlayerWaitingMessage();
@@ -861,7 +889,8 @@ export class EvalCalcWwaNode {
   evalMessage(node: Wwa.Msg) {
     const value = this.evalWwaNode(node.value);
     const showString = isNaN(value)? value: value.toString();
-    this.generator.wwa.handleMsgFunction(showString);
+    const additionalItems = this.generator.pickPageAdditionalQueue();
+    this.generator.wwa.handleMsgFunction({ message: showString, additionalItems });
     return undefined;
   }
 
