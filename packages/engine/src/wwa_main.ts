@@ -7053,7 +7053,7 @@ function start() {
             return mes;             // Gecko and WebKit
         }
     });
-    var titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
+    const titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
     const virtualPadAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-enable");
     const virtualPadEnable = virtualPadAttribute !== null && virtualPadAttribute.match(/^true$/i) !== null;
     inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName, virtualPadEnable);
@@ -7111,7 +7111,8 @@ function start() {
         {
             mapdata: mapFileName,
             urlGateEnable: urlgateEnabled,
-            titleImg: titleImgName,
+            // WWA のコンストラクターはカバー画像未指定の場合は undefined と扱う
+            titleImg: titleImgName ?? undefined,
             audioDir: audioDirectory,
             classicModeEnable: classicModeEnabled,
             itemEffectEnable: itemEffectEnabled,
