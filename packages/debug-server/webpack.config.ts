@@ -8,6 +8,12 @@ const config: webpack.Configuration = {
   output: {
     filename: "index.js",
     path: path.resolve(__dirname, "lib"),
+    assetModuleFilename: (pathData) => {
+      if (pathData.filename?.endsWith("png")) {
+        return "icons/[name].[hash][ext][query]";
+      }
+      return "[name].[hash][ext][query]";
+    },
   },
   resolve: {
     extensions: [".ts", ".js"],
@@ -31,6 +37,7 @@ const config: webpack.Configuration = {
           },
         ],
       },
+      { test: /\.(html|css|png)$/, type: "asset/resource" },
     ],
   },
   watchOptions: {
