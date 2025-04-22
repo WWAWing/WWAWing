@@ -52,12 +52,12 @@ export interface BinaryOperation {
 
 export interface Symbol {
   type: "Symbol";
-  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "CX" | "CY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF" | "ENEMY_GD";
+  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "CX" | "CY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF" | "ENEMY_GD" | "LP";
 }
 
 export interface Array1D {
   type: "Array1D";
-  name: "ITEM" | "m" | "o" | "v"; // 2次元配列の1次元分が返ってくる可能性がある
+  name: "ITEM" | "m" | "o" | "v" | "LP"; // 2次元配列の1次元分が返ってくる可能性がある
   index0: Calcurable;
 }
 

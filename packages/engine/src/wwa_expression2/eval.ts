@@ -137,6 +137,7 @@ export class EvalCalcWwaNode {
     i: number,
     j: number,
     k: number,
+    LP: number[],
     loopCount: number,
     /** break/continue管理フラグ */
     break_flag: boolean;
@@ -149,6 +150,7 @@ export class EvalCalcWwaNode {
       i: null,
       j: null,
       k: null,
+      LP: [],
       loopCount: 0,
       break_flag: false,
       continue_flag: false
@@ -369,29 +371,48 @@ export class EvalCalcWwaNode {
 
   /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
   forStateMent(node: Wwa.ForStatement) {
-    const init: Wwa.SpecialParameterAssignment = <Wwa.SpecialParameterAssignment>node.init;
+    const init: Wwa.SpecialParameterAssignment | Wwa.Array1D = <Wwa.SpecialParameterAssignment|Wwa.Array1D>node.init;
 
     /** for文初期化時に呼ばれる関数 */
     const initStatment = () => {
-      /** 初期化チェックを行う */
-      switch(init.kind) {
-        case 'i':
-          if(this.for_id.i !== null) {
-            throw new Error("iの値が既に外側のforループで使われています。");
-          }
-          break;
-        case 'j':
-          if(this.for_id.j !== null) {
-            throw new Error("jの値が既に外側のforループで使われています。");
-          }
-          break;
-        case 'k':
-          if(this.for_id.k !== null) {
-            throw new Error("kの値が既に外側のforループで使われています。");
-          }
-          break;
-        default:
-          throw new Error("予想外の変数がfor文内で使用されました :"+init.kind);
+      if('kind' in init) {
+        /** 初期化チェックを行う */
+        switch(init.kind) {
+          case 'i':
+            if(this.for_id.i !== null) {
+              throw new Error("iの値が既に外側のforループで使われています。");
+            }
+            break;
+          case 'j':
+            if(this.for_id.j !== null) {
+              throw new Error("jの値が既に外側のforループで使われています。");
+            }
+            break;
+          case 'k':
+            if(this.for_id.k !== null) {
+              throw new Error("kの値が既に外側のforループで使われています。");
+            }
+            break;
+          default:
+            console.log(node)
+            throw new Error("予想外の変数がfor文内で使用されました :"+init.kind);
+        }
+      }
+      else {
+        switch (init.name) {
+          case 'LP':
+            const LPIndex = Number(this.evalWwaNode(init.index0));
+            if(Number.isNaN(LPIndex)) {
+              throw new Error(`LPのIndex値はNumberでないといけません。: ${LPIndex}`)
+            }
+            if(this.for_id.LP[LPIndex] !== null && this.for_id.LP[LPIndex] !== undefined) {
+              throw new Error(`LP[${LPIndex}]の値が既に外側のforループで使われています。`);
+            }
+            break;
+          default:
+            console.log(node)
+            throw new Error("予想外の1次元配列がfor文内で使用されました :"+init.name);
+        }
       }
       /** 添字の初期化処理を実施する */
       this.evalWwaNode(node.init);
@@ -418,16 +439,25 @@ export class EvalCalcWwaNode {
 
     /** for文終了後に呼ばれる処理 */
     this.for_id.break_flag = false;
-    switch(init.kind) {
-      case 'i':
-        this.for_id.i = null;
-        break;
-      case 'j':
-        this.for_id.j = null;
-        break;
-      case 'k':
-        this.for_id.k = null;
-        break;
+    if('kind' in init) {
+      switch(init.kind) {
+        case 'i':
+          this.for_id.i = null;
+          break;
+        case 'j':
+          this.for_id.j = null;
+          break;
+        case 'k':
+          this.for_id.k = null;
+          break;
+      }
+    }
+    else {
+      switch (init.name) {
+        case 'LP':
+          const LPIndex = Number(this.evalWwaNode(init.index0));
+          this.for_id.LP[LPIndex] = null;
+      }
     }
   }
 
@@ -1123,8 +1153,9 @@ export class EvalCalcWwaNode {
           throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+userVarIndex);
         }
         return game_status.itemBox[userVarIndex - 1];
+      case "LP":
+        return this.for_id.LP[userVarIndex];
       default:
-        throw new Error("このシンボルは取得できません")
     }
   }
 
