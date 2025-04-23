@@ -221,6 +221,8 @@ export class EvalCalcWwaNode {
         return this.convertTemplateLiteral(node);
       case "ConditionalExpression":
         return this.convertConditionalExpression(node);
+      case "LoopPointerAssignment":
+        return this.convertLoopPointerExpression(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -282,6 +284,13 @@ export class EvalCalcWwaNode {
             type: "ItemAssignment",
             itemBoxPosition1to12: node.argument.index0,
             value: valueLiteral
+          })
+         } else if (node.argument.name === "LP") {
+          this.convertLoopPointerExpression({
+            type: "LoopPointerAssignment",
+            index: node.argument.index0,
+            value: valueLiteral,
+            operator: "="
           })
         } else {
           throw new Error(`このリテラルはインクリメント/デクリメントできません: ${node.argument.type}`)
@@ -371,7 +380,7 @@ export class EvalCalcWwaNode {
 
   /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
   forStateMent(node: Wwa.ForStatement) {
-    const init: Wwa.SpecialParameterAssignment | Wwa.Array1D = <Wwa.SpecialParameterAssignment|Wwa.Array1D>node.init;
+    const init: Wwa.SpecialParameterAssignment | Wwa.LoopPointerAssignment = <Wwa.SpecialParameterAssignment|Wwa.LoopPointerAssignment>node.init;
 
     /** for文初期化時に呼ばれる関数 */
     const initStatment = () => {
@@ -399,9 +408,9 @@ export class EvalCalcWwaNode {
         }
       }
       else {
-        switch (init.name) {
-          case 'LP':
-            const LPIndex = Number(this.evalWwaNode(init.index0));
+        switch (init.type) {
+          case 'LoopPointerAssignment':
+            const LPIndex = Number(this.evalWwaNode(init.index));
             if(Number.isNaN(LPIndex)) {
               throw new Error(`LPのIndex値はNumberでないといけません。: ${LPIndex}`)
             }
@@ -411,7 +420,7 @@ export class EvalCalcWwaNode {
             break;
           default:
             console.log(node)
-            throw new Error("予想外の1次元配列がfor文内で使用されました :"+init.name);
+            throw new Error("予想外の1次元配列がfor文内で使用されました :"+init);
         }
       }
       /** 添字の初期化処理を実施する */
@@ -453,9 +462,9 @@ export class EvalCalcWwaNode {
       }
     }
     else {
-      switch (init.name) {
-        case 'LP':
-          const LPIndex = Number(this.evalWwaNode(init.index0));
+      switch (init.type) {
+        case 'LoopPointerAssignment':
+          const LPIndex = Number(this.evalWwaNode(init.index));
           this.for_id.LP[LPIndex] = null;
       }
     }
@@ -875,6 +884,32 @@ export class EvalCalcWwaNode {
     return value;
   }
 
+  /**  LP[0]を処理する */
+  convertLoopPointerExpression(node: Wwa.LoopPointerAssignment) {
+    const right = this.evalWwaNode(node.value);
+    const index = this.evalWwaNode(node.index);
+    switch(node.operator) {
+      case "+=":
+        this.for_id.LP[index] = right;
+        break;
+      case "-=":
+        this.for_id.LP[index] = right;
+        break;
+      case "/=":
+        this.for_id.LP[index] = right;
+        break;
+      case "*=":
+        this.for_id.LP[index] = right;
+        break;
+      case "=":
+      default:
+        this.for_id.LP[index] = right;
+        break;
+    }
+    return 0;
+  }
+
+
   /**
    * 保持しているITEMを変更する
    * ITEM[0] に対する代入で、任意位置挿入ができます。
@@ -948,6 +983,9 @@ export class EvalCalcWwaNode {
       type: "Symbol",
       name: node.kind
     })
+    if(Array.isArray(currentValue)) {
+      throw new Error(`配列Objectに対して直接代入は出来ません: ${currentValue}`)
+    }
     const targetValue = (()=>{
       switch(node.operator) {
         case "+=":
@@ -1129,6 +1167,9 @@ export class EvalCalcWwaNode {
       case 'ENEMY_GD':
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
+      case 'LP':
+        // LOG出力用として返す
+        return this.for_id.LP;
       default:
         throw new Error("このシンボルは取得できません")
     }

@@ -30,6 +30,14 @@ export interface UserVariableAssignment {
   operator?: "=" | "+=" | "-=" | "*=" | "/=";
 }
 
+
+export interface LoopPointerAssignment {
+  type: "LoopPointerAssignment";
+  index: Calcurable;
+  value: Calcurable;
+  operator?: "=" | "+=" | "-=" | "*=" | "/=";
+}
+
 export interface SpecialParameterAssignment {
   type: "SpecialParameterAssignment";
   kind: "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS";
@@ -203,4 +211,5 @@ export type WWANode = |
   LogicalExpression |
   TemplateLiteral |
   TemplateElement |
-  ConditionalExpression;
+  ConditionalExpression |
+  LoopPointerAssignment;

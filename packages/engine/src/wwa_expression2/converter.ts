@@ -331,9 +331,10 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           }
         } else if (left.name === "LP") {
           return {
-            type: "Array1D",
-            name: "LP",
-            index0: left.index0
+            type: "LoopPointerAssignment",
+            index: left.index0,
+            value: right,
+            operator: node.operator
           }
         } else {
           throw new Error(`1次元配列にて想定していないシンボルが指定されました ${left.name}`);
