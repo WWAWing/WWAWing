@@ -7008,7 +7008,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `v["test"] = [1, 2, 3];\nMSG(v["test"][0])\n\nv["player"] = {"name": "マサト","age": 19}\nMSG(v["player"]["name"])\n\nv["players"] = [{"name": "マサト","age": 19},{"name": "ヤツロウ","age": 21}]\nMSG(v["players"][1]["name"])\nv["players"][1]["name"] = "トナミ"\nMSG(v["players"][1]["name"])`;
+    consoleTextareaElement.textContent = `v["money"] = 100;\nv["name"] = "ヤツロウ";\nMSG(v["name"]+"「俺の所持金は"+v["money"]+"ゴールドだ」");\nfor(LP[0]=0; LP[0]<2; LP[0]++) {\n  LOG(LP);\n}`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();

@@ -218,6 +218,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_IMG_POS_X":
     case "GET_IMG_POS_Y":
     case "LENGTH":
+    case "IS_NUMBER":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -347,8 +348,15 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
             value: right,
             operator: node.operator
           }
+        } else if (left.name === "LP") {
+          return {
+            type: "LoopPointerAssignment",
+            index: left.indecies[0],
+            value: right,
+            operator: node.operator
+          }
         } else {
-          throw new Error("");
+          throw new Error(`1次元配列にて想定していないシンボルが指定されました ${left.name}`);
         }
       } else if (left.type === "Symbol") {
         if (
@@ -366,7 +374,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           left.name === "PLAYER_PX" ||
           left.name === "PLAYER_PY" ||
           left.name === "MOVE_SPEED" ||
-          left.name === "MOVE_FRAME_TIME"
+          left.name === "MOVE_FRAME_TIME" ||
+          left.name === "LP"
         ) {
           throw new Error("このシンボルには代入できません");
         }
@@ -452,14 +461,14 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
   const property = convertNodeAcornToWwa(node.property);
 
   if (object.type === "Symbol") {
-    if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM" && object.name !== "PICTURE") {
+    if (!["v", "m", "o", "ITEM", "LP", "PICTURE"].includes(object.name)) {
       throw new Error("このシンボルは配列にできません");
     }
     if (Wwa.isCalcurable(property)) {
       // m, o については一次元分適用
       return {
         type: "ArrayOrObject1D",
-        name: object.name,
+        name: <"v"|"m"|"o"|"ITEM"|"LP">object.name,
         indecies: [property],
       };
     } else {
@@ -473,7 +482,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
     if (Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject2D",
-        name: object.name,
+        name: <"m" | "o">object.name,
         // 1次元配列 + 1次元分の index を合成
         indecies: [...object.indecies, property]
       }
@@ -537,6 +546,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "PLAYER_PY":
     case "MOVE_SPEED":
     case "MOVE_FRAME_TIME":
+    case "LP":
       return {
         type: "Symbol",
         name: node.name
