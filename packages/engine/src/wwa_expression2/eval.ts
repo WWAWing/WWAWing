@@ -466,6 +466,7 @@ export class EvalCalcWwaNode {
         case 'LoopPointerAssignment':
           const LPIndex = Number(this.evalWwaNode(init.index));
           this.for_id.LP[LPIndex] = null;
+          break;
       }
     }
   }
@@ -1202,6 +1203,7 @@ export class EvalCalcWwaNode {
       case "LP":
         return this.for_id.LP[userVarIndex];
       default:
+        throw new Error("このシンボルは取得できません")
     }
   }
 
