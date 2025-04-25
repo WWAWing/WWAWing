@@ -794,10 +794,10 @@ export class EvalCalcWwaNode {
         }
         throw new Error("GET_IMG_POS_Y: 指定したIDのパーツのTypeが異常です。");
       }
-      case "IS_NAN": {
+      case "IS_NUMBER": {
         this._checkArgsLength(1, node);
-        const value = Number(this.evalWwaNode(node.value[0]));
-        return Number.isNaN(value);
+        const value = this.evalWwaNode(node.value[0]);
+        return typeof value === "number";
       }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
