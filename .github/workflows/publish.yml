@@ -15,34 +15,13 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: true
-
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/init
         with:
-          node-version: '22.x'
-          registry-url: 'https://registry.npmjs.org'
-      
-      - name: "Configure"
-        run: |
-          git config user.name "[Automatically Released] Matsuyuki"
-          git config user.email "matsuyuki.eca@gmail.com"
-
-      - name: restore node_modules
-        uses: actions/cache@v4
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-
-      - name: "Install"
-        run: |
-          git lfs pull
-          npm i -g npm@10
-          npm install
-      
+          lfs: true
       - name: "Publish"
         # lerna version でバージョンを上げた後、npm i をすると package-lock.json に差分が出てしまうので...
         run: |
