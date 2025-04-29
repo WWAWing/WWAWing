@@ -1,0 +1,46 @@
+name: "init"
+
+inputs:
+  lfs:
+    default: false
+    type: boolean
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22.x'
+        registry-url: 'https://registry.npmjs.org'
+    
+    - name: "Configure"
+      shell: bash
+      run: |
+        git config user.name "[Automatically Released] Matsuyuki"
+        git config user.email "matsuyuki.eca@gmail.com"
+
+    - name: Restore node_modules
+      uses: actions/cache@v4
+      with:
+        path: '**/node_modules'
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+
+    # https://github.com/actions/checkout/issues/165#issuecomment-2776048200
+    - name: Create Git LFS file list
+      shell: bash
+      run: git lfs ls-files -l |cut -d ' ' -f1 | sort > .git/lfs-hashes.txt
+      if: ${{ inputs.lfs }}
+
+    - name: Restore Git LFS object cache
+      uses: actions/cache@v4
+      if: ${{ inputs.lfs }}
+      with:
+        path: .git/lfs
+        key: ${{ runner.os }}-lfs-${{ hashFiles('.git/lfs-hashes.txt') }}
+
+    - name: "Install"
+      shell: bash
+      run: |
+        git lfs pull
+        npm i -g npm@10
+        npm install
