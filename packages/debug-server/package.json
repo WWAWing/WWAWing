@@ -9,20 +9,30 @@
   ],
   "scripts": {
     "start": "npm run build && node lib debug",
-    "build": "tsc -p .",
-    "generate": "shx mkdir -p bin && pkg -t node18-win-x64 ./lib/index.js --output bin/wwa-server.exe",
-    "clean": "shx rm -rf debug lib bin",
+    "build": "webpack build --config ./webpack.config.ts",
+    "generate": "run-s generate:*",
+    "generate:pre-crean": "shx rm -rf bin tmp",
+    "generate:prepare": "ts-node ./scripts/prepare-generate.ts && node --experimental-sea-config ./tmp/sea-config.json",
+    "generate:inject": "postject ./bin/wwa-server.exe NODE_SEA_BLOB ./tmp/sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
+    "generate:post-clean": "shx rm -rf tmp",
+    "clean": "shx rm -rf debug lib bin tmp",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
+  "dependencies": {
+    "@wwawing/serve-index": "file:../serve-index"
+  },
   "devDependencies": {
+    "@swc/core": "^1.10.0",
+    "@swc/helpers": "^0.5.15",
     "@types/express": "4.17.14",
-    "@types/node": "^18.11.9",
-    "@types/serve-index": "1.9.1",
-    "express": "^4.18.1",
-    "pkg": "^5.8.0",
-    "serve-index": "1.9.1",
+    "@types/node": "^22.10.1",
+    "express": "^4.21.2",
+    "npm-run-all": "^4.1.5",
+    "postject": "^1.0.0-alpha.6",
+    "regenerator-runtime": "^0.14.1",
+    "resolve-pkg": "^2.0.0",
     "shelljs": "^0.8.5",
     "shx": "^0.3.4",
     "typescript": "^5.3.3"
@@ -31,7 +41,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=18",
-    "npm": ">=8"
+    "node": ">=22",
+    "npm": ">=10"
   }
 }
