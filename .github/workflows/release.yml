@@ -10,34 +10,19 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: true
-
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/init
         with:
-          node-version: '22.x'
-          registry-url: 'https://registry.npmjs.org'
-
+          lfs: true
       - name: "Set Env"
         run: "echo \"WWA_WING_VERSION=$(node -e \"console.log(require('./packages/engine/package.json').version)\")\" >> $GITHUB_ENV"
-
-      - name: restore node_modules
-        uses: actions/cache@v4
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-
-      - name: "Install & Build"
+      - name: "Build"
         run: |
-          npm i -g npm@10
-          git lfs pull
-          npm install
           npm run build
           npm run generate
-
       - name: "Upload distributions"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
