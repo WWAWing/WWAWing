@@ -187,6 +187,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "HAS_ITEM":
     case "REMOVE_ITEM":
     case "MOVE":
+    case "PARTS_MOVE":
     case "IS_PLAYER_WAITING_MESSAGE":
     case "GET_UNIXTIME":
     case "GET_DATE_YEAR":
@@ -206,6 +207,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "EXIT":
     case "GET_IMG_POS_X":
     case "GET_IMG_POS_Y":
+    case "IS_NUMBER":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -328,11 +330,18 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
             value: right,
             operator: node.operator
           }
+        } else if (left.name === "LP") {
+          return {
+            type: "LoopPointerAssignment",
+            index: left.index0,
+            value: right,
+            operator: node.operator
+          }
         } else {
-          throw new Error("");
+          throw new Error(`1次元配列にて想定していないシンボルが指定されました ${left.name}`);
         }
       } else if (left.type === "Symbol") {
-        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM" || left.name === "X" || left.name === "Y" || left.name === "ID" || left.name === "TYPE") {
+        if (left.name === "m" || left.name === "o" || left.name === "v" || left.name === "ITEM" || left.name === "X" || left.name === "Y" || left.name === "ID" || left.name === "TYPE" || left.name === "CX" || left.name === "CY" || left.name === "LP") {
           throw new Error("このシンボルには代入できません");
         }
         if (left.name === "AT_TOTAL") {
@@ -411,14 +420,14 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
   const property = convertNodeAcornToWwa(node.property);
 
   if (object.type === "Symbol") {
-    if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM") {
+    if (!["v", "m", "o", "ITEM", "LP"].includes(object.name)) {
       throw new Error("このシンボルは配列にできません");
     }
     if(property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
       // m, o については一次元分適用
       return {
         type: "Array1D",
-        name: object.name,
+        name: <"v"|"m"|"o"|"ITEM"|"LP">object.name,
         index0: property
       }
     } else {
@@ -433,7 +442,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Ww
     if (property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
       return {
         type: "Array2D",
-        name: object.name,
+        name: <"m" | "o">object.name,
         index0: object.index0,
         index1: property
       }
@@ -455,6 +464,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "TYPE":
     case "PX":
     case "PY":
+    case "CX":
+    case "CY":
     case "v":
     case "HP":
     case "HPMAX":
@@ -475,6 +486,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_HP":
     case "ENEMY_AT":
     case "ENEMY_DF":
+    case "LP":
       return {
         type: "Symbol",
         name: node.name

@@ -11,6 +11,7 @@ import * as ExpressionParser from "../wwa_expression";
 import { Macro } from "../wwa_macro";
 
 export * from "./data";
+export * from "./typedef";
 
 export function generatePagesByRawMessage(
   message: string,

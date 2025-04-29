@@ -2,6 +2,7 @@ import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as Wwa from "./wwa";
+import { PageAdditionalItem } from "./typedef";
 
 const operatorOperationMap: {
   [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
@@ -48,21 +49,25 @@ export class EvalCalcWwaNodeGenerator {
        */
       estimatingParams?: BattleEstimateParameters;
     }
+    /** メッセージの各ページに追加装飾 (FACE 関数のイメージなど) を蓄えておく関数． */
+    messagePageAdditionalQueue: PageAdditionalItem[];
   }
 
   constructor(wwa: WWA) {
     this.wwa = wwa;
     /** 初期処理上限を10万回にする */
     this.loop_limit = 100000;
-    this.state = {}
+    this.state = {
+      messagePageAdditionalQueue: [],
+    };
   }
 
   public setTriggerParts(partsId: number, partsType: PartsType, position: Coord) {
     this.state = { ...this.state, triggerParts: { id: partsId, type: partsType, position } };
   }
 
-  public clearTriggerParts() {
-    this.state = { ...this.state, triggerParts: undefined };
+  public clearTemporaryState() {
+    this.state = { ...this.state, triggerParts: undefined, messagePageAdditionalQueue: [] };
   }
 
   /**
@@ -107,6 +112,16 @@ export class EvalCalcWwaNodeGenerator {
     }
   }
 
+  public addPageAdditionalItem(item: PageAdditionalItem) {
+    this.state.messagePageAdditionalQueue.push(item);
+  }
+
+  public pickPageAdditionalQueue(): PageAdditionalItem[] {
+    const items = [...this.state.messagePageAdditionalQueue];
+    this.state.messagePageAdditionalQueue = [];
+    return items;
+  }
+
   public updateLoopLimit(limit: number) {
     this.loop_limit = limit;
   }
@@ -122,6 +137,7 @@ export class EvalCalcWwaNode {
     i: number,
     j: number,
     k: number,
+    LP: number[],
     loopCount: number,
     /** break/continue管理フラグ */
     break_flag: boolean;
@@ -134,6 +150,7 @@ export class EvalCalcWwaNode {
       i: null,
       j: null,
       k: null,
+      LP: [],
       loopCount: 0,
       break_flag: false,
       continue_flag: false
@@ -204,6 +221,8 @@ export class EvalCalcWwaNode {
         return this.convertTemplateLiteral(node);
       case "ConditionalExpression":
         return this.convertConditionalExpression(node);
+      case "LoopPointerAssignment":
+        return this.convertLoopPointerExpression(node);
       default:
         console.log(node);
         throw new Error("未定義または未実装のノードです");
@@ -265,6 +284,13 @@ export class EvalCalcWwaNode {
             type: "ItemAssignment",
             itemBoxPosition1to12: node.argument.index0,
             value: valueLiteral
+          })
+         } else if (node.argument.name === "LP") {
+          this.convertLoopPointerExpression({
+            type: "LoopPointerAssignment",
+            index: node.argument.index0,
+            value: valueLiteral,
+            operator: "="
           })
         } else {
           throw new Error(`このリテラルはインクリメント/デクリメントできません: ${node.argument.type}`)
@@ -354,29 +380,48 @@ export class EvalCalcWwaNode {
 
   /** for(i=0; i<10; i=i+1) のようなFor文を処理する */
   forStateMent(node: Wwa.ForStatement) {
-    const init: Wwa.SpecialParameterAssignment = <Wwa.SpecialParameterAssignment>node.init;
+    const init: Wwa.SpecialParameterAssignment | Wwa.LoopPointerAssignment = <Wwa.SpecialParameterAssignment|Wwa.LoopPointerAssignment>node.init;
 
     /** for文初期化時に呼ばれる関数 */
     const initStatment = () => {
-      /** 初期化チェックを行う */
-      switch(init.kind) {
-        case 'i':
-          if(this.for_id.i !== null) {
-            throw new Error("iの値が既に外側のforループで使われています。");
-          }
-          break;
-        case 'j':
-          if(this.for_id.j !== null) {
-            throw new Error("jの値が既に外側のforループで使われています。");
-          }
-          break;
-        case 'k':
-          if(this.for_id.k !== null) {
-            throw new Error("kの値が既に外側のforループで使われています。");
-          }
-          break;
-        default:
-          throw new Error("予想外の変数がfor文内で使用されました :"+init.kind);
+      if('kind' in init) {
+        /** 初期化チェックを行う */
+        switch(init.kind) {
+          case 'i':
+            if(this.for_id.i !== null) {
+              throw new Error("iの値が既に外側のforループで使われています。");
+            }
+            break;
+          case 'j':
+            if(this.for_id.j !== null) {
+              throw new Error("jの値が既に外側のforループで使われています。");
+            }
+            break;
+          case 'k':
+            if(this.for_id.k !== null) {
+              throw new Error("kの値が既に外側のforループで使われています。");
+            }
+            break;
+          default:
+            console.log(node)
+            throw new Error("予想外の変数がfor文内で使用されました :"+init.kind);
+        }
+      }
+      else {
+        switch (init.type) {
+          case 'LoopPointerAssignment':
+            const LPIndex = Number(this.evalWwaNode(init.index));
+            if(Number.isNaN(LPIndex)) {
+              throw new Error(`LPのIndex値はNumberでないといけません。: ${LPIndex}`)
+            }
+            if(this.for_id.LP[LPIndex] !== null && this.for_id.LP[LPIndex] !== undefined) {
+              throw new Error(`LP[${LPIndex}]の値が既に外側のforループで使われています。`);
+            }
+            break;
+          default:
+            console.log(node)
+            throw new Error("予想外の1次元配列がfor文内で使用されました :"+init);
+        }
       }
       /** 添字の初期化処理を実施する */
       this.evalWwaNode(node.init);
@@ -403,16 +448,26 @@ export class EvalCalcWwaNode {
 
     /** for文終了後に呼ばれる処理 */
     this.for_id.break_flag = false;
-    switch(init.kind) {
-      case 'i':
-        this.for_id.i = null;
-        break;
-      case 'j':
-        this.for_id.j = null;
-        break;
-      case 'k':
-        this.for_id.k = null;
-        break;
+    if('kind' in init) {
+      switch(init.kind) {
+        case 'i':
+          this.for_id.i = null;
+          break;
+        case 'j':
+          this.for_id.j = null;
+          break;
+        case 'k':
+          this.for_id.k = null;
+          break;
+      }
+    }
+    else {
+      switch (init.type) {
+        case 'LoopPointerAssignment':
+          const LPIndex = Number(this.evalWwaNode(init.index));
+          this.for_id.LP[LPIndex] = null;
+          break;
+      }
     }
   }
 
@@ -528,12 +583,18 @@ export class EvalCalcWwaNode {
         ) {
           throw new Error("各引数は0以上の整数でなければなりません。");
         }
-        this.generator.wwa.handleFaceFunction(new Face(
-            new Coord(destPosX, destPosY),
-            new Coord(srcPosX, srcPosY),
-            new Coord(srcWidth, srcHeight)
-          )
-        );
+        // <p> 区切りごとに処理タイミングが分けられているマクロ文と違い、 WWA Script はその区切りが無いため、この場で実行するとコード内のすべての FACE のイメージが表示されてしまう
+        // 一度 EvalCalcWwaNodeGenerator のステートで実行する処理をキープしておいて、メッセージ表示のタイミングで実行するようにしている
+        this.generator.addPageAdditionalItem({
+          type: "face",
+          data: {
+            face: new Face(
+              new Coord(destPosX, destPosY),
+              new Coord(srcPosX, srcPosY),
+              new Coord(srcWidth, srcHeight)
+            )
+          }
+        });
         return undefined;
       }
       case "EFFECT": {
@@ -604,6 +665,13 @@ export class EvalCalcWwaNode {
           this.generator.wwa.movePlayer(direction);
           this.generator.wwa.movePlayer(direction);
           return 0;
+      }
+      case "PARTS_MOVE": {
+        // TODO CALL_PUSH 系イベントやデバッグコンソールからメッセージなしで実行するとプレイヤーが動かない限りパーツも動かない
+        this._checkArgsLength(1, node);
+        const moveNum = Number(this.evalWwaNode(node.value[0]));
+        this.generator.wwa.setMoveMacroWaitingToPlayer(moveNum);
+        return 0;
       }
       case "IS_PLAYER_WAITING_MESSAGE": {
         return this.generator.wwa.isPlayerWaitingMessage();
@@ -726,6 +794,11 @@ export class EvalCalcWwaNode {
         }
         throw new Error("GET_IMG_POS_Y: 指定したIDのパーツのTypeが異常です。");
       }
+      case "IS_NUMBER": {
+        this._checkArgsLength(1, node);
+        const value = this.evalWwaNode(node.value[0]);
+        return typeof value === "number";
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
@@ -817,6 +890,32 @@ export class EvalCalcWwaNode {
     return value;
   }
 
+  /**  LP[0]を処理する */
+  convertLoopPointerExpression(node: Wwa.LoopPointerAssignment) {
+    const right = this.evalWwaNode(node.value);
+    const index = this.evalWwaNode(node.index);
+    switch(node.operator) {
+      case "+=":
+        this.for_id.LP[index] = right;
+        break;
+      case "-=":
+        this.for_id.LP[index] = right;
+        break;
+      case "/=":
+        this.for_id.LP[index] = right;
+        break;
+      case "*=":
+        this.for_id.LP[index] = right;
+        break;
+      case "=":
+      default:
+        this.for_id.LP[index] = right;
+        break;
+    }
+    return 0;
+  }
+
+
   /**
    * 保持しているITEMを変更する
    * ITEM[0] に対する代入で、任意位置挿入ができます。
@@ -861,7 +960,8 @@ export class EvalCalcWwaNode {
   evalMessage(node: Wwa.Msg) {
     const value = this.evalWwaNode(node.value);
     const showString = isNaN(value)? value: value.toString();
-    this.generator.wwa.handleMsgFunction(showString);
+    const additionalItems = this.generator.pickPageAdditionalQueue();
+    this.generator.wwa.handleMsgFunction({ message: showString, additionalItems });
     return undefined;
   }
 
@@ -889,6 +989,9 @@ export class EvalCalcWwaNode {
       type: "Symbol",
       name: node.kind
     })
+    if(Array.isArray(currentValue)) {
+      throw new Error(`配列Objectに対して直接代入は出来ません: ${currentValue}`)
+    }
     const targetValue = (()=>{
       switch(node.operator) {
         case "+=":
@@ -1017,6 +1120,10 @@ export class EvalCalcWwaNode {
         return gameStatus.playerCoord.x;
       case "PY":
         return gameStatus.playerCoord.y;
+      case "CX":
+        return gameStatus.cameraCoord.x;
+      case "CY":
+        return gameStatus.cameraCoord.y;
       case "AT":
         return gameStatus.bareStatus.strength;
       case "AT_TOTAL":
@@ -1066,6 +1173,9 @@ export class EvalCalcWwaNode {
       case 'ENEMY_GD':
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
+      case 'LP':
+        // LOG出力用として返す
+        return this.for_id.LP;
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -1090,6 +1200,8 @@ export class EvalCalcWwaNode {
           throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+userVarIndex);
         }
         return game_status.itemBox[userVarIndex - 1];
+      case "LP":
+        return this.for_id.LP[userVarIndex];
       default:
         throw new Error("このシンボルは取得できません")
     }

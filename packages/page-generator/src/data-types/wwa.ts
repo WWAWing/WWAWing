@@ -17,7 +17,10 @@ export interface GameOption {
         controllerId?: string;
     },
     debugConsole?: {
-    }
+    },
+    wwaScript?: {
+        userDefinedScriptsFile: string;
+    },
 }
 
 export interface Resources {

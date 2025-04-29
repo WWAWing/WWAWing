@@ -40,7 +40,7 @@ import { Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import { parseMacro } from "./wwa_macro";
-import { ParsedMessage, isEmptyMessageTree, Node, Junction, Page, generatePagesByRawMessage } from "./wwa_message";
+import { ParsedMessage, isEmptyMessageTree, MessageRequestPage, Node, Page, generatePagesByRawMessage } from "./wwa_message";
 import { MessageWindow, MonsterWindow, ScoreWindow } from "./wwa_window"
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -57,6 +57,9 @@ import * as ExpressionParser2 from "./wwa_expression2";
 import { UserScriptResponse, fetchScriptFile } from "./load_script_file";
 import { WWANode } from "./wwa_expression2/wwa";
 import * as VarDump from "./wwa_vardump"
+import { DataWWAOptions } from "./wwa_data/typedef";
+import { makeDefaultWWAOptions } from "./wwa_data/options";
+import { PageAdditionalItem } from "./wwa_expression2/typedef";
 
 let wwa: WWA
 
@@ -267,13 +270,13 @@ export class WWA {
      * 現在表示されているウィンドウが全て閉じられた後にメッセージとして表示されます.
      * メッセージウィンドウ(システムメッセージ含む)に関しては、表示される予定のものが全て掃けた後にリクエスト内容のメッセージが表示されます.
      */
-    private _windowCloseWaitingMessageDisplayRequests: string[] = [];
+    private _windowCloseWaitingMessageDisplayRequests: MessageRequestPage[] = [];
 
     /**
      * プレイヤーや物体パーツが動いている途中に発生したメッセージ表示リクエスト.
      * プレイヤーが次の座標に納まってからメッセージ処理を実行します。
      */
-    private _playerAndObjectsStopWaitingMessageDisplayRequests: string[] = [];
+    private _playerAndObjectsStopWaitingMessageDisplayRequests: MessageRequestPage[] = [];
 
     /**
      * ウィンドウが表示されている途中に発生したジャンプゲートリクエスト.
@@ -308,19 +311,7 @@ export class WWA {
     private userDefinedFunctions: { [key: string]: WWANode } = {};
 
     constructor(
-        mapFileName: string,
-        urlgateEnabled: boolean = false,
-        titleImgName: string,
-        classicModeEnabled: boolean,
-        itemEffectEnabled: boolean,
-        useGoToWWA: boolean,
-        audioDirectory: string = "",
-        disallowLoadOldSave: boolean = false,
-        dumpElm: HTMLElement = null,
-        userVarNamesFile: string | null,
-        canDisplayUserVars: boolean,
-        enableVirtualPad: boolean = false,
-        virtualpadControllerElm: HTMLElement = null,
+        options: DataWWAOptions = makeDefaultWWAOptions(),
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -333,7 +324,7 @@ export class WWA {
             this._isActive = true;
         });
         this._isActive = true;
-        if (titleImgName === null) {
+        if (options.titleImg === undefined) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
             ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
@@ -351,7 +342,7 @@ export class WWA {
                 this._setLoadingMessage(ctxCover, 0);
             }
         } catch (e) { }
-        this._dumpElement = dumpElm;
+        this._dumpElement = options.varDumpElm;
         const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
         if (_AudioContext) {
             this.audioContext = new _AudioContext();
@@ -367,19 +358,19 @@ export class WWA {
         }
         this.userDevice = new UserDevice();
 
-        this._isURLGateEnable = urlgateEnabled;
-        this._isClassicModeEnable = classicModeEnabled;
+        this._isURLGateEnable = options.urlGateEnable;
+        this._isClassicModeEnable = options.classicModeEnable;
         this._mainCallCounter = 0;
         this._animationCounter = 0;
         this._statusPressCounter = new Status(0, 0, 0, 0);
-        if (!audioDirectory) {
-            audioDirectory = "./audio/";
-        } else if (audioDirectory[audioDirectory.length - 1] !== "/") {
-            audioDirectory += "/";
+        if (!options.audioDir) {
+            options.audioDir = "./audio/";
+        } else if (options.audioDir[options.audioDir.length - 1] !== "/") {
+            options.audioDir += "/";
         }
-        this._audioDirectory = audioDirectory;
+        this._audioDirectory = options.audioDir;
         // Go To WWA を強制するオプションが無効なら、Battle Reportにする
-        this._bottomButtonType = useGoToWWA ? ControlPanelBottomButton.GOTO_WWA : ControlPanelBottomButton.BATTLE_REPORT;
+        this._bottomButtonType = options.useGoToWwa ? ControlPanelBottomButton.GOTO_WWA : ControlPanelBottomButton.BATTLE_REPORT;
 
         var t_start: number = new Date().getTime();
         var isLocal = !!location.href.match(/^file/);
@@ -436,7 +427,7 @@ export class WWA {
 
         this._loadHandler = (wwaData: WWAData): void => {
             this._wwaData = wwaData;
-            this._wwaData.isItemEffectEnabled = itemEffectEnabled;
+            this._wwaData.isItemEffectEnabled = options.itemEffectEnable;
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -541,7 +532,7 @@ export class WWA {
             this._camera.setPlayer(this._player);
             this._keyStore = new KeyStore();
             this._mouseStore = new MouseStore();
-            if (enableVirtualPad) {
+            if (options.virtualPadEnable) {
                 this._virtualPadButtonElements = {
                     BUTTON_ENTER: <HTMLButtonElement>util.$id("wwa-enter-button"),
                     BUTTON_ESC: <HTMLButtonElement>util.$id("wwa-esc-button"),
@@ -560,7 +551,7 @@ export class WWA {
                     this._setVirtualPadTouch.bind(this),
                     this._setVirtualPadLeave.bind(this)
                 );
-                setUpVirtualPadController(virtualpadControllerElm, () => {
+                setUpVirtualPadController(options.virtualPadControllerElm, () => {
                     this._virtualPadStore.toggleVisible();
                 });
             } else {
@@ -612,7 +603,7 @@ export class WWA {
                     alert(message);
                 }
             });
-            this._isDisallowLoadOldSave = disallowLoadOldSave;
+            this._isDisallowLoadOldSave = options.disallowLoadOldSave;
             this._messageWindow.setWWASave(this._wwaSave);
 
             WWACompress.setRestartData(this._restartData, this._wwaData);
@@ -984,7 +975,7 @@ export class WWA {
                 this, this._wwaData.mapCGName, util.$id("wwa-wrapper"));
 
             this._passwordWindow = new PasswordWindow(
-                this, <HTMLDivElement>util.$id("wwa-wrapper"), disallowLoadOldSave);
+                this, <HTMLDivElement>util.$id("wwa-wrapper"), options.disallowLoadOldSave);
 
             this._monsterWindow = new MonsterWindow(
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
@@ -1046,7 +1037,7 @@ export class WWA {
 
                 if (this._usePassword) {
                     let showingMessage = soundLoadConfirmMessage;
-                    if (canDisplayUserVars) {
+                    if (options.displayUserVars) {
                         showingMessage += "\n\n※変数表示が有効になっています。\n公開前に必ずHTMLファイル内の\n data-wwa-display-user-vars=\"true\" \nを消してください。"
                     }
                     this._messageWindow.setMessage(showingMessage);
@@ -1131,24 +1122,24 @@ export class WWA {
         eventEmitter.addListener("mapData", mapDataHandler)
         eventEmitter.addListener("progress", progressHandler)
         eventEmitter.addListener("error", errorHandler)
-        const loader = new WWALoader(mapFileName, eventEmitter);
+        const loader = new WWALoader(options.mapdata, eventEmitter);
         loader.requestAndLoadMapData().then(async () => {
-            this._canDisplayUserVars = canDisplayUserVars;
+            this._canDisplayUserVars = options.displayUserVars;
             this._userVarNameList = [];
             if (this._canDisplayUserVars) {
                 this._inlineUserVarViewer = { topUserVarIndex:  {named: 0, numbered: 0}, isVisible: false, kind: "numbered" };
                 // ユーザー変数ファイルを読み込む
-                const userVarStatus = await (userVarNamesFile ? fetchJsonFile(userVarNamesFile) : {
+                const userVarStatus = await (options.userVarNamesFile ? fetchJsonFile(options.userVarNamesFile) : {
                     kind: "noFileSpecified" as const,
                     errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
                 })
-                this.setUserVarStatus(userVarStatus, userVarNamesFile);
+                this.setUserVarStatus(userVarStatus, options.userVarNamesFile);
             }
         });
         /** 外部スクリプト関係処理 */
         (async () => {
             /** ユーザ定義関数を取得する */
-            const userScriptListJSONFileName = "./script/script_file_list.json";
+            const userScriptListJSONFileName = options.userDefinedScriptsFile ?? "./script/script_file_list.json";
             const userScriptFileNameList = await fetchJsonFile(userScriptListJSONFileName);
             let userScriptStringsPromises = [];
             console.log(userScriptFileNameList);
@@ -1271,6 +1262,17 @@ export class WWA {
         const moveFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_MOVE"];
         if(moveFunc) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(moveFunc);
+        }
+    }
+
+    /**
+     * WWA Script のユーザー定義独自関数 "CALL_CAMERA_MOVE" を実行します。
+     * カメラ画面の切り替わりが終わった時に実行されます。
+     */
+    public callCameraMoveUserDefineFunction() {
+        const cameraMoveFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_CAMERA_MOVE"];
+        if (cameraMoveFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(cameraMoveFunc);
         }
     }
 
@@ -1916,6 +1918,16 @@ export class WWA {
                 // システムメッセージ扱いではなく、パーツが表示している扱いになります。
                 if (isScoreDisplayingPage && messageLinesToDisplay.length === 0) {
                     messageLinesToDisplay.push(this._createSimpleMessage("スコアを表示します。", currentPage.triggerParts));
+                }
+
+                if (currentPage.additionalItems) {
+                    currentPage.additionalItems.forEach((item) => {
+                        // TODO 長くなるようであれば別メソッドへの独立も考える
+                        switch (item.type) {
+                            case "face":
+                                this.addFace(item.data.face);
+                        }
+                    });
                 }
 
                 // 表示されるメッセージがある場合は、メッセージウィンドウを表示してループから抜ける
@@ -3919,7 +3931,7 @@ export class WWA {
         }
         if (this._windowCloseWaitingMessageDisplayRequests.length > 0) {
             const message = this._windowCloseWaitingMessageDisplayRequests.shift();
-            this.registerPageByMessage(message);
+            this.registerPageByMessage(message.message, { additionalItems: message.additionalItems });
             return { newPageGenerated: true };
         }
         return {newPageGenerated: false };
@@ -3934,7 +3946,10 @@ export class WWA {
         if (this._playerAndObjectsStopWaitingMessageDisplayRequests.length > 0) {
             // 移動後のプレイヤーが justPosition ならメッセージを表示する
             // HACK: <P> で発生したメッセージを無理やり連結しているが、配列を直接受け取れるようになるべき
-            this.registerPageByMessage(this._playerAndObjectsStopWaitingMessageDisplayRequests.join("<p>"));
+            this.registerPageByMessage(
+                this._playerAndObjectsStopWaitingMessageDisplayRequests.map(item => item.message).join("<p>"),
+                { additionalItems: this._playerAndObjectsStopWaitingMessageDisplayRequests.map(item => item.additionalItems).flat() }
+            );
             this._playerAndObjectsStopWaitingMessageDisplayRequests = [];
         }
     }
@@ -3948,39 +3963,27 @@ export class WWA {
 
     // メッセージが表示できる場合は表示します。
     // できない場合はできるようになってからします。
-    public reserveMessageDisplayWhenShouldOpen(message: string) {
+    public reserveMessageDisplayWhenShouldOpen(messageRequest: MessageRequestPage) {
         if (
             this._player.isWaitingMessage() ||
             this._player.isFighting() ||
             this._player.isWaitingPasswordWindow() ||
             this._player.isWaitingEstimateWindow()
         ) {
-            this._windowCloseWaitingMessageDisplayRequests.push(message);
+            this._windowCloseWaitingMessageDisplayRequests.push(messageRequest);
         } else if (this._player.isMoving() || this._player.isWaitingMoveMacro()) {
-            this._playerAndObjectsStopWaitingMessageDisplayRequests.push(message);
+            this._playerAndObjectsStopWaitingMessageDisplayRequests.push(messageRequest);
         } else {
-            this.registerPageByMessage(message);
+            this.registerPageByMessage(messageRequest.message, { additionalItems: messageRequest.additionalItems });
         }
     }
 
     // MSG() 関数の実行結果をハンドリングします。
-    public handleMsgFunction(message: string): void{
+    public handleMsgFunction(messageRequest: MessageRequestPage): void{
         if (this._pageExecuting) {
-            this._windowCloseWaitingMessageDisplayRequests.push(message)
+            this._windowCloseWaitingMessageDisplayRequests.push(messageRequest);
         } else {
-            this.reserveMessageDisplayWhenShouldOpen(message);
-        }
-    }
-
-    // FACE() 関数の実行結果をハンドリングします。
-    public handleFaceFunction(face: Face): void {
-        // $face マクロを発行し、メッセージに積む。
-        if(this._pageExecuting) {
-            this._windowCloseWaitingMessageDisplayRequests.push(
-              `$face=${face.destPos.x},${face.destPos.y},${face.srcPos.x},${face.srcPos.y},${face.srcSize.x},${face.srcSize.y}`
-            );
-        } else {
-            this.addFace(face);
+            this.reserveMessageDisplayWhenShouldOpen(messageRequest);
         }
     }
 
@@ -4025,17 +4028,19 @@ export class WWA {
                 type: PartsType.OBJECT,
                 position: new Coord(0, 0)
             },
-            scoreOption = undefined
+            scoreOption = undefined,
+            additionalItems = [],
         }: {
             showChoice?: boolean,
             isSystemMessage?: boolean,
             triggerParts?: TriggerParts,
-            scoreOption?: ScoreOption
+            scoreOption?: ScoreOption,
+            additionalItems?: PageAdditionalItem[],
         } = {}
     ): void {
         const generatedPage = generatePagesByRawMessage(
           message,
-          { triggerParts, isSystemMessage, showChoice, scoreOption },
+          { triggerParts, isSystemMessage, showChoice, scoreOption, additionalItems },
           (macroStr: string) => parseMacro(this, triggerParts, macroStr),
           (script: string, triggerParts?: TriggerParts) => this._execEvalString(script, triggerParts),
           // HACK: expressionParser 依存を打ち切りたい (wwa_expression2 に完全移行できれば嫌でも消えるはず)
@@ -6645,6 +6650,7 @@ font-weight: bold;
             userVars: this._userVar.numbered,
             playerCoord: this._player.getPosition().getPartsCoord(),
             playerDirection: this._player.getDir(),
+            cameraCoord: this._camera.getPosition().getPartsCoord(),
             itemBox: this._player.getCopyOfItemBox(),
             wwaData: this._wwaData
         }
@@ -6680,7 +6686,7 @@ font-weight: bold;
                 this.evalCalcWwaNodeGenerator.setTriggerParts(triggerParts.id, triggerParts.type, triggerParts.position);
             }
             this.evalCalcWwaNodeGenerator.evalWwaNodes(nodes);
-            this.evalCalcWwaNodeGenerator.clearTriggerParts();
+            this.evalCalcWwaNodeGenerator.clearTemporaryState();
         }
         catch(e) {
             console.error(e);
@@ -6798,7 +6804,7 @@ function setupDebugConsole(debugConsoleAreaElement: HTMLElement | null): HTMLEle
     const consoleTextareaElement = document.createElement("textarea");
     consoleTextareaElement.setAttribute("rows", "10");
     consoleTextareaElement.setAttribute("cols", "60");
-    consoleTextareaElement.textContent = `v["money"] = 100;\nv["name"] = "ヤツロウ";\nMSG(v["name"]+"「俺の所持金は"+v["money"]+"ゴールドだ」");\nSHOW_USER_DEF_VAR();`;
+    consoleTextareaElement.textContent = `v["money"] = 100;\nv["name"] = "ヤツロウ";\nMSG(v["name"]+"「俺の所持金は"+v["money"]+"ゴールドだ」");\nfor(LP[0]=0; LP[0]<2; LP[0]++) {\n  LOG(LP);\n}`;
     // textarea に対するキー入力を WWA の入力として扱わない
     // HACK: 本来は WWA の入力を window で listen しないようにすべき
     const keyListener = (event: KeyboardEvent) => event.stopPropagation();
@@ -6843,7 +6849,7 @@ function start() {
             return mes;             // Gecko and WebKit
         }
     });
-    var titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
+    const titleImgName = util.$id("wwa-wrapper").getAttribute("data-wwa-title-img");
     const virtualPadAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-enable");
     const virtualPadEnable = virtualPadAttribute !== null && virtualPadAttribute.match(/^true$/i) !== null;
     inject(<HTMLDivElement>util.$id("wwa-wrapper"), titleImgName, virtualPadEnable);
@@ -6893,20 +6899,31 @@ function start() {
         }
         return false;
     })();
+
+    const userDefinedScriptsFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-defined-scripts-file");
+
     wwa = new WWA(
-        mapFileName,
-        urlgateEnabled,
-        titleImgName,
-        classicModeEnabled,
-        itemEffectEnabled,
-        useGoToWWA,
-        audioDirectory,
-        disallowLoadOldSave,
-        dumpElm,
-        userVarNamesFile,
-        canDisplayUserVars,
-        virtualPadEnable,
-        virtualPadControllerElm
+        {
+            mapdata: mapFileName,
+            urlGateEnable: urlgateEnabled,
+            // WWA のコンストラクターはカバー画像未指定の場合は undefined と扱う
+            titleImg: titleImgName ?? undefined,
+            audioDir: audioDirectory,
+            classicModeEnable: classicModeEnabled,
+            itemEffectEnable: itemEffectEnabled,
+            useGoToWwa: useGoToWWA,
+            // lookingAround は Constructor にて設定
+            // autoSave は Constructor にて設定
+            disallowLoadOldSave: disallowLoadOldSave,
+            // resumeSaveData は Constructor にて設定
+            varDumpElm: dumpElm,
+            userVarNamesFile,
+            displayUserVars: canDisplayUserVars,
+            virtualPadEnable,
+            // virtualPadViewportFitEnable はすでに start 関数で使用済み
+            virtualPadControllerElm,
+            userDefinedScriptsFile,
+        }
     );
 }
 
