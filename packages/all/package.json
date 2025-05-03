@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
-    "@octokit/rest": "^18.12.0",
+    "@octokit/rest": "^21.1.1",
     "@types/jszip": "^3.4.1",
     "@types/shelljs": "^0.8.11",
     "@wwawing/assets": "file:../assets",
