@@ -29,9 +29,9 @@
     "@types/node": "^22.10.1",
     "@types/pug": "^2.0.6",
     "npm-run-all2": "^8.0.1",
-    "shelljs": "^0.8.5",
-    "shx": "^0.3.4",
-    "typescript": "^5.7.2"
+    "shelljs": "^0.9.2",
+    "shx": "^0.4.0",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "pug": "^3.0.2"

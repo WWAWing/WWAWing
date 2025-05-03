@@ -43,7 +43,7 @@
     "npm-run-all2": "^8.0.1",
     "regenerator-runtime": "^0.14.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=22",
