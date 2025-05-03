@@ -5,6 +5,6 @@ module.exports = {
             syntax: "typescript"
         },
         transform: null,
-        target: "es2021"
+        target: "es2023"
     }
 };

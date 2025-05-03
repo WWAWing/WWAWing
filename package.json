@@ -10,7 +10,7 @@
   },
   "scripts": {
     "test": "lerna run test --scope @wwawing/{engine,serve-index}",
-    "clean": "lerna clean --yes",
+    "clean": "lerna run clean",
     "start": "lerna run start --stream --scope @wwawing/engine",
     "build": "lerna run build --stream",
     "deploy": "lerna run deploy:prod --scope @wwawing/engine",
@@ -33,11 +33,17 @@
   },
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
+    "@swc/core": "^1.10.4",
+    "@swc/helpers": "^0.5.15",
     "@types/node": "^22.10.1",
-    "lerna": "^6.6.2",
-    "npm-run-all": "^4.1.5",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.4"
+    "@lerna-lite/cli": "^4.1.1",
+    "@lerna-lite/publish": "^4.1.1",
+    "@lerna-lite/run": "^4.1.1",
+    "@lerna-lite/version": "^4.1.1",
+    "npm-run-all2": "^8.0.1",
+    "regenerator-runtime": "^0.14.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=22",
