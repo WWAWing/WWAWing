@@ -15,4 +15,7 @@
       "esModuleInterop": true,
       "resolveJsonModule": true
     },
+    "ts-node": {
+      "swc": true
+    }
   }
