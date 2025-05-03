@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import sea from "node:sea";
 import express from "express";
 import serveIndex from "@wwawing/serve-index";
@@ -32,12 +34,27 @@ app.use(
   express.static(baseDir),
   serveIndex(baseDir, {
     icons: true,
-    ...(sea.isSea() && {
-      templateParseMode: "fileContent",
+    ...(sea.isSea() ? {
+    templateParseMode: "fileContent",
       template: decoder.decode(sea.getAsset("directory.html")),
       stylesheet: decoder.decode(sea.getAsset("style.css")),
       iconLoadCallback: (fileName) =>
         Buffer.from(sea.getAsset(`___ICON___${fileName}`)).toString("base64"),
+    } : {
+      templateParseMode: "fileName",
+      // __dirname は webpack された結果の index.js 起点であることに注意せよ
+      template: path.join(__dirname, require("@wwawing/serve-index/public/directory.html")),
+      stylesheet: path.join(__dirname, require("@wwawing/serve-index/public/style.css")),
+      iconLoadCallback: (fileName) => {
+        if (fileName.includes("/") || fileName.includes("\\")) {
+          throw TypeError("ファイル名に使用できない文字が含まれています。");
+        }
+        // 以下の処理は serve-index を模倣
+        return fs.readFileSync(
+          path.join(__dirname, require(`@wwawing/serve-index/public/icons/${fileName}`)),
+          "base64"
+        );
+      }
     }),
   })
 );

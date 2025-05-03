@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/engine",
-  "version": "3.12.16-publish-test.based-on.3.12.15.p.1",
+  "version": "3.12.16",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "./lib/wwa.js",
   "files": [
@@ -65,7 +65,7 @@
     "shelljs": "^0.8.5",
     "shx": "^0.3.4",
     "terser-webpack-plugin": "^5.3.9",
-    "ts-loader": "^9.4.3",
+    "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
     "webpack": "^5.83.1",
