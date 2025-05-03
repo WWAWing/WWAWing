@@ -1,7 +1,7 @@
 # WWA Wing
 インターネット RPG 「[World Wide Adventure](http://wwajp.com/)」 の TypeScript / JavaScript 実装です。
 
-このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna により自動化されています。
+このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna-lite により自動化されています。
 
 ## 準備
 - Node.js 22系
@@ -35,8 +35,8 @@ OSは不問です。
 
 ## ディレクトリ構成
 ```
-├── getEngineVersion.sh                         ## WWA Wing 本体のバージョンを取得するためのシェルスクリプト (Travis CIで使用）
-├── lerna.json                                  ## lerna の構成ファイル
+├── getEngineVersion.sh                         ## WWA Wing 本体のバージョンを取得するためのシェルスクリプト （Travis CIで使用）
+├── lerna.json                                  ## lerna-lite の構成ファイル
 ├── netlify.toml                                ## Netlify によるテストファイル自動生成のための設定ファイル
 ├── tsconfig.json                               ## TypeScript のコンパイル設定ファイル
 └── packages ================================== ## このディレクトリ以下に各 npm パッケージを格納しています
