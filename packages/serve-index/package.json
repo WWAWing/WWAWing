@@ -1,7 +1,7 @@
 {
   "name": "@wwawing/serve-index",
   "description": "Serve directory listings",
-  "version": "4.1.0-unstable.based-on.3.12.15.p.5",
+  "version": "4.1.0-unstable.based-on.3.12.17",
   "author": "Douglas Christopher Wilson <doug@somethingdoug.com>, WWA Wing Team",
   "license": "MIT",
   "types": "./types/index.d.ts",
