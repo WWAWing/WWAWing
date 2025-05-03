@@ -35,7 +35,6 @@ OSは不問です。
 
 ## ディレクトリ構成
 ```
-├── getEngineVersion.sh                         ## WWA Wing 本体のバージョンを取得するためのシェルスクリプト （Travis CIで使用）
 ├── lerna.json                                  ## lerna-lite の構成ファイル
 ├── netlify.toml                                ## Netlify によるテストファイル自動生成のための設定ファイル
 ├── tsconfig.json                               ## TypeScript のコンパイル設定ファイル
@@ -58,9 +57,9 @@ WWA Wing 本体のソースは `packages/engine/src` 下にあります。
 
 ## ブランチ戦略
 - `develop` ブランチが最新です。
-- 現在リリースされているWWA Wingは `master` ブランチの最新です。
+- 現在リリースされている安定版 WWA Wing は `master` ブランチの最新です。
 - Pull Request を作成する場合は、 リポジトリのフォークを作成した上でこのリポジトリの `develop` ブランチに向けて作成してください。
-- リリース作業は　WWA Wing Team のメンテナ(まつゆき @matsuyuki-a)が行います。(`develop` ブランチを `master` ブランチにマージします。)
+- リリース作業は　WWA Wing Team のメンテナ （@matsuyuki-a, @aokashi, @hirarira）が行います。(`develop` ブランチを `master` ブランチにマージします。)
 
 詳細は [コントリビューションガイドライン](./CONTRIBUTING.md) に含まれています。
 
