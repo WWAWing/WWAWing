@@ -21,6 +21,19 @@ npm run build
 
 することで、各パッケージが動作可能な状態になります。
 
+### Visual Studio Code をご利用の場合
+
+「実行とデバッグ」タブから、 WWA Wing の開発環境を1クリックで実行することができます。
+普通は「Launch WWAWing on Firefox」もしくは「Launch WWAWing on Chrome」をご使用ください。
+
+- Launch wwawing-dev-server: WWA Wing の dev-server を起動します。
+- Launch wwawing-dev on Firefox: 開発用の Firefox を起動するだけです。
+- Launch wwawing-dev on Chrome: 開発用の Chrome を起動するだけです。
+- **Launch WWAWing on Firefox**: WWA Wing の開発環境を Firefox で起動します。拡張機能「Debugger for Firefox」が必要です。
+- **Launch WWAWing on Chrome**: WWA Wing の開発環境を Chrome で起動します。拡張機能は不要です。
+
+ブレークポイントは使用できますが、 `/wwamap.html` にしか機能しません。
+
 ## サポートブラウザ
 ### PC
 OSは不問です。
