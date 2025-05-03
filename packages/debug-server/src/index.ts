@@ -6,7 +6,7 @@ import serveIndex from "@wwawing/serve-index";
 
 /*!
  * @wwawing/debug-server
- * Copyright (c) 2018-2024 WWA Wing Team
+ * Copyright (c) 2018-2025 WWA Wing Team
  * MIT Licensed
  */
 

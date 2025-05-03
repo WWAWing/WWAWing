@@ -1,10 +1,11 @@
 import * as DataTypes from "../data-types";
 
-export function generateOfficialCopyright(): DataTypes.Copyright {
+export function generateOfficialCopyright(date: Date = new Date()): DataTypes.Copyright {
     return {
         range: {
             firstYear: 1996,
-            lastYear: 2016,
+            // タイムゾーンによって最大1日誤差が出るが許容としたい
+            lastYear: date.getFullYear(),
         },
         product: {
             genre: "Internet RPG",
