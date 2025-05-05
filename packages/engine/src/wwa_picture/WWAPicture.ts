@@ -7,6 +7,7 @@ import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVari
 import { WWA } from "../wwa_main";
 import WWAPictureItem from "./WWAPictureItem";
 import { fetchJsonFile } from "../json_api_client";
+import { PictureCacheCanvas } from "./PictureCacheCanvas";
 
 /**
  * ピクチャ機能の表示や制御を行うクラスです。
@@ -93,10 +94,9 @@ export default class WWAPicutre {
      * @param registry ピクチャのレジストリ情報
      */
     public registerPicture(registry: PictureRegistry) {
-        const canvas = new CacheCanvas(
+        const canvas = new PictureCacheCanvas(
             WWAConsts.CHIP_SIZE * WWAConsts.H_PARTS_NUM_IN_WINDOW,
-            WWAConsts.CHIP_SIZE * WWAConsts.V_PARTS_NUM_IN_WINDOW,
-            true
+            WWAConsts.CHIP_SIZE * WWAConsts.V_PARTS_NUM_IN_WINDOW
         );
         const invalidPropertyNames = Object.keys(registry.properties)
             .filter((propertyName) => !PicturePropertyDefinitions.some(({ name }) => name === propertyName));

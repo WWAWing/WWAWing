@@ -13,8 +13,6 @@ export class CacheCanvas {
         this.cvs.width = width;
         this.cvs.height = height;
         this.ctx = this.cvs.getContext("2d", { alpha: isTransparent });
-        // TODO オプションでオフにできるようにしたい
-        this.ctx.imageSmoothingEnabled = false;
         this._isTransparent = isTransparent;
         //document.body.appendChild(this.cvs);
     }
@@ -24,24 +22,6 @@ export class CacheCanvas {
             Consts.CHIP_SIZE, Consts.CHIP_SIZE, canvasX, canvasY,
             width, height
         );
-    }
-    public drawCanvasFree(image: HTMLImageElement, canvasX: number, canvasY: number, width: number, height: number): void {
-        this.ctx.drawImage(image, canvasX, canvasY, width, height);
-    }
-    /**
-     * フォントを描画します。色などの設定はあらかじめ ctx フィールドに設定しておいてください。
-     */
-    public drawFont(text: string, canvasX: number, canvasY: number, lineHeight?: number): void {
-        if (lineHeight !== undefined) {
-            const lines = text.split("\n");
-            lines.forEach((line, index) => {
-                // Canvas API では描画しているテキストから1行分の高さを簡単に算出することはできない (できても px 単位じゃなかったりする)
-                // 引数 lineHeight の指定が必要
-                this.ctx.fillText(line, canvasX, canvasY + (index * lineHeight));
-            });
-        } else {
-            this.ctx.fillText(text, canvasX, canvasY);
-        }
     }
     public clear() {
         this.clearRect(0, 0, this.cvs.width, this.cvs.height);
@@ -229,7 +209,7 @@ export class CGManager {
 
     public drawPictures(): void {
         this.picture.forEachPictures((picture) => {
-            this._ctx.drawImage(picture.cvs,
+            this._ctx.drawImage(picture.imageBitmap,
                 0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW,
                 0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
         });

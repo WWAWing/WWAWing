@@ -15,6 +15,7 @@ import {
 } from "./utils";
 import { NextPicturePartsInfo } from "./typedef";
 import { WWATimer } from "./WWATimer";
+import { PictureCacheCanvas } from "./PictureCacheCanvas";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -80,7 +81,7 @@ export default class WWAPictureItem {
 
     private _timer: WWATimer;
 
-    constructor(wwa: WWA, private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
+    constructor(wwa: WWA, private _registry: PictureRegistry, private _canvas: PictureCacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
         this._posBaseY = properties.pos?.[1] ?? 0;
@@ -164,8 +165,8 @@ export default class WWAPictureItem {
         return this._hasAnimation;
     }
 
-    public get cvs() {
-        return this._canvas.cvs;
+    public get imageBitmap() {
+        return this._canvas.imageBitmap;
     }
 
     public get appearParts() {
@@ -247,6 +248,7 @@ export default class WWAPictureItem {
                 }
             }
         }
+        this._canvas.updateImageBitmap();
     }
 
     /**
