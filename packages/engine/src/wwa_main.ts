@@ -4657,17 +4657,18 @@ export class WWA {
         }
         let newData: WWAData;
         let isWorldNameEmpty: boolean = false;
+        // FIXME: IndexedDBから復元した場合は配列やオブジェクト内の参照が復元されるが、パスワードセーブの場合はされない。
+        // パスワードセーブの場合にも参照を復元する必要がある。
         if (password !== null) {
             const result = this._decodePassword(password);
             newData = result[0];
             isWorldNameEmpty = result[1].isWorldNameEmpty;
         } else {
-            newData = <WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._messageWindow.load()));
+            newData = structuredClone(restart ? this._restartData : this._messageWindow.load());
         }
-        // TODO: WWAEvalの属性変更対策, もう少しスマートなディープコピー方法考える
-        newData.message = <string[]>JSON.parse(JSON.stringify(this._restartData.message));
-        newData.mapAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.mapAttribute));
-        newData.objectAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.objectAttribute));
+        newData.message = structuredClone(this._restartData.message);
+        newData.mapAttribute = structuredClone(this._restartData.mapAttribute);
+        newData.objectAttribute = structuredClone(this._restartData.objectAttribute);
         if (newData.map === void 0) {
             newData.map = this._decompressMap(newData.mapCompressed);
         }
