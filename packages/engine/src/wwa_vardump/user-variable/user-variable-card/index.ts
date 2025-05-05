@@ -8,10 +8,14 @@ export interface Props {
 
 const BLANK = "-";
 export const CLASS_NAME = "user-variable-card";
+export const TRIMMED_CLASS_NAME = "user-variable-card--is-trimmed";
 
 export function createElement({ index, value }: Props): HTMLElement {
   const element = document.createElement("div");
   element.classList.add(CLASS_NAME);
+  if (isTrimmingValue(value)) {
+    element.classList.add(TRIMMED_CLASS_NAME);
+  }
   element.dataset.varIndex = String(index);
   element.appendChild(createIndexElement(index));
   element.appendChild(createValueElement(value));
@@ -69,4 +73,9 @@ export function clearValue(element: HTMLElement) {
 
 export function getLabelElement(element: HTMLElement): HTMLElement | null {
   return element.querySelector(`.${UserVariableLabel.CLASS_NAME}`);
+}
+
+function isTrimmingValue(value: unknown) {
+  // object 形式は trimming するとすべての内容を見ることができない
+  return typeof value !== "object";
 }

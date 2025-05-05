@@ -39,6 +39,7 @@ export interface TemplateValues {
             "data-wwa-virtualpad-viewport-fit-enable"?: string;
             "data-wwa-virtualpad-controller-elm"?: string;
             "data-wwa-user-defined-scripts-file"?: string;
+            "data-wwa-picture-image-names-file"?: string;
         };
     };
     debugConsoleElement?: {
@@ -82,6 +83,7 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-virtualpad-viewport-fit-enable": Helper.toStringBooleanOptional(wwa.gameOption?.virtualPad?.viewportFitEnable),
                 "data-wwa-virtualpad-controller-elm": wwa.gameOption?.virtualPad?.controllerId ? `#${wwa.gameOption.virtualPad.controllerId}` : undefined,
                 "data-wwa-user-defined-scripts-file": wwa.gameOption?.wwaScript?.userDefinedScriptsFile,
+                "data-wwa-picture-image-names-file": wwa.resources.pictureImageNamesFile,
             }
         },
         // HACK: デバッグコンソールエリアの要素名は変更できるようにする

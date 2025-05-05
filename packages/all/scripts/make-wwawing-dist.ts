@@ -39,7 +39,8 @@ export default async function makeDistribution(
         ];
     } else {
         tasks = [
-            ...createHTMLFilePromises(["caves01", "caves02", "island02", "wwamap"]),
+            // "picture_test" は不安定版である場合に限定して頒布物に含める
+            ...createHTMLFilePromises(["caves01", "caves02", "island02", "wwamap", "picture_test"]),
             copy("engine", path.join("LICENSE")),
             copy("assets", path.join("html", "manual.html")),
             copy("assets", path.join("text", "*.txt")),
@@ -48,13 +49,13 @@ export default async function makeDistribution(
             copy("assets", path.join("wwamk310", "WinWwamk.exe")),
             copy("assets", path.join("wwamk310", "wwamk_manual.html")),
             copy("assets", path.join("audio", "*"), path.join("mapdata", "audio")),
-            copy("assets", path.join("mapdata", "{caves01,caves02,island02,wwamap}.dat"), "mapdata"),
+            copy("assets", path.join("mapdata", "{caves01,caves02,island02,wwamap,picture_test}.dat"), "mapdata"),
             copy("assets", path.join("images", "*.gif"), "mapdata"),
             copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
             copy("debug-server", path.join("bin", "wwa-server.exe"), "mapdata"),
             copy("debug-server", path.join("bin", "LICENSE"), "mapdata"),
             copy("styles", path.join("output", "*.css"), "mapdata"),
-            copy("assets", path.join("vars", "*.json"), "mapdata"),
+            copy("assets", path.join("defs", "*.json"), "mapdata"),
             copy("assets", path.join("script", "script_file_list.json"), path.join("mapdata", "script")),
             copy("assets", path.join("script", "*.js"), path.join("mapdata", "script")),
         ];
@@ -148,6 +149,7 @@ export default async function makeDistribution(
 
     function createConfig(mapDataName: string): InputConfig {
         const canIncludeUserVarOptions = (mapDataName === "wwamap");
+        const canIncludePictureOptions = (mapDataName === "picture_test");
         return {
             page: {
                 additionalCssFiles: ["style.css"]
@@ -176,7 +178,10 @@ export default async function makeDistribution(
                     titleImage: "cover.gif",
                     ...(canIncludeUserVarOptions ? {
                         userVarNamesFile: `${mapDataName}-vars.json`
-                    } : {})
+                    } : {}),
+                    ...(canIncludePictureOptions ? {
+                        pictureImageNamesFile: `${mapDataName}-picture.json`
+                    } : {}),
                 },
             },
             copyrights: "official-and-wing"
