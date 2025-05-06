@@ -6063,11 +6063,15 @@ font-weight: bold;
                 }
             } else if (typeof ref === "object" && ref !== null) {
                 const key = String(targetRefIndex);
-                if ( key === "__proto__" || key === "constructor" || key === "prototype") {
-                    console.warn(`代入先オブジェクトのキー名に __proto__, constructor, prototype は使えません: ${key}`);
-                    return;
+                if (util.assignmentBlockProperties.includes(key)) {
+                  console.warn(
+                    `代入先オブジェクトのキー名に使えない名前が含まれています: ${key}`
+                  );
+                  return;
                 } else {
-                    Object.defineProperties(ref, { [key]: { value: result, writable: true } });
+                  Object.defineProperties(ref, {
+                    [key]: { value: result, writable: true },
+                  });
                 }
             } else {
                 ref[targetRefIndex] = result;

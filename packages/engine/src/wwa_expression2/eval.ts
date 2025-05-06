@@ -1,6 +1,7 @@
 import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
+import { assignmentBlockProperties } from "../wwa_util";
 import * as Wwa from "./wwa";
 import { Literal } from "./wwa";
 import { PARTS_TYPE_LIST } from "./utils";
@@ -958,12 +959,10 @@ export class EvalCalcWwaNode {
 
   objectExpression(node: Wwa.ObjectExpression) {
     const entries = node.properties.map((property) => this.evalWwaNode(property));
-    // Object.fromEntries を使用している限り、 __proto__ などを使ったプロトタイプ汚染は発生しないと
-    // 思われるが、念のため、 __proto__, constructor, prototype はキー名として認めない。
     return Object.fromEntries(entries.filter(([key, _]) => {
-      const valid = key !== "__proto__" && key !== "constructor" && key !== "prototype";
+      const valid = !assignmentBlockProperties.includes(key);
       if (!valid) {
-        console.warn(`オブジェクトからキー ${key} が除去されました。キー名に __proto__, constructor, prototype は使えません。`);
+        console.warn(`オブジェクトからキー ${key} が除去されました。`);
       }
       return valid;
     }));

@@ -98,3 +98,12 @@ export function formatUserVarForDisplay(value: number | string | boolean, trimmi
 }
 
 
+export const assignmentBlockProperties = [
+    "__proto__",
+    "__defineGetter__",
+    "__defineSetter__",
+    "__lookupGetter__",
+    "__lookupSetter__",
+    "constructor",
+    "prototype"
+];
