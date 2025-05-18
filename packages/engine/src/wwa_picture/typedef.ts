@@ -35,3 +35,10 @@ export type TimePoint = {
     value: number;
     type: TimeType;
 };
+
+/**
+ * ピクチャの描画方法を一意に識別する文字列です。
+ * `"minimum"` は最低限のサイズで描画します。負荷が軽いので、サイズが決まっている場合はこちらの使用をおすすめします。
+ * `"maximum"` は描画範囲内、最大のサイズで描画します。テキストの描画など、サイズが分からない場合はこちらをご利用ください。
+ */
+export type DrawCoordType = "minimum" | "maximum";

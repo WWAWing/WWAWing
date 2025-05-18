@@ -12,9 +12,10 @@ import {
     getVerticalCorrectionBySizeAnchor,
     canDrawChip,
 } from "./utils";
-import { NextPicturePartsInfo } from "./typedef";
+import { DrawCoordType, NextPicturePartsInfo } from "./typedef";
 import { WWATimer } from "./WWATimer";
 import { PictureCacheCanvas } from "./PictureCacheCanvas";
+import { getDrawPictureCanvasCoords, getDrawPictureOffsetInCacheCanvas, getPictureCanvasSize } from "./coordType";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -24,6 +25,7 @@ import { PictureCacheCanvas } from "./PictureCacheCanvas";
 export default class WWAPictureItem {
 
     private readonly _canvas: PictureCacheCanvas;
+    private readonly _drawCoordType: DrawCoordType;
 
     /**
      * 基準 X 座標。 circle プロパティによる円運動では、基準となる座標がないと同じ座標上での円運動を維持できない。
@@ -130,9 +132,12 @@ export default class WWAPictureItem {
 
         this._angleRadian = properties.angle ? properties.angle * Math.PI / 180 : 0;
         this._rotateRadian = properties.rotate ? properties.rotate * Math.PI / 180 : 0;
-
+        this._drawCoordType = properties.text ? "maximum" : "minimum";
         this._updatePictureCache();
-        this._canvas = new PictureCacheCanvas(this._totalWidth, this._totalHeight);
+        const { width: canvasWidth, height: canvasHeight } = getPictureCanvasSize(
+            this._drawCoordType, this._totalWidth, this._totalHeight
+        );
+        this._canvas = new PictureCacheCanvas(canvasWidth, canvasHeight);
         
         this._timer = new WWATimer();
         this._timer.addPoint(
@@ -207,11 +212,12 @@ export default class WWAPictureItem {
 
         const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
         const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;
-        
+        const { x: offsetX, y: offsetY } = getDrawPictureOffsetInCacheCanvas(this._drawCoordType, this._posDestX, this._posDestY);
+
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
-                const chipX = this._charaWidth * rx;
-                const chipY = this._charaHeight * ry;
+                const chipX = offsetX + this._charaWidth * rx;
+                const chipY = offsetY + this._charaHeight * ry;
                 if (this._imgFile) {
                     this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
                 } else if (this._drawChip) {
@@ -248,7 +254,7 @@ export default class WWAPictureItem {
                         }
                     }
                 }
-                if (this._registry.properties.text) {
+                if (this.getHasText()) {
                     this._canvas.drawFont(
                         this._registry.properties.text,
                         chipX,
@@ -262,12 +268,13 @@ export default class WWAPictureItem {
     }
 
     public getDrawPictureCoords() {
-        return {
-            x: this._posDestX, 
-            y: this._posDestY,
-            width: this._totalWidth,
-            height: this._totalHeight,
-        };
+        return getDrawPictureCanvasCoords(
+            this._drawCoordType,
+            this._posDestX,
+            this._posDestY,
+            this._totalWidth,
+            this._totalHeight
+        );
     }
 
     /**
@@ -286,7 +293,10 @@ export default class WWAPictureItem {
         this._zoomX = this._zoomX + this._zoomAccelX;
         this._zoomY = this._zoomY + this._zoomAccelY;
         this._updatePictureCache();
-        this._canvas.updateSize(this._totalWidth, this._totalHeight);
+        const { width: canvasWidth, height: canvasHeight } = getPictureCanvasSize(
+            this._drawCoordType, this._totalWidth, this._totalHeight
+        );
+        this._canvas.updateSize(canvasWidth, canvasHeight);
         this._circleAngle = this._circleAngle + this._circleSpeed;
         if (this._fade !== 0) {
             this._opacity = this._opacity + this._fade;
@@ -419,6 +429,10 @@ export default class WWAPictureItem {
             this._fade !== 0 ||
             this._rotateRadian !== 0
         );
+    }
+
+    private getHasText() {
+        return this._registry.properties.text;
     }
 
     private static _getImgPosByPicture(registry: PictureRegistry, isMainTime: boolean) {
