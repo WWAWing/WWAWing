@@ -84,10 +84,27 @@ export const getDrawPictureCanvasCoords = (
     };
 };
 
-export const getTranslateOffsetForRotate = (width: number, height: number) => {
-    // TODO type が "maximum" の場合も考慮する
+export const getTranslateOffsetForRotate = (
+    type: DrawCoordType,
+    width: number,
+    height: number,
+    posX: number,
+    posY: number
+) => {
+    if (type === "maximum") {
+        return {
+            x: posX,
+            y: posY,
+        };
+    }
+    if (type === "minimumWithMargin") {
+        return {
+            x: WWAConsts.CHIP_SIZE + (width / 2),
+            y: WWAConsts.CHIP_SIZE + (height / 2),
+        };
+    }
     return {
-        x: WWAConsts.CHIP_SIZE + (width / 2),
-        y: WWAConsts.CHIP_SIZE + (height / 2),
+        x: width / 2,
+        y: height / 2,
     };
 };
