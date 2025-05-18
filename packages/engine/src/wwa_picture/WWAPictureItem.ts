@@ -219,7 +219,7 @@ export default class WWAPictureItem {
                 const chipX = offsetX + this._charaWidth * rx;
                 const chipY = offsetY + this._charaHeight * ry;
                 if (this._imgFile) {
-                    this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
+                    this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._charaWidth, this._charaHeight);
                 } else if (this._drawChip) {
                     if (this._mapCropCache !== null) {
                         this._mapCropCache.forEach((line, y) => {
