@@ -33,9 +33,7 @@ export class PictureCacheCanvas {
      * @param width 描画サイズの横幅
      * @param height 描画サイズの縦幅
      */
-    public updateCacheCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
-        this.canvas.width = width;
-        this.canvas.height = height;
+    public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
         this.ctx.drawImage(
             _image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
             Consts.CHIP_SIZE, Consts.CHIP_SIZE, canvasX, canvasY,
@@ -59,6 +57,10 @@ export class PictureCacheCanvas {
         } else {
             this.ctx.fillText(text, canvasX, canvasY);
         }
+    }
+    public updateSize(width: number, height: number) {
+        this.canvas.width = width;
+        this.canvas.height = height;
     }
     public clear() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);

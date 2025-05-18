@@ -45,10 +45,18 @@ export default class WWAPictureItem {
     private _sizeX: number;
     private _sizeY: number;
     /**
-     * crop プロパティを用いた場合の、1マス分の横幅。
+     * crop プロパティを用いた場合の1マス分の横幅
      */
     private _chipWidth: number;
     private _chipHeight: number;
+    /**
+     * crop プロパティでくっつけた、1体分の横幅
+     */
+    private _charaWidth: number;
+    private _charaHeight: number;
+    /**
+     * ピクチャの描画範囲の横幅
+     */
     private _totalWidth: number;
     private _totalHeight: number;
     private _moveX: number;
@@ -202,8 +210,8 @@ export default class WWAPictureItem {
         
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
-                const chipX = this._totalWidth * rx;
-                const chipY = this._totalHeight * ry;
+                const chipX = this._charaWidth * rx;
+                const chipY = this._charaHeight * ry;
                 if (this._imgFile) {
                     this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
                 } else if (this._drawChip) {
@@ -213,7 +221,7 @@ export default class WWAPictureItem {
                                 if (!canDrawChip(cx, cy, cx2, cy2)) {
                                     return;
                                 }
-                                this._canvas.updateCacheCanvas(
+                                this._canvas.drawCanvas(
                                     image,
                                     isMainAnimation ? cx : cx2,
                                     isMainAnimation ? cy : cy2,
@@ -227,7 +235,7 @@ export default class WWAPictureItem {
                     } else {
                         for (let cy = 0; cy < this._cropY; cy++) {
                             for (let cx = 0; cx < this._cropX; cx++) {
-                                this._canvas.updateCacheCanvas(
+                                this._canvas.drawCanvas(
                                     image,
                                     imgPosX + cx,
                                     imgPosY + cy,
@@ -278,6 +286,7 @@ export default class WWAPictureItem {
         this._zoomX = this._zoomX + this._zoomAccelX;
         this._zoomY = this._zoomY + this._zoomAccelY;
         this._updatePictureCache();
+        this._canvas.updateSize(this._totalWidth, this._totalHeight);
         this._circleAngle = this._circleAngle + this._circleSpeed;
         if (this._fade !== 0) {
             this._opacity = this._opacity + this._fade;
@@ -292,10 +301,12 @@ export default class WWAPictureItem {
     }
 
     private _updatePictureCache() {
-        this._totalWidth = adjustPositiveValue(this._sizeX) * this._cropX;
-        this._totalHeight = adjustPositiveValue(this._sizeY) * this._cropY;
-        this._chipWidth = Math.floor(this._totalWidth / this._cropX);
-        this._chipHeight = Math.floor(this._totalHeight / this._cropY);
+        this._chipWidth = adjustPositiveValue(this._sizeX);
+        this._chipHeight = adjustPositiveValue(this._sizeY);
+        this._charaWidth = this._chipWidth * this._cropX;
+        this._charaHeight = this._chipHeight * this._cropY;
+        this._totalWidth = this._charaWidth * this._repeatX;
+        this._totalHeight = this._charaHeight * this._repeatY;
         this._posDestX = Math.floor(
             getHorizontalCorrectionBySizeAnchor(
                 getHorizontalCirclePosition(
@@ -303,7 +314,7 @@ export default class WWAPictureItem {
                     this._circleRadiusX,
                     this._circleAngle
                 ),
-                this._totalWidth,
+                this._charaWidth,
                 this._anchor
             )
         );
@@ -314,7 +325,7 @@ export default class WWAPictureItem {
                     this._circleRadiusY,
                     this._circleAngle
                 ),
-                this._totalHeight,
+                this._charaHeight,
                 this._anchor
             )
         );
