@@ -21,7 +21,21 @@ export class PictureCacheCanvas {
         this.imageBitmap = this.canvas.transferToImageBitmap();
     }
 
-    public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
+    /**
+     * 内部の OffscreenCanvas を更新します。
+     * PictureCacheCanvas は内部の　Canvas のサイズを最小限に抑えているため、描画位置の指定は　PictureCacheCanvas の描画側で実装してください。
+     *
+     * @param _image 読み取る画像
+     * @param canvasX ピクチャ内で描画するX座標 (pos プロパティの値は含めないこと)
+     * @param canvasY ピクチャ内で描画するY座標 (pos プロパティの値は含めないこと)
+     * @param chipX 読み取る画像のX座標 (マス単位)
+     * @param chipY 読み取る画像のX座標 (マス単位)
+     * @param width 描画サイズの横幅
+     * @param height 描画サイズの縦幅
+     */
+    public updateCacheCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
+        this.canvas.width = width;
+        this.canvas.height = height;
         this.ctx.drawImage(
             _image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
             Consts.CHIP_SIZE, Consts.CHIP_SIZE, canvasX, canvasY,

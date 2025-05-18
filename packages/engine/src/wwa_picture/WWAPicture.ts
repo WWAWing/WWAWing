@@ -1,5 +1,4 @@
-import { CacheCanvas } from "../wwa_cgmanager";
-import { Coord, PartsType, WWAConsts } from "../wwa_data";
+import { Coord, PartsType } from "../wwa_data";
 import { PicturePropertyDefinitions } from "./config";
 import { PictureExternalImageItem } from "./typedef";
 import { PictureRegistry, RawPictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
@@ -7,7 +6,6 @@ import { checkValuesFromRawRegistry, convertPictureRegistryFromText, convertVari
 import { WWA } from "../wwa_main";
 import WWAPictureItem from "./WWAPictureItem";
 import { fetchJsonFile } from "../json_api_client";
-import { PictureCacheCanvas } from "./PictureCacheCanvas";
 
 /**
  * ピクチャ機能の表示や制御を行うクラスです。
@@ -94,10 +92,6 @@ export default class WWAPicutre {
      * @param registry ピクチャのレジストリ情報
      */
     public registerPicture(registry: PictureRegistry) {
-        const canvas = new PictureCacheCanvas(
-            WWAConsts.CHIP_SIZE * WWAConsts.H_PARTS_NUM_IN_WINDOW,
-            WWAConsts.CHIP_SIZE * WWAConsts.V_PARTS_NUM_IN_WINDOW
-        );
         const invalidPropertyNames = Object.keys(registry.properties)
             .filter((propertyName) => !PicturePropertyDefinitions.some(({ name }) => name === propertyName));
         if (invalidPropertyNames.length > 0) {
@@ -122,9 +116,9 @@ export default class WWAPicutre {
         }
         if (isValidLayerNumber(registry.layerNumber)) {
             if (isAnonymousPicture(registry.layerNumber)) {
-                this._anonymousPictures.push(new WWAPictureItem(this._wwa, registry, canvas, externalImageFile));
+                this._anonymousPictures.push(new WWAPictureItem(this._wwa, registry, externalImageFile));
             } else {
-                this._pictures.set(registry.layerNumber, new WWAPictureItem(this._wwa, registry, canvas, externalImageFile));
+                this._pictures.set(registry.layerNumber, new WWAPictureItem(this._wwa, registry, externalImageFile));
                 // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
                 this._pictures = new Map([...this._pictures.entries()].sort(([, a], [, b]) => a.layerNumber - b.layerNumber));
             }

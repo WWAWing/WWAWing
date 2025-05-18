@@ -209,9 +209,9 @@ export class CGManager {
 
     public drawPictures(): void {
         this.picture.forEachPictures((picture) => {
-            this._ctx.drawImage(picture.imageBitmap,
-                0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW,
-                0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
+            const { x, y, width, height } = picture.getDrawPictureCoords();
+            // ピクチャは一度に大量の Canvas 画像を描画することになるため、画面全体でサイズ確保して描画すると大きな負荷になる
+            this._ctx.drawImage(picture.imageBitmap, 0, 0, width, height, x, y, width, height);
         });
     }
 

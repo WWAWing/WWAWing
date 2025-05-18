@@ -1,6 +1,5 @@
 import { PictureRegistry } from "@wwawing/common-interface";
 import { PartsType } from "@wwawing/loader";
-import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as util from "../wwa_util";
@@ -23,6 +22,8 @@ import { PictureCacheCanvas } from "./PictureCacheCanvas";
  * そこでこれらのパラメーターを生成時に算出してキャッシュすることで描画の効率化を図ります。
  */
 export default class WWAPictureItem {
+
+    private readonly _canvas: PictureCacheCanvas;
 
     /**
      * 基準 X 座標。 circle プロパティによる円運動では、基準となる座標がないと同じ座標上での円運動を維持できない。
@@ -81,7 +82,7 @@ export default class WWAPictureItem {
 
     private _timer: WWATimer;
 
-    constructor(wwa: WWA, private _registry: PictureRegistry, private _canvas: PictureCacheCanvas, externalFile?: HTMLImageElement) {
+    constructor(wwa: WWA, private _registry: PictureRegistry, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
         this._posBaseY = properties.pos?.[1] ?? 0;
@@ -123,6 +124,7 @@ export default class WWAPictureItem {
         this._rotateRadian = properties.rotate ? properties.rotate * Math.PI / 180 : 0;
 
         this._updatePictureCache();
+        this._canvas = new PictureCacheCanvas(this._totalWidth, this._totalHeight);
         
         this._timer = new WWATimer();
         this._timer.addPoint(
@@ -200,8 +202,8 @@ export default class WWAPictureItem {
         
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
-                const chipX = this._posDestX + (this._totalWidth * rx);
-                const chipY = this._posDestY + (this._totalHeight * ry);
+                const chipX = this._totalWidth * rx;
+                const chipY = this._totalHeight * ry;
                 if (this._imgFile) {
                     this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
                 } else if (this._drawChip) {
@@ -211,7 +213,7 @@ export default class WWAPictureItem {
                                 if (!canDrawChip(cx, cy, cx2, cy2)) {
                                     return;
                                 }
-                                this._canvas.drawCanvas(
+                                this._canvas.updateCacheCanvas(
                                     image,
                                     isMainAnimation ? cx : cx2,
                                     isMainAnimation ? cy : cy2,
@@ -225,7 +227,7 @@ export default class WWAPictureItem {
                     } else {
                         for (let cy = 0; cy < this._cropY; cy++) {
                             for (let cx = 0; cx < this._cropX; cx++) {
-                                this._canvas.drawCanvas(
+                                this._canvas.updateCacheCanvas(
                                     image,
                                     imgPosX + cx,
                                     imgPosY + cy,
@@ -249,6 +251,15 @@ export default class WWAPictureItem {
             }
         }
         this._canvas.updateImageBitmap();
+    }
+
+    public getDrawPictureCoords() {
+        return {
+            x: this._posDestX, 
+            y: this._posDestY,
+            width: this._totalWidth,
+            height: this._totalHeight,
+        };
     }
 
     /**
