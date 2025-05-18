@@ -1,7 +1,7 @@
 import { WWAConsts as Consts } from "../wwa_data";
 
 export class PictureCacheCanvas {
-    public readonly canvas: OffscreenCanvas;
+    private readonly canvas: OffscreenCanvas;
     public ctx: OffscreenCanvasRenderingContext2D;
     public imageBitmap: ImageBitmap;
 
