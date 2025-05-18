@@ -15,7 +15,7 @@ import {
 import { DrawCoordType, NextPicturePartsInfo } from "./typedef";
 import { WWATimer } from "./WWATimer";
 import { PictureCacheCanvas } from "./PictureCacheCanvas";
-import { getDrawPictureCanvasCoords, getDrawPictureOffsetInCacheCanvas, getPictureCanvasSize } from "./coordType";
+import { getDrawPictureCanvasCoords, getDrawPictureOffsetInCacheCanvas, getPictureCanvasSize, getTranslateOffsetForRotate } from "./coordType";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -86,7 +86,7 @@ export default class WWAPictureItem {
     private readonly _mapCropCache: [number, number, number, number][][] | null;
     private _opacity: number;
     private readonly _fade: number;
-    private readonly _angleRadian: number;
+    private _angleRadian: number;
     private readonly _rotateRadian: number;
     private readonly _hasAnimation: boolean;
 
@@ -132,7 +132,14 @@ export default class WWAPictureItem {
 
         this._angleRadian = properties.angle ? properties.angle * Math.PI / 180 : 0;
         this._rotateRadian = properties.rotate ? properties.rotate * Math.PI / 180 : 0;
-        this._drawCoordType = properties.text ? "maximum" : "minimum";
+        if (properties.text) {
+            this._drawCoordType = "minimum";
+        } else if (properties.angle || properties.rotate) {
+            this._drawCoordType = "minimumWithMargin";
+        } else {
+            this._drawCoordType = "minimum";
+        }
+        
         this._updatePictureCache();
         const { width: canvasWidth, height: canvasHeight } = getPictureCanvasSize(
             this._drawCoordType, this._totalWidth, this._totalHeight
@@ -156,9 +163,12 @@ export default class WWAPictureItem {
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
-        this._canvas.ctx.translate(this._posBaseX, this._posBaseY);
-        this._canvas.ctx.rotate(this._angleRadian);
-        this._canvas.ctx.translate(-this._posBaseX, -this._posBaseY);
+        if (this._angleRadian !== 0) {
+            const { x: offsetX, y: offsetY } = getTranslateOffsetForRotate(this._totalWidth, this._totalHeight);
+            this._canvas.ctx.translate(offsetX, offsetY);
+            this._canvas.ctx.rotate(this._angleRadian);
+            this._canvas.ctx.translate(-offsetX, -offsetY);
+        }
         this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
         this._canvas.ctx.textBaseline = "top";
         if (properties.textAlign) {
@@ -303,10 +313,11 @@ export default class WWAPictureItem {
             this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
         }
         if (this._rotateRadian !== 0) {
-            // this._angle を加えると加速運動になってしまう
-            this._canvas.ctx.translate(this._posBaseX, this._posBaseY);
-            this._canvas.ctx.rotate(this._rotateRadian);
-            this._canvas.ctx.translate(-this._posBaseX, -this._posBaseY);
+            this._angleRadian += this._rotateRadian;
+            const { x: offsetX, y: offsetY } = getTranslateOffsetForRotate(this._totalWidth, this._totalHeight);
+            this._canvas.ctx.translate(offsetX, offsetY);
+            this._canvas.ctx.rotate(this._angleRadian);
+            this._canvas.ctx.translate(-offsetX, -offsetY);
         }
     }
 
