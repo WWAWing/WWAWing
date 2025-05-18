@@ -16,9 +16,12 @@ export class PictureCacheCanvas {
     /**
      * 内部の OffscreenCanvas をより軽量な ImageBitmap に変換生成します。
      * OffscreenCanvas の内容が変わった場合は必ず実行してください。
+     * サイズがない場合は実行されません。
      */
     public updateImageBitmap() {
-        this.imageBitmap = this.canvas.transferToImageBitmap();
+        if (this.canvas.width > 0 && this.canvas.height > 0) {
+            this.imageBitmap = this.canvas.transferToImageBitmap();
+        }
     }
 
     /**
