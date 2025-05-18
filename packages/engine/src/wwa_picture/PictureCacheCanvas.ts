@@ -1,7 +1,7 @@
 import { WWAConsts as Consts } from "../wwa_data";
 
 export class PictureCacheCanvas {
-    private canvas: OffscreenCanvas;
+    public readonly canvas: OffscreenCanvas;
     public ctx: OffscreenCanvasRenderingContext2D;
     public imageBitmap: ImageBitmap;
 
@@ -28,17 +28,17 @@ export class PictureCacheCanvas {
      * 内部の OffscreenCanvas を更新します。
      * PictureCacheCanvas は内部の　Canvas のサイズを最小限に抑えているため、描画位置の指定は　PictureCacheCanvas の描画側で実装してください。
      *
-     * @param _image 読み取る画像
+     * @param image 読み取る画像
      * @param canvasX ピクチャ内で描画するX座標 (pos プロパティの値は含めないこと)
      * @param canvasY ピクチャ内で描画するY座標 (pos プロパティの値は含めないこと)
      * @param chipX 読み取る画像のX座標 (マス単位)
-     * @param chipY 読み取る画像のX座標 (マス単位)
+     * @param chipY 読み取る画像のY座標 (マス単位)
      * @param width 描画サイズの横幅
      * @param height 描画サイズの縦幅
      */
-    public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
+    public drawCanvas(image: HTMLImageElement, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
         this.ctx.drawImage(
-            _image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
+            image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
             Consts.CHIP_SIZE, Consts.CHIP_SIZE, canvasX, canvasY,
             width, height
         );
@@ -64,6 +64,8 @@ export class PictureCacheCanvas {
     public updateSize(width: number, height: number) {
         this.canvas.width = width;
         this.canvas.height = height;
+        // canvas のサイズを変更すると imageSmoothingEnabled はリセットされるので再設定が必要
+        this.ctx.imageSmoothingEnabled = false;
     }
     public clear() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
