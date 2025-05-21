@@ -1,7 +1,6 @@
 import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
-import { assignmentBlockProperties } from "../wwa_util";
 import * as Wwa from "./wwa";
 import { Literal } from "./wwa";
 import { PARTS_TYPE_LIST } from "./utils";
@@ -959,13 +958,7 @@ export class EvalCalcWwaNode {
 
   objectExpression(node: Wwa.ObjectExpression) {
     const entries = node.properties.map((property) => this.evalWwaNode(property));
-    return Object.fromEntries(entries.filter(([key, _]) => {
-      const valid = !assignmentBlockProperties.includes(key);
-      if (!valid) {
-        console.warn(`オブジェクトからキー ${key} が除去されました。`);
-      }
-      return valid;
-    }));
+    return new Map(entries);
   }
 
   arrayExpression(node: Wwa.ArrayExpression) {

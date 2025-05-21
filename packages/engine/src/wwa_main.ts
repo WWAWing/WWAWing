@@ -10,6 +10,7 @@ import {
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
     StatusKind, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, WWAConsts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
+    type UserVar, type UserVarMap, type UserVarPrimitive
 } from "./wwa_data";
 
 import {
@@ -171,8 +172,8 @@ export class WWA {
     private _isDisallowLoadOldSave: boolean = false;
 
     private _userVar: {
-        named: Map<string, number | string | boolean>
-        numbered: (number | string | boolean)[];
+        named: UserVarMap; 
+        numbered: UserVarPrimitive[];
     };
 
     private _pageExecuting: boolean; // ページ実行中かどうか
@@ -4528,7 +4529,7 @@ export class WWA {
             this.evalCalcWwaNodeGenerator.evalWwaNode(func);
         }
 
-        var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
+        var qd = structuredClone(this._wwaData);
         
         var pc = this._player.getPosition().getPartsCoord();
         var st = this._player.getStatusWithoutEquipments();
@@ -4545,7 +4546,7 @@ export class WWA {
         qd.gameSpeedIndex = this._player.getSpeedIndex();
         qd.playTime = this._playTimeCalculator?.calculateTimeMs() ?? 0;
         qd.userVar = this._userVar.numbered.slice();
-        qd.userNamedVar = [...this._userVar.named];
+        qd.userNamedVar = this._userVar.named;
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
@@ -4580,7 +4581,7 @@ export class WWA {
                 });
                 return "";
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
-                const compressQD:any = WWACompress.compress(qd);
+                const compressQD:any = WWACompress.compress(qd, {isPassword: true});
                 compressQD.isCompress = 1;
                 const s = JSON.stringify(compressQD);
                 this.wwaCustomEvent('wwa_passwordsave', {
@@ -4699,7 +4700,7 @@ export class WWA {
     }
 
     private _applyQuickLoad(newData: WWAData): void {
-        this._userVar.named = new Map(newData.userNamedVar);
+        this._userVar.named = newData.userNamedVar;
         this._userVar.numbered = newData.userVar;
         this._player.setEnergyMax(newData.statusEnergyMax);
         this._player.setEnergy(newData.statusEnergy);
@@ -6023,7 +6024,7 @@ font-weight: bold;
 
         // 元配列の参照から値を書き換えるため最後の index の一つ手前まで頭出し
         // 最初の index は currentValueObject で参照済のため見ない
-        const ref = indecies.slice(1, lastIndex).reduce((prev, current) =>  prev[current], currentValueObject);
+        const ref = indecies.slice(1, lastIndex).reduce((prev, current) => util.getItem(prev, current), currentValueObject);
         let result = assignee;
         const targetRefIndex = indecies[lastIndex];
         if(indecies.length > 1) {
@@ -6032,25 +6033,25 @@ font-weight: bold;
                     result = assignee;
                     break;
                 case '+=':
-                    result = ref[targetRefIndex] + assignee;
+                    result = util.getItem(ref, targetRefIndex) + assignee;
                     break;
                 case '-=':
                     if (typeof assignee !== "number") {
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
                     }
-                    result = ref[targetRefIndex] - assignee;
+                    result = util.getItem(ref, targetRefIndex) - assignee;
                     break;
                 case '*=':
                     if (typeof assignee !== "number") {
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
                     }
-                    result = ref[targetRefIndex] * assignee;
+                    result = util.getItem(ref, targetRefIndex) * assignee;
                     break;
                 case '/=':
                     if (typeof assignee !== "number") {
                         throw new TypeError(`その演算子は利用できません: ${operator}`)
                     }
-                    result = ref[targetRefIndex] / assignee;
+                    result = util.getItem(ref, targetRefIndex) / assignee;
                     break;
                 default:
                     throw new TypeError(`その演算子は利用できません: ${operator}`)
@@ -6063,18 +6064,9 @@ font-weight: bold;
                 }
             } else if (typeof ref === "object" && ref !== null) {
                 const key = String(targetRefIndex);
-                if (util.assignmentBlockProperties.includes(key)) {
-                  console.warn(
-                    `代入先オブジェクトのキー名に使えない名前が含まれています: ${key}`
-                  );
-                  return;
-                } else {
-                  Object.defineProperties(ref, {
-                    [key]: { value: result, writable: true },
-                  });
-                }
+                util.setItem(ref, key, result)
             } else {
-                ref[targetRefIndex] = result;
+                util.setItem(ref, targetRefIndex, result);
             }
             this._userVar.named.set(indecies[0], currentValueObject);
         } else {
@@ -6095,7 +6087,7 @@ font-weight: bold;
             }
         }
 
-        const _get = (indexOrName: number | string,): number | string | boolean => {
+        const _get = (indexOrName: number | string,): UserVar => {
             if (typeof indexOrName === "number") {
                 return this._userVar.numbered[indexOrName];
             } else { // indexOrName === "string"
@@ -6226,7 +6218,7 @@ font-weight: bold;
         return this._userVar.numbered[no];
     }
     // User名称変数取得
-    public getUserNameVar(id: number | string): number | string | boolean {
+    public getUserNameVar(id: number | string): UserVar {
         const varValue = this._userVar.named.get(id.toString());
         return varValue ?? "";
     }
