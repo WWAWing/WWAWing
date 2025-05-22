@@ -7,6 +7,7 @@ import { PARTS_TYPE_LIST } from "./utils";
 import { evalLengthFunction } from "./functions/length";
 import { getPlayerCoordPx, getPlayerCoordPy } from "./symbols";
 import { PageAdditionalItem } from "./typedef";
+import { getItem } from "../wwa_util";
 
 const operatorOperationMap: {
   [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
@@ -1328,7 +1329,7 @@ export class EvalCalcWwaNode {
           throw new Error(`指定したユーザー定義変数: v["${userNameKey}"] は配列ではありません`)
         }
         const userNameRightKey = this.evalWwaNode(node.indecies[1]);
-        return userNameValue[userNameRightKey];
+        return getItem(userNameValue, userNameRightKey);
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -1338,7 +1339,7 @@ export class EvalCalcWwaNode {
   evalArrayOrObject3DPlus(node: Wwa.ArrayOrObject3DPlus) {
     const indecies = node.indecies.map((x) => this.evalWwaNode(x));
     const userNameValue = this.generator.wwa.getUserNameVar(indecies[0]);
-    return indecies.slice(1).reduce((prev, current) => prev[current], userNameValue);
+    return indecies.slice(1).reduce((prev, current) => getItem(prev, current), userNameValue);
   }
 
   evalLiteral(node: Wwa.Literal) {
