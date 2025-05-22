@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/loader",
-  "version": "4.1.0-save-bug-fix.based-on.3.12.17.p.1",
+  "version": "4.1.0-save-bug-fix.based-on.3.12.17.p.2",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/index.js",
   "module": "./module/index.js",
