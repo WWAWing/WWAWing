@@ -1,3 +1,4 @@
+import { UserVarMap } from "../../wwa_data";
 import * as UserVariableCard from "../user-variable/user-variable-card";
 import * as UserVariableList from "../user-variable/user-variable-list";
 import * as UserVariableListSection from "../user-variable/user-variable-list-section";
@@ -8,7 +9,7 @@ import * as UserVariableListSection from "../user-variable/user-variable-list-se
  */
 export function updateValues(
   dumpElement: HTMLElement | undefined | null,
-  userVar: Map<string, number | string | boolean>
+  userVar: UserVarMap 
 ): void {
   if (!(dumpElement instanceof HTMLElement)) {
     return;

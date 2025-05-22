@@ -1,9 +1,9 @@
-import { type WWAData } from "@wwawing/common-interface";
+import type { WWAData, UserVar, UserVarPrimitive, UserVarMap } from "@wwawing/common-interface";
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
-export { type WWAData };
+export type { WWAData, UserVar, UserVarPrimitive, UserVarMap};
 
 export class EquipmentStatus {
     public strength: number;
