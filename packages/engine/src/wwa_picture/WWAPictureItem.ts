@@ -321,7 +321,7 @@ export default class WWAPictureItem {
             this._opacity = this._opacity + this._fade;
             this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
         }
-        if (this._rotateRadian !== 0) {
+        if (this._angleRadian !== 0 || this._rotateRadian !== 0) {
             this._angleRadian += this._rotateRadian;
             const { x: offsetX, y: offsetY } = getTranslateOffsetForRotate(
                 this._drawCoordType,
