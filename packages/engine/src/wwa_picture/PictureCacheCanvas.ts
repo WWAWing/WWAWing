@@ -1,4 +1,5 @@
 import { WWAConsts as Consts } from "../wwa_data";
+import { convertAppliableCanvasHeight, convertAppliableCanvasWidth } from "./utils";
 
 export class PictureCacheCanvas {
     private readonly canvas: OffscreenCanvas;
@@ -6,7 +7,10 @@ export class PictureCacheCanvas {
     public imageBitmap: ImageBitmap;
 
     constructor(width: number, height: number) {
-        this.canvas = new OffscreenCanvas(width, height);
+        this.canvas = new OffscreenCanvas(
+            convertAppliableCanvasWidth(width),
+            convertAppliableCanvasHeight(height)
+        );
         this.ctx = this.canvas.getContext("2d", { alpha: true });
         // TODO オプションでオフにできるようにしたい
         this.ctx.imageSmoothingEnabled = false;
@@ -62,8 +66,8 @@ export class PictureCacheCanvas {
         }
     }
     public updateSize(width: number, height: number) {
-        this.canvas.width = width;
-        this.canvas.height = height;
+        this.canvas.width = convertAppliableCanvasWidth(width);
+        this.canvas.height = convertAppliableCanvasHeight(height);
         // canvas のサイズを変更すると imageSmoothingEnabled はリセットされるので再設定が必要
         this.ctx.imageSmoothingEnabled = false;
     }

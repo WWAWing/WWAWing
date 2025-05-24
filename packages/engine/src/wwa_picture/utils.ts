@@ -260,3 +260,12 @@ export const getVerticalCirclePosition = (y: number, radius: number, angle: numb
     const rad = angle * Math.PI / 180.0;
     return y + (radius * Math.sin(rad));
 };
+
+/**
+ * 指定した横幅を、 Canvas で使用可能な横幅に変換します。
+ * 横幅が 0 以下になると OffscreenCanvas では ImageBitmap が正しく出力されないため、1以上の値に調整します。
+ * @param width 横幅 (px 単位)
+ * @returns Canvas で設定しても安全な状態の横幅 (px 単位)
+ */
+export const convertAppliableCanvasWidth = (width: number) => Math.max(width, 1);
+export const convertAppliableCanvasHeight = (height: number) => Math.max(height, 1);
