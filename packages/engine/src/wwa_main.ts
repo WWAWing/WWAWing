@@ -1267,26 +1267,14 @@ export class WWA {
         if(moveFunc) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(moveFunc);
         }
-        // const moveaaFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_MOVEAA"];
-        // if(moveaaFunc) {
-        //     this.evalCalcWwaNodeGenerator.evalWwaNode(moveaaFunc);
-        // }
     }
 
     /** サウンド再生が終了した際のユーザ定義独自関数を呼び出す */
     public callSoundFinishedDefineFunction(sound: Sound,soundId: number) {
         const soundFinishFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
 
-        
             this._wwaData.bgm = 0;
-            // console.log("userDefinedFunctions (詳細):", JSON.stringify(this.userDefinedFunctions, null, 2));
-            // console.log("userDefinedFunctions keys:", Object.keys(this.userDefinedFunctions));
-            // Object.entries(this.userDefinedFunctions).forEach(([key, value]) => {
-            //     console.log(`key: ${key}, type: ${typeof value}, value:`, value);
-            // });
         if (soundFinishFunc) {
-                // console.log("いけてるぜ")
-            // this.evalCalcWwaNodeGenerator.evalWwaNode(soundFinishFunc);
             this.evalCalcWwaNodeGenerator.setEarnedSound(soundId);
             
                 console.log(this.evalCalcWwaNodeGenerator.state.earnedSound.soundId);
@@ -1297,8 +1285,6 @@ export class WWA {
             console.log(soundId)
             this.createSoundInstance(soundId)
             this.playSound(soundId);
-            console.log("CALL_BGM_END が登録されていません！");
-            // return false;
         }
     }
 
