@@ -123,11 +123,15 @@ export class WWA {
     private _battleEstimateWindow: BattleEstimateWindow;
     private _passwordWindow: PasswordWindow;
     private _wwaSave: WWASave;
+    private _sound: Sound;
 
     private _stopUpdateByLoadFlag: boolean;
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
+    public isBgmStopped: boolean;
+    public isBgmAllLoop: boolean
+    public soundId: number;
 
     /**
      * 所持状態のマップデータの文字列加工をMD5化した文字列です。
@@ -1263,6 +1267,39 @@ export class WWA {
         if(moveFunc) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(moveFunc);
         }
+        // const moveaaFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_MOVEAA"];
+        // if(moveaaFunc) {
+        //     this.evalCalcWwaNodeGenerator.evalWwaNode(moveaaFunc);
+        // }
+    }
+
+    /** サウンド再生が終了した際のユーザ定義独自関数を呼び出す */
+    public callSoundFinishedDefineFunction(sound: Sound,soundId: number) {
+        const soundFinishFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
+
+        
+            this._wwaData.bgm = 0;
+            // console.log("userDefinedFunctions (詳細):", JSON.stringify(this.userDefinedFunctions, null, 2));
+            // console.log("userDefinedFunctions keys:", Object.keys(this.userDefinedFunctions));
+            // Object.entries(this.userDefinedFunctions).forEach(([key, value]) => {
+            //     console.log(`key: ${key}, type: ${typeof value}, value:`, value);
+            // });
+        if (soundFinishFunc) {
+                // console.log("いけてるぜ")
+            // this.evalCalcWwaNodeGenerator.evalWwaNode(soundFinishFunc);
+            this.evalCalcWwaNodeGenerator.setEarnedSound(soundId);
+            
+                console.log(this.evalCalcWwaNodeGenerator.state.earnedSound.soundId);
+            this.evalCalcWwaNodeGenerator.evalWwaNode(soundFinishFunc);
+            
+            // return true;
+        } else {
+            console.log(soundId)
+            this.createSoundInstance(soundId)
+            this.playSound(soundId);
+            console.log("CALL_BGM_END が登録されていません！");
+            // return false;
+        }
     }
 
     /**
@@ -1550,7 +1587,7 @@ export class WWA {
             if (this._wwaData.bgm === targetSoundId) {
                 if (targetAudio.hasData()) {
                     // TODO ロード完了したタイミングの this._wwaData.bgmDelayDurationMs は変更されているのか？
-                    targetAudio.play(this._wwaData.bgmDelayDurationMs);
+                    targetAudio.play(this, this._wwaData.bgmDelayDurationMs);
                     this._wwaData.bgm = targetSoundId;
                     this._clearSoundLoadedCheckTimer();
                 } else if (targetAudio.isError()) {
@@ -1613,10 +1650,10 @@ export class WWA {
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
-                this.sounds[id].play(bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
+                this.sounds[id].play(this, bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
                 this._wwaData.bgm = id;
             } else {
-                this.sounds[id].play();
+                this.sounds[id].play(this);
             }
         }
 
@@ -2769,6 +2806,25 @@ export class WWA {
         const frameFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_FRAME"];
         if(frameFunc) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(frameFunc);
+        }
+
+        
+        const bgmEndFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
+        this.isBgmAllLoop = !bgmEndFunc;
+
+            /** フレームごとにユーザー定義独自関数を呼び出す */
+        if(this.isBgmStopped){
+            this.isBgmStopped = false;
+            this.callSoundFinishedDefineFunction(this._sound,this.soundId);
+            // const soundFinishedFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_MOVEAA"];
+            // if(soundFinishedFunc) {
+            //     this.evalCalcWwaNodeGenerator.setEarnedSound(this.soundId);
+            //     console.log(this.evalCalcWwaNodeGenerator.state.earnedSound.soundId);
+            //     this.evalCalcWwaNodeGenerator.evalWwaNode(soundFinishedFunc);
+            // }
+            // else{
+            //     this._sound.play(this);
+            // }
         }
     }
     public vibration(isStrong: boolean) {

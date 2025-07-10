@@ -1,4 +1,5 @@
 import { SystemSound } from './wwa_data';
+import { WWA } from './wwa_main';
 
 export class Sound {
     private audioBuffer: AudioBuffer;
@@ -96,36 +97,43 @@ export class Sound {
      * 一時停止した場合でも、最初から再生します。
      * @param delayDurationMs 遅延時間
      */
-    public play(delayDurationMs = 0): void {
-        const bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
-        this.bufferSources.push(bufferSource);
+    public play(_wwa: WWA, delayDurationMs = 0): void {
+    const bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
+    this.bufferSources.push(bufferSource);
 
-        bufferSource.buffer = this.audioBuffer;
-        if (this.isBgm()) {
-            bufferSource.loop = true;
-        }
-        bufferSource.connect(this.audioGain);
+    bufferSource.buffer = this.audioBuffer;
+    //ユーザ定義独自関数『CALL_BGM_END』が設定されていればfalse、されていなければtrue
+    bufferSource.loop = _wwa.isBgmAllLoop;
 
-        // TODO(rmn): bufferSource.buffer.duration ? あとで調べる
-        let duration = (bufferSource as any).duration;
-        if ((!isFinite(duration)) || (duration < 0) || (typeof duration !== "number")) {
-            duration = 0;
-        }
+    bufferSource.connect(this.audioGain);
 
-        bufferSource.onended = () => {
-            const id = this.bufferSources.indexOf(bufferSource);
-            if (id !== -1) {
-                this.bufferSources.splice(id, 1);
-            }
-            this.disposeBufferSource(bufferSource);
-        }
-        this.delayBgmTimeoutId = window.setTimeout(() => {
-            this.delayBgmTimeoutId = null;
-            bufferSource.start();
-        }, delayDurationMs);
-
-        this.audioGain.connect(this.audioContext.destination);
+    // TODO(rmn): bufferSource.buffer.duration ? あとで調べる
+    let duration = (bufferSource as any).duration;
+    if ((!isFinite(duration)) || (duration < 0) || (typeof duration !== "number")) {
+        duration = 0;
     }
+    
+    _wwa.isBgmStopped = false;
+    _wwa.soundId = this.id;
+    // 再生終了時に呼ばれる処理
+    bufferSource.onended = () => {
+        const id = this.bufferSources.indexOf(bufferSource);
+        if (id !== -1) {
+            this.bufferSources.splice(id, 1);
+        }
+        this.disposeBufferSource(bufferSource);
+        if (this.isBgm()) {
+            //wwa_ts側にBGM再生が終わった旨を連携
+            _wwa.isBgmStopped = true;
+        }
+    };
+    this.delayBgmTimeoutId = window.setTimeout(() => {
+        this.delayBgmTimeoutId = null;
+        bufferSource.start();
+    }, delayDurationMs);
+
+    this.audioGain.connect(this.audioContext.destination);
+}
 
     /**
      * 音声を止めます。

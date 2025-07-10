@@ -41,6 +41,11 @@ export class EvalCalcWwaNodeGenerator {
       /** 使用・取得したアイテムの位置 */
       itemPos1To12?: number
     }
+    /** サウンド取得時ならオブジェクトあり, さもなくば undefined. */
+    readonly earnedSound?: {
+      /** 再生サウンドのID */
+      soundId?: number,
+    }
     /** 戦闘ダメージのための計算ならオブジェクトあり, さもなくば undefined */
     readonly battleDamageCalculation?: {
       /** 計算結果に中断が含まれている */
@@ -72,6 +77,13 @@ export class EvalCalcWwaNodeGenerator {
 
   public clearTemporaryState() {
     this.state = { ...this.state, triggerParts: undefined, messagePageAdditionalQueue: [] };
+  }
+  /**
+   * サウンド関連のReadOnly値をセットする
+   * @param sound_id 再生したサウンドのID
+   */
+  public setEarnedSound(soundId: number) {
+    this.state = { ...this.state, earnedSound: { soundId } };
   }
 
   /**
@@ -1249,6 +1261,8 @@ export class EvalCalcWwaNode {
         return this.for_id.k;
       case 'LOOPLIMIT':
         return this.generator.loop_limit;
+      case 'SOUND_ID':
+        return this.generator.state.earnedSound?.soundId ?? -1;
       case 'ITEM_ID':
         return this.generator.state.earnedItem?.partsId ?? -1;
       case 'ITEM_POS':
