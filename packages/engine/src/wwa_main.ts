@@ -129,9 +129,13 @@ export class WWA {
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
-    public isBgmStopped: boolean;
     public isBgmAllLoop: boolean
     public soundId: number;
+
+    private _nextFrameQueue: (() => void)[] = [];
+    public enqueueNextFrame(fn: () => void): void {
+        this._nextFrameQueue.push(fn);
+    }
 
     /**
      * 所持状態のマップデータの文字列加工をMD5化した文字列です。
@@ -1273,7 +1277,7 @@ export class WWA {
     public callSoundFinishedDefineFunction(sound: Sound,soundId: number) {
         const soundFinishFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
 
-            this._wwaData.bgm = 0;
+        this._wwaData.bgm = 0;
         if (soundFinishFunc) {
             this.evalCalcWwaNodeGenerator.setEarnedSound(soundId);
             
@@ -2798,20 +2802,10 @@ export class WWA {
         const bgmEndFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
         this.isBgmAllLoop = !bgmEndFunc;
 
-            /** フレームごとにユーザー定義独自関数を呼び出す */
-        if(this.isBgmStopped){
-            this.isBgmStopped = false;
-            this.callSoundFinishedDefineFunction(this._sound,this.soundId);
-            // const soundFinishedFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_MOVEAA"];
-            // if(soundFinishedFunc) {
-            //     this.evalCalcWwaNodeGenerator.setEarnedSound(this.soundId);
-            //     console.log(this.evalCalcWwaNodeGenerator.state.earnedSound.soundId);
-            //     this.evalCalcWwaNodeGenerator.evalWwaNode(soundFinishedFunc);
-            // }
-            // else{
-            //     this._sound.play(this);
-            // }
-        }
+        /** フレームごとにユーザー定義独自関数を呼び出す */
+        this._nextFrameQueue.forEach(fn => fn());
+        this._nextFrameQueue = [];
+
     }
     public vibration(isStrong: boolean) {
         this._gamePadStore.vibration(isStrong);

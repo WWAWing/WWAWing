@@ -118,7 +118,6 @@ export class Sound {
             duration = 0;
         }
     
-        _wwa.isBgmStopped = false;
         _wwa.soundId = this.id;
         // 再生終了時に呼ばれる処理
         bufferSource.onended = () => {
@@ -128,8 +127,10 @@ export class Sound {
             }
             this.disposeBufferSource(bufferSource);
             if (this.isBgm() && !_wwa.isBgmAllLoop) {
-                //wwa_ts側にBGM再生が終わった旨を連携
-                _wwa.isBgmStopped = true;
+                //BGM再生終わったらキューに処理追加
+                _wwa.enqueueNextFrame(() => {
+                    _wwa.callSoundFinishedDefineFunction(this, this.id);
+                });
             }
         };
         this.delayBgmTimeoutId = window.setTimeout(() => {
