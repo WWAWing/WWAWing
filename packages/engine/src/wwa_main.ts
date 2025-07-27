@@ -1277,16 +1277,13 @@ export class WWA {
     public callSoundFinishedDefineFunction(sound: Sound,soundId: number) {
         const soundFinishFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
 
+        //CALL_BGM_END有効時はBGMを自動ループしないため、再生中BGMを初期化する。（＝何もBGMを再生していないものと認識させる。）
         this._wwaData.bgm = 0;
         if (soundFinishFunc) {
             this.evalCalcWwaNodeGenerator.setEarnedSound(soundId);
-            
-                console.log(this.evalCalcWwaNodeGenerator.state.earnedSound.soundId);
             this.evalCalcWwaNodeGenerator.evalWwaNode(soundFinishFunc);
             
-            // return true;
         } else {
-            console.log(soundId)
             this.createSoundInstance(soundId)
             this.playSound(soundId);
         }
