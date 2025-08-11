@@ -83,7 +83,7 @@ export function assertString(value: unknown, varName: string): value is string {
 export function formatUserVarForDisplay(value: UserVar, trimming?: boolean, depth = 0): string {
   if (depth >= 3) {
     return "...";
-  } else if(typeof value === "number" || typeof value === "boolean") {
+  } else if(typeof value === "number" || typeof value === "boolean" || value === undefined || value === null) {
     return String(value);
   } else if (typeof value === "string") {
     // 文字列かつ10文字以上の場合に省略表記にしたい
