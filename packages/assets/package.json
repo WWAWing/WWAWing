@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/assets",
-  "version": "4.1.0-save-bug-fix.based-on.3.12.17.p.1",
+  "version": "4.1.0-save-bug-fix.based-on.3.12.17.p.2",
   "description": "WWA Wing asset files",
   "main": "index.js",
   "files": [
