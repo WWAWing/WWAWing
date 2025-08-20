@@ -450,7 +450,7 @@ export class WWA {
 
             // プレイ時間関連
             this._playTimeCalculator = new PlayTimeCalculator();
-            this._restartData = JSON.parse(JSON.stringify(this._wwaData));
+            this._restartData = structuredClone(this._wwaData);
             this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
 
             this.initCSSRule();
