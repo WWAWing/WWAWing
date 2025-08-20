@@ -1,3 +1,4 @@
+import { convertMapToObject } from "@wwawing/util";
 import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
@@ -518,7 +519,7 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         // 指定した引数の文字列をログ出力する
         const value = this.evalWwaNode(node.value[0]);
-        console.log(value);
+        console.log ( value instanceof Map ? convertMapToObject(value) : value);
         return undefined;
       }
       case "ABLE_CHANGE_SPEED": {
@@ -742,8 +743,8 @@ export class EvalCalcWwaNode {
           this.generator.wwa.deletePictureRegistry(layerNumber);
           return;
         }
-        if (typeof propertyDefinition === "object") {
-          this.generator.wwa.setPictureRegistryFromObject(layerNumber, propertyDefinition);
+        if (propertyDefinition instanceof Map) {
+          this.generator.wwa.setPictureRegistryFromObject(layerNumber, convertMapToObject(propertyDefinition));
         } else if (typeof propertyDefinition === "string") {
           // TODO パーツ座標は本来なら実行元パーツの座標にすべきだが、イベント関数では判別できない。
           this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition);

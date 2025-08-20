@@ -1,5 +1,6 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
+import { convertMapToObject } from "@wwawing/util";
 import { PictureRegistry, SystemMessage } from "@wwawing/common-interface";
 import type { JsonResponseData, JsonResponseError, JsonResponseErrorKind } from "./json_api_client";
 import {
@@ -6222,9 +6223,9 @@ font-weight: bold;
         const varValue = this._userVar.named.get(id.toString());
         return varValue ?? "";
     }
-    // User名称変数の一覧を取得
+    // User名称変数の一覧を取得 (ログ出力用)
     public getAllUserNameVar() {
-        return Array.from(this._userVar.named);
+        return convertMapToObject(this._userVar.named);
     }
     // 現在の位置情報記憶
     public recUserPosition(x: number, y: number): void {

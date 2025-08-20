@@ -1,5 +1,5 @@
 import { toJSON, fromJSON } from "flatted"
-import {convertMapToObject, convertObjectToMap } from "@wwawing/util";
+import { convertMapToObject, convertObjectToMap } from "@wwawing/util";
 import { WWAData, WWAConsts } from "../wwa_data";
 import { WWADataWithWorldNameStatus } from "./common";
 
