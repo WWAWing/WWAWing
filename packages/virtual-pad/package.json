@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/virtual-pad",
-  "version": "4.1.0-save-bug-fix.based-on.3.12.18.p.1",
+  "version": "4.1.0-save-bug-fix.based-on.3.12.18.p.2",
   "description": "WWA Wing Virtual Pad for mobile phone",
   "main": "lib/index.js",
   "scripts": {

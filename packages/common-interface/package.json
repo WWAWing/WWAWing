@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "4.1.0-save-bug-fix.based-on.3.12.18.p.1",
+  "version": "4.1.0-save-bug-fix.based-on.3.12.18.p.2",
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
