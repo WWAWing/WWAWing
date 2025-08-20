@@ -163,9 +163,7 @@ export default class WWAPictureItem {
         this._timer.addPoint("startAnim", properties.animTime?.[0], properties.animTimeFrame?.[0]);
         this._timer.addPoint("endAnim", properties.animTime?.[1], properties.animTimeFrame?.[1]);
         this._timer.addPoint("wait", properties.wait, properties.waitFrame);
-        
-        // Canvas の ctx を色々いじる
-        this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+
         if (this._angleRadian !== 0) {
             const { x: offsetX, y: offsetY } = getTranslateOffsetForRotate(
                 this._drawCoordType,
@@ -178,16 +176,7 @@ export default class WWAPictureItem {
             this._canvas.ctx.rotate(this._angleRadian);
             this._canvas.ctx.translate(-offsetX, -offsetY);
         }
-        this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
-        this._canvas.ctx.textBaseline = "top";
-        if (properties.textAlign) {
-            this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
-        }
-        const colorR = properties.color?.[0] ?? 0;
-        const colorG = properties.color?.[1] ?? 0;
-        const colorB = properties.color?.[2] ?? 0;
-        this._canvas.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
-
+        this.setCanvasContext();
         this._hasAnimation = this.getHasAnimation();
     }
 
@@ -221,6 +210,22 @@ export default class WWAPictureItem {
         return this._registry.properties.script;
     }
 
+    public setCanvasContext() {
+        // Canvas の ctx を色々いじる
+        const { properties } = this._registry;
+        this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+        this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
+        this._canvas.ctx.textBaseline = "top";
+        if (properties.textAlign) {
+            this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
+        }
+        const colorR = properties.color?.[0] ?? 0;
+        const colorG = properties.color?.[1] ?? 0;
+        const colorB = properties.color?.[2] ?? 0;
+        this._canvas.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
+        // ピクチャの角度については clear しても角度設定はこのまま維持されるみたいなので、ここでは行わない
+    }
+
     /**
      * ピクチャを描画します。
      * 毎フレーム処理されるため、プロパティから直接引き出される値以外はあらかじめフィールドに数値などをキャッシュしてください。
@@ -228,6 +233,9 @@ export default class WWAPictureItem {
     public draw(image: HTMLImageElement, isMainAnimation: boolean) {
         // TODO これをオフにするオプションがあっても良さそう
         this.clearCanvas();
+        // ↑ の clearCanvas によって内部の CanvasContext がリセットされることがあるので再設定する
+        // (具体的にはテキストだけをアニメーションで動かす場合、アニメーション動作で clearCanvas が作動し、 CanvasContext からテキスト関連の設定が消し飛ぶ)
+        this.setCanvasContext();
 
         const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
         const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;
