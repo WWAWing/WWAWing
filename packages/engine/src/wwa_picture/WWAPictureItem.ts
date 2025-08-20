@@ -1,5 +1,6 @@
 import { PictureRegistry } from "@wwawing/common-interface";
 import { PartsType } from "@wwawing/loader";
+import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import * as util from "../wwa_util";
@@ -12,10 +13,8 @@ import {
     getVerticalCorrectionBySizeAnchor,
     canDrawChip,
 } from "./utils";
-import { DrawCoordType, NextPicturePartsInfo } from "./typedef";
+import { NextPicturePartsInfo } from "./typedef";
 import { WWATimer } from "./WWATimer";
-import { PictureCacheCanvas } from "./PictureCacheCanvas";
-import { getDrawPictureCanvasCoords, getDrawPictureOffsetInCacheCanvas, getPictureCanvasSize, getTranslateOffsetForRotate } from "./coordType";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -23,9 +22,6 @@ import { getDrawPictureCanvasCoords, getDrawPictureOffsetInCacheCanvas, getPictu
  * そこでこれらのパラメーターを生成時に算出してキャッシュすることで描画の効率化を図ります。
  */
 export default class WWAPictureItem {
-
-    private readonly _canvas: PictureCacheCanvas;
-    private readonly _drawCoordType: DrawCoordType;
 
     /**
      * 基準 X 座標。 circle プロパティによる円運動では、基準となる座標がないと同じ座標上での円運動を維持できない。
@@ -47,18 +43,10 @@ export default class WWAPictureItem {
     private _sizeX: number;
     private _sizeY: number;
     /**
-     * crop プロパティを用いた場合の1マス分の横幅
+     * crop プロパティを用いた場合の、1マス分の横幅。
      */
     private _chipWidth: number;
     private _chipHeight: number;
-    /**
-     * crop プロパティでくっつけた、1体分の横幅
-     */
-    private _charaWidth: number;
-    private _charaHeight: number;
-    /**
-     * ピクチャの描画範囲の横幅
-     */
     private _totalWidth: number;
     private _totalHeight: number;
     private _moveX: number;
@@ -86,13 +74,13 @@ export default class WWAPictureItem {
     private readonly _mapCropCache: [number, number, number, number][][] | null;
     private _opacity: number;
     private readonly _fade: number;
-    private _angleRadian: number;
+    private readonly _angleRadian: number;
     private readonly _rotateRadian: number;
     private readonly _hasAnimation: boolean;
 
     private _timer: WWATimer;
 
-    constructor(wwa: WWA, private _registry: PictureRegistry, externalFile?: HTMLImageElement) {
+    constructor(wwa: WWA, private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
         this._posBaseY = properties.pos?.[1] ?? 0;
@@ -132,22 +120,8 @@ export default class WWAPictureItem {
 
         this._angleRadian = properties.angle ? properties.angle * Math.PI / 180 : 0;
         this._rotateRadian = properties.rotate ? properties.rotate * Math.PI / 180 : 0;
-        if (properties.text) {
-            if (properties.angle || properties.rotate) {
-                console.warn(`レイヤー${this.layerNumber}番: テキストの描画と回転の併用は、現時点では非推奨です。今後動作が変わる可能性があるので、自己責任でお願いします。`);
-            }
-            this._drawCoordType = "maximum";
-        } else if (properties.angle || properties.rotate) {
-            this._drawCoordType = "minimumWithMargin";
-        } else {
-            this._drawCoordType = "minimum";
-        }
-        
+
         this._updatePictureCache();
-        const { width: canvasWidth, height: canvasHeight } = getPictureCanvasSize(
-            this._drawCoordType, this._totalWidth, this._totalHeight
-        );
-        this._canvas = new PictureCacheCanvas(canvasWidth, canvasHeight);
         
         this._timer = new WWATimer();
         this._timer.addPoint(
@@ -166,18 +140,9 @@ export default class WWAPictureItem {
         
         // Canvas の ctx を色々いじる
         this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
-        if (this._angleRadian !== 0) {
-            const { x: offsetX, y: offsetY } = getTranslateOffsetForRotate(
-                this._drawCoordType,
-                this._totalWidth,
-                this._totalHeight,
-                this._posBaseX,
-                this._posBaseY
-            );
-            this._canvas.ctx.translate(offsetX, offsetY);
-            this._canvas.ctx.rotate(this._angleRadian);
-            this._canvas.ctx.translate(-offsetX, -offsetY);
-        }
+        this._canvas.ctx.translate(this._posBaseX, this._posBaseY);
+        this._canvas.ctx.rotate(this._angleRadian);
+        this._canvas.ctx.translate(-this._posBaseX, -this._posBaseY);
         this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
         this._canvas.ctx.textBaseline = "top";
         if (properties.textAlign) {
@@ -199,8 +164,8 @@ export default class WWAPictureItem {
         return this._hasAnimation;
     }
 
-    public get imageBitmap() {
-        return this._canvas.imageBitmap;
+    public get cvs() {
+        return this._canvas.cvs;
     }
 
     public get appearParts() {
@@ -231,14 +196,13 @@ export default class WWAPictureItem {
 
         const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
         const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;
-        const { x: offsetX, y: offsetY } = getDrawPictureOffsetInCacheCanvas(this._drawCoordType, this._posDestX, this._posDestY);
-
+        
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
-                const chipX = offsetX + this._charaWidth * rx;
-                const chipY = offsetY + this._charaHeight * ry;
+                const chipX = this._posDestX + (this._totalWidth * rx);
+                const chipY = this._posDestY + (this._totalHeight * ry);
                 if (this._imgFile) {
-                    this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._charaWidth, this._charaHeight);
+                    this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
                 } else if (this._drawChip) {
                     if (this._mapCropCache !== null) {
                         this._mapCropCache.forEach((line, y) => {
@@ -273,7 +237,7 @@ export default class WWAPictureItem {
                         }
                     }
                 }
-                if (this.getHasText()) {
+                if (this._registry.properties.text) {
                     this._canvas.drawFont(
                         this._registry.properties.text,
                         chipX,
@@ -283,17 +247,6 @@ export default class WWAPictureItem {
                 }
             }
         }
-        this._canvas.updateImageBitmap();
-    }
-
-    public getDrawPictureCoords() {
-        return getDrawPictureCanvasCoords(
-            this._drawCoordType,
-            this._posDestX,
-            this._posDestY,
-            this._totalWidth,
-            this._totalHeight
-        );
     }
 
     /**
@@ -312,37 +265,24 @@ export default class WWAPictureItem {
         this._zoomX = this._zoomX + this._zoomAccelX;
         this._zoomY = this._zoomY + this._zoomAccelY;
         this._updatePictureCache();
-        const { width: canvasWidth, height: canvasHeight } = getPictureCanvasSize(
-            this._drawCoordType, this._totalWidth, this._totalHeight
-        );
-        this._canvas.updateSize(canvasWidth, canvasHeight);
         this._circleAngle = this._circleAngle + this._circleSpeed;
         if (this._fade !== 0) {
             this._opacity = this._opacity + this._fade;
             this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
         }
-        if (this._angleRadian !== 0 || this._rotateRadian !== 0) {
-            this._angleRadian += this._rotateRadian;
-            const { x: offsetX, y: offsetY } = getTranslateOffsetForRotate(
-                this._drawCoordType,
-                this._totalWidth,
-                this._totalHeight,
-                this._posBaseX,
-                this._posBaseY
-            );
-            this._canvas.ctx.translate(offsetX, offsetY);
-            this._canvas.ctx.rotate(this._angleRadian);
-            this._canvas.ctx.translate(-offsetX, -offsetY);
+        if (this._rotateRadian !== 0) {
+            // this._angle を加えると加速運動になってしまう
+            this._canvas.ctx.translate(this._posBaseX, this._posBaseY);
+            this._canvas.ctx.rotate(this._rotateRadian);
+            this._canvas.ctx.translate(-this._posBaseX, -this._posBaseY);
         }
     }
 
     private _updatePictureCache() {
-        this._chipWidth = adjustPositiveValue(this._sizeX);
-        this._chipHeight = adjustPositiveValue(this._sizeY);
-        this._charaWidth = this._chipWidth * this._cropX;
-        this._charaHeight = this._chipHeight * this._cropY;
-        this._totalWidth = this._charaWidth * this._repeatX;
-        this._totalHeight = this._charaHeight * this._repeatY;
+        this._totalWidth = adjustPositiveValue(this._sizeX) * this._cropX;
+        this._totalHeight = adjustPositiveValue(this._sizeY) * this._cropY;
+        this._chipWidth = Math.floor(this._totalWidth / this._cropX);
+        this._chipHeight = Math.floor(this._totalHeight / this._cropY);
         this._posDestX = Math.floor(
             getHorizontalCorrectionBySizeAnchor(
                 getHorizontalCirclePosition(
@@ -350,7 +290,7 @@ export default class WWAPictureItem {
                     this._circleRadiusX,
                     this._circleAngle
                 ),
-                this._charaWidth,
+                this._totalWidth,
                 this._anchor
             )
         );
@@ -361,7 +301,7 @@ export default class WWAPictureItem {
                     this._circleRadiusY,
                     this._circleAngle
                 ),
-                this._charaHeight,
+                this._totalHeight,
                 this._anchor
             )
         );
@@ -455,10 +395,6 @@ export default class WWAPictureItem {
             this._fade !== 0 ||
             this._rotateRadian !== 0
         );
-    }
-
-    private getHasText() {
-        return this._registry.properties.text;
     }
 
     private static _getImgPosByPicture(registry: PictureRegistry, isMainTime: boolean) {
