@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/util",
-  "version": "4.1.0-save-bug-fix.based-on.3.12.18",
+  "version": "4.1.0-save-bug-fix.based-on.3.12.18.p.1",
   "description": "WWA Wing utility package",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
