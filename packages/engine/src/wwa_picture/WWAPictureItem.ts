@@ -558,7 +558,7 @@ export default class WWAPictureItem {
         return `${italicValue} ${boldValue} ${fontSizeValue} ${fontFamilyValue}`;
     }
 
-    private static _convertTextAlign(value: string): CanvasTextAlign | undefined {
+    private static _convertTextAlign(value: string): CanvasTextAlign | null {
         if (!value) {
             return null;
         }
