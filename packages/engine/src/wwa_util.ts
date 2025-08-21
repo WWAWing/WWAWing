@@ -1,3 +1,4 @@
+import { isPrimitive } from "@wwawing/util";
 import { Coord, UserVar, UserVarMap } from "./wwa_data";
 
 export var $id = (id: string): HTMLElement => {
@@ -106,24 +107,27 @@ export function formatUserVarForDisplay(value: UserVar, trimming?: boolean, dept
   }
 }
 
-export function getItem(x: UserVarMap | Array<any>, key: string | number) {
+export function getItem(x: UserVarMap | Array<any>, key: unknown) {
   if (Array.isArray(x)) {
     if (typeof key !== "number") {
       throw new TypeError("数字以外をindexにできません");
     }
     return x[key];
   } else if (x instanceof Map) {
-    if (typeof key !== "string") {
-      throw new TypeError("文字列以外をキーにできません");
+    // JavaScript のオブジェクトに準拠し、文字列でないキーが与えられた場合は文字列にする
+    if (!isPrimitive(key)) {
+      throw new TypeError(
+        "オブジェクトのキーはプリミティブ値でなければなりません。: " + key
+      );
     }
-    return x.get(key);
+    return x.get(String(key));
   } else {
     throw new TypeError(x satisfies never);
   }
 }
 export function setItem(
   x: UserVarMap | Array<any>,
-  key: string | number,
+  key: unknown,
   value: UserVar
 ) {
   if (Array.isArray(x)) {
@@ -132,10 +136,13 @@ export function setItem(
     }
     x[key] = value;
   } else if (x instanceof Map) {
-    if (typeof key !== "string") {
-      throw new TypeError("文字列以外をキーにできません");
+    // JavaScript のオブジェクトに準拠し、文字列でないキーが与えられた場合は文字列にする
+    if (!isPrimitive(key)) {
+      throw new TypeError(
+        "オブジェクトのキーはプリミティブ値でなければなりません。: " + key
+      );
     }
-    x.set(key, value);
+    x.set(String(key), value);
   } else {
     throw new TypeError(x satisfies never);
   }

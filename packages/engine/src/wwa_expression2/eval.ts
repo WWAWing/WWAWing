@@ -1,4 +1,4 @@
-import { convertMapToObject } from "@wwawing/util";
+import { convertMapToObject, isPrimitive } from "@wwawing/util";
 import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
@@ -955,7 +955,12 @@ export class EvalCalcWwaNode {
   }
 
   property(node: Wwa.Property) {
-    return [this.evalWwaNode(node.key), this.evalWwaNode(node.value)];
+    // JavaScript のオブジェクト同様、文字列でないキーは文字列として解釈します。
+    const key = this.evalWwaNode(node.key)
+    if (!isPrimitive(key)) {
+      throw new Error(`オブジェクトのキーはプリミティブ値でなければなりません。: ${key}`);
+    }
+    return [String(this.evalWwaNode(node.key)), this.evalWwaNode(node.value)];
   }
 
   objectExpression(node: Wwa.ObjectExpression) {
