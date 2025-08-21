@@ -70,6 +70,7 @@ export class PictureCacheCanvas {
         this.canvas.height = convertAppliableCanvasHeight(height);
         // canvas のサイズを変更すると imageSmoothingEnabled はリセットされるので再設定が必要
         this.ctx.imageSmoothingEnabled = false;
+        // そのほかにも canvas の context がリセットされているので、必要に応じて再設定すること
     }
     public clear() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
