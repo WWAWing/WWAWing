@@ -84,6 +84,9 @@ export default class WWAPictureItem {
      * @todo _cropX と _cropY とでどちらかしか使用しないため、両方ともまとめてクラスで管理できるようにしたい
      */
     private readonly _mapCropCache: [number, number, number, number][][] | null;
+    private readonly _fontStyle: string;
+    private readonly _textAlign: CanvasTextAlign | null;
+    private readonly _fillStyle: string;
     private _opacity: number;
     private readonly _fade: number;
     private _angleRadian: number;
@@ -114,6 +117,13 @@ export default class WWAPictureItem {
         this._circleRadiusX = properties.circle?.[0] ?? 0;
         this._circleRadiusY = properties.circle?.[1] ?? this._circleRadiusX;
         this._circleAngle = properties.circle?.[2] ?? 0;
+
+        this._fontStyle = WWAPictureItem._getFontValue(properties);
+        this._textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
+        const colorR = properties.color?.[0] ?? 0;
+        const colorG = properties.color?.[1] ?? 0;
+        const colorB = properties.color?.[2] ?? 0;
+        this._fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
 
         // アニメーション関連のプロパティをセット
         this._moveX = properties.move?.[0] ?? 0;
@@ -163,9 +173,7 @@ export default class WWAPictureItem {
         this._timer.addPoint("startAnim", properties.animTime?.[0], properties.animTimeFrame?.[0]);
         this._timer.addPoint("endAnim", properties.animTime?.[1], properties.animTimeFrame?.[1]);
         this._timer.addPoint("wait", properties.wait, properties.waitFrame);
-        
-        // Canvas の ctx を色々いじる
-        this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+
         if (this._angleRadian !== 0) {
             const { x: offsetX, y: offsetY } = getTranslateOffsetForRotate(
                 this._drawCoordType,
@@ -178,16 +186,7 @@ export default class WWAPictureItem {
             this._canvas.ctx.rotate(this._angleRadian);
             this._canvas.ctx.translate(-offsetX, -offsetY);
         }
-        this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
-        this._canvas.ctx.textBaseline = "top";
-        if (properties.textAlign) {
-            this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
-        }
-        const colorR = properties.color?.[0] ?? 0;
-        const colorG = properties.color?.[1] ?? 0;
-        const colorB = properties.color?.[2] ?? 0;
-        this._canvas.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
-
+        this.updateCanvasContext();
         this._hasAnimation = this.getHasAnimation();
     }
 
@@ -219,6 +218,18 @@ export default class WWAPictureItem {
 
     public get executeScriptFunctionName() {
         return this._registry.properties.script;
+    }
+
+    public updateCanvasContext() {
+        // Canvas の ctx を色々いじる
+        this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+        this._canvas.ctx.font = this._fontStyle;
+        this._canvas.ctx.textBaseline = "top";
+        if (this._textAlign) {
+            this._canvas.ctx.textAlign = this._textAlign;
+        }
+        this._canvas.ctx.fillStyle = this._fillStyle;
+        // ピクチャの角度については clear しても角度設定はこのまま維持されるみたいなので、ここでは行わない
     }
 
     /**
@@ -319,7 +330,7 @@ export default class WWAPictureItem {
         this._circleAngle = this._circleAngle + this._circleSpeed;
         if (this._fade !== 0) {
             this._opacity = this._opacity + this._fade;
-            this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+            // opacity の変更反映は後の this.updateCanvasContext で行う
         }
         if (this._angleRadian !== 0 || this._rotateRadian !== 0) {
             this._angleRadian += this._rotateRadian;
@@ -334,6 +345,8 @@ export default class WWAPictureItem {
             this._canvas.ctx.rotate(this._angleRadian);
             this._canvas.ctx.translate(-offsetX, -offsetY);
         }
+        // this._canvas.updateSize の Canvas のサイズ変更によって内部の CanvasContext がリセットされることがあるので再設定する
+        this.updateCanvasContext();
     }
 
     private _updatePictureCache() {
@@ -545,13 +558,16 @@ export default class WWAPictureItem {
         return `${italicValue} ${boldValue} ${fontSizeValue} ${fontFamilyValue}`;
     }
 
-    private static _convertTextAlign(value: string): CanvasTextAlign | undefined {
+    private static _convertTextAlign(value: string): CanvasTextAlign | null {
+        if (!value) {
+            return null;
+        }
         if (["center", "end", "left", "right", "start"].includes(value)) {
             return value as CanvasTextAlign;
         }
         // TODO 例外を投げるべき？
         console.warn(`textAlign プロパティで不正な値が検出されました。: ${value}`);
-        return undefined;
+        return null;
     }
 
     private static _roundPercentage(value: number): number {
