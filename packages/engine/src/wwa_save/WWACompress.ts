@@ -599,8 +599,14 @@ export default class WWACompress {
                     return loadObject;
                 }
                 // 不安定版旧版互換: 以前は Map を配列化した表現 [["key1", "value1"], ["key2", "value2"], ...] の形式だった
+                // これを Map に復元する
                 if (Array.isArray(loadObject)) {
-                    return structuredClone(loadObject);
+                    return new Map(
+                      structuredClone(loadObject).map(([key, value]) => [
+                        key,
+                        convertObjectToMap(value),
+                      ])
+                    );
                 }
                 if (loadObject["version"] !== 2 || typeof loadObject["data"] !== "object") {
                     throw new TypeError("セーブデータが壊れています");
