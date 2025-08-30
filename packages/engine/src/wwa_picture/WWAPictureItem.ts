@@ -198,8 +198,8 @@ export default class WWAPictureItem {
         return this._hasAnimation;
     }
 
-    public get imageBitmap() {
-        return this._canvas.imageBitmap;
+    public get canvasImage() {
+        return this._canvas.getCanvasImage();
     }
 
     public get appearParts() {
@@ -294,7 +294,6 @@ export default class WWAPictureItem {
                 }
             }
         }
-        this._canvas.updateImageBitmap();
     }
 
     public getDrawPictureCoords() {

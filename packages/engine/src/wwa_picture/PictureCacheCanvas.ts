@@ -4,7 +4,6 @@ import { convertAppliableCanvasHeight, convertAppliableCanvasWidth } from "./uti
 export class PictureCacheCanvas {
     private readonly canvas: OffscreenCanvas;
     public ctx: OffscreenCanvasRenderingContext2D;
-    public imageBitmap: ImageBitmap;
 
     constructor(width: number, height: number) {
         this.canvas = new OffscreenCanvas(
@@ -14,18 +13,10 @@ export class PictureCacheCanvas {
         this.ctx = this.canvas.getContext("2d", { alpha: true });
         // TODO オプションでオフにできるようにしたい
         this.ctx.imageSmoothingEnabled = false;
-        this.updateImageBitmap();
     }
 
-    /**
-     * 内部の OffscreenCanvas をより軽量な ImageBitmap に変換生成します。
-     * OffscreenCanvas の内容が変わった場合は必ず実行してください。
-     * サイズがない場合は実行されません。
-     */
-    public updateImageBitmap() {
-        if (this.canvas.width > 0 && this.canvas.height > 0) {
-            this.imageBitmap = this.canvas.transferToImageBitmap();
-        }
+    public getCanvasImage() {
+        return this.canvas;
     }
 
     /**
