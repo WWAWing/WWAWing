@@ -4547,7 +4547,7 @@ export class WWA {
         qd.gameSpeedIndex = this._player.getSpeedIndex();
         qd.playTime = this._playTimeCalculator?.calculateTimeMs() ?? 0;
         qd.userVar = this._userVar.numbered.slice();
-        qd.userNamedVar = this._userVar.named;
+        qd.userNamedVar = structuredClone(this._userVar.named);
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
