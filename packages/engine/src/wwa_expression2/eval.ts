@@ -1,6 +1,8 @@
+import { convertMapToObject, isPrimitive } from "@wwawing/util";
 import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
+import { getItem } from "../wwa_util";
 import * as Wwa from "./wwa";
 import { Literal } from "./wwa";
 import { PARTS_TYPE_LIST } from "./utils";
@@ -517,7 +519,7 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         // 指定した引数の文字列をログ出力する
         const value = this.evalWwaNode(node.value[0]);
-        console.log(value);
+        console.log ( value instanceof Map ? convertMapToObject(value) : value);
         return undefined;
       }
       case "ABLE_CHANGE_SPEED": {
@@ -741,8 +743,8 @@ export class EvalCalcWwaNode {
           this.generator.wwa.deletePictureRegistry(layerNumber);
           return;
         }
-        if (typeof propertyDefinition === "object") {
-          this.generator.wwa.setPictureRegistryFromObject(layerNumber, propertyDefinition);
+        if (propertyDefinition instanceof Map) {
+          this.generator.wwa.setPictureRegistryFromObject(layerNumber, convertMapToObject(propertyDefinition));
         } else if (typeof propertyDefinition === "string") {
           // TODO パーツ座標は本来なら実行元パーツの座標にすべきだが、イベント関数では判別できない。
           this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition);
@@ -953,20 +955,17 @@ export class EvalCalcWwaNode {
   }
 
   property(node: Wwa.Property) {
-    return [this.evalWwaNode(node.key), this.evalWwaNode(node.value)];
+    // JavaScript のオブジェクト同様、文字列でないキーは文字列として解釈します。
+    const key = this.evalWwaNode(node.key)
+    if (!isPrimitive(key)) {
+      throw new Error(`オブジェクトのキーはプリミティブ値でなければなりません。: ${key}`);
+    }
+    return [String(this.evalWwaNode(node.key)), this.evalWwaNode(node.value)];
   }
 
   objectExpression(node: Wwa.ObjectExpression) {
     const entries = node.properties.map((property) => this.evalWwaNode(property));
-    // Object.fromEntries を使用している限り、 __proto__ などを使ったプロトタイプ汚染は発生しないと
-    // 思われるが、念のため、 __proto__, constructor, prototype はキー名として認めない。
-    return Object.fromEntries(entries.filter(([key, _]) => {
-      const valid = key !== "__proto__" && key !== "constructor" && key !== "prototype";
-      if (!valid) {
-        console.warn(`オブジェクトからキー ${key} が除去されました。キー名に __proto__, constructor, prototype は使えません。`);
-      }
-      return valid;
-    }));
+    return new Map(entries);
   }
 
   arrayExpression(node: Wwa.ArrayExpression) {
@@ -1336,7 +1335,7 @@ export class EvalCalcWwaNode {
           throw new Error(`指定したユーザー定義変数: v["${userNameKey}"] は配列ではありません`)
         }
         const userNameRightKey = this.evalWwaNode(node.indecies[1]);
-        return userNameValue[userNameRightKey];
+        return getItem(userNameValue, userNameRightKey);
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -1346,7 +1345,7 @@ export class EvalCalcWwaNode {
   evalArrayOrObject3DPlus(node: Wwa.ArrayOrObject3DPlus) {
     const indecies = node.indecies.map((x) => this.evalWwaNode(x));
     const userNameValue = this.generator.wwa.getUserNameVar(indecies[0]);
-    return indecies.slice(1).reduce((prev, current) => prev[current], userNameValue);
+    return indecies.slice(1).reduce((prev, current) => getItem(prev, current), userNameValue);
   }
 
   evalLiteral(node: Wwa.Literal) {

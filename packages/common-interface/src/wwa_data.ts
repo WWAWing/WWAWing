@@ -1,6 +1,10 @@
 import { Key } from "./wwa_system_message";
 import { PictureProperties } from "./wwa_picture";
 
+export type UserVarPrimitive = number | string | boolean;  // null | undefined も認めたい
+export type UserVar = UserVarPrimitive | Array<UserVar> | UserVarMap;
+export type UserVarMap =  Map<string, UserVar>
+
 export interface Coord {
     x: number;
     y: number;
@@ -150,8 +154,8 @@ export interface WWAData {
      */
     gamePadButtonItemTable: number[];
 
-    userVar: (string | number | boolean)[];
-    userNamedVar: [string, string | number | boolean][];
+    userVar: UserVarPrimitive[];
+    userNamedVar: UserVarMap;
     permitChangeGameSpeed: boolean;
     gameSpeedIndex: number;
     playTime: number;

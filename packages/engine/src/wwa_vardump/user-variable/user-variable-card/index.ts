@@ -1,9 +1,10 @@
+import { UserVar } from "../../../wwa_data";
 import { formatUserVarForDisplay } from "../../../wwa_util";
 import * as UserVariableLabel from "../user-variable-label";
 
 export interface Props {
   index: number | string;
-  value?: number | string | boolean;
+  value?: UserVar;
 }
 
 const BLANK = "-";
@@ -35,7 +36,7 @@ function createIndexElement(index: number | string): HTMLElement {
   return element;
 }
 
-function createValueElement(value?: number | string | boolean): HTMLElement {
+function createValueElement(value?: UserVar): HTMLElement {
   const element = document.createElement("div");
   element.classList.add("value");
   if (typeof value === "string") {
@@ -62,7 +63,7 @@ export function setupLabel(
 
 export function setValue(
   element: HTMLElement,
-  value?: number | string | boolean
+  value?: UserVar 
 ): void {
   element.textContent = value === undefined ? BLANK : formatUserVarForDisplay(value);
 }
