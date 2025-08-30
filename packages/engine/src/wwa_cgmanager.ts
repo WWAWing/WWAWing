@@ -211,7 +211,7 @@ export class CGManager {
         this.picture.forEachPictures((picture) => {
             const { x, y, width, height } = picture.getDrawPictureCoords();
             // ピクチャは一度に大量の Canvas 画像を描画することになるため、画面全体でサイズ確保して描画すると大きな負荷になる
-            this._ctx.drawImage(picture.imageBitmap, 0, 0, width, height, x, y, width, height);
+            this._ctx.drawImage(picture.canvasImage, 0, 0, width, height, x, y, width, height);
         });
     }
 
