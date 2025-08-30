@@ -338,7 +338,7 @@ export class WWA {
         try {
             if (this._hasTitleImg) {
                 // HACK: develop マージ時に条件分岐を書く
-                util.$id("unstable-version-warning").textContent = "この WWA Wing は [超不安定版] です。本番使用しないでください。";
+                util.$id("unstable-version-warning").textContent = "この WWA Wing は [不安定版] です。";
                 util.$id("version").textContent = "WWA Wing Ver." + VERSION_WWAJS;
             } else {
                 this._setLoadingMessage(ctxCover, 0);

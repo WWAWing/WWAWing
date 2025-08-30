@@ -40,7 +40,7 @@ canvas.wwa-canvas {
     > #unstable-version-warning {
         @include cover_message(3);
         font-weight: bold;
-        background-color: black;
+        background-color: red;
         color: white;
     }
 
