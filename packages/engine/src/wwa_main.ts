@@ -5888,7 +5888,7 @@ export class WWA {
                 triggerPartsX: partsPosition.x,
                 triggerPartsY: partsPosition.y,
                 soundNumber: attributes[WWAConsts.ATR_SOUND] ?? 0,
-                properties,
+                properties: convertMapToObject(properties),
             },
             // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
             partsNumber,
