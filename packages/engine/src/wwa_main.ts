@@ -1160,15 +1160,22 @@ export class WWA {
                 try {
                     this.setUsertScript(loadUserScriptstringsObj);
                 }
-                catch(e) {
-                    console.error(e.message);
+                catch(error) {
+                    alert(`外部スクリプト ${loadUserScriptstringsObj.fileName} の解析中にエラーが発生しました。\nこのままゲームを開始することはできますが、正常に動作しない可能性が高いです。\n\n詳細:\n${error.message}`);
+                    console.error(error.message);
                 }
             })
             
             /** ゲーム開始時のユーザ定義独自関数を呼び出す */
             const gameStartFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_WWA_START"];
-            if(gameStartFunc) {
-                this.evalCalcWwaNodeGenerator.evalWwaNode(gameStartFunc);
+            if (gameStartFunc) {
+                try {
+                    this.evalCalcWwaNodeGenerator.evalWwaNode(gameStartFunc);
+                } catch (error) {
+                    // CALL_WWA_START については、通常のメッセージウィンドウがまだ表示されない段階で実行されるため、alertに流す。
+                    alert(`CALL_WWA_START でエラーが発生しました。\n\n詳細:\n${error.message}`)
+                    console.error(error.message);
+                }
             }
         })()
         /** スクリプトパーサーを作成する */
