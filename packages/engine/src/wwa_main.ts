@@ -6066,6 +6066,9 @@ font-weight: bold;
             } else if (typeof ref === "object" && ref !== null) {
                 const key = String(targetRefIndex);
                 util.setItem(ref, key, result)
+            } else if (typeof ref === "string") {
+                // JavaScript の string はイミュータブルなので書き換え不可
+                throw new TypeError(`文字列 "${ref}" の特定の文字を直接書き換えることはできません`);
             } else {
                 util.setItem(ref, targetRefIndex, result);
             }
@@ -6220,8 +6223,7 @@ font-weight: bold;
     }
     // User名称変数取得
     public getUserNameVar(id: number | string): UserVar {
-        const varValue = this._userVar.named.get(id.toString());
-        return varValue ?? "";
+        return this._userVar.named.get(id.toString());
     }
     // User名称変数の一覧を取得 (ログ出力用)
     public getAllUserNameVar() {

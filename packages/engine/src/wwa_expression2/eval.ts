@@ -1040,9 +1040,8 @@ export class EvalCalcWwaNode {
 
   evalMessage(node: Wwa.Msg) {
     const value = this.evalWwaNode(node.value);
-    const showString = isNaN(value)? value: value.toString();
     const additionalItems = this.generator.pickPageAdditionalQueue();
-    this.generator.wwa.handleMsgFunction({ message: showString, additionalItems });
+    this.generator.wwa.handleMsgFunction({ message: String(value), additionalItems });
     return undefined;
   }
 
@@ -1328,14 +1327,22 @@ export class EvalCalcWwaNode {
         const partsType = node.name === 'o'? PartsType.OBJECT: PartsType.MAP;
         const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
-      case "v":
-        const userNameKey = (<Literal>node.indecies[0]).value;
-        const userNameValue = this.generator.wwa.getUserNameVar(userNameKey);
-        if(!Array.isArray(userNameValue) && !(typeof userNameValue === 'object')) {
-          throw new Error(`指定したユーザー定義変数: v["${userNameKey}"] は配列ではありません`)
+      case "v": {
+        const key = (node.indecies[0] as Literal).value;
+        const value = this.generator.wwa.getUserNameVar(key);
+        if (
+          value === null ||
+          (!Array.isArray(value) &&
+            typeof value !== "object" &&
+            typeof value !== "string")
+        ) {
+          throw new Error(
+            `指定したユーザー定義変数: v["${key}"] は配列・オブジェクト・文字列ではありません`
+          );
         }
         const userNameRightKey = this.evalWwaNode(node.indecies[1]);
-        return getItem(userNameValue, userNameRightKey);
+        return getItem(value, userNameRightKey);
+      }
       default:
         throw new Error("このシンボルは取得できません")
     }
