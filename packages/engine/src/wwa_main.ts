@@ -125,11 +125,19 @@ export class WWA {
     private _battleEstimateWindow: BattleEstimateWindow;
     private _passwordWindow: PasswordWindow;
     private _wwaSave: WWASave;
+    private _sound: Sound;
 
     private _stopUpdateByLoadFlag: boolean;
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
+    public isBgmAllLoop: boolean
+    public soundId: number;
+
+    private _nextFrameQueue: (() => void)[] = [];
+    public enqueueNextFrame(fn: () => void): void {
+        this._nextFrameQueue.push(fn);
+    }
 
     /**
      * 所持状態のマップデータの文字列加工をMD5化した文字列です。
@@ -1274,6 +1282,22 @@ export class WWA {
         }
     }
 
+    /** サウンド再生が終了した際のユーザ定義独自関数を呼び出す */
+    public callSoundFinishedDefineFunction(sound: Sound,soundId: number) {
+        const soundFinishFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
+
+        //CALL_BGM_END有効時はBGMを自動ループしないため、再生中BGMを初期化する。（＝何もBGMを再生していないものと認識させる。）
+        this._wwaData.bgm = 0;
+        if (soundFinishFunc) {
+            this.evalCalcWwaNodeGenerator.setEarnedSound(soundId);
+            this.evalCalcWwaNodeGenerator.evalWwaNode(soundFinishFunc);
+            
+        } else {
+            this.createSoundInstance(soundId)
+            this.playSound(soundId);
+        }
+    }
+
     /**
      * WWA Script のユーザー定義独自関数 "CALL_CAMERA_MOVE" を実行します。
      * カメラ画面の切り替わりが終わった時に実行されます。
@@ -1559,7 +1583,7 @@ export class WWA {
             if (this._wwaData.bgm === targetSoundId) {
                 if (targetAudio.hasData()) {
                     // TODO ロード完了したタイミングの this._wwaData.bgmDelayDurationMs は変更されているのか？
-                    targetAudio.play(this._wwaData.bgmDelayDurationMs);
+                    targetAudio.play(this, this._wwaData.bgmDelayDurationMs);
                     this._wwaData.bgm = targetSoundId;
                     this._clearSoundLoadedCheckTimer();
                 } else if (targetAudio.isError()) {
@@ -1622,10 +1646,10 @@ export class WWA {
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
-                this.sounds[id].play(bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
+                this.sounds[id].play(this, bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
                 this._wwaData.bgm = id;
             } else {
-                this.sounds[id].play();
+                this.sounds[id].play(this);
             }
         }
 
@@ -2779,6 +2803,15 @@ export class WWA {
         if(frameFunc) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(frameFunc);
         }
+
+        
+        const bgmEndFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
+        this.isBgmAllLoop = !bgmEndFunc;
+
+        /** フレームごとにユーザー定義独自関数を呼び出す */
+        this._nextFrameQueue.forEach(fn => fn());
+        this._nextFrameQueue = [];
+
     }
     public vibration(isStrong: boolean) {
         this._gamePadStore.vibration(isStrong);
