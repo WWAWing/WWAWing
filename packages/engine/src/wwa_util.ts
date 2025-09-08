@@ -107,10 +107,14 @@ export function formatUserVarForDisplay(value: UserVar, trimming?: boolean, dept
   }
 }
 
-export function getItem(x: UserVarMap | Array<any>, key: unknown) {
+export function getItem(x: unknown, key: unknown) {
   if (Array.isArray(x)) {
     if (typeof key !== "number") {
-      throw new TypeError("数字以外をindexにできません");
+      throw new TypeError("配列に対して、数字以外をindexにできません");
+    }
+    if (key < 0 || key >= x.length) {
+      console.warn(`配列のインデックス ${key} は範囲外です`);
+      return undefined;
     }
     return x[key];
   } else if (x instanceof Map) {
@@ -121,12 +125,23 @@ export function getItem(x: UserVarMap | Array<any>, key: unknown) {
       );
     }
     return x.get(String(key));
+  } else if (typeof x === "string") {
+    if (typeof key !== "number") {
+      throw new TypeError(`文字列 "${x}" に対して、数字以外をindexにできません`);
+    }
+    if (key < 0 || key >= x.length) {
+      console.warn(`文字列 "${x}" のインデックス ${key} は範囲外です`);
+      return undefined;
+    }
+    return x[key]; // 文字列中の文字を取得する場合
+  } else if (isPrimitive(x)) {
+    throw new TypeError(`プリミティブ値 ${String(x)} は添字参照できません`);
   } else {
-    throw new TypeError(x satisfies never);
+    throw new TypeError(String(x) + "は添字参照できません");
   }
 }
 export function setItem(
-  x: UserVarMap | Array<any>,
+  x: unknown,
   key: unknown,
   value: UserVar
 ) {
@@ -143,8 +158,12 @@ export function setItem(
       );
     }
     x.set(String(key), value);
+  } else if (typeof x === "string") {
+    throw new TypeError(`文字列 "${x}" の特定の文字を直接書き換えることはできません`);
+  } else if (isPrimitive(x)) {
+    throw new TypeError(`プリミティブ値 ${String(x)} は添字参照できません`);
   } else {
-    throw new TypeError(x satisfies never);
+    throw new TypeError(String(x) + "は添字参照できません");
   }
 }
 

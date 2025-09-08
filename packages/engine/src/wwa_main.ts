@@ -1160,15 +1160,22 @@ export class WWA {
                 try {
                     this.setUsertScript(loadUserScriptstringsObj);
                 }
-                catch(e) {
-                    console.error(e.message);
+                catch(error) {
+                    alert(`外部スクリプト ${loadUserScriptstringsObj.fileName} の解析中にエラーが発生しました。\nこのままゲームを開始することはできますが、正常に動作しない可能性が高いです。\n\n詳細:\n${error.message}`);
+                    console.error(error.message);
                 }
             })
             
             /** ゲーム開始時のユーザ定義独自関数を呼び出す */
             const gameStartFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_WWA_START"];
-            if(gameStartFunc) {
-                this.evalCalcWwaNodeGenerator.evalWwaNode(gameStartFunc);
+            if (gameStartFunc) {
+                try {
+                    this.evalCalcWwaNodeGenerator.evalWwaNode(gameStartFunc);
+                } catch (error) {
+                    // CALL_WWA_START については、通常のメッセージウィンドウがまだ表示されない段階で実行されるため、alertに流す。
+                    alert(`CALL_WWA_START でエラーが発生しました。\n\n詳細:\n${error.message}`)
+                    console.error(error.message);
+                }
             }
         })()
         /** スクリプトパーサーを作成する */
@@ -6066,6 +6073,9 @@ font-weight: bold;
             } else if (typeof ref === "object" && ref !== null) {
                 const key = String(targetRefIndex);
                 util.setItem(ref, key, result)
+            } else if (typeof ref === "string") {
+                // JavaScript の string はイミュータブルなので書き換え不可
+                throw new TypeError(`文字列 "${ref}" の特定の文字を直接書き換えることはできません`);
             } else {
                 util.setItem(ref, targetRefIndex, result);
             }
@@ -6220,8 +6230,7 @@ font-weight: bold;
     }
     // User名称変数取得
     public getUserNameVar(id: number | string): UserVar {
-        const varValue = this._userVar.named.get(id.toString());
-        return varValue ?? "";
+        return this._userVar.named.get(id.toString());
     }
     // User名称変数の一覧を取得 (ログ出力用)
     public getAllUserNameVar() {
