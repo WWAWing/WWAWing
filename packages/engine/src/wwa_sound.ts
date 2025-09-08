@@ -1,4 +1,5 @@
 import { SystemSound } from './wwa_data';
+import { WWA } from './wwa_main';
 
 export class Sound {
     private audioBuffer: AudioBuffer;
@@ -94,16 +95,15 @@ export class Sound {
     /**
      * 音声を再生します。
      * 一時停止した場合でも、最初から再生します。
-     * @param delayDurationMs 遅延時間
+     * @param delayDurationMs 遅延時間 [ms]
+     * @param bgmLoopDisabled 再生するサウンドがBGMの場合、ループを無効にするかどうか。効果音の場合は無視されます。
+     * @param playingEndCallback 再生終了時に呼ばれるコールバック関数
      */
-    public play(delayDurationMs = 0): void {
-        const bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
+    public play(delayDurationMs = 0, bgmLoopDisabled: boolean = false, playingEndCallback?: () => void): void {
+        const bufferSource = this.audioContext.createBufferSource();
         this.bufferSources.push(bufferSource);
-
         bufferSource.buffer = this.audioBuffer;
-        if (this.isBgm()) {
-            bufferSource.loop = true;
-        }
+        bufferSource.loop = Boolean(!bgmLoopDisabled && this.isBgm());
         bufferSource.connect(this.audioGain);
 
         // TODO(rmn): bufferSource.buffer.duration ? あとで調べる
@@ -111,14 +111,19 @@ export class Sound {
         if ((!isFinite(duration)) || (duration < 0) || (typeof duration !== "number")) {
             duration = 0;
         }
-
-        bufferSource.onended = () => {
-            const id = this.bufferSources.indexOf(bufferSource);
-            if (id !== -1) {
-                this.bufferSources.splice(id, 1);
+    
+        const onBufferPlayEnded = () => {
+            bufferSource.removeEventListener("ended", onBufferPlayEnded);
+            const bufferSourceIndex = this.bufferSources.indexOf(bufferSource);
+            if (bufferSourceIndex !== -1) {
+                this.bufferSources.splice(bufferSourceIndex, 1);
             }
             this.disposeBufferSource(bufferSource);
+            playingEndCallback?.();
         }
+
+        // 再生終了時に呼ばれる処理
+        bufferSource.addEventListener("ended", onBufferPlayEnded);
         this.delayBgmTimeoutId = window.setTimeout(() => {
             this.delayBgmTimeoutId = null;
             bufferSource.start();

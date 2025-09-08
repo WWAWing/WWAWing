@@ -43,6 +43,11 @@ export class EvalCalcWwaNodeGenerator {
       /** 使用・取得したアイテムの位置 */
       itemPos1To12?: number
     }
+    /** 過去にBGMが再生れていればオブジェクトあり, さもなくば undefined. */
+    readonly lastBgm?: {
+      /** 最後に再生されたBGMのサウンド番号 */
+      soundId?: number,
+    }
     /** 戦闘ダメージのための計算ならオブジェクトあり, さもなくば undefined */
     readonly battleDamageCalculation?: {
       /** 計算結果に中断が含まれている */
@@ -74,6 +79,10 @@ export class EvalCalcWwaNodeGenerator {
 
   public clearTemporaryState() {
     this.state = { ...this.state, triggerParts: undefined, messagePageAdditionalQueue: [] };
+  }
+  
+  public setLastBgm(soundId: number) {
+    this.state = { ...this.state, lastBgm: { soundId } };
   }
 
   /**
@@ -1247,6 +1256,8 @@ export class EvalCalcWwaNode {
         return this.for_id.k;
       case 'LOOPLIMIT':
         return this.generator.loop_limit;
+      case 'LAST_BGM_ID':
+        return this.generator.state.lastBgm?.soundId ?? -1;
       case 'ITEM_ID':
         return this.generator.state.earnedItem?.partsId ?? -1;
       case 'ITEM_POS':

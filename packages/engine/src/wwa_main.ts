@@ -130,6 +130,12 @@ export class WWA {
     private _isURLGateEnable: boolean;
     private _loadType: LoadType;
     private _restartData: WWAData;
+    private _scriptCallBgmEndFunctionDefined: boolean; // CALL_BGM_END 関数が WWA Script で定義されているかどうか
+
+    private _nextFrameActionQueue: (() => void)[] = [];
+    public enqueueNextFrameAction(fn: () => void): void {
+        this._nextFrameActionQueue.push(fn);
+    }
 
     /**
      * 所持状態のマップデータの文字列加工をMD5化した文字列です。
@@ -1274,6 +1280,22 @@ export class WWA {
         }
     }
 
+    /** サウンド再生が終了した際のユーザ定義独自関数を呼び出す */
+    public callSoundFinishedDefineFunction(soundId: number) {
+        const soundFinishFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
+
+        //CALL_BGM_END有効時はBGMを自動ループしないため、再生中BGMを初期化する。（＝何もBGMを再生していないものと認識させる。）
+        this._wwaData.bgm = 0;
+        if (soundFinishFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(soundFinishFunc);
+            
+        } else {
+            // そもそも CALL_BGM_END がない場合は callSoundDefineFunction 自体が呼ばれないはずなのでこの処理は不要そう？
+            this.createSoundInstance(soundId)
+            this.playSound(soundId);
+        }
+    }
+
     /**
      * WWA Script のユーザー定義独自関数 "CALL_CAMERA_MOVE" を実行します。
      * カメラ画面の切り替わりが終わった時に実行されます。
@@ -1559,7 +1581,13 @@ export class WWA {
             if (this._wwaData.bgm === targetSoundId) {
                 if (targetAudio.hasData()) {
                     // TODO ロード完了したタイミングの this._wwaData.bgmDelayDurationMs は変更されているのか？
-                    targetAudio.play(this._wwaData.bgmDelayDurationMs);
+                    targetAudio.play(this._wwaData.bgmDelayDurationMs, this._scriptCallBgmEndFunctionDefined, () => {
+                        this.evalCalcWwaNodeGenerator.setLastBgm(targetSoundId);
+                        if (this._scriptCallBgmEndFunctionDefined) {
+                            // BGM の 再生が終わったら、CALL_BGM_END を呼び出す処理をキューに追加
+                            this.enqueueNextFrameAction(() => this.callSoundFinishedDefineFunction(targetSoundId));
+                        }
+                    });
                     this._wwaData.bgm = targetSoundId;
                     this._clearSoundLoadedCheckTimer();
                 } else if (targetAudio.isError()) {
@@ -1618,11 +1646,19 @@ export class WWA {
                   ので、ゲームデータ上にはBGM設定を反映する
                 */
                 this._wwaData.bgm = id;
+                // LAST_BGM_ID も一応更新しておく
+                this.evalCalcWwaNodeGenerator.setLastBgm(id);
                 this._setSoundLoadedCheckTimer(id);
             }
         } else {
             if (id >= SystemSound.BGM_LB) {
-                this.sounds[id].play(bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
+                this.sounds[id].play(this._wwaData.bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs, this._scriptCallBgmEndFunctionDefined, () => {
+                    this.evalCalcWwaNodeGenerator.setLastBgm(id);
+                    if (this._scriptCallBgmEndFunctionDefined) {
+                         // BGM の 再生が終わったら、CALL_BGM_END を呼び出す処理をキューに追加
+                         this.enqueueNextFrameAction(() => this.callSoundFinishedDefineFunction(id));
+                    }
+                });
                 this._wwaData.bgm = id;
             } else {
                 this.sounds[id].play();
@@ -2779,6 +2815,15 @@ export class WWA {
         if(frameFunc) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(frameFunc);
         }
+
+        
+        const bgmEndFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_BGM_END"];
+        this._scriptCallBgmEndFunctionDefined = Boolean(bgmEndFunc);
+
+        /** フレームごとにユーザー定義独自関数を呼び出す */
+        this._nextFrameActionQueue.forEach(fn => fn());
+        this._nextFrameActionQueue = [];
+
     }
     public vibration(isStrong: boolean) {
         this._gamePadStore.vibration(isStrong);
