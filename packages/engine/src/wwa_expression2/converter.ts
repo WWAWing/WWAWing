@@ -375,7 +375,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           left.name === "PLAYER_PY" ||
           left.name === "MOVE_SPEED" ||
           left.name === "MOVE_FRAME_TIME" ||
-          left.name === "LP"
+          left.name === "LP" ||
+          left.name === "undefined"
         ) {
           throw new Error("このシンボルには代入できません");
         }
@@ -547,6 +548,7 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "MOVE_SPEED":
     case "MOVE_FRAME_TIME":
     case "LP":
+    case "undefined":
       return {
         type: "Symbol",
         name: node.name

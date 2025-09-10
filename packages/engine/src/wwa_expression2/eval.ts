@@ -1276,6 +1276,8 @@ export class EvalCalcWwaNode {
       case 'LP':
         // LOG出力用として返す
         return this.for_id.LP;
+      case "undefined":
+        return undefined;
       default:
         throw new Error("このシンボルは取得できません")
     }
