@@ -3,6 +3,11 @@
   "version": "3.13.0-unstable.based-on.3.12.11.p.12",
   "description": "wwawing debug server",
   "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WWAWing/WWAWing.git",
+    "directory": "packages/debug-server"
+  },
   "files": [
     "bin",
     "lib"
