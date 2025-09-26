@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/event-emitter",
-  "version": "3.12.8",
+  "version": "3.12.18",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "repository": {
     "type": "git",
