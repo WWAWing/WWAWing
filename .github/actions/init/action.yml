@@ -20,6 +20,7 @@ runs:
         git config user.email "matsuyuki.eca@gmail.com"
 
     - name: Restore node_modules
+      id: restore-node-modules
       uses: actions/cache@v4
       with:
         path: '**/node_modules'
@@ -38,9 +39,15 @@ runs:
         path: .git/lfs
         key: ${{ runner.os }}-lfs-${{ hashFiles('.git/lfs-hashes.txt') }}
 
-    - name: "Install"
+    - name: "Git LFS pull"
       shell: bash
-      run: |
-        git lfs pull
-        npm i -g npm@10
-        npm install
+      run: git lfs pull
+
+    - name: "Install npm"
+      shell: bash
+      run: npm i -g npm@10
+
+    - name: "Install dependencies"
+      shell: bash
+      if: steps.restore-node-modules.outputs.cache-hit != 'true'
+      run: npm ci

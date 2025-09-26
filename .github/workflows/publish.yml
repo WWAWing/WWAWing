@@ -23,11 +23,10 @@ jobs:
         with:
           lfs: true
       - name: "Publish"
-        # lerna version でバージョンを上げた後、npm i をすると package-lock.json に差分が出てしまうので...
         run: |
           npm run version-up -- ${{ github.event.inputs.version }} --yes
           export NEW_VERSION=$(node -e 'process.stdout.write(require("./lerna.json").version)')
-          npm install
+          npm ci
           git add -u package-lock.json lerna.json packages/*/package.json
           git commit -m "v$NEW_VERSION"
           git tag "v$NEW_VERSION"
