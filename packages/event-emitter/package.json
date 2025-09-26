@@ -2,6 +2,11 @@
   "name": "@wwawing/event-emitter",
   "version": "3.13.0-unstable.based-on.3.12.11.p.12",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WWAWing/WWAWing.git",
+    "directory": "packages/event-emitter"
+  },
   "files": [
     "lib",
     "module"
