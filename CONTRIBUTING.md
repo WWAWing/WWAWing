@@ -107,15 +107,14 @@ WWA Wing では、下記のことに念頭して活動していただくこと�
 7. プルリクエストのブランチを削除します
 
 ## 不安定版 npm パッケージの publish について
-※実施する前に @matsuyuki-a までご相談ください。
+※実施する前に @matsuyuki-a までご一報ください。
 
 正式版でない npm パッケージを publish する場合は、 [WWA Wing Publish](https://github.com/WWAWing/WWAWing/actions/workflows/publish.yml) のページを開き、
 
 - publish したいブランチを選択する
-- バージョン名を `3.2.0-hogehoge.based-on.3.1.9.p.1` のように、フルで記入 (vなし)
-- タグ名を、上記バージョン名の `hogehoge` の部分の文字列とする (将来的にはここは省略できるようにしたい...)
+- バージョン名を `3.2.0-unstable.based-on.3.1.9.p.1` のように、フルで記入 (vなし)
 
-の3点を守り、`Run workflow` を押してください。
+の2点を守り、`Run workflow` を押してください。
 
 ## monorepo 中のパッケージの追加について
 monorepo 中にパッケージを追加する場合は、事前に @matsuyuki-a までご相談ください。
