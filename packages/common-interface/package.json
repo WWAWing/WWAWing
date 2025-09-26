@@ -4,6 +4,10 @@
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WWAWing/WWAWing"
+  },
   "files": [
     "lib"
   ],
