@@ -4,6 +4,11 @@
   "description": "World Wide Adventure: an RPG Engine.",
   "author": "WWA Wing Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WWAWing/WWAWing.git",
+    "directory": "packages/all"
+  },
   "scripts": {
     "release": "run-s release:make-zip release:upload-zip",
     "release:make-zip": "npm run clean && ts-node ./scripts",

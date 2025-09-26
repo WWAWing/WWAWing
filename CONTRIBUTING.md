@@ -116,3 +116,8 @@ WWA Wing では、下記のことに念頭して活動していただくこと�
 - タグ名を、上記バージョン名の `hogehoge` の部分の文字列とする (将来的にはここは省略できるようにしたい...)
 
 の3点を守り、`Run workflow` を押してください。
+
+## monorepo 中のパッケージの追加について
+monorepo 中にパッケージを追加する場合は、事前に @matsuyuki-a までご相談ください。
+(新規パッケージに対して、npm のレジストリ側で [OpenID Connect の設定作業](https://docs.npmjs.com/trusted-publishers#configuring-trusted-publishing)を行う必要があります。)
+
