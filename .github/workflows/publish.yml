@@ -1,5 +1,9 @@
 name: "WWA Wing Publish"
 
+permissions:
+  id-token: write  # Required for OIDC
+  contents: write
+
 on:
   workflow_dispatch:
     inputs:
@@ -32,5 +36,3 @@ jobs:
           git tag "v$NEW_VERSION"
           git push origin HEAD --tags
           npm run publish:all -- --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
