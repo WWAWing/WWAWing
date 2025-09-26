@@ -119,5 +119,12 @@ WWA Wing では、下記のことに念頭して活動していただくこと�
 
 ## monorepo 中のパッケージの追加について
 monorepo 中にパッケージを追加する場合は、事前に @matsuyuki-a までご相談ください。
-(新規パッケージに対して、npm のレジストリ側で [OpenID Connect の設定作業](https://docs.npmjs.com/trusted-publishers#configuring-trusted-publishing)を行う必要があります。)
+(新規パッケージに対して、npmjs.com 側で [Trusted Publishing の設定作業](https://docs.npmjs.com/trusted-publishers#configuring-trusted-publishing)を行う必要があります。)
+
+### monorepo 内パッケージの追加時にハマりやすいポイントのメモ
+- 新規のパッケージをいきなりは Trussted Publishing を有効にできないので、まずは 手動で不通に publish する
+  - npmjs.com 側に実体ができないと設定画面を操作できない
+- デフォルトブランチ (WWAWing では develop) に実体がないと publish が 404 で失敗する
+  - develop 以外でパッケージを追加する場合は、ダミーでもよいので develop にパッケージを作っておく
+- `package.json` に `repository` フィールドが正し設定されていないと publish が認証まわりで失敗する
 

@@ -5,6 +5,6 @@
 
 [build.environment]
   NODE_VERSION = "22.20.0"
-  NPM_VERSION = "10"
+  NPM_VERSION = "11"
   # node-gyp が v3.6.0 以上の Python を要求している
   PYTHON_VERSION = "3.8"

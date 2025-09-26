@@ -45,7 +45,7 @@ runs:
 
     - name: "Install npm"
       shell: bash
-      run: npm i -g npm@10
+      run: npm i -g npm@11
 
     - name: "Install dependencies"
       shell: bash
