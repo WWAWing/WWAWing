@@ -3,6 +3,11 @@
   "version": "4.1.0-unstable.based-on.3.12.18.p.6",
   "description": "WWA Wing Virtual Pad for mobile phone",
   "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WWAWing/WWAWing.git",
+    "directory": "packages/virtual-pad"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p .",

@@ -125,3 +125,8 @@ WWA Wing Team のメンバーによって、状況によっては `master` ブ�
 - バージョン名を `3.2.0-unstable.based-on.3.1.9.p.1` のように、フルで記入 (vなし)
 
 の2点を守り、`Run workflow` を押してください。
+
+## monorepo 中のパッケージの追加について
+monorepo 中にパッケージを追加する場合は、事前に @matsuyuki-a までご相談ください。
+(新規パッケージに対して、npm のレジストリ側で [OpenID Connect の設定作業](https://docs.npmjs.com/trusted-publishers#configuring-trusted-publishing)を行う必要があります。)
+
