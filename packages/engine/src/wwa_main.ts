@@ -1,6 +1,7 @@
 declare var VERSION_WWAJS: string; // webpackにより注入
 
-import { SystemMessage } from "@wwawing/common-interface";
+import { convertMapToObject } from "@wwawing/util";
+import { PictureRegistry, SystemMessage } from "@wwawing/common-interface";
 import type { JsonResponseData, JsonResponseError, JsonResponseErrorKind } from "./json_api_client";
 import {
     WWAConsts as Consts, WWAData as Data, Coord, Position, WWAButtonTexts,
@@ -9,7 +10,8 @@ import {
     SystemSound, loadMessages, sidebarButtonCellElementID, SpeedChange, PartsType,
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
-    StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
+    StatusKind, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, WWAConsts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
+    type UserVar, type UserVarMap, type UserVarPrimitive
 } from "./wwa_data";
 
 import {
@@ -171,8 +173,8 @@ export class WWA {
     private _isDisallowLoadOldSave: boolean = false;
 
     private _userVar: {
-        named: Map<string, number | string | boolean>
-        numbered: (number | string | boolean)[];
+        named: UserVarMap; 
+        numbered: UserVarPrimitive[];
     };
 
     private _pageExecuting: boolean; // ページ実行中かどうか
@@ -294,7 +296,6 @@ export class WWA {
     private hoge: number[][];
     ////////////////////////
 
-    private _loadHandler: (wwaData: WWAData) => void;
     public audioContext: AudioContext;
     public audioGain: GainNode;
     private audioExtension: string = "";
@@ -310,11 +311,9 @@ export class WWA {
     /** ユーザー定義スクリプト関数 */
     private userDefinedFunctions: { [key: string]: WWANode } = {};
 
-    constructor(
-        options: DataWWAOptions = makeDefaultWWAOptions(),
-    ) {
+    constructor(options = makeDefaultWWAOptions()) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
-        var ctxCover;
+        let ctxCover: CanvasRenderingContext2D;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
             this._isActive = false;
@@ -327,7 +326,7 @@ export class WWA {
         if (options.titleImg === undefined) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
-            ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+            ctxCover = this._cvsCover.getContext("2d");
             ctxCover.fillStyle = "rgb(0, 0, 0)";
         } else {
             this._hasTitleImg = true;
@@ -343,20 +342,19 @@ export class WWA {
             }
         } catch (e) { }
         this._dumpElement = options.varDumpElm;
-        const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+        const _AudioContext = (window.AudioContext || window["webkitAudioContext"]) as typeof AudioContext;
         if (_AudioContext) {
             this.audioContext = new _AudioContext();
             this.audioGain = this.audioContext.createGain();
             this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
         }
 
-        var myAudio = new Audio();
+        const myAudio = new Audio();
         if (("no" !== myAudio.canPlayType("audio/mpeg") as string) && ("" !== myAudio.canPlayType("audio/mpeg"))) {
             this.audioExtension = "mp3";
         } else {
             this.audioExtension = "m4a";
         }
-        this.userDevice = new UserDevice();
 
         this._isURLGateEnable = options.urlGateEnable;
         this._isClassicModeEnable = options.classicModeEnable;
@@ -371,8 +369,10 @@ export class WWA {
         this._audioDirectory = options.audioDir;
         // Go To WWA を強制するオプションが無効なら、Battle Reportにする
         this._bottomButtonType = options.useGoToWwa ? ControlPanelBottomButton.GOTO_WWA : ControlPanelBottomButton.BATTLE_REPORT;
-
-        var t_start: number = new Date().getTime();
+        this._userVarNameList = [];
+        // スクリプトパーサーを作成する
+        this.evalCalcWwaNodeGenerator = new ExpressionParser2.EvalCalcWwaNodeGenerator(this);
+        this.userDevice = new UserDevice();
         var isLocal = !!location.href.match(/^file/);
         if (isLocal) {
             switch (this.userDevice.device) {
@@ -425,9 +425,168 @@ export class WWA {
                 break;
         }
 
-        this._loadHandler = (wwaData: WWAData): void => {
+        const totalLoadStartTime = performance.now();
+        console.log("WWA のロード処理を開始します");
+
+        // 依存関係がないロード処理は並行して行う
+        Promise.all([
+          // (A) マップデータのロード・調整
+          new Promise<WWAData>(async (resolve) => {
+            // (A-1) マップデータのロード
+            const startTimeMs = performance.now();
+            console.log(`(A-1) マップデータ ${options.mapdata} のロードを開始します`);
+            const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
+            const mapDataHandler = (mapData: WWAData) => {
+              eventEmitter.removeListener("mapData", mapDataHandler);
+              eventEmitter.removeListener("progress", progressHandler);
+              eventEmitter.removeListener("error", errorHandler);
+              console.log(`(A-1) マップデータ ${options.mapdata} のロードが完了しました (${performance.now() - startTimeMs}ms)`);
+              resolve(mapData); 
+            };
+            const progressHandler = (progress: Progress) => this._setProgressBar(progress);
+            const errorHandler = (error: LoaderError) => {
+              this._setErrorMessage(
+                "下記のエラーが発生しました。: \n" + error.message,
+                ctxCover
+              );
+              throw new Error("MapData Load Error: " + error.message);
+            };
+            eventEmitter.addListener("mapData", mapDataHandler);
+            eventEmitter.addListener("progress", progressHandler);
+            eventEmitter.addListener("error", errorHandler);
+            await new WWALoader(options.mapdata, eventEmitter).requestAndLoadMapData();
+          }).then(wwaData => {
+            // (A-2) リスタートデータの作成
+            const startTimeMs = performance.now();
+            console.log(`(A-2) マップデータからリスタートデータの作成を開始します`);
+            wwaData.isItemEffectEnabled = options.itemEffectEnable;
+            const pathList = options.mapdata.split("/"); //ディレクトリで分割
+            pathList.pop(); //最後のファイルを消す
+            pathList.push(wwaData.mapCGName); //最後に画像ファイル名を追加
+            wwaData.mapCGName = pathList.join("/");  //pathを復元
+            const result = {
+              wwaData,
+              restartData: structuredClone(wwaData),
+              checkOriginalMapString: this._generateMapDataHash(wwaData)
+            };
+            console.log(`(A-2) マップデータからのリスタートデータの作成が完了しました (${performance.now() - startTimeMs}ms)`);
+            return result;
+          }).then<{
+              wwaData: WWAData;
+              restartData: WWAData;
+              checkOriginalMapString: string;
+          }>(info => new Promise(resolve => {
+              // (A-3) マップ画像のロード
+              const startTimeMs = performance.now();
+              console.log (`(A-3) マップ画像 ${info.wwaData.mapCGName} のロードを開始します`);
+              const mapCgImageElement = new Image();
+              mapCgImageElement.src = info.wwaData.mapCGName;
+              mapCgImageElement.decode()
+                .then(() => {
+                    console.log(`(A-3) マップ画像 ${info.wwaData.mapCGName} のロードが完了しました (${performance.now() - startTimeMs}ms)`);
+                    // mapcgImageElement 自体は使わない
+                    resolve(info)
+                })
+                .catch(() => {
+                  this._setErrorMessage(
+                    "画像ファイル「" + info.wwaData.mapCGName + "」が見つかりませんでした。\n" +
+                    "管理者の方へ: データがアップロードされているか、\n" +
+                    "パーミッションを確かめてください。",
+                     ctxCover
+                  );
+                  throw new Error("Map CG Image Load Error");
+                })
+          })),
+          // (B) ユーザー変数ファイルのロード・初期化
+          new Promise<void>(async (resolve) => {
+            this._canDisplayUserVars = options.displayUserVars;
+            if (!this._canDisplayUserVars) {
+                console.log("(B) ユーザー変数の表示機能は無効化されています");
+                resolve();
+                return;
+            }
+            const loadStartTime = performance.now();
+            console.log(`(B) ユーザー変数名一覧のロードおよび初期化を開始します (名前一覧ファイル: ${options.userVarNamesFile ?? "未指定"})`);
+            this._inlineUserVarViewer = {
+              topUserVarIndex: { named: 0, numbered: 0 },
+              isVisible: false,
+              kind: "numbered",
+            };
+            // ユーザー変数ファイルを読み込む
+            const userVarStatus = await (options.userVarNamesFile
+              ? fetchJsonFile(options.userVarNamesFile)
+              : {
+                  kind: "noFileSpecified" as const,
+                  errorMessage:
+                    "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。",
+                });
+              this.setUserVarStatus(userVarStatus, options.userVarNamesFile);
+              switch(userVarStatus.kind) {
+                case "data":
+                    console.log(`(B) ユーザー変数名一覧のロードおよび初期化が完了しました (${performance.now() - loadStartTime}ms)`);
+                    break;
+                case "noFileSpecified":
+                    console.log(`(B) ユーザー変数名一覧のロードはスキップされました (${performance.now() - loadStartTime}ms)`);
+                    break;
+                default:
+                    console.warn(`(B) ユーザー変数名一覧のロード中にエラーが発生しました (${performance.now() - loadStartTime}ms)`);
+                    console.warn("(B) " + userVarStatus.errorMessage);
+                    break;
+              }
+            resolve();
+          }),
+          // (C) 外部 WWA Script のロード・解析
+          new Promise<void>(async (resolve) => {
+            const startTime = performance.now();
+
+            // ユーザ定義関数を取得する
+            const userScriptListJSONFileName = options.userDefinedScriptsFile ?? "./script/script_file_list.json";
+            console.log(`(C) 外部 WWA Script のロード・解析を開始します (リストファイル: ${userScriptListJSONFileName})`);
+            const userScriptFileNameListResponse = await fetchJsonFile(userScriptListJSONFileName);
+            if (userScriptFileNameListResponse?.kind === 'data' && Array.isArray(userScriptFileNameListResponse.data)) {
+                console.log("(C) これらの外部 WWA Script がロードされます:", userScriptFileNameListResponse.data);
+                const userScriptResponsePromises =
+                    userScriptFileNameListResponse.data.map((fileName) => fetchScriptFile(fileName));
+                (await Promise.allSettled(userScriptResponsePromises)).forEach(userScriptResponsePromise => {
+                    if (userScriptResponsePromise.status !== "fulfilled") {
+                        alert(`(C) 外部スクリプト ${userScriptResponsePromise.reason.fileName} のロード中にエラーが発生しました。\nこのままゲームを開始することはできますが、正常に動作しない可能性が高いです。\n\n詳細:\n${userScriptResponsePromise.reason.message}`);
+                        console.error(userScriptResponsePromise.reason.message);
+                        return;
+                    }
+                    switch(userScriptResponsePromise.value.kind) {
+                        case "data":
+                            try {
+                                this.setUserScript(userScriptResponsePromise.value);
+                            } catch(error) {
+                                alert(`外部スクリプト ${userScriptResponsePromise.value.fileName} の解析中にエラーが発生しました。\nこのままゲームを開始することはできますが、正常に動作しない可能性が高いです。\n\n詳細:\n${error instanceof Error ? error.message : String(error)}`);
+                                console.error(`(C) 外部スクリプト ${userScriptResponsePromise.value.fileName} の解析中にエラーが発生しました。`, error);
+                            }
+                            return;
+                        case "httpError":
+                            console.warn(`(C) 外部スクリプト ${userScriptResponsePromise.value.fileName} が見つからなかったか、その他のHTTPエラーが発生しました。`, userScriptResponsePromise.value.errorMessage)
+                            return;
+                        case "otherError":
+                             alert(`外部スクリプト ${userScriptResponsePromise.value.fileName} のロード中にエラーが発生しました。\nこのままゲームを開始することはできますが、正常に動作しない可能性が高いです。\n\n詳細:\n${userScriptResponsePromise.value.errorMessage}`);
+                             console.error(`(C) 外部スクリプト ${userScriptResponsePromise.value.fileName} のロード中にエラーが発生しました。`, userScriptResponsePromise.value.errorMessage);
+                             return;
+                        default:
+                            alert("外部スクリプトの解析中に予期せぬエラーが発生しました");
+                            console.error(`(C) 外部スクリプト ${userScriptResponsePromise.value.fileName} の解析中に予期せぬエラーが発生しました`, userScriptResponsePromise.value);
+                            return;
+                        }
+                });
+            } else {
+                console.log(`(C) 外部 WWA Script のリスト ${userScriptListJSONFileName} が見つからなかったか、内容が不正だったため、外部スクリプトはロードされませんでした。`);
+            }
+            console.log(`(C) 外部 WWA Script のロード・解析が完了しました (${performance.now() - startTime}ms)`);
+            resolve();
+          })
+        ]).then(([{wwaData, restartData, checkOriginalMapString}]) => {
             this._wwaData = wwaData;
-            this._wwaData.isItemEffectEnabled = options.itemEffectEnable;
+            this._restartData = restartData;
+            this.checkOriginalMapString = checkOriginalMapString;
+            console.log(`WWAのロード処理が完了しました。(${performance.now() - totalLoadStartTime}ms)`);
+        }).then(() => {
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -440,30 +599,11 @@ export class WWA {
                 }
             } catch (e) { }
 
-            var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata"); //ファイル名取得
-            var pathList = mapFileName.split("/"); //ディレクトリで分割
-            pathList.pop(); //最後のファイルを消す
-            pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
-            this._wwaData.mapCGName = pathList.join("/");  //pathを復元
-
-            // プレイ時間関連
-            this._playTimeCalculator = new PlayTimeCalculator();
-            this._restartData = JSON.parse(JSON.stringify(this._wwaData));
-            this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 2);
-            var cgFile = new Image();
-            cgFile.src = this._wwaData.mapCGName;
-            cgFile.addEventListener("error", (): void => {
-                this._setErrorMessage("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
-                    "管理者の方へ: データがアップロードされているか、\n" +
-                    "パーミッションを確かめてください。", ctxCover);
 
-            });
-
-            var escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
+            const escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
             /**
              * Node に対して background-color を設定します。
              *     主に操作パネルの各部位に背景画像を割り当てる際に使用します。
@@ -509,9 +649,6 @@ export class WWA {
             this._setLoadingMessage(ctxCover, 3);
             this._mapIDTableCreate();
             this._replaceAllRandomObjects();
-
-            var t_end: number = new Date().getTime();
-            console.log("Loading Complete!" + (t_end - t_start) + "ms");
 
             this._cvs = <HTMLCanvasElement>util.$id("wwa-map");
             var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d", {alpha:false});
@@ -986,25 +1123,12 @@ export class WWA {
             this._paintSkipByDoorOpen = false
             this._clearFacesInNextFrame = false
             this._useConsole = false;
-            
+
+            // プレイ時間関連
+            this._playTimeCalculator = new PlayTimeCalculator();
             this.wwaCustomEvent('wwa_startup');
-            /*
-            var count = 0;
-            for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
-            for (var yy = 0; yy < this._wwaData.mapWidth; yy++) {
-            if (this._wwaData.mapObject[yy][xx] === 1620) {
-            if (count === 0) {
-            count++;
-            continue;
-            }
-            throw new Error("Found!!" + xx + " " + yy);
-            }
-            }
-            }
-            */
 
-
-            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, (): void => {
+            this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, this, options.pictureImageNamesFile, (): void => {
                 this._isSkippedSoundMessage = true;
                 const setGameStartingMessageWhenPcOrSP = () => {
                     switch (this.userDevice.device) {
@@ -1111,66 +1235,20 @@ export class WWA {
                     window.requestAnimationFrame(this.soundCheckCaller);
                 }
             });
-
+            console.log("WWA_START");
             this.wwaCustomEvent('wwa_start');
-        }
-        const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
-        const mapDataHandler = (mapData: WWAData) => this._loadHandler(mapData);
-        const progressHandler = (progress: Progress) => this._setProgressBar(progress);
-        const errorHandler = (error: LoaderError) => this._setErrorMessage("下記のエラーが発生しました。: \n" + error.message, ctxCover);
-        // TODO removeListener
-        eventEmitter.addListener("mapData", mapDataHandler)
-        eventEmitter.addListener("progress", progressHandler)
-        eventEmitter.addListener("error", errorHandler)
-        const loader = new WWALoader(options.mapdata, eventEmitter);
-        loader.requestAndLoadMapData().then(async () => {
-            this._canDisplayUserVars = options.displayUserVars;
-            this._userVarNameList = [];
-            if (this._canDisplayUserVars) {
-                this._inlineUserVarViewer = { topUserVarIndex:  {named: 0, numbered: 0}, isVisible: false, kind: "numbered" };
-                // ユーザー変数ファイルを読み込む
-                const userVarStatus = await (options.userVarNamesFile ? fetchJsonFile(options.userVarNamesFile) : {
-                    kind: "noFileSpecified" as const,
-                    errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
-                })
-                this.setUserVarStatus(userVarStatus, options.userVarNamesFile);
-            }
-        });
-        /** 外部スクリプト関係処理 */
-        (async () => {
-            /** ユーザ定義関数を取得する */
-            const userScriptListJSONFileName = options.userDefinedScriptsFile ?? "./script/script_file_list.json";
-            const userScriptFileNameList = await fetchJsonFile(userScriptListJSONFileName);
-            let userScriptStringsPromises = [];
-            console.log(userScriptFileNameList);
-            if(userScriptFileNameList?.kind === 'data') {
-                if(Array.isArray(userScriptFileNameList.data)) {
-                    userScriptFileNameList.data.map((fileName) => {
-                        userScriptStringsPromises.push(
-                            fetchScriptFile(fileName)
-                        )
-                    })
-                }
-            }
-            // 読み込んだ外部ファイルの一覧
-            const loadUserScriptstringsObjList = await Promise.all(userScriptStringsPromises);
-            loadUserScriptstringsObjList.forEach((loadUserScriptstringsObj)=>{
-                try {
-                    this.setUsertScript(loadUserScriptstringsObj);
-                }
-                catch(e) {
-                    console.error(e.message);
-                }
-            })
-            
             /** ゲーム開始時のユーザ定義独自関数を呼び出す */
             const gameStartFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_WWA_START"];
-            if(gameStartFunc) {
-                this.evalCalcWwaNodeGenerator.evalWwaNode(gameStartFunc);
+            if (gameStartFunc) {
+                try {
+                    this.evalCalcWwaNodeGenerator.evalWwaNode(gameStartFunc);
+                } catch (error) {
+                    // CALL_WWA_START については、通常のメッセージウィンドウがまだ表示されない段階で実行されるため、alertに流す。
+                    alert(`CALL_WWA_START でエラーが発生しました。\n\n詳細:\n${error.message}`)
+                    console.error(error.message);
+                }
             }
-        })()
-        /** スクリプトパーサーを作成する */
-        this.evalCalcWwaNodeGenerator = new ExpressionParser2.EvalCalcWwaNodeGenerator(this);
+        });
     }
 
     /**
@@ -1281,7 +1359,7 @@ export class WWA {
     }
 
     /** ユーザ定義スクリプト処理関数 */
-    private setUsertScript(userScriptStrings: UserScriptResponse) {
+    private setUserScript(userScriptStrings: UserScriptResponse) {
         if(userScriptStrings.kind !== "data") {
             console.error(userScriptStrings);
             return;
@@ -1293,6 +1371,13 @@ export class WWA {
                 this.userDefinedFunctions[functionName] = currentNode.body;
             }
         })
+    }
+
+    public callUserScript(functionName: string) {
+        const userFunc = this.getUserScript(functionName);
+        if (userFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
+        }
     }
 
     private convertWwaNodes = (scriptString: string): WWANode[] => {
@@ -1498,7 +1583,7 @@ export class WWA {
         let loadedNum = 0;
         let total = 0;
         if (!this._hasTitleImg) {
-            var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+            var ctxCover = this._cvsCover.getContext("2d");
         } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
         this._keyStore.update();
         if (this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
@@ -2634,16 +2719,13 @@ export class WWA {
             this._objectMovingDataManager.update();
         }
 
+        this.updatePicturesAnimation();
+        this._cgManager.picture.updateFrameTimerValue();
         this._prevFrameEventExected = false;
         if (this._player.getPosition().isJustPosition() && this._camera.getPosition().isScreenTopPosition()) {
 
-            if (
-                !this._shouldTreatWillMessageDisplay(this._pages) && // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
-                !this._player.isJumped() &&
-                !this._player.isWaitingMessage() &&
-                !this._player.isWaitingEstimateWindow() &&
-                !this._player.isWaitingMoveMacro() &&
-                !this._player.isFighting()) {
+            // パーツの接触判定でメッセージが発生しうる場合は、パーツのプレイヤー座標実行をしない
+            if (!this._shouldTreatWillMessageDisplay(this._pages) && !this._player.isPausing()) {
 
                 if (this._player.isPartsAppearedTime()) {
                     this._player.clearPartsAppearedFlag();
@@ -2688,6 +2770,12 @@ export class WWA {
         this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
         if (!this._player.isWaitingMessage() || !this._isClassicModeEnable) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
             this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
+            // isSubAnimation の定義では、 this._animationCounter > ANIMATION_REP_HALF_FRAME となっていて、
+            // ANIMATION_REP_HALF_FRAME の剰余だけで算出すると、常時非 sub のアニメーションが流れることになるため、
+            // sub の判定については 1 フレーム分判定を後ろにずらしている
+            if (this._animationCounter === 0 || this._animationCounter === Consts.ANIMATION_REP_HALF_FRAME + 1) {
+                this.updateAllPicturesCache();
+            }
         }
         if (this._camera.isResetting()) {
             this._camera.advanceTransitionStepNum();
@@ -2763,6 +2851,10 @@ export class WWA {
     }
     public vibration(isStrong: boolean) {
         this._gamePadStore.vibration(isStrong);
+    }
+
+    private _isMainAnimation() {
+        return this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
     }
 
     private _drawAll() {
@@ -2849,6 +2941,7 @@ export class WWA {
 
         // 7. マクロ文で描画されるエフェクトや顔表示、フレームなどを描画
         this._drawEffect();
+        this._drawPictures();
         this._drawFaces();
         this._drawFrame();
 
@@ -2951,7 +3044,7 @@ export class WWA {
         var yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW);
         var offset: Coord;
         var count: number = 0;
-        var animationType: boolean = this._animationCounter > Consts.ANIMATION_REP_HALF_FRAME;
+        var animationType: boolean = this._isMainAnimation();
         var imgType: boolean, ppxo: number, ppyo: number, canvasX: number, canvasY: number, type: number, num: number, result: Coord;
         var x: number, y: number, partsIDObj: number, savePartsIDObj: number, n: number;
         var useBattleArea: boolean = this._player.isFighting() &&
@@ -3112,6 +3205,10 @@ export class WWA {
 
     private _drawFrame(): void {
         this._cgManager.drawFrame();
+    }
+
+    private _drawPictures(): void {
+        this._cgManager.drawPictures();
     }
 
     private _checkNoDrawObject(objCoord: Coord, objType: number, atrNumber: number): boolean {
@@ -4509,7 +4606,7 @@ export class WWA {
             this.evalCalcWwaNodeGenerator.evalWwaNode(func);
         }
 
-        var qd = <WWAData>JSON.parse(JSON.stringify(this._wwaData));
+        var qd = structuredClone(this._wwaData);
         
         var pc = this._player.getPosition().getPartsCoord();
         var st = this._player.getStatusWithoutEquipments();
@@ -4526,7 +4623,7 @@ export class WWA {
         qd.gameSpeedIndex = this._player.getSpeedIndex();
         qd.playTime = this._playTimeCalculator?.calculateTimeMs() ?? 0;
         qd.userVar = this._userVar.numbered.slice();
-        qd.userNamedVar = [...this._userVar.named];
+        qd.userNamedVar = structuredClone(this._userVar.named);
 
         switch (callInfo) {
             case ChoiceCallInfo.CALL_BY_LOG_QUICK_SAVE:
@@ -4561,7 +4658,7 @@ export class WWA {
                 });
                 return "";
             case ChoiceCallInfo.CALL_BY_PASSWORD_SAVE:
-                const compressQD:any = WWACompress.compress(qd);
+                const compressQD:any = WWACompress.compress(qd, {isPassword: true});
                 compressQD.isCompress = 1;
                 const s = JSON.stringify(compressQD);
                 this.wwaCustomEvent('wwa_passwordsave', {
@@ -4638,17 +4735,18 @@ export class WWA {
         }
         let newData: WWAData;
         let isWorldNameEmpty: boolean = false;
+        // FIXME: IndexedDBから復元した場合は配列やオブジェクト内の参照が復元されるが、パスワードセーブの場合はされない。
+        // パスワードセーブの場合にも参照を復元する必要がある。
         if (password !== null) {
             const result = this._decodePassword(password);
             newData = result[0];
             isWorldNameEmpty = result[1].isWorldNameEmpty;
         } else {
-            newData = <WWAData>JSON.parse(JSON.stringify(restart ? this._restartData : this._messageWindow.load()));
+            newData = structuredClone(restart ? this._restartData : this._messageWindow.load());
         }
-        // TODO: WWAEvalの属性変更対策, もう少しスマートなディープコピー方法考える
-        newData.message = <string[]>JSON.parse(JSON.stringify(this._restartData.message));
-        newData.mapAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.mapAttribute));
-        newData.objectAttribute = <number[][]>JSON.parse(JSON.stringify(this._restartData.objectAttribute));
+        newData.message = structuredClone(this._restartData.message);
+        newData.mapAttribute = structuredClone(this._restartData.mapAttribute);
+        newData.objectAttribute = structuredClone(this._restartData.objectAttribute);
         if (newData.map === void 0) {
             newData.map = this._decompressMap(newData.mapCompressed);
         }
@@ -4679,7 +4777,7 @@ export class WWA {
     }
 
     private _applyQuickLoad(newData: WWAData): void {
-        this._userVar.named = new Map(newData.userNamedVar);
+        this._userVar.named = newData.userNamedVar;
         this._userVar.numbered = newData.userVar;
         this._player.setEnergyMax(newData.statusEnergyMax);
         this._player.setEnergy(newData.statusEnergy);
@@ -4720,6 +4818,8 @@ export class WWA {
 
         this.updateCSSRule();
         this.updateEffect();
+        this._cgManager.restorePictures(this._wwaData.pictureRegistry);
+        this.updateAllPicturesCache();
         this._player.updateStatusValueBox();
         this._wwaSave.quickSaveButtonUpdate(this._wwaData);
     }
@@ -5717,7 +5817,7 @@ export class WWA {
     }
 
     public canInput(): boolean {
-        return !this._temporaryInputDisable;
+        return !this._temporaryInputDisable && !this._cgManager.picture.isWaiting();
     }
 
     /*public setWaitTime( time: number): void {
@@ -5738,6 +5838,26 @@ export class WWA {
     }
     public updateEffect(): void {
         this._cgManager.updateEffects(<Coord[]>this._wwaData.effectCoords);
+    }
+
+    /**
+     * 全ピクチャ内の CacheCanvas を更新します。
+     * ピクチャが一つでも更新された場合は必ず実行してください。
+     * 比較的負荷の高い処理になるため、アニメーションでピクチャが動いた場合は {@link updatePicturesAnimation} をご使用ください。
+     */
+    public updateAllPicturesCache(): void {
+        this._cgManager.updateAllPicturesCache(this._isMainAnimation());
+    }
+
+    /**
+     * 各ピクチャのアニメーションを動かし、 CacheCanvas を更新します。
+     * また、カウントダウンも行い、タイムオーバーした場合は消去も行います。
+     */
+    public updatePicturesAnimation(): void {
+        if (this._player.isPausing()) {
+            return;
+        }
+        this._cgManager.updatePicturesAnimation(this._isMainAnimation());
     }
 
     public setImgClick(pos: Coord): void {
@@ -5803,6 +5923,91 @@ export class WWA {
         this._wwaData.bgmDelayDurationMs = delayMs;
     }
 
+    /**
+     * パーツ番号からピクチャーを登録します。
+     * @param layerNumber ピクチャーを登録するレイヤー番号
+     * @param partsNumber プロパティが記載された JSON テキストを有しているパーツの番号
+     * @param partsType そのパーツの種類
+     * @param partsPosition このピクチャー登録の実行元のパーツ座標。プレイヤーの座標ではない
+     * @param previousPictureProperties next プロパティでプロパティ引き継いだまま次のピクチャを表示する場合、消去直前のピクチャのプロパティ情報
+     */
+    public setPictureRegistry(
+        layerNumber: number,
+        partsNumber: number,
+        partsType: PartsType,
+        partsPosition: Coord,
+        previousPictureProperties?: PictureRegistry["properties"]
+    ) {
+        const attributes =
+            partsType === PartsType.OBJECT ? this._wwaData.objectAttribute[partsNumber] :
+            partsType === PartsType.MAP ? this._wwaData.mapAttribute[partsNumber] :
+            null;
+        if (attributes === null) {
+            throw new Error("対応していないパーツ番号です。");
+        }
+        const messageText = this.getMessageById(attributes[WWAConsts.ATR_STRING]);
+        if (!messageText) {
+            if (partsType === PartsType.OBJECT) {
+                throw new Error(`物体パーツ ${partsNumber} 番に対応したテキストが見つかりませんでした。`);
+            } else {
+                throw new Error(`背景パーツ ${partsNumber} 番に対応したテキストが見つかりませんでした。`);
+            }
+        }
+        const properties = this._returnEvalString("(" + messageText + ")");
+        const data = this._cgManager.picture.registerPictureFromRawRegistry(
+            {
+                layerNumber,
+                imgPosX: (attributes[WWAConsts.ATR_X] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosX2: (attributes[WWAConsts.ATR_X2] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY: (attributes[WWAConsts.ATR_Y] ?? 0) / WWAConsts.CHIP_SIZE,
+                imgPosY2: (attributes[WWAConsts.ATR_Y2] ?? 0) / WWAConsts.CHIP_SIZE,
+                triggerPartsX: partsPosition.x,
+                triggerPartsY: partsPosition.y,
+                soundNumber: attributes[WWAConsts.ATR_SOUND] ?? 0,
+                properties: convertMapToObject(properties),
+            },
+            // TODO この場で generateTokenValues を実行すれば CGManager 側に WWA の参照を作らなくても済む気がする
+            partsNumber,
+            partsType,
+            previousPictureProperties,
+        );
+        // _cgManager 内のデータと _wwaData 内のデータで同期を取る
+        this._wwaData.pictureRegistry = data;
+        this.updateAllPicturesCache();
+    }
+
+    /**
+     * JSON テキストをそのまま評価してピクチャーを登録します。
+     * @param layerNumber ピクチャーを登録するレイヤー番号
+     * @param propertiesText プロパティが記載された JSON テキスト (変数評価済みの状態)
+     * @deprecated JSON によるパースはプロパティ記載の自由度が低いため、今後使用しません。一応互換性確保で残していますが、不安定版のうちに削除する予定です。
+     */
+    public setPictureRegistryFromRawText(layerNumber: number, propertiesText: string) {
+        const data = this._cgManager.picture.registerPictureFromRawText(layerNumber, propertiesText);
+        this._wwaData.pictureRegistry = data;
+        this.updateAllPicturesCache();
+    }
+
+    /**
+     * Object 形式をプロパティとして扱いピクチャを登録します。
+     * @param layerNumber ピクチャを登録するレイヤー番号
+     * @param properties プロパティが記載された Object (RawRegistry と一緒です)
+     */
+    public setPictureRegistryFromObject(layerNumber: number, properties: object) {
+        const data = this._cgManager.picture.registerPictureFromObject(layerNumber, properties);
+        this._wwaData.pictureRegistry = data;
+        this.updateAllPicturesCache();
+    }
+
+    public deletePictureRegistry(layerNumber: number) {
+        const data = this._cgManager.picture.deletePicture(layerNumber);
+        this._wwaData.pictureRegistry = data;
+    }
+
+    public clearAllPictures() {
+        this._cgManager.picture.clearAllPictures();
+        this._wwaData.pictureRegistry = [];
+    }
 
     private _stylePos: number[]; // w
     private _styleElm: HTMLStyleElement;
@@ -5890,10 +6095,68 @@ font-weight: bold;
             this._player.jumpTo(new Position(this, jx, jy, 0, 0));
         }
     }
+    public setUserVarIndecies(indecies: any[], assignee: number | string | boolean, operator: string = "="): void {
+        const currentValueObject = this._userVar.named.get(indecies[0]);
+        const lastIndex = indecies.length - 1;
+
+        // 元配列の参照から値を書き換えるため最後の index の一つ手前まで頭出し
+        // 最初の index は currentValueObject で参照済のため見ない
+        const ref = indecies.slice(1, lastIndex).reduce((prev, current) => util.getItem(prev, current), currentValueObject);
+        let result = assignee;
+        const targetRefIndex = indecies[lastIndex];
+        if(indecies.length > 1) {
+            switch(operator) {
+                case '=': 
+                    result = assignee;
+                    break;
+                case '+=':
+                    result = util.getItem(ref, targetRefIndex) + assignee;
+                    break;
+                case '-=':
+                    if (typeof assignee !== "number") {
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                    }
+                    result = util.getItem(ref, targetRefIndex) - assignee;
+                    break;
+                case '*=':
+                    if (typeof assignee !== "number") {
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                    }
+                    result = util.getItem(ref, targetRefIndex) * assignee;
+                    break;
+                case '/=':
+                    if (typeof assignee !== "number") {
+                        throw new TypeError(`その演算子は利用できません: ${operator}`)
+                    }
+                    result = util.getItem(ref, targetRefIndex) / assignee;
+                    break;
+                default:
+                    throw new TypeError(`その演算子は利用できません: ${operator}`)
+            }
+            if (Array.isArray(ref)) {
+                if (typeof targetRefIndex === "number") {
+                    ref[targetRefIndex] = result;
+                } else {
+                    throw new TypeError(`配列の添字に数字以外は使えません: ${indecies[lastIndex]}`)
+                }
+            } else if (typeof ref === "object" && ref !== null) {
+                const key = String(targetRefIndex);
+                util.setItem(ref, key, result)
+            } else if (typeof ref === "string") {
+                // JavaScript の string はイミュータブルなので書き換え不可
+                throw new TypeError(`文字列 "${ref}" の特定の文字を直接書き換えることはできません`);
+            } else {
+                util.setItem(ref, targetRefIndex, result);
+            }
+            this._userVar.named.set(indecies[0], currentValueObject);
+        } else {
+            throw new Error(`indeciesの引数が足りていません: ${indecies}`)
+        }
+    }
+
     // User変数記憶
     public setUserVar(index: number | string, assignee: number | string | boolean, operator?: string): void {
-
-       const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
+        const _assign = (indexOrName: number | string, value: number | string | boolean) =>  {
             if (typeof indexOrName === "number") {
                 if (typeof value !== "number") {
                     throw new TypeError("数字index変数への数値以外の代入は今のところできません。あらかじめご了承ください。");
@@ -5904,7 +6167,7 @@ font-weight: bold;
             }
         }
 
-        const _get = (indexOrName: number | string,): number | string | boolean => {
+        const _get = (indexOrName: number | string,): UserVar => {
             if (typeof indexOrName === "number") {
                 return this._userVar.numbered[indexOrName];
             } else { // indexOrName === "string"
@@ -6035,12 +6298,12 @@ font-weight: bold;
         return this._userVar.numbered[no];
     }
     // User名称変数取得
-    public getUserNameVar(id: number | string): number | string | boolean {
+    public getUserNameVar(id: number | string): UserVar {
         return this._userVar.named.get(id.toString());
     }
-    // User名称変数の一覧を取得
+    // User名称変数の一覧を取得 (ログ出力用)
     public getAllUserNameVar() {
-        return Array.from(this._userVar.named);
+        return convertMapToObject(this._userVar.named);
     }
     // 現在の位置情報記憶
     public recUserPosition(x: number, y: number): void {
@@ -6652,6 +6915,8 @@ font-weight: bold;
             playerDirection: this._player.getDir(),
             cameraCoord: this._camera.getPosition().getPartsCoord(),
             itemBox: this._player.getCopyOfItemBox(),
+            gameSpeedIndex: this._player.getSpeedIndex(),
+            // TODO ステータスが変わっても更新されていない？
             wwaData: this._wwaData
         }
     }
@@ -6691,6 +6956,21 @@ font-weight: bold;
         catch(e) {
             console.error(e);
             this.registerSystemMessagePage("解析中にエラーが発生しました :\n" + e.message);
+        }
+    }
+
+    /**
+     * WWA Script の Node を評価して対応した値にします。
+     */
+    private _returnEvalString(evalString: string) {
+        try {
+            const acornNode = ExpressionParser2.parse("(" + evalString + ")");
+            const nodes = ExpressionParser2.convertNodeAcornToWwa(acornNode);
+            return this.evalCalcWwaNodeGenerator.evalWwaNode(nodes);
+        }
+        catch(e) {
+            console.error(e);
+            this.registerSystemMessagePage("解析中にエラーが発生しました :\n" + e.message, false);
         }
     }
 
@@ -6892,6 +7172,7 @@ function start() {
     }
     const virtualPadContollerQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-virtualpad-controller-elm");
     const virtualPadControllerElm: HTMLElement | null = virtualPadEnable && virtualPadContollerQuery ? util.$qsh(virtualPadContollerQuery) : null;
+    const pictureImageNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-picture-image-names-file");
     const disallowLoadOldSave = (() => {
         const disallowLoadOldSaveAttribute = util.$id("wwa-wrapper").getAttribute("data-wwa-disallow-load-old-save");
         if (disallowLoadOldSaveAttribute !== null && disallowLoadOldSaveAttribute.match(/^true$/i)) {
@@ -6923,6 +7204,7 @@ function start() {
             // virtualPadViewportFitEnable はすでに start 関数で使用済み
             virtualPadControllerElm,
             userDefinedScriptsFile,
+            pictureImageNamesFile,
         }
     );
 }

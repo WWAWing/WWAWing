@@ -122,7 +122,7 @@ export class TextLoader {
     wwaData.gameSpeedIndex = WWAConsts.DEFAULT_SPEED_INDEX;
     wwaData.permitChangeGameSpeed = true;
     wwaData.userVar = Array.from({length: WWAConsts.USER_VAR_NUM}).map(() => 0);
-    wwaData.userNamedVar = [];
+    wwaData.userNamedVar = new Map();
     wwaData.playTime = 0;
 
     wwaData.isVisibleStatusEnergy = true;
@@ -133,6 +133,8 @@ export class TextLoader {
     wwaData.gameOverPolicy = "default";
 
     wwaData.bgmDelayDurationMs = 0;
+
+    wwaData.pictureRegistry = [];
 
     return wwaData;
   }

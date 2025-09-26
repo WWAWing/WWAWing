@@ -1,5 +1,8 @@
 
+import { PictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
 import { WWAConsts as Consts, Coord } from "./wwa_data";
+import WWAPicutre from "./wwa_picture/WWAPicture";
+import { WWA } from "./wwa_main";
 
 export class CacheCanvas {
     public cvs: HTMLCanvasElement;
@@ -13,11 +16,11 @@ export class CacheCanvas {
         this._isTransparent = isTransparent;
         //document.body.appendChild(this.cvs);
     }
-    public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number): void {
+    public drawCanvas(_image, chipX: number, chipY: number, canvasX: number, canvasY: number, width = Consts.CHIP_SIZE, height = Consts.CHIP_SIZE): void {
         this.ctx.drawImage(
             _image, Consts.CHIP_SIZE * chipX, Consts.CHIP_SIZE * chipY,
             Consts.CHIP_SIZE, Consts.CHIP_SIZE, canvasX, canvasY,
-            Consts.CHIP_SIZE, Consts.CHIP_SIZE
+            width, height
         );
     }
     public clear() {
@@ -52,6 +55,7 @@ export class CGManager {
     private _backCanvas: CacheCanvas;
     private _objectCanvases: CacheCanvas[];
     private _effectCanvases: CacheCanvas[];
+    public picture: WWAPicutre;
     public mapCache: number[] = void 0;
     public mapObjectCache: number[] = void 0;
     public mapCacheYLimit: number = 0;
@@ -155,6 +159,20 @@ export class CGManager {
         }
     }
 
+    public restorePictures(regitories: PictureRegistry[]): void {
+        this.picture.clearAllPictures();
+        regitories.forEach((registry) => {
+            this.picture.registerPicture(registry);
+        });
+    }
+    public updateAllPicturesCache(isMainAnimation = true): void {
+        this.picture.updateAllPicturesCache(this._image, isMainAnimation);
+    }
+
+    public updatePicturesAnimation(isMainAnimation = true): void {
+        this.picture.updatePicturesAnimation(this._image, isMainAnimation);
+    }
+
     public drawFrame(): void {
         // 全
         //this._ctx.drawImage(this._frameCanvas.cvs,
@@ -187,6 +205,14 @@ export class CGManager {
         this._ctx.drawImage(effectCanvas.cvs,
             0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW,
             0, 0, Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW);
+    }
+
+    public drawPictures(): void {
+        this.picture.forEachPictures((picture) => {
+            const { x, y, width, height } = picture.getDrawPictureCoords();
+            // ピクチャは一度に大量の Canvas 画像を描画することになるため、画面全体でサイズ確保して描画すると大きな負荷になる
+            this._ctx.drawImage(picture.canvasImage, 0, 0, width, height, x, y, width, height);
+        });
     }
 
     public drawCanvas(chipX: number, chipY: number, canvasX: number, canvasY: number): void {
@@ -339,12 +365,20 @@ export class CGManager {
         this.createFrame();
     }
 
-    public constructor(ctx: CanvasRenderingContext2D, fileName: string, _frameCoord: Coord, loadCompleteCallBack: () => void) {
+    public constructor(
+        ctx: CanvasRenderingContext2D,
+        fileName: string,
+        _frameCoord: Coord,
+        wwa: WWA,
+        pictureImageNamesFile: string | null,
+        loadCompleteCallBack: () => void
+    ) {
 
         this._frameCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);
         this._backCanvas = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, false);
         this._objectCanvases = [];
         this._effectCanvases = [];
+        this.picture = new WWAPicutre(wwa, pictureImageNamesFile);
         var i;
         for (i = 0; i < 2; i++) {
             this._objectCanvases[i] = new CacheCanvas(Consts.CHIP_SIZE * Consts.V_PARTS_NUM_IN_WINDOW, Consts.CHIP_SIZE * Consts.H_PARTS_NUM_IN_WINDOW, true);

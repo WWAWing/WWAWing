@@ -30,4 +30,5 @@ export interface Resources {
     wwaCss?: string;
     titleImage?: string;
     userVarNamesFile?: string;
+    pictureImageNamesFile?: string;
 }
