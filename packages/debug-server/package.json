@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/debug-server",
-  "version": "0.0.0-exe-chousa.based-on.3.12.21",
+  "version": "0.0.0-exe-chousa.based-on.3.12.21.p.1",
   "description": "wwawing debug server",
   "main": "lib/index.js",
   "repository": {
