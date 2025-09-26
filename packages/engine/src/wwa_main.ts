@@ -296,7 +296,6 @@ export class WWA {
     private hoge: number[][];
     ////////////////////////
 
-    private _loadHandler: (wwaData: WWAData) => void;
     public audioContext: AudioContext;
     public audioGain: GainNode;
     private audioExtension: string = "";
@@ -312,11 +311,9 @@ export class WWA {
     /** ユーザー定義スクリプト関数 */
     private userDefinedFunctions: { [key: string]: WWANode } = {};
 
-    constructor(
-        options: DataWWAOptions = makeDefaultWWAOptions(),
-    ) {
+    constructor(options = makeDefaultWWAOptions()) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
-        var ctxCover;
+        let ctxCover: CanvasRenderingContext2D;
         window.addEventListener("click", (e): void => {
             // WWA操作領域がクリックされた場合は, stopPropagationなので呼ばれないはず
             this._isActive = false;
@@ -329,7 +326,7 @@ export class WWA {
         if (options.titleImg === undefined) {
             this._hasTitleImg = false;
             this._cvsCover = <HTMLCanvasElement>util.$id("progress-panel");
-            ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+            ctxCover = this._cvsCover.getContext("2d");
             ctxCover.fillStyle = "rgb(0, 0, 0)";
         } else {
             this._hasTitleImg = true;
@@ -345,20 +342,19 @@ export class WWA {
             }
         } catch (e) { }
         this._dumpElement = options.varDumpElm;
-        const _AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+        const _AudioContext = (window.AudioContext || window["webkitAudioContext"]) as typeof AudioContext;
         if (_AudioContext) {
             this.audioContext = new _AudioContext();
             this.audioGain = this.audioContext.createGain();
             this.audioGain.gain.setValueAtTime(1, this.audioContext.currentTime);
         }
 
-        var myAudio = new Audio();
+        const myAudio = new Audio();
         if (("no" !== myAudio.canPlayType("audio/mpeg") as string) && ("" !== myAudio.canPlayType("audio/mpeg"))) {
             this.audioExtension = "mp3";
         } else {
             this.audioExtension = "m4a";
         }
-        this.userDevice = new UserDevice();
 
         this._isURLGateEnable = options.urlGateEnable;
         this._isClassicModeEnable = options.classicModeEnable;
@@ -373,8 +369,10 @@ export class WWA {
         this._audioDirectory = options.audioDir;
         // Go To WWA を強制するオプションが無効なら、Battle Reportにする
         this._bottomButtonType = options.useGoToWwa ? ControlPanelBottomButton.GOTO_WWA : ControlPanelBottomButton.BATTLE_REPORT;
-
-        var t_start: number = new Date().getTime();
+        this._userVarNameList = [];
+        // スクリプトパーサーを作成する
+        this.evalCalcWwaNodeGenerator = new ExpressionParser2.EvalCalcWwaNodeGenerator(this);
+        this.userDevice = new UserDevice();
         var isLocal = !!location.href.match(/^file/);
         if (isLocal) {
             switch (this.userDevice.device) {
@@ -427,9 +425,168 @@ export class WWA {
                 break;
         }
 
-        this._loadHandler = (wwaData: WWAData): void => {
+        const totalLoadStartTime = performance.now();
+        console.log("WWA のロード処理を開始します");
+
+        // 依存関係がないロード処理は並行して行う
+        Promise.all([
+          // (A) マップデータのロード・調整
+          new Promise<WWAData>(async (resolve) => {
+            // (A-1) マップデータのロード
+            const startTimeMs = performance.now();
+            console.log(`(A-1) マップデータ ${options.mapdata} のロードを開始します`);
+            const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
+            const mapDataHandler = (mapData: WWAData) => {
+              eventEmitter.removeListener("mapData", mapDataHandler);
+              eventEmitter.removeListener("progress", progressHandler);
+              eventEmitter.removeListener("error", errorHandler);
+              console.log(`(A-1) マップデータ ${options.mapdata} のロードが完了しました (${performance.now() - startTimeMs}ms)`);
+              resolve(mapData); 
+            };
+            const progressHandler = (progress: Progress) => this._setProgressBar(progress);
+            const errorHandler = (error: LoaderError) => {
+              this._setErrorMessage(
+                "下記のエラーが発生しました。: \n" + error.message,
+                ctxCover
+              );
+              throw new Error("MapData Load Error: " + error.message);
+            };
+            eventEmitter.addListener("mapData", mapDataHandler);
+            eventEmitter.addListener("progress", progressHandler);
+            eventEmitter.addListener("error", errorHandler);
+            await new WWALoader(options.mapdata, eventEmitter).requestAndLoadMapData();
+          }).then(wwaData => {
+            // (A-2) リスタートデータの作成
+            const startTimeMs = performance.now();
+            console.log(`(A-2) マップデータからリスタートデータの作成を開始します`);
+            wwaData.isItemEffectEnabled = options.itemEffectEnable;
+            const pathList = options.mapdata.split("/"); //ディレクトリで分割
+            pathList.pop(); //最後のファイルを消す
+            pathList.push(wwaData.mapCGName); //最後に画像ファイル名を追加
+            wwaData.mapCGName = pathList.join("/");  //pathを復元
+            const result = {
+              wwaData,
+              restartData: structuredClone(wwaData),
+              checkOriginalMapString: this._generateMapDataHash(wwaData)
+            };
+            console.log(`(A-2) マップデータからのリスタートデータの作成が完了しました (${performance.now() - startTimeMs}ms)`);
+            return result;
+          }).then<{
+              wwaData: WWAData;
+              restartData: WWAData;
+              checkOriginalMapString: string;
+          }>(info => new Promise(resolve => {
+              // (A-3) マップ画像のロード
+              const startTimeMs = performance.now();
+              console.log (`(A-3) マップ画像 ${info.wwaData.mapCGName} のロードを開始します`);
+              const mapCgImageElement = new Image();
+              mapCgImageElement.src = info.wwaData.mapCGName;
+              mapCgImageElement.decode()
+                .then(() => {
+                    console.log(`(A-3) マップ画像 ${info.wwaData.mapCGName} のロードが完了しました (${performance.now() - startTimeMs}ms)`);
+                    // mapcgImageElement 自体は使わない
+                    resolve(info)
+                })
+                .catch(() => {
+                  this._setErrorMessage(
+                    "画像ファイル「" + info.wwaData.mapCGName + "」が見つかりませんでした。\n" +
+                    "管理者の方へ: データがアップロードされているか、\n" +
+                    "パーミッションを確かめてください。",
+                     ctxCover
+                  );
+                  throw new Error("Map CG Image Load Error");
+                })
+          })),
+          // (B) ユーザー変数ファイルのロード・初期化
+          new Promise<void>(async (resolve) => {
+            this._canDisplayUserVars = options.displayUserVars;
+            if (!this._canDisplayUserVars) {
+                console.log("(B) ユーザー変数の表示機能は無効化されています");
+                resolve();
+                return;
+            }
+            const loadStartTime = performance.now();
+            console.log(`(B) ユーザー変数名一覧のロードおよび初期化を開始します (名前一覧ファイル: ${options.userVarNamesFile ?? "未指定"})`);
+            this._inlineUserVarViewer = {
+              topUserVarIndex: { named: 0, numbered: 0 },
+              isVisible: false,
+              kind: "numbered",
+            };
+            // ユーザー変数ファイルを読み込む
+            const userVarStatus = await (options.userVarNamesFile
+              ? fetchJsonFile(options.userVarNamesFile)
+              : {
+                  kind: "noFileSpecified" as const,
+                  errorMessage:
+                    "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。",
+                });
+              this.setUserVarStatus(userVarStatus, options.userVarNamesFile);
+              switch(userVarStatus.kind) {
+                case "data":
+                    console.log(`(B) ユーザー変数名一覧のロードおよび初期化が完了しました (${performance.now() - loadStartTime}ms)`);
+                    break;
+                case "noFileSpecified":
+                    console.log(`(B) ユーザー変数名一覧のロードはスキップされました (${performance.now() - loadStartTime}ms)`);
+                    break;
+                default:
+                    console.warn(`(B) ユーザー変数名一覧のロード中にエラーが発生しました (${performance.now() - loadStartTime}ms)`);
+                    console.warn("(B) " + userVarStatus.errorMessage);
+                    break;
+              }
+            resolve();
+          }),
+          // (C) 外部 WWA Script のロード・解析
+          new Promise<void>(async (resolve) => {
+            const startTime = performance.now();
+
+            // ユーザ定義関数を取得する
+            const userScriptListJSONFileName = options.userDefinedScriptsFile ?? "./script/script_file_list.json";
+            console.log(`(C) 外部 WWA Script のロード・解析を開始します (リストファイル: ${userScriptListJSONFileName})`);
+            const userScriptFileNameListResponse = await fetchJsonFile(userScriptListJSONFileName);
+            if (userScriptFileNameListResponse?.kind === 'data' && Array.isArray(userScriptFileNameListResponse.data)) {
+                console.log("(C) これらの外部 WWA Script がロードされます:", userScriptFileNameListResponse.data);
+                const userScriptResponsePromises =
+                    userScriptFileNameListResponse.data.map((fileName) => fetchScriptFile(fileName));
+                (await Promise.allSettled(userScriptResponsePromises)).forEach(userScriptResponsePromise => {
+                    if (userScriptResponsePromise.status !== "fulfilled") {
+                        alert(`(C) 外部スクリプト ${userScriptResponsePromise.reason.fileName} のロード中にエラーが発生しました。\nこのままゲームを開始することはできますが、正常に動作しない可能性が高いです。\n\n詳細:\n${userScriptResponsePromise.reason.message}`);
+                        console.error(userScriptResponsePromise.reason.message);
+                        return;
+                    }
+                    switch(userScriptResponsePromise.value.kind) {
+                        case "data":
+                            try {
+                                this.setUserScript(userScriptResponsePromise.value);
+                            } catch(error) {
+                                alert(`外部スクリプト ${userScriptResponsePromise.value.fileName} の解析中にエラーが発生しました。\nこのままゲームを開始することはできますが、正常に動作しない可能性が高いです。\n\n詳細:\n${error instanceof Error ? error.message : String(error)}`);
+                                console.error(`(C) 外部スクリプト ${userScriptResponsePromise.value.fileName} の解析中にエラーが発生しました。`, error);
+                            }
+                            return;
+                        case "httpError":
+                            console.warn(`(C) 外部スクリプト ${userScriptResponsePromise.value.fileName} が見つからなかったか、その他のHTTPエラーが発生しました。`, userScriptResponsePromise.value.errorMessage)
+                            return;
+                        case "otherError":
+                             alert(`外部スクリプト ${userScriptResponsePromise.value.fileName} のロード中にエラーが発生しました。\nこのままゲームを開始することはできますが、正常に動作しない可能性が高いです。\n\n詳細:\n${userScriptResponsePromise.value.errorMessage}`);
+                             console.error(`(C) 外部スクリプト ${userScriptResponsePromise.value.fileName} のロード中にエラーが発生しました。`, userScriptResponsePromise.value.errorMessage);
+                             return;
+                        default:
+                            alert("外部スクリプトの解析中に予期せぬエラーが発生しました");
+                            console.error(`(C) 外部スクリプト ${userScriptResponsePromise.value.fileName} の解析中に予期せぬエラーが発生しました`, userScriptResponsePromise.value);
+                            return;
+                        }
+                });
+            } else {
+                console.log(`(C) 外部 WWA Script のリスト ${userScriptListJSONFileName} が見つからなかったか、内容が不正だったため、外部スクリプトはロードされませんでした。`);
+            }
+            console.log(`(C) 外部 WWA Script のロード・解析が完了しました (${performance.now() - startTime}ms)`);
+            resolve();
+          })
+        ]).then(([{wwaData, restartData, checkOriginalMapString}]) => {
             this._wwaData = wwaData;
-            this._wwaData.isItemEffectEnabled = options.itemEffectEnable;
+            this._restartData = restartData;
+            this.checkOriginalMapString = checkOriginalMapString;
+            console.log(`WWAのロード処理が完了しました。(${performance.now() - totalLoadStartTime}ms)`);
+        }).then(() => {
             try {
                 if (this._hasTitleImg) {
                     util.$id("version").textContent += (
@@ -442,30 +599,11 @@ export class WWA {
                 }
             } catch (e) { }
 
-            var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata"); //ファイル名取得
-            var pathList = mapFileName.split("/"); //ディレクトリで分割
-            pathList.pop(); //最後のファイルを消す
-            pathList.push(this._wwaData.mapCGName); //最後に画像ファイル名を追加
-            this._wwaData.mapCGName = pathList.join("/");  //pathを復元
-
-            // プレイ時間関連
-            this._playTimeCalculator = new PlayTimeCalculator();
-            this._restartData = structuredClone(this._wwaData);
-            this.checkOriginalMapString = this._generateMapDataHash(this._restartData);
-
             this.initCSSRule();
             this._setProgressBar(getProgress(0, 4, LoadStage.GAME_INIT));
             this._setLoadingMessage(ctxCover, 2);
-            var cgFile = new Image();
-            cgFile.src = this._wwaData.mapCGName;
-            cgFile.addEventListener("error", (): void => {
-                this._setErrorMessage("画像ファイル「" + this._wwaData.mapCGName + "」が見つかりませんでした。\n" +
-                    "管理者の方へ: データがアップロードされているか、\n" +
-                    "パーミッションを確かめてください。", ctxCover);
 
-            });
-
-            var escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
+            const escapedFilename: string = this._wwaData.mapCGName.replace("(", "\\(").replace(")", "\\)");
             /**
              * Node に対して background-color を設定します。
              *     主に操作パネルの各部位に背景画像を割り当てる際に使用します。
@@ -511,9 +649,6 @@ export class WWA {
             this._setLoadingMessage(ctxCover, 3);
             this._mapIDTableCreate();
             this._replaceAllRandomObjects();
-
-            var t_end: number = new Date().getTime();
-            console.log("Loading Complete!" + (t_end - t_start) + "ms");
 
             this._cvs = <HTMLCanvasElement>util.$id("wwa-map");
             var ctx = <CanvasRenderingContext2D>this._cvs.getContext("2d", {alpha:false});
@@ -988,23 +1123,10 @@ export class WWA {
             this._paintSkipByDoorOpen = false
             this._clearFacesInNextFrame = false
             this._useConsole = false;
-            
-            this.wwaCustomEvent('wwa_startup');
-            /*
-            var count = 0;
-            for (var xx = 0; xx < this._wwaData.mapWidth; xx++) {
-            for (var yy = 0; yy < this._wwaData.mapWidth; yy++) {
-            if (this._wwaData.mapObject[yy][xx] === 1620) {
-            if (count === 0) {
-            count++;
-            continue;
-            }
-            throw new Error("Found!!" + xx + " " + yy);
-            }
-            }
-            }
-            */
 
+            // プレイ時間関連
+            this._playTimeCalculator = new PlayTimeCalculator();
+            this.wwaCustomEvent('wwa_startup');
 
             this._cgManager = new CGManager(ctx, this._wwaData.mapCGName, this._frameCoord, this, options.pictureImageNamesFile, (): void => {
                 this._isSkippedSoundMessage = true;
@@ -1113,59 +1235,8 @@ export class WWA {
                     window.requestAnimationFrame(this.soundCheckCaller);
                 }
             });
-
+            console.log("WWA_START");
             this.wwaCustomEvent('wwa_start');
-        }
-        const eventEmitter: WWALoaderEventEmitter = new BrowserEventEmitter();
-        const mapDataHandler = (mapData: WWAData) => this._loadHandler(mapData);
-        const progressHandler = (progress: Progress) => this._setProgressBar(progress);
-        const errorHandler = (error: LoaderError) => this._setErrorMessage("下記のエラーが発生しました。: \n" + error.message, ctxCover);
-        // TODO removeListener
-        eventEmitter.addListener("mapData", mapDataHandler)
-        eventEmitter.addListener("progress", progressHandler)
-        eventEmitter.addListener("error", errorHandler)
-        const loader = new WWALoader(options.mapdata, eventEmitter);
-        loader.requestAndLoadMapData().then(async () => {
-            this._canDisplayUserVars = options.displayUserVars;
-            this._userVarNameList = [];
-            if (this._canDisplayUserVars) {
-                this._inlineUserVarViewer = { topUserVarIndex:  {named: 0, numbered: 0}, isVisible: false, kind: "numbered" };
-                // ユーザー変数ファイルを読み込む
-                const userVarStatus = await (options.userVarNamesFile ? fetchJsonFile(options.userVarNamesFile) : {
-                    kind: "noFileSpecified" as const,
-                    errorMessage: "data-wwa-user-var-names-file 属性に、変数の説明を記したファイル名を書くことで、その説明を表示できます。詳しくはマニュアルをご覧ください。"
-                })
-                this.setUserVarStatus(userVarStatus, options.userVarNamesFile);
-            }
-        });
-        /** 外部スクリプト関係処理 */
-        (async () => {
-            /** ユーザ定義関数を取得する */
-            const userScriptListJSONFileName = options.userDefinedScriptsFile ?? "./script/script_file_list.json";
-            const userScriptFileNameList = await fetchJsonFile(userScriptListJSONFileName);
-            let userScriptStringsPromises = [];
-            console.log(userScriptFileNameList);
-            if(userScriptFileNameList?.kind === 'data') {
-                if(Array.isArray(userScriptFileNameList.data)) {
-                    userScriptFileNameList.data.map((fileName) => {
-                        userScriptStringsPromises.push(
-                            fetchScriptFile(fileName)
-                        )
-                    })
-                }
-            }
-            // 読み込んだ外部ファイルの一覧
-            const loadUserScriptstringsObjList = await Promise.all(userScriptStringsPromises);
-            loadUserScriptstringsObjList.forEach((loadUserScriptstringsObj)=>{
-                try {
-                    this.setUsertScript(loadUserScriptstringsObj);
-                }
-                catch(error) {
-                    alert(`外部スクリプト ${loadUserScriptstringsObj.fileName} の解析中にエラーが発生しました。\nこのままゲームを開始することはできますが、正常に動作しない可能性が高いです。\n\n詳細:\n${error.message}`);
-                    console.error(error.message);
-                }
-            })
-            
             /** ゲーム開始時のユーザ定義独自関数を呼び出す */
             const gameStartFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_WWA_START"];
             if (gameStartFunc) {
@@ -1177,9 +1248,7 @@ export class WWA {
                     console.error(error.message);
                 }
             }
-        })()
-        /** スクリプトパーサーを作成する */
-        this.evalCalcWwaNodeGenerator = new ExpressionParser2.EvalCalcWwaNodeGenerator(this);
+        });
     }
 
     /**
@@ -1290,7 +1359,7 @@ export class WWA {
     }
 
     /** ユーザ定義スクリプト処理関数 */
-    private setUsertScript(userScriptStrings: UserScriptResponse) {
+    private setUserScript(userScriptStrings: UserScriptResponse) {
         if(userScriptStrings.kind !== "data") {
             console.error(userScriptStrings);
             return;
@@ -1514,7 +1583,7 @@ export class WWA {
         let loadedNum = 0;
         let total = 0;
         if (!this._hasTitleImg) {
-            var ctxCover = <CanvasRenderingContext2D>this._cvsCover.getContext("2d");
+            var ctxCover = this._cvsCover.getContext("2d");
         } // 本当はコンストラクタで生成した変数を利用したかったけど、ゆるして
         this._keyStore.update();
         if (this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
