@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/event-emitter",
-  "version": "0.0.0-oidc-publish-test.based-on.3.12.18",
+  "version": "0.0.0-oidc-publish-test.based-on.3.12.18.p.1",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "repository": {
     "type": "git",

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "0.0.0-oidc-publish-test.based-on.3.12.18",
+  "version": "0.0.0-oidc-publish-test.based-on.3.12.18.p.1",
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
