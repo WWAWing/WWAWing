@@ -1,12 +1,13 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "0.0.0-oidc-publish-test.based-on.3.12.18.p.1",
+  "version": "3.12.18",
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/WWAWing/WWAWing"
+    "url": "https://github.com/WWAWing/WWAWing.git",
+    "directory": "packages/common-interface"
   },
   "files": [
     "lib"

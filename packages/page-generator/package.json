@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/page-generator",
-  "version": "0.0.0-oidc-publish-test.based-on.3.12.18.p.1",
+  "version": "3.12.8",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/loader",
-  "version": "0.0.0-oidc-publish-test.based-on.3.12.18.p.1",
+  "version": "3.12.8",
   "description": "a World Wide Adventure mapdata loader for client-side web applications",
   "main": "./lib/index.js",
   "module": "./module/index.js",
