@@ -287,7 +287,7 @@ export class WWA {
      * メッセージウィンドウ(システムメッセージ含む)に関しては、表示される予定のものが全て掃けた後にリクエスト内容のジャンプ処理が発生します.
      * ジャンプゲートの後にPXやPYが書き換わった場合には、ジャンプゲートの座標にPX, PYが書き換わったものが適用されます.
      */
-    private _windowCloseWaitingJumpGateRequest?: { x: number; y: number } = undefined
+    private _windowCloseWaitingJumpGateRequest?: { x: number; y: number; dir: Direction } = undefined;
 
     private _debugConsoleElement: HTMLElement | undefined = undefined;
 
@@ -6086,13 +6086,13 @@ font-weight: bold;
         return this._useConsole;
     }
     // JumpGateマクロ実装ポイント
-    public forcedJumpGate(jx: number, jy: number): void {
-        if(this._player.isWaitingMessage()) {
-            this._windowCloseWaitingJumpGateRequest = { x: jx, y: jy };
+    public forcedJumpGate(jx: number, jy: number, jdir: Direction = Direction.NO_DIRECTION): void {
+        if (this._player.isWaitingMessage()) {
+            this._windowCloseWaitingJumpGateRequest = { x: jx, y: jy, dir: jdir };
         } else {
             this._windowCloseWaitingJumpGateRequest = undefined;
             // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
-            this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+            this._player.jumpTo(new Position(this, jx, jy, 0, 0), jdir);
         }
     }
     public setUserVarIndecies(indecies: any[], assignee: number | string | boolean, operator: string = "="): void {

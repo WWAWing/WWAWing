@@ -1,7 +1,10 @@
+import type { Primitive } from "./_common";
 export { convertObjectToMap, type ObjectToMap } from "./objectToMap";
 export { convertMapToObject } from "./mapToObject";
 
-export function isPrimitive(x: unknown): x is string | number | boolean | bigint | symbol | null | undefined {
+export type { Primitive }
+
+export function isPrimitive(x: unknown): x is Primitive {
   return (
     typeof x === "string" ||
     typeof x === "number" ||

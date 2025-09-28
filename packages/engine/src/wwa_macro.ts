@@ -11,7 +11,8 @@ import {
     StatusSolutionKind,
     TriggerParts,
     ScoreOption,
-    PreprocessMacroType
+    PreprocessMacroType,
+    Direction
 } from "./wwa_data";
 
 import { type TokenValues, type Descriminant, evaluateDescriminant, evaluateMacroArgExpression } from "./wwa_expression";
@@ -555,10 +556,11 @@ export class Macro {
 
     // JumpGateマクロ実行部
     private _executeJumpGateMacro(): void {
-        this._concatEmptyArgs(2);
-        var x = this._evaluateIntValue(0);
-        var y = this._evaluateIntValue(1);
-        this._wwa.forcedJumpGate(x, y);
+        this._concatEmptyArgs(3);
+        const x = this._evaluateIntValue(0);
+        const y = this._evaluateIntValue(1);
+        const dir = this._evaluateIntValue(2, Direction.NO_DIRECTION);
+        this._wwa.forcedJumpGate(x, y, dir);
     }
     // RecPositionマクロ実行部
     private _executeRecPositionMacro(): void {

@@ -1,6 +1,6 @@
 import { convertMapToObject, isPrimitive } from "@wwawing/util";
 import { SystemMessage } from "@wwawing/common-interface";
-import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Direction, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import { getItem } from "../wwa_util";
 import * as Wwa from "./wwa";
@@ -197,8 +197,6 @@ export class EvalCalcWwaNode {
         return this.evalSetSpecialParameter(node);
       case "Random":
         return this.evalRandom(node);
-      case "Jumpgate":
-        return this.evalJumpgate(node);
       case "Msg":
         return this.evalMessage(node);
       case "ItemAssignment":
@@ -500,6 +498,16 @@ export class EvalCalcWwaNode {
   evalAnyFunction(node: Wwa.AnyFunction) {
     const game_status = this.generator.wwa.getGameStatus();
     switch(node.functionName) {
+      case "JUMPGATE": {
+        const x = this.evalWwaNode(node.value[0]);
+        const y = this.evalWwaNode(node.value[1]);
+        const dir = node.value[2] ? this.evalWwaNode(node.value[2]) : Direction.NO_DIRECTION;
+        if (isNaN(x) || isNaN(y)) {
+          throw new Error(`飛び先の値が数値になっていません。 x=${x} / y=${y}`);
+        }
+        this.generator.wwa.forcedJumpGate(x, y, EvalCalcWwaNode.convertDirection(dir));
+        return undefined;
+      }
       case "SOUND": {
         this._checkArgsLength(1, node);
         // SOUNDは引数を一つだけ取る
@@ -881,6 +889,30 @@ export class EvalCalcWwaNode {
     }
   }
 
+  private static convertDirection(dir: unknown): Direction {
+    switch (dir) {
+      case 2:
+      case "down":
+        return Direction.DOWN;
+      case 4:
+      case "left":
+        return Direction.LEFT;
+      case 5:
+      case undefined:
+      case null:
+        return Direction.NO_DIRECTION;
+      case 6:
+      case "right":
+        return Direction.RIGHT;
+      case 8:
+      case "up":
+        return Direction.UP;
+      default:
+        console.warn(`JUMPGATEの方向指定 ${String(dir)} が不正です`);
+        return undefined;
+    }
+  }
+
   private resolveSystemMessageKeyFromMacroArg(target: any): SystemMessage.Key | undefined {
     if (typeof target === "string") {
       // メッセージコードとして解決しようとする
@@ -1055,16 +1087,6 @@ export class EvalCalcWwaNode {
     const value = this.evalWwaNode(node.value);
     const additionalItems = this.generator.pickPageAdditionalQueue();
     this.generator.wwa.handleMsgFunction({ message: String(value), additionalItems });
-    return undefined;
-  }
-
-  evalJumpgate(node: Wwa.Jumpgate) {
-    const x = this.evalWwaNode(node.x);
-    const y = this.evalWwaNode(node.y);
-    if(isNaN(x) || isNaN(y)) {
-      throw new Error(`飛び先の値が数値になっていません。 x=${x} / y=${y}`);
-    }
-    this.generator.wwa.forcedJumpGate(x, y);
     return undefined;
   }
 
@@ -1343,7 +1365,7 @@ export class EvalCalcWwaNode {
         const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
       case "v": {
-        const key = (node.indecies[0] as Literal).value;
+        const key = this.evalWwaNode(node.indecies[0]);
         const value = this.generator.wwa.getUserNameVar(key);
         if (
           value === null ||

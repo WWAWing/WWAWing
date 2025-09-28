@@ -1,3 +1,4 @@
+import { isPrimitive } from "@wwawing/util";
 import * as Acorn from "./acorn";
 import * as Wwa from "./wwa";
 
@@ -171,11 +172,10 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
   switch(functionName) {
     case "RAND":
       return execRandomFunction(node.arguments);
-    case "JUMPGATE":
-      return execJumpgateFunction(node.arguments);
     case "MSG":
     case "MESSAGE":
       return execMessageFunction(node.arguments);
+    case "JUMPGATE":
     case "SOUND":
     case "SAVE":
     case "LOG":
@@ -256,24 +256,6 @@ function execMessageFunction(callee: Acorn.Literal[]): Wwa.WWANode {
   }
 }
 
-/**
- * JUMPGATE関数を実行する
- * JUMPGATEを実行するための識別子を返す
- */
-function execJumpgateFunction(callee: Acorn.Literal[]): Wwa.WWANode {
-  if(callee.length < 2) {
-    throw new Error("RAND関数には引数が2つ必要です。")
-  }
-  const pos = {
-    x: callee[0],
-    y: callee[1]
-  }
-  return {
-    type: "Jumpgate",
-    x: convertNodeAcornToWwa(pos.x),
-    y: convertNodeAcornToWwa(pos.y)
-  }
-}
 
 /**
  * RAND関数を実行する
@@ -563,9 +545,9 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
 }
 
 function convertLiteral(node: Acorn.Literal): Wwa.Literal {
-  // UNDONE: 小数点以下の処理をする
-  // UNDONE: boolean 値の取り扱いをする. 多分 Wwa.Boolean を作ることになる.
-  // typeof node.value が number でも boolean でもないならエラーにする. (nullやらundefinedやら書かれると困る)
+  if (!isPrimitive(node.value)) {
+    throw new TypeError("Literal の値が不正です");
+  }
   return {
     type: "Literal",
     value: node.value

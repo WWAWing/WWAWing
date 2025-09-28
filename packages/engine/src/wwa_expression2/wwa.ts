@@ -1,3 +1,5 @@
+import { Primitive } from "@wwawing/util";
+
 export type Calcurable = ArrayOrObject1D | ArrayOrObject2D | ArrayOrObject3DPlus | Literal | Symbol | UnaryOperation | BinaryOperation | Random | CallDefinedFunction | AnyFunction | ConditionalExpression | ArrayExpression | ObjectExpression;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
@@ -83,7 +85,7 @@ export interface ArrayOrObject3DPlus {
 
 export interface Literal {
   type: "Literal";
-  value: number | string;
+  value: Primitive;
 }
 
 export interface Random {
@@ -95,6 +97,7 @@ export interface Jumpgate {
   type: "Jumpgate";
   x: WWANode;
   y: WWANode;
+  direction?: WWANode;
 }
 
 export interface Msg {
@@ -218,7 +221,6 @@ export type WWANode = |
   Literal |
   Symbol |
   Random |
-  Jumpgate |
   Msg |
   IfStatement |
   BlockStatement |
