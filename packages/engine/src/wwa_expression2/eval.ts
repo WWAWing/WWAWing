@@ -863,6 +863,19 @@ export class EvalCalcWwaNode {
         const value = this.evalWwaNode(node.value[0]);
         return typeof value === "number";
       }
+      case "CLONE": {
+        this._checkArgsLength(1, node);
+        const value = this.evalWwaNode(node.value[0]);
+        if (typeof value === "symbol" || !isPrimitive(value) && !(value instanceof Map) && !Array.isArray(value)) {
+          throw new TypeError("この値はクローンできません。");
+        }
+        try {
+          return structuredClone(value);
+        } catch (error) {
+          console.error(error);
+          throw new Error("クローン中にエラーが発生しました。");
+        }
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
