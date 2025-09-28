@@ -1366,7 +1366,7 @@ export class WWA {
         }
         const readScriptWWANodes = this.convertWwaNodes(userScriptStrings.data);
         readScriptWWANodes.forEach((currentNode) => {
-            if(currentNode.type === 'DefinedFunction' && this.userDefinedFunctions) {
+            if(currentNode.type === "UserDefinedFunction" && this.userDefinedFunctions) {
                 const functionName = currentNode.functionName;
                 this.userDefinedFunctions[functionName] = currentNode.body;
             }

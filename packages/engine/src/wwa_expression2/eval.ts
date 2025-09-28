@@ -209,10 +209,13 @@ export class EvalCalcWwaNode {
         return this.partsAssignment(node);
       case "ForStatement":
         return this.forStateMent(node);
-      case "AnyFunction":
-        return this.wrapCallFunction(node, node => this.evalAnyFunction(node));
-      case "CallDefinedFunction":
-        return this.wrapCallFunction(node, node => this.callDefinedFunction(node));
+      case "SystemDefinedFunctionCall":
+        return this.evalSystemDefinedFunctionCall(node);
+      case "UserDefinedFunctionCall":
+        return this.evalUserDefinedFunctionCall(node);
+      case "UserDefinedFunction":
+        // 関数定義は何も実行しません
+        return;
       case "Break":
         return this.breakStatement(node);
       case "Return":
@@ -255,13 +258,15 @@ export class EvalCalcWwaNode {
     }    
   }
 
-  /** 関数の呼び出し */
-  callDefinedFunction(node: Wwa.CallDefinedFunction) {
+  /** ユーザー定義関数の呼び出し */
+  evalUserDefinedFunctionCall(node: Wwa.UserDefinedFunctionCall) {
     const func = this.generator.wwa.getUserScript(node.functionName);
     if(func === null) {
       throw new Error(`未定義の関数が呼び出されました: ${node.functionName}`);
     }
-    return this.evalWwaNode(func);
+    const functionResult = this.wrapCallFunction(func, func => this.evalWwaNode(func));
+    const indecies = node.indecies?.map((x) => this.evalWwaNode(x)) ?? [];
+    return indecies.reduce((prev, current) => getItem(prev, current), functionResult);
   }
 
   /** i++ などが実行された時の処理. 現在後置インクリメントのみ対応しています. */
@@ -485,17 +490,25 @@ export class EvalCalcWwaNode {
 
   /**
    * 関数実行時に引数が不足しているかチェックする
+   * ※ 現在のところユーザー定義関数に引数を定義できないため、システム定義関数のみ対応しています。
    * @param length 
    * @param node 
    */
-  private _checkArgsLength(length: number, node: Wwa.AnyFunction) {
+  private _checkArgsLength(length: number, node: Wwa.SystemDefinedFunctionCall) {
     if(node.value.length < length) {
       throw new Error(`関数 ${node.functionName} の引数が不足しています！`);
     }
   }
   
-  /** 任意の特殊関数を実行する */
-  evalAnyFunction(node: Wwa.AnyFunction) {
+  /** システム定義関数を実行する */
+  evalSystemDefinedFunctionCall(node: Wwa.SystemDefinedFunctionCall) {
+    const functionResult = this.wrapCallFunction(node, node => this.evalSystemDefinedFunctionCallInner(node));
+    const indecies = node.indecies?.map((x) => this.evalWwaNode(x)) ?? [];
+    return indecies.reduce((prev, current) => getItem(prev, current), functionResult);
+  }
+
+  /** システム定義関数を実行する (内部) */
+  private evalSystemDefinedFunctionCallInner(node: Wwa.SystemDefinedFunctionCall) {
     const game_status = this.generator.wwa.getGameStatus();
     switch(node.functionName) {
       case "JUMPGATE": {

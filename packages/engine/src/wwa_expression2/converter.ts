@@ -70,7 +70,7 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
 
 function convertFunctionStatement(node: Acorn.FunctionDeclaration): Wwa.WWANode {
   return {
-    type: "DefinedFunction",
+    type: "UserDefinedFunction",
     functionName: node.id.name,
     body: convertNodeAcornToWwa(node.body)
   }
@@ -168,6 +168,10 @@ function convertIfStatement(node: Acorn.IfStatement): Wwa.WWANode {
  * @returns 
  */
 function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
+  if (node.callee.type !== "Identifier") {
+    // xxx.foo(), xxx().foo() のような関数呼び出しは現状サポートしない
+    throw new Error("WWAでは存在しない構文です");
+  }
   const functionName = node.callee.name;
   switch(functionName) {
     case "RAND":
@@ -220,23 +224,23 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "LENGTH":
     case "IS_NUMBER":
     case "CLONE":
-      return execAnyFunction(node.arguments, functionName);
+      return execSystemDefinedFunctionCall(node.arguments, functionName);
     default:
       return {
-        type: "CallDefinedFunction",
+        type: "UserDefinedFunctionCall",
         functionName: functionName
       }
   }
 }
 
 /**
- * 任意の関数型
+ * システム定義関数を実行する
  * @param callee 
  * @returns 
  */
-function execAnyFunction(callee: Acorn.Literal[], functionName: string): Wwa.WWANode {
+function execSystemDefinedFunctionCall(callee: Acorn.Literal[], functionName: string): Wwa.WWANode {
   return {
-    type: "AnyFunction",
+    type: "SystemDefinedFunctionCall",
     functionName: functionName,
     value: callee.map((v) => {
       return convertNodeAcornToWwa(v)
@@ -440,55 +444,79 @@ function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.WWANode {
   }
 }
 
-function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObject1D | Wwa.ArrayOrObject2D | Wwa.ArrayOrObject3DPlus {
-  const object = convertNodeAcornToWwa(node.object);
+function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObject1D | Wwa.ArrayOrObject2D | Wwa.ArrayOrObject3DPlus | Wwa.SystemDefinedFunctionCall | Wwa.UserDefinedFunctionCall {
+  const objectOrFunctionCall = convertNodeAcornToWwa(node.object);
   const property = convertNodeAcornToWwa(node.property);
 
-  if (object.type === "Symbol") {
-    if (!["v", "m", "o", "ITEM", "LP", "PICTURE"].includes(object.name)) {
+  if (Wwa.isFunctionCall(property)) {
+    // xxx.foo() のような関数呼び出しは現状サポートしない
+    throw new Error("WWAでは存在しない構文です");
+  }
+
+  if (objectOrFunctionCall.type === "Symbol") {
+    if (!["v", "m", "o", "ITEM", "LP", "PICTURE"].includes(objectOrFunctionCall.name)) {
       throw new Error("このシンボルは配列にできません");
     }
     if (Wwa.isCalcurable(property)) {
-      // m, o については一次元分適用
       return {
         type: "ArrayOrObject1D",
-        name: <"v"|"m"|"o"|"ITEM"|"LP">object.name,
+        name: <"v"|"m"|"o"|"ITEM"|"LP">objectOrFunctionCall.name,
         indecies: [property],
       };
     } else {
       throw new Error("WWAでは存在しない構文です");
     }
-  } else if (object.type === "ArrayOrObject1D") {
+  } else if (objectOrFunctionCall.type === "ArrayOrObject1D") {
     // 1次元にしかできないものは排除
-    if (object.name === "ITEM" || object.name === "PICTURE") {
+    if (objectOrFunctionCall.name === "ITEM" || objectOrFunctionCall.name === "PICTURE") {
       throw new Error("この配列は2次元以上にはできません。");
     }
     if (Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject2D",
-        name: <"m" | "o">object.name,
+        name: <"m" | "o">objectOrFunctionCall.name,
         // 1次元配列 + 1次元分の index を合成
-        indecies: [...object.indecies, property]
+        indecies: [...objectOrFunctionCall.indecies, property]
       }
     } else {
       // 数値に解決できないものが index に来てはいけない
       throw new Error("WWAでは存在しない構文です")
     }
-  } else if(object.type === "ArrayOrObject2D" || object.type === "ArrayOrObject3DPlus") {
-    if (object.name === "m" || object.name === "o") {
+  } else if(objectOrFunctionCall.type === "ArrayOrObject2D" || objectOrFunctionCall.type === "ArrayOrObject3DPlus") {
+    if (objectOrFunctionCall.name === "m" || objectOrFunctionCall.name === "o") {
       throw new Error("この配列は3次元以上にはできません。");
     }
     // ユーザ定義名前変数のみ3次元以上配列が使える
-    if (object.name === "v" && Wwa.isCalcurable(property)) {
+    if (objectOrFunctionCall.name === "v" && Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject3DPlus",
-        name: object.name,
-        indecies: [ ...object.indecies, property]
+        name: objectOrFunctionCall.name,
+        indecies: [ ...objectOrFunctionCall.indecies, property]
       }
     }
-  }
-  else {
-    throw new Error("WWAでは存在しない構文です")
+  } else if (objectOrFunctionCall.type === "SystemDefinedFunctionCall") {
+    if (Wwa.isCalcurable(property)) {
+      return {
+        type: "SystemDefinedFunctionCall",
+        functionName: objectOrFunctionCall.functionName,
+        value: objectOrFunctionCall.value,
+        // fooFunction().barMember.bazMember... のような形
+        indecies: [...(objectOrFunctionCall.indecies ?? []), property],
+      };
+    } else {
+      throw new Error("WWAでは存在しない構文です")
+    }
+  } else if (objectOrFunctionCall.type === "UserDefinedFunctionCall") {
+    if (Wwa.isCalcurable(property)) {
+      return {
+        type: "UserDefinedFunctionCall",
+        functionName: objectOrFunctionCall.functionName,
+        // fooFunction().barMember.bazMember... のような形
+        indecies: [...(objectOrFunctionCall.indecies ?? []), property],
+      }
+    } else {
+      throw new Error("WWAでは存在しない構文です")
+    }
   }
 }
 

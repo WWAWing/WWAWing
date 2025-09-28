@@ -51,7 +51,7 @@ export interface Literal extends Node {
 export interface CallExpression extends Node {
   type: "CallExpression",
   arguments: Literal[],
-  callee: Identifier
+  callee: Identifier | MemberExpression;
 }
 
 export interface IfStatement extends Node {
