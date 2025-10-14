@@ -10,7 +10,7 @@
   "sideEffects": false,
   "scripts": {
     "test": "jest",
-    "start": "run-p build:dev deploy:dev server",
+    "start": "run-p server build:dev deploy:dev",
     "build": "npm-run-all clean build:prod",
     "build:prod": "vite build --mode production",
     "build:dev": "vite build --mode development --watch",

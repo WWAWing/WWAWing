@@ -34,6 +34,14 @@ export default defineConfig(({ mode }) => {
     // TypeScript 設定
     resolve: {
       extensions: ['.ts', '.js'],
+      alias: {
+        // monorepo 内の依存パッケージのソースを直接参照して HMR を有効化
+        '@wwawing/common-interface': resolve(__dirname, '../common-interface/src/index.ts'),
+        '@wwawing/event-emitter': resolve(__dirname, '../event-emitter/src/index.ts'),
+        '@wwawing/loader': resolve(__dirname, '../loader/src/index.ts'),
+        '@wwawing/util': resolve(__dirname, '../util/src/index.ts'),
+        '@wwawing/virtual-pad': resolve(__dirname, '../virtual-pad/src/index.ts'),
+      },
     },
 
     // 環境変数の定義
