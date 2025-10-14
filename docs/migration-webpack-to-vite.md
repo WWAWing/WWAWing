@@ -18,7 +18,7 @@ WWA Wing Engine パッケージのビルドシステムを webpack から Vite �
 **開発ビルド (`webpack.config.ts`)**:
 - エントリーポイント: `./src/wwa_main.ts`
 - 出力: `lib/wwa.long.js`
-- ターゲット: `browserslist:last 2 versions or IE 11`
+- ターゲット: `browserslist:last 2 versions or IE 11` (**注**: この設定は古く、現在は不要)
 - TypeScript コンパイル: `ts-loader` + `tsconfig.webpack.json` (module: ESNext)
 - 環境変数注入: `VERSION_WWAJS` (package.json の version を注入)
 - ライセンスバナー: WWA Wing Engine と crypto-js のライセンス
@@ -69,10 +69,16 @@ run-p (並列実行)
 3. **モダンなツールチェーン**
    - ES モジュールネイティブ対応
    - より良いデバッグ体験
+   - Baseline Widely Available 対応による最適化されたコード生成
 
 4. **将来性**
    - webpack よりも活発な開発コミュニティ
    - 最新の Web 技術への対応が早い
+
+5. **レガシーブラウザサポートの廃止による恩恵**
+   - IE 11 などの古いブラウザのための polyfill が不要
+   - ファイルサイズの削減とパフォーマンス向上
+   - モダンな JavaScript 機能を活用可能
 
 ## 移行方針
 
@@ -84,8 +90,7 @@ run-p (並列実行)
 // package.json の devDependencies に追加
 {
   "vite": "^6.0.0",
-  "@vitejs/plugin-legacy": "^6.0.0",  // レガシーブラウザサポート用 (必要に応じて)
-  "vite-plugin-banner": "^0.8.0"      // ライセンスバナー用
+  "vite-plugin-banner": "^0.8.0"  // ライセンスバナー用
 }
 ```
 
@@ -96,6 +101,8 @@ run-p (並列実行)
 - `terser-webpack-plugin`
 - `@types/webpack`
 - `@types/terser-webpack-plugin`
+
+**注**: `@vitejs/plugin-legacy` は不要。Baseline Widely Available をターゲットとするため、レガシーブラウザサポートは含めません。
 
 #### 1.2 Vite 設定ファイルの作成
 
@@ -126,7 +133,7 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: false, // assets などが先にコピーされるため
       sourcemap: isDev,
       minify: isDev ? false : 'esbuild',
-      target: 'es2018', // tsconfig.json の target に合わせる
+      target: 'es2020', // Baseline Widely Available (2020年頃の機能) に対応
       rollupOptions: {
         output: {
           // グローバル変数として公開しない (IIFE として自己実行)
@@ -169,6 +176,12 @@ export default defineConfig(({ mode }) => {
 - Vite は `resolve.alias` で `false` を指定することで、webpack の `fallback` と同様の動作を実現
 - `vite-plugin-banner` を使ってライセンスバナーを追加
 - esbuild の minify は Terser より高速だが、ライセンスコメント保持のオプションが限定的なため、banner プラグインで対応
+- `target: 'es2020'` により、Baseline Widely Available の機能を使用可能
+  - Optional Chaining (`?.`)
+  - Nullish Coalescing (`??`)
+  - Dynamic Import
+  - BigInt
+  - Promise.allSettled など
 
 #### 1.3 package.json のスクリプト更新
 
@@ -230,20 +243,36 @@ export default defineConfig(({ mode }) => {
 - Vite への移行は Jest の設定に影響しないはず (SWC を使用しているため)
 - 念のため `npm test` でテストが通ることを確認
 
-#### 2.3 レガシーブラウザサポートの検討
+#### 2.3 ブラウザターゲットの最適化
 
-現在の webpack 設定では `browserslist:last 2 versions or IE 11` をターゲットにしているが、以下を検討:
+**方針**: Baseline Widely Available をターゲットとする
 
-1. **IE 11 サポートを継続する場合**
-   - `@vitejs/plugin-legacy` を使用
-   - ただし、WWA Wing のブラウザサポートポリシーを確認する必要あり
-   - IE 11 は 2022 年にサポート終了しているため、現在のポリシー次第
+Baseline Widely Available は、主要なブラウザで安定してサポートされている機能セットを指します（おおよそ 2020 年以降の機能）。
 
-2. **モダンブラウザのみサポートする場合**
-   - `target: 'es2018'` で十分
-   - ファイルサイズの削減とパフォーマンス向上が期待できる
+**利用可能な ES2020+ の機能**:
+- **Optional Chaining** (`?.`): オブジェクトのプロパティに安全にアクセス
+- **Nullish Coalescing** (`??`): null/undefined のみをフォールバック
+- **Dynamic Import**: コードスプリッティングとオンデマンドロード
+- **BigInt**: 任意精度の整数演算
+- **Promise.allSettled**: すべての Promise の結果を待機
+- **globalThis**: 環境に依存しないグローバルオブジェクト
 
-**推奨**: CLAUDE.md の「サポートブラウザ」セクションには IE 11 の記載がないため、レガシーブラウザサポートは不要と判断。
+**対応ブラウザ** (CLAUDE.md に記載のサポートブラウザ):
+- 最新版の Firefox
+- 最新版の Chrome/Chromium (Edge を含む)
+- 最新版の Safari (デスクトップ)
+- Android の最新版 Chrome
+- iOS の最新版 Safari
+
+これらのブラウザはすべて ES2020 の機能をサポートしています。
+
+**メリット**:
+1. **ファイルサイズの削減**: レガシーブラウザ向けの polyfill や変換が不要
+2. **パフォーマンス向上**: ネイティブのモダン JavaScript 機能を活用
+3. **メンテナンスコストの削減**: 古いブラウザの特殊ケースを考慮不要
+4. **開発体験の向上**: モダンな構文を直接使用可能
+
+**Vite 設定**: `target: 'es2020'` を使用することで、Baseline Widely Available に対応
 
 ### Phase 3: クリーンアップ
 
@@ -268,8 +297,8 @@ export default defineConfig(({ mode }) => {
 ```markdown
 ### ビルドシステム
 
-- **TypeScript**: ターゲット ES2018、CommonJS モジュールでコンパイル
-- **Vite**: engine パッケージのバンドルに使用 (esbuild ベース)
+- **TypeScript**: ターゲット ES2020 (Baseline Widely Available)、CommonJS モジュールでコンパイル
+- **Vite**: engine パッケージのバンドルに使用 (esbuild ベース、ES2020 ターゲット)
 - **lerna-lite**: パッケージ間の操作を統括
 - **ts-node with SWC**: ビルドスクリプトの高速な TypeScript 実行
 - **Jest with SWC**: engine パッケージのテストフレームワーク
@@ -392,12 +421,16 @@ Webpack から Vite への移行は、以下の理由から推奨されます:
 1. **ビルド速度の大幅な向上** - 開発体験が改善
 2. **設定のシンプル化** - メンテナンスが容易に
 3. **将来性** - モダンなツールチェーンへの移行
+4. **Baseline Widely Available 対応** - モダンブラウザ向けに最適化されたコード生成
 
 移行は比較的リスクが低く、3 日程度で完了できる見込みです。段階的なアプローチとテストを十分に行うことで、安全に移行できます。
+
+**注**: レガシーブラウザ（IE 11 など）のサポートは廃止され、Baseline Widely Available（ES2020 相当）をターゲットとします。これにより、ファイルサイズの削減とパフォーマンス向上が期待できます。
 
 ## 参考資料
 
 - [Vite 公式ドキュメント](https://vitejs.dev/)
 - [Vite ライブラリモードガイド](https://vitejs.dev/guide/build.html#library-mode)
 - [vite-plugin-banner](https://github.com/chengpeiquan/vite-plugin-banner)
-- [@vitejs/plugin-legacy](https://github.com/vitejs/vite/tree/main/packages/plugin-legacy)
+- [Baseline Widely Available](https://web.dev/baseline/)
+- [ES2020 Features](https://www.proposals.es/proposals/Finished)
