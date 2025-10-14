@@ -1,5 +1,5 @@
 import * as webpack from "webpack";
-import * as path from "path";
+import * as path from "node:path";
 import * as packageJson from "./package.json";
 
 const cryptoJsLicenseComment = `crypto-js\

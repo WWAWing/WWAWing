@@ -1,5 +1,5 @@
 import * as webpack from "webpack";
-import * as path from "path";
+import * as path from "node:path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 
 /**
@@ -16,7 +16,7 @@ const config: webpack.Configuration = {
     resolve: {
         extensions: [".ts", ".js"],
         fallback: {
-            "fs": false
+            "node:fs": false
         }
     },
     module: {

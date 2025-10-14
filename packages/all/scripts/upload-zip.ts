@@ -1,6 +1,6 @@
 import { Octokit } from "@octokit/rest";
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const WWA_WING_VERSION = process.env.WWA_WING_VERSION;
