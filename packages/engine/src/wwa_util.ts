@@ -1,5 +1,5 @@
 import { isPrimitive } from "@wwawing/util";
-import { Coord, UserVar, UserVarMap } from "./wwa_data";
+import { Coord, Direction, UserVar } from "./wwa_data";
 
 export var $id = (id: string): HTMLElement => {
     return document.getElementById(id);
@@ -167,6 +167,13 @@ export function setItem(
   }
 }
 
+/**
+ * プレイヤーの向きとして正しい値かどうかを判定します。
+ * (斜め移動の値は物体パーツを斜め移動させる場合に使われますが、プレイヤーの向きとしては不正な値です。)
+ */
+export function isValidPlayerDirection(dir: number): boolean {
+    return [Direction.NO_DIRECTION, Direction.LEFT, Direction.DOWN, Direction.UP, Direction.RIGHT].includes(dir);
+}
 
 export const assignmentBlockProperties = [
     "__proto__",

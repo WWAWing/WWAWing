@@ -2,9 +2,8 @@ import { convertMapToObject, isPrimitive } from "@wwawing/util";
 import { SystemMessage } from "@wwawing/common-interface";
 import { BattleEstimateParameters, Coord, Direction, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
-import { getItem } from "../wwa_util";
+import { getItem, isValidPlayerDirection } from "../wwa_util";
 import * as Wwa from "./wwa";
-import { Literal } from "./wwa";
 import { PARTS_TYPE_LIST } from "./utils";
 import { evalLengthFunction } from "./functions/length";
 import { getPlayerCoordPx, getPlayerCoordPy } from "./symbols";
@@ -518,7 +517,12 @@ export class EvalCalcWwaNode {
         if (isNaN(x) || isNaN(y)) {
           throw new Error(`飛び先の値が数値になっていません。 x=${x} / y=${y}`);
         }
-        this.generator.wwa.forcedJumpGate(x, y, EvalCalcWwaNode.convertDirection(dir));
+        const convertedDir = EvalCalcWwaNode.convertDirection(dir);
+        if (!isValidPlayerDirection(convertedDir)) {
+            // NOTE: convertedDir ではなく入力された値をエラーメッセージにしてわかりやすくする 
+            throw new TypeError("この値の向きにプレイヤーを向けることはできません" + dir);
+        }
+        this.generator.wwa.forcedJumpGate(x, y, convertedDir);
         return undefined;
       }
       case "SOUND": {

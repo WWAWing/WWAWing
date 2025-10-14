@@ -1360,13 +1360,13 @@ export class WWA {
 
     /** ユーザ定義スクリプト処理関数 */
     private setUserScript(userScriptStrings: UserScriptResponse) {
-        if(userScriptStrings.kind !== "data") {
+        if (userScriptStrings.kind !== "data") {
             console.error(userScriptStrings);
             return;
         }
         const readScriptWWANodes = this.convertWwaNodes(userScriptStrings.data);
         readScriptWWANodes.forEach((currentNode) => {
-            if(currentNode.type === "UserDefinedFunction" && this.userDefinedFunctions) {
+            if (currentNode.type === "UserDefinedFunction" && this.userDefinedFunctions) {
                 const functionName = currentNode.functionName;
                 this.userDefinedFunctions[functionName] = currentNode.body;
             }
@@ -6086,6 +6086,8 @@ font-weight: bold;
         return this._useConsole;
     }
     // JumpGateマクロ実装ポイント
+    // HACK: Direction 型が広すぎるので、斜め移動の向きを型の上でも塞いでおきたい。
+    // そもそも TypeScript の enum を無くしていきたいので、一旦はこのままにしておく。
     public forcedJumpGate(jx: number, jy: number, jdir: Direction = Direction.NO_DIRECTION): void {
         if (this._player.isWaitingMessage()) {
             this._windowCloseWaitingJumpGateRequest = { x: jx, y: jy, dir: jdir };
