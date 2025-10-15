@@ -18,10 +18,10 @@
     "build:lib": "npm run clean:lib && tsc -p .",
     "build:module": "npm run clean:module && tsc -p ./tsconfig.module.json",
     "start": "run-s start:browser",
-    "start:browser": "run-s debug:build:browser debug:start:browser",
+    "start:browser": "vite",
     "start:node": "run-s debug:build:node debug:start:node",
     "debug:build": "run-p debug:build:*",
-    "debug:build:browser": "run-s clean:debug:browser && cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack && shx cp ./src/___debug-resources___/wwamap.dat ./debug/browser",
+    "debug:build:browser": "run-s clean:debug:browser && vite build && shx cp ./src/___debug-resources___/wwamap.dat ./debug/browser",
     "debug:build:node": "run-s clean:debug:node && tsc -p tsconfig-debug-for-node.json && shx cp ./src/___debug-resources___/wwamap.dat ./debug/node/___debug-resources___/",
     "debug:start:browser": "http-server ./debug/browser -o",
     "debug:start:node": "node ./debug/node/___debug-resources___/demo-node.js",
@@ -49,7 +49,6 @@
   },
   "devDependencies": {
     "@wwawing/common-interface": "file:../common-interface",
-    "cross-env": "^7.0.3",
     "html-loader": "^5.1.0",
     "html-webpack-plugin": "^5.5.0",
     "http-server": "^14.1.1",
@@ -59,6 +58,7 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
+    "vite": "^6.3.7",
     "webpack": "^5.83.1",
     "webpack-cli": "^5.1.1"
   },
