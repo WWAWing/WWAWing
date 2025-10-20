@@ -22,7 +22,7 @@
     "generate:post-clean": "shx rm -rf tmp",
     "clean": "shx rm -rf debug lib bin tmp",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "type-check": "tsc -p . --watch"
+    "type-check": "tsc -p . --watch --noEmit"
   },
   "author": "WWA Wing Team",
   "license": "MIT",

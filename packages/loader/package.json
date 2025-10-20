@@ -32,7 +32,7 @@
     "clean:debug:browser": "shx rm -rf debug/browser",
     "clean:debug:node": "shx rm -rf debug/node",
     "test": "echo \"no test specified\"",
-    "type-check": "tsc -p . --watch"
+    "type-check": "tsc -p . --watch --noEmit"
   },
   "repository": {
     "type": "git",

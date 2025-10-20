@@ -12,7 +12,7 @@
   "scripts": {
     "build": "shx rm -rf lib && tsc -p .",
     "test": "jest",
-    "type-check": "tsc -p . --watch"
+    "type-check": "tsc -p . --watch --noEmit"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
