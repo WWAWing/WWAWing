@@ -49,8 +49,6 @@
     "@types/crypto-js": "^4.1.1",
     "@types/jest": "^29.5.1",
     "@types/pug": "^2.0.6",
-    "@types/terser-webpack-plugin": "^5.2.0",
-    "@types/webpack": "^5.28.0",
     "@wwawing/assets": "file:../assets",
     "@wwawing/common-interface": "file:../common-interface",
     "@wwawing/debug-server": "file:../debug-server",
@@ -69,14 +67,10 @@
     "pug": "^3.0.2",
     "shelljs": "^0.9.2",
     "shx": "^0.4.0",
-    "terser-webpack-plugin": "^5.3.9",
-    "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^6.3.6",
-    "vite-plugin-banner": "^0.8.1",
-    "webpack": "^5.83.1",
-    "webpack-cli": "^5.1.1"
+    "vite-plugin-banner": "^0.8.1"
   },
   "publishConfig": {
     "access": "public"

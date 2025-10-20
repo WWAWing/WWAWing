@@ -1,4 +1,4 @@
-declare var VERSION_WWAJS: string; // webpackにより注入
+declare var VERSION_WWAJS: string; // viteにより注入
 
 import { convertMapToObject } from "@wwawing/util";
 import { PictureRegistry, SystemMessage } from "@wwawing/common-interface";
