@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "type-check": "tsc -p . --watch",
     "build": "tsc -p ."
   },
   "author": "WWA Wing Team",

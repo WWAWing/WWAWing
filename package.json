@@ -11,7 +11,9 @@
   "scripts": {
     "test": "lerna run test --scope @wwawing/{engine,serve-index}",
     "clean": "lerna run clean",
-    "start": "lerna run start --stream --scope @wwawing/engine",
+    "start": "run-p start:*",
+    "start:engine": "lerna run start --stream --scope @wwawing/engine -- --dev",
+    "start:type-check": "lerna run type-check --parallel",
     "build": "lerna run build --stream",
     "deploy": "lerna run deploy:prod --scope @wwawing/engine",
     "generate": "lerna run generate --stream",

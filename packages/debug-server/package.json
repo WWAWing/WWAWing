@@ -21,7 +21,8 @@
     "generate:inject": "postject ./bin/wwa-server.exe NODE_SEA_BLOB ./tmp/sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
     "generate:post-clean": "shx rm -rf tmp",
     "clean": "shx rm -rf debug lib bin tmp",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "type-check": "tsc -p . --watch"
   },
   "author": "WWA Wing Team",
   "license": "MIT",

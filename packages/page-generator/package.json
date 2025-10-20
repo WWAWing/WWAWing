@@ -17,7 +17,8 @@
     "build:module": "tsc -p ./tsconfig.module.json && shx cp ./src/wwa.pug ./module/wwa.pug",
     "clean": "run-s clean:*",
     "clean:lib": "shx rm -rf ./lib",
-    "clean:module": "shx rm -rf ./module"
+    "clean:module": "shx rm -rf ./module",
+    "type-check": "tsc -p . --watch"
   },
   "files": [
     "lib",

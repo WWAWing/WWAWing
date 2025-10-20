@@ -25,7 +25,8 @@
     "deploy:prod:html": "ts-node ./debug/make-debug-pages",
     "deploy:dev:html": "ts-node ./debug/make-debug-pages dev",
     "clean": "shx rm -rf lib",
-    "server": "node ./launch-server lib"
+    "server": "node ./launch-server lib",
+    "type-check": "tsc -p . --watch"
   },
   "repository": {
     "type": "git",
