@@ -1,5 +1,5 @@
 import * as pug from "pug";
-import * as path from "path";
+import * as path from "node:path";
 import * as DataTypes from "./data-types";
 import * as Helper from "./helper";
 

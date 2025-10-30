@@ -22,7 +22,8 @@
     "build:module": "tsc -p ./tsconfig.module.json",
     "clean": "run-p clean:*",
     "clean:lib": "shx rm -rf ./lib",
-    "clean:module": "shx rm -rf ./module"
+    "clean:module": "shx rm -rf ./module",
+    "type-check": "tsc -p . --watch --noEmit"
   },
   "author": "WWA Wing Team",
   "license": "MIT",

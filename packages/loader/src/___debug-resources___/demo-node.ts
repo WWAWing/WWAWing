@@ -2,7 +2,7 @@ import { NodeEventEmitter } from "@wwawing/event-emitter";
 import { WWALoader, WWALoaderEventEmitter } from "..";
 import { WWAData } from "@wwawing/common-interface";
 import { EXTRACTING_MAPDATA_FILENAME, targetKeys} from "./demo-common";
-import path from "path";
+import path from "node:path";
 
 const display = (data: WWAData) => {
     targetKeys.forEach(key => {
