@@ -64,4 +64,9 @@ export const regMacroArg = new RegExp(`^(${VALUE_OR_FUNCTION})(?:(${CALC_OPERATO
 /**
  * ifマクロのフォーマット
  */
- export const regIf = new RegExp(`${START}(${VALUE_OR_FUNCTION})(${COMPARISON_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);
+export const regIf = new RegExp(`${START}(${VALUE_OR_FUNCTION})(${COMPARISON_OPERATOR})(${VALUE_OR_FUNCTION})${END}`);
+
+/**
+ * ピクチャーの文字列形式のテンプレート文字列のフォーマット
+ */
+export const regPictureTemplate = new RegExp(`{{(${VALUE_OR_FUNCTION})}}`, "g");

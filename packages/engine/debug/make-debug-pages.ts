@@ -1,7 +1,7 @@
 import { render, InputConfig } from "@wwawing/page-generator";
-import * as fs from "fs";
+import * as fs from "node:fs";
 import * as pug from "pug";
-import * as path from "path";
+import * as path from "node:path";
 import maps from "./maps-config";
 
 const isDev = process.argv.length >= 3 && process.argv[2] === "dev";
@@ -73,7 +73,8 @@ function createPlayPageConfig(mapDataName: string, cssName?: string, isClassicMo
                 wwaJs: isDev ? "wwa.long.js" : "wwa.js",
                 wwaCss: cssName,
                 titleImage: "cover.gif",
-                userVarNamesFile: `${mapDataName}-vars.json`
+                userVarNamesFile: `${mapDataName}-vars.json`,
+                pictureImageNamesFile: mapDataName === "picture_test" ? `${mapDataName}-picture.json` : undefined,
             },
         },
         copyrights: "official-and-wing"

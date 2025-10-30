@@ -1,4 +1,4 @@
-import { WWAConsts as Consts, type UserVariableKind } from "../../../wwa_data";
+import { WWAConsts as Consts, UserVar, type UserVariableKind } from "../../../wwa_data";
 import * as UserVariableCard from "../user-variable-card";
 
 export const CLASS_NAME = "user-variable-list";
@@ -24,7 +24,7 @@ export function createListItemElement({
   value,
 }: {
   index: number | string;
-  value?: number | string | boolean;
+  value?: UserVar;
 }) {
   const element = document.createElement("li");
   element.appendChild(UserVariableCard.createElement({ index, value }));
@@ -33,7 +33,7 @@ export function createListItemElement({
 
 export function appendNewListItemElement(
   element: HTMLElement,
-  { index, value }: { index: number | string; value: number | string | boolean }
+  { index, value }: { index: number | string; value: UserVar }
 ) {
   element.appendChild(createListItemElement({ index, value }));
 }

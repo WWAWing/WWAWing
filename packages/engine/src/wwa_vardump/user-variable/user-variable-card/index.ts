@@ -1,17 +1,22 @@
+import { UserVar } from "../../../wwa_data";
 import { formatUserVarForDisplay } from "../../../wwa_util";
 import * as UserVariableLabel from "../user-variable-label";
 
 export interface Props {
   index: number | string;
-  value?: number | string | boolean;
+  value?: UserVar;
 }
 
 const BLANK = "-";
 export const CLASS_NAME = "user-variable-card";
+export const TRIMMED_CLASS_NAME = "user-variable-card--is-trimmed";
 
 export function createElement({ index, value }: Props): HTMLElement {
   const element = document.createElement("div");
   element.classList.add(CLASS_NAME);
+  if (isTrimmingValue(value)) {
+    element.classList.add(TRIMMED_CLASS_NAME);
+  }
   element.dataset.varIndex = String(index);
   element.appendChild(createIndexElement(index));
   element.appendChild(createValueElement(value));
@@ -31,7 +36,7 @@ function createIndexElement(index: number | string): HTMLElement {
   return element;
 }
 
-function createValueElement(value?: number | string | boolean): HTMLElement {
+function createValueElement(value?: UserVar): HTMLElement {
   const element = document.createElement("div");
   element.classList.add("value");
   if (typeof value === "string") {
@@ -58,7 +63,7 @@ export function setupLabel(
 
 export function setValue(
   element: HTMLElement,
-  value?: number | string | boolean
+  value?: UserVar 
 ): void {
   element.textContent = value === undefined ? BLANK : formatUserVarForDisplay(value);
 }
@@ -69,4 +74,9 @@ export function clearValue(element: HTMLElement) {
 
 export function getLabelElement(element: HTMLElement): HTMLElement | null {
   return element.querySelector(`.${UserVariableLabel.CLASS_NAME}`);
+}
+
+function isTrimmingValue(value: unknown) {
+  // object 形式は trimming するとすべての内容を見ることができない
+  return typeof value !== "object";
 }

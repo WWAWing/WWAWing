@@ -1,4 +1,5 @@
-import { Coord } from "./wwa_data";
+import { isPrimitive } from "@wwawing/util";
+import { Coord, UserVar, UserVarMap } from "./wwa_data";
 
 export var $id = (id: string): HTMLElement => {
     return document.getElementById(id);
@@ -76,11 +77,16 @@ export function assertString(value: unknown, varName: string): value is string {
 
 /**
  * ユーザ変数などで使われる値をデバッグ系ツールに出力するためのフォーマット関数
- * string 型の場合にダブルクォートでくくったものを返します。それ以外の場合はそのまま値を文字列化したものを返します。
+ * string 型の場合にダブルクォートでくくったものを返します。boolean, number型の場合はそのまま値を文字列化したものを返します。
  * trimming = true にした場合は 11コードポイント以上の文字列は10文字までに省略されます。
+ * 無限再帰防止のため、深さ3以上は省略されます。
  */
-export function formatUserVarForDisplay(value: number | string | boolean, trimming?: boolean): string {
-  if (typeof value === "string") {
+export function formatUserVarForDisplay(value: UserVar, trimming?: boolean, depth = 0): string {
+  if (depth >= 3) {
+    return "...";
+  } else if(typeof value === "number" || typeof value === "boolean" || value === undefined || value === null) {
+    return String(value);
+  } else if (typeof value === "string") {
     // 文字列かつ10文字以上の場合に省略表記にしたい
     // 基本的な絵文字はこれで文字数カウントできるが、Zero Width Joiner があるとうまく分割できない
     // しかし、それをうまくカウントしようとすると 正規表現をがんばるか、Intl.Segmenter などを使う必要が出てくる
@@ -91,8 +97,83 @@ export function formatUserVarForDisplay(value: number | string | boolean, trimmi
         return `"${arrayValue.slice(0, 10).join("")}…`;
     }
     return `"${value}"`;
+  } else if (Array.isArray(value)) {
+    return `[${value.map((x) => formatUserVarForDisplay(x, true, depth + 1)).join(",")}]`;
+  } else if (value instanceof Map) {
+    const pairs = [...value];
+    return `{${pairs.map(([key, value]) => `${key}:${formatUserVarForDisplay(value, true, depth + 1)}`).join(",")}}`
+  } else {
+    throw new TypeError("この値はフォーマットできません", value)
   }
-  return String(value);
+}
+
+export function getItem(x: unknown, key: unknown) {
+  if (Array.isArray(x)) {
+    if (typeof key !== "number") {
+      throw new TypeError("配列に対して、数字以外をindexにできません");
+    }
+    if (key < 0 || key >= x.length) {
+      console.warn(`配列のインデックス ${key} は範囲外です`);
+      return undefined;
+    }
+    return x[key];
+  } else if (x instanceof Map) {
+    // JavaScript のオブジェクトに準拠し、文字列でないキーが与えられた場合は文字列にする
+    if (!isPrimitive(key)) {
+      throw new TypeError(
+        "オブジェクトのキーはプリミティブ値でなければなりません。: " + key
+      );
+    }
+    return x.get(String(key));
+  } else if (typeof x === "string") {
+    if (typeof key !== "number") {
+      throw new TypeError(`文字列 "${x}" に対して、数字以外をindexにできません`);
+    }
+    if (key < 0 || key >= x.length) {
+      console.warn(`文字列 "${x}" のインデックス ${key} は範囲外です`);
+      return undefined;
+    }
+    return x[key]; // 文字列中の文字を取得する場合
+  } else if (isPrimitive(x)) {
+    throw new TypeError(`プリミティブ値 ${String(x)} は添字参照できません`);
+  } else {
+    throw new TypeError(String(x) + "は添字参照できません");
+  }
+}
+export function setItem(
+  x: unknown,
+  key: unknown,
+  value: UserVar
+) {
+  if (Array.isArray(x)) {
+    if (typeof key !== "number") {
+      throw new TypeError("数字以外をindexにできません");
+    }
+    x[key] = value;
+  } else if (x instanceof Map) {
+    // JavaScript のオブジェクトに準拠し、文字列でないキーが与えられた場合は文字列にする
+    if (!isPrimitive(key)) {
+      throw new TypeError(
+        "オブジェクトのキーはプリミティブ値でなければなりません。: " + key
+      );
+    }
+    x.set(String(key), value);
+  } else if (typeof x === "string") {
+    throw new TypeError(`文字列 "${x}" の特定の文字を直接書き換えることはできません`);
+  } else if (isPrimitive(x)) {
+    throw new TypeError(`プリミティブ値 ${String(x)} は添字参照できません`);
+  } else {
+    throw new TypeError(String(x) + "は添字参照できません");
+  }
 }
 
 
+export const assignmentBlockProperties = [
+    "__proto__",
+    "__defineGetter__",
+    "__defineSetter__",
+    "__lookupGetter__",
+    "__lookupSetter__",
+    "constructor",
+    "prototype"
+];

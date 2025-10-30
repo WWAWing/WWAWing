@@ -4,6 +4,7 @@
  */
 export default [
     { fileName: "test", title: "テストマップ" },
+    { fileName: "picture_test", title: "テストマップ (ピクチャ機能限定版)" },
     { fileName: "wwamap", title: "Standard Map" },
     { fileName: "wwamap", outputPageName: "wwamap-classic", title: "Standard Map (Classic Mode)", cssName: "wwa_classic.css", isClassicMode: true as const },
     { fileName: "island02", title: "Fantasy Island" },

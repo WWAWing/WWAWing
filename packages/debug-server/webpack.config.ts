@@ -1,6 +1,8 @@
 import webpack from "webpack";
 import path from "node:path";
 
+// debug-server は 当面の間引き続き webpack を利用します。
+// rollup を使った場合はアセットの解決を手動でやる必要があるので、webpack で事足りる内は webpack を使い続けようと思います。
 const config: webpack.Configuration = {
   mode: "production",
   entry: "./src/index.ts",

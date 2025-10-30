@@ -1,9 +1,9 @@
-import { type WWAData } from "@wwawing/common-interface";
+import type { WWAData, UserVar, UserVarPrimitive, UserVarMap } from "@wwawing/common-interface";
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
-export { type WWAData };
+export type { WWAData, UserVar, UserVarPrimitive, UserVarMap};
 
 export class EquipmentStatus {
     public strength: number;
@@ -602,6 +602,7 @@ export enum MacroType {
     CONSOLE_LOG2 = 63,
     DELAYBGM = 64,
     SYSMSG = 65,
+    PICTURE = 66,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101,
     LEGACY_IF = 10050
@@ -675,6 +676,7 @@ export var macrotable = {
     "$console_log2": 63,
     "$delaybgm": 64,
     "$sysmsg": 65,
+    "$picture": 66,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }

@@ -1,7 +1,13 @@
+import { convertMapToObject, isPrimitive } from "@wwawing/util";
 import { SystemMessage } from "@wwawing/common-interface";
-import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
+import { getItem } from "../wwa_util";
 import * as Wwa from "./wwa";
+import { Literal } from "./wwa";
+import { PARTS_TYPE_LIST } from "./utils";
+import { evalLengthFunction } from "./functions/length";
+import { getPlayerCoordPx, getPlayerCoordPy } from "./symbols";
 import { PageAdditionalItem } from "./typedef";
 
 const operatorOperationMap: {
@@ -177,12 +183,14 @@ export class EvalCalcWwaNode {
         return this.evalBinaryOperation(node);
       case "Symbol":
         return this.evalSymbol(node);
-      case "Array1D":
-        return this.evalArray1D(node);
-      case "Array2D":
-        return this.evalArray2D(node);
+      case "ArrayOrObject1D":
+        return this.evalArrayOrObject1D(node);
+      case "ArrayOrObject2D":
+        return this.evalArrayOrObject2D(node);
+      case "ArrayOrObject3DPlus":
+        return this.evalArrayOrObject3DPlus(node);
       case "Literal":
-        return this.evalNumber(node);
+        return this.evalLiteral(node);
       case "UserVariableAssignment":
         return this.evalSetUserVariable(node);
       case "SpecialParameterAssignment":
@@ -221,6 +229,12 @@ export class EvalCalcWwaNode {
         return this.convertTemplateLiteral(node);
       case "ConditionalExpression":
         return this.convertConditionalExpression(node);
+      case "Property":
+        return this.property(node);
+      case "ObjectExpression":
+        return this.objectExpression(node);
+      case "ArrayExpression":
+        return this.arrayExpression(node);
       case "LoopPointerAssignment":
         return this.convertLoopPointerExpression(node);
       default:
@@ -254,7 +268,7 @@ export class EvalCalcWwaNode {
 
   /** i++ などが実行された時の処理. 現在後置インクリメントのみ対応しています. */
   updateExpression(node: Wwa.UpdateExpression) {
-    if (node.argument.type !== "Array1D" && node.argument.type !== "Array2D" && node.argument.type !== "Symbol") {
+    if (node.argument.type !== "ArrayOrObject1D" && node.argument.type !== "ArrayOrObject2D" && node.argument.type !== "Symbol") {
       throw new Error(`node.argument.typeが インクリメント/デクリメントできる対象ではありません。: ${node.argument.type}`);
     }
     const update = (value: number) => {
@@ -272,23 +286,23 @@ export class EvalCalcWwaNode {
     const valueLiteral = { type: "Literal", value: updatedValue } as const;
 
     switch(node.argument.type) {
-      case "Array1D": {
+      case "ArrayOrObject1D": {
         if (node.argument.name ==="v") {
           this.evalSetUserVariable({
             type: "UserVariableAssignment",
-            index: node.argument.index0,
+            index: [node.argument.indecies[0]],
             value: valueLiteral
           })
         } else if (node.argument.name === "ITEM") {
           this.itemAssignment({
             type: "ItemAssignment",
-            itemBoxPosition1to12: node.argument.index0,
+            itemBoxPosition1to12: node.argument.indecies[0],
             value: valueLiteral
           })
          } else if (node.argument.name === "LP") {
           this.convertLoopPointerExpression({
             type: "LoopPointerAssignment",
-            index: node.argument.index0,
+            index: node.argument.indecies[0],
             value: valueLiteral,
             operator: "="
           })
@@ -297,11 +311,11 @@ export class EvalCalcWwaNode {
         }
         break;
       }
-      case "Array2D": {
+      case "ArrayOrObject2D": {
         const params = {
           type: "PartsAssignment",
-          destinationX: node.argument.index0,
-          destinationY: node.argument.index1,
+          destinationX: node.argument.indecies[0],
+          destinationY: node.argument.indecies[1],
           value: valueLiteral,
           operator: "="
         } as const satisfies Partial<Wwa.PartsAssignment>;
@@ -505,7 +519,7 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         // 指定した引数の文字列をログ出力する
         const value = this.evalWwaNode(node.value[0]);
-        console.log(value);
+        console.log ( value instanceof Map ? convertMapToObject(value) : value);
         return undefined;
       }
       case "ABLE_CHANGE_SPEED": {
@@ -557,7 +571,6 @@ export class EvalCalcWwaNode {
         const destID = Number(this.evalWwaNode(node.value[1]));
         let partsType = node.value[2]? Number(this.evalWwaNode(node.value[2])): 0;
         let onlyThisSight = node.value[3]? Boolean(this.evalWwaNode(node.value[3])): false;
-        const PARTS_TYPE_LIST = [PartsType.OBJECT, PartsType.MAP];
         if(srcID < 0 || destID < 0 ) {
           throw new Error("パーツ番号が不正です");
         }
@@ -720,8 +733,54 @@ export class EvalCalcWwaNode {
         } else {
           throw new Error("この値は文字列に変換できないため、システムメッセージを表示できません。");
         }
+        break;
       }
-      break;
+      case "PICTURE": {
+        this._checkArgsLength(1, node);
+        const layerNumber = Number(this.evalWwaNode(node.value[0]));
+        const propertyDefinition = node.value.length >= 2 ? this.evalWwaNode(node.value[1]) : undefined;
+        if (propertyDefinition === undefined) {
+          this.generator.wwa.deletePictureRegistry(layerNumber);
+          return;
+        }
+        if (propertyDefinition instanceof Map) {
+          this.generator.wwa.setPictureRegistryFromObject(layerNumber, convertMapToObject(propertyDefinition));
+        } else if (typeof propertyDefinition === "string") {
+          // TODO パーツ座標は本来なら実行元パーツの座標にすべきだが、イベント関数では判別できない。
+          this.generator.wwa.setPictureRegistryFromRawText(layerNumber, propertyDefinition);
+        } else {
+          throw new Error("ピクチャのプロパティ定義は文字列あるいはオブジェクトである必要があります。")
+        }
+        break;
+      }
+      case "PICTURE_FROM_PARTS": {
+        this._checkArgsLength(2, node);
+        const layerNumber = Number(this.evalWwaNode(node.value[0]));
+        const propertyPartsNumber = Number(this.evalWwaNode(node.value[1]));
+        if (propertyPartsNumber === 0) {
+          this.generator.wwa.deletePictureRegistry(layerNumber);
+          return;
+        }
+        const propertyPartsType = node.value.length >= 3 ? Number(this.evalWwaNode(node.value[2])) : PartsType.OBJECT;
+        if (!PARTS_TYPE_LIST.includes(propertyPartsType)) {
+          throw new Error("パーツ種別が不明です");
+        }
+        const gameStatus = this.generator.wwa.getGameStatus();
+        // 実行元パーツ座標はプレイヤーの座標として評価する
+        this.generator.wwa.setPictureRegistry(layerNumber, propertyPartsNumber, propertyPartsType, gameStatus.playerCoord);
+        break;
+      }
+      case "CLEAR_ALL_PICTURES": {
+        this.generator.wwa.clearAllPictures();
+        break;
+      }
+      case "HAS_PICTURE": {
+        this._checkArgsLength(1, node);
+        const layerNumber = Number(this.evalWwaNode(node.value[0]));
+        // TODO もしかしたら WWAPicture から呼び出したほうが正確？
+        const hasPicture = game_status.wwaData.pictureRegistry.some((item) => item.layerNumber === layerNumber);
+        return hasPicture;
+      }
       /** 絶対値を返す関数 */
       case "ABS": {
         this._checkArgsLength(1, node);
@@ -793,6 +852,11 @@ export class EvalCalcWwaNode {
           return Math.floor(ims_pos / WWAConsts.CHIP_SIZE);
         }
         throw new Error("GET_IMG_POS_Y: 指定したIDのパーツのTypeが異常です。");
+      }
+      case "LENGTH": {
+        this._checkArgsLength(1, node);
+        const targetValue = this.evalWwaNode(node.value[0]);
+        return evalLengthFunction(targetValue);
       }
       case "IS_NUMBER": {
         this._checkArgsLength(1, node);
@@ -890,6 +954,23 @@ export class EvalCalcWwaNode {
     return value;
   }
 
+  property(node: Wwa.Property) {
+    // JavaScript のオブジェクト同様、文字列でないキーは文字列として解釈します。
+    const key = this.evalWwaNode(node.key)
+    if (!isPrimitive(key)) {
+      throw new Error(`オブジェクトのキーはプリミティブ値でなければなりません。: ${key}`);
+    }
+    return [String(this.evalWwaNode(node.key)), this.evalWwaNode(node.value)];
+  }
+
+  objectExpression(node: Wwa.ObjectExpression) {
+    const entries = node.properties.map((property) => this.evalWwaNode(property));
+    return new Map(entries);
+  }
+
+  arrayExpression(node: Wwa.ArrayExpression) {
+    return node.elements.map((element) => this.evalWwaNode(element));
+  }
   /**  LP[0]を処理する */
   convertLoopPointerExpression(node: Wwa.LoopPointerAssignment) {
     const right = this.evalWwaNode(node.value);
@@ -959,9 +1040,8 @@ export class EvalCalcWwaNode {
 
   evalMessage(node: Wwa.Msg) {
     const value = this.evalWwaNode(node.value);
-    const showString = isNaN(value)? value: value.toString();
     const additionalItems = this.generator.pickPageAdditionalQueue();
-    this.generator.wwa.handleMsgFunction({ message: showString, additionalItems });
+    this.generator.wwa.handleMsgFunction({ message: String(value), additionalItems });
     return undefined;
   }
 
@@ -1051,13 +1131,23 @@ export class EvalCalcWwaNode {
   }
 
   evalSetUserVariable(node: Wwa.UserVariableAssignment) {
-    const right = this.evalWwaNode(node.value);
-    if(!this.generator.wwa) {
+    if(node.index.length > 1) {
+      const right = this.evalWwaNode(node.value);
+      const userVarIndexes = node.index.map((x) => this.evalWwaNode(x));
+      this.generator.wwa.setUserVarIndecies(userVarIndexes, right, node.operator);
+      return;
+    }
+    else {
+      // TODO: 互換性保持の暫定措置
+      const right = this.evalWwaNode(node.value);
+      if(!this.generator.wwa) {
+        return right;
+      }
+      // TODO: 後で直す
+      const userVarIndex = this.evalWwaNode(node.index[0]);
+      this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
       return right;
     }
-    const userVarIndex = this.evalWwaNode(node.index);
-    this.generator.wwa.setUserVar(userVarIndex, right, node.operator);
-    return right;
   }
 
   evalUnaryOperation(node: Wwa.UnaryOperation) {
@@ -1173,16 +1263,28 @@ export class EvalCalcWwaNode {
       case 'ENEMY_GD':
         // 戦闘予測の場合は戦闘予測用HPで計算       
         return this.generator.state.battleDamageCalculation?.estimatingParams?.enemyStatus.gold ?? (typeof enemyStatus === 'number'? -1 : enemyStatus.gold);
+      case 'PICTURE':
+        throw new Error("この機能はまだ実装されていません！");
+      case 'PLAYER_PX':
+        return getPlayerCoordPx(gameStatus.playerCoord.x, gameStatus.cameraCoord.x);
+      case 'PLAYER_PY':
+        return getPlayerCoordPy(gameStatus.playerCoord.y, gameStatus.cameraCoord.y);
+      case 'MOVE_SPEED':
+        return speedList[gameStatus.gameSpeedIndex];
+      case 'MOVE_FRAME_TIME':
+        return WWAConsts.CHIP_SIZE / speedList[gameStatus.gameSpeedIndex];
       case 'LP':
         // LOG出力用として返す
         return this.for_id.LP;
+      case "undefined":
+        return undefined;
       default:
         throw new Error("このシンボルは取得できません")
     }
   }
 
-  evalArray1D(node: Wwa.Array1D) {
-    const userVarIndex = this.evalWwaNode(node.index0);
+  evalArrayOrObject1D(node: Wwa.ArrayOrObject1D) {
+    const userVarIndex = this.evalWwaNode(node.indecies[0]);
     if (typeof userVarIndex !== "number") {
       switch(node.name) {
         case "v":
@@ -1200,6 +1302,8 @@ export class EvalCalcWwaNode {
           throw new Error("ITEMの添字に想定外の値が入っています。1以上12以下の添字を指定してください。: "+userVarIndex);
         }
         return game_status.itemBox[userVarIndex - 1];
+      case "PICTURE":
+        throw new Error("この機能はまだ実装されていません！");
       case "LP":
         return this.for_id.LP[userVarIndex];
       default:
@@ -1211,12 +1315,12 @@ export class EvalCalcWwaNode {
    * o[1][2]のようなobject/mapパーツを右辺値に持ってきた際に該当座標のパーツ番号を返す
    * 左辺値代入は partsAssignment で処理する
    **/
-  evalArray2D(node: Wwa.Array2D) {
+  evalArrayOrObject2D(node: Wwa.ArrayOrObject2D) {
     switch(node.name) {
       case "m":
       case "o":
-        const x = this.evalWwaNode(node.index0);
-        const y = this.evalWwaNode(node.index1);
+        const x = this.evalWwaNode(node.indecies[0]);
+        const y = this.evalWwaNode(node.indecies[1]);
         if(typeof x !== "number" || typeof y !== "number") {
           throw new Error(`座標は数値で指定してください (${x}, ${y})`)
         }
@@ -1225,12 +1329,35 @@ export class EvalCalcWwaNode {
         const partsType = node.name === 'o'? PartsType.OBJECT: PartsType.MAP;
         const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
+      case "v": {
+        const key = (node.indecies[0] as Literal).value;
+        const value = this.generator.wwa.getUserNameVar(key);
+        if (
+          value === null ||
+          (!Array.isArray(value) &&
+            typeof value !== "object" &&
+            typeof value !== "string")
+        ) {
+          throw new Error(
+            `指定したユーザー定義変数: v["${key}"] は配列・オブジェクト・文字列ではありません`
+          );
+        }
+        const userNameRightKey = this.evalWwaNode(node.indecies[1]);
+        return getItem(value, userNameRightKey);
+      }
       default:
         throw new Error("このシンボルは取得できません")
     }
   }
 
-  evalNumber(node: Wwa.Literal) {
+  // 3次元以上配列はユーザ定義名前変数のみ使用可能
+  evalArrayOrObject3DPlus(node: Wwa.ArrayOrObject3DPlus) {
+    const indecies = node.indecies.map((x) => this.evalWwaNode(x));
+    const userNameValue = this.generator.wwa.getUserNameVar(indecies[0]);
+    return indecies.slice(1).reduce((prev, current) => getItem(prev, current), userNameValue);
+  }
+
+  evalLiteral(node: Wwa.Literal) {
     return node.value;
   }
 }

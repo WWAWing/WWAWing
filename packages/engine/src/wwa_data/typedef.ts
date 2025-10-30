@@ -22,4 +22,5 @@ export interface DataWWAOptions {
     virtualPadViewportFitEnable?: boolean;
     virtualPadControllerElm?: HTMLElement;
     userDefinedScriptsFile?: string;
+    pictureImageNamesFile?: string;
 }

@@ -10,22 +10,23 @@
   "sideEffects": false,
   "scripts": {
     "test": "jest",
-    "start": "run-p build:dev deploy:dev server",
+    "start": "run-p server build:dev deploy:dev",
     "build": "npm-run-all clean build:prod",
-    "build:prod": "webpack --config webpack.config.prod.ts",
-    "build:dev": "webpack -w",
+    "build:prod": "vite build --mode production",
+    "build:dev": "vite build --mode development --watch",
     "deploy:prod": "shx mkdir -p lib && run-p deploy:common:* deploy:prod:*",
     "deploy:dev": "shx mkdir -p lib && run-p deploy:common:* deploy:dev:*",
     "deploy:common:audio": "shx cp -R ../../node_modules/@wwawing/assets/audio lib/",
     "deploy:common:images": "shx cp ../../node_modules/@wwawing/assets/images/*.* lib/",
     "deploy:common:mapdata": "shx cp ../../node_modules/@wwawing/assets/mapdata/*.* lib/",
-    "deploy:common:vars": "shx cp ../../node_modules/@wwawing/assets/vars/*.* lib/",
+    "deploy:common:defs": "shx cp ../../node_modules/@wwawing/assets/defs/*.* lib/",
     "deploy:common:style": "shx cp ../../node_modules/@wwawing/styles/output/*.* lib/ && shx cp ../../node_modules/@wwawing/assets/style/*.* lib/",
     "deploy:common:scripts": "shx mkdir -p lib/script && shx cp ../../node_modules/@wwawing/assets/script/*.* lib/script",
     "deploy:prod:html": "ts-node ./debug/make-debug-pages",
     "deploy:dev:html": "ts-node ./debug/make-debug-pages dev",
     "clean": "shx rm -rf lib",
-    "server": "node ./launch-server lib"
+    "server": "node ./launch-server lib",
+    "type-check": "tsc -p . --watch --noEmit"
   },
   "repository": {
     "type": "git",
@@ -48,8 +49,6 @@
     "@types/crypto-js": "^4.1.1",
     "@types/jest": "^29.5.1",
     "@types/pug": "^2.0.6",
-    "@types/terser-webpack-plugin": "^5.2.0",
-    "@types/webpack": "^5.28.0",
     "@wwawing/assets": "file:../assets",
     "@wwawing/common-interface": "file:../common-interface",
     "@wwawing/debug-server": "file:../debug-server",
@@ -57,8 +56,10 @@
     "@wwawing/loader": "file:../loader",
     "@wwawing/page-generator": "file:../page-generator",
     "@wwawing/styles": "file:../styles",
+    "@wwawing/util": "file:../util",
     "@wwawing/virtual-pad": "file:../virtual-pad",
     "crypto-js": "^4.1.1",
+    "flatted": "^3.3.3",
     "jest": "^29.5.0",
     "jest-cli": "^29.5.0",
     "jest-environment-jsdom": "^29.5.0",
@@ -66,12 +67,10 @@
     "pug": "^3.0.2",
     "shelljs": "^0.9.2",
     "shx": "^0.4.0",
-    "terser-webpack-plugin": "^5.3.9",
-    "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "webpack": "^5.83.1",
-    "webpack-cli": "^5.1.1"
+    "vite": "^6.3.6",
+    "vite-plugin-banner": "^0.8.1"
   },
   "publishConfig": {
     "access": "public"

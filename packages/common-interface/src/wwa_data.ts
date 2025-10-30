@@ -1,4 +1,9 @@
-import type { Key } from "./wwa_system_message";
+import { Key } from "./wwa_system_message";
+import { PictureProperties } from "./wwa_picture";
+
+export type UserVarPrimitive = number | string | boolean;  // null | undefined も認めたい
+export type UserVar = UserVarPrimitive | Array<UserVar> | UserVarMap;
+export type UserVarMap =  Map<string, UserVar>
 
 export interface Coord {
     x: number;
@@ -12,6 +17,27 @@ export interface Coord {
  * - except-macro: マクロで生命力が 0 になった場合以外ではゲームオーバーにする
  */
 export type GameOverPolicy = "default" | "never" | "except-macro";
+
+type PictureRegistryBase<N> = {
+    layerNumber: number,
+    imgPosX: number,
+    imgPosY: number,
+    imgPosX2: number,
+    imgPosY2: number,
+    /**
+     * ピクチャ作成を呼び出したパーツの X 座標。 next プロパティで次のピクチャをつながる場合に使用する。
+     */
+    triggerPartsX: number,
+    /**
+     * ピクチャ作成を呼び出したパーツの Y 座標。
+     */
+    triggerPartsY: number,
+    soundNumber: number,
+    properties: PictureProperties<N>
+};
+export type PictureRegistry = PictureRegistryBase<number>;
+// 変数参照がまだ残っている状態の PictureRegistry
+export type RawPictureRegistry = PictureRegistryBase<number | string>;
 
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
@@ -128,8 +154,8 @@ export interface WWAData {
      */
     gamePadButtonItemTable: number[];
 
-    userVar: (string | number | boolean)[];
-    userNamedVar: [string, string | number | boolean][];
+    userVar: UserVarPrimitive[];
+    userNamedVar: UserVarMap;
     permitChangeGameSpeed: boolean;
     gameSpeedIndex: number;
     playTime: number;
@@ -162,5 +188,6 @@ export interface WWAData {
      */
     customSystemMessages: Partial<Record<Key, string>>;
 
-}
+    pictureRegistry: PictureRegistry[];
 
+}
