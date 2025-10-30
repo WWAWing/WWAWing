@@ -1,5 +1,9 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { resolve } from 'node:path';
+
+// 本 vite.config.ts は @wwawing/loader をブラウザから読み込んで動作確認するためのものです。
+// src/___debug-resources___ 以下のデバッグ用リソースをビルドします。
+// @wwawing/engine のビルドには関係ありませんのでご注意ください。
 
 export default defineConfig({
   root: 'src/___debug-resources___',
