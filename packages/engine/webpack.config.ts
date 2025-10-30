@@ -8,7 +8,7 @@ const cryptoJsLicenseComment = `crypto-js\
 
 const wwaWingEngineLicenseComment = `WWA Wing Engine\
  (c) NAO / WWA Wing Team /\
- MIT License https://github.com/WWAWing/WWAWing/blob/develop/packages/engine/LICENSE`;
+ MIT License https://github.com/WWAWing/WWAWing/blob/v3/packages/engine/LICENSE`;
 
 const config: webpack.Configuration = {
     mode: "development",
