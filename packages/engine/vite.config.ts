@@ -4,7 +4,7 @@ import banner from 'vite-plugin-banner';
 import pkg from './package.json';
 
 const cryptoJsLicenseComment = `crypto-js (c) Jeff Mott / Evan Vosberg / MIT License https://github.com/brix/crypto-js/blob/develop/LICENSE`;
-const wwaWingEngineLicenseComment = `WWA Wing Engine (c) NAO / WWA Wing Team / MIT License https://github.com/WWAWing/WWAWing/blob/develop/packages/engine/LICENSE`;
+const wwaWingEngineLicenseComment = `WWA Wing Engine (c) NAO / WWA Wing Team / MIT License https://github.com/WWAWing/WWAWing/blob/v4/packages/engine/LICENSE`;
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
