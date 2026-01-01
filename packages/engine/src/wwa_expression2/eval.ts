@@ -787,6 +787,32 @@ export class EvalCalcWwaNode {
         const value = Number(this.evalWwaNode(node.value[0]));
         return Math.abs(value);
       }
+      case "POW": {
+        this._checkArgsLength(2, node);
+        const base = Number(this.evalWwaNode(node.value[0]));
+        const exponent = Number(this.evalWwaNode(node.value[1]));
+        return Math.pow(base, exponent);
+      }
+      case "SQRT": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.sqrt(value);
+      }
+      case "SIN": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.sin(value);
+      }
+      case "COS": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.cos(value);
+      }
+      case "TAN": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.tan(value);
+      }
       /** ゲームオーバー座標取得関数たち */
       case "GET_GAMEOVER_POS_X": {
         const pos = this.generator.wwa.getGemeOverPosition();
