@@ -8,4 +8,4 @@ export const PARTS_TYPE_LIST = [PartsType.OBJECT, PartsType.MAP];
  * その誤差が原因で、限りなく 0 に近いものの、扱いにくい値 (1.2246467991473532e-16) が算出されます。
  * この場合、 true として判定されることを想定しています。
  */
-export const isLowerThanEpsilon = (value: number) => Math.abs(value) < 1e-10;
+export const isLowerThanEpsilon = (value: number) => Math.abs(value) < Number.EPSILON;
