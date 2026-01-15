@@ -52,7 +52,7 @@
     "@wwawing/common-interface": "file:../common-interface",
     "http-server": "^14.1.1",
     "npm-run-all2": "^8.0.1",
-    "shelljs": "^0.9.2",
+    "shelljs": "^0.10.0",
     "shx": "^0.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
