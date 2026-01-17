@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/express": "5.0.6",
-    "@types/node": "^22.10.1",
+    "@types/node": "^24",
     "express": "^5.2.1",
     "npm-run-all2": "^8.0.1",
     "postject": "^1.0.0-alpha.6",
@@ -47,7 +47,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=22",
+    "node": ">=24",
     "npm": ">=11"
   }
 }

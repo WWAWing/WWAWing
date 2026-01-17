@@ -1,0 +1,9 @@
+{
+    "minify": false,
+    "jsc": {
+        "parser": {
+            "syntax": "typescript"
+        },
+        "target": "es2023"
+    }
+}
