@@ -12,14 +12,14 @@ describe("functions-test", () => {
       expect(evalLengthFunction({ wwa: "hogehoge", wing: "fugafuga" })).toBe(2);
     });
     it("数値形式の場合は取り扱えない", () => {
-      expect(() => evalLengthFunction(12345)).toThrowError();
+      expect(() => evalLengthFunction(12345)).toThrow();
     });
     it("null の場合は取り扱えない", () => {
-      expect(() => evalLengthFunction(null)).toThrowError();
+      expect(() => evalLengthFunction(null)).toThrow();
     });
     it("boolean 形式の場合は取り扱えない", () => {
-      expect(() => evalLengthFunction(true)).toThrowError();
-      expect(() => evalLengthFunction(false)).toThrowError();
+      expect(() => evalLengthFunction(true)).toThrow();
+      expect(() => evalLengthFunction(false)).toThrow();
     });
   })
 });

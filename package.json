@@ -37,7 +37,7 @@
   "devDependencies": {
     "@swc/core": "^1.10.4",
     "@swc/helpers": "^0.5.15",
-    "@types/node": "^22.10.1",
+    "@types/node": "^24",
     "@lerna-lite/cli": "^4.10.5",
     "@lerna-lite/publish": "^4.10.5",
     "@lerna-lite/run": "^4.10.5",
@@ -48,10 +48,10 @@
     "typescript": "^5.8.3"
   },
   "engines": {
-    "node": ">=22",
+    "node": ">=24",
     "npm": ">=11"
   },
   "volta": {
-    "node": "22.13.1"
+    "node": "24.13.0"
   }
 }

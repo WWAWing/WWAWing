@@ -32,7 +32,7 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^22.10.1",
+    "@types/node": "^24",
     "@types/pug": "^2.0.6",
     "npm-run-all2": "^8.0.1",
     "shelljs": "^0.10.0",
@@ -46,7 +46,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=22",
+    "node": ">=24",
     "npm": ">=11"
   }
 }

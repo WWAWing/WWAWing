@@ -10,7 +10,7 @@
 #
 # 以下は、ダウンロードしたい Node.js のバージョンに合わせてください
 # Example:
-#   $version="v22.15.0"
+#   $version="v24.13.0"
 $version="v24.13.0"
 
 Push-Location "$PSScriptRoot\exe"

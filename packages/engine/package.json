@@ -76,7 +76,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=22",
+    "node": ">=24",
     "npm": ">=11"
   }
 }
