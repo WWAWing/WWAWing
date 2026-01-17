@@ -64,7 +64,7 @@ function main(serveIndexDir: string) {
 
 /*!
  * @wwawing/debug-server
- * Copyright (c) 2018-2025 WWA Wing Team
+ * Copyright (c) 2018-2026 WWA Wing Team
  * MIT Licensed
  * https://github.com/WWAWing/WWAWing/blob/v3/packages/debug-server/LICENSE
  */
