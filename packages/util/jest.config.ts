@@ -1,3 +1,7 @@
+import fs from "node:fs";
+
+const swcConfig = JSON.parse(fs.readFileSync(`../../.swcrc`, 'utf-8'))
+
 /*
  * For a detailed explanation regarding each configuration property and type check, visit:
  * https://jestjs.io/docs/configuration
@@ -18,7 +22,7 @@ export default {
   ],
   testRegex: ["__tests__/.*|\\.test\\.(js|ts)"],
   transform: {
-    "^.+\\.(j|t)s$": ["@swc/jest", require("../../swcConfig")]
+    "^.+\\.(j|t)s$": ["@swc/jest", swcConfig]
   },
   transformIgnorePatterns: [
     "/node_modules/",

@@ -8,7 +8,7 @@ WWA Wing は、インターネット RPG 「World Wide Adventure」の TypeScrip
 
 ## 必要な環境
 
-- Node.js 22系
+- Node.js 24系
 - npm 11系
 - Git LFS (wwa-server の生成時のみ必要)
   - 開発前に一度 `git lfs install` を実行する必要があります
