@@ -4,7 +4,7 @@ import path from "node:path";
 const config: webpack.Configuration = {
   mode: "production",
   entry: "./src/index.ts",
-  target: "node22",
+  target: "node24",
   output: {
     filename: "index.js",
     path: path.resolve(__dirname, "lib"),

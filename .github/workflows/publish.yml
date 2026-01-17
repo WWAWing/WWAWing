@@ -8,13 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "バージョンを入力 (patch/minor/major/X.Y.Z-hogehoge.based-on.A.B.C.p.N)"
+        description: "バージョンを入力 (major, minor, patch) 安定版は原則 patch のみ"
         required: true
         default: "patch"
-      tag:
-        description: "publish に使うタグを入力 (普通にリリースしたい場合:latest)"
-        required: true
-        default: "latest"
 
 jobs:
   publish:
@@ -26,6 +22,7 @@ jobs:
       - uses: ./.github/actions/init
         with:
           lfs: true
+      ## 安定版ではタグは latest に固定します
       - name: "Publish"
         run: |
           npm run version-up -- ${{ github.event.inputs.version }} --yes
@@ -35,4 +32,4 @@ jobs:
           git commit -m "v$NEW_VERSION"
           git tag "v$NEW_VERSION"
           git push origin HEAD --tags
-          npm run publish:all -- --dist-tag ${{ github.event.inputs.tag }} --no-verify-access --yes
+          npm run publish:all -- --dist-tag latest --no-verify-access --yes
