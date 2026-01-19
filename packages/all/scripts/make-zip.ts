@@ -1,5 +1,4 @@
 import JSZip from "jszip";
-import glob from "glob";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -7,7 +6,7 @@ const baseDir = "./dist";
 
 async function getAllFiles(target: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
-    glob(`${target}/**/*.*`, { cwd: baseDir }, (error, matches) => {
+    fs.glob(`${target}/**/*.*`, { cwd: baseDir }, (error, matches) => {
       if (error) {
         reject(error);
       } else {
