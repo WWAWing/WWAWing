@@ -10,10 +10,14 @@
   },
   "files": [
     "audio",
+    "defs",
+    "exe",
     "html",
     "images",
     "mapdata",
+    "script",
     "style",
+    "text",
     "wwamk310"
   ],
   "scripts": {
