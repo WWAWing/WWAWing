@@ -2717,6 +2717,28 @@ export class WWA {
             }
             this._objectMovingDataManager.update();
         }
+        // メッセージ非表示待機モード
+        else if(this._player.isWaitingNoMessage()) {
+            if(
+                this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
+                this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
+                this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                this._mouseStore.getMouseState() === MouseState.MOUSEDOWN ||
+                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B) ||
+                this._virtualPadStore.checkTouchButton("BUTTON_ENTER") ||
+                this._virtualPadStore.checkTouchButton("BUTTON_ESC")
+            ) {
+                // メッセージ非表示待機モードを解除
+                this._player.clearMessageWaiting();
+                const execFuncName = this._player.getAfterEnterExecFuncName();
+                console.log("メッセージ非表示待機モードを解除")
+                console.log("実行関数名: "+execFuncName)
+                this.evalCalcWwaNodeGenerator.evalWwaNode({
+                    type: "CallDefinedFunction",
+                    functionName: execFuncName
+                });
+            }
+        }
 
         this.updatePicturesAnimation();
         this._cgManager.picture.updateFrameTimerValue();
@@ -7053,6 +7075,10 @@ font-weight: bold;
 
     public overwriteSystemMessage(key: SystemMessage.Key, message: string | undefined) {
         this._wwaData.customSystemMessages[key] = message;
+    }
+
+    public setEnterWaiting(afterEnterExecFuncName: string) {
+        this._player.setNoMessageWaitng(afterEnterExecFuncName);
     }
 };
 

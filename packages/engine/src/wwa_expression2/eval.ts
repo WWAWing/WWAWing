@@ -863,6 +863,18 @@ export class EvalCalcWwaNode {
         const value = this.evalWwaNode(node.value[0]);
         return typeof value === "number";
       }
+      case "WAIT_ENTER": {
+        this._checkArgsLength(1, node);
+        // valueで評価した関数名を読み込む
+        const value = this.evalWwaNode(node.value[0]);
+        this.generator.wwa.setEnterWaiting(value);
+        // TODO: ENTERが押されたときに呼び出されるようにする
+        // this.evalWwaNode({
+        //   type: "CallDefinedFunction",
+        //   functionName: value
+        // })
+        return;
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }

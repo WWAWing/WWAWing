@@ -46,6 +46,7 @@ export enum PlayerState {
     MOVING,
     CAMERA_MOVING,
     MESSAGE_WAITING,
+    NO_MESSAGE_WAITING,
     LOCALGATE_JUMPED,
     BATTLE,
     ESTIMATE_WINDOW_WAITING,
@@ -111,6 +112,9 @@ export class Player extends PartsObject {
     // 戦闘開始からでなくとも、途中から0ダメージターンが規定回数が超えた場合も終了。
     // 戦闘していない場合は 0。
     protected _battleNoDamageTurnLength: number;
+
+    // メッセージ非表示待機後に呼ばれるユーザー定義関数
+    protected _afterEnterExecFuncName: string;
 
     public move(): void {
         if (this.isControllable()) {
@@ -338,8 +342,22 @@ export class Player extends PartsObject {
         this._state = PlayerState.MESSAGE_WAITING;
     }
 
+    // メッセージ非表示でEnterクリック待機状態とする
+    public setNoMessageWaitng(afterEnterExecFuncName: string): void {
+        this._state = PlayerState.NO_MESSAGE_WAITING;
+        this._afterEnterExecFuncName = afterEnterExecFuncName;
+    }
+
     public isWaitingMessage(): boolean {
         return this._state === PlayerState.MESSAGE_WAITING;
+    }
+
+    public isWaitingNoMessage(): boolean {
+        return this._state === PlayerState.NO_MESSAGE_WAITING;
+    }
+
+    public getAfterEnterExecFuncName(): string {
+        return this._afterEnterExecFuncName;
     }
 
     public isDelayFrame(): boolean {
@@ -354,10 +372,14 @@ export class Player extends PartsObject {
     }
 
     public clearMessageWaiting(): void {
-        if (this._state !== PlayerState.MESSAGE_WAITING && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
+        const isWaiting = [
+            PlayerState.MESSAGE_WAITING,
+            PlayerState.NO_MESSAGE_WAITING
+        ].includes(this._state);
+        if (!isWaiting && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             return;
         }
-        if (this._state === PlayerState.MESSAGE_WAITING) {
+        if (isWaiting) {
             this._state = PlayerState.CONTROLLABLE;
         } else if (this._state === PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             this._state = PlayerState.LOCALGATE_JUMPED;
