@@ -2732,11 +2732,22 @@ export class WWA {
                 this._player.clearMessageWaiting();
                 const execFuncName = this._player.getAfterEnterExecFuncName();
                 console.log("メッセージ非表示待機モードを解除")
-                console.log("実行関数名: "+execFuncName)
-                this.evalCalcWwaNodeGenerator.evalWwaNode({
-                    type: "CallDefinedFunction",
-                    functionName: execFuncName
-                });
+                if(execFuncName !== "") {
+                    console.log("実行関数名: "+execFuncName)
+                    try {
+                        this.evalCalcWwaNodeGenerator.evalWwaNode({
+                            type: "CallDefinedFunction",
+                            functionName: execFuncName
+                        });
+                    }
+                    catch(e) {
+                        // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
+                        console.error(e);
+                    }
+                }
+                else {
+                    console.log("関数実行はしません。")
+                }
             }
         }
 
