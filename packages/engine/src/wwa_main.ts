@@ -1673,6 +1673,34 @@ export class WWA {
         }
     }
 
+    /** 音楽を停止します */
+    public stopSound(fileName: string | number) {
+        /** 従来の数字音声の場合 */
+        if(Number.isFinite(fileName)) {
+            const id = Number(fileName);
+            if (id < 0 || id >= Consts.SOUND_MAX) {
+                console.warn("サウンド番号が範囲外です。");
+                return;
+            }
+            if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
+                if (this.sounds[this._wwaData.bgm].isPlaying()) {
+                    this.sounds[this._wwaData.bgm].pause();
+                }
+                this._wwaData.bgm = 0;
+            }
+        }
+        /** カスタム音声の場合 */
+        else {
+            if(this.customSounds[fileName]) {
+                    this.customSounds[fileName].pause();
+                    this._wwaData.bgm = 0;
+            }
+            else {            
+                console.warn(`該当のサウンドファイルが未定義です。: ${fileName}`)
+            }
+        }
+    }
+
     /** IDでは無く任意の音楽ファイルを再生する */
     public customPlaySound(fileName: string, isLoop: boolean = false, isStop = false): void {
         if(this.customSounds[fileName]) {
@@ -1682,12 +1710,12 @@ export class WWA {
                     this._wwaData.bgm = 0;
                 }
                 else if(isLoop) {
-                    if(this._wwaData.bgm !== fileName) {
-                        this.customSounds[fileName].play(0, isLoop);
-                        this._wwaData.bgm = fileName;
-                    }
+                    console.log(`${fileName} をループ再生します。`);
+                    this.customSounds[fileName].play(0, isLoop);
+                    // this._wwaData.bgm = fileName;
                 }
                 else {
+                    console.log(`${fileName} を再生します。`);
                     this.customSounds[fileName].play(0, isLoop);
                 }
             }

@@ -516,6 +516,13 @@ export class EvalCalcWwaNode {
           this.generator.wwa.customPlaySound(soundValue, Boolean(isLoop), Boolean(isStop))
         }
       }
+      case "SOUND_STOP":
+      case "STOP_SOUND": {
+        this._checkArgsLength(1, node);
+        const soundValue = this.evalWwaNode(node.value[0]);
+        this.generator.wwa.stopSound(soundValue);
+      }
+        break;
       case "SAVE": {
         this._checkArgsLength(1, node);
         // SAVEは引数を一つだけ取る
