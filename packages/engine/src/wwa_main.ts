@@ -1677,7 +1677,7 @@ export class WWA {
     public customPlaySound(fileName: string, isLoop: boolean = false): void {
         if(this.customSounds[fileName]) {
             if(this.customSounds[fileName].hasData()) {
-                this.customSounds[fileName].play();
+                this.customSounds[fileName].play(0, isLoop);
             }
         }
         else {

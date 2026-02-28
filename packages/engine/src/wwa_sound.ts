@@ -96,12 +96,12 @@ export class Sound {
      * 一時停止した場合でも、最初から再生します。
      * @param delayDurationMs 遅延時間
      */
-    public play(delayDurationMs = 0): void {
+    public play(delayDurationMs = 0, isLoop = false): void {
         const bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
         this.bufferSources.push(bufferSource);
 
         bufferSource.buffer = this.audioBuffer;
-        if (this.isBgm()) {
+        if (this.isBgm() || isLoop) {
             bufferSource.loop = true;
         }
         bufferSource.connect(this.audioGain);
