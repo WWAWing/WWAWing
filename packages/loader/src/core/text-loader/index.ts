@@ -83,6 +83,7 @@ export class TextLoader {
     wwaData.objectNoCollapseDefaultFlag = WWAConsts.DEFAULT_OBJECT_NO_COLLAPSE;
     wwaData.delPlayerFlag = false;
     wwaData.bgm = 0;
+    wwaData.customBgm = [];
     wwaData.effectCoords = [];
     wwaData.effectWaits = 0;
 

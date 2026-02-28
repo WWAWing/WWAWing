@@ -1562,6 +1562,7 @@ export class WWA {
                 this.customSounds[audioKey] = new Sound(-1, filePath, this.audioContext, this.audioGain);
             })
         }
+        this._wwaData.customBgm = [];
     }
 
     public loadSound(): void {
@@ -1693,7 +1694,9 @@ export class WWA {
         else {
             if(this.customSounds[fileName]) {
                     this.customSounds[fileName].pause();
-                    this._wwaData.bgm = 0;
+                    this._wwaData.customBgm = this._wwaData.customBgm.filter((x) => {
+                        return x.fileName !== fileName;
+                    })
             }
             else {            
                 console.warn(`該当のサウンドファイルが未定義です。: ${fileName}`)
@@ -1701,6 +1704,7 @@ export class WWA {
         }
     }
 
+    /** すべてのBGMを止める */
     public stopAllSound() {
         /** 通常サウンドを止める */
         if ((this._wwaData.bgm === SystemSound.NO_SOUND || this._wwaData.bgm >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
@@ -1713,6 +1717,7 @@ export class WWA {
         Object.keys(this.customSounds).forEach((key) => {
             this.stopSound(key);
         })
+        this._wwaData.customBgm = [];
     }
 
     /** IDでは無く任意の音楽ファイルを再生する */
@@ -1726,7 +1731,7 @@ export class WWA {
                 else if(isLoop) {
                     console.log(`${fileName} をループ再生します。`);
                     this.customSounds[fileName].play(0, isLoop);
-                    // this._wwaData.bgm = fileName;
+                    this._wwaData.customBgm.push({fileName, isLoop});
                 }
                 else {
                     console.log(`${fileName} を再生します。`);
@@ -4886,6 +4891,9 @@ export class WWA {
         } else {
             this.playSound(newData.bgm, newData.bgmDelayDurationMs);
         }
+        newData.customBgm.forEach((customBgm) => {
+            this.customPlaySound(customBgm.fileName, customBgm.isLoop);
+        })
         this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
         if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
             this._player.setPartsAppearedFlag();
