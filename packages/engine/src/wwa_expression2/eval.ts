@@ -509,20 +509,20 @@ export class EvalCalcWwaNode {
         if(Number.isFinite(soundValue)) {
           // 曲を鳴らす
           this.generator.wwa.playSound(soundValue);
-          return soundValue;
         }
         /** ファイル名が指定されたら該当音楽ファイルを直接実行する */
         else {
           this.generator.wwa.customPlaySound(soundValue, Boolean(isLoop), Boolean(isStop))
         }
+        return soundValue;
       }
       case "SOUND_STOP":
       case "STOP_SOUND": {
         this._checkArgsLength(1, node);
         const soundValue = this.evalWwaNode(node.value[0]);
         this.generator.wwa.stopSound(soundValue);
+        return soundValue;
       }
-        break;
       case "SAVE": {
         this._checkArgsLength(1, node);
         // SAVEは引数を一つだけ取る
