@@ -504,6 +504,7 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         const soundValue = this.evalWwaNode(node.value[0]);
         const isLoop = node.value[1]? this.evalWwaNode(node.value[1]): false;
+        const isStop = node.value[2]? this.evalWwaNode(node.value[1]): false;
         /** 引数に数字が指定されたら従来通りの処理とする */
         if(Number.isFinite(soundValue)) {
           // 曲を鳴らす
@@ -512,7 +513,7 @@ export class EvalCalcWwaNode {
         }
         /** ファイル名が指定されたら該当音楽ファイルを直接実行する */
         else {
-          this.generator.wwa.customPlaySound(soundValue, Boolean(isLoop))
+          this.generator.wwa.customPlaySound(soundValue, Boolean(isLoop), Boolean(isStop))
         }
       }
       case "SAVE": {

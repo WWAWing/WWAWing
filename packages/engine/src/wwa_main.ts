@@ -1674,10 +1674,22 @@ export class WWA {
     }
 
     /** IDでは無く任意の音楽ファイルを再生する */
-    public customPlaySound(fileName: string, isLoop: boolean = false): void {
+    public customPlaySound(fileName: string, isLoop: boolean = false, isStop = false): void {
         if(this.customSounds[fileName]) {
             if(this.customSounds[fileName].hasData()) {
-                this.customSounds[fileName].play(0, isLoop);
+                if(isStop) {
+                    this.customSounds[fileName].pause();
+                    this._wwaData.bgm = 0;
+                }
+                else if(isLoop) {
+                    if(this._wwaData.bgm !== fileName) {
+                        this.customSounds[fileName].play(0, isLoop);
+                        this._wwaData.bgm = fileName;
+                    }
+                }
+                else {
+                    this.customSounds[fileName].play(0, isLoop);
+                }
             }
         }
         else {
