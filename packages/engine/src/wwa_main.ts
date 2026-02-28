@@ -1701,6 +1701,20 @@ export class WWA {
         }
     }
 
+    public stopAllSound() {
+        /** 通常サウンドを止める */
+        if ((this._wwaData.bgm === SystemSound.NO_SOUND || this._wwaData.bgm >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
+            if (this.sounds[this._wwaData.bgm].isPlaying()) {
+                this.sounds[this._wwaData.bgm].pause();
+            }
+            this._wwaData.bgm = 0;
+        }
+        /** カスタムサウンドを全部止める */
+        Object.keys(this.customSounds).forEach((key) => {
+            this.stopSound(key);
+        })
+    }
+
     /** IDでは無く任意の音楽ファイルを再生する */
     public customPlaySound(fileName: string, isLoop: boolean = false, isStop = false): void {
         if(this.customSounds[fileName]) {

@@ -500,6 +500,7 @@ export class EvalCalcWwaNode {
   evalAnyFunction(node: Wwa.AnyFunction) {
     const game_status = this.generator.wwa.getGameStatus();
     switch(node.functionName) {
+      case "MUSIC":
       case "SOUND": {
         this._checkArgsLength(1, node);
         const soundValue = this.evalWwaNode(node.value[0]);
@@ -522,6 +523,12 @@ export class EvalCalcWwaNode {
         const soundValue = this.evalWwaNode(node.value[0]);
         this.generator.wwa.stopSound(soundValue);
         return soundValue;
+      }
+      case "STOP_SOUNDS":
+      case "ALL_SOUND_STOP":
+      case "STOP_ALL_SOUND": {
+        this.generator.wwa.stopAllSound();
+        return;
       }
       case "SAVE": {
         this._checkArgsLength(1, node);

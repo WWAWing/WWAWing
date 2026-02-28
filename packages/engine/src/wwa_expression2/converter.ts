@@ -176,9 +176,13 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "MSG":
     case "MESSAGE":
       return execMessageFunction(node.arguments);
+    case "MUSIC":
     case "SOUND":
     case "SOUND_STOP":
     case "STOP_SOUND":
+    case "STOP_SOUNDS":
+    case "ALL_SOUND_STOP":
+    case "STOP_ALL_SOUND":
     case "SAVE":
     case "LOG":
     case "ABLE_CHANGE_SPEED":
