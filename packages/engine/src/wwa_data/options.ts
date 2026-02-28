@@ -24,5 +24,6 @@ export function makeDefaultWWAOptions(): DataWWAOptions {
         virtualPadViewportFitEnable: false,
         virtualPadControllerElm: undefined,
         userDefinedScriptsFile: "./script/script_file_list.json",
+        userDefinedSoundFile: "./audio/sounds.json"
     };
 }

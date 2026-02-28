@@ -131,6 +131,8 @@ export class WWA {
     private _loadType: LoadType;
     private _restartData: WWAData;
 
+    private _userDefinedSoundFile: string;
+
     /**
      * 所持状態のマップデータの文字列加工をMD5化した文字列です。
      * データが壊れていないかなどの検証に使います。
@@ -148,6 +150,8 @@ export class WWA {
     private _battleEffectCoord: Coord;
 
     private sounds: Sound[];
+
+    private customSounds: {[key: string]: Sound};
 
     private _temporaryInputDisable: boolean;
 
@@ -1142,6 +1146,7 @@ export class WWA {
                 const soundLoadConfirmMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_LOAD_SOUND);
                 if (soundLoadConfirmMessage === "ON") {
                     this._isLoadedSound = true;
+                    this._userDefinedSoundFile = options.userDefinedSoundFile;
                     setGameStartingMessageWhenPcOrSP();
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound();
@@ -1542,7 +1547,26 @@ export class WWA {
         this.sounds[soundId] = new Sound(soundId, filePath, this.audioContext, this.audioGain);
     }
 
+    private async loadCustomSound(): Promise<void> {
+        this.customSounds = {};
+        // ユーザ定義関数を取得する
+        // (D) カスタムオーディオファイルのロード・解析
+        const userAudioListJSONFileName = this._userDefinedSoundFile ?? "./audio/sounds.json";
+        console.log(`(D) カスタムオーディオファイルのロード・解析を開始します (リストファイル: ${userAudioListJSONFileName})`);
+        const userAudioFileNameListResponse = await fetchJsonFile(userAudioListJSONFileName);
+        
+        if (userAudioFileNameListResponse?.kind === 'data' && userAudioFileNameListResponse.data) {
+            console.log("(D) これらのオーディオ がロードされます:", userAudioFileNameListResponse.data);
+            Object.keys(userAudioFileNameListResponse.data).map((audioKey) => {
+                const filePath = userAudioFileNameListResponse.data[audioKey];
+                this.customSounds[audioKey] = new Sound(-1, filePath, this.audioContext, this.audioGain);
+            })
+        }
+    }
+
     public loadSound(): void {
+        // TODO loadSound()全体をasync関数にしたい
+        this.loadCustomSound();
         this.sounds = new Array(Consts.SOUND_MAX + 1);
 
         this.createSoundInstance(SystemSound.DECISION);
@@ -1646,6 +1670,18 @@ export class WWA {
         if(this.soundLoadedCheckTimer) {
             clearInterval(this.soundLoadedCheckTimer);
             this.soundLoadedCheckTimer = undefined;
+        }
+    }
+
+    /** IDでは無く任意の音楽ファイルを再生する */
+    public customPlaySound(fileName: string, isLoop: boolean = false): void {
+        if(this.customSounds[fileName]) {
+            if(this.customSounds[fileName].hasData()) {
+                this.customSounds[fileName].play();
+            }
+        }
+        else {
+            console.warn(`該当のサウンドファイルが未定義です。: ${fileName}`)
         }
     }
 
