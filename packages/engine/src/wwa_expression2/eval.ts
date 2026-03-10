@@ -866,7 +866,18 @@ export class EvalCalcWwaNode {
       case "WAIT_ENTER": {
         // valueで評価した関数名を読み込む
         const value = node.value[0]? this.evalWwaNode(node.value[0]): "";
-        this.generator.wwa.setEnterWaiting(value);
+        const noMessageWaitingExecFuncNames: {
+          up: string,
+          down: string,
+          right: string,
+          left: string
+        } = {
+          up: node.value[1]? this.evalWwaNode(node.value[1]): "",
+          down: node.value[2]? this.evalWwaNode(node.value[2]): "",
+          right: node.value[3]? this.evalWwaNode(node.value[3]): "",
+          left: node.value[4]? this.evalWwaNode(node.value[4]): "",
+        }
+        this.generator.wwa.setEnterWaiting(value, noMessageWaitingExecFuncNames);
         return;
       }
       default:

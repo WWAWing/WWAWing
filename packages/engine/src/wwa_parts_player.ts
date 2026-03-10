@@ -116,6 +116,14 @@ export class Player extends PartsObject {
     // メッセージ非表示待機後に呼ばれるユーザー定義関数
     protected _afterEnterExecFuncName: string;
 
+    /** メッセージ非表示待機中に上下左右キーが押されたときに呼ばれるユーザー定義関数 */
+    protected _noMessageWaitingExecFuncNames: {
+        up: string,
+        down: string,
+        right: string,
+        left: string
+    }
+
     public move(): void {
         if (this.isControllable()) {
             this.controll(this._dir);
@@ -343,9 +351,19 @@ export class Player extends PartsObject {
     }
 
     // メッセージ非表示でEnterクリック待機状態とする
-    public setNoMessageWaitng(afterEnterExecFuncName: string): void {
+
+    public setNoMessageWaitng(
+        afterEnterExecFuncName: string,
+        noMessageWaitingExecFuncNames: {
+            up: string,
+            down: string,
+            right: string,
+            left: string
+        }
+    ): void {
         this._state = PlayerState.NO_MESSAGE_WAITING;
         this._afterEnterExecFuncName = afterEnterExecFuncName;
+        this._noMessageWaitingExecFuncNames = noMessageWaitingExecFuncNames
     }
 
     public isWaitingMessage(): boolean {
@@ -358,6 +376,15 @@ export class Player extends PartsObject {
 
     public getAfterEnterExecFuncName(): string {
         return this._afterEnterExecFuncName;
+    }
+
+    public getNoMessageWaitExecFuncNames(): {
+        up: string,
+        down: string,
+        right: string,
+        left: string
+    } {
+        return this._noMessageWaitingExecFuncNames;
     }
 
     public isDelayFrame(): boolean {

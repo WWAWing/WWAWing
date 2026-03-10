@@ -2719,6 +2719,7 @@ export class WWA {
         }
         // メッセージ非表示待機モード
         else if(this._player.isWaitingNoMessage()) {
+            const noMessageWaitExecFuncNames = this._player.getNoMessageWaitExecFuncNames();
             if(
                 this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                 this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
@@ -2747,6 +2748,54 @@ export class WWA {
                 }
                 else {
                     console.log("関数実行はしません。")
+                }
+            }
+            if(this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN && noMessageWaitExecFuncNames.up !== "") {               
+                try {
+                    this.evalCalcWwaNodeGenerator.evalWwaNode({
+                        type: "CallDefinedFunction",
+                        functionName: noMessageWaitExecFuncNames.up
+                    });
+                }
+                catch(e) {
+                    // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
+                    console.error(e);
+                }
+            }
+            if(this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN && noMessageWaitExecFuncNames.down !== "") {               
+                try {
+                    this.evalCalcWwaNodeGenerator.evalWwaNode({
+                        type: "CallDefinedFunction",
+                        functionName: noMessageWaitExecFuncNames.down
+                    });
+                }
+                catch(e) {
+                    // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
+                    console.error(e);
+                }
+            }
+            if(this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN && noMessageWaitExecFuncNames.right !== "") {               
+                try {
+                    this.evalCalcWwaNodeGenerator.evalWwaNode({
+                        type: "CallDefinedFunction",
+                        functionName: noMessageWaitExecFuncNames.right
+                    });
+                }
+                catch(e) {
+                    // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
+                    console.error(e);
+                }
+            }
+            if(this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN && noMessageWaitExecFuncNames.left !== "") {               
+                try {
+                    this.evalCalcWwaNodeGenerator.evalWwaNode({
+                        type: "CallDefinedFunction",
+                        functionName: noMessageWaitExecFuncNames.left
+                    });
+                }
+                catch(e) {
+                    // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
+                    console.error(e);
                 }
             }
         }
@@ -7088,8 +7137,19 @@ font-weight: bold;
         this._wwaData.customSystemMessages[key] = message;
     }
 
-    public setEnterWaiting(afterEnterExecFuncName: string) {
-        this._player.setNoMessageWaitng(afterEnterExecFuncName);
+    public setEnterWaiting(
+        afterEnterExecFuncName: string,
+        noMessageWaitingExecFuncNames: {
+            up: string,
+            down: string,
+            right: string,
+            left: string
+        }
+    ) {
+        this._player.setNoMessageWaitng(
+            afterEnterExecFuncName,
+            noMessageWaitingExecFuncNames
+        );
     }
 };
 

@@ -47,3 +47,55 @@ function CALL_SAVE() {
 function CALL_FRAME() {
   v[0]=TIME;
 }
+
+function show_sword() {
+  v["sword_x"] = 160;
+  v["sword_y"] = 160;
+  PICTURE(1, {
+    pos: [v["sword_x"], v["sword_x"]],
+    img: [4, 2],
+    size: [120, 120]
+  });
+  WAIT_ENTER("next_action", "exec_up", "exec_down", "exec_right", "exec_left");
+}
+
+function next_action() {
+  MSG("画面がクリックされました")
+  PICTURE(1);
+}
+
+function exec_up() {
+  v["sword_y"] -= 10;
+  PICTURE(1, {
+    pos: [v["sword_x"], v["sword_y"]],
+    img: [4, 2],
+    size: [120, 120]
+  });
+}
+
+function exec_down() {
+  v["sword_y"] += 10;
+  PICTURE(1, {
+    pos: [v["sword_x"], v["sword_y"]],
+    img: [4, 2],
+    size: [120, 120]
+  });
+}
+
+function exec_right() {
+  v["sword_x"] += 10;
+  PICTURE(1, {
+    pos: [v["sword_x"], v["sword_y"]],
+    img: [4, 2],
+    size: [120, 120]
+  });
+}
+
+function exec_left() {
+  v["sword_x"] -= 10;
+  PICTURE(1, {
+    pos: [v["sword_x"], v["sword_y"]],
+    img: [4, 2],
+    size: [120, 120]
+  });
+}
