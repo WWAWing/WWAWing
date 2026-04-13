@@ -13,7 +13,9 @@
       "experimentalDecorators": true,
       "noLib": false,
       "esModuleInterop": true,
-      "resolveJsonModule": true
+      "resolveJsonModule": true,
+      // HACK: jest-environment-jsdom で使用している jsdom のバージョンが古く、依存パッケージの型まわりでエラーが出るため、 *.d.ts のチェックをスキップする
+      "skipLibCheck": true,
     },
     "ts-node": {
       "swc": true
