@@ -8,7 +8,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
       with:
         node-version: '24.14.1'
         registry-url: 'https://registry.npmjs.org'
@@ -21,7 +21,7 @@ runs:
 
     - name: Restore node_modules
       id: restore-node-modules
-      uses: actions/cache@v4
+      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       with:
         path: '**/node_modules'
         key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -33,7 +33,7 @@ runs:
       if: ${{ inputs.lfs }}
 
     - name: Restore Git LFS object cache
-      uses: actions/cache@v4
+      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       if: ${{ inputs.lfs }}
       with:
         path: .git/lfs
@@ -45,7 +45,7 @@ runs:
 
     - name: "Install npm"
       shell: bash
-      run: npm i -g npm@11
+      run: npm i -g npm@11.11.0
 
     - name: "Install dependencies"
       shell: bash
