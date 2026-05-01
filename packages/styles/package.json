@@ -19,8 +19,8 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/sass": "^1.43.1",
-    "sass": "^1.55.0",
+    "@types/sass": "^1.45.0",
+    "sass": "^1.99.0",
     "shx": "^0.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
