@@ -1,4 +1,4 @@
-{
-  "field": "./audio/field.mp3",
-  "hello": "./audio/hello.mp3"
-}
+[
+   { "name": "field", "isBgm": true},
+   "hello"
+]

@@ -151,7 +151,7 @@ export class WWA {
 
     private sounds: Sound[];
 
-    private customSounds: {[key: string]: Sound};
+    private customSoundList: Record<string, Sound>;
 
     private _temporaryInputDisable: boolean;
 
@@ -1547,22 +1547,57 @@ export class WWA {
         this.sounds[soundId] = new Sound(soundId, filePath, this.audioContext, this.audioGain);
     }
 
+    public createCustomSoundInstance(soundId: string, option: { isBgm?: boolean, overwrite?: boolean } = {},): void {
+        if (this.customSoundList[soundId]) {
+            if (!option?.overwrite) {
+                console.warn(`Sound with soundId ${soundId} already exists. Skipping creation of this sound.`);
+                return;
+            }
+            console.warn(`Sound with soundId ${soundId} already exists. Overwriting this sound because overwrite option is set to true.`);
+        }
+        if (soundId.includes(".") || soundId.includes("/") || soundId.includes("\\")) {
+            console.warn(`Invalid soundId: ${soundId}`);
+            return;
+        }
+        const filePath = `${this._audioDirectory}${soundId}.${this.audioExtension}`;
+        this.customSoundList[soundId] = new Sound(soundId, filePath, this.audioContext, this.audioGain, option.isBgm ?? false);
+    }
+
     private async loadCustomSound(): Promise<void> {
-        this.customSounds = {};
+        this.customSoundList = {};
         // ユーザ定義関数を取得する
         // (D) カスタムオーディオファイルのロード・解析
-        const userAudioListJSONFileName = this._userDefinedSoundFile ?? "./audio/sounds.json";
+        const userAudioListJSONFileName = this._userDefinedSoundFile ?? this._audioDirectory + "sounds.json";
         console.log(`(D) カスタムオーディオファイルのロード・解析を開始します (リストファイル: ${userAudioListJSONFileName})`);
+
         const userAudioFileNameListResponse = await fetchJsonFile(userAudioListJSONFileName);
         
-        if (userAudioFileNameListResponse?.kind === 'data' && userAudioFileNameListResponse.data) {
-            console.log("(D) これらのオーディオ がロードされます:", userAudioFileNameListResponse.data);
-            Object.keys(userAudioFileNameListResponse.data).map((audioKey) => {
-                const filePath = userAudioFileNameListResponse.data[audioKey];
-                this.customSounds[audioKey] = new Sound(-1, filePath, this.audioContext, this.audioGain);
-            })
+        if (userAudioFileNameListResponse?.kind !== "data" || !Array.isArray(userAudioFileNameListResponse.data)) {
+            console.warn(`(D) カスタムオーディオファイルのリストの取得に失敗しました。リストファイルが存在するか、正しい形式で書かれているかを確認してください。 (リストファイル: ${userAudioListJSONFileName})`);
+            return;
         }
-        this._wwaData.customBgm = [];
+        console.log("(D) これらのオーディオ がロードされます:", userAudioFileNameListResponse.data);
+        userAudioFileNameListResponse.data.forEach((item) => {
+            switch (typeof item) {
+                case "number":
+                    this.createSoundInstance(item);
+                    return;
+                case "string":
+                    this.createCustomSoundInstance(item, {overwrite: true});
+                    return;
+                case "object":
+                    if (!item || "prototype" in item || !("name" in item) || typeof item.name !== "string" || typeof item.name !== "number") {
+                        console.warn(`Invalid audio key data: ${item}`);
+                        return;
+                    } 
+                    this.createCustomSoundInstance(item.name, { isBgm: "isBgm" in item && item.isBgm === true, overwrite: true });
+                    return;
+                default: 
+                    console.warn(`Invalid audio key data: ${item}`);
+                    return;
+            }
+        });
+        this._wwaData.playingCustomBgmList = [];
     }
 
     public loadSound(): void {
@@ -1675,32 +1710,37 @@ export class WWA {
     }
 
     /** 音楽を停止します */
-    public stopSound(fileName: string | number) {
-        /** 従来の数字音声の場合 */
-        if(Number.isFinite(fileName)) {
-            const id = Number(fileName);
-            if (id < 0 || id >= Consts.SOUND_MAX) {
-                console.warn("サウンド番号が範囲外です。");
+    public stopSound(soundId: string | number) {
+        switch (typeof soundId) {
+            // 従来の数字音声の場合
+            case "number": {
+                const id = Number(soundId);
+                if (!Number.isFinite(id) || id < 0 || id >= Consts.SOUND_MAX) {
+                    console.warn("サウンド番号が範囲外です。");
+                    return;
+                }
+                if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
+                    if (this.sounds[this._wwaData.bgm].isPlaying()) {
+                        this.sounds[this._wwaData.bgm].pause();
+                    }
+                    this._wwaData.bgm = 0;
+                }
                 return;
             }
-            if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
-                if (this.sounds[this._wwaData.bgm].isPlaying()) {
-                    this.sounds[this._wwaData.bgm].pause();
+            // カスタム音声の場合 
+            case "string": {
+                if (!this.customSoundList[soundId]) {
+                    console.warn(`該当のサウンドファイルが未定義です。: ${soundId}`)
+                    return;
                 }
-                this._wwaData.bgm = 0;
+                this.customSoundList[soundId].pause();
+                // 止めたBGMの情報を削除
+                this._wwaData.playingCustomBgmList = this._wwaData.playingCustomBgmList.filter((x) => x.soundId !== soundId)
+                return;
             }
-        }
-        /** カスタム音声の場合 */
-        else {
-            if(this.customSounds[fileName]) {
-                    this.customSounds[fileName].pause();
-                    this._wwaData.customBgm = this._wwaData.customBgm.filter((x) => {
-                        return x.fileName !== fileName;
-                    })
-            }
-            else {            
-                console.warn(`該当のサウンドファイルが未定義です。: ${fileName}`)
-            }
+            default:
+                console.warn(`サウンドIDの型が不正です。: ${soundId}`);
+                return;
         }
     }
 
@@ -1714,33 +1754,37 @@ export class WWA {
             this._wwaData.bgm = 0;
         }
         /** カスタムサウンドを全部止める */
-        Object.keys(this.customSounds).forEach((key) => {
-            this.stopSound(key);
-        })
-        this._wwaData.customBgm = [];
+        Object.keys(this.customSoundList).forEach((key) => this.stopSound(key))
+        this._wwaData.playingCustomBgmList = [];
     }
 
     /** IDでは無く任意の音楽ファイルを再生する */
-    public customPlaySound(fileName: string, isLoop: boolean = false, isStop = false): void {
-        if(this.customSounds[fileName]) {
-            if(this.customSounds[fileName].hasData()) {
-                if(isStop) {
-                    this.customSounds[fileName].pause();
-                    this._wwaData.bgm = 0;
-                }
-                else if(isLoop) {
-                    console.log(`${fileName} をループ再生します。`);
-                    this.customSounds[fileName].play(0, isLoop);
-                    this._wwaData.customBgm.push({fileName, isLoop});
-                }
-                else {
-                    console.log(`${fileName} を再生します。`);
-                    this.customSounds[fileName].play(0, isLoop);
-                }
-            }
+    public customPlaySound(soundId: string, isLoop: boolean = false, stopping = false): void {
+        if (!this.customSoundList[soundId]) {
+            console.warn(`該当のサウンドファイルが未定義です。: ${soundId}`);
+            return;
         }
-        else {
-            console.warn(`該当のサウンドファイルが未定義です。: ${fileName}`)
+        if (!this.customSoundList[soundId].hasData()) {
+            console.warn(`該当のサウンドファイルのデータがありません。: ${soundId}`);
+            return;
+        }
+        if (stopping) {
+            this.customSoundList[soundId].pause();
+            this._wwaData.bgm = 0;
+        } else if (isLoop) {
+            console.log(`${soundId} をループ再生します。`);
+            if (!this.customSoundList[soundId].isBgm()) {
+                console.warn(`soundId ${soundId} はBGMとして定義されていません。強制的にBGMとしてループ再生します。`);
+            }
+            this.customSoundList[soundId].play(0, isLoop);
+            this._wwaData.playingCustomBgmList.push({soundId, isLoop});
+        } else {
+            console.log(`${soundId} を再生します。`);
+            this.customSoundList[soundId].play(0, isLoop);
+            // BGM の場合は BGM 扱いする
+            if (this.customSoundList[soundId].isBgm()) {
+                this._wwaData.playingCustomBgmList.push({soundId, isLoop});
+            }
         }
     }
 
@@ -4891,8 +4935,8 @@ export class WWA {
         } else {
             this.playSound(newData.bgm, newData.bgmDelayDurationMs);
         }
-        newData.customBgm.forEach((customBgm) => {
-            this.customPlaySound(customBgm.fileName, customBgm.isLoop);
+        newData.playingCustomBgmList.forEach((customBgm) => {
+            this.customPlaySound(customBgm.soundId, customBgm.isLoop);
         })
         this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
         if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
