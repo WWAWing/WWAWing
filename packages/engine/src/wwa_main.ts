@@ -1706,21 +1706,19 @@ export class WWA {
 
     }
     public playDecisionSound(): void {
-        console.log("D"+this.getDecisionSound())
         if(this.getDecisionSound() !== undefined) {
             this.playSound(this.getDecisionSound());
         }
         else{
-        this.playSound(SystemSound.DECISION);
+            this.playSound(SystemSound.DECISION);
         }
     }
     public playAttackSound(): void {
-        console.log("A"+this.getAttackSound())
         if(this.getAttackSound() !== undefined) {
             this.playSound(this.getAttackSound());
         }
         else{
-        this.playSound(SystemSound.ATTACK);
+            this.playSound(SystemSound.ATTACK);
         }
     }
 
