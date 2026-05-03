@@ -136,6 +136,9 @@ export class TextLoader {
 
     wwaData.pictureRegistry = [];
 
+    wwaData.decisionSound = undefined;
+    wwaData.attackSound = undefined;
+
     return wwaData;
   }
 

@@ -190,6 +190,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "FACE":
     case "EFFECT":
     case "CHANGE_PLAYER_IMAGE":
+    case "CHANGE_PLAYER_IMG":
     case "HAS_ITEM":
     case "REMOVE_ITEM":
     case "MOVE":
@@ -219,6 +220,20 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_IMG_POS_Y":
     case "LENGTH":
     case "IS_NUMBER":
+    case "COLOR":
+    case "EFFITEM":
+    case "CHANGE_BOM_IMAGE":
+    case "CHANGE_CLICK_IMAGE":
+    case "CHANGE_CLICK_IMG":
+    case "CHANGE_FRAME_IMAGE":
+    case "CHANGE_FRAME_IMG":
+    case "CHANGE_YESNO_IMAGE":
+    case "CHANGE_YESNO_IMG":
+    case "NO_GAMEOVER":
+    case "DEFAULT":
+    case "DIR_MAP":
+    case "CHANGE_SOUND_ATTACK":
+    case "CHANGE_SOUND_DECISION":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {

@@ -1649,6 +1649,13 @@ export class WWA {
         }
     }
 
+    public getSoundEnabled(){
+         return this._isLoadedSound;
+    }
+    public checkSoundEnabled(id: number): void {
+        const audioInstance = this.sounds[id];
+        audioInstance.hasData();
+    }
     public playSound(id: number, bgmDelayDurationMs?: number): void {
         if (!this._isLoadedSound) {
             // 音声データがロードされていなくても、次に音が流れる設定でゲーム開始したときにBGMを復元しなければならない。
@@ -1698,6 +1705,22 @@ export class WWA {
         }
 
     }
+    public playDecisionSound(): void {
+        if(this.getDecisionSound() !== undefined) {
+            this.playSound(this.getDecisionSound());
+        }
+        else{
+            this.playSound(SystemSound.DECISION);
+        }
+    }
+    public playAttackSound(): void {
+        if(this.getAttackSound() !== undefined) {
+            this.playSound(this.getAttackSound());
+        }
+        else{
+            this.playSound(SystemSound.ATTACK);
+        }
+    }
 
     public openGameWindow(): void {
         var ppos = this._player.getPosition();
@@ -1741,7 +1764,7 @@ export class WWA {
         if (this._player.canUseItem(itemPos1To12)) {
             var bg = <HTMLDivElement>(util.$id("item" + (itemPos1To12 - 1)));
             bg.classList.add("onpress");
-            this.playSound(SystemSound.DECISION);
+            this.playDecisionSound();
             const systemMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_USE_ITEM);
             if (systemMessage === "BLANK") {
                 this._player.readyToUseItem(itemPos1To12);
@@ -1771,7 +1794,7 @@ export class WWA {
 
     public onselectbutton(button: SidebarButton, forcePassword: boolean = false, forceGoToWWA: boolean = false): void {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[button]));
-        this.playSound(SystemSound.DECISION);
+        this.playDecisionSound();
         this._itemMenu.close();
         bg.classList.add("onpress");
         if (button === SidebarButton.QUICK_LOAD) {
@@ -1892,7 +1915,7 @@ export class WWA {
     public onitemmenucalled() {
         this.registerSystemMessagePage("右のメニューを選択してください。");
         this._messageWindow.setItemMenuChoice(true);
-        this.playSound(SystemSound.DECISION);
+        this.playDecisionSound();
         this._itemMenu.openView();
     }
 
@@ -2325,10 +2348,10 @@ export class WWA {
                     if (this.launchBattleEstimateWindow()) {
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {
-                    this.playSound(SystemSound.DECISION);
+                    this.playDecisionSound();
                     this.onselectbutton(SidebarButton.QUICK_LOAD, true);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
-                    this.playSound(SystemSound.DECISION);
+                    this.playDecisionSound();
                     if (this._useSuspend) {//中断モード
                         this.onpasssuspendsavecalled();
                     } else if (this._usePassword) {
@@ -2569,12 +2592,12 @@ export class WWA {
                         }
                     }
                     if (this._yesNoJudge === YesNoState.YES) {
-                        this.playSound(SystemSound.DECISION);
+                        this.playDecisionSound();
                         this._yesNoDispCounter = Consts.YESNO_PRESS_DISP_FRAME_NUM;
                         this._messageWindow.setInputDisable();
                         this._messageWindow.update();
                     } else if (this._yesNoJudge === YesNoState.NO) {
-                        this.playSound(SystemSound.DECISION);
+                        this.playDecisionSound();
                         this._yesNoDispCounter = Consts.YESNO_PRESS_DISP_FRAME_NUM;
                         this._messageWindow.setInputDisable();
                         this._messageWindow.update();
@@ -2627,7 +2650,7 @@ export class WWA {
                     }
                     this._itemMenu.ng();
                     this._setNextPage();
-                    this.playSound(SystemSound.DECISION);
+                    this.playDecisionSound();
                     this._messageWindow.setItemMenuChoice(false);
                 }
             } else {
@@ -5232,7 +5255,7 @@ export class WWA {
         const yTop = Math.max(0, cpParts.y);
         const yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
         const monsterList: Monster[] = [];
-        this.playSound(SystemSound.DECISION);
+        this.playDecisionSound();
         for (let x = xLeft; x <= xRight; x++) {
             for (let y= yTop; y <= yBottom; y++) {
                 const partsId = this._wwaData.mapObject[y][x];
@@ -5920,6 +5943,19 @@ export class WWA {
     }
     public setBgmDelay(delayMs: number) {
         this._wwaData.bgmDelayDurationMs = delayMs;
+    }
+
+    public setDecisionSound(soundNumber: number) {
+        this._wwaData.decisionSound = soundNumber;
+    }
+    public getDecisionSound() {
+        return this._wwaData.decisionSound;
+    }
+    public setAttackSound(soundNumber: number) {
+        this._wwaData.attackSound = soundNumber;
+    }
+    public getAttackSound() {
+        return this._wwaData.attackSound;
     }
 
     /**
