@@ -501,13 +501,37 @@ export class EvalCalcWwaNode {
   evalAnyFunction(node: Wwa.AnyFunction) {
     const game_status = this.generator.wwa.getGameStatus();
     switch(node.functionName) {
+      case "MUSIC":
       case "SOUND": {
         this._checkArgsLength(1, node);
-        // SOUNDは引数を一つだけ取る
-        const soundNumber = this.evalWwaNode(node.value[0]);
-        // 曲を鳴らす
-        this.generator.wwa.playSound(soundNumber);
-        return soundNumber;
+        const soundValue = this.evalWwaNode(node.value[0]);
+        const loopPlaying = node.value[1]? this.evalWwaNode(node.value[1]): undefined; // 指定がない場合かつBGMの場合はループ再生の対象となるので undefinedを渡す。
+        const bgmDelayDurationMs = node.value[2]? this.evalWwaNode(node.value[2]): false;
+        this.generator.wwa.playSound(soundValue, {
+          loopPlaying,
+          bgmDelayDurationMs: bgmDelayDurationMs >= 0 ? bgmDelayDurationMs : undefined
+        });
+        return soundValue;
+      }
+      case "BGM_STOP":
+      case "STOP_BGM": {
+        this.generator.wwa.stopBgm();
+        return undefined;
+      }
+      case "SOUND_STOP":
+      case "STOP_SOUND": {
+        this._checkArgsLength(1, node);
+        const soundValue = this.evalWwaNode(node.value[0]);
+        this.generator.wwa.stopSound(soundValue, { includeBgm: true });
+        return soundValue;
+      }
+      case "STOP_SOUNDS":
+      case "ALL_SOUND_STOP":
+      case "STOP_ALL_SOUND": {
+        this._checkArgsLength(1, node);
+        const includeBgm = this.evalWwaNode(node.value[0]);
+        this.generator.wwa.stopAllSound({ includeBgm: Boolean(includeBgm) });
+        return undefined;
       }
       case "SAVE": {
         this._checkArgsLength(1, node);

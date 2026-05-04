@@ -147,7 +147,7 @@ export class WWA {
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
-    private sounds: Sound[];
+    private _soundMap: Map<number | string, Sound>;
 
     private _temporaryInputDisable: boolean;
 
@@ -1161,8 +1161,7 @@ export class WWA {
                     this._isLoadedSound = true;
                     setGameStartingMessageWhenPcOrSP();
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
-                    this.loadSound();
-                    window.requestAnimationFrame(this.soundCheckCaller);
+                    this.loadSound().then(()=> window.requestAnimationFrame(this.soundCheckCaller));
                     return;
                 } else if (soundLoadConfirmMessage === "OFF") {
                     this._isLoadedSound = false;
@@ -1219,8 +1218,7 @@ export class WWA {
                                 this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
                                 this._isLoadedSound = true;
                                 this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
-                                this.loadSound();
-                                window.requestAnimationFrame(this.soundCheckCaller);
+                                this.loadSound().then(() => window.requestAnimationFrame(this.soundCheckCaller));
                             }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                         }
 
@@ -1247,8 +1245,7 @@ export class WWA {
                     this._yesNoJudge = YesNoState.UNSELECTED;
                     this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
                     this._isLoadedSound = true;
-                    this.loadSound();
-                    window.requestAnimationFrame(this.soundCheckCaller);
+                    this.loadSound().then(() => window.requestAnimationFrame(this.soundCheckCaller));
                 }
             });
             console.log("WWA_START");
@@ -1551,24 +1548,28 @@ export class WWA {
         }
     }
 
-    public createSoundInstance(soundId: number): void {
-        if (soundId === 0 || soundId === SystemSound.NO_SOUND || this.sounds[soundId]) {
+    public createSoundInstance(soundId: number | string): void {
+        if (soundId === 0 || soundId === SystemSound.NO_SOUND || this._soundMap.has(soundId)) {
             return;
         }
         const filePath = `${this._audioDirectory}${soundId}.${this.audioExtension}`;
-        this.sounds[soundId] = new Sound(soundId, filePath, this.audioContext, this.audioGain);
+        this._soundMap.set(soundId, new Sound(soundId, filePath, this.audioContext, this.audioGain));
     }
 
-    public loadSound(): void {
-        this.sounds = new Array(Consts.SOUND_MAX + 1);
+    public async loadSound(): Promise<void> {
+        this._soundMap = new Map<number, Sound>();
 
+        console.log("(D) サウンドのロードを開始します。");
+        console.log("(D-1) システムサウンドのロードを開始します。");
         this.createSoundInstance(SystemSound.DECISION);
         this.createSoundInstance(SystemSound.ATTACK);
 
+        console.log("(D-2) 背景パーツ記載のサウンドのロードを開始します。");
         for (let partsId = 1; partsId < this._wwaData.mapPartsMax; partsId++) {
             const soundId = this._wwaData.mapAttribute[partsId][Consts.ATR_SOUND];
             this.createSoundInstance(soundId);
         }
+        console.log("(D-3) 物体パーツ記載のサウンドのロードを開始します。");
         for (let partsId = 1; partsId < this._wwaData.objPartsMax; partsId++) {
             if (this._wwaData.objectAttribute[partsId][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
                 continue;
@@ -1577,6 +1578,7 @@ export class WWA {
             this.createSoundInstance(soundId);
         }
         // 全メッセージを解析し、$sound マクロのパラメータからロードすべきサウンド番号を全取得し、ロードする。
+        console.log("(D-4) $sound マクロ記載のサウンドのロードを開始します。");
         this._wwaData.message.forEach(message =>
             message
                 .split("\n")
@@ -1591,8 +1593,100 @@ export class WWA {
                     }
                 })
         );
+        console.log("(D-4) マップから抽出したサウンド番号一覧:", Array.from(this._soundMap.keys()));
+        await this.loadCustomSound();
+        console.log("(D-6) 次のサウンドがロードされます:", Array.from(this._soundMap.keys()).sort((a, b) => {
+            if (typeof a === "number") {
+                return typeof b === "number" ? a - b : -1;
+            } else {
+                return typeof b === "number" ? 1 : a.localeCompare(b);
+            }
+        }));
         this._wwaData.bgm = 0;
         this._soundLoadSkipFlag = false;
+    }
+
+    private async loadCustomSound(): Promise<void> {
+        const userAudioListJSONFileName = this._audioDirectory + "sound-list.json";
+        console.log(`(D-5) サウンドリストファイル: ${userAudioListJSONFileName} の解析を開始します。`);
+
+        const userAudioFileNameListResponse = await fetchJsonFile(userAudioListJSONFileName);
+        
+        if (userAudioFileNameListResponse?.kind !== "data" || !Array.isArray(userAudioFileNameListResponse.data)) {
+            console.warn(`(D-5) カスタムオーディオファイルのリストの取得に失敗しました。リストファイルが存在するか、正しい形式で書かれているかを確認してください。 (リストファイル: ${userAudioListJSONFileName})`);
+            return;
+        }
+        userAudioFileNameListResponse.data.forEach((soundId) => {
+            switch (typeof soundId) {
+                case "number":
+                    this.createSoundInstance(soundId);
+                    return;
+                case "string": {
+                    if (soundId.startsWith("#")) {
+                        // コメントとみなして無視
+                        return;
+                    }
+                    const numberSoundId = Number(soundId);
+                    if (
+                        soundId.includes("/") ||
+                        soundId.includes("\\") ||
+                        numberSoundId <= 0 ||
+                        numberSoundId > Number.MAX_SAFE_INTEGER ||
+                        numberSoundId == SystemSound.NO_SOUND
+                    ) {
+                      console.warn(`(D-5) 無効なサウンドIDが指定されました: ${soundId}`);
+                      return;
+                    }
+                    if (!Number.isNaN(numberSoundId)) {
+                        console.warn("(D-5) 文字列で数値のサウンドIDが与えられました。数値として解釈します。 (指定されたサウンドID: " + soundId + ")");
+                        this.createSoundInstance(numberSoundId);
+                        return;
+                    }
+                    this.createSoundInstance(soundId);
+                    return;
+                }
+                case "object":
+                    if (!soundId) {
+                        return;
+                    }
+                    if (Array.isArray(soundId)) {
+                        // [from, to] の形式で数値のサウンドIDが与えられた場合、from から to までのサウンドIDをすべてロードする
+                        if (soundId.length !== 2) {
+                            console.warn(`(D-5) 配列形式でサウンドIDを与える場合は2要素で与えてください: ${JSON.stringify(soundId)}`);
+                            return;
+                        }
+                        try {
+                            soundId.forEach(id => {
+                                if (typeof id !== "number" || id <= 0 || id > Number.MAX_SAFE_INTEGER) {
+                                    // forEach を脱出
+                                    throw new Error(`(D-5) 無効なサウンドIDが指定されました: ${JSON.stringify(soundId)}`);
+                                }
+                            });
+                        } catch (e) {
+                            console.warn(e.message);
+                            return;
+                        }
+                        const [soundIdFrom, soundIdTo] = soundId as number[];
+                        if (soundIdFrom > soundIdTo) {
+                            console.warn(`(D-5) サウンドIDが配列形式で与えられていますが、from (${soundIdFrom}) が to (${soundIdTo}) より大きくなっています: ${JSON.stringify(soundId)}`);
+                            return;
+                        }
+                        for (let id = soundIdFrom; id <= soundIdTo; id++) {
+                            if (id == SystemSound.NO_SOUND) {
+                                console.warn(`(D-5) サウンドID ${id} が範囲に含まれていますが、これは停止用に使用している値で無効なのでスキップします。`);
+                                continue;
+                             }
+                            this.createSoundInstance(id);
+                        }
+                        return;
+                    }
+                    console.warn(`(D-5) サウンドIDがオブジェクトのようですが、現在この記法はサポートされていません: ${JSON.stringify(soundId)}`);
+                    return;
+                default: 
+                    console.warn(`(D-5) この形式のサウンドIDはサポートされていません: ${soundId}`);
+                    return;
+            }
+        });
     }
 
     public checkAllSoundLoaded(): void {
@@ -1605,18 +1699,16 @@ export class WWA {
         if (this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
             this._soundLoadSkipFlag = true;
         }
-        for (let i = 1; i <= Consts.SOUND_MAX; i++) {
-            const instance = this.sounds[i];
-            if (instance === void 0 || instance.isError()) {
-                continue;
+        this._soundMap.forEach((instance) => {
+            if (!instance || instance.isError()) {
+                return;
             }
-
             total++;
             if (!instance.hasData()) {
-                continue;
+                return;
             }
             loadedNum++;
-        }
+        });
         if (loadedNum < total && !this._soundLoadSkipFlag) {
             this._setProgressBar(getProgress(loadedNum, total, LoadStage.AUDIO));
             window.requestAnimationFrame(this.soundCheckCaller);
@@ -1625,6 +1717,7 @@ export class WWA {
 
         this._setProgressBar(getProgress(Consts.SOUND_MAX, Consts.SOUND_MAX, LoadStage.AUDIO));
         this._setLoadingMessage(ctxCover, LoadStage.FINISH);
+        console.log("(D-7) サウンドのロードが完了しました。");
         this.openGameWindow();
     }
 
@@ -1633,10 +1726,10 @@ export class WWA {
      * ロードが完了した場合には再生します。
      * @param targetSoundId 確認する音楽ファイルのサウンド番号
      */
-    private _setSoundLoadedCheckTimer(targetSoundId: number): void {
-        const targetAudio = this.sounds[targetSoundId];
+    private _setSoundLoadedCheckTimer(targetSoundId: number | string): void {
+        const targetAudio = this._soundMap.get(targetSoundId);
         // 対象音源が存在しないなど、エラーの場合は何度確認しても無駄なので何もせず終了
-        if (targetAudio.isError()) {
+        if (!targetAudio || targetAudio.isError()) {
             return;
         }
         this.soundLoadedCheckTimer = window.setInterval((): void => {
@@ -1665,79 +1758,149 @@ export class WWA {
             this.soundLoadedCheckTimer = undefined;
         }
     }
-
     public getSoundEnabled(){
          return this._isLoadedSound;
     }
-    public checkSoundEnabled(id: number): void {
-        const audioInstance = this.sounds[id];
+
+    public checkSoundEnabled(id: number | string): void {
+        const audioInstance = this._soundMap.get(id);
         audioInstance.hasData();
     }
-    public playSound(id: number, bgmDelayDurationMs?: number): void {
+
+
+    /** BGM を停止します */
+    public stopBgm() {
+        const targetSound = this._soundMap.get(this._wwaData.bgm);
+        if (targetSound?.isPlaying()) {
+            targetSound.pause();
+        }
+        this._wwaData.bgm = 0;
+    }
+
+    /**
+     * 指定されたサウンドを停止します
+     * BGM, 効果音を問いません。
+     * 主にループ再生している効果音を停止することを想定しています。
+     */
+    public stopSound(soundId: number | string, option: { includeBgm: boolean }) {
+        if (this.soundIsBgm(soundId)) {
+            if (option.includeBgm && this._wwaData.bgm === soundId) {
+                this.stopBgm()
+            }
+            return;
+        }
+        const targetSound = this._soundMap.get(soundId);
+        if (targetSound?.isPlaying()) {
+            targetSound.pause();
+        }
+    }
+
+    /**
+     * すべてのサウンドを停止します
+     */
+    public stopAllSound(option: {includeBgm: boolean}) {
+        this._soundMap.keys().forEach((soundId) => this.stopSound(soundId, option));
+    }
+
+    public playSound(id: number | string, option: { loopPlaying?: boolean; bgmDelayDurationMs?: number; } = {}): void {
+        const isBgm = this.soundIsBgm(id);
+        // option.loopPlaying が undefined の時、 BGM の場合はループする, その他のサウンドの場合はループしない。
+        const loopPlaying = option.loopPlaying === undefined ? isBgm : option.loopPlaying;
         if (!this._isLoadedSound) {
             // 音声データがロードされていなくても、次に音が流れる設定でゲーム開始したときにBGMを復元しなければならない。
             if (id === SystemSound.NO_SOUND) {
                 this._wwaData.bgm = 0;
-            } else if (id >= SystemSound.BGM_LB) {
-                this._wwaData.bgm = id;
+            } else if (isBgm) {
+                // 音声データがロードされていない場合でループなしBGMを再生しようとした時は、セーブデータから再生情報の復旧を行わない。
+                this._wwaData.bgm = loopPlaying ? id : 0;
             }
             return;
         }
 
-        if (id < 0 || id >= Consts.SOUND_MAX) {
+        if (typeof id === "number" && (id < 0 || id >= Consts.SOUND_MAX)) {
             console.warn("サウンド番号が範囲外です。");
             return;
         }
-        if (id >= SystemSound.BGM_LB && this._wwaData.bgm === id) {
+        // 同じBGMが既に再生されている場合は無視する
+        // この時、新しく playSound に対して指定された option が反映されないのは仕様です
+        if (isBgm && this._wwaData.bgm === id) {
             return;
         }
 
-        if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
-            if (this.sounds[this._wwaData.bgm].isPlaying()) {
-                this.sounds[this._wwaData.bgm].pause();
-            }
-            this._wwaData.bgm = 0;
+        // BGM が変更される場合は旧BGMを停止する。 BGM を止めるサウンド番号が与えられた場合も止める。
+        if ((id === SystemSound.NO_SOUND || isBgm) && this._wwaData.bgm !== 0) {
+            this.stopBgm();
         }
 
         if (id === 0 || id === SystemSound.NO_SOUND) {
             return;
         }
-        const audioInstance = this.sounds[id];
+        const audioInstance = this._soundMap.get(id);
+        if (!audioInstance) {
+            console.warn(`サウンドID ${id} は、マップデータにも ${this._audioDirectory}sound-list.json にも出現しないため、再生できません。`);
+            return;
+        }
         if (!audioInstance.hasData()) {
-            if (id >= SystemSound.BGM_LB) {
+            if (isBgm) {
                /* 
                   音源がロードされていなくても、QuickLoad などでゲーム状態を復元したときにはBGMを復元しなければならない。
                   ので、ゲームデータ上にはBGM設定を反映する
+                  ただし、ループ再生でない場合は復元しない
                 */
-                this._wwaData.bgm = id;
+                this._wwaData.bgm = loopPlaying ? id : 0;
                 this._setSoundLoadedCheckTimer(id);
             }
         } else {
-            if (id >= SystemSound.BGM_LB) {
-                this.sounds[id].play(bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
+            if (isBgm) {
+                audioInstance?.play(option.bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs, loopPlaying, () => {
+                    // BGMがループ再生でない場合は、再生が終わったタイミングでBGM設定をクリアする
+                    // なお、他のBGMが再生されている場合に暴発しないよう、playSound 呼び出し時以外の id で呼び出された場合は処理をブロックする。
+                    if (id === this._wwaData.bgm && !loopPlaying) {
+                        this._wwaData.bgm = 0;
+                    }
+                });
+                // 再生が終了するまでの間は、ループ再生でない場合でもセーブデータから復旧する
                 this._wwaData.bgm = id;
             } else {
-                this.sounds[id].play();
+                audioInstance?.play(0, loopPlaying);
             }
         }
 
     }
     public playDecisionSound(): void {
-        if(this.getDecisionSound() !== undefined) {
-            this.playSound(this.getDecisionSound());
-        }
-        else{
-            this.playSound(SystemSound.DECISION);
-        }
+        this.playSound(this._wwaData.decisionSound ?? SystemSound.DECISION);
     }
+
     public playAttackSound(): void {
-        if(this.getAttackSound() !== undefined) {
-            this.playSound(this.getAttackSound());
+        this.playSound(this._wwaData.attackSound ?? SystemSound.ATTACK) ;
+    }
+    public setDecisionSound(soundId: number | string) {
+        if (this.soundIsBgm(soundId)) {
+            console.warn("決定音にBGMを設定することはできません。");
+            return;
         }
-        else{
-            this.playSound(SystemSound.ATTACK);
+        this._wwaData.decisionSound = soundId;
+    }
+    public setAttackSound(soundId: number | string) {
+        if (this.soundIsBgm(soundId)) {
+            console.warn("攻撃音にBGMを設定することはできません。");
+            return;
+        }
+        this._wwaData.attackSound = soundId;
+    }
+
+    private soundIsBgm(soundId: number | string): boolean {
+        switch (typeof soundId) {
+            case "number":
+                return soundId >= SystemSound.BGM_LB;
+            case "string":
+                // プレフィックスの bgm_ の大文字小文字は問わない
+                return soundId.match(/^bgm_/i) !== null;
+            default:
+                throw new TypeError(`Invalid soundId type: ${typeof soundId}`);
         }
     }
+
 
     public openGameWindow(): void {
         var ppos = this._player.getPosition();
@@ -4714,7 +4877,7 @@ export class WWA {
         if (newData.bgm === 0) {
             this.playSound(SystemSound.NO_SOUND);
         } else {
-            this.playSound(newData.bgm, newData.bgmDelayDurationMs);
+            this.playSound(newData.bgm, { bgmDelayDurationMs: newData.bgmDelayDurationMs });
         }
         this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
         if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
@@ -5840,19 +6003,6 @@ export class WWA {
     }
     public setBgmDelay(delayMs: number) {
         this._wwaData.bgmDelayDurationMs = delayMs;
-    }
-
-    public setDecisionSound(soundNumber: number) {
-        this._wwaData.decisionSound = soundNumber;
-    }
-    public getDecisionSound() {
-        return this._wwaData.decisionSound;
-    }
-    public setAttackSound(soundNumber: number) {
-        this._wwaData.attackSound = soundNumber;
-    }
-    public getAttackSound() {
-        return this._wwaData.attackSound;
     }
 
     /**
