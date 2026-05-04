@@ -23,5 +23,4 @@ export interface DataWWAOptions {
     virtualPadControllerElm?: HTMLElement;
     userDefinedScriptsFile?: string;
     pictureImageNamesFile?: string;
-    userDefinedSoundFile?: string;
 }

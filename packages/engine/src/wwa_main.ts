@@ -131,8 +131,6 @@ export class WWA {
     private _loadType: LoadType;
     private _restartData: WWAData;
 
-    private _userDefinedSoundFile: string;
-
     /**
      * 所持状態のマップデータの文字列加工をMD5化した文字列です。
      * データが壊れていないかなどの検証に使います。
@@ -1161,7 +1159,6 @@ export class WWA {
                 const soundLoadConfirmMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_LOAD_SOUND);
                 if (soundLoadConfirmMessage === "ON") {
                     this._isLoadedSound = true;
-                    this._userDefinedSoundFile = options.userDefinedSoundFile;
                     setGameStartingMessageWhenPcOrSP();
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
                     this.loadSound().then(()=> window.requestAnimationFrame(this.soundCheckCaller));
@@ -1610,7 +1607,7 @@ export class WWA {
     }
 
     private async loadCustomSound(): Promise<void> {
-        const userAudioListJSONFileName = this._userDefinedSoundFile ?? this._audioDirectory + "sound-list.json";
+        const userAudioListJSONFileName = this._audioDirectory + "sound-list.json";
         console.log(`(D-5) サウンドリストファイル: ${userAudioListJSONFileName} の解析を開始します。`);
 
         const userAudioFileNameListResponse = await fetchJsonFile(userAudioListJSONFileName);
