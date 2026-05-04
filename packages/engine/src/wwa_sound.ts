@@ -7,16 +7,22 @@ export class Sound {
     private isExceededMaxRetryCount?: true;
     // NOTE: 現状ブラウザで動くことを前提にしているので、もしNodeで動かすとかがあれば setTimeout まわりのラッパーを作る必要がありそうです。
     private delayBgmTimeoutId: number | null;
+    private _isBgm: boolean;
 
     public constructor(
         /**
-         * サウンド番号
+         * サウンド番号またはカスタムサウンドファイル名
          */
-        private id: number,
+        private id: number | string,
         private fileName: string,
         private audioContext: AudioContext,
-        private audioGain: GainNode
+        private audioGain: GainNode,
+        _isBgm?: boolean
     ) {
+        if (typeof this.id === "number" && typeof _isBgm === "boolean") {
+            console.warn(`サウンドID ${this.id} に対して isBgm (${_isBgm}) が指定されていますが、サウンドIDが数字の場合は自動でBGMかどうかを判定するため、この指定は無視されます。`);
+        } 
+        this._isBgm = typeof this.id == "number" ? this.id >= SystemSound.BGM_LB : Boolean(_isBgm);
         this.audioContext = audioContext;
         this.audioGain = audioGain;
         this.audioBuffer = null;
@@ -32,7 +38,7 @@ export class Sound {
         try {
             return await fetch(this.fileName);
         } catch(error) {
-            console.warn(`サウンド ${this.id} 番の音声ファイルの取得失敗 (fetch)`);
+            console.warn(`サウンドID ${this.id} の音声ファイルの取得失敗 (fetch)`);
             return undefined;
         }
     }
@@ -41,14 +47,14 @@ export class Sound {
         try {
             return await response.arrayBuffer();
         } catch(error) {
-            console.warn(`サウンド ${this.id} 番の音声ファイルの取得失敗 (arrayBuffer)`);
+            console.warn(`サウンドID ${this.id} の音声ファイルの取得失敗 (arrayBuffer)`);
             return undefined;
         }
     }
 
     private async load(errorCount: number = 0): Promise<void> {
         if (errorCount >= 10) {
-            console.log(`サウンド ${this.id} 番の音声ファイルの取得失敗 (最大リトライ回数超過)`);
+            console.log(`サウンドID ${this.id} の音声ファイルの取得失敗 (最大リトライ回数超過)`);
             this.isExceededMaxRetryCount = true;
             return;
         }
@@ -58,7 +64,7 @@ export class Sound {
             return;
         }
         if (response.status !== 0 && response.status !== 200) {
-            console.warn(`サウンド ${this.id} 番の音声ファイルが見つかりません！ HTTPエラー番号: ${response.status}`);
+            console.warn(`サウンドID ${this.id} の音声ファイルが見つかりません！ HTTPエラー番号: ${response.status}`);
             this.cancelLoad();
             return;
         }
@@ -69,7 +75,7 @@ export class Sound {
         }
         this.audioContext.decodeAudioData(buffer, buffer => {
             if (buffer.length === 0) {
-                console.log(`サウンド ${this.id} 番の音声ファイルのバッファサイズが 0 です `);
+                console.log(`サウンドID ${this.id} の音声ファイルのバッファサイズが 0 です `);
                 this.retry(errorCount);
                 return;
             }
@@ -96,7 +102,7 @@ export class Sound {
      * 一時停止した場合でも、最初から再生します。
      * @param delayDurationMs 遅延時間
      */
-    public play(delayDurationMs = 0, isLoop = false): void {
+    public play(delayDurationMs = 0, isLoop = false, onEnded?: () => void): void {
         const bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
         this.bufferSources.push(bufferSource);
 
@@ -118,6 +124,7 @@ export class Sound {
                 this.bufferSources.splice(id, 1);
             }
             this.disposeBufferSource(bufferSource);
+            onEnded?.();
         }
         this.delayBgmTimeoutId = window.setTimeout(() => {
             this.delayBgmTimeoutId = null;
@@ -145,7 +152,7 @@ export class Sound {
      * @see SystemSound.BGM_LB
      */
     public isBgm(): boolean {
-        return this.id >= SystemSound.BGM_LB;
+        return this._isBgm === true;
     }
     /**
      * データが取得できたかを確認します。
