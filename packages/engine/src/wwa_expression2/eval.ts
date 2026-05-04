@@ -9,6 +9,7 @@ import { PARTS_TYPE_LIST } from "./utils";
 import { evalLengthFunction } from "./functions/length";
 import { getPlayerCoordPx, getPlayerCoordPy } from "./symbols";
 import { PageAdditionalItem } from "./typedef";
+import { MacroImgFrameIndex } from ".././wwa_data";
 
 const operatorOperationMap: {
   [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
@@ -663,7 +664,8 @@ export class EvalCalcWwaNode {
         this.generator.wwa.setEffect(waitTime, coords);
         return undefined;
       }
-      case "CHANGE_PLAYER_IMAGE": {
+      case "CHANGE_PLAYER_IMAGE":
+      case "CHANGE_PLAYER_IMG": {
         this._checkArgsLength(2, node);
         const x = Number(this.evalWwaNode(node.value[0]));
         const y = Number(this.evalWwaNode(node.value[1]));
@@ -886,6 +888,150 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         const value = this.evalWwaNode(node.value[0]);
         return typeof value === "number";
+      }
+      case "COLOR": {
+        //本実装
+        this._checkArgsLength(4, node);
+        const type = Number(this.evalWwaNode(node.value[0]));
+        const r = Number(this.evalWwaNode(node.value[1]));
+        const g = Number(this.evalWwaNode(node.value[2]));
+        const b = Number(this.evalWwaNode(node.value[3]));
+        if (type < 0 || type > 5) {
+          throw new Error("種別は0から5までです");
+        }
+        if (r < 0 || r > 255 ||
+            g < 0 || g > 255 ||
+            b < 0 || b > 255) {
+          throw new Error("色が範囲外です");
+        }
+        this.generator.wwa.changeStyleRule(type, r, g, b);
+        return;
+      }
+      case "EFFITEM": {
+        this._checkArgsLength(1, node);
+        const mode = Boolean(this.evalWwaNode(node.value[0]));
+        this.generator.wwa.updateItemEffectEnabled(mode);
+        return;
+      }
+      case "CHANGE_BOM_IMAGE":
+      case "CHANGE_BOM_IMG": {
+        this._checkArgsLength(2, node);
+        const x = Number(this.evalWwaNode(node.value[0]));
+        const y = Number(this.evalWwaNode(node.value[1]));
+        if (x < 0 || y < 0) {
+          throw new Error("座標は0以上の整数ではありません");
+        }
+        this.generator.wwa.setBattleEffectCoord(new Coord(x, y));
+        return;
+      }
+      case "CHANGE_CLICK_IMAGE":
+      case "CHANGE_CLICK_IMG": {
+        this._checkArgsLength(2, node);
+        const x = Number(this.evalWwaNode(node.value[0]));
+        const y = Number(this.evalWwaNode(node.value[1]));
+        if (x < 0 || y < 0) {
+          throw new Error("引数が0以上の整数ではありません");
+        }
+        this.generator.wwa.setImgClick(new Coord(x, y));
+        return;
+
+      }
+      case "CHANGE_FRAME_IMAGE":
+      case "CHANGE_FRAME_IMG": {
+        this._checkArgsLength(3, node);
+        const type = Number(this.evalWwaNode(node.value[0]));
+        const x = Number(this.evalWwaNode(node.value[1]));
+        const y = Number(this.evalWwaNode(node.value[2]));
+        if (x < 0 || y < 0) {
+          throw new Error("座標は正でなければなりません。");
+        }
+        switch(type) {
+          case MacroImgFrameIndex.ENERGY:
+          case MacroImgFrameIndex.STRENGTH:
+          case MacroImgFrameIndex.DEFENCE:
+          case MacroImgFrameIndex.GOLD:
+            this.generator.wwa.setStatusIconCoord(type, new Coord(x, y));
+            break;
+          case MacroImgFrameIndex.WIDE_CELL_ROW:
+            this.generator.wwa.setWideCellCoord(new Coord(x, y));
+            break;
+          case MacroImgFrameIndex.ITEM_BG:
+            this.generator.wwa.setItemboxBackgroundPosition({ x: x, y: y });
+            break;
+          case MacroImgFrameIndex.MAIN_FRAME:
+            this.generator.wwa.setFrameCoord(new Coord(x, y));
+            break;
+          default:
+            throw new Error("種別が不正です。");
+        }
+        return;
+      }
+      case "CHANGE_YESNO_IMAGE":
+      case "CHANGE_YESNO_IMG": {
+        this._checkArgsLength(2, node);
+        const x = Number(this.evalWwaNode(node.value[0]));
+        const y = Number(this.evalWwaNode(node.value[1])); 
+        this.generator.wwa.setYesNoImgCoord(new Coord(x, y));
+        return;
+      }
+      case "NO_GAMEOVER": {
+        this._checkArgsLength(1, node);
+        const isGameOverDisabled = this.evalWwaNode(node.value[0]);
+        this.generator.wwa.setGameOverPolicy(isGameOverDisabled);
+        return;
+      }
+      case "DEFAULT":{
+        this._checkArgsLength(1, node);
+        const defaultFlag = Boolean(this.evalWwaNode(node.value[0]));
+        this.generator.wwa.setObjectNotCollapseOnPartsOnPlayer(defaultFlag);
+        return;
+      }
+      case "DIR_MAP": {
+        // 3つ目はオプションのため、2つだけチェックする
+        this._checkArgsLength(2, node);
+        const partsID = Number(this.evalWwaNode(node.value[0]));
+        const dist = Number(this.evalWwaNode(node.value[1]));
+        const partsType = node.value[2] !== undefined? Number(this.evalWwaNode(node.value[2])): PartsType.OBJECT; 
+          if (partsID < 0) {
+            throw new Error("パーツ番号が不正です");
+          }
+          if (partsType === PartsType.OBJECT) {
+            if (partsID >= this.generator.wwa.getObjectPartsNum()) {
+                throw new Error("パーツ番号が不正です");
+            }
+        } else {
+            if (partsID >= this.generator.wwa.getMapPartsNum()) {
+                throw new Error("パーツ番号が不正です");
+            }
+        }
+        this.generator.wwa.appearPartsByDirection(dist, partsID, partsType);
+        return;
+      }
+      case "CHANGE_SOUND_DECISION": {
+        /*
+        サウンド読み込みOFF時はサウンドチェックが常に失敗するため、
+        決定音変更処理自体をスキップする。
+        */
+        if(this.generator.wwa.getSoundEnabled()){
+          this._checkArgsLength(1, node);
+          const decisionSound = this.evalWwaNode(node.value[0]);
+          this.generator.wwa.checkSoundEnabled(decisionSound);
+          this.generator.wwa.setDecisionSound(decisionSound);
+        }
+        return;
+      }
+      case "CHANGE_SOUND_ATTACK": {
+        /*
+        サウンド読み込みOFF時はサウンドチェックが常に失敗するため、
+        攻撃音変更処理自体をスキップする。
+        */
+        if(this.generator.wwa.getSoundEnabled()){
+          this._checkArgsLength(1, node);
+          const attackSound = this.evalWwaNode(node.value[0]);
+          this.generator.wwa.checkSoundEnabled(attackSound);
+          this.generator.wwa.setAttackSound(attackSound);
+        }
+        return;
       }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
