@@ -137,7 +137,6 @@ export function createDefaultWWAData(): WWAData {
         objectNoCollapseDefaultFlag: undefined,
         delPlayerFlag: undefined,
         bgm: undefined,
-        playingCustomBgmList: undefined,
         effectCoords: undefined,
         effectWaits: undefined,
         imgStatusEnergyX: undefined,

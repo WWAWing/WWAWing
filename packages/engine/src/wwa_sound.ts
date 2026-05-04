@@ -102,7 +102,7 @@ export class Sound {
      * 一時停止した場合でも、最初から再生します。
      * @param delayDurationMs 遅延時間
      */
-    public play(delayDurationMs = 0, isLoop = false): void {
+    public play(delayDurationMs = 0, isLoop = false, onEnded?: () => void): void {
         const bufferSource: AudioBufferSourceNode = this.audioContext.createBufferSource();
         this.bufferSources.push(bufferSource);
 
@@ -124,6 +124,7 @@ export class Sound {
                 this.bufferSources.splice(id, 1);
             }
             this.disposeBufferSource(bufferSource);
+            onEnded?.();
         }
         this.delayBgmTimeoutId = window.setTimeout(() => {
             this.delayBgmTimeoutId = null;

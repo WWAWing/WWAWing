@@ -98,8 +98,7 @@ export interface WWAData {
 
     delPlayerFlag: boolean;
 
-    bgm: number;
-    playingCustomBgmList: {soundId: string, isLoop: boolean}[];
+    bgm: number | string;
     effectCoords: Coord[];
     effectWaits: number;
 
