@@ -229,6 +229,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "IS_NUMBER":
     case "COLOR":
     case "EFFITEM":
+    case "CHANGE_BOM_IMG":
     case "CHANGE_BOM_IMAGE":
     case "CHANGE_CLICK_IMAGE":
     case "CHANGE_CLICK_IMG":
