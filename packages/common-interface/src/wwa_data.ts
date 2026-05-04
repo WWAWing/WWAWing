@@ -32,7 +32,11 @@ type PictureRegistryBase<N> = {
      * ピクチャ作成を呼び出したパーツの Y 座標。
      */
     triggerPartsY: number,
-    soundNumber: number,
+    /**
+     * サウンドID
+     * 互換性のため soundNumber を名乗っているが、文字列のサウンドIDでもOK。
+     */
+    soundNumber: number | string,
     properties: PictureProperties<N>
 };
 export type PictureRegistry = PictureRegistryBase<number>;
