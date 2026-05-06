@@ -46,6 +46,8 @@ export enum PlayerState {
     MOVING,
     CAMERA_MOVING,
     MESSAGE_WAITING,
+    // メッセージ以外でに操作を受け付けない状態 (WWA Script の PAUSE() でクリックや Enter を待機するなど
+    MANUAL_PAUSE,
     LOCALGATE_JUMPED,
     BATTLE,
     ESTIMATE_WINDOW_WAITING,
@@ -111,6 +113,17 @@ export class Player extends PartsObject {
     // 戦闘開始からでなくとも、途中から0ダメージターンが規定回数が超えた場合も終了。
     // 戦闘していない場合は 0。
     protected _battleNoDamageTurnLength: number;
+
+    // メッセージ非表示待機後に呼ばれるユーザー定義関数
+    protected _afterEnterExecFuncName: string;
+
+    /** メッセージ非表示待機中に上下左右キーが押されたときに呼ばれるユーザー定義関数 */
+    protected _noMessageWaitingExecFuncNames: {
+        up: string,
+        down: string,
+        right: string,
+        left: string
+    }
 
     public move(): void {
         if (this.isControllable()) {
@@ -338,8 +351,51 @@ export class Player extends PartsObject {
         this._state = PlayerState.MESSAGE_WAITING;
     }
 
+    // メッセージ非表示でEnterクリック待機状態とする
+
+    public setManualPause(
+        afterEnterExecFuncName: string,
+        noMessageWaitingExecFuncNames: {
+            up: string,
+            down: string,
+            right: string,
+            left: string
+        }
+    ): void {
+        if (!this.isControllable()) {
+            return;
+        }
+        this._state = PlayerState.MANUAL_PAUSE;
+        this._afterEnterExecFuncName = afterEnterExecFuncName;
+        this._noMessageWaitingExecFuncNames = noMessageWaitingExecFuncNames
+    }
+
+    public isWaitingMessageOrManualPause(): boolean {
+        return [
+            PlayerState.MESSAGE_WAITING,
+            PlayerState.MANUAL_PAUSE
+        ].includes(this._state);
+    }
+
     public isWaitingMessage(): boolean {
         return this._state === PlayerState.MESSAGE_WAITING;
+    }
+
+    public isManualPause(): boolean {
+        return this._state === PlayerState.MANUAL_PAUSE;
+    }
+
+    public getAfterEnterExecFuncName(): string {
+        return this._afterEnterExecFuncName;
+    }
+
+    public getNoMessageWaitExecFuncNames(): {
+        up: string,
+        down: string,
+        right: string,
+        left: string
+    } {
+        return this._noMessageWaitingExecFuncNames;
     }
 
     public isDelayFrame(): boolean {
@@ -353,11 +409,12 @@ export class Player extends PartsObject {
         this._messageDelayFrameCount = 1;
     }
 
-    public clearMessageWaiting(): void {
-        if (this._state !== PlayerState.MESSAGE_WAITING && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
+    public clearWaitingMessageOrManualPause(): void {
+        const isWaiting = this.isWaitingMessageOrManualPause();
+        if (!isWaiting && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             return;
         }
-        if (this._state === PlayerState.MESSAGE_WAITING) {
+        if (isWaiting) {
             this._state = PlayerState.CONTROLLABLE;
         } else if (this._state === PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             this._state = PlayerState.LOCALGATE_JUMPED;
@@ -1280,7 +1337,7 @@ export class Player extends PartsObject {
     public isPausing() {
         return (
             this.isJumped() ||
-            this.isWaitingMessage() ||
+            this.isWaitingMessageOrManualPause() ||
             this.isWaitingPasswordWindow() ||
             this.isWaitingEstimateWindow() ||
             this.isWaitingMoveMacro() ||

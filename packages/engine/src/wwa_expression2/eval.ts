@@ -715,6 +715,10 @@ export class EvalCalcWwaNode {
       case "IS_PLAYER_WAITING_MESSAGE": {
         return this.generator.wwa.isPlayerWaitingMessage();
       }
+      case "IS_PAUSE":
+      case "IS_PLAYER_WAITING_ENTER": {
+        return this.generator.wwa.isManualPause();
+      }
       case "GET_UNIXTIME":
         return Math.floor(new Date().getTime()/1000);
       case "GET_DATE_YEAR":
@@ -888,6 +892,24 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         const value = this.evalWwaNode(node.value[0]);
         return typeof value === "number";
+      }
+      case "PAUSE":
+      case "WAIT_ENTER": {
+        // valueで評価した関数名を読み込む
+        const value = node.value[0]? this.evalWwaNode(node.value[0]): "";
+        const noMessageWaitingExecFuncNames: {
+          up: string,
+          down: string,
+          right: string,
+          left: string
+        } = {
+          up: node.value[1] ? this.evalWwaNode(node.value[1]) : "",
+          down: node.value[2] ? this.evalWwaNode(node.value[2]) : "",
+          right: node.value[3] ? this.evalWwaNode(node.value[3]) : "",
+          left: node.value[4] ? this.evalWwaNode(node.value[4]) : "",
+        }
+        this.generator.wwa.manualPause(value, noMessageWaitingExecFuncNames);
+        return;
       }
       case "COLOR": {
         //本実装
