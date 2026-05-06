@@ -1,9 +1,9 @@
-import type { WWAData, UserVar, UserVarPrimitive, UserVarMap } from "@wwawing/common-interface";
+import { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound } from "@wwawing/common-interface";
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
-export type { WWAData, UserVar, UserVarPrimitive, UserVarMap};
+export { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound };
 
 export class EquipmentStatus {
     public strength: number;
@@ -698,13 +698,6 @@ export enum MacroImgFrameIndex {
     WIDE_CELL_ROW = 4,
     ITEM_BG = 5,
     MAIN_FRAME = 6
-}
-
-export enum SystemSound {
-    DECISION = 1,
-    ATTACK = 3,
-    BGM_LB = 70,
-    NO_SOUND = 99
 }
 
 export const speedList = [1, 2, 5, 8, 10, 20];

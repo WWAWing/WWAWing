@@ -176,7 +176,14 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "MSG":
     case "MESSAGE":
       return execMessageFunction(node.arguments);
+    case "MUSIC":
     case "SOUND":
+    case "BGM_STOP":
+    case "STOP_BGM":
+    case "SOUND_STOP":
+    case "STOP_SOUND":
+    case "ALL_SOUND_STOP":
+    case "STOP_ALL_SOUND":
     case "SAVE":
     case "LOG":
     case "ABLE_CHANGE_SPEED":
@@ -190,11 +197,14 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "FACE":
     case "EFFECT":
     case "CHANGE_PLAYER_IMAGE":
+    case "CHANGE_PLAYER_IMG":
     case "HAS_ITEM":
     case "REMOVE_ITEM":
     case "MOVE":
     case "PARTS_MOVE":
     case "IS_PLAYER_WAITING_MESSAGE":
+    case "IS_PAUSE":
+    case "IS_PLAYER_WAITING_ENTER":
     case "GET_UNIXTIME":
     case "GET_DATE_YEAR":
     case "GET_DATE_MONTH":
@@ -219,7 +229,23 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_IMG_POS_Y":
     case "LENGTH":
     case "IS_NUMBER":
+    case "PAUSE":
     case "WAIT_ENTER":
+    case "COLOR":
+    case "EFFITEM":
+    case "CHANGE_BOM_IMG":
+    case "CHANGE_BOM_IMAGE":
+    case "CHANGE_CLICK_IMAGE":
+    case "CHANGE_CLICK_IMG":
+    case "CHANGE_FRAME_IMAGE":
+    case "CHANGE_FRAME_IMG":
+    case "CHANGE_YESNO_IMAGE":
+    case "CHANGE_YESNO_IMG":
+    case "NO_GAMEOVER":
+    case "DEFAULT":
+    case "DIR_MAP":
+    case "CHANGE_SOUND_ATTACK":
+    case "CHANGE_SOUND_DECISION":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {

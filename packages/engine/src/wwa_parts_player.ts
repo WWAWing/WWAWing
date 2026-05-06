@@ -46,7 +46,8 @@ export enum PlayerState {
     MOVING,
     CAMERA_MOVING,
     MESSAGE_WAITING,
-    NO_MESSAGE_WAITING,
+    // メッセージ以外でに操作を受け付けない状態 (WWA Script の PAUSE() でクリックや Enter を待機するなど
+    MANUAL_PAUSE,
     LOCALGATE_JUMPED,
     BATTLE,
     ESTIMATE_WINDOW_WAITING,
@@ -352,7 +353,7 @@ export class Player extends PartsObject {
 
     // メッセージ非表示でEnterクリック待機状態とする
 
-    public setNoMessageWaitng(
+    public setManualPause(
         afterEnterExecFuncName: string,
         noMessageWaitingExecFuncNames: {
             up: string,
@@ -361,17 +362,27 @@ export class Player extends PartsObject {
             left: string
         }
     ): void {
-        this._state = PlayerState.NO_MESSAGE_WAITING;
+        if (!this.isControllable()) {
+            return;
+        }
+        this._state = PlayerState.MANUAL_PAUSE;
         this._afterEnterExecFuncName = afterEnterExecFuncName;
         this._noMessageWaitingExecFuncNames = noMessageWaitingExecFuncNames
+    }
+
+    public isWaitingMessageOrManualPause(): boolean {
+        return [
+            PlayerState.MESSAGE_WAITING,
+            PlayerState.MANUAL_PAUSE
+        ].includes(this._state);
     }
 
     public isWaitingMessage(): boolean {
         return this._state === PlayerState.MESSAGE_WAITING;
     }
 
-    public isWaitingNoMessage(): boolean {
-        return this._state === PlayerState.NO_MESSAGE_WAITING;
+    public isManualPause(): boolean {
+        return this._state === PlayerState.MANUAL_PAUSE;
     }
 
     public getAfterEnterExecFuncName(): string {
@@ -398,11 +409,8 @@ export class Player extends PartsObject {
         this._messageDelayFrameCount = 1;
     }
 
-    public clearMessageWaiting(): void {
-        const isWaiting = [
-            PlayerState.MESSAGE_WAITING,
-            PlayerState.NO_MESSAGE_WAITING
-        ].includes(this._state);
+    public clearWaitingMessageOrManualPause(): void {
+        const isWaiting = this.isWaitingMessageOrManualPause();
         if (!isWaiting && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             return;
         }
@@ -1101,13 +1109,13 @@ export class Player extends PartsObject {
         this._battleTurnLength++;
         if (this._wwa.isBattleSpeedIndexForQuickBattle(this._speedIndex) || this._battleTurnLength > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
             if (this._battleTurnLength === 1) {
-                this._wwa.playSound(SystemSound.ATTACK);
+                this._wwa.playAttackSound();
                 this._wwa.vibration(false);
             }
             this._battleFrameCounter = 1;
         } else {
             this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
-            this._wwa.playSound(SystemSound.ATTACK);
+            this._wwa.playAttackSound();
             this._wwa.vibration(true);
         }
 
@@ -1329,7 +1337,7 @@ export class Player extends PartsObject {
     public isPausing() {
         return (
             this.isJumped() ||
-            this.isWaitingMessage() ||
+            this.isWaitingMessageOrManualPause() ||
             this.isWaitingPasswordWindow() ||
             this.isWaitingEstimateWindow() ||
             this.isWaitingMoveMacro() ||
