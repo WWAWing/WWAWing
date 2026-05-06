@@ -362,6 +362,9 @@ export class Player extends PartsObject {
             left: string
         }
     ): void {
+        if (!this.isControllable()) {
+            return;
+        }
         this._state = PlayerState.MANUAL_PAUSE;
         this._afterEnterExecFuncName = afterEnterExecFuncName;
         this._noMessageWaitingExecFuncNames = noMessageWaitingExecFuncNames
