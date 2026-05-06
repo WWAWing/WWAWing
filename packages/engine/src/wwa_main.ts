@@ -2799,11 +2799,8 @@ export class WWA {
                 this._player.resetMoveObjectAutoExecTimer();
             }
             this._objectMovingDataManager.update();
-        }
-        // メッセージ非表示待機モード
-        else if(this._player.isManualPause()) {
-            const noMessageWaitExecFuncNames = this._player.getNoMessageWaitExecFuncNames();
-            if(
+        } else if (this._player.isManualPause()) {
+            if (
                 this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                 this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
                 this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
@@ -2812,75 +2809,36 @@ export class WWA {
                 this._virtualPadStore.checkTouchButton("BUTTON_ENTER") ||
                 this._virtualPadStore.checkTouchButton("BUTTON_ESC")
             ) {
-                // メッセージ非表示待機モードを解除
+                // マニュアルポーズを解除 
                 this._player.clearWaitingMessageOrManualPause();
-                const execFuncName = this._player.getAfterEnterExecFuncName();
-                console.log("メッセージ非表示待機モードを解除")
-                if(execFuncName !== "") {
-                    console.log("実行関数名: "+execFuncName)
+                const functionName = this._player.getAfterEnterExecFuncName();
+                if (functionName !== "") {
                     try {
-                        this.evalCalcWwaNodeGenerator.evalWwaNode({
-                            type: "CallDefinedFunction",
-                            functionName: execFuncName
-                        });
+                        this.evalCalcWwaNodeGenerator.evalWwaNode({ type: "CallDefinedFunction", functionName });
+                    } catch(e) {
+                        // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
+                        console.error(e);
                     }
-                    catch(e) {
+                } 
+            }
+
+            const noMessageWaitExecFuncNames = this._player.getNoMessageWaitExecFuncNames();
+            ([
+                { keyCode: KeyCode.KEY_UP, funcKey: "up" },
+                { keyCode: KeyCode.KEY_DOWN, funcKey: "down" },
+                { keyCode: KeyCode.KEY_RIGHT, funcKey: "right" },
+                { keyCode: KeyCode.KEY_LEFT, funcKey: "left" }
+            ] satisfies { keyCode: number, funcKey: keyof typeof noMessageWaitExecFuncNames }[]).forEach(({keyCode, funcKey}) => {
+                const functionName = noMessageWaitExecFuncNames[funcKey];
+                if (this._keyStore.getKeyState(keyCode) === KeyState.KEYDOWN && functionName !== "") {               
+                    try {
+                        this.evalCalcWwaNodeGenerator.evalWwaNode({ type: "CallDefinedFunction", functionName });
+                    }  catch(e) {
                         // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
                         console.error(e);
                     }
                 }
-                else {
-                    console.log("関数実行はしません。")
-                }
-            }
-            if(this._keyStore.getKeyState(KeyCode.KEY_UP) === KeyState.KEYDOWN && noMessageWaitExecFuncNames.up !== "") {               
-                try {
-                    this.evalCalcWwaNodeGenerator.evalWwaNode({
-                        type: "CallDefinedFunction",
-                        functionName: noMessageWaitExecFuncNames.up
-                    });
-                }
-                catch(e) {
-                    // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
-                    console.error(e);
-                }
-            }
-            if(this._keyStore.getKeyState(KeyCode.KEY_DOWN) === KeyState.KEYDOWN && noMessageWaitExecFuncNames.down !== "") {               
-                try {
-                    this.evalCalcWwaNodeGenerator.evalWwaNode({
-                        type: "CallDefinedFunction",
-                        functionName: noMessageWaitExecFuncNames.down
-                    });
-                }
-                catch(e) {
-                    // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
-                    console.error(e);
-                }
-            }
-            if(this._keyStore.getKeyState(KeyCode.KEY_RIGHT) === KeyState.KEYDOWN && noMessageWaitExecFuncNames.right !== "") {               
-                try {
-                    this.evalCalcWwaNodeGenerator.evalWwaNode({
-                        type: "CallDefinedFunction",
-                        functionName: noMessageWaitExecFuncNames.right
-                    });
-                }
-                catch(e) {
-                    // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
-                    console.error(e);
-                }
-            }
-            if(this._keyStore.getKeyState(KeyCode.KEY_LEFT) === KeyState.KEYDOWN && noMessageWaitExecFuncNames.left !== "") {               
-                try {
-                    this.evalCalcWwaNodeGenerator.evalWwaNode({
-                        type: "CallDefinedFunction",
-                        functionName: noMessageWaitExecFuncNames.left
-                    });
-                }
-                catch(e) {
-                    // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
-                    console.error(e);
-                }
-            }
+            })
         }
 
         this.updatePicturesAnimation();
