@@ -778,7 +778,7 @@ export class WWA {
                     e.preventDefault()
                     return;
                 }
-                if (!this._player.isWaitingMessage()) {
+                if (!this._player.isWaitingMessageOrManualPause()) {
                     if (!this._player.isWaitingPasswordWindow()) {
                         if (e.keyCode === KeyCode.KEY_DOWN ||
                             e.keyCode === KeyCode.KEY_LEFT ||
@@ -886,7 +886,7 @@ export class WWA {
                     e.keyCode === KeyCode.KEY_F9 ||
                     e.keyCode === KeyCode.KEY_F12 ||
                     e.keyCode === KeyCode.KEY_SPACE) {
-                    if (!this._player.isWaitingMessage() && !this._player.isWaitingPasswordWindow()) {
+                    if (!this._player.isWaitingMessageOrManualPause() && !this._player.isWaitingPasswordWindow()) {
                         e.preventDefault();
                     }
                 }
@@ -2801,7 +2801,7 @@ export class WWA {
             this._objectMovingDataManager.update();
         }
         // メッセージ非表示待機モード
-        else if(this._player.isWaitingNoMessage()) {
+        else if(this._player.isManualPause()) {
             const noMessageWaitExecFuncNames = this._player.getNoMessageWaitExecFuncNames();
             if(
                 this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
@@ -2813,7 +2813,7 @@ export class WWA {
                 this._virtualPadStore.checkTouchButton("BUTTON_ESC")
             ) {
                 // メッセージ非表示待機モードを解除
-                this._player.clearMessageWaiting();
+                this._player.clearWaitingMessageOrManualPause();
                 const execFuncName = this._player.getAfterEnterExecFuncName();
                 console.log("メッセージ非表示待機モードを解除")
                 if(execFuncName !== "") {
@@ -2932,7 +2932,7 @@ export class WWA {
 
         this._mainCallCounter++;
         this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
-        if (!this._player.isWaitingMessage() || !this._isClassicModeEnable) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
+        if (!this._player.isWaitingMessageOrManualPause() || !this._isClassicModeEnable) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
             this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
             // isSubAnimation の定義では、 this._animationCounter > ANIMATION_REP_HALF_FRAME となっていて、
             // ANIMATION_REP_HALF_FRAME の剰余だけで算出すると、常時非 sub のアニメーションが流れることになるため、
@@ -2945,7 +2945,7 @@ export class WWA {
             this._camera.advanceTransitionStepNum();
         }
 
-        if (!this._player.isWaitingMessage()) {
+        if (!this._player.isWaitingMessageOrManualPause()) {
             this._player.decrementLookingAroundTimer();
             if (this._statusPressCounter.energy > 0 && --this._statusPressCounter.energy === 0) {
                 util.$id("disp-energy").classList.remove("onpress");
@@ -3180,7 +3180,7 @@ export class WWA {
         const canvasX = (pos.x - cpParts.x) * Consts.CHIP_SIZE + poso.x - cpOffset.x;
         const canvasY = (pos.y - cpParts.y) * Consts.CHIP_SIZE + poso.y - cpOffset.y;
         let crop: number;
-        if (this._useLookingAround && this._player.isLookingAround() && !this._player.isWaitingMessage()) {
+        if (this._useLookingAround && this._player.isLookingAround() && !this._player.isWaitingMessageOrManualPause()) {
             // ジャンプゲート後のぐるぐるまわるやつ
             const dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
             crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
@@ -4226,7 +4226,7 @@ export class WWA {
     // できない場合はできるようになってからします。
     public reserveMessageDisplayWhenShouldOpen(messageRequest: MessageRequestPage) {
         if (
-            this._player.isWaitingMessage() ||
+            this._player.isWaitingMessageOrManualPause() ||
             this._player.isFighting() ||
             this._player.isWaitingPasswordWindow() ||
             this._player.isWaitingEstimateWindow()
@@ -4567,7 +4567,7 @@ export class WWA {
         this._yesNoChoicePartsID = void 0;
         this._yesNoUseItemPos = void 0;
         this._yesNoChoiceCallInfo = ChoiceCallInfo.NONE;
-        this._player.clearMessageWaiting();
+        this._player.clearWaitingMessageOrManualPause();
         this._messageWindow.clear();
         this._messageWindow.setYesNoChoice(false);
 
@@ -5680,7 +5680,7 @@ export class WWA {
                 this._keyStore.allClear();
                 this._mouseStore.clear();
             }
-            this._player.clearMessageWaiting();
+            this._player.clearWaitingMessageOrManualPause();
             return { newPageGenerated: false };
         } else {
             this.registerPageByMessage(
@@ -6251,7 +6251,7 @@ font-weight: bold;
     }
     // JumpGateマクロ実装ポイント
     public forcedJumpGate(jx: number, jy: number): void {
-        if(this._player.isWaitingMessage()) {
+        if(this._player.isWaitingMessageOrManualPause()) {
             this._windowCloseWaitingJumpGateRequest = { x: jx, y: jy };
         } else {
             this._windowCloseWaitingJumpGateRequest = undefined;
@@ -7147,7 +7147,10 @@ font-weight: bold;
     }
 
     public isPlayerWaitingMessage(): boolean {
-        return this._player.isWaitingMessage();
+        return this._player.isWaitingMessageOrManualPause();
+    }
+    public isManualPause(): boolean {
+        return this._player.isManualPause();
     }
     private _loadSystemMessage(key: SystemMessage.Key): string {
         // マクロなどで上書きされたシステムメッセージを解決
@@ -7220,7 +7223,7 @@ font-weight: bold;
         this._wwaData.customSystemMessages[key] = message;
     }
 
-    public setEnterWaiting(
+    public manualPause(
         afterEnterExecFuncName: string,
         noMessageWaitingExecFuncNames: {
             up: string,
@@ -7229,7 +7232,7 @@ font-weight: bold;
             left: string
         }
     ) {
-        this._player.setNoMessageWaitng(
+        this._player.setManualPause(
             afterEnterExecFuncName,
             noMessageWaitingExecFuncNames
         );
