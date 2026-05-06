@@ -60,7 +60,7 @@ function show_sword() {
 }
 
 function next_action() {
-  MSG("画面がクリックされました")
+  MSG("画面がクリックされました");
   PICTURE(1);
 }
 

@@ -898,10 +898,10 @@ export class EvalCalcWwaNode {
           right: string,
           left: string
         } = {
-          up: node.value[1]? this.evalWwaNode(node.value[1]): "",
-          down: node.value[2]? this.evalWwaNode(node.value[2]): "",
-          right: node.value[3]? this.evalWwaNode(node.value[3]): "",
-          left: node.value[4]? this.evalWwaNode(node.value[4]): "",
+          up: node.value[1] ? this.evalWwaNode(node.value[1]) : "",
+          down: node.value[2] ? this.evalWwaNode(node.value[2]) : "",
+          right: node.value[3] ? this.evalWwaNode(node.value[3]) : "",
+          left: node.value[4] ? this.evalWwaNode(node.value[4]) : "",
         }
         this.generator.wwa.setEnterWaiting(value, noMessageWaitingExecFuncNames);
         return;
