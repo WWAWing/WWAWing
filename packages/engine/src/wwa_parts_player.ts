@@ -1101,13 +1101,13 @@ export class Player extends PartsObject {
         this._battleTurnLength++;
         if (this._wwa.isBattleSpeedIndexForQuickBattle(this._speedIndex) || this._battleTurnLength > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
             if (this._battleTurnLength === 1) {
-                this._wwa.playSound(SystemSound.ATTACK);
+                this._wwa.playAttackSound();
                 this._wwa.vibration(false);
             }
             this._battleFrameCounter = 1;
         } else {
             this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
-            this._wwa.playSound(SystemSound.ATTACK);
+            this._wwa.playAttackSound();
             this._wwa.vibration(true);
         }
 

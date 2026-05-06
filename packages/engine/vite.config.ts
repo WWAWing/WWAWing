@@ -21,8 +21,8 @@ export default defineConfig(({ mode }) => {
       outDir: 'lib',
       emptyOutDir: false, // assets などが先にコピーされるため
       sourcemap: isDev,
-      minify: isDev ? false : 'esbuild',
-      target: 'es2020',
+      minify: isDev ? false : 'oxc',
+      target: 'baseline-widely-available',
       rollupOptions: {
         output: {
           // グローバル変数として公開しない (IIFE として自己実行)

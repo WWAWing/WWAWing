@@ -1,7 +1,7 @@
 {
   "name": "@wwawing/serve-index",
   "description": "Serve directory listings",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "author": "Douglas Christopher Wilson <doug@somethingdoug.com>, WWA Wing Team",
   "license": "MIT",
   "types": "./types/index.d.ts",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "after": "0.8.2",
-    "eslint": "9.17.0",
+    "eslint": "9.39.4",
     "eslint-plugin-markdown": "5.1.0",
     "supertest": "7.0.0"
   },

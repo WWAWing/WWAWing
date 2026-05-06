@@ -147,7 +147,7 @@ export class WWA {
     private _frameCoord: Coord;
     private _battleEffectCoord: Coord;
 
-    private sounds: Sound[];
+    private _soundMap: Map<number | string, Sound>;
 
     private _temporaryInputDisable: boolean;
 
@@ -844,9 +844,16 @@ export class WWA {
                     e.keyCode === KeyCode.KEY_UP ||
                     e.keyCode === KeyCode.KEY_SHIFT ||
                     e.keyCode === KeyCode.KEY_ENTER ||
+                    e.keyCode === KeyCode.KEY_0 ||
                     e.keyCode === KeyCode.KEY_1 ||
                     e.keyCode === KeyCode.KEY_2 ||
                     e.keyCode === KeyCode.KEY_3 ||
+                    e.keyCode === KeyCode.KEY_4 ||
+                    e.keyCode === KeyCode.KEY_5 ||
+                    e.keyCode === KeyCode.KEY_6 ||
+                    e.keyCode === KeyCode.KEY_7 ||
+                    e.keyCode === KeyCode.KEY_8 ||
+                    e.keyCode === KeyCode.KEY_9 ||
                     e.keyCode === KeyCode.KEY_A ||
                     e.keyCode === KeyCode.KEY_C ||
                     e.keyCode === KeyCode.KEY_D ||
@@ -860,6 +867,16 @@ export class WWA {
                     e.keyCode === KeyCode.KEY_Y ||
                     e.keyCode === KeyCode.KEY_Z ||
                     e.keyCode === KeyCode.KEY_ESC ||
+                    e.keyCode === KeyCode.KEY_NUM0 ||
+                    e.keyCode === KeyCode.KEY_NUM1 ||
+                    e.keyCode === KeyCode.KEY_NUM2 ||
+                    e.keyCode === KeyCode.KEY_NUM3 ||
+                    e.keyCode === KeyCode.KEY_NUM4 ||
+                    e.keyCode === KeyCode.KEY_NUM5 ||
+                    e.keyCode === KeyCode.KEY_NUM6 ||
+                    e.keyCode === KeyCode.KEY_NUM7 ||
+                    e.keyCode === KeyCode.KEY_NUM8 ||
+                    e.keyCode === KeyCode.KEY_NUM9 ||
                     e.keyCode === KeyCode.KEY_F1 ||
                     e.keyCode === KeyCode.KEY_F3 ||
                     e.keyCode === KeyCode.KEY_F4 ||
@@ -1144,8 +1161,7 @@ export class WWA {
                     this._isLoadedSound = true;
                     setGameStartingMessageWhenPcOrSP();
                     this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
-                    this.loadSound();
-                    window.requestAnimationFrame(this.soundCheckCaller);
+                    this.loadSound().then(()=> window.requestAnimationFrame(this.soundCheckCaller));
                     return;
                 } else if (soundLoadConfirmMessage === "OFF") {
                     this._isLoadedSound = false;
@@ -1202,8 +1218,7 @@ export class WWA {
                                 this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
                                 this._isLoadedSound = true;
                                 this._setLoadingMessage(ctxCover, LoadStage.AUDIO);
-                                this.loadSound();
-                                window.requestAnimationFrame(this.soundCheckCaller);
+                                this.loadSound().then(() => window.requestAnimationFrame(this.soundCheckCaller));
                             }, Consts.YESNO_PRESS_DISP_FRAME_NUM * Consts.DEFAULT_FRAME_INTERVAL);
                         }
 
@@ -1230,8 +1245,7 @@ export class WWA {
                     this._yesNoJudge = YesNoState.UNSELECTED;
                     this._yesNoJudgeInNextFrame = YesNoState.UNSELECTED;
                     this._isLoadedSound = true;
-                    this.loadSound();
-                    window.requestAnimationFrame(this.soundCheckCaller);
+                    this.loadSound().then(() => window.requestAnimationFrame(this.soundCheckCaller));
                 }
             });
             console.log("WWA_START");
@@ -1534,24 +1548,28 @@ export class WWA {
         }
     }
 
-    public createSoundInstance(soundId: number): void {
-        if (soundId === 0 || soundId === SystemSound.NO_SOUND || this.sounds[soundId]) {
+    public createSoundInstance(soundId: number | string): void {
+        if (soundId === 0 || soundId === SystemSound.NO_SOUND || this._soundMap.has(soundId)) {
             return;
         }
         const filePath = `${this._audioDirectory}${soundId}.${this.audioExtension}`;
-        this.sounds[soundId] = new Sound(soundId, filePath, this.audioContext, this.audioGain);
+        this._soundMap.set(soundId, new Sound(soundId, filePath, this.audioContext, this.audioGain));
     }
 
-    public loadSound(): void {
-        this.sounds = new Array(Consts.SOUND_MAX + 1);
+    public async loadSound(): Promise<void> {
+        this._soundMap = new Map<number, Sound>();
 
+        console.log("(D) サウンドのロードを開始します。");
+        console.log("(D-1) システムサウンドのロードを開始します。");
         this.createSoundInstance(SystemSound.DECISION);
         this.createSoundInstance(SystemSound.ATTACK);
 
+        console.log("(D-2) 背景パーツ記載のサウンドのロードを開始します。");
         for (let partsId = 1; partsId < this._wwaData.mapPartsMax; partsId++) {
             const soundId = this._wwaData.mapAttribute[partsId][Consts.ATR_SOUND];
             this.createSoundInstance(soundId);
         }
+        console.log("(D-3) 物体パーツ記載のサウンドのロードを開始します。");
         for (let partsId = 1; partsId < this._wwaData.objPartsMax; partsId++) {
             if (this._wwaData.objectAttribute[partsId][Consts.ATR_TYPE] === Consts.OBJECT_RANDOM) {
                 continue;
@@ -1560,6 +1578,7 @@ export class WWA {
             this.createSoundInstance(soundId);
         }
         // 全メッセージを解析し、$sound マクロのパラメータからロードすべきサウンド番号を全取得し、ロードする。
+        console.log("(D-4) $sound マクロ記載のサウンドのロードを開始します。");
         this._wwaData.message.forEach(message =>
             message
                 .split("\n")
@@ -1574,8 +1593,100 @@ export class WWA {
                     }
                 })
         );
+        console.log("(D-4) マップから抽出したサウンド番号一覧:", Array.from(this._soundMap.keys()));
+        await this.loadCustomSound();
+        console.log("(D-6) 次のサウンドがロードされます:", Array.from(this._soundMap.keys()).sort((a, b) => {
+            if (typeof a === "number") {
+                return typeof b === "number" ? a - b : -1;
+            } else {
+                return typeof b === "number" ? 1 : a.localeCompare(b);
+            }
+        }));
         this._wwaData.bgm = 0;
         this._soundLoadSkipFlag = false;
+    }
+
+    private async loadCustomSound(): Promise<void> {
+        const userAudioListJSONFileName = this._audioDirectory + "sound-list.json";
+        console.log(`(D-5) サウンドリストファイル: ${userAudioListJSONFileName} の解析を開始します。`);
+
+        const userAudioFileNameListResponse = await fetchJsonFile(userAudioListJSONFileName);
+        
+        if (userAudioFileNameListResponse?.kind !== "data" || !Array.isArray(userAudioFileNameListResponse.data)) {
+            console.warn(`(D-5) カスタムオーディオファイルのリストの取得に失敗しました。リストファイルが存在するか、正しい形式で書かれているかを確認してください。 (リストファイル: ${userAudioListJSONFileName})`);
+            return;
+        }
+        userAudioFileNameListResponse.data.forEach((soundId) => {
+            switch (typeof soundId) {
+                case "number":
+                    this.createSoundInstance(soundId);
+                    return;
+                case "string": {
+                    if (soundId.startsWith("#")) {
+                        // コメントとみなして無視
+                        return;
+                    }
+                    const numberSoundId = Number(soundId);
+                    if (
+                        soundId.includes("/") ||
+                        soundId.includes("\\") ||
+                        numberSoundId <= 0 ||
+                        numberSoundId > Number.MAX_SAFE_INTEGER ||
+                        numberSoundId == SystemSound.NO_SOUND
+                    ) {
+                      console.warn(`(D-5) 無効なサウンドIDが指定されました: ${soundId}`);
+                      return;
+                    }
+                    if (!Number.isNaN(numberSoundId)) {
+                        console.warn("(D-5) 文字列で数値のサウンドIDが与えられました。数値として解釈します。 (指定されたサウンドID: " + soundId + ")");
+                        this.createSoundInstance(numberSoundId);
+                        return;
+                    }
+                    this.createSoundInstance(soundId);
+                    return;
+                }
+                case "object":
+                    if (!soundId) {
+                        return;
+                    }
+                    if (Array.isArray(soundId)) {
+                        // [from, to] の形式で数値のサウンドIDが与えられた場合、from から to までのサウンドIDをすべてロードする
+                        if (soundId.length !== 2) {
+                            console.warn(`(D-5) 配列形式でサウンドIDを与える場合は2要素で与えてください: ${JSON.stringify(soundId)}`);
+                            return;
+                        }
+                        try {
+                            soundId.forEach(id => {
+                                if (typeof id !== "number" || id <= 0 || id > Number.MAX_SAFE_INTEGER) {
+                                    // forEach を脱出
+                                    throw new Error(`(D-5) 無効なサウンドIDが指定されました: ${JSON.stringify(soundId)}`);
+                                }
+                            });
+                        } catch (e) {
+                            console.warn(e.message);
+                            return;
+                        }
+                        const [soundIdFrom, soundIdTo] = soundId as number[];
+                        if (soundIdFrom > soundIdTo) {
+                            console.warn(`(D-5) サウンドIDが配列形式で与えられていますが、from (${soundIdFrom}) が to (${soundIdTo}) より大きくなっています: ${JSON.stringify(soundId)}`);
+                            return;
+                        }
+                        for (let id = soundIdFrom; id <= soundIdTo; id++) {
+                            if (id == SystemSound.NO_SOUND) {
+                                console.warn(`(D-5) サウンドID ${id} が範囲に含まれていますが、これは停止用に使用している値で無効なのでスキップします。`);
+                                continue;
+                             }
+                            this.createSoundInstance(id);
+                        }
+                        return;
+                    }
+                    console.warn(`(D-5) サウンドIDがオブジェクトのようですが、現在この記法はサポートされていません: ${JSON.stringify(soundId)}`);
+                    return;
+                default: 
+                    console.warn(`(D-5) この形式のサウンドIDはサポートされていません: ${soundId}`);
+                    return;
+            }
+        });
     }
 
     public checkAllSoundLoaded(): void {
@@ -1588,18 +1699,16 @@ export class WWA {
         if (this._keyStore.getKeyState(KeyCode.KEY_SPACE) === KeyState.KEYDOWN) {
             this._soundLoadSkipFlag = true;
         }
-        for (let i = 1; i <= Consts.SOUND_MAX; i++) {
-            const instance = this.sounds[i];
-            if (instance === void 0 || instance.isError()) {
-                continue;
+        this._soundMap.forEach((instance) => {
+            if (!instance || instance.isError()) {
+                return;
             }
-
             total++;
             if (!instance.hasData()) {
-                continue;
+                return;
             }
             loadedNum++;
-        }
+        });
         if (loadedNum < total && !this._soundLoadSkipFlag) {
             this._setProgressBar(getProgress(loadedNum, total, LoadStage.AUDIO));
             window.requestAnimationFrame(this.soundCheckCaller);
@@ -1608,6 +1717,7 @@ export class WWA {
 
         this._setProgressBar(getProgress(Consts.SOUND_MAX, Consts.SOUND_MAX, LoadStage.AUDIO));
         this._setLoadingMessage(ctxCover, LoadStage.FINISH);
+        console.log("(D-7) サウンドのロードが完了しました。");
         this.openGameWindow();
     }
 
@@ -1616,10 +1726,10 @@ export class WWA {
      * ロードが完了した場合には再生します。
      * @param targetSoundId 確認する音楽ファイルのサウンド番号
      */
-    private _setSoundLoadedCheckTimer(targetSoundId: number): void {
-        const targetAudio = this.sounds[targetSoundId];
+    private _setSoundLoadedCheckTimer(targetSoundId: number | string): void {
+        const targetAudio = this._soundMap.get(targetSoundId);
         // 対象音源が存在しないなど、エラーの場合は何度確認しても無駄なので何もせず終了
-        if (targetAudio.isError()) {
+        if (!targetAudio || targetAudio.isError()) {
             return;
         }
         this.soundLoadedCheckTimer = window.setInterval((): void => {
@@ -1648,56 +1758,149 @@ export class WWA {
             this.soundLoadedCheckTimer = undefined;
         }
     }
+    public getSoundEnabled(){
+         return this._isLoadedSound;
+    }
 
-    public playSound(id: number, bgmDelayDurationMs?: number): void {
+    public checkSoundEnabled(id: number | string): void {
+        const audioInstance = this._soundMap.get(id);
+        audioInstance.hasData();
+    }
+
+
+    /** BGM を停止します */
+    public stopBgm() {
+        const targetSound = this._soundMap.get(this._wwaData.bgm);
+        if (targetSound?.isPlaying()) {
+            targetSound.pause();
+        }
+        this._wwaData.bgm = 0;
+    }
+
+    /**
+     * 指定されたサウンドを停止します
+     * BGM, 効果音を問いません。
+     * 主にループ再生している効果音を停止することを想定しています。
+     */
+    public stopSound(soundId: number | string, option: { includeBgm: boolean }) {
+        if (this.soundIsBgm(soundId)) {
+            if (option.includeBgm && this._wwaData.bgm === soundId) {
+                this.stopBgm()
+            }
+            return;
+        }
+        const targetSound = this._soundMap.get(soundId);
+        if (targetSound?.isPlaying()) {
+            targetSound.pause();
+        }
+    }
+
+    /**
+     * すべてのサウンドを停止します
+     */
+    public stopAllSound(option: {includeBgm: boolean}) {
+        this._soundMap.keys().forEach((soundId) => this.stopSound(soundId, option));
+    }
+
+    public playSound(id: number | string, option: { loopPlaying?: boolean; bgmDelayDurationMs?: number; } = {}): void {
+        const isBgm = this.soundIsBgm(id);
+        // option.loopPlaying が undefined の時、 BGM の場合はループする, その他のサウンドの場合はループしない。
+        const loopPlaying = option.loopPlaying === undefined ? isBgm : option.loopPlaying;
         if (!this._isLoadedSound) {
             // 音声データがロードされていなくても、次に音が流れる設定でゲーム開始したときにBGMを復元しなければならない。
             if (id === SystemSound.NO_SOUND) {
                 this._wwaData.bgm = 0;
-            } else if (id >= SystemSound.BGM_LB) {
-                this._wwaData.bgm = id;
+            } else if (isBgm) {
+                // 音声データがロードされていない場合でループなしBGMを再生しようとした時は、セーブデータから再生情報の復旧を行わない。
+                this._wwaData.bgm = loopPlaying ? id : 0;
             }
             return;
         }
 
-        if (id < 0 || id >= Consts.SOUND_MAX) {
+        if (typeof id === "number" && (id < 0 || id >= Consts.SOUND_MAX)) {
             console.warn("サウンド番号が範囲外です。");
             return;
         }
-        if (id >= SystemSound.BGM_LB && this._wwaData.bgm === id) {
+        // 同じBGMが既に再生されている場合は無視する
+        // この時、新しく playSound に対して指定された option が反映されないのは仕様です
+        if (isBgm && this._wwaData.bgm === id) {
             return;
         }
 
-        if ((id === SystemSound.NO_SOUND || id >= SystemSound.BGM_LB) && this._wwaData.bgm !== 0) {
-            if (this.sounds[this._wwaData.bgm].isPlaying()) {
-                this.sounds[this._wwaData.bgm].pause();
-            }
-            this._wwaData.bgm = 0;
+        // BGM が変更される場合は旧BGMを停止する。 BGM を止めるサウンド番号が与えられた場合も止める。
+        if ((id === SystemSound.NO_SOUND || isBgm) && this._wwaData.bgm !== 0) {
+            this.stopBgm();
         }
 
         if (id === 0 || id === SystemSound.NO_SOUND) {
             return;
         }
-        const audioInstance = this.sounds[id];
+        const audioInstance = this._soundMap.get(id);
+        if (!audioInstance) {
+            console.warn(`サウンドID ${id} は、マップデータにも ${this._audioDirectory}sound-list.json にも出現しないため、再生できません。`);
+            return;
+        }
         if (!audioInstance.hasData()) {
-            if (id >= SystemSound.BGM_LB) {
+            if (isBgm) {
                /* 
                   音源がロードされていなくても、QuickLoad などでゲーム状態を復元したときにはBGMを復元しなければならない。
                   ので、ゲームデータ上にはBGM設定を反映する
+                  ただし、ループ再生でない場合は復元しない
                 */
-                this._wwaData.bgm = id;
+                this._wwaData.bgm = loopPlaying ? id : 0;
                 this._setSoundLoadedCheckTimer(id);
             }
         } else {
-            if (id >= SystemSound.BGM_LB) {
-                this.sounds[id].play(bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs);
+            if (isBgm) {
+                audioInstance?.play(option.bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs, loopPlaying, () => {
+                    // BGMがループ再生でない場合は、再生が終わったタイミングでBGM設定をクリアする
+                    // なお、他のBGMが再生されている場合に暴発しないよう、playSound 呼び出し時以外の id で呼び出された場合は処理をブロックする。
+                    if (id === this._wwaData.bgm && !loopPlaying) {
+                        this._wwaData.bgm = 0;
+                    }
+                });
+                // 再生が終了するまでの間は、ループ再生でない場合でもセーブデータから復旧する
                 this._wwaData.bgm = id;
             } else {
-                this.sounds[id].play();
+                audioInstance?.play(0, loopPlaying);
             }
         }
 
     }
+    public playDecisionSound(): void {
+        this.playSound(this._wwaData.decisionSound ?? SystemSound.DECISION);
+    }
+
+    public playAttackSound(): void {
+        this.playSound(this._wwaData.attackSound ?? SystemSound.ATTACK) ;
+    }
+    public setDecisionSound(soundId: number | string) {
+        if (this.soundIsBgm(soundId)) {
+            console.warn("決定音にBGMを設定することはできません。");
+            return;
+        }
+        this._wwaData.decisionSound = soundId;
+    }
+    public setAttackSound(soundId: number | string) {
+        if (this.soundIsBgm(soundId)) {
+            console.warn("攻撃音にBGMを設定することはできません。");
+            return;
+        }
+        this._wwaData.attackSound = soundId;
+    }
+
+    private soundIsBgm(soundId: number | string): boolean {
+        switch (typeof soundId) {
+            case "number":
+                return soundId >= SystemSound.BGM_LB;
+            case "string":
+                // プレフィックスの bgm_ の大文字小文字は問わない
+                return soundId.match(/^bgm_/i) !== null;
+            default:
+                throw new TypeError(`Invalid soundId type: ${typeof soundId}`);
+        }
+    }
+
 
     public openGameWindow(): void {
         var ppos = this._player.getPosition();
@@ -1741,7 +1944,7 @@ export class WWA {
         if (this._player.canUseItem(itemPos1To12)) {
             var bg = <HTMLDivElement>(util.$id("item" + (itemPos1To12 - 1)));
             bg.classList.add("onpress");
-            this.playSound(SystemSound.DECISION);
+            this.playDecisionSound();
             const systemMessage = this.resolveSystemMessage(SystemMessage.Key.CONFIRM_USE_ITEM);
             if (systemMessage === "BLANK") {
                 this._player.readyToUseItem(itemPos1To12);
@@ -1771,7 +1974,7 @@ export class WWA {
 
     public onselectbutton(button: SidebarButton, forcePassword: boolean = false, forceGoToWWA: boolean = false): void {
         var bg = <HTMLDivElement>(util.$id(sidebarButtonCellElementID[button]));
-        this.playSound(SystemSound.DECISION);
+        this.playDecisionSound();
         this._itemMenu.close();
         bg.classList.add("onpress");
         if (button === SidebarButton.QUICK_LOAD) {
@@ -1892,7 +2095,7 @@ export class WWA {
     public onitemmenucalled() {
         this.registerSystemMessagePage("右のメニューを選択してください。");
         this._messageWindow.setItemMenuChoice(true);
-        this.playSound(SystemSound.DECISION);
+        this.playDecisionSound();
         this._itemMenu.openView();
     }
 
@@ -2325,10 +2528,10 @@ export class WWA {
                     if (this.launchBattleEstimateWindow()) {
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F3)) {
-                    this.playSound(SystemSound.DECISION);
+                    this.playDecisionSound();
                     this.onselectbutton(SidebarButton.QUICK_LOAD, true);
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F4)) {
-                    this.playSound(SystemSound.DECISION);
+                    this.playDecisionSound();
                     if (this._useSuspend) {//中断モード
                         this.onpasssuspendsavecalled();
                     } else if (this._usePassword) {
@@ -2363,141 +2566,21 @@ export class WWA {
                     this._displayHelp();
                 }
                 /** Keyを押した際のユーザ定義独自関数を呼び出す */
-                // TODO: 冗長な表現になってるので修正したい
+                const make = (keyName: string, funcName: string) => ({
+                    key: KeyCode[`KEY_${keyName}` as keyof typeof KeyCode],
+                    func: funcName
+                });
                 const checkHitKeyUserFunctions = [
-                    {
-                        key: KeyCode.KEY_A,
-                        func: "CALL_PUSH_A"
-                    },
-                    {
-                        key: KeyCode.KEY_B,
-                        func: "CALL_PUSH_B"
-                    },
-                    {
-                        key: KeyCode.KEY_C,
-                        func: "CALL_PUSH_C"
-                    },
-                    {
-                        key: KeyCode.KEY_D,
-                        func: "CALL_PUSH_D"
-                    },
-                    {
-                        key: KeyCode.KEY_E,
-                        func: "CALL_PUSH_E"
-                    },
-                    {
-                        key: KeyCode.KEY_F,
-                        func: "CALL_PUSH_F"
-                    },
-                    {
-                        key: KeyCode.KEY_G,
-                        func: "CALL_PUSH_G"
-                    },
-                    {
-                        key: KeyCode.KEY_H,
-                        func: "CALL_PUSH_H"
-                    },
-                    {
-                        key: KeyCode.KEY_I,
-                        func: "CALL_PUSH_I"
-                    },
-                    {
-                        key: KeyCode.KEY_J,
-                        func: "CALL_PUSH_J"
-                    },
-                    {
-                        key: KeyCode.KEY_K,
-                        func: "CALL_PUSH_K"
-                    },
-                    {
-                        key: KeyCode.KEY_L,
-                        func: "CALL_PUSH_L"
-                    },
-                    {
-                        key: KeyCode.KEY_M,
-                        func: "CALL_PUSH_M"
-                    },
-                    {
-                        key: KeyCode.KEY_N,
-                        func: "CALL_PUSH_N"
-                    },
-                    {
-                        key: KeyCode.KEY_O,
-                        func: "CALL_PUSH_O"
-                    },
-                    {
-                        key: KeyCode.KEY_P,
-                        func: "CALL_PUSH_P"
-                    },
-                    {
-                        key: KeyCode.KEY_Q,
-                        func: "CALL_PUSH_Q"
-                    },
-                    {
-                        key: KeyCode.KEY_R,
-                        func: "CALL_PUSH_R"
-                    },
-                    {
-                        key: KeyCode.KEY_S,
-                        func: "CALL_PUSH_S"
-                    },
-                    {
-                        key: KeyCode.KEY_T,
-                        func: "CALL_PUSH_T"
-                    },
-                    {
-                        key: KeyCode.KEY_U,
-                        func: "CALL_PUSH_U"
-                    },
-                    {
-                        key: KeyCode.KEY_V,
-                        func: "CALL_PUSH_V"
-                    },
-                    {
-                        key: KeyCode.KEY_W,
-                        func: "CALL_PUSH_W"
-                    },
-                    {
-                        key: KeyCode.KEY_X,
-                        func: "CALL_PUSH_X"
-                    },
-                    {
-                        key: KeyCode.KEY_Y,
-                        func: "CALL_PUSH_Y"
-                    },
-                    {
-                        key: KeyCode.KEY_Z,
-                        func: "CALL_PUSH_Z"
-                    },
-                    {
-                        key: KeyCode.KEY_ENTER,
-                        func: "CALL_PUSH_ENTER"
-                    },
-                    {
-                        key: KeyCode.KEY_ESC,
-                        func: "CALL_PUSH_ESC"
-                    },
-                    {
-                        key: KeyCode.KEY_SPACE,
-                        func: "CALL_PUSH_SPACE"
-                    },
-                    {
-                        key: KeyCode.KEY_LEFT,
-                        func: "CALL_PUSH_LEFT"
-                    },
-                    {
-                        key: KeyCode.KEY_RIGHT,
-                        func: "CALL_PUSH_RIGHT"
-                    },
-                    {
-                        key: KeyCode.KEY_UP,
-                        func: "CALL_PUSH_UP"
-                    },
-                    {
-                        key: KeyCode.KEY_DOWN,
-                        func: "CALL_PUSH_DOWN"
-                    }
-                ]
+                    // 通常数字
+                    ..."0123456789".split("").map(n => make(n, `CALL_PUSH_${n}`)),
+                    // テンキー（同じfuncを使う）
+                    ..."0123456789".split("").map(n => make(`NUM${n}`, `CALL_PUSH_${n}`)),
+                    // アルファベット
+                    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => make(l, `CALL_PUSH_${l}`)),
+                    // その他
+                    ...["ENTER", "SHIFT", "ESC", "SPACE", "LEFT", "RIGHT", "UP", "DOWN"]
+                        .map(k => make(k, `CALL_PUSH_${k}`))
+                ];
                 checkHitKeyUserFunctions.forEach((key)=>{
                     if(this._keyStore.checkHitKey(key.key)) {
                         const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[key.func];
@@ -2569,12 +2652,12 @@ export class WWA {
                         }
                     }
                     if (this._yesNoJudge === YesNoState.YES) {
-                        this.playSound(SystemSound.DECISION);
+                        this.playDecisionSound();
                         this._yesNoDispCounter = Consts.YESNO_PRESS_DISP_FRAME_NUM;
                         this._messageWindow.setInputDisable();
                         this._messageWindow.update();
                     } else if (this._yesNoJudge === YesNoState.NO) {
-                        this.playSound(SystemSound.DECISION);
+                        this.playDecisionSound();
                         this._yesNoDispCounter = Consts.YESNO_PRESS_DISP_FRAME_NUM;
                         this._messageWindow.setInputDisable();
                         this._messageWindow.update();
@@ -2627,7 +2710,7 @@ export class WWA {
                     }
                     this._itemMenu.ng();
                     this._setNextPage();
-                    this.playSound(SystemSound.DECISION);
+                    this.playDecisionSound();
                     this._messageWindow.setItemMenuChoice(false);
                 }
             } else {
@@ -4876,7 +4959,7 @@ export class WWA {
         if (newData.bgm === 0) {
             this.playSound(SystemSound.NO_SOUND);
         } else {
-            this.playSound(newData.bgm, newData.bgmDelayDurationMs);
+            this.playSound(newData.bgm, { bgmDelayDurationMs: newData.bgmDelayDurationMs });
         }
         this.setImgClick(new Coord(newData.imgClickX, newData.imgClickY));
         if (this.getObjectIdByPosition(this._player.getPosition()) !== 0) {
@@ -5314,7 +5397,7 @@ export class WWA {
         const yTop = Math.max(0, cpParts.y);
         const yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
         const monsterList: Monster[] = [];
-        this.playSound(SystemSound.DECISION);
+        this.playDecisionSound();
         for (let x = xLeft; x <= xRight; x++) {
             for (let y= yTop; y <= yBottom; y++) {
                 const partsId = this._wwaData.mapObject[y][x];

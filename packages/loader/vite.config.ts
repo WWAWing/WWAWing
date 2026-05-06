@@ -11,7 +11,7 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'debug/browser'),
     emptyOutDir: true,
-    target: 'es2020', // Baseline Widely Available
+    target: 'baseline-widely-available',
     rollupOptions: {
       input: resolve(__dirname, 'src/___debug-resources___/index.html'),
     },
