@@ -715,7 +715,7 @@ export class EvalCalcWwaNode {
       case "IS_PLAYER_WAITING_MESSAGE": {
         return this.generator.wwa.isPlayerWaitingMessage();
       }
-      case "IS_PAUSE":
+      case "IS_MANUAL_PAUSE":
       case "IS_PLAYER_WAITING_ENTER": {
         return this.generator.wwa.isManualPause();
       }
@@ -893,7 +893,7 @@ export class EvalCalcWwaNode {
         const value = this.evalWwaNode(node.value[0]);
         return typeof value === "number";
       }
-      case "PAUSE":
+      case "MANUAL_PAUSE":
       case "WAIT_ENTER": {
         // valueで評価した関数名を読み込む
         const value = node.value[0]? this.evalWwaNode(node.value[0]): "";
