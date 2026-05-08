@@ -56,7 +56,7 @@ function show_sword() {
     img: [4, 2],
     size: [120, 120]
   });
-  PAUSE("next_action", "exec_up", "exec_down", "exec_right", "exec_left");
+  MANUAL_PAUSE("next_action", "exec_up", "exec_down", "exec_right", "exec_left");
 }
 
 function next_action() {

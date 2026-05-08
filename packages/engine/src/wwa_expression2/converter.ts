@@ -203,7 +203,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "MOVE":
     case "PARTS_MOVE":
     case "IS_PLAYER_WAITING_MESSAGE":
-    case "IS_PAUSE":
+    case "IS_MANUAL_PAUSE":
     case "IS_PLAYER_WAITING_ENTER":
     case "GET_UNIXTIME":
     case "GET_DATE_YEAR":
@@ -229,7 +229,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_IMG_POS_Y":
     case "LENGTH":
     case "IS_NUMBER":
-    case "PAUSE":
+    case "MANUAL_PAUSE":
     case "WAIT_ENTER":
     case "COLOR":
     case "EFFITEM":
