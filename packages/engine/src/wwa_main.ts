@@ -1925,14 +1925,12 @@ export class WWA {
 
         setTimeout( () => {
             util.$id("wwa-wrapper").removeChild(util.$id("wwa-cover"));
-            // TODO: これが表示終わるまでプレイヤーをcontrollableにしない
-            //                setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
-            this._main();
+            requestAnimationFrame(this.mainCaller.bind(this));
         }, Consts.SPLASH_SCREEN_DISP_MILLS);
 
     }
 
-    public mainCaller = () => this._main();
+    public mainCaller = (now: DOMHighResTimeStamp) => this._main(now);
     public soundCheckCaller = () => this.checkAllSoundLoaded();
 
     /**
@@ -2133,7 +2131,18 @@ export class WWA {
         this._keyStore.checkHitKey(KeyCode.KEY_N)
     );
 
-    private _main(): void {
+
+    private _prevTimeStamp: DOMHighResTimeStamp = 0;
+
+    private _main(now: DOMHighResTimeStamp): void {
+
+        if (this._prevTimeStamp !== 0) {
+            const elapsedTimeMs = now - this._prevTimeStamp;
+            console.log(elapsedTimeMs);
+            this.setUserVar("elapsedTimeUs", Math.floor(elapsedTimeMs * 1000) );
+        }
+
+        this._prevTimeStamp = now;
 
         this._temporaryInputDisable = false;
         this._stopUpdateByLoadFlag = false;
@@ -2158,7 +2167,7 @@ export class WWA {
                 this._drawAll();
             }
             //待ち時間待機
-            window.requestAnimationFrame(this.mainCaller);
+            window.requestAnimationFrame(this.mainCaller.bind(this));
             return;
         }
         this._waitFrame = 0;
