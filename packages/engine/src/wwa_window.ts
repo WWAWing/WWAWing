@@ -647,3 +647,28 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
         return "MessageWindow";
     }
 }
+
+
+export class GameFrameRateWindow {
+    private element: HTMLElement;
+    private fpsIndicatorElement: HTMLElement;
+    constructor (parentElement: HTMLElement) {
+        // UNDONE: デフォルトで非表示、Fキーで表示にする
+        this.element = document.createElement("div");
+        // HACK: 後で style に動かす
+        this.element.style.position = "relative";
+        this.element.style.background = "rgba(255, 255, 255, .9)";
+        this.element.style.zIndex = "301";
+
+        this.fpsIndicatorElement = document.createElement("div");
+        this.fpsIndicatorElement.textContent = "-";
+        this.element.appendChild(this.fpsIndicatorElement)
+
+        parentElement.appendChild(this.element);
+
+    }
+
+    public update(fps: number): void {
+        this.fpsIndicatorElement.textContent = `${Math.round(fps * 100) / 100} fps `
+    }
+}

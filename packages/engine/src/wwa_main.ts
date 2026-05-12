@@ -43,7 +43,7 @@ import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import { parseMacro } from "./wwa_macro";
 import { ParsedMessage, isEmptyMessageTree, MessageRequestPage, Node, Page, generatePagesByRawMessage } from "./wwa_message";
-import { MessageWindow, MonsterWindow, ScoreWindow } from "./wwa_window"
+import { MessageWindow, MonsterWindow, ScoreWindow, GameFrameRateWindow } from "./wwa_window"
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
 import { inject, checkTouchDevice } from "./wwa_inject_html";
@@ -107,6 +107,7 @@ export class WWA {
     private _objectMovingDataManager: ObjectMovingDataManager;
     public _messageWindow: MessageWindow; // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
     private _monsterWindow: MonsterWindow;
+    private _gameFrameRateWindow: GameFrameRateWindow
     private _scoreWindow: ScoreWindow;
     private _pages: Page[];
     private _yesNoJudge: YesNoState;
@@ -1134,6 +1135,8 @@ export class WWA {
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
             this._setProgressBar(getProgress(3, 4, LoadStage.GAME_INIT));
 
+            this._gameFrameRateWindow = new GameFrameRateWindow(util.$id("wwa-wrapper"));
+
             this._isLoadedSound = false;
             this._temporaryInputDisable = false;
             this._paintSkipByDoorOpen = false
@@ -1930,7 +1933,49 @@ export class WWA {
 
     }
 
-    public mainCaller = (now: DOMHighResTimeStamp) => this._main(now);
+    private _prevTimeStamp: DOMHighResTimeStamp = -1;
+    private _accumlatedTimeMs: number = 0;
+    private _samplingTimeMs: number = 0;
+    private _frameCountForMeasureFps: number = 0;
+
+    // モニターリフレッシュレートに関わらず、60FPSで固定する
+    private readonly INTERVAL_MS = 1000 / 60;
+
+    public mainCaller = (now: DOMHighResTimeStamp) => {
+        let shouldCallRaf = false;
+        const elapsedTimeMs = now - this._prevTimeStamp;
+        this.setUserVar("elapsedTimeUs", Math.floor(elapsedTimeMs * 1000) );
+
+        this._prevTimeStamp = now;
+
+        if (this._prevTimeStamp === -1) {
+            shouldCallRaf = true;
+        } else {
+            this._accumlatedTimeMs += elapsedTimeMs;
+            if (this._accumlatedTimeMs >= this.INTERVAL_MS) {
+                this._accumlatedTimeMs -= this.INTERVAL_MS;
+            }
+            // タブ復帰後の連続フレーム防止
+            if (this._accumlatedTimeMs > this.INTERVAL_MS * 2) {
+                this._accumlatedTimeMs = 0
+            }
+            this._main();
+            this._frameCountForMeasureFps++;
+        }
+
+        this._samplingTimeMs += elapsedTimeMs;
+
+        if (this._samplingTimeMs >= 1000) {
+            this._gameFrameRateWindow?.update(this._frameCountForMeasureFps / (this._samplingTimeMs / 1000));
+            this._frameCountForMeasureFps = 0;
+            this._samplingTimeMs = 0;
+        }
+
+        if (shouldCallRaf) {
+            requestAnimationFrame(this.mainCaller.bind(this))
+        }
+    } 
+
     public soundCheckCaller = () => this.checkAllSoundLoaded();
 
     /**
@@ -2131,18 +2176,7 @@ export class WWA {
         this._keyStore.checkHitKey(KeyCode.KEY_N)
     );
 
-
-    private _prevTimeStamp: DOMHighResTimeStamp = 0;
-
-    private _main(now: DOMHighResTimeStamp): void {
-
-        if (this._prevTimeStamp !== 0) {
-            const elapsedTimeMs = now - this._prevTimeStamp;
-            console.log(elapsedTimeMs);
-            this.setUserVar("elapsedTimeUs", Math.floor(elapsedTimeMs * 1000) );
-        }
-
-        this._prevTimeStamp = now;
+    private _main(): void {
 
         this._temporaryInputDisable = false;
         this._stopUpdateByLoadFlag = false;
