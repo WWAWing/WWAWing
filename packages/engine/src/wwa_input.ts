@@ -5,7 +5,9 @@ export enum KeyState {
     KEYDOWN,
     KEYPRESS,
     KEYUP,
-    KEYPRESS_MESSAGECHANGE
+    KEYPRESS_MESSAGECHANGE,
+    KEYHOLD,           // 長押し開始（閾値到達の瞬間）
+    KEYPRESS_REPEAT    // 長押し中リピート
 }
 export enum KeyCode {
     KEY_ENTER = 13,
@@ -74,24 +76,39 @@ export enum KeyCode {
     KEY_F10 = 121,
     KEY_F12 = 123
 }
-
 export class KeyStore {
     public static KEY_BUFFER_MAX = 256;
+
+    // 長押し判定の閾値・リピート間隔（フレーム数）
+    public static KEYHOLD_THRESHOLD_FRAME = 12;
+    public static KEYREPEAT_INTERVAL_FRAME = 6;
+
     private _nextKeyState: Array<boolean>;
     private _keyState: Array<boolean>;
     private _prevKeyState: Array<boolean>;
 
     private _prevKeyStateOnControllable: Array<boolean>;
     private _keyInputContinueFrameNum: Array<number>;
+    private _keyInputContinueFrameNumOnRelease: Array<number>;
 
     public checkHitKey(keyCode: KeyCode): boolean {
-        var s = this.getKeyState(keyCode);
-        return (s === KeyState.KEYDOWN || s === KeyState.KEYPRESS);
+        const s = this.getKeyState(keyCode);
+        return s === KeyState.KEYDOWN || s === KeyState.KEYPRESS;
     }
 
     public getKeyState(keyCode: KeyCode): KeyState {
+        const frames = this._keyInputContinueFrameNum[keyCode];
         if (this._prevKeyState[keyCode]) {
             if (this._keyState[keyCode]) {
+                if (frames === KeyStore.KEYHOLD_THRESHOLD_FRAME) {
+                    return KeyState.KEYHOLD;
+                }
+                if (
+                    frames > KeyStore.KEYHOLD_THRESHOLD_FRAME &&
+                    (frames - KeyStore.KEYHOLD_THRESHOLD_FRAME) % KeyStore.KEYREPEAT_INTERVAL_FRAME === 0
+                ) {
+                    return KeyState.KEYPRESS_REPEAT;
+                }
                 return KeyState.KEYPRESS;
             }
             return KeyState.KEYUP;
@@ -101,6 +118,10 @@ export class KeyStore {
             }
             return KeyState.NONE;
         }
+    }
+
+    public wasLongPress(keyCode: KeyCode): boolean {
+        return this._keyInputContinueFrameNumOnRelease[keyCode] >= KeyStore.KEYHOLD_THRESHOLD_FRAME;
     }
 
     public getKeyStateForControllPlayer(keyCode: KeyCode): KeyState {
@@ -122,8 +143,9 @@ export class KeyStore {
             if (this._keyState[keyCode]) {
                 return (
                     this._keyInputContinueFrameNum[keyCode] >=
-                        WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM ?
-                        KeyState.KEYPRESS_MESSAGECHANGE : KeyState.KEYPRESS
+                        WWAConsts.KEYPRESS_MESSAGE_CHANGE_FRAME_NUM
+                        ? KeyState.KEYPRESS_MESSAGECHANGE
+                        : KeyState.KEYPRESS
                 );
             }
             return KeyState.KEYUP;
@@ -136,22 +158,28 @@ export class KeyStore {
     }
 
     public setPressInfo(keyCode: KeyCode): void {
+        // すでに押下中なら（keydownの連打イベント）カウントをリセットしない
+        if (!this._nextKeyState[keyCode]) {
+            this._keyInputContinueFrameNum[keyCode] = 0;
+        }
         this._nextKeyState[keyCode] = true;
-        this._keyInputContinueFrameNum[keyCode] = -1;
     }
 
     public setReleaseInfo(keyCode: KeyCode): void {
+        // カウントはリセットしない（update()でOnReleaseに保存してから自然消滅させる）
         this._nextKeyState[keyCode] = false;
-        this._keyInputContinueFrameNum[keyCode] = -1;
     }
 
     public update(): void {
-        var i: number;
         this._prevKeyState = this._keyState.slice();
         this._keyState = this._nextKeyState.slice();
-        for (i = 0; i < KeyStore.KEY_BUFFER_MAX; i++) {
+        for (let i = 0; i < KeyStore.KEY_BUFFER_MAX; i++) {
             if (this._keyState[i]) {
                 this._keyInputContinueFrameNum[i]++;
+            } else if (this._prevKeyState[i] && !this._keyState[i]) {
+                // 離した瞬間にカウントを保存してからリセット
+                this._keyInputContinueFrameNumOnRelease[i] = this._keyInputContinueFrameNum[i];
+                this._keyInputContinueFrameNum[i] = 0;
             }
         }
     }
@@ -161,27 +189,17 @@ export class KeyStore {
     }
 
     public allClear(): void {
-        var i: number;
-        this._nextKeyState = new Array(KeyStore.KEY_BUFFER_MAX);
-        for (i = 0; i < KeyStore.KEY_BUFFER_MAX; i++) {
-            this._nextKeyState[i] = false;
-        }
+        this._nextKeyState = new Array(KeyStore.KEY_BUFFER_MAX).fill(false);
     }
 
     constructor() {
-        var i: number;
-        this._nextKeyState = new Array(KeyStore.KEY_BUFFER_MAX);
-        this._keyState = new Array(KeyStore.KEY_BUFFER_MAX);
-        this._prevKeyState = new Array(KeyStore.KEY_BUFFER_MAX);
-        this._prevKeyStateOnControllable = new Array(KeyStore.KEY_BUFFER_MAX);
-        this._keyInputContinueFrameNum = new Array(KeyStore.KEY_BUFFER_MAX);
-        for (i = 0; i < KeyStore.KEY_BUFFER_MAX; i++) {
-            this._nextKeyState[i] = false;
-            this._keyState[i] = false;
-            this._prevKeyState[i] = false;
-            this._prevKeyStateOnControllable[i] = false;
-            this._keyInputContinueFrameNum[i] = 0;
-        }
+        const size = KeyStore.KEY_BUFFER_MAX;
+        this._nextKeyState                      = new Array(size).fill(false);
+        this._keyState                          = new Array(size).fill(false);
+        this._prevKeyState                      = new Array(size).fill(false);
+        this._prevKeyStateOnControllable        = new Array(size).fill(false);
+        this._keyInputContinueFrameNum          = new Array(size).fill(0);
+        this._keyInputContinueFrameNumOnRelease = new Array(size).fill(0);
     }
 }
 

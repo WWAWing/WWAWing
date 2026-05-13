@@ -47,6 +47,24 @@ function CALL_PUSH_ESC() {
   MSG("ESC keyが押されました")
 }
 
+/** 数字の9ボタンを長押しした際に呼ばれる関数 */
+function CALL_HOLD_9() {
+    PICTURE(1, {
+    pos: [220, 220],
+    timeFrame: 80 / 2,
+    img: [3, 3],
+    move: [0, 2],
+    zoom: [0.5, 0.5],
+    fade: -(200 / 80),
+    anchor: 5
+  });
+}
+
+/** 数字の9ボタンの長押しをやめた際に呼ばれる関数 */
+function CALL_HOLD_RELEASE_9() {
+    MSG("9 keyの長押しが解除されました");
+}
+
 /** WWAを開始した際に呼ばれる関数 */
 function CALL_WWA_START() {
   MSG("ゲームを開始します")

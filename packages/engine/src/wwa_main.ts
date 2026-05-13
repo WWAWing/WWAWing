@@ -2570,25 +2570,49 @@ export class WWA {
                     key: KeyCode[`KEY_${keyName}` as keyof typeof KeyCode],
                     func: funcName
                 });
-                const checkHitKeyUserFunctions = [
-                    // 通常数字
-                    ..."0123456789".split("").map(n => make(n, `CALL_PUSH_${n}`)),
-                    // テンキー（同じfuncを使う）
-                    ..."0123456789".split("").map(n => make(`NUM${n}`, `CALL_PUSH_${n}`)),
-                    // アルファベット
-                    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => make(l, `CALL_PUSH_${l}`)),
-                    // その他
+                const keyNames = [
+                    ..."0123456789".split("").map(n => ({ keyName: n,       funcSuffix: n })),
+                    ..."0123456789".split("").map(n => ({ keyName: `NUM${n}`, funcSuffix: n })),
+                    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => ({ keyName: l, funcSuffix: l })),
                     ...["ENTER", "SHIFT", "ESC", "SPACE", "LEFT", "RIGHT", "UP", "DOWN"]
-                        .map(k => make(k, `CALL_PUSH_${k}`))
+                        .map(k => ({ keyName: k, funcSuffix: k }))
                 ];
-                checkHitKeyUserFunctions.forEach((key)=>{
-                    if(this._keyStore.checkHitKey(key.key)) {
-                        const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[key.func];
-                        if(userFunc) {
-                            this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
-                        }
+                const checkHitKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
+                    make(keyName, `CALL_PUSH_${funcSuffix}`)
+                );
+                const checkHoldKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
+                    make(keyName, `CALL_HOLD_${funcSuffix}`)
+                );
+                const checkHoldReleaseKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
+                    make(keyName, `CALL_HOLD_RELEASE_${funcSuffix}`)
+                );
+                const callIfDefined = (funcName: string) => {
+                    const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[funcName];
+                    if (userFunc) {
+                        this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
                     }
-                })
+                };
+                checkHitKeyUserFunctions.forEach(({ key, func }) => {
+                    const state = this._keyStore.getKeyState(key);
+                    // KEYHOLD以降（長押し中）は通常押下を発火しない
+                    if (state === KeyState.KEYDOWN || state === KeyState.KEYPRESS) {
+                        callIfDefined(func);
+                    }
+                });
+                checkHoldKeyUserFunctions.forEach(({ key, func }) => {
+                    const state = this._keyStore.getKeyState(key);
+                    if (state === KeyState.KEYHOLD || state === KeyState.KEYPRESS_REPEAT) {
+                        callIfDefined(func);
+                    }
+                });
+                checkHoldReleaseKeyUserFunctions.forEach(({ key, func }) => {
+                    if (
+                        this._keyStore.getKeyState(key) === KeyState.KEYUP &&
+                        this._keyStore.wasLongPress(key)
+                    ) {
+                        callIfDefined(func);
+                    }
+                });
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
