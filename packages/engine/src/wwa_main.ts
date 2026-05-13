@@ -2593,9 +2593,7 @@ export class WWA {
                     }
                 };
                 checkHitKeyUserFunctions.forEach(({ key, func }) => {
-                    const state = this._keyStore.getKeyState(key);
-                    // KEYHOLD以降（長押し中）は通常押下を発火しない
-                    if (state === KeyState.KEYDOWN || state === KeyState.KEYPRESS) {
+                    if (this._keyStore.checkHitKey(key)) {
                         callIfDefined(func);
                     }
                 });

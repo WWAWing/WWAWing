@@ -93,7 +93,12 @@ export class KeyStore {
 
     public checkHitKey(keyCode: KeyCode): boolean {
         const s = this.getKeyState(keyCode);
-        return s === KeyState.KEYDOWN || s === KeyState.KEYPRESS;
+        return (
+            s === KeyState.KEYDOWN ||
+            s === KeyState.KEYPRESS ||
+            s === KeyState.KEYHOLD ||
+            s === KeyState.KEYPRESS_REPEAT
+        );
     }
 
     public getKeyState(keyCode: KeyCode): KeyState {
