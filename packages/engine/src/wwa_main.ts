@@ -11,7 +11,7 @@ import {
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
     StatusKind, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, WWAConsts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
-    type UserVar, type UserVarMap, type UserVarPrimitive
+    type UserVar, type UserVarMap, type UserVarPrimitive, type ManualPauseInformation
 } from "./wwa_data";
 
 import {
@@ -59,7 +59,6 @@ import * as ExpressionParser2 from "./wwa_expression2";
 import { UserScriptResponse, fetchScriptFile } from "./load_script_file";
 import { WWANode } from "./wwa_expression2/wwa";
 import * as VarDump from "./wwa_vardump"
-import { DataWWAOptions } from "./wwa_data/typedef";
 import { makeDefaultWWAOptions } from "./wwa_data/options";
 import { PageAdditionalItem } from "./wwa_expression2/typedef";
 
@@ -2800,6 +2799,7 @@ export class WWA {
             }
             this._objectMovingDataManager.update();
         } else if (this._player.isManualPause()) {
+            const manualPauseInformation = this._player.getManualPauseInformation();
             if (
                 this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
                 this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
@@ -2809,9 +2809,9 @@ export class WWA {
                 this._virtualPadStore.checkTouchButton("BUTTON_ENTER") ||
                 this._virtualPadStore.checkTouchButton("BUTTON_ESC")
             ) {
+                const functionName = manualPauseInformation?.functionNames.cancelPause ?? "";
                 // マニュアルポーズを解除 
                 this._player.clearWaitingMessageOrManualPause();
-                const functionName = this._player.getAfterEnterExecFuncName();
                 if (functionName !== "") {
                     try {
                         this.evalCalcWwaNodeGenerator.evalWwaNode({ type: "CallDefinedFunction", functionName });
@@ -2822,14 +2822,13 @@ export class WWA {
                 } 
             }
 
-            const noMessageWaitExecFuncNames = this._player.getNoMessageWaitExecFuncNames();
             ([
                 { keyCode: KeyCode.KEY_UP, funcKey: "up" },
                 { keyCode: KeyCode.KEY_DOWN, funcKey: "down" },
                 { keyCode: KeyCode.KEY_RIGHT, funcKey: "right" },
                 { keyCode: KeyCode.KEY_LEFT, funcKey: "left" }
-            ] satisfies { keyCode: number, funcKey: keyof typeof noMessageWaitExecFuncNames }[]).forEach(({keyCode, funcKey}) => {
-                const functionName = noMessageWaitExecFuncNames[funcKey];
+            ] satisfies { keyCode: number, funcKey: Exclude<keyof typeof manualPauseInformation["functionNames"], "cancelPause"> }[]).forEach(({keyCode, funcKey}) => {
+                const functionName = manualPauseInformation?.functionNames[funcKey] ?? "";
                 if (this._keyStore.getKeyState(keyCode) === KeyState.KEYDOWN && functionName !== "") {               
                     try {
                         this.evalCalcWwaNodeGenerator.evalWwaNode({ type: "CallDefinedFunction", functionName });
@@ -5638,7 +5637,11 @@ export class WWA {
                 this._keyStore.allClear();
                 this._mouseStore.clear();
             }
-            this._player.clearWaitingMessageOrManualPause();
+            // メッセージが発生しないパーツでマニュアルポーズが発生する場合は。プレイヤーを制御可能にせず、マニュアルポーズ状態を維持する。
+            // メッセージが発生するパーツにおいてはマニュアルポーズはできない。
+            if (!this._player.isManualPause()) {
+                this._player.clearWaitingMessageOrManualPause();
+            }
             return { newPageGenerated: false };
         } else {
             this.registerPageByMessage(
@@ -7177,19 +7180,8 @@ font-weight: bold;
         this._wwaData.customSystemMessages[key] = message;
     }
 
-    public manualPause(
-        afterEnterExecFuncName: string,
-        noMessageWaitingExecFuncNames: {
-            up: string,
-            down: string,
-            right: string,
-            left: string
-        }
-    ) {
-        this._player.setManualPause(
-            afterEnterExecFuncName,
-            noMessageWaitingExecFuncNames
-        );
+    public manualPause(manualPauseInformation: ManualPauseInformation): void {
+        this._player.setManualPause(manualPauseInformation);
     }
 };
 

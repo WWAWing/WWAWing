@@ -895,20 +895,15 @@ export class EvalCalcWwaNode {
       }
       case "MANUAL_PAUSE":
       case "WAIT_ENTER": {
-        // valueで評価した関数名を読み込む
-        const value = node.value[0]? this.evalWwaNode(node.value[0]): "";
-        const noMessageWaitingExecFuncNames: {
-          up: string,
-          down: string,
-          right: string,
-          left: string
-        } = {
-          up: node.value[1] ? this.evalWwaNode(node.value[1]) : "",
-          down: node.value[2] ? this.evalWwaNode(node.value[2]) : "",
-          right: node.value[3] ? this.evalWwaNode(node.value[3]) : "",
-          left: node.value[4] ? this.evalWwaNode(node.value[4]) : "",
-        }
-        this.generator.wwa.manualPause(value, noMessageWaitingExecFuncNames);
+        this.generator.wwa.manualPause({
+          functionNames: {
+            cancelPause: node.value[0]? this.evalWwaNode(node.value[0]): "",
+            up: node.value[1] ? this.evalWwaNode(node.value[1]) : "",
+            down: node.value[2] ? this.evalWwaNode(node.value[2]) : "",
+            right: node.value[3] ? this.evalWwaNode(node.value[3]) : "",
+            left: node.value[4] ? this.evalWwaNode(node.value[4]) : ""
+          }
+        });
         return;
       }
       case "COLOR": {
