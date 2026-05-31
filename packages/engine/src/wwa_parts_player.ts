@@ -339,14 +339,14 @@ export class Player extends PartsObject {
     }
 
     public setMessageWaiting(): void {
+        if (this._state === PlayerState.MANUAL_PAUSE) {
+            console.warn("メッセージが表示されるため、マニュアルポーズが無効になりました。");
+        }
         this._state = PlayerState.MESSAGE_WAITING;
     }
 
     public setManualPause(manualPauseInformation: ManualPauseInformation): void {
         if (!this.isControllable()) {
-            if (this._state === PlayerState.MESSAGE_WAITING) {
-                console.warn("メッセージが表示されるパーツではマニュアルポーズはできません。");
-            }
             return;
         }
         this._state = PlayerState.MANUAL_PAUSE;
