@@ -14,9 +14,9 @@ export interface Coord {
  * プレイヤーの生命力が 0 になった時の挙動
  * - default: 生命力が 0 になったらゲームオーバーとする
  * - never: 生命力が 0 になってもゲームオーバーにしない
- * - except-macro: マクロで生命力が 0 になった場合以外ではゲームオーバーにする
+ * - except-assignment: マクロやスクリプトなどでので生命力 0 代入以外ではゲームオーバーにする
  */
-export type GameOverPolicy = "default" | "never" | "except-macro";
+export type GameOverPolicy = "default" | "never" | "except-assignment";
 
 type PictureRegistryBase<N> = {
     layerNumber: number,

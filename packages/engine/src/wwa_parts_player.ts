@@ -147,7 +147,11 @@ export class Player extends PartsObject {
                 this._samePosLastExecutedMapID = void 0;
                 this._samePosLastExecutedObjID = void 0;
                 /** プレイヤーが動いた歳ユーザ定義独自関数を呼び出す */
-                this._wwa.callMoveUserDefineFunction();
+                const { isGameOver } = this._wwa.callMoveUserDefineFunction();
+                if (isGameOver) {
+                    // ゲームオーバー時に this._position を更新するとカメラ座標がプレイヤー座標とずれてしまうため、ゲームオーバー時は更新しない
+                    return;
+                }
             }
             this._position = next;
         }
@@ -1169,7 +1173,7 @@ export class Player extends PartsObject {
                 this._battleTurnLength = 0;
                 this._battleNoDamageTurnLength = 0;
                 this._enemy = null;
-                if (this._wwa.shouldApplyGameOver({ isCalledByMacro: false })) {
+                if (this._wwa.shouldApplyGameOver({ isAssignment: false })) {
                     this._wwa.gameover();
                 }
             }
