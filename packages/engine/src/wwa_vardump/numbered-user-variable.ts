@@ -40,7 +40,7 @@ export function updateLabels(
     if (!(varIndexElement instanceof HTMLElement)) {
       return;
     }
-    const varLabelElement = UserVariableCard.getLabelElement(varIndexElement);
+    const varLabelElement = UserVariableCard.getLabelElement(varIndexElement, querySelectorCache);
     if (!(varLabelElement instanceof HTMLElement)) {
       return;
     }

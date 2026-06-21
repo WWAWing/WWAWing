@@ -1,5 +1,6 @@
 import { UserVar } from "../../../wwa_data";
 import { formatUserVarForDisplay } from "../../../wwa_util";
+import * as QuerySelectorCache from "../../infra/query-selector-cache";
 import * as UserVariableLabel from "../user-variable-label";
 
 export interface Props {
@@ -65,6 +66,10 @@ export function setValue(
   element: HTMLElement,
   value?: UserVar 
 ): void {
+  const content = formatUserVarForDisplay(value);
+  if (element.textContent === content) {
+    return;
+  }
   element.textContent = value === undefined ? BLANK : formatUserVarForDisplay(value);
 }
 
@@ -72,8 +77,8 @@ export function clearValue(element: HTMLElement) {
   element.textContent = BLANK;
 }
 
-export function getLabelElement(element: HTMLElement): HTMLElement | null {
-  return element.querySelector(`.${UserVariableLabel.CLASS_NAME}`);
+export function getLabelElement(element: HTMLElement, querySelectorCache: QuerySelectorCache.Props): Element | null {
+  return querySelectorCache.querySelectorWithSpecifiedElement(element, `.${UserVariableLabel.CLASS_NAME}`);
 }
 
 function isTrimmingValue(value: unknown) {

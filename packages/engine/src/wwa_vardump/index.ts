@@ -27,7 +27,7 @@ export interface Props {
 
 export function setup(dumpElmQuery: string): Props | null {
   const element = $qs(dumpElmQuery);
-  const querySelectorCache = QuerySelectorCache.createQuerySelectorCache({ rootElement: element });
+  const querySelectorCache = QuerySelectorCache.createQuerySelectorCaches(element);
   if (!(element instanceof HTMLElement)) {
     // 要素がない場合は何もしない
     return null;
