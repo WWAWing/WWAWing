@@ -1408,12 +1408,12 @@ export class WWA {
         }
         if (userVarStatus.kind === "noFileSpecified") {
             // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
-            this._varDump.numberedUserVariable.updateInformation(userVarStatus.errorMessage, false);
+            this._varDump?.numberedUserVariable.updateInformation(userVarStatus.errorMessage, false);
             return;
         }
         if(userVarStatus.kind !== "data") {
             this._userVarNameListRequestError = userVarStatus;
-            this._varDump.numberedUserVariable.updateInformation(this._userVarNameListRequestError.errorMessage, true);
+            this._varDump?.numberedUserVariable.updateInformation(this._userVarNameListRequestError.errorMessage, true);
             return;
         }
         if (!userVarStatus.data || typeof userVarStatus.data !== "object") {
@@ -1421,11 +1421,11 @@ export class WWA {
                 kind: "notObject",
                 errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
             }
-            this._varDump.numberedUserVariable.updateInformation(this._userVarNameListRequestError.errorMessage, true);
+            this._varDump?.numberedUserVariable.updateInformation(this._userVarNameListRequestError.errorMessage, true);
             return;
         }
         this._userVarNameList = this.convertUserVariableNameListToArray(userVarStatus.data);
-        this._varDump.numberedUserVariable.updateLabels(this._userVarNameList);
+        this._varDump?.numberedUserVariable.updateLabels(this._userVarNameList);
     }
 
     /**
@@ -2958,7 +2958,7 @@ export class WWA {
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
-        this._varDump.updateAllVariables({
+        this._varDump?.updateAllVariables({
           userVar: this._userVar.numbered,
           namedUserVar: this._userVar.named,
         });
