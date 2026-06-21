@@ -1,22 +1,19 @@
-import { WWAConsts as Consts } from "../../wwa_data";
-
-import * as UserVariableCard from "../user-variable/user-variable-card";
-import * as UserVariableLabel from "../user-variable/user-variable-label";
-import * as UserVariableList from "../user-variable/user-variable-list";
-import * as UserVariableListSection from "../user-variable/user-variable-list-section";
+import { WWAConsts as Consts } from "../wwa_data";
+import * as QuerySelectorCache from "./infra/query-selector-cache";
+import * as UserVariableCard from "./user-variable/user-variable-card";
+import * as UserVariableLabel from "./user-variable/user-variable-label";
+import * as UserVariableList from "./user-variable/user-variable-list";
+import * as UserVariableListSection from "./user-variable/user-variable-list-section";
 
 /**
  * 指定された dumpElement 内にある UserVariableListSection (Numbered) の全ユーザ変数を userVar の値で更新します。
  */
 export function updateValues(
-  dumpElement: HTMLElement | undefined | null,
-  userVar: (number | string | boolean)[]
+  querySelectorCache: QuerySelectorCache.Props,
+  userVar: (number | string | boolean)[],
 ): void {
-  if (!(dumpElement instanceof HTMLElement)) {
-    return;
-  }
   Array.from({ length: Consts.USER_VAR_NUM }).map((_, index) => {
-    const element = getCardValueElement(dumpElement, index);
+    const element = getCardValueElement(querySelectorCache, index);
     if (!(element instanceof HTMLElement)) {
       return;
     }
@@ -30,19 +27,16 @@ export function updateValues(
  * userVarNameList は添字がユーザ変数の添字に対応する変数名ラベルの配列です。
  */
 export function updateLabels(
-  dumpElement: HTMLElement | undefined | null,
+  querySelectorCache: QuerySelectorCache.Props,
   userVarNameList: string[]
 ): void {
-  if (!dumpElement) {
-    return;
-  }
   // 以下は変数一覧に変数名を流し込む処理
   Array.from({ length: Consts.USER_VAR_NUM }).map((_, index) => {
     const userVarName = userVarNameList[index];
     if (!userVarName) {
       return;
     }
-    const varIndexElement = getCardIndexElement(dumpElement, index);
+    const varIndexElement = getCardIndexElement(querySelectorCache, index);
     if (!(varIndexElement instanceof HTMLElement)) {
       return;
     }
@@ -59,14 +53,11 @@ export function updateLabels(
  * 指定された dumpElement 内にある UserVariableListSection の information 内のメッセージを更新します。
  */
 export function updateInformation(
-  dumpElement: HTMLElement | undefined | null,
+  querySelectorCache: QuerySelectorCache.Props,
   content: string,
   isError: boolean = false
 ): void {
-  if (!dumpElement) {
-    return;
-  }
-  const element = getInformationElement(dumpElement);
+  const element = getInformationElement(querySelectorCache);
   if (!(element instanceof HTMLElement)) {
     return;
   }
@@ -79,8 +70,8 @@ export function updateInformation(
 
 const LIST_SECTION_SELECTOR = `.${UserVariableListSection.CLASS_NAME}[data-kind="numbered"]`;
 
-function getInformationElement(dumpElement: HTMLElement) {
-  return dumpElement.querySelector(
+function getInformationElement(querySelectorCache: QuerySelectorCache.Props) {
+  return querySelectorCache.querySelector(
     `${LIST_SECTION_SELECTOR} > header > .${UserVariableListSection.Header.Information.CLASS_NAME}`
   );
 }
@@ -91,10 +82,10 @@ function generateCardSelector(index: number) {
   }[data-var-index="${CSS.escape(String(index))}"]`;
 }
 
-function getCardIndexElement(dumpElement: HTMLElement, index: number) {
-  return dumpElement.querySelector(`${generateCardSelector(index)} > .index`);
+function getCardIndexElement(querySelectorCache: QuerySelectorCache.Props, index: number) {
+  return querySelectorCache.querySelector(`${generateCardSelector(index)} > .index`);
 }
 
-function getCardValueElement(dumpElement: HTMLElement, index: number) {
-  return dumpElement.querySelector(`${generateCardSelector(index)} > .value`);
+function getCardValueElement(querySelectorCache: QuerySelectorCache.Props, index: number) {
+  return querySelectorCache.querySelector(`${generateCardSelector(index)} > .value`);
 }
