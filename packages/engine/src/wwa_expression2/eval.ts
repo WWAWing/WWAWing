@@ -5,7 +5,7 @@ import { WWA } from "../wwa_main";
 import { getItem } from "../wwa_util";
 import * as Wwa from "./wwa";
 import { Literal } from "./wwa";
-import { PARTS_TYPE_LIST } from "./utils";
+import { isLowerThanEpsilon, PARTS_TYPE_LIST } from "./utils";
 import { evalLengthFunction } from "./functions/length";
 import { getPlayerCoordPx, getPlayerCoordPy } from "./symbols";
 import { PageAdditionalItem, GameOver } from "./typedef";
@@ -844,6 +844,44 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         const value = Number(this.evalWwaNode(node.value[0]));
         return Math.abs(value);
+      }
+      case "POW": {
+        this._checkArgsLength(2, node);
+        const base = Number(this.evalWwaNode(node.value[0]));
+        const exponent = Number(this.evalWwaNode(node.value[1]));
+        return Math.pow(base, exponent);
+      }
+      case "SQRT": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.sqrt(value);
+      }
+      case "SIN": {
+        this._checkArgsLength(1, node);
+        const angle = Number(this.evalWwaNode(node.value[0]));
+        const value = Math.sin(angle * Math.PI / 180.0);
+        if (isLowerThanEpsilon(value)) {
+          return 0;
+        }
+        return value;
+      }
+      case "COS": {
+        this._checkArgsLength(1, node);
+        const angle = Number(this.evalWwaNode(node.value[0]));
+        const value = Math.cos(angle * Math.PI / 180.0);
+        if (isLowerThanEpsilon(value)) {
+          return 0;
+        }
+        return value;
+      }
+      case "TAN": {
+        this._checkArgsLength(1, node);
+        const angle = Number(this.evalWwaNode(node.value[0]));
+        const value = Math.tan(angle * Math.PI / 180.0);
+        if (isLowerThanEpsilon(value)) {
+          return 0;
+        }
+        return value;
       }
       /** ゲームオーバー座標取得関数たち */
       case "GET_GAMEOVER_POS_X": {

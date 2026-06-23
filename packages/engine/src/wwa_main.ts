@@ -303,7 +303,7 @@ export class WWA {
     private soundLoadedCheckTimer: number | undefined = undefined;
 
     private _playTimeCalculator: PlayTimeCalculator | undefined = undefined;
-    private _dumpElement: HTMLElement;
+    private _varDump: VarDump.Props | null = null;
 
     private evalCalcWwaNodeGenerator: ExpressionParser2.EvalCalcWwaNodeGenerator;
 
@@ -339,7 +339,7 @@ export class WWA {
                 this._setLoadingMessage(ctxCover, 0);
             }
         } catch (e) { }
-        this._dumpElement = options.varDumpElm;
+        this._varDump = options.varDump;
         const _AudioContext = (window.AudioContext || window["webkitAudioContext"]) as typeof AudioContext;
         if (_AudioContext) {
             this.audioContext = new _AudioContext();
@@ -1413,12 +1413,12 @@ export class WWA {
         }
         if (userVarStatus.kind === "noFileSpecified") {
             // noFileSpecified の場合は、こういうこともできますよ、という案内なのでエラーにはしない
-            VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, userVarStatus.errorMessage, false);
+            this._varDump?.numberedUserVariable.updateInformation(userVarStatus.errorMessage, false);
             return;
         }
         if(userVarStatus.kind !== "data") {
             this._userVarNameListRequestError = userVarStatus;
-            VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
+            this._varDump?.numberedUserVariable.updateInformation(this._userVarNameListRequestError.errorMessage, true);
             return;
         }
         if (!userVarStatus.data || typeof userVarStatus.data !== "object") {
@@ -1426,11 +1426,11 @@ export class WWA {
                 kind: "notObject",
                 errorMessage: `ユーザ変数一覧 ${userVarNamesFile} が正しい形式で書かれていません。`
             }
-            VarDump.Api.NumberedUserVariable.updateInformation(this._dumpElement, this._userVarNameListRequestError.errorMessage, true);
+            this._varDump?.numberedUserVariable.updateInformation(this._userVarNameListRequestError.errorMessage, true);
             return;
         }
         this._userVarNameList = this.convertUserVariableNameListToArray(userVarStatus.data);
-        VarDump.Api.NumberedUserVariable.updateLabels(this._dumpElement, this._userVarNameList);
+        this._varDump?.numberedUserVariable.updateLabels(this._userVarNameList);
     }
 
     /**
@@ -2963,8 +2963,7 @@ export class WWA {
                 setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
-        VarDump.Api.updateAllVariables({
-          dumpElement: this._dumpElement,
+        this._varDump?.updateAllVariables({
           userVar: this._userVar.numbered,
           namedUserVar: this._userVar.named,
         });
@@ -7272,13 +7271,13 @@ function start() {
     var mapFileName = util.$id("wwa-wrapper").getAttribute("data-wwa-mapdata");
     var audioDirectory = util.$id("wwa-wrapper").getAttribute("data-wwa-audio-dir");
     var dumpElmQuery = util.$id("wwa-wrapper").getAttribute("data-wwa-var-dump-elm");
-    var dumpElm: HTMLElement | null = null;
+    let varDump: VarDump.Props | null = null;
     /** 変数を表示できるか */
     var canDisplayUserVars = (util.$id("wwa-wrapper").getAttribute("data-wwa-display-user-vars") === "true");
     /** WWAの変数命名データを読み込む */
     var userVarNamesFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-var-names-file");
     if (util.$id("wwa-wrapper").hasAttribute("data-wwa-var-dump-elm") && canDisplayUserVars) {
-        dumpElm = VarDump.setup(dumpElmQuery);
+        varDump = VarDump.setup(dumpElmQuery);
     }
     var urlgateEnabled = true;
     if (util.$id("wwa-wrapper").getAttribute("data-wwa-urlgate-enable").match(/^false$/i)) {
@@ -7332,7 +7331,7 @@ function start() {
             // autoSave は Constructor にて設定
             disallowLoadOldSave: disallowLoadOldSave,
             // resumeSaveData は Constructor にて設定
-            varDumpElm: dumpElm,
+            varDump,
             userVarNamesFile,
             displayUserVars: canDisplayUserVars,
             virtualPadEnable,

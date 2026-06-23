@@ -17,7 +17,7 @@ export function makeDefaultWWAOptions(): DataWWAOptions {
         autoSave: true,
         disallowLoadOldSave: false,
         resumeSaveData: undefined,
-        varDumpElm: undefined,
+        varDump: null,
         userVarNamesFile: undefined,
         displayUserVars: false,
         virtualPadEnable: false,
