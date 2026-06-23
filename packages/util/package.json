@@ -19,9 +19,9 @@
   "devDependencies": {
     "@swc/core": "^1.15.8",
     "@swc/jest": "^0.2.39",
-    "jest": "^30.3.0",
-    "jest-cli": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
+    "jest": "^30.4.2",
+    "jest-cli": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "shelljs": "^0.10.0",
     "shx": "^0.4.0",
     "typescript": "^5.8.3"
