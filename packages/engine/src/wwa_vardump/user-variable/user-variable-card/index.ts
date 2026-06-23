@@ -1,5 +1,6 @@
 import { UserVar } from "../../../wwa_data";
 import { formatUserVarForDisplay } from "../../../wwa_util";
+import * as ElementStore from "../../infra/element-store";
 import * as UserVariableLabel from "../user-variable-label";
 
 export interface Props {
@@ -11,41 +12,49 @@ const BLANK = "-";
 export const CLASS_NAME = "user-variable-card";
 export const TRIMMED_CLASS_NAME = "user-variable-card--is-trimmed";
 
-export function createElement({ index, value }: Props): HTMLElement {
-  const element = document.createElement("div");
-  element.classList.add(CLASS_NAME);
+export function createElement({ index, value }: Props): ElementStore.UserVarElementInfo {
+  const cardElement = document.createElement("div");
+  cardElement.classList.add(CLASS_NAME);
   if (isTrimmingValue(value)) {
-    element.classList.add(TRIMMED_CLASS_NAME);
+    cardElement.classList.add(TRIMMED_CLASS_NAME);
   }
-  element.dataset.varIndex = String(index);
-  element.appendChild(createIndexElement(index));
-  element.appendChild(createValueElement(value));
-  return element;
+  cardElement.dataset.varIndex = String(index);
+  const { cardIndexElement, cardIndexLabelElement } = createIndexElement(index);
+  const cardValueElement = createValueElement(value);
+  cardElement.appendChild(cardIndexElement);
+  cardElement.appendChild(cardValueElement);
+  return {
+    cardElement,
+    cardIndexElement,
+    cardIndexLabelElement,
+    cardValueElement
+  };
 }
 
-function createIndexElement(index: number | string): HTMLElement {
-  const element = document.createElement("div");
-  element.classList.add("index");
-  element.textContent = String(index);
+function createIndexElement(index: number | string): Pick<ElementStore.UserVarElementInfo, "cardIndexElement" | "cardIndexLabelElement"> {
+  const cardIndexElement = document.createElement("div");
+  cardIndexElement.classList.add("index");
+  cardIndexElement.textContent = String(index);
   if (typeof index === "string") {
     // 名前つき変数の場合はホバーでタイトルチップ表示 (省略表記があるため)
     // 数字indexの変数の場合は、別途ラベルが出る可能性があるため出しません
-    element.setAttribute("title", index);
+    cardIndexElement.setAttribute("title", index);
   }
-  element.appendChild(UserVariableLabel.createElement());
-  return element;
+  const cardIndexLabelElement = UserVariableLabel.createElement();
+  cardIndexElement.appendChild(cardIndexLabelElement);
+  return { cardIndexElement, cardIndexLabelElement };
 }
 
 function createValueElement(value?: UserVar): HTMLElement {
-  const element = document.createElement("div");
-  element.classList.add("value");
+  const valueElement = document.createElement("div");
+  valueElement.classList.add("value");
   if (typeof value === "string") {
     // 値が文字列の場合はツールチップ表示 数字indexの場合でも出します
-    element.setAttribute("title", formatUserVarForDisplay(value));
+    valueElement.setAttribute("title", formatUserVarForDisplay(value));
   }
 
-  setValue(element, value);
-  return element;
+  setValue(valueElement, value);
+  return valueElement;
 }
 
 export function setupLabel(
@@ -65,15 +74,15 @@ export function setValue(
   element: HTMLElement,
   value?: UserVar 
 ): void {
+  const content = formatUserVarForDisplay(value);
+  if (element.textContent === content) {
+    return;
+  }
   element.textContent = value === undefined ? BLANK : formatUserVarForDisplay(value);
 }
 
 export function clearValue(element: HTMLElement) {
   element.textContent = BLANK;
-}
-
-export function getLabelElement(element: HTMLElement): HTMLElement | null {
-  return element.querySelector(`.${UserVariableLabel.CLASS_NAME}`);
 }
 
 function isTrimmingValue(value: unknown) {
