@@ -236,6 +236,8 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "IS_NUMBER":
     case "MANUAL_PAUSE":
     case "WAIT_ENTER":
+    case "CANCEL_MANUAL_PAUSE":
+    case "CANCEL_WAIT_ENTER":
     case "COLOR":
     case "EFFITEM":
     case "CHANGE_BOM_IMG":

@@ -961,15 +961,23 @@ export class EvalCalcWwaNode {
       }
       case "MANUAL_PAUSE":
       case "WAIT_ENTER": {
+        const arg0 = this.evalWwaNode(node.value[0]);
+        const blockingCancelPauseByPlayer = arg0 === "__BLOCK";
         this.generator.wwa.manualPause({
           functionNames: {
-            cancelPause: node.value[0]? this.evalWwaNode(node.value[0]): "",
+            cancelPause: arg0 && !blockingCancelPauseByPlayer ? arg0 : "",
             up: node.value[1] ? this.evalWwaNode(node.value[1]) : "",
             down: node.value[2] ? this.evalWwaNode(node.value[2]) : "",
             right: node.value[3] ? this.evalWwaNode(node.value[3]) : "",
             left: node.value[4] ? this.evalWwaNode(node.value[4]) : ""
-          }
+          },
+          blockingCancelPauseByPlayer 
         });
+        return;
+      }
+      case "CANCEL_MANUAL_PAUSE":
+      case "CANCEL_WAIT_ENTER": {
+        this.generator.wwa.cancelManualPause();
         return;
       }
       case "COLOR": {

@@ -2806,13 +2806,15 @@ export class WWA {
         } else if (this._player.isManualPause()) {
             const manualPauseInformation = this._player.getManualPauseInformation();
             if (
-                this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
-                this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
-                this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
-                this._mouseStore.getMouseState() === MouseState.MOUSEDOWN ||
-                this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B) ||
-                this._virtualPadStore.checkTouchButton("BUTTON_ENTER") ||
-                this._virtualPadStore.checkTouchButton("BUTTON_ESC")
+                !manualPauseInformation.blockingCancelPauseByPlayer && (
+                    this._keyStore.getKeyState(KeyCode.KEY_ENTER) === KeyState.KEYDOWN ||
+                    this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_SPACE) === KeyState.KEYDOWN ||
+                    this._keyStore.getKeyStateForMessageCheck(KeyCode.KEY_ESC) === KeyState.KEYDOWN ||
+                    this._mouseStore.getMouseState() === MouseState.MOUSEDOWN ||
+                    this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_A, GamePadState.BUTTON_INDEX_B) ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_ENTER") ||
+                    this._virtualPadStore.checkTouchButton("BUTTON_ESC")
+                )
             ) {
                 const functionName = manualPauseInformation?.functionNames.cancelPause ?? "";
                 // マニュアルポーズを解除 
@@ -7186,8 +7188,12 @@ font-weight: bold;
         this._wwaData.customSystemMessages[key] = message;
     }
 
-    public manualPause(manualPauseInformation: ManualPauseInformation): void {
-        this._player.setManualPause(manualPauseInformation);
+    public manualPause(manualPauseInformation: ManualPauseInformation, blockingCancelPauseByPlayer: boolean = false): void {
+        this._player.setManualPause(manualPauseInformation, blockingCancelPauseByPlayer);
+    }
+
+    public cancelManualPause(): void {
+        this._player.clearWaitingMessageOrManualPause();
     }
 };
 
