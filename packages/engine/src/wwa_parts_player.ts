@@ -349,7 +349,7 @@ export class Player extends PartsObject {
         this._state = PlayerState.MESSAGE_WAITING;
     }
 
-    public setManualPause(manualPauseInformation: ManualPauseInformation): void {
+    public setManualPause(manualPauseInformation: ManualPauseInformation, blockingCancelPauseByPlayer: boolean = false): void {
         if (!this.isControllable()) {
             return;
         }

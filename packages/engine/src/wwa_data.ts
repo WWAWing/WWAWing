@@ -1102,4 +1102,5 @@ export interface ManualPauseInformation {
         right: string;
         left: string;
     }
+    blockingCancelPauseByPlayer: boolean;
 }
