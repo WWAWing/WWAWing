@@ -5,10 +5,10 @@ import { WWA } from "../wwa_main";
 import { getItem } from "../wwa_util";
 import * as Wwa from "./wwa";
 import { Literal } from "./wwa";
-import { PARTS_TYPE_LIST } from "./utils";
+import { isLowerThanEpsilon, PARTS_TYPE_LIST } from "./utils";
 import { evalLengthFunction } from "./functions/length";
 import { getPlayerCoordPx, getPlayerCoordPy } from "./symbols";
-import { PageAdditionalItem } from "./typedef";
+import { PageAdditionalItem, GameOver } from "./typedef";
 import { MacroImgFrameIndex } from ".././wwa_data";
 
 const operatorOperationMap: {
@@ -99,11 +99,29 @@ export class EvalCalcWwaNodeGenerator {
   }
 
   public evalWwaNodes(nodes: Wwa.WWANode[]) {
-    // BlockStatement で囲ってそれを実行
-    return this.evalWwaNode({ type: "BlockStatement", value: nodes });
+    try {
+      // BlockStatement で囲ってそれを実行
+      return this.evalWwaNodeInternal({ type: "BlockStatement", value: nodes });
+    } catch (e) {
+      if (e instanceof GameOver) {
+        return { isGameOver: true, value: e.value };
+      }
+      throw e;
+    }
   }
 
-  public evalWwaNode(node: Wwa.WWANode) {
+  public evalWwaNode(node: Wwa.WWANode): { isGameOver: boolean, value: any } {
+    try {
+      return { isGameOver: false, value: this.evalWwaNodeInternal(node) };
+    } catch (e) {
+      if (e instanceof GameOver) {
+        return { isGameOver: true, value: e.value };
+      }
+      throw e;
+    }
+  }
+
+  private evalWwaNodeInternal(node: Wwa.WWANode) {
     if(node.type === "BlockStatement" && Array.isArray(node.value) && node.value.length === 0 ) {
       return;
     }
@@ -111,8 +129,18 @@ export class EvalCalcWwaNodeGenerator {
       const evalNode = new EvalCalcWwaNode(this);
       return evalNode.evalWwaNode(node);
     } catch (caughtThing) {
-      if (caughtThing instanceof ReturnedInformation || caughtThing instanceof ExitInformation) {
+      if (caughtThing instanceof ReturnedInformation) {
         return caughtThing.value;
+      } else if (caughtThing instanceof ExitInformation) {
+        switch(caughtThing.reason) {
+          case "ABORT_BATTLE":
+          case "EXIT":
+            return caughtThing.value;
+          case "GAME_OVER":
+            throw new GameOver(caughtThing.value);
+          default:
+            throw new TypeError("ExitInformationのreasonが不正です: "+ (caughtThing.reason satisfies never));
+        }
       } else {
         throw caughtThing;
       }
@@ -817,6 +845,44 @@ export class EvalCalcWwaNode {
         const value = Number(this.evalWwaNode(node.value[0]));
         return Math.abs(value);
       }
+      case "POW": {
+        this._checkArgsLength(2, node);
+        const base = Number(this.evalWwaNode(node.value[0]));
+        const exponent = Number(this.evalWwaNode(node.value[1]));
+        return Math.pow(base, exponent);
+      }
+      case "SQRT": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.sqrt(value);
+      }
+      case "SIN": {
+        this._checkArgsLength(1, node);
+        const angle = Number(this.evalWwaNode(node.value[0]));
+        const value = Math.sin(angle * Math.PI / 180.0);
+        if (isLowerThanEpsilon(value)) {
+          return 0;
+        }
+        return value;
+      }
+      case "COS": {
+        this._checkArgsLength(1, node);
+        const angle = Number(this.evalWwaNode(node.value[0]));
+        const value = Math.cos(angle * Math.PI / 180.0);
+        if (isLowerThanEpsilon(value)) {
+          return 0;
+        }
+        return value;
+      }
+      case "TAN": {
+        this._checkArgsLength(1, node);
+        const angle = Number(this.evalWwaNode(node.value[0]));
+        const value = Math.tan(angle * Math.PI / 180.0);
+        if (isLowerThanEpsilon(value)) {
+          return 0;
+        }
+        return value;
+      }
       /** ゲームオーバー座標取得関数たち */
       case "GET_GAMEOVER_POS_X": {
         const pos = this.generator.wwa.getGemeOverPosition();
@@ -895,20 +961,23 @@ export class EvalCalcWwaNode {
       }
       case "MANUAL_PAUSE":
       case "WAIT_ENTER": {
-        // valueで評価した関数名を読み込む
-        const value = node.value[0]? this.evalWwaNode(node.value[0]): "";
-        const noMessageWaitingExecFuncNames: {
-          up: string,
-          down: string,
-          right: string,
-          left: string
-        } = {
-          up: node.value[1] ? this.evalWwaNode(node.value[1]) : "",
-          down: node.value[2] ? this.evalWwaNode(node.value[2]) : "",
-          right: node.value[3] ? this.evalWwaNode(node.value[3]) : "",
-          left: node.value[4] ? this.evalWwaNode(node.value[4]) : "",
-        }
-        this.generator.wwa.manualPause(value, noMessageWaitingExecFuncNames);
+        const arg0 = this.evalWwaNode(node.value[0]);
+        const blockingCancelPauseByPlayer = arg0 === "__BLOCK";
+        this.generator.wwa.manualPause({
+          functionNames: {
+            cancelPause: arg0 && !blockingCancelPauseByPlayer ? arg0 : "",
+            up: node.value[1] ? this.evalWwaNode(node.value[1]) : "",
+            down: node.value[2] ? this.evalWwaNode(node.value[2]) : "",
+            right: node.value[3] ? this.evalWwaNode(node.value[3]) : "",
+            left: node.value[4] ? this.evalWwaNode(node.value[4]) : ""
+          },
+          blockingCancelPauseByPlayer 
+        });
+        return;
+      }
+      case "CANCEL_MANUAL_PAUSE":
+      case "CANCEL_WAIT_ENTER": {
+        this.generator.wwa.cancelManualPause();
         return;
       }
       case "COLOR": {
@@ -1287,17 +1356,21 @@ export class EvalCalcWwaNode {
         this.generator.wwa.jumpSpecifiedYPos(targetValue);
         return targetValue;
       case 'AT':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, targetValue, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.STRENGTH, targetValue, true);
         return targetValue;
       case 'DF':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, targetValue, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.DEFENCE, targetValue, true);
         return targetValue;
       case 'GD':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.GOLD, targetValue, false);
+        this.generator.wwa.setPlayerStatus(MacroStatusIndex.GOLD, targetValue, true);
         return targetValue;
-      case 'HP':
-        this.generator.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, targetValue, false);
+      case 'HP': {
+        const { isGameOver } = this.generator.wwa.setPlayerStatus(MacroStatusIndex.ENERGY, targetValue, true);
+        if (isGameOver) {
+          throw new ExitInformation("GAME_OVER");
+        }
         return targetValue;
+      }
       case 'HPMAX':
         this.generator.wwa.setPlayerEnergyMax(targetValue);
         return targetValue;
@@ -1571,5 +1644,5 @@ class ReturnedInformation {
 class ExitInformation {
   // HACK: evalWwaNode の型つけが any になっているのでそれに準じる形で妥協。
   // evalWwaNode の型つけは改善されるべき。
-  constructor(public reason: "ABORT_BATTLE" | "EXIT", public value?: any) {}
+  constructor(public reason: "ABORT_BATTLE" | "EXIT" | "GAME_OVER", public value?: any) {}
 }

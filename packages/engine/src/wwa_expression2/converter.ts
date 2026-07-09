@@ -221,6 +221,11 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "HAS_PICTURE":
     case "SHOW_USER_DEF_VAR":
     case "ABS":
+    case "POW":
+    case "SQRT":
+    case "SIN":
+    case "COS":
+    case "TAN":
     case "GET_GAMEOVER_POS_X":
     case "GET_GAMEOVER_POS_Y":
     case "ABORT_BATTLE":
@@ -231,6 +236,8 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "IS_NUMBER":
     case "MANUAL_PAUSE":
     case "WAIT_ENTER":
+    case "CANCEL_MANUAL_PAUSE":
+    case "CANCEL_WAIT_ENTER":
     case "COLOR":
     case "EFFITEM":
     case "CHANGE_BOM_IMG":

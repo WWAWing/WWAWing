@@ -1090,3 +1090,17 @@ export interface BattleEstimateParameters {
  * 戦闘ダメージ方向の定義
  */
 export type BattleDamageDirection = "playerToEnemy" | "enemyToPlayer";
+
+/**
+ * マニュアルポーズ情報
+ */
+export interface ManualPauseInformation {
+    functionNames: {
+        cancelPause: string;
+        up: string;
+        down: string;
+        right: string;
+        left: string;
+    }
+    blockingCancelPauseByPlayer: boolean;
+}

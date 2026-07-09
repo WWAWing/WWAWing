@@ -9,10 +9,10 @@ import {
     speedList,
     PartsType,
     ItemMode,
-    SystemSound,
     AppearanceTriggerType,
     Coord,
     type BattleTurnResult,
+    ManualPauseInformation,
 } from "./wwa_data";
 import { Camera } from "./wwa_camera";
 import { Monster } from "./wwa_monster";
@@ -114,16 +114,7 @@ export class Player extends PartsObject {
     // 戦闘していない場合は 0。
     protected _battleNoDamageTurnLength: number;
 
-    // メッセージ非表示待機後に呼ばれるユーザー定義関数
-    protected _afterEnterExecFuncName: string;
-
-    /** メッセージ非表示待機中に上下左右キーが押されたときに呼ばれるユーザー定義関数 */
-    protected _noMessageWaitingExecFuncNames: {
-        up: string,
-        down: string,
-        right: string,
-        left: string
-    }
+    protected _manualPauseInformation: ManualPauseInformation | undefined;
 
     public move(): void {
         if (this.isControllable()) {
@@ -156,7 +147,11 @@ export class Player extends PartsObject {
                 this._samePosLastExecutedMapID = void 0;
                 this._samePosLastExecutedObjID = void 0;
                 /** プレイヤーが動いた歳ユーザ定義独自関数を呼び出す */
-                this._wwa.callMoveUserDefineFunction();
+                const { isGameOver } = this._wwa.callMoveUserDefineFunction();
+                if (isGameOver) {
+                    // ゲームオーバー時に this._position を更新するとカメラ座標がプレイヤー座標とずれてしまうため、ゲームオーバー時は更新しない
+                    return;
+                }
             }
             this._position = next;
         }
@@ -348,26 +343,18 @@ export class Player extends PartsObject {
     }
 
     public setMessageWaiting(): void {
+        if (this._state === PlayerState.MANUAL_PAUSE) {
+            console.warn("メッセージが表示されるため、マニュアルポーズが無効になりました。");
+        }
         this._state = PlayerState.MESSAGE_WAITING;
     }
 
-    // メッセージ非表示でEnterクリック待機状態とする
-
-    public setManualPause(
-        afterEnterExecFuncName: string,
-        noMessageWaitingExecFuncNames: {
-            up: string,
-            down: string,
-            right: string,
-            left: string
-        }
-    ): void {
+    public setManualPause(manualPauseInformation: ManualPauseInformation, blockingCancelPauseByPlayer: boolean = false): void {
         if (!this.isControllable()) {
             return;
         }
         this._state = PlayerState.MANUAL_PAUSE;
-        this._afterEnterExecFuncName = afterEnterExecFuncName;
-        this._noMessageWaitingExecFuncNames = noMessageWaitingExecFuncNames
+        this._manualPauseInformation = manualPauseInformation;
     }
 
     public isWaitingMessageOrManualPause(): boolean {
@@ -385,17 +372,8 @@ export class Player extends PartsObject {
         return this._state === PlayerState.MANUAL_PAUSE;
     }
 
-    public getAfterEnterExecFuncName(): string {
-        return this._afterEnterExecFuncName;
-    }
-
-    public getNoMessageWaitExecFuncNames(): {
-        up: string,
-        down: string,
-        right: string,
-        left: string
-    } {
-        return this._noMessageWaitingExecFuncNames;
+    public getManualPauseInformation(): ManualPauseInformation | undefined {
+        return this._manualPauseInformation;
     }
 
     public isDelayFrame(): boolean {
@@ -410,6 +388,9 @@ export class Player extends PartsObject {
     }
 
     public clearWaitingMessageOrManualPause(): void {
+        if (this._state === PlayerState.MANUAL_PAUSE) {
+            this._manualPauseInformation = undefined;
+        }
         const isWaiting = this.isWaitingMessageOrManualPause();
         if (!isWaiting && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             return;
@@ -1192,7 +1173,7 @@ export class Player extends PartsObject {
                 this._battleTurnLength = 0;
                 this._battleNoDamageTurnLength = 0;
                 this._enemy = null;
-                if (this._wwa.shouldApplyGameOver({ isCalledByMacro: false })) {
+                if (this._wwa.shouldApplyGameOver({ isAssignment: false })) {
                     this._wwa.gameover();
                 }
             }

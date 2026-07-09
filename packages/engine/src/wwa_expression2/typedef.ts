@@ -8,3 +8,7 @@ interface PageAdditionalFaceItem {
 };
 
 export type PageAdditionalItem = PageAdditionalFaceItem;
+
+export class GameOver {
+    constructor(public value: any) {}
+}

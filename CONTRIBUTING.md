@@ -40,6 +40,7 @@ WWA Wing Team のメンバーによって、 `v3` ブランチ宛てのPull Requ
 
 - `Z` の部分は **パッチ** (patch) と呼び、軽微な機能の修正の場合に上がります。
 - `Y` の部分は **マイナー** (minor) と呼び、機能の追加時に上がります。
+  - 都合により、 v4 系が不安定版の間は機能追加であってもマイナーバージョンを上げない運用をしています。
 - `X` の部分は **メジャー** (major) と呼びます。ユーザ体験が変わったり、既存のマクロ文に大幅な破壊的変更が入ったりした時に上げる想定です。
   - 現在のところ `X` の部分が 3 のものは安定版, 4 のものは不安定版です。
   - 安定版 v3 の開発は、致命的な問題とライブラリアップデートなどの保守を除き終了しています。
@@ -118,9 +119,9 @@ monorepo 中にパッケージを追加する場合は、事前に @matsuyuki-a 
 (新規パッケージに対して、npmjs.com 側で [Trusted Publishing の設定作業](https://docs.npmjs.com/trusted-publishers#configuring-trusted-publishing)を行う必要があります。)
 
 ### monorepo 内パッケージの追加時にハマりやすいポイントのメモ
-- 新規のパッケージをいきなりは Trussted Publishing を有効にできないので、まずは 手動で不通に publish する
+- 新規のパッケージをいきなりは Trussted Publishing を有効にできないので、まずは 手動で普通に publish する
   - npmjs.com 側に実体ができないと設定画面を操作できない
-- デフォルトブランチ (WWAWing では develop) に実体がないと publish が 404 で失敗する
+- デフォルトブランチ (WWAWing では `v4`) に実体がないと publish が 404 で失敗する
   - develop 以外でパッケージを追加する場合は、ダミーでもよいので develop にパッケージを作っておく
 - `package.json` に `repository` フィールドが正し設定されていないと publish が認証まわりで失敗する
 
