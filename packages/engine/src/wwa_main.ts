@@ -1718,6 +1718,7 @@ export class WWA {
         });
         if (loadedNum < total && !this._soundLoadSkipFlag) {
             this._setProgressBar(getProgress(loadedNum, total, LoadStage.AUDIO));
+            // 取り扱い検討中。mainCallerで呼んだ方がいかも？
             window.requestAnimationFrame(this.soundCheckCaller);
             return;
         }
@@ -1946,19 +1947,18 @@ export class WWA {
     private readonly INTERVAL_MS = 1000 / 60;
 
     public mainCaller = (now: DOMHighResTimeStamp) => {
-        let shouldCallRaf = false;
+        if (this._prevTimeStamp < 0) {
+            this._prevTimeStamp = now;
+            requestAnimationFrame(this.mainCaller.bind(this));
+            return;
+        }
         const elapsedTimeMs = now - this._prevTimeStamp;
+        this._prevTimeStamp = now;
         this.setUserVar("elapsedTimeUs", Math.floor(elapsedTimeMs * 1000) );
 
-        this._prevTimeStamp = now;
-
-        if (this._prevTimeStamp === -1) {
-            shouldCallRaf = true;
-        } else {
-            this._accumlatedTimeMs += elapsedTimeMs;
-            if (this._accumlatedTimeMs >= this.INTERVAL_MS) {
-                this._accumlatedTimeMs -= this.INTERVAL_MS;
-            }
+        this._accumlatedTimeMs += elapsedTimeMs;
+        if (this._accumlatedTimeMs >= this.INTERVAL_MS) {
+            this._accumlatedTimeMs -= this.INTERVAL_MS;
             // タブ復帰後の連続フレーム防止
             if (this._accumlatedTimeMs > this.INTERVAL_MS * 2) {
                 this._accumlatedTimeMs = 0
@@ -1974,10 +1974,7 @@ export class WWA {
             this._frameCountForMeasureFps = 0;
             this._samplingTimeMs = 0;
         }
-
-        if (shouldCallRaf) {
-            requestAnimationFrame(this.mainCaller.bind(this))
-        }
+        requestAnimationFrame(this.mainCaller.bind(this));
     } 
 
     public soundCheckCaller = () => this.checkAllSoundLoaded();
@@ -2204,8 +2201,6 @@ export class WWA {
                 // 指定位置にパーツを出現が実行された場合に限り描画
                 this._drawAll();
             }
-            //待ち時間待機
-            window.requestAnimationFrame(this.mainCaller.bind(this));
             return;
         }
         this._waitFrame = 0;
@@ -2974,10 +2969,7 @@ export class WWA {
                 this._dispatchPlayerAndObjectsStopTimeRequests();   
             }
         }
-        if (!this._stopUpdateByLoadFlag) {
-            //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
-            window.requestAnimationFrame(this.mainCaller);
-        } else {
+        if (this._stopUpdateByLoadFlag) {
             this._fadeout((): void => {
                 if (this._loadType === LoadType.QUICK_LOAD) {
                     this._quickLoad();
