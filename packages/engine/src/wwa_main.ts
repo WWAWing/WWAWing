@@ -11,7 +11,7 @@ import {
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
     StatusKind, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, WWAConsts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
-    type UserVar, type UserVarMap, type UserVarPrimitive, type ManualPauseInformation
+    type UserVar, type UserVarMap, type UserVarPrimitive, type ManualPauseInformation, type FrameRateDisplayingPattern
 } from "./wwa_data";
 
 import {
@@ -290,6 +290,8 @@ export class WWA {
     private _windowCloseWaitingJumpGateRequest?: { x: number; y: number } = undefined
 
     private _debugConsoleElement: HTMLElement | undefined = undefined;
+
+    private _frameRateDisplayingPattern: FrameRateDisplayingPattern = "default-off";
 
     ////////////////////////
     public debug: boolean;
@@ -1134,7 +1136,17 @@ export class WWA {
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
             this._setProgressBar(getProgress(3, 4, LoadStage.GAME_INIT));
 
-            this._gameFrameRateWindow = new GameFrameRateWindow(util.$id("wwa-wrapper"));
+            this._gameFrameRateWindow = new GameFrameRateWindow(util.$id("wwa-wrapper"), options.frameRateDisplayingPattern === "always" ? undefined : () => this._gameFrameRateWindow.hide());
+            if (options.frameRateDisplayingPattern === "default-off" || options.frameRateDisplayingPattern === "never") {
+                this._gameFrameRateWindow.hide();
+            } else if (options.frameRateDisplayingPattern === "default-on" || options.frameRateDisplayingPattern === "always") {
+                this._gameFrameRateWindow.updateTargetFps(WWAConsts.TARGET_FPS);
+                this._gameFrameRateWindow.show();
+            } else {
+                throw new TypeError(`Invalid framerateDisplayingPattern: ${options.frameRateDisplayingPattern satisfies never}`);
+            }
+            // ゲーム機の場合はFPS表示封印 需要があれば今後解除検討
+            this._frameRateDisplayingPattern = this.userDevice.device === DEVICE_TYPE.GAME ? "never" : options.frameRateDisplayingPattern;
 
             this._isLoadedSound = false;
             this._temporaryInputDisable = false;
@@ -1943,8 +1955,6 @@ export class WWA {
     private _samplingTimeMs: number = 0;
     private _frameCountForMeasureFps: number = 0;
 
-    // モニターリフレッシュレートに関わらず、60FPSで固定する
-    private readonly INTERVAL_MS = 1000 / 60;
 
     public mainCaller = (now: DOMHighResTimeStamp) => {
         if (this._prevTimeStamp < 0) {
@@ -1957,10 +1967,10 @@ export class WWA {
         this.setUserVar("elapsedTimeUs", Math.floor(elapsedTimeMs * 1000) );
 
         this._accumlatedTimeMs += elapsedTimeMs;
-        if (this._accumlatedTimeMs >= this.INTERVAL_MS) {
-            this._accumlatedTimeMs -= this.INTERVAL_MS;
+        if (this._accumlatedTimeMs >= WWAConsts.INTERVAL_MS) {
+            this._accumlatedTimeMs -= WWAConsts.INTERVAL_MS;
             // タブ復帰後の連続フレーム防止
-            if (this._accumlatedTimeMs > this.INTERVAL_MS * 2) {
+            if (this._accumlatedTimeMs > WWAConsts.INTERVAL_MS * 2) {
                 this._accumlatedTimeMs = 0
             }
             this._main();
@@ -1970,7 +1980,7 @@ export class WWA {
         this._samplingTimeMs += elapsedTimeMs;
 
         if (this._samplingTimeMs >= 1000) {
-            this._gameFrameRateWindow?.update(this._frameCountForMeasureFps / (this._samplingTimeMs / 1000));
+            this._gameFrameRateWindow?.updateCurrentFps(this._frameCountForMeasureFps / (this._samplingTimeMs / 1000));
             this._frameCountForMeasureFps = 0;
             this._samplingTimeMs = 0;
         }
@@ -2606,6 +2616,11 @@ export class WWA {
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_Y)) {
                     // コマンドのヘルプ 
                     this._displayHelp();
+                } else if (this._keyStore.checkHitKey(KeyCode.KEY_F)) {
+                    if (this._frameRateDisplayingPattern === "default-off" || this._frameRateDisplayingPattern === "default-on") {
+                        this._gameFrameRateWindow.toggleVisibility();
+                        this._gameFrameRateWindow.updateTargetFps(WWAConsts.TARGET_FPS);
+                    }
                 }
                 /** Keyを押した際のユーザ定義独自関数を呼び出す */
                 const make = (keyName: string, funcName: string) => ({
@@ -5629,6 +5644,7 @@ export class WWA {
                         "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
                         "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
                         "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
+                        (this._frameRateDisplayingPattern !== "never" && this._frameRateDisplayingPattern !== "always" ? "Ｆ：FPS表示切り替え\n" : "") +
                         "　　　Ｉ: 移動速度を落とす／\n" +
                         "Ｆ２、Ｐ: 移動速度を上げる\n" +
                         "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
@@ -7358,6 +7374,20 @@ function start() {
 
     const userDefinedScriptsFile = util.$id("wwa-wrapper").getAttribute("data-wwa-user-defined-scripts-file");
 
+    const frameRateDisplayingPatternRaw = util.$id("wwa-wrapper").getAttribute("data-wwa-frame-rate-displaying-pattern") ?? "default-off";
+    let frameRateDisplayingPattern: FrameRateDisplayingPattern;
+    if (
+        frameRateDisplayingPatternRaw !== "default-off" &&
+        frameRateDisplayingPatternRaw !== "default-on" &&
+        frameRateDisplayingPatternRaw !== "always" &&
+        frameRateDisplayingPatternRaw !== "never"
+    ) {
+        console.warn("data-wwa-frame-rate-displaying-pattern の値が不正です。default-off に設定します。");
+        frameRateDisplayingPattern = "default-off";
+    } else {
+        frameRateDisplayingPattern = frameRateDisplayingPatternRaw;
+    } 
+
     wwa = new WWA(
         {
             mapdata: mapFileName,
@@ -7380,6 +7410,7 @@ function start() {
             virtualPadControllerElm,
             userDefinedScriptsFile,
             pictureImageNamesFile,
+            frameRateDisplayingPattern 
         }
     );
 }

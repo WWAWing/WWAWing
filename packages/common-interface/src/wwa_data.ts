@@ -43,6 +43,8 @@ export type PictureRegistry = PictureRegistryBase<number>;
 // 変数参照がまだ残っている状態の PictureRegistry
 export type RawPictureRegistry = PictureRegistryBase<number | string>;
 
+export type FrameRateDisplayingPattern = "default-off" | "default-on" | "always" | "never";
+
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
 export interface WWAData {

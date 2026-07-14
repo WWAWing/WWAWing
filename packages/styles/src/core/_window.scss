@@ -139,6 +139,48 @@ $wwa_icon_width-scale_up: 100px !default;
     }
 }
 
+#wwa-game-frame-rate-window {
+    @extend %wwa_window;
+    position: relative;
+    display: flex;
+    top: 0;
+    left: 0;
+    z-index: 301;
+    width: 160px;
+    flex-direction: row;
+    justify-content: center;
+    gap: 4px;
+    overflow: hidden;
+    font-size: 8px;
+    line-height: 1.2;
+    font-weight: bold;
+    &[aria-hidden="true"] {
+        display: none;
+    }
+    > .wwa-game-frame-rate-window-close-button {
+        position: absolute;
+        top: -2px;
+        right: 2px;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        padding: 0;
+        margin: 0;
+        border: 0 none;
+        border-radius: 2px;
+        font-size: 8px;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+        &:hover, &:focus {
+            background-color: #CCCCCC;
+        }
+        &:focus {
+            outline: 1px solid #000000;
+        }
+    }
+}
+
 div.savedata {
     display: inline-block;
     text-align: center;

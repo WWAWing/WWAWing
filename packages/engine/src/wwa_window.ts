@@ -651,24 +651,78 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
 
 export class GameFrameRateWindow {
     private element: HTMLElement;
-    private fpsIndicatorElement: HTMLElement;
-    constructor (parentElement: HTMLElement) {
-        // UNDONE: デフォルトで非表示、Fキーで表示にする
-        this.element = document.createElement("div");
-        // HACK: 後で style に動かす
-        this.element.style.position = "relative";
-        this.element.style.background = "rgba(255, 255, 255, .9)";
-        this.element.style.zIndex = "301";
+    private currentFpsIndicatorElement: HTMLElement;
+    private separatorElement: HTMLElement;
+    private targetFpsIndicatorElement: HTMLElement;
+    private closeButtonElement: HTMLButtonElement;
+    private unitElement: HTMLElement;
 
-        this.fpsIndicatorElement = document.createElement("div");
-        this.fpsIndicatorElement.textContent = "-";
-        this.element.appendChild(this.fpsIndicatorElement)
+    constructor (parentElement: HTMLElement, closeButtonClickHandler?: () => void) {
+        this.element = document.createElement("div");
+        this.element.setAttribute("id", "wwa-game-frame-rate-window");
+
+        this.currentFpsIndicatorElement = document.createElement("span");
+        this.element.appendChild(this.currentFpsIndicatorElement);
+
+        this.separatorElement = document.createElement("span");
+        this.separatorElement.textContent = "/";
+        this.element.appendChild(this.separatorElement);
+
+        this.targetFpsIndicatorElement = document.createElement("span");
+        this.element.appendChild(this.targetFpsIndicatorElement);
+
+        this.unitElement = document.createElement("span");
+        this.unitElement.textContent = "fps";
+        this.element.appendChild(this.unitElement);
+
+        if (closeButtonClickHandler) {
+            this.closeButtonElement = document.createElement("button");
+            this.closeButtonElement.textContent = "✕";
+            this.closeButtonElement.classList.add("wwa-game-frame-rate-window-close-button");
+            this.closeButtonElement.addEventListener("click", closeButtonClickHandler);
+            this.element.appendChild(this.closeButtonElement);
+        }
+
+        this.reset();
 
         parentElement.appendChild(this.element);
-
     }
 
-    public update(fps: number): void {
-        this.fpsIndicatorElement.textContent = `${Math.round(fps * 100) / 100} fps `
+    public updateCurrentFps(fps: number): void {
+        this.currentFpsIndicatorElement.textContent = GameFrameRateWindow.formatFps(fps);
+    }
+
+    public updateTargetFps(fps: number): void {
+        this.targetFpsIndicatorElement.textContent = GameFrameRateWindow.formatFps(fps);
+    }
+
+    public reset(): void {
+        this.updateCurrentFps(NaN);
+        this.updateTargetFps(NaN);
+    }
+
+    public show(): void {
+        this.element.removeAttribute("aria-hidden");
+    }
+    
+    public hide(): void {
+        this.element.setAttribute("aria-hidden", "true");
+        this.reset();
+    }
+
+    public toggleVisibility(): void {
+        if (this.element.hasAttribute("aria-hidden")) {
+            this.show();
+        } else {
+            this.hide();
+        }
+    }
+
+    private static formatFps(fps: number): string {
+        if (Number.isNaN(fps)) {
+            return "--.--";
+        }
+        const fpsx100 = Math.round(fps * 100);
+        return `${Math.floor(fpsx100 / 100)}.${(fpsx100 % 100).toString().padStart(2, '0')} `
     }
 }
