@@ -1964,7 +1964,6 @@ export class WWA {
         }
         const elapsedTimeMs = now - this._prevTimeStamp;
         this._prevTimeStamp = now;
-        this.setUserVar("elapsedTimeUs", Math.floor(elapsedTimeMs * 1000) );
 
         this._accumlatedTimeMs += elapsedTimeMs;
         if (this._accumlatedTimeMs >= WWAConsts.INTERVAL_MS) {
