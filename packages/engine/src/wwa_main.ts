@@ -3011,7 +3011,6 @@ export class WWA {
                         this.evalCalcWwaNodeGenerator.evalWwaNode(passwordLoadFunc);
                     }
                 }
-                setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
         this._varDump?.updateAllVariables({
