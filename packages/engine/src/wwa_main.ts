@@ -1730,14 +1730,19 @@ export class WWA {
         });
         if (loadedNum < total && !this._soundLoadSkipFlag) {
             this._setProgressBar(getProgress(loadedNum, total, LoadStage.AUDIO));
-            // 取り扱い検討中。mainCallerで呼んだ方がいかも？
             window.requestAnimationFrame(this.soundCheckCaller);
             return;
         }
 
         this._setProgressBar(getProgress(Consts.SOUND_MAX, Consts.SOUND_MAX, LoadStage.AUDIO));
         this._setLoadingMessage(ctxCover, LoadStage.FINISH);
-        console.log("(D-7) サウンドのロードが完了しました。");
+        if (this._soundLoadSkipFlag) {
+            const allSoundEntries = Array.from(this._soundMap.entries());
+            console.warn("(D-7) サウンドのロードがスキップされました。現時点でエラーでない以下のサウンドはバックグラウンドで引き続きロードを試みます:" ,
+                 allSoundEntries.filter(([_, instance]) => !instance.hasData() && !instance.isError()).map(([id, _]) => id));
+        } else {
+            console.log("(D-7) サウンドのロードが完了しました。");
+        }
         this.openGameWindow();
     }
 
