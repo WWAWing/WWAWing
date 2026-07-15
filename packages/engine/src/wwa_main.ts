@@ -2187,9 +2187,11 @@ export class WWA {
     );
 
     private _main(): void {
+        if (this._stopUpdateByLoadFlag) {
+            return;
+        }
 
         this._temporaryInputDisable = false;
-        this._stopUpdateByLoadFlag = false;
 
         // キー情報のアップデート
         this._keyStore.update();
@@ -2985,6 +2987,7 @@ export class WWA {
         }
         if (this._stopUpdateByLoadFlag) {
             this._fadeout((): void => {
+                this._stopUpdateByLoadFlag = false;
                 if (this._loadType === LoadType.QUICK_LOAD) {
                     this._quickLoad();
                     this.wwaCustomEvent('wwa_quickload');
