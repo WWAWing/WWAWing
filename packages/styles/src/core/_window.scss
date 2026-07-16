@@ -150,24 +150,26 @@ $wwa_icon_width-scale_up: 100px !default;
     flex-direction: row;
     justify-content: center;
     gap: 4px;
+    padding: 1px 0;
     overflow: hidden;
-    font-size: 8px;
+    font-size: 12px;
     line-height: 1.2;
     font-weight: bold;
     &[aria-hidden="true"] {
         display: none;
     }
     > .wwa-game-frame-rate-window-close-button {
+        box-sizing: border-box;
         position: absolute;
-        top: -2px;
-        right: 2px;
+        top: 0;
+        right: 0;
         appearance: none;
-        width: 12px;
-        height: 12px;
-        padding: 0;
+        width: 16px;
+        height: 16px;
+        padding: 2px;
         margin: 0;
         border: 0 none;
-        border-radius: 2px;
+        border-radius: 50%;
         font-size: 8px;
         font-weight: bold;
         text-align: center;
