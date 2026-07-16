@@ -336,7 +336,7 @@ export class WWA {
 
         try {
             if (this._hasTitleImg) {
-                util.$id("unstable-version-warning").textContent = "この WWA Wing は [不安定版] です。";
+                util.$id("unstable-version-warning").textContent = "この WWA Wing は [超安定版] です。";
                 util.$id("version").textContent = "WWA Wing Ver." + VERSION_WWAJS;
             } else {
                 this._setLoadingMessage(ctxCover, 0);
