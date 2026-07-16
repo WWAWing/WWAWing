@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/page-generator",
-  "version": "4.0.7",
+  "version": "4.0.8-fps-measure.based-on.4.0.7",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -40,8 +40,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "pug": "^3.0.3",
-    "@wwawing/common-interface": "file:../common-interface"
+    "@wwawing/common-interface": "file:../common-interface",
+    "pug": "^3.0.3"
   },
   "publishConfig": {
     "access": "public"

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/styles",
-  "version": "4.0.7",
+  "version": "4.0.8-fps-measure.based-on.4.0.7",
   "description": "WWA Wing stylesheet files",
   "main": "index.js",
   "repository": {
