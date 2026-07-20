@@ -253,6 +253,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "DIR_MAP":
     case "CHANGE_SOUND_ATTACK":
     case "CHANGE_SOUND_DECISION":
+    case "SORT":
       return execAnyFunction(node.arguments, functionName);
     default:
       return {
@@ -410,6 +411,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           left.name === "MOVE_SPEED" ||
           left.name === "MOVE_FRAME_TIME" ||
           left.name === "LP" ||
+          left.name === "SORT_A" ||
+          left.name === "SORT_B" ||
           left.name === "undefined"
         ) {
           throw new Error("このシンボルには代入できません");
@@ -496,14 +499,14 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
   const property = convertNodeAcornToWwa(node.property);
 
   if (object.type === "Symbol") {
-    if (!["v", "m", "o", "ITEM", "LP", "PICTURE"].includes(object.name)) {
+    if (!["v", "m", "o", "ITEM", "LP", "PICTURE", "SORT_A", "SORT_B"].includes(object.name)) {
       throw new Error("このシンボルは配列にできません");
     }
     if (Wwa.isCalcurable(property)) {
-      // m, o については一次元分適用
+      //一次元分適用
       return {
         type: "ArrayOrObject1D",
-        name: <"v"|"m"|"o"|"ITEM"|"LP">object.name,
+        name: <"v"|"m"|"o"|"ITEM"|"LP"|"SORT_A"|"SORT_B">object.name,
         indecies: [property],
       };
     } else {
@@ -517,7 +520,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
     if (Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject2D",
-        name: <"m" | "o">object.name,
+        name: <"m" | "o" | "SORT_A" | "SORT_B">object.name,
         // 1次元配列 + 1次元分の index を合成
         indecies: [...object.indecies, property]
       }
@@ -529,8 +532,8 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
     if (object.name === "m" || object.name === "o") {
       throw new Error("この配列は3次元以上にはできません。");
     }
-    // ユーザ定義名前変数のみ3次元以上配列が使える
-    if (object.name === "v" && Wwa.isCalcurable(property)) {
+    // ユーザ定義名前変数, SORT_A, SORT_B のみ3次元以上配列が使える
+    if ((object.name === "v" || object.name === "SORT_A" || object.name === "SORT_B") && Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject3DPlus",
         name: object.name,
@@ -582,6 +585,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "MOVE_SPEED":
     case "MOVE_FRAME_TIME":
     case "LP":
+    case "SORT_A":
+    case "SORT_B":
     case "undefined":
       return {
         type: "Symbol",
