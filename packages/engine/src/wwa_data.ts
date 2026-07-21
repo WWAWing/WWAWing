@@ -807,8 +807,9 @@ export class WWAConsts {
     static MAX_SPEED_INDEX = speedList.length - 1;
     static QUICK_BATTLE_SPEED_INDECIES = [speedList.length - 2, speedList.length - 1];
 
-    static ANIMATION_REP_HALF_FRAME: number = 22;
-    static PLAYER_LOOKING_AROUND_START_FRAME: number = WWAConsts.ANIMATION_REP_HALF_FRAME * 4;
+    static ANIMATION_REP_HALF_FRAME: number = 32;
+    static PLAYER_LOOKING_AROUND_START_FRAME: number = 80;
+    static PLAYER_LOOKING_AROUND_LOOP_INTERVAL_FRAME: number = 80;
 
     static RELATIVE_COORD_BIAS: number = 10000;
     static RELATIVE_COORD_LOWER: number = WWAConsts.RELATIVE_COORD_BIAS - 1000;

@@ -11,7 +11,7 @@ import {
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
     StatusKind, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOption, TriggerParts, WWAConsts, type UserVariableKind, type BattleTurnResult, BattleEstimateParameters, BattleDamageDirection,
-    type UserVar, type UserVarMap, type UserVarPrimitive, type ManualPauseInformation, type FrameRateDisplayingPattern
+    type UserVar, type UserVarMap, type UserVarPrimitive, type ManualPauseInformation, type FrameRateDisplayingPattern,
 } from "./wwa_data";
 
 import {
@@ -2954,7 +2954,7 @@ export class WWA {
         this._drawAll();
 
         this._mainCallCounter++;
-        this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
+        this._mainCallCounter %= Number.MAX_SAFE_INTEGER; // オーバーフローで指数になるやつ対策
         if (!this._player.isWaitingMessageOrManualPause() || !this._isClassicModeEnable) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
             this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
             // isSubAnimation の定義では、 this._animationCounter > ANIMATION_REP_HALF_FRAME となっていて、
@@ -3200,9 +3200,10 @@ export class WWA {
         const canvasY = (pos.y - cpParts.y) * Consts.CHIP_SIZE + poso.y - cpOffset.y;
         let crop: number;
         if (this._useLookingAround && this._player.isLookingAround() && !this._player.isWaitingMessageOrManualPause()) {
-            // ジャンプゲート後のぐるぐるまわるやつ
+        // ジャンプゲート後のぐるぐるまわるやつ
             const dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
-            crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
+            const dirIntervalMs = Consts.PLAYER_LOOKING_AROUND_LOOP_INTERVAL_FRAME / dirChanger.length;
+            crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % Consts.PLAYER_LOOKING_AROUND_LOOP_INTERVAL_FRAME / dirIntervalMs)];
         } else if (this._player.isMovingImage()) {
             // 歩行アニメでは一つとなりの画像を使用
             crop = this._wwaData.playerImgPosX + playerImageRelXCrop + 1;
