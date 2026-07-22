@@ -177,6 +177,8 @@ export class EvalCalcWwaNode {
     /** break/continue管理フラグ */
     break_flag: boolean;
     continue_flag: boolean;
+    sort_a?: { value: unknown };
+    sort_b?: { value: unknown };
   }
 
   constructor(generator: EvalCalcWwaNodeGenerator) {
@@ -188,7 +190,9 @@ export class EvalCalcWwaNode {
       LP: [],
       loopCount: 0,
       break_flag: false,
-      continue_flag: false
+      continue_flag: false,
+      sort_a: null,
+      sort_b: null,
     }
   }
 
@@ -1124,6 +1128,38 @@ export class EvalCalcWwaNode {
         }
         return;
       }
+      case "SORT": {
+        if (this.for_id.sort_a || this.for_id.sort_b) {
+          throw new Error("SORT関数に与えた関数内でSORT関数を呼び出すことはできません。");
+        }
+        this._checkArgsLength(1, node);
+        const targetValue = this.evalWwaNode(node.value[0]);
+        const compareFunctionName = node.value[1] ? this.evalWwaNode(node.value[1]) : undefined;
+        if (!Array.isArray(targetValue)) {
+          throw new Error("SORT関数の引数は配列である必要があります。");
+        }
+        if (compareFunctionName !== undefined && typeof compareFunctionName !== "string") {
+          throw new Error("SORT関数の比較関数名は文字列である必要があります。");
+        }
+        const compareFunction = this.generator.wwa.getUserScript(compareFunctionName);
+        targetValue.sort((compareFunctionName ? (a, b) => {
+          this.for_id.sort_a = { value: a };
+          this.for_id.sort_b = { value: b };
+          try {
+            this.evalWwaNode(compareFunction);
+          } catch (caught) {
+            if (caught instanceof ReturnedInformation) {
+              this.for_id.sort_a = undefined;
+              this.for_id.sort_b = undefined;
+              return caught.value;
+            } else {
+              throw caught;
+            }
+          }
+          return undefined;
+        } : undefined));
+        return;
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
@@ -1338,10 +1374,22 @@ export class EvalCalcWwaNode {
         case "+=":
           return currentValue + right;
         case "-=":
+          if (typeof currentValue !== "number" || typeof right !== "number") {
+            console.warn(`${node.kind} に数値以外の減算をすることはできません、` );
+            return NaN;
+          }
           return currentValue - right;
         case "*=":
+          if (typeof currentValue !== "number" || typeof right !== "number") {
+            console.warn(`${node.kind} に数値以外の乗算をすることはできません、` );
+            return NaN;
+          }
           return currentValue * right;
         case "/=":
+          if (typeof currentValue !== "number" || typeof right !== "number") {
+            console.warn(`${node.kind} に数値以外の除算をすることはできません、` );
+            return NaN;
+          }
           return currentValue / right;
         case "=":
         default:
@@ -1543,6 +1591,16 @@ export class EvalCalcWwaNode {
         return this.for_id.LP;
       case "undefined":
         return undefined;
+      case "SORT_A":
+        if (!this.for_id.sort_a) {
+          throw new Error("SORT_AはSORT関数の比較関数内でのみ使用可能です。");
+        }
+        return this.for_id.sort_a?.value;
+      case "SORT_B":
+        if (!this.for_id.sort_b) {
+          throw new Error("SORT_BはSORT関数の比較関数内でのみ使用可能です。");
+        }
+        return this.for_id.sort_b?.value;
       default:
         throw new Error("このシンボルは取得できません")
     }
@@ -1554,6 +1612,16 @@ export class EvalCalcWwaNode {
       switch(node.name) {
         case "v":
           return this.generator.wwa.getUserNameVar(userVarIndex);
+        case "SORT_A":
+          if (!this.for_id.sort_a) {
+            throw new Error("SORT_AはSORT関数の比較関数内でのみ使用可能です。");
+          }
+          return getItem(this.for_id.sort_a.value, userVarIndex) ;
+        case "SORT_B":
+           if (!this.for_id.sort_b) {
+            throw new Error("SORT_BはSORT関数の比較関数内でのみ使用可能です。");
+          }
+          return getItem(this.for_id.sort_b.value, userVarIndex) ;
         default:
           throw new Error("このシンボルは取得できません");
       }
@@ -1571,7 +1639,18 @@ export class EvalCalcWwaNode {
         throw new Error("この機能はまだ実装されていません！");
       case "LP":
         return this.for_id.LP[userVarIndex];
+      case "SORT_A":
+        if (!this.for_id.sort_a) {
+          throw new Error("SORT_AはSORT関数の比較関数内でのみ使用可能です。");
+        }
+        return this.for_id.sort_a.value[userVarIndex];
+      case "SORT_B":
+        if (!this.for_id.sort_b) {
+          throw new Error("SORT_BはSORT関数の比較関数内でのみ使用可能です。");
+        }
+        return this.for_id.sort_b.value[userVarIndex];
       default:
+        console.log(node.name, node.indecies[0], userVarIndex);
         throw new Error("このシンボルは取得できません")
     }
   }
@@ -1609,17 +1688,44 @@ export class EvalCalcWwaNode {
         }
         const userNameRightKey = this.evalWwaNode(node.indecies[1]);
         return getItem(value, userNameRightKey);
+      } 
+      case "SORT_A": {
+        const indecies = node.indecies.map((x) => this.evalWwaNode(x));
+        if (!this.for_id.sort_a) {
+            throw new Error("SORT_AはSORT関数の比較関数内でのみ使用可能です。");
+        }
+        return indecies.reduce((prev, current) => getItem(prev, current), this.for_id.sort_a.value);
       }
-      default:
-        throw new Error("このシンボルは取得できません")
+      case "SORT_B": {
+        const indecies = node.indecies.map((x) => this.evalWwaNode(x));
+        if (!this.for_id.sort_b) {
+            throw new Error("SORT_BはSORT関数の比較関数内でのみ使用可能です。");
+        }
+        return indecies.reduce((prev, current) => getItem(prev, current), this.for_id.sort_b.value);
+      }
     }
   }
 
-  // 3次元以上配列はユーザ定義名前変数のみ使用可能
   evalArrayOrObject3DPlus(node: Wwa.ArrayOrObject3DPlus) {
     const indecies = node.indecies.map((x) => this.evalWwaNode(x));
-    const userNameValue = this.generator.wwa.getUserNameVar(indecies[0]);
-    return indecies.slice(1).reduce((prev, current) => getItem(prev, current), userNameValue);
+    switch(node.name) {
+      case "v": {
+        const userNameValue = this.generator.wwa.getUserNameVar(indecies[0]);
+        return indecies.slice(1).reduce((prev, current) => getItem(prev, current), userNameValue);
+      }
+      case "SORT_A": {
+        if (!this.for_id.sort_a) {
+            throw new Error("SORT_AはSORT関数の比較関数内でのみ使用可能です。");
+        }
+        return indecies.reduce((prev, current) => getItem(prev, current), this.for_id.sort_a.value);
+      }
+      case "SORT_B": {
+        if (!this.for_id.sort_b) {
+            throw new Error("SORT_BはSORT関数の比較関数内でのみ使用可能です。");
+        }
+        return indecies.reduce((prev, current) => getItem(prev, current), this.for_id.sort_b.value);
+      }
+    }
   }
 
   evalLiteral(node: Wwa.Literal) {
