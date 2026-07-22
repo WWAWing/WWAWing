@@ -59,25 +59,25 @@ export interface BinaryOperation {
 
 export interface Symbol {
   type: "Symbol";
-  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "CX" | "CY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF" | "ENEMY_GD" | "PICTURE" | "PLAYER_PX" | "PLAYER_PY" | "MOVE_SPEED" | "MOVE_FRAME_TIME" | "LP" | "undefined";
+  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "CX" | "CY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF" | "ENEMY_GD" | "PICTURE" | "PLAYER_PX" | "PLAYER_PY" | "MOVE_SPEED" | "MOVE_FRAME_TIME" | "LP" | "SORT_A" | "SORT_B" | "undefined";
 }
 
 export interface ArrayOrObject1D {
   type: "ArrayOrObject1D";
-  name: "ITEM" | "m" | "o" | "v" | "PICTURE" | "LP"; // 2次元配列の1次元分が返ってくる可能性がある
+  name: "ITEM" | "m" | "o" | "v" | "PICTURE" | "LP" | "SORT_A" | "SORT_B"; // 2次元配列の1次元分が返ってくる可能性がある
   indecies: Calcurable[];
 }
 
 export interface ArrayOrObject2D {
   type: "ArrayOrObject2D";
-  name: "m" | "o" | "v";
+  name: "m" | "o" | "v" | "SORT_A" | "SORT_B";
   indecies: Calcurable[];
 }
 
 // 3次元以上の配列
 export interface ArrayOrObject3DPlus {
   type: "ArrayOrObject3DPlus";
-  name: "v";
+  name: "v" | "SORT_A" | "SORT_B";
   indecies: Calcurable[];
 }
 
