@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "4.0.8-fps-measure.based-on.4.0.7",
+  "version": "4.0.8",
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
