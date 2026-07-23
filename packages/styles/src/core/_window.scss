@@ -154,7 +154,6 @@ $wwa_icon_width-scale_up: 100px !default;
     overflow: hidden;
     font-size: 12px;
     line-height: 1.2;
-    font-weight: bold;
     &[aria-hidden="true"] {
         display: none;
     }
@@ -171,7 +170,7 @@ $wwa_icon_width-scale_up: 100px !default;
         border: 0 none;
         border-radius: 50%;
         font-size: 8px;
-        font-weight: bold;
+        font-weight: inherit;
         text-align: center;
         cursor: pointer;
         &:hover, &:focus {
@@ -180,6 +179,9 @@ $wwa_icon_width-scale_up: 100px !default;
         &:focus {
             outline: 1px solid #000000;
         }
+    }
+    &:not([data-classic-mode-enabled="true"]) {
+        font-weight: bold;
     }
 }
 

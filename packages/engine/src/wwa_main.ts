@@ -1136,7 +1136,7 @@ export class WWA {
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
             this._setProgressBar(getProgress(3, 4, LoadStage.GAME_INIT));
 
-            this._gameFrameRateWindow = new GameFrameRateWindow(util.$id("wwa-wrapper"), options.frameRateDisplayingPattern === "always" ? undefined : () => this._gameFrameRateWindow.hide());
+            this._gameFrameRateWindow = new GameFrameRateWindow(util.$id("wwa-wrapper"), options.classicModeEnable ?? false, options.frameRateDisplayingPattern === "always" ? undefined : () => this._gameFrameRateWindow.hide());
             if (options.frameRateDisplayingPattern === "default-off" || options.frameRateDisplayingPattern === "never") {
                 this._gameFrameRateWindow.hide();
             } else if (options.frameRateDisplayingPattern === "default-on" || options.frameRateDisplayingPattern === "always") {
