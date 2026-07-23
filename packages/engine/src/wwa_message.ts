@@ -1868,10 +1868,13 @@ export class GameFrameRateWindow {
     private closeButtonElement: HTMLButtonElement;
     private unitElement: HTMLElement;
 
-    constructor (parentElement: HTMLElement, closeButtonClickHandler?: () => void) {
+    constructor (parentElement: HTMLElement, classicModeEnabled: boolean, closeButtonClickHandler?: () => void) {
         this.element = document.createElement("div");
         this.element.setAttribute("id", "wwa-game-frame-rate-window");
-
+        if (classicModeEnabled) {
+            this.element.dataset.classicModeEnabled = "true";
+        }
+           
         this.currentFpsIndicatorElement = document.createElement("span");
         this.element.appendChild(this.currentFpsIndicatorElement);
 
