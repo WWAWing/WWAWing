@@ -23,6 +23,7 @@ export enum KeyCode {
     KEY_C = 67,
     KEY_D = 68,
     KEY_E = 69,
+    KEY_F = 70,
     KEY_I = 73,
     KEY_M = 77,
     KEY_N = 78,

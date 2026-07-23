@@ -39,7 +39,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "pug": "^3.0.2"
+    "pug": "^3.0.2",
+    "@wwawing/common-interface": "file:../common-interface"
   },
   "publishConfig": {
     "access": "public"

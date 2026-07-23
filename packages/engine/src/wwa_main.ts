@@ -10,6 +10,7 @@ import {
     speedNameList, MoveType, AppearanceTriggerType, vx, vy, EquipmentStatus, SecondCandidateMoveType,
     ChangeStyleType, MacroStatusIndex, SelectorType, IDTable, UserDevice, OS_TYPE, DEVICE_TYPE, BROWSER_TYPE, ControlPanelBottomButton, MacroImgFrameIndex, DrawPartsData,
     StatusKind, MacroType, StatusSolutionKind, UserVarNameListRequestErrorKind, ScoreOptions, TriggerParts,
+    type FrameRateDisplayingPattern
 } from "./wwa_data";
 
 import {
@@ -40,7 +41,7 @@ import { Parts, Player } from "./wwa_parts_player";
 import { Monster } from "./wwa_monster";
 import { ObjectMovingDataManager } from "./wwa_motion";
 import {
-    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine,
+    MessageWindow, MonsterWindow, ScoreWindow, ParsedMessage, Macro, parseMacro, MessageSegments, isEmptyMessageTree, getLastMessage, concatMessage, Node, Junction, Page, MessageLineType, messagLineIsText, MessageLine, GameFrameRateWindow
 } from "./wwa_message";
 import { BattleEstimateWindow } from "./wwa_estimate_battle";
 import { PasswordWindow, Mode } from "./wwa_password_window";
@@ -99,6 +100,7 @@ export class WWA {
     private _objectMovingDataManager: ObjectMovingDataManager;
     public _messageWindow: MessageWindow; // TODO(rmn): wwa_parts_player からの参照を断ち切ってprivateに戻す
     private _monsterWindow: MonsterWindow;
+    private _gameFrameRateWindow: GameFrameRateWindow
     private _scoreWindow: ScoreWindow;
     private _pages: Page[];
     private _yesNoJudge: YesNoState;
@@ -236,6 +238,8 @@ export class WWA {
      */
     private _lastScoreOptions?: ScoreOptions;
 
+    private _frameRateDisplayingPattern: FrameRateDisplayingPattern = "default-off";
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -266,6 +270,7 @@ export class WWA {
         canDisplayUserVars: boolean,
         enableVirtualPad: boolean = false,
         virtualpadControllerElm: HTMLElement = null,
+        frameRateDisplayingPattern: FrameRateDisplayingPattern = "default-off"
     ) {
         this.wwaCustomEventEmitter = new BrowserEventEmitter(util.$id("wwa-wrapper"));
         var ctxCover;
@@ -921,6 +926,18 @@ export class WWA {
                 this, new Coord(50, 180), 340, 60, false, util.$id("wwa-wrapper"), this._wwaData.mapCGName);
             this._setProgressBar(getProgress(3, 4, LoadStage.GAME_INIT));
 
+            this._gameFrameRateWindow = new GameFrameRateWindow(util.$id("wwa-wrapper"), classicModeEnabled ?? false, frameRateDisplayingPattern === "always" ? undefined : () => this._gameFrameRateWindow.hide());
+            if (frameRateDisplayingPattern === "default-off" || frameRateDisplayingPattern === "never") {
+                this._gameFrameRateWindow.hide();
+            } else if (frameRateDisplayingPattern === "default-on" || frameRateDisplayingPattern === "always") {
+                this._gameFrameRateWindow.updateTargetFps(Consts.TARGET_FPS);
+                this._gameFrameRateWindow.show();
+            } else {
+                throw new TypeError(`Invalid framerateDisplayingPattern: ${frameRateDisplayingPattern satisfies never}`);
+            }
+            // ゲーム機の場合はFPS表示封印 需要があれば今後解除検討
+            this._frameRateDisplayingPattern = this.userDevice.device === DEVICE_TYPE.GAME ? "never" : frameRateDisplayingPattern;
+
             this._isLoadedSound = false;
             this._temporaryInputDisable = false;
             this._paintSkipByDoorOpen = false
@@ -1409,14 +1426,46 @@ export class WWA {
 
         setTimeout( () => {
             util.$id("wwa-wrapper").removeChild(util.$id("wwa-cover"));
-            // TODO: これが表示終わるまでプレイヤーをcontrollableにしない
-            //                setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this);
-            this._main();
+            requestAnimationFrame(this.mainCaller.bind(this));
         }, Consts.SPLASH_SCREEN_DISP_MILLS);
 
     }
 
-    public mainCaller = () => this._main();
+    private _prevTimeStamp: DOMHighResTimeStamp = -1;
+    private _accumlatedTimeMs: number = 0;
+    private _samplingTimeMs: number = 0;
+    private _frameCountForMeasureFps: number = 0;
+
+
+    public mainCaller = (now: DOMHighResTimeStamp) => {
+        if (this._prevTimeStamp < 0) {
+            this._prevTimeStamp = now;
+            requestAnimationFrame(this.mainCaller.bind(this));
+            return;
+        }
+        const elapsedTimeMs = now - this._prevTimeStamp;
+        this._prevTimeStamp = now;
+
+        this._accumlatedTimeMs += elapsedTimeMs;
+        if (this._accumlatedTimeMs >= Consts.INTERVAL_MS) {
+            this._accumlatedTimeMs -= Consts.INTERVAL_MS;
+            // タブ復帰後の連続フレーム防止
+            if (this._accumlatedTimeMs > Consts.INTERVAL_MS * 2) {
+                this._accumlatedTimeMs = 0
+            }
+            this._main();
+            this._frameCountForMeasureFps++;
+        }
+
+        this._samplingTimeMs += elapsedTimeMs;
+
+        if (this._samplingTimeMs >= 1000) {
+            this._gameFrameRateWindow?.updateCurrentFps(this._frameCountForMeasureFps / (this._samplingTimeMs / 1000));
+            this._frameCountForMeasureFps = 0;
+            this._samplingTimeMs = 0;
+        }
+        requestAnimationFrame(this.mainCaller.bind(this));
+    } 
     public soundCheckCaller = () => this.checkAllSoundLoaded();
 
     /**
@@ -1646,8 +1695,10 @@ export class WWA {
     }
 
     private _main(): void {
+        if (this._stopUpdateByLoadFlag) {
+            return;
+        }
         this._temporaryInputDisable = false;
-        this._stopUpdateByLoadFlag = false;
 
         // キー情報のアップデート
         this._keyStore.update();
@@ -1669,7 +1720,6 @@ export class WWA {
                 this._drawAll();
             }
             //待ち時間待機
-            window.requestAnimationFrame(this.mainCaller);
             return;
         }
         this._waitFrame = 0;
@@ -2048,6 +2098,11 @@ export class WWA {
                     this._gamePadStore.buttonTrigger(GamePadState.BUTTON_INDEX_Y)) {
                     // コマンドのヘルプ 
                     this._displayHelp();
+                }  else if (this._keyStore.getKeyState(KeyCode.KEY_F) === KeyState.KEYDOWN) {
+                    if (this._frameRateDisplayingPattern === "default-off" || this._frameRateDisplayingPattern === "default-on") {
+                        this._gameFrameRateWindow.toggleVisibility();
+                        this._gameFrameRateWindow.updateTargetFps(Consts.TARGET_FPS);
+                    }
                 }
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
@@ -2298,7 +2353,7 @@ export class WWA {
         this._drawAll();
 
         this._mainCallCounter++;
-        this._mainCallCounter %= 1000000000; // オーバーフローで指数になるやつ対策
+        this._mainCallCounter %= Number.MAX_SAFE_INTEGER; // オーバーフローで指数になるやつ対策
         if (!this._player.isWaitingMessage() || !this._isClassicModeEnable) { // クラシックモード以外では動くように、下の条件分岐とは一緒にしない
             this._animationCounter = (this._animationCounter + 1) % (Consts.ANIMATION_REP_HALF_FRAME * 2);
         }
@@ -2324,11 +2379,9 @@ export class WWA {
         if (this._player.isWaitingMoveMacro()) {
             this._player.decrementMoveObjectAutoExecTimer();
         }
-        if (!this._stopUpdateByLoadFlag) {
-            //setTimeout(this.mainCaller, this._waitTimeInCurrentFrame, this);
-            window.requestAnimationFrame(this.mainCaller);
-        } else {
+        if (this._stopUpdateByLoadFlag) {
             this._fadeout((): void => {
+                this._stopUpdateByLoadFlag = false;
                 if (this._loadType === LoadType.QUICK_LOAD) {
                     this._quickLoad();
                     this.wwaCustomEvent('wwa_quickload');
@@ -2340,7 +2393,6 @@ export class WWA {
                     this._passwordSaveExtractData = void 0;
                     this.wwaCustomEvent('wwa_passwordload');
                 }
-                setTimeout(this.mainCaller, Consts.DEFAULT_FRAME_INTERVAL, this)
             });
         }
         VarDump.Api.updateAllVariables({
@@ -2513,7 +2565,8 @@ export class WWA {
         if (this._useLookingAround && this._player.isLookingAround() && !this._player.isWaitingMessage()) {
             // ジャンプゲート後のぐるぐるまわるやつ
             const dirChanger = [2, 3, 4, 5, 0, 1, 6, 7];
-            crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % 64 / 8)];
+            const dirIntervalMs = Consts.PLAYER_LOOKING_AROUND_LOOP_INTERVAL_FRAME / dirChanger.length;
+            crop = this._wwaData.playerImgPosX + dirChanger[Math.floor(this._mainCallCounter % Consts.PLAYER_LOOKING_AROUND_LOOP_INTERVAL_FRAME / dirIntervalMs)];
         } else if (this._player.isMovingImage()) {
             // 歩行アニメでは一つとなりの画像を使用
             crop = this._wwaData.playerImgPosX + playerImageRelXCrop + 1;
@@ -5040,6 +5093,7 @@ export class WWA {
                         "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
                         "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
                         "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
+                        (this._frameRateDisplayingPattern !== "never" && this._frameRateDisplayingPattern !== "always" ? "Ｆ：FPS表示切り替え\n" : "") +
                         "　　　Ｉ: 移動速度を落とす／\n" +
                         "Ｆ２、Ｐ: 移動速度を上げる\n" +
                         "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
@@ -6285,6 +6339,19 @@ function start() {
         }
         return false;
     })();
+    const frameRateDisplayingPatternRaw = util.$id("wwa-wrapper").getAttribute("data-wwa-frame-rate-displaying-pattern") ?? "default-off";
+    let frameRateDisplayingPattern: FrameRateDisplayingPattern;
+    if (
+        frameRateDisplayingPatternRaw !== "default-off" &&
+        frameRateDisplayingPatternRaw !== "default-on" &&
+        frameRateDisplayingPatternRaw !== "always" &&
+        frameRateDisplayingPatternRaw !== "never"
+    ) {
+        console.warn("data-wwa-frame-rate-displaying-pattern の値が不正です。default-off に設定します。");
+        frameRateDisplayingPattern = "default-off";
+    } else {
+        frameRateDisplayingPattern = frameRateDisplayingPatternRaw;
+    } 
     wwa = new WWA(
         mapFileName,
         urlgateEnabled,
@@ -6298,7 +6365,8 @@ function start() {
         userVarNamesFile,
         canDisplayUserVars,
         virtualPadEnable,
-        virtualPadControllerElm
+        virtualPadControllerElm,
+        frameRateDisplayingPattern
     );
 }
 
