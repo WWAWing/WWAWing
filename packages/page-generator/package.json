@@ -40,6 +40,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@wwawing/common-interface": "file:../common-interface",
     "pug": "^3.0.3"
   },
   "publishConfig": {

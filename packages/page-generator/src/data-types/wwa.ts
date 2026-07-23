@@ -1,3 +1,5 @@
+import type { FrameRateDisplayingPattern } from "@wwawing/common-interface";
+
 export interface GameOption {
     isUrlGateEnabled?: boolean;
     isClassicMode?: boolean;
@@ -21,6 +23,7 @@ export interface GameOption {
     wwaScript?: {
         userDefinedScriptsFile: string;
     },
+    frameRateDisplayingPattern?: FrameRateDisplayingPattern;
 }
 
 export interface Resources {

@@ -1,9 +1,9 @@
-import { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound } from "@wwawing/common-interface";
+import { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound, type FrameRateDisplayingPattern } from "@wwawing/common-interface";
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
-export { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound };
+export { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound, type FrameRateDisplayingPattern };
 
 export class EquipmentStatus {
     public strength: number;
@@ -706,6 +706,8 @@ export const StatusKind = ["energy", "strength", "defence", "gold"] as const;
 export type StatusKind = typeof StatusKind[number];
 export class WWAConsts {
     static WWA_HOME: string = "http://wwajp.com";
+    static TARGET_FPS: number = 60;
+    static INTERVAL_MS: number = 1000 / WWAConsts.TARGET_FPS;
 
     static ITEMBOX_SIZE: number = 12;
     static MAP_ATR_MAX: number = 60;
@@ -805,8 +807,9 @@ export class WWAConsts {
     static MAX_SPEED_INDEX = speedList.length - 1;
     static QUICK_BATTLE_SPEED_INDECIES = [speedList.length - 2, speedList.length - 1];
 
-    static ANIMATION_REP_HALF_FRAME: number = 22;
-    static PLAYER_LOOKING_AROUND_START_FRAME: number = WWAConsts.ANIMATION_REP_HALF_FRAME * 4;
+    static ANIMATION_REP_HALF_FRAME: number = 32;
+    static PLAYER_LOOKING_AROUND_START_FRAME: number = 80;
+    static PLAYER_LOOKING_AROUND_LOOP_INTERVAL_FRAME: number = 80;
 
     static RELATIVE_COORD_BIAS: number = 10000;
     static RELATIVE_COORD_LOWER: number = WWAConsts.RELATIVE_COORD_BIAS - 1000;
