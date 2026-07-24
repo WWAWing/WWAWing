@@ -70,10 +70,10 @@ describe("generateValueAssignOperation", () => {
             "ITEM_COUNT_ALL", "AT_TOTAL", "AT_ITEMS", "DF_TOTAL", "DF_ITEMS",
             "TIME", "PX", "PY", "X", "Y", "ID", "TYPE", "ITEM_COUNT"];
         expressions.forEach(expression => {
-            expect(() => generateValueAssignOperation(111, expression)).toThrowError(Error);
+            expect(() => generateValueAssignOperation(111, expression)).toThrow(Error);
         });
     });
     it("関数への代入操作オブジェクトは生成できない", () => {
-        expect(() => generateValueAssignOperation(100, "RAND(100)")).toThrowError(Error);
+        expect(() => generateValueAssignOperation(100, "RAND(100)")).toThrow(Error);
     });
 });

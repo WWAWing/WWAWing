@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 const htmlGenerator = require("../lib");
 
 // 暫定CLI. CLIを別パッケージに分割したら消す

@@ -180,7 +180,14 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "MESSAGE":
       return execMessageFunction(node.arguments);
     case "JUMPGATE":
+    case "MUSIC":
     case "SOUND":
+    case "BGM_STOP":
+    case "STOP_BGM":
+    case "SOUND_STOP":
+    case "STOP_SOUND":
+    case "ALL_SOUND_STOP":
+    case "STOP_ALL_SOUND":
     case "SAVE":
     case "LOG":
     case "ABLE_CHANGE_SPEED":
@@ -194,11 +201,14 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "FACE":
     case "EFFECT":
     case "CHANGE_PLAYER_IMAGE":
+    case "CHANGE_PLAYER_IMG":
     case "HAS_ITEM":
     case "REMOVE_ITEM":
     case "MOVE":
     case "PARTS_MOVE":
     case "IS_PLAYER_WAITING_MESSAGE":
+    case "IS_MANUAL_PAUSE":
+    case "IS_PLAYER_WAITING_ENTER":
     case "GET_UNIXTIME":
     case "GET_DATE_YEAR":
     case "GET_DATE_MONTH":
@@ -215,6 +225,11 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "HAS_PICTURE":
     case "SHOW_USER_DEF_VAR":
     case "ABS":
+    case "POW":
+    case "SQRT":
+    case "SIN":
+    case "COS":
+    case "TAN":
     case "GET_GAMEOVER_POS_X":
     case "GET_GAMEOVER_POS_Y":
     case "ABORT_BATTLE":
@@ -224,6 +239,26 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "LENGTH":
     case "IS_NUMBER":
     case "CLONE":
+    case "MANUAL_PAUSE":
+    case "WAIT_ENTER":
+    case "CANCEL_MANUAL_PAUSE":
+    case "CANCEL_WAIT_ENTER":
+    case "COLOR":
+    case "EFFITEM":
+    case "CHANGE_BOM_IMG":
+    case "CHANGE_BOM_IMAGE":
+    case "CHANGE_CLICK_IMAGE":
+    case "CHANGE_CLICK_IMG":
+    case "CHANGE_FRAME_IMAGE":
+    case "CHANGE_FRAME_IMG":
+    case "CHANGE_YESNO_IMAGE":
+    case "CHANGE_YESNO_IMG":
+    case "NO_GAMEOVER":
+    case "DEFAULT":
+    case "DIR_MAP":
+    case "CHANGE_SOUND_ATTACK":
+    case "CHANGE_SOUND_DECISION":
+    case "SORT":
       return execSystemDefinedFunctionCall(node.arguments, functionName);
     default:
       return {
@@ -363,6 +398,8 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           left.name === "MOVE_SPEED" ||
           left.name === "MOVE_FRAME_TIME" ||
           left.name === "LP" ||
+          left.name === "SORT_A" ||
+          left.name === "SORT_B" ||
           left.name === "undefined"
         ) {
           throw new Error("このシンボルには代入できません");
@@ -454,13 +491,13 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
   }
 
   if (objectOrFunctionCall.type === "Symbol") {
-    if (!["v", "m", "o", "ITEM", "LP", "PICTURE"].includes(objectOrFunctionCall.name)) {
+    if (!["v", "m", "o", "ITEM", "LP", "PICTURE", "SORT_A", "SORT_B"].includes(objectOrFunctionCall.name)) {
       throw new Error("このシンボルは配列にできません");
     }
     if (Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject1D",
-        name: <"v"|"m"|"o"|"ITEM"|"LP">objectOrFunctionCall.name,
+        name: <"v"|"m"|"o"|"ITEM"|"LP"|"SORT_A"|"SORT_B">objectOrFunctionCall.name,
         indecies: [property],
       };
     } else {
@@ -474,7 +511,7 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
     if (Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject2D",
-        name: <"m" | "o">objectOrFunctionCall.name,
+        name: <"m" | "o" | "SORT_A" | "SORT_B">objectOrFunctionCall.name,
         // 1次元配列 + 1次元分の index を合成
         indecies: [...objectOrFunctionCall.indecies, property]
       }
@@ -486,8 +523,8 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
     if (objectOrFunctionCall.name === "m" || objectOrFunctionCall.name === "o") {
       throw new Error("この配列は3次元以上にはできません。");
     }
-    // ユーザ定義名前変数のみ3次元以上配列が使える
-    if (objectOrFunctionCall.name === "v" && Wwa.isCalcurable(property)) {
+    // ユーザ定義名前変数, SORT_A, SORT_B のみ3次元以上配列が使える
+    if ((objectOrFunctionCall.name === "v" || objectOrFunctionCall.name === "SORT_A" || objectOrFunctionCall.name === "SORT_B") && Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject3DPlus",
         name: objectOrFunctionCall.name,
@@ -559,6 +596,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "MOVE_SPEED":
     case "MOVE_FRAME_TIME":
     case "LP":
+    case "SORT_A":
+    case "SORT_B":
     case "undefined":
       return {
         type: "Symbol",

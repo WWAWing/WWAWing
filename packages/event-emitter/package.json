@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/event-emitter",
-  "version": "4.1.0-unstable.based-on.3.12.22.p.1",
+  "version": "4.0.10",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "repository": {
     "type": "git",
@@ -22,13 +22,14 @@
     "build:module": "tsc -p ./tsconfig.module.json",
     "clean": "run-p clean:*",
     "clean:lib": "shx rm -rf ./lib",
-    "clean:module": "shx rm -rf ./module"
+    "clean:module": "shx rm -rf ./module",
+    "type-check": "tsc -p . --watch --noEmit"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
     "npm-run-all2": "^8.0.1",
-    "shelljs": "^0.9.2",
+    "shelljs": "^0.10.0",
     "shx": "^0.4.0",
     "typescript": "^5.8.3"
   },
@@ -36,7 +37,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=22",
+    "node": ">=24",
     "npm": ">=11"
   }
 }

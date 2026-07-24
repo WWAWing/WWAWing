@@ -11,7 +11,9 @@
   "scripts": {
     "test": "lerna run test --scope @wwawing/{engine,serve-index}",
     "clean": "lerna run clean",
-    "start": "lerna run start --stream --scope @wwawing/engine",
+    "start": "run-p start:*",
+    "start:engine": "lerna run start --stream --scope @wwawing/engine -- --dev",
+    "start:type-check": "lerna run type-check --parallel",
     "build": "lerna run build --stream",
     "deploy": "lerna run deploy:prod --scope @wwawing/engine",
     "generate": "lerna run generate --stream",
@@ -35,21 +37,21 @@
   "devDependencies": {
     "@swc/core": "^1.10.4",
     "@swc/helpers": "^0.5.15",
-    "@types/node": "^22.10.1",
-    "@lerna-lite/cli": "^4.1.1",
-    "@lerna-lite/publish": "^4.1.1",
-    "@lerna-lite/run": "^4.1.1",
-    "@lerna-lite/version": "^4.1.1",
+    "@types/node": "^24",
+    "@lerna-lite/cli": "^5.4.1",
+    "@lerna-lite/publish": "^5.4.1",
+    "@lerna-lite/run": "^5.4.1",
+    "@lerna-lite/version": "^5.4.1",
     "npm-run-all2": "^8.0.1",
     "regenerator-runtime": "^0.14.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "engines": {
-    "node": ">=22",
+    "node": ">=24",
     "npm": ">=11"
   },
   "volta": {
-    "node": "22.13.1"
+    "node": "24.15.0"
   }
 }

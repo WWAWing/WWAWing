@@ -17,12 +17,13 @@ export function makeDefaultWWAOptions(): DataWWAOptions {
         autoSave: true,
         disallowLoadOldSave: false,
         resumeSaveData: undefined,
-        varDumpElm: undefined,
+        varDump: null,
         userVarNamesFile: undefined,
         displayUserVars: false,
         virtualPadEnable: false,
         virtualPadViewportFitEnable: false,
         virtualPadControllerElm: undefined,
         userDefinedScriptsFile: "./script/script_file_list.json",
+        frameRateDisplayingPattern: "default-off",
     };
 }

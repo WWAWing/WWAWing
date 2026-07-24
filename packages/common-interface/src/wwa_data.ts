@@ -14,9 +14,9 @@ export interface Coord {
  * プレイヤーの生命力が 0 になった時の挙動
  * - default: 生命力が 0 になったらゲームオーバーとする
  * - never: 生命力が 0 になってもゲームオーバーにしない
- * - except-macro: マクロで生命力が 0 になった場合以外ではゲームオーバーにする
+ * - except-assignment: マクロやスクリプトなどでので生命力 0 代入以外ではゲームオーバーにする
  */
-export type GameOverPolicy = "default" | "never" | "except-macro";
+export type GameOverPolicy = "default" | "never" | "except-assignment";
 
 type PictureRegistryBase<N> = {
     layerNumber: number,
@@ -32,12 +32,18 @@ type PictureRegistryBase<N> = {
      * ピクチャ作成を呼び出したパーツの Y 座標。
      */
     triggerPartsY: number,
-    soundNumber: number,
+    /**
+     * サウンドID
+     * 互換性のため soundNumber を名乗っているが、文字列のサウンドIDでもOK。
+     */
+    soundNumber: number | string,
     properties: PictureProperties<N>
 };
 export type PictureRegistry = PictureRegistryBase<number>;
 // 変数参照がまだ残っている状態の PictureRegistry
 export type RawPictureRegistry = PictureRegistryBase<number | string>;
+
+export type FrameRateDisplayingPattern = "default-off" | "default-on" | "always" | "never";
 
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
@@ -98,7 +104,7 @@ export interface WWAData {
 
     delPlayerFlag: boolean;
 
-    bgm: number;
+    bgm: number | string;
     effectCoords: Coord[];
     effectWaits: number;
 
@@ -140,7 +146,7 @@ export interface WWAData {
     checkString: string;
 
     isItemEffectEnabled: boolean;
-
+    
     /**
      * プレイ時間
      * memo: playFrameCount というのは古い表記なのでマージなどの時に注意
@@ -190,4 +196,13 @@ export interface WWAData {
 
     pictureRegistry: PictureRegistry[];
 
+    decisionSound?: number | string;
+    attackSound?: number | string;
+}
+
+export enum SystemSound {
+    DECISION = 1,
+    ATTACK = 3,
+    BGM_LB = 70,
+    NO_SOUND = 99
 }

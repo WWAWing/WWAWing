@@ -12,15 +12,15 @@ on:
         required: true
         default: "patch"
       tag:
-        description: "publish に使うタグを入力 (普通にリリースしたい場合:latest)"
+        description: "publish に使うタグを入力 (不安定版: unstable, 安定版: latest, 超不安定版はバージョン名の hogehoge の部分に合わせる)"
         required: true
-        default: "latest"
+        default: "unstable"
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
       - uses: ./.github/actions/init

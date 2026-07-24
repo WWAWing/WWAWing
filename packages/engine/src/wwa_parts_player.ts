@@ -9,10 +9,10 @@ import {
     speedList,
     PartsType,
     ItemMode,
-    SystemSound,
     AppearanceTriggerType,
     Coord,
     type BattleTurnResult,
+    ManualPauseInformation,
 } from "./wwa_data";
 import { Camera } from "./wwa_camera";
 import { Monster } from "./wwa_monster";
@@ -46,6 +46,8 @@ export enum PlayerState {
     MOVING,
     CAMERA_MOVING,
     MESSAGE_WAITING,
+    // メッセージ以外でに操作を受け付けない状態 (WWA Script の PAUSE() でクリックや Enter を待機するなど
+    MANUAL_PAUSE,
     LOCALGATE_JUMPED,
     BATTLE,
     ESTIMATE_WINDOW_WAITING,
@@ -112,6 +114,8 @@ export class Player extends PartsObject {
     // 戦闘していない場合は 0。
     protected _battleNoDamageTurnLength: number;
 
+    protected _manualPauseInformation: ManualPauseInformation | undefined;
+
     public move(): void {
         if (this.isControllable()) {
             this.controll(this._dir);
@@ -143,7 +147,11 @@ export class Player extends PartsObject {
                 this._samePosLastExecutedMapID = void 0;
                 this._samePosLastExecutedObjID = void 0;
                 /** プレイヤーが動いた歳ユーザ定義独自関数を呼び出す */
-                this._wwa.callMoveUserDefineFunction();
+                const { isGameOver } = this._wwa.callMoveUserDefineFunction();
+                if (isGameOver) {
+                    // ゲームオーバー時に this._position を更新するとカメラ座標がプレイヤー座標とずれてしまうため、ゲームオーバー時は更新しない
+                    return;
+                }
             }
             this._position = next;
         }
@@ -335,11 +343,37 @@ export class Player extends PartsObject {
     }
 
     public setMessageWaiting(): void {
+        if (this._state === PlayerState.MANUAL_PAUSE) {
+            console.warn("メッセージが表示されるため、マニュアルポーズが無効になりました。");
+        }
         this._state = PlayerState.MESSAGE_WAITING;
+    }
+
+    public setManualPause(manualPauseInformation: ManualPauseInformation, blockingCancelPauseByPlayer: boolean = false): void {
+        if (!this.isControllable()) {
+            return;
+        }
+        this._state = PlayerState.MANUAL_PAUSE;
+        this._manualPauseInformation = manualPauseInformation;
+    }
+
+    public isWaitingMessageOrManualPause(): boolean {
+        return [
+            PlayerState.MESSAGE_WAITING,
+            PlayerState.MANUAL_PAUSE
+        ].includes(this._state);
     }
 
     public isWaitingMessage(): boolean {
         return this._state === PlayerState.MESSAGE_WAITING;
+    }
+
+    public isManualPause(): boolean {
+        return this._state === PlayerState.MANUAL_PAUSE;
+    }
+
+    public getManualPauseInformation(): ManualPauseInformation | undefined {
+        return this._manualPauseInformation;
     }
 
     public isDelayFrame(): boolean {
@@ -353,11 +387,15 @@ export class Player extends PartsObject {
         this._messageDelayFrameCount = 1;
     }
 
-    public clearMessageWaiting(): void {
-        if (this._state !== PlayerState.MESSAGE_WAITING && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
+    public clearWaitingMessageOrManualPause(): void {
+        if (this._state === PlayerState.MANUAL_PAUSE) {
+            this._manualPauseInformation = undefined;
+        }
+        const isWaiting = this.isWaitingMessageOrManualPause();
+        if (!isWaiting && this._state !== PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             return;
         }
-        if (this._state === PlayerState.MESSAGE_WAITING) {
+        if (isWaiting) {
             this._state = PlayerState.CONTROLLABLE;
         } else if (this._state === PlayerState.LOCALGATE_JUMPED_WITH_MESSAGE) {
             this._state = PlayerState.LOCALGATE_JUMPED;
@@ -1056,13 +1094,13 @@ export class Player extends PartsObject {
         this._battleTurnLength++;
         if (this._wwa.isBattleSpeedIndexForQuickBattle(this._speedIndex) || this._battleTurnLength > Consts.BATTLE_SPEED_CHANGE_TURN_NUM) {
             if (this._battleTurnLength === 1) {
-                this._wwa.playSound(SystemSound.ATTACK);
+                this._wwa.playAttackSound();
                 this._wwa.vibration(false);
             }
             this._battleFrameCounter = 1;
         } else {
             this._battleFrameCounter = Consts.BATTLE_INTERVAL_FRAME_NUM;
-            this._wwa.playSound(SystemSound.ATTACK);
+            this._wwa.playAttackSound();
             this._wwa.vibration(true);
         }
 
@@ -1139,7 +1177,7 @@ export class Player extends PartsObject {
                 this._battleTurnLength = 0;
                 this._battleNoDamageTurnLength = 0;
                 this._enemy = null;
-                if (this._wwa.shouldApplyGameOver({ isCalledByMacro: false })) {
+                if (this._wwa.shouldApplyGameOver({ isAssignment: false })) {
                     this._wwa.gameover();
                 }
             }
@@ -1284,7 +1322,7 @@ export class Player extends PartsObject {
     public isPausing() {
         return (
             this.isJumped() ||
-            this.isWaitingMessage() ||
+            this.isWaitingMessageOrManualPause() ||
             this.isWaitingPasswordWindow() ||
             this.isWaitingEstimateWindow() ||
             this.isWaitingMoveMacro() ||

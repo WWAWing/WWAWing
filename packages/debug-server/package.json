@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/debug-server",
-  "version": "4.1.0-unstable.based-on.3.12.22.p.1",
+  "version": "4.0.10",
   "description": "wwawing debug server",
   "main": "lib/index.js",
   "repository": {
@@ -21,7 +21,8 @@
     "generate:inject": "postject ./bin/wwa-server.exe NODE_SEA_BLOB ./tmp/sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
     "generate:post-clean": "shx rm -rf tmp",
     "clean": "shx rm -rf debug lib bin tmp",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "type-check": "tsc -p . --watch --noEmit"
   },
   "author": "WWA Wing Team",
   "license": "MIT",
@@ -29,25 +30,25 @@
     "@wwawing/serve-index": "file:../serve-index"
   },
   "devDependencies": {
-    "@types/express": "4.17.14",
-    "@types/node": "^22.10.1",
-    "express": "^4.21.2",
+    "@types/express": "5.0.6",
+    "@types/node": "^24",
+    "express": "^5.2.1",
     "npm-run-all2": "^8.0.1",
     "postject": "^1.0.0-alpha.6",
     "resolve-pkg": "^2.0.0",
-    "shelljs": "^0.9.2",
+    "shelljs": "^0.10.0",
     "shx": "^0.4.0",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "webpack": "^5.83.1",
-    "webpack-cli": "^5.1.1"
+    "webpack": "^5.104.1",
+    "webpack-cli": "^5.1.4"
   },
   "publishConfig": {
     "access": "public"
   },
   "engines": {
-    "node": ">=22",
+    "node": ">=24",
     "npm": ">=11"
   }
 }
