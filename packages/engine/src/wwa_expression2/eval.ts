@@ -1110,7 +1110,6 @@ export class EvalCalcWwaNode {
         if(this.generator.wwa.getSoundEnabled()){
           this._checkArgsLength(1, node);
           const decisionSound = this.evalWwaNode(node.value[0]);
-          this.generator.wwa.checkSoundEnabled(decisionSound);
           this.generator.wwa.setDecisionSound(decisionSound);
         }
         return;
@@ -1123,7 +1122,6 @@ export class EvalCalcWwaNode {
         if(this.generator.wwa.getSoundEnabled()){
           this._checkArgsLength(1, node);
           const attackSound = this.evalWwaNode(node.value[0]);
-          this.generator.wwa.checkSoundEnabled(attackSound);
           this.generator.wwa.setAttackSound(attackSound);
         }
         return;
