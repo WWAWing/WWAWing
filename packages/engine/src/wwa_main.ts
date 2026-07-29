@@ -1568,7 +1568,7 @@ export class WWA {
     }
 
     public createSoundInstance(soundId: number | string): void {
-        if (soundId === 0 || soundId === SystemSound.NO_SOUND || this._soundMap.has(soundId)) {
+        if (soundId === 0 || soundId === SystemSound.NO_SOUND || this._soundMap?.has(soundId)) {
             return;
         }
         const filePath = `${this._audioDirectory}${soundId}.${this.audioExtension}`;
@@ -1709,6 +1709,9 @@ export class WWA {
     }
 
     public checkAllSoundLoaded(): void {
+        if (!this._soundMap) {
+            return;
+        }
         let loadedNum = 0;
         let total = 0;
         if (!this._hasTitleImg) {
@@ -1752,7 +1755,7 @@ export class WWA {
      * @param targetSoundId 確認する音楽ファイルのサウンド番号
      */
     private _setSoundLoadedCheckTimer(targetSoundId: number | string): void {
-        const targetAudio = this._soundMap.get(targetSoundId);
+        const targetAudio = this._soundMap?.get(targetSoundId);
         // 対象音源が存在しないなど、エラーの場合は何度確認しても無駄なので何もせず終了
         if (!targetAudio || targetAudio.isError()) {
             return;
@@ -1787,15 +1790,9 @@ export class WWA {
          return this._isLoadedSound;
     }
 
-    public checkSoundEnabled(id: number | string): void {
-        const audioInstance = this._soundMap.get(id);
-        audioInstance.hasData();
-    }
-
-
     /** BGM を停止します */
     public stopBgm() {
-        const targetSound = this._soundMap.get(this._wwaData.bgm);
+        const targetSound = this._soundMap?.get(this._wwaData.bgm);
         if (targetSound?.isPlaying()) {
             targetSound.pause();
         }
@@ -1814,7 +1811,7 @@ export class WWA {
             }
             return;
         }
-        const targetSound = this._soundMap.get(soundId);
+        const targetSound = this._soundMap?.get(soundId);
         if (targetSound?.isPlaying()) {
             targetSound.pause();
         }
@@ -1824,7 +1821,7 @@ export class WWA {
      * すべてのサウンドを停止します
      */
     public stopAllSound(option: {includeBgm: boolean}) {
-        this._soundMap.keys().forEach((soundId) => this.stopSound(soundId, option));
+        this._soundMap?.keys().forEach((soundId) => this.stopSound(soundId, option));
     }
 
     public playSound(id: number | string, option: { loopPlaying?: boolean; bgmDelayDurationMs?: number; } = {}): void {
@@ -1860,7 +1857,7 @@ export class WWA {
         if (id === 0 || id === SystemSound.NO_SOUND) {
             return;
         }
-        const audioInstance = this._soundMap.get(id);
+        const audioInstance = this._soundMap?.get(id);
         if (!audioInstance) {
             console.warn(`サウンドID ${id} は、マップデータにも ${this._audioDirectory}sound-list.json にも出現しないため、再生できません。`);
             return;

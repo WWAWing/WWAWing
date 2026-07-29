@@ -1140,29 +1140,15 @@ export class EvalCalcWwaNode {
         return;
       }
       case "CHANGE_SOUND_DECISION": {
-        /*
-        サウンド読み込みOFF時はサウンドチェックが常に失敗するため、
-        決定音変更処理自体をスキップする。
-        */
-        if(this.generator.wwa.getSoundEnabled()){
-          this._checkArgsLength(1, node);
-          const decisionSound = this.evalWwaNode(node.value[0]);
-          this.generator.wwa.checkSoundEnabled(decisionSound);
-          this.generator.wwa.setDecisionSound(decisionSound);
-        }
+        this._checkArgsLength(1, node);
+        const decisionSound = this.evalWwaNode(node.value[0]);
+        this.generator.wwa.setDecisionSound(decisionSound);
         return;
       }
       case "CHANGE_SOUND_ATTACK": {
-        /*
-        サウンド読み込みOFF時はサウンドチェックが常に失敗するため、
-        攻撃音変更処理自体をスキップする。
-        */
-        if(this.generator.wwa.getSoundEnabled()){
-          this._checkArgsLength(1, node);
-          const attackSound = this.evalWwaNode(node.value[0]);
-          this.generator.wwa.checkSoundEnabled(attackSound);
-          this.generator.wwa.setAttackSound(attackSound);
-        }
+        this._checkArgsLength(1, node);
+        const attackSound = this.evalWwaNode(node.value[0]);
+        this.generator.wwa.setAttackSound(attackSound);
         return;
       }
       case "SORT": {
