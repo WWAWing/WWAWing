@@ -1,15 +1,13 @@
 import { convertMapToObject, isPrimitive } from "@wwawing/util";
 import { SystemMessage } from "@wwawing/common-interface";
-import { BattleEstimateParameters, Coord, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Direction, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
 import { WWA } from "../wwa_main";
-import { getItem } from "../wwa_util";
+import { getItem, isValidPlayerDirection } from "../wwa_util";
 import * as Wwa from "./wwa";
-import { Literal } from "./wwa";
 import { isLowerThanEpsilon, PARTS_TYPE_LIST } from "./utils";
 import { evalLengthFunction } from "./functions/length";
 import { getPlayerCoordPx, getPlayerCoordPy } from "./symbols";
 import { PageAdditionalItem, GameOver } from "./typedef";
-import { MacroImgFrameIndex } from ".././wwa_data";
 
 const operatorOperationMap: {
   [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
@@ -230,8 +228,6 @@ export class EvalCalcWwaNode {
         return this.evalSetSpecialParameter(node);
       case "Random":
         return this.evalRandom(node);
-      case "Jumpgate":
-        return this.evalJumpgate(node);
       case "Msg":
         return this.evalMessage(node);
       case "ItemAssignment":
@@ -244,10 +240,13 @@ export class EvalCalcWwaNode {
         return this.partsAssignment(node);
       case "ForStatement":
         return this.forStateMent(node);
-      case "AnyFunction":
-        return this.wrapCallFunction(node, node => this.evalAnyFunction(node));
-      case "CallDefinedFunction":
-        return this.wrapCallFunction(node, node => this.callDefinedFunction(node));
+      case "SystemDefinedFunctionCall":
+        return this.evalSystemDefinedFunctionCall(node);
+      case "UserDefinedFunctionCall":
+        return this.evalUserDefinedFunctionCall(node);
+      case "UserDefinedFunction":
+        // 関数定義は何も実行しません
+        return;
       case "Break":
         return this.breakStatement(node);
       case "Return":
@@ -290,13 +289,15 @@ export class EvalCalcWwaNode {
     }    
   }
 
-  /** 関数の呼び出し */
-  callDefinedFunction(node: Wwa.CallDefinedFunction) {
+  /** ユーザー定義関数の呼び出し */
+  evalUserDefinedFunctionCall(node: Wwa.UserDefinedFunctionCall) {
     const func = this.generator.wwa.getUserScript(node.functionName);
     if(func === null) {
       throw new Error(`未定義の関数が呼び出されました: ${node.functionName}`);
     }
-    return this.evalWwaNode(func);
+    const functionResult = this.wrapCallFunction(func, func => this.evalWwaNode(func));
+    const indecies = node.indecies?.map((x) => this.evalWwaNode(x)) ?? [];
+    return indecies.reduce((prev, current) => getItem(prev, current), functionResult);
   }
 
   /** i++ などが実行された時の処理. 現在後置インクリメントのみ対応しています. */
@@ -520,19 +521,42 @@ export class EvalCalcWwaNode {
 
   /**
    * 関数実行時に引数が不足しているかチェックする
+   * ※ 現在のところユーザー定義関数に引数を定義できないため、システム定義関数のみ対応しています。
    * @param length 
    * @param node 
    */
-  private _checkArgsLength(length: number, node: Wwa.AnyFunction) {
+  private _checkArgsLength(length: number, node: Wwa.SystemDefinedFunctionCall) {
     if(node.value.length < length) {
       throw new Error(`関数 ${node.functionName} の引数が不足しています！`);
     }
   }
   
-  /** 任意の特殊関数を実行する */
-  evalAnyFunction(node: Wwa.AnyFunction) {
+  /** システム定義関数を実行する */
+  evalSystemDefinedFunctionCall(node: Wwa.SystemDefinedFunctionCall) {
+    const functionResult = this.wrapCallFunction(node, node => this.evalSystemDefinedFunctionCallInner(node));
+    const indecies = node.indecies?.map((x) => this.evalWwaNode(x)) ?? [];
+    return indecies.reduce((prev, current) => getItem(prev, current), functionResult);
+  }
+
+  /** システム定義関数を実行する (内部) */
+  private evalSystemDefinedFunctionCallInner(node: Wwa.SystemDefinedFunctionCall) {
     const game_status = this.generator.wwa.getGameStatus();
     switch(node.functionName) {
+      case "JUMPGATE": {
+        const x = this.evalWwaNode(node.value[0]);
+        const y = this.evalWwaNode(node.value[1]);
+        const dir = node.value[2] ? this.evalWwaNode(node.value[2]) : Direction.NO_DIRECTION;
+        if (isNaN(x) || isNaN(y)) {
+          throw new Error(`飛び先の値が数値になっていません。 x=${x} / y=${y}`);
+        }
+        const convertedDir = EvalCalcWwaNode.convertDirection(dir);
+        if (!isValidPlayerDirection(convertedDir)) {
+            // NOTE: convertedDir ではなく入力された値をエラーメッセージにしてわかりやすくする 
+            throw new TypeError("この値の向きにプレイヤーを向けることはできません" + dir);
+        }
+        this.generator.wwa.forcedJumpGate(x, y, convertedDir);
+        return undefined;
+      }
       case "MUSIC":
       case "SOUND": {
         this._checkArgsLength(1, node);
@@ -963,6 +987,19 @@ export class EvalCalcWwaNode {
         const value = this.evalWwaNode(node.value[0]);
         return typeof value === "number";
       }
+      case "CLONE": {
+        this._checkArgsLength(1, node);
+        const value = this.evalWwaNode(node.value[0]);
+        if (typeof value === "symbol" || !isPrimitive(value) && !(value instanceof Map) && !Array.isArray(value)) {
+          throw new TypeError("この値はクローンできません。");
+        }
+        try {
+          return structuredClone(value);
+        } catch (error) {
+          console.error(error);
+          throw new Error("クローン中にエラーが発生しました。");
+        }
+      }
       case "MANUAL_PAUSE":
       case "WAIT_ENTER": {
         const arg0 = this.evalWwaNode(node.value[0]);
@@ -1151,6 +1188,30 @@ export class EvalCalcWwaNode {
     }
   }
 
+  private static convertDirection(dir: unknown): Direction {
+    switch (dir) {
+      case 2:
+      case "down":
+        return Direction.DOWN;
+      case 4:
+      case "left":
+        return Direction.LEFT;
+      case 5:
+      case undefined:
+      case null:
+        return Direction.NO_DIRECTION;
+      case 6:
+      case "right":
+        return Direction.RIGHT;
+      case 8:
+      case "up":
+        return Direction.UP;
+      default:
+        console.warn(`JUMPGATEの方向指定 ${String(dir)} が不正です`);
+        return undefined;
+    }
+  }
+
   private resolveSystemMessageKeyFromMacroArg(target: any): SystemMessage.Key | undefined {
     if (typeof target === "string") {
       // メッセージコードとして解決しようとする
@@ -1325,16 +1386,6 @@ export class EvalCalcWwaNode {
     const value = this.evalWwaNode(node.value);
     const additionalItems = this.generator.pickPageAdditionalQueue();
     this.generator.wwa.handleMsgFunction({ message: String(value), additionalItems });
-    return undefined;
-  }
-
-  evalJumpgate(node: Wwa.Jumpgate) {
-    const x = this.evalWwaNode(node.x);
-    const y = this.evalWwaNode(node.y);
-    if(isNaN(x) || isNaN(y)) {
-      throw new Error(`飛び先の値が数値になっていません。 x=${x} / y=${y}`);
-    }
-    this.generator.wwa.forcedJumpGate(x, y);
     return undefined;
   }
 
@@ -1660,7 +1711,7 @@ export class EvalCalcWwaNode {
         const partsID = this.generator.wwa.getPartsID(new Coord(x, y), partsType);
         return partsID;
       case "v": {
-        const key = (node.indecies[0] as Literal).value;
+        const key = this.evalWwaNode(node.indecies[0]);
         const value = this.generator.wwa.getUserNameVar(key);
         if (
           value === null ||

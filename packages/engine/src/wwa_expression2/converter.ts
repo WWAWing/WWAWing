@@ -1,3 +1,4 @@
+import { isPrimitive } from "@wwawing/util";
 import * as Acorn from "./acorn";
 import * as Wwa from "./wwa";
 
@@ -69,7 +70,7 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
 
 function convertFunctionStatement(node: Acorn.FunctionDeclaration): Wwa.WWANode {
   return {
-    type: "DefinedFunction",
+    type: "UserDefinedFunction",
     functionName: node.id.name,
     body: convertNodeAcornToWwa(node.body)
   }
@@ -167,15 +168,18 @@ function convertIfStatement(node: Acorn.IfStatement): Wwa.WWANode {
  * @returns 
  */
 function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
+  if (node.callee.type !== "Identifier") {
+    // xxx.foo(), xxx().foo() のような関数呼び出しは現状サポートしない
+    throw new Error("WWAでは存在しない構文です");
+  }
   const functionName = node.callee.name;
   switch(functionName) {
     case "RAND":
       return execRandomFunction(node.arguments);
-    case "JUMPGATE":
-      return execJumpgateFunction(node.arguments);
     case "MSG":
     case "MESSAGE":
       return execMessageFunction(node.arguments);
+    case "JUMPGATE":
     case "MUSIC":
     case "SOUND":
     case "BGM_STOP":
@@ -234,6 +238,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_IMG_POS_Y":
     case "LENGTH":
     case "IS_NUMBER":
+    case "CLONE":
     case "MANUAL_PAUSE":
     case "WAIT_ENTER":
     case "CANCEL_MANUAL_PAUSE":
@@ -254,23 +259,23 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "CHANGE_SOUND_ATTACK":
     case "CHANGE_SOUND_DECISION":
     case "SORT":
-      return execAnyFunction(node.arguments, functionName);
+      return execSystemDefinedFunctionCall(node.arguments, functionName);
     default:
       return {
-        type: "CallDefinedFunction",
+        type: "UserDefinedFunctionCall",
         functionName: functionName
       }
   }
 }
 
 /**
- * 任意の関数型
+ * システム定義関数を実行する
  * @param callee 
  * @returns 
  */
-function execAnyFunction(callee: Acorn.Literal[], functionName: string): Wwa.WWANode {
+function execSystemDefinedFunctionCall(callee: Acorn.Literal[], functionName: string): Wwa.WWANode {
   return {
-    type: "AnyFunction",
+    type: "SystemDefinedFunctionCall",
     functionName: functionName,
     value: callee.map((v) => {
       return convertNodeAcornToWwa(v)
@@ -290,24 +295,6 @@ function execMessageFunction(callee: Acorn.Literal[]): Wwa.WWANode {
   }
 }
 
-/**
- * JUMPGATE関数を実行する
- * JUMPGATEを実行するための識別子を返す
- */
-function execJumpgateFunction(callee: Acorn.Literal[]): Wwa.WWANode {
-  if(callee.length < 2) {
-    throw new Error("RAND関数には引数が2つ必要です。")
-  }
-  const pos = {
-    x: callee[0],
-    y: callee[1]
-  }
-  return {
-    type: "Jumpgate",
-    x: convertNodeAcornToWwa(pos.x),
-    y: convertNodeAcornToWwa(pos.y)
-  }
-}
 
 /**
  * RAND関数を実行する
@@ -494,55 +481,79 @@ function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.WWANode {
   }
 }
 
-function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObject1D | Wwa.ArrayOrObject2D | Wwa.ArrayOrObject3DPlus {
-  const object = convertNodeAcornToWwa(node.object);
+function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObject1D | Wwa.ArrayOrObject2D | Wwa.ArrayOrObject3DPlus | Wwa.SystemDefinedFunctionCall | Wwa.UserDefinedFunctionCall {
+  const objectOrFunctionCall = convertNodeAcornToWwa(node.object);
   const property = convertNodeAcornToWwa(node.property);
 
-  if (object.type === "Symbol") {
-    if (!["v", "m", "o", "ITEM", "LP", "PICTURE", "SORT_A", "SORT_B"].includes(object.name)) {
+  if (Wwa.isFunctionCall(property)) {
+    // xxx.foo() のような関数呼び出しは現状サポートしない
+    throw new Error("WWAでは存在しない構文です");
+  }
+
+  if (objectOrFunctionCall.type === "Symbol") {
+    if (!["v", "m", "o", "ITEM", "LP", "PICTURE", "SORT_A", "SORT_B"].includes(objectOrFunctionCall.name)) {
       throw new Error("このシンボルは配列にできません");
     }
     if (Wwa.isCalcurable(property)) {
-      //一次元分適用
       return {
         type: "ArrayOrObject1D",
-        name: <"v"|"m"|"o"|"ITEM"|"LP"|"SORT_A"|"SORT_B">object.name,
+        name: <"v"|"m"|"o"|"ITEM"|"LP"|"SORT_A"|"SORT_B">objectOrFunctionCall.name,
         indecies: [property],
       };
     } else {
       throw new Error("WWAでは存在しない構文です");
     }
-  } else if (object.type === "ArrayOrObject1D") {
+  } else if (objectOrFunctionCall.type === "ArrayOrObject1D") {
     // 1次元にしかできないものは排除
-    if (object.name === "ITEM" || object.name === "PICTURE") {
+    if (objectOrFunctionCall.name === "ITEM" || objectOrFunctionCall.name === "PICTURE") {
       throw new Error("この配列は2次元以上にはできません。");
     }
     if (Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject2D",
-        name: <"m" | "o" | "SORT_A" | "SORT_B">object.name,
+        name: <"m" | "o" | "SORT_A" | "SORT_B">objectOrFunctionCall.name,
         // 1次元配列 + 1次元分の index を合成
-        indecies: [...object.indecies, property]
+        indecies: [...objectOrFunctionCall.indecies, property]
       }
     } else {
       // 数値に解決できないものが index に来てはいけない
       throw new Error("WWAでは存在しない構文です")
     }
-  } else if(object.type === "ArrayOrObject2D" || object.type === "ArrayOrObject3DPlus") {
-    if (object.name === "m" || object.name === "o") {
+  } else if(objectOrFunctionCall.type === "ArrayOrObject2D" || objectOrFunctionCall.type === "ArrayOrObject3DPlus") {
+    if (objectOrFunctionCall.name === "m" || objectOrFunctionCall.name === "o") {
       throw new Error("この配列は3次元以上にはできません。");
     }
     // ユーザ定義名前変数, SORT_A, SORT_B のみ3次元以上配列が使える
-    if ((object.name === "v" || object.name === "SORT_A" || object.name === "SORT_B") && Wwa.isCalcurable(property)) {
+    if ((objectOrFunctionCall.name === "v" || objectOrFunctionCall.name === "SORT_A" || objectOrFunctionCall.name === "SORT_B") && Wwa.isCalcurable(property)) {
       return {
         type: "ArrayOrObject3DPlus",
-        name: object.name,
-        indecies: [ ...object.indecies, property]
+        name: objectOrFunctionCall.name,
+        indecies: [ ...objectOrFunctionCall.indecies, property]
       }
     }
-  }
-  else {
-    throw new Error("WWAでは存在しない構文です")
+  } else if (objectOrFunctionCall.type === "SystemDefinedFunctionCall") {
+    if (Wwa.isCalcurable(property)) {
+      return {
+        type: "SystemDefinedFunctionCall",
+        functionName: objectOrFunctionCall.functionName,
+        value: objectOrFunctionCall.value,
+        // fooFunction().barMember.bazMember... のような形
+        indecies: [...(objectOrFunctionCall.indecies ?? []), property],
+      };
+    } else {
+      throw new Error("WWAでは存在しない構文です")
+    }
+  } else if (objectOrFunctionCall.type === "UserDefinedFunctionCall") {
+    if (Wwa.isCalcurable(property)) {
+      return {
+        type: "UserDefinedFunctionCall",
+        functionName: objectOrFunctionCall.functionName,
+        // fooFunction().barMember.bazMember... のような形
+        indecies: [...(objectOrFunctionCall.indecies ?? []), property],
+      }
+    } else {
+      throw new Error("WWAでは存在しない構文です")
+    }
   }
 }
 
@@ -601,9 +612,9 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
 }
 
 function convertLiteral(node: Acorn.Literal): Wwa.Literal {
-  // UNDONE: 小数点以下の処理をする
-  // UNDONE: boolean 値の取り扱いをする. 多分 Wwa.Boolean を作ることになる.
-  // typeof node.value が number でも boolean でもないならエラーにする. (nullやらundefinedやら書かれると困る)
+  if (!isPrimitive(node.value)) {
+    throw new TypeError("Literal の値が不正です");
+  }
   return {
     type: "Literal",
     value: node.value

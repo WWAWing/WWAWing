@@ -287,7 +287,7 @@ export class WWA {
      * メッセージウィンドウ(システムメッセージ含む)に関しては、表示される予定のものが全て掃けた後にリクエスト内容のジャンプ処理が発生します.
      * ジャンプゲートの後にPXやPYが書き換わった場合には、ジャンプゲートの座標にPX, PYが書き換わったものが適用されます.
      */
-    private _windowCloseWaitingJumpGateRequest?: { x: number; y: number } = undefined
+    private _windowCloseWaitingJumpGateRequest?: { x: number; y: number; dir: Direction } = undefined;
 
     private _debugConsoleElement: HTMLElement | undefined = undefined;
 
@@ -1392,13 +1392,13 @@ export class WWA {
 
     /** ユーザ定義スクリプト処理関数 */
     private setUserScript(userScriptStrings: UserScriptResponse) {
-        if(userScriptStrings.kind !== "data") {
+        if (userScriptStrings.kind !== "data") {
             console.error(userScriptStrings);
             return;
         }
         const readScriptWWANodes = this.convertWwaNodes(userScriptStrings.data);
         readScriptWWANodes.forEach((currentNode) => {
-            if(currentNode.type === 'DefinedFunction' && this.userDefinedFunctions) {
+            if (currentNode.type === "UserDefinedFunction" && this.userDefinedFunctions) {
                 const functionName = currentNode.functionName;
                 this.userDefinedFunctions[functionName] = currentNode.body;
             }
@@ -6274,13 +6274,15 @@ font-weight: bold;
         return this._useConsole;
     }
     // JumpGateマクロ実装ポイント
-    public forcedJumpGate(jx: number, jy: number): void {
+    // HACK: Direction 型が広すぎるので、斜め移動の向きを型の上でも塞いでおきたい。
+    // そもそも TypeScript の enum を無くしていきたいので、一旦はこのままにしておく。
+    public forcedJumpGate(jx: number, jy: number, jdir: Direction = Direction.NO_DIRECTION): void {
         if(this._player.isWaitingMessageOrManualPause()) {
-            this._windowCloseWaitingJumpGateRequest = { x: jx, y: jy };
+            this._windowCloseWaitingJumpGateRequest = { x: jx, y: jy, dir: jdir };
         } else {
             this._windowCloseWaitingJumpGateRequest = undefined;
             // NOTE: jumpgateマクロは、1フレーム遅延の対象とせず、即時ジャンプを行う
-            this._player.jumpTo(new Position(this, jx, jy, 0, 0));
+            this._player.jumpTo(new Position(this, jx, jy, 0, 0), jdir);
         }
     }
     public setUserVarIndecies(indecies: any[], assignee: number | string | boolean, operator: string = "="): void {

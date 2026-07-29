@@ -463,7 +463,7 @@ export class Player extends PartsObject {
         }
     }
 
-    public jumpTo(pos: Position): boolean {
+    public jumpTo(pos: Position, specifiedDirection = Direction.NO_DIRECTION): boolean {
         var prevCameraPos = this._camera.getPosition();
         var prevPos = this.getPosition();
 
@@ -481,20 +481,24 @@ export class Player extends PartsObject {
         this._samePosLastExecutedMapID = void 0;
         this._samePosLastExecutedObjID = void 0;
 
-        // ジャンプ先がジャンプゲートの場合、下向きに設定
-        if (pos.hasLocalGate()) {
-            this._dir = Direction.DOWN;
-            // 隣接4方向のジャンプゲートがある場合、ジャンプゲートの反対方向に向きを設定
-        } else if (pos.getPartsCoord().y <= this._wwa.getMapWidth() - 2 && pos.getNextJustPosition(Direction.DOWN).hasLocalGate()) {
-            this._dir = Direction.UP;
-        } else if (pos.getPartsCoord().y >= 1 && pos.getNextJustPosition(Direction.UP).hasLocalGate()) {
-            this._dir = Direction.DOWN;
-        } else if (pos.getPartsCoord().x <= this._wwa.getMapWidth() - 2 && pos.getNextJustPosition(Direction.RIGHT).hasLocalGate()) {
-            this._dir = Direction.LEFT;
-        } else if (pos.getPartsCoord().x >= 1 && pos.getNextJustPosition(Direction.LEFT).hasLocalGate()) {
-            this._dir = Direction.RIGHT;
+        if (specifiedDirection !== Direction.NO_DIRECTION) {
+            this._dir = specifiedDirection;
         } else {
-            this._dir = Direction.DOWN;
+            // ジャンプ先がジャンプゲートの場合、下向きに設定
+            if (pos.hasLocalGate()) {
+                this._dir = Direction.DOWN;
+                // 隣接4方向のジャンプゲートがある場合、ジャンプゲートの反対方向に向きを設定
+            } else if (pos.getPartsCoord().y <= this._wwa.getMapWidth() - 2 && pos.getNextJustPosition(Direction.DOWN).hasLocalGate()) {
+                this._dir = Direction.UP;
+            } else if (pos.getPartsCoord().y >= 1 && pos.getNextJustPosition(Direction.UP).hasLocalGate()) {
+                this._dir = Direction.DOWN;
+            } else if (pos.getPartsCoord().x <= this._wwa.getMapWidth() - 2 && pos.getNextJustPosition(Direction.RIGHT).hasLocalGate()) {
+                this._dir = Direction.LEFT;
+            } else if (pos.getPartsCoord().x >= 1 && pos.getNextJustPosition(Direction.LEFT).hasLocalGate()) {
+                this._dir = Direction.RIGHT;
+            } else {
+                this._dir = Direction.DOWN;
+            }
         }
 
         if (!this._camera.getPosition().equals(prevCameraPos)) {

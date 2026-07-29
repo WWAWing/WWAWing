@@ -1,9 +1,17 @@
-export type Calcurable = ArrayOrObject1D | ArrayOrObject2D | ArrayOrObject3DPlus | Literal | Symbol | UnaryOperation | BinaryOperation | Random | CallDefinedFunction | AnyFunction | ConditionalExpression | ArrayExpression | ObjectExpression;
+import { Primitive } from "@wwawing/util";
+
+export type Calcurable = ArrayOrObject1D | ArrayOrObject2D | ArrayOrObject3DPlus | Literal | Symbol | UnaryOperation | BinaryOperation | Random | UserDefinedFunctionCall | SystemDefinedFunctionCall | ConditionalExpression | ArrayExpression | ObjectExpression;
+
+export type FunctionCall = UserDefinedFunctionCall | SystemDefinedFunctionCall;
 
 export function isCalcurable(node: WWANode): node is Calcurable {
   // ObjectExpression と ArrayExpression はピクチャ機能でしか使用しないためサポート対象外
-  const supportType = ["ArrayOrObject1D", "ArrayOrObject2D", "ArrayOrObject3DPlus", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "CallDefinedFunction", "AnyFunction", "ConditionalExpression", "ArrayExpression", "ObjectExpression"];
+  const supportType = ["ArrayOrObject1D", "ArrayOrObject2D", "ArrayOrObject3DPlus", "Literal", "Symbol", "UnaryOperation", "BinaryOperation", "Random", "UserDefinedFunctionCall", "SystemDefinedFunctionCall", "ConditionalExpression", "ArrayExpression", "ObjectExpression"];
   return supportType.includes(node.type);
+}
+
+export function isFunctionCall(node: WWANode): node is FunctionCall {
+  return node.type === "UserDefinedFunctionCall" || node.type === "SystemDefinedFunctionCall";
 }
 
 export interface PartsAssignment {
@@ -83,7 +91,7 @@ export interface ArrayOrObject3DPlus {
 
 export interface Literal {
   type: "Literal";
-  value: number | string;
+  value: Primitive;
 }
 
 export interface Random {
@@ -95,6 +103,7 @@ export interface Jumpgate {
   type: "Jumpgate";
   x: WWANode;
   y: WWANode;
+  direction?: WWANode;
 }
 
 export interface Msg {
@@ -122,21 +131,26 @@ export interface ForStatement {
   update: WWANode;
 }
 
-export interface AnyFunction {
-  type: "AnyFunction",
-  functionName: string,
-  value: WWANode[]
-}
-
-export interface DefinedFunction {
-  type: "DefinedFunction",
+export interface UserDefinedFunction {
+  type: "UserDefinedFunction",
   functionName: string,
   body: WWANode
 }
 
-export interface CallDefinedFunction {
-  type: "CallDefinedFunction",
+export interface SystemDefinedFunctionCall {
+  type: "SystemDefinedFunctionCall",
+  functionName: string,
+  value: WWANode[],
+  // foo().bar.baz ... のような場合に使う
+  indecies?: WWANode[]
+}
+
+export interface UserDefinedFunctionCall {
+  type: "UserDefinedFunctionCall",
   functionName: string
+  // foo().bar.baz ... のような場合に使う
+  indecies?: WWANode[]
+  // 現在のところ、ユーザー定義関数には引数を定義できません（スコープの取り扱いが必要なので）
 }
 
 export interface Break {
@@ -218,15 +232,13 @@ export type WWANode = |
   Literal |
   Symbol |
   Random |
-  Jumpgate |
   Msg |
   IfStatement |
   BlockStatement |
-  AnyFunction |
-  DefinedFunction |
-  CallDefinedFunction |
+  UserDefinedFunction |
+  SystemDefinedFunctionCall |
+  UserDefinedFunctionCall |
   ForStatement |
-  AnyFunction |
   Break |
   Continue |
   Return |

@@ -1,3 +1,4 @@
+import { Primitive } from "@wwawing/util";
 import { parse, type Node } from "acorn";
 export { parse, Node };
 
@@ -44,13 +45,13 @@ export interface Identifier extends Node {
 
 export interface Literal extends Node {
   type: "Literal",
-  value: number;
+  value: Primitive;
 }
 
 export interface CallExpression extends Node {
   type: "CallExpression",
   arguments: Literal[],
-  callee: Identifier
+  callee: Identifier | MemberExpression;
 }
 
 export interface IfStatement extends Node {
