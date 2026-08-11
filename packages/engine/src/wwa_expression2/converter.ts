@@ -242,6 +242,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_IMG_POS_Y":
     case "LENGTH":
     case "IS_NUMBER":
+    case "IS_NAN":
     case "CLONE":
     case "MANUAL_PAUSE":
     case "WAIT_ENTER":

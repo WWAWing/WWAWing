@@ -872,7 +872,7 @@ export class EvalCalcWwaNode {
         const dividend = Number(this.evalWwaNode(node.value[0]));
         const divisor = Number(this.evalWwaNode(node.value[1]));
         if (divisor === 0) {
-          return 0;
+          return NaN;
         }
         // "DIV" 関数は小数点以下の値も含める
         return dividend / divisor;
@@ -1011,6 +1011,11 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         const value = this.evalWwaNode(node.value[0]);
         return typeof value === "number";
+      }
+      case "IS_NAN": {
+        this._checkArgsLength(1, node);
+        const value = this.evalWwaNode(node.value[0]);
+        return isNaN(value);
       }
       case "CLONE": {
         this._checkArgsLength(1, node);
