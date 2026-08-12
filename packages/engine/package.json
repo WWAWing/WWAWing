@@ -9,7 +9,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "test": "jest",
+    "test": "tsc --noEmit && jest",
     "start": "run-p server build:dev deploy:dev",
     "build": "npm-run-all clean build:prod",
     "build:prod": "vite build --mode production",

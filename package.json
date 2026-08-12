@@ -9,7 +9,7 @@
     ]
   },
   "scripts": {
-    "test": "lerna run test --scope @wwawing/{engine,serve-index}",
+    "test": "lerna run test --scope @wwawing/{engine,loader,serve-index}",
     "clean": "lerna run clean",
     "start": "run-p start:*",
     "start:engine": "lerna run start --stream --scope @wwawing/engine -- --dev",

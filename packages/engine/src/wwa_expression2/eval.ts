@@ -1,6 +1,6 @@
 import { convertMapToObject, isPrimitive } from "@wwawing/util";
 import { SystemMessage } from "@wwawing/common-interface";
-import { BattleEstimateParameters, Coord, Direction, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList  } from "../wwa_data";
+import { BattleEstimateParameters, Coord, Direction, Face, MacroStatusIndex, PartsType, Position, WWAConsts, speedList, MacroImgFrameIndex } from "../wwa_data";
 import { WWA } from "../wwa_main";
 import { getItem, isValidPlayerDirection } from "../wwa_util";
 import * as Wwa from "./wwa";
