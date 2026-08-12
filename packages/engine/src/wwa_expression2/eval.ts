@@ -584,8 +584,11 @@ export class EvalCalcWwaNode {
       case "STOP_SOUNDS":
       case "ALL_SOUND_STOP":
       case "STOP_ALL_SOUND": {
-        this._checkArgsLength(1, node);
-        const includeBgm = this.evalWwaNode(node.value[0]);
+        const option = node.value.length > 0 ? this.evalWwaNode(node.value[0]) : new Map();
+        if (!(option instanceof Map)) {
+          throw new Error("STOP_ALL_SOUND の引数はオブジェクトで指定してください。");
+        }
+        const includeBgm = option?.get("includeBgm") ?? true;
         this.generator.wwa.stopAllSound({ includeBgm: Boolean(includeBgm) });
         return undefined;
       }
