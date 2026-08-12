@@ -2877,7 +2877,7 @@ export class WWA {
                 this._player.clearWaitingMessageOrManualPause();
                 if (functionName !== "") {
                     try {
-                        this.evalCalcWwaNodeGenerator.evalWwaNode({ type: "CallDefinedFunction", functionName });
+                        this.evalCalcWwaNodeGenerator.evalWwaNode({ type: "UserDefinedFunctionCall", functionName });
                     } catch(e) {
                         // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
                         console.error(e);
@@ -2894,7 +2894,7 @@ export class WWA {
                 const functionName = manualPauseInformation?.functionNames[funcKey] ?? "";
                 if (this._keyStore.getKeyState(keyCode) === KeyState.KEYDOWN && functionName !== "") {               
                     try {
-                        this.evalCalcWwaNodeGenerator.evalWwaNode({ type: "CallDefinedFunction", functionName });
+                        this.evalCalcWwaNodeGenerator.evalWwaNode({ type: "UserDefinedFunctionCall", functionName });
                     }  catch(e) {
                         // 呼び出したユーザー定義関数が存在しなくてもシステム全体は落ちないようにする
                         console.error(e);
