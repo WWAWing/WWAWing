@@ -485,11 +485,6 @@ function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObjec
   const objectOrFunctionCall = convertNodeAcornToWwa(node.object);
   const property = convertNodeAcornToWwa(node.property);
 
-  if (Wwa.isFunctionCall(property)) {
-    // xxx.foo() のような関数呼び出しは現状サポートしない
-    throw new Error("WWAでは存在しない構文です");
-  }
-
   if (objectOrFunctionCall.type === "Symbol") {
     if (!["v", "m", "o", "ITEM", "LP", "PICTURE", "SORT_A", "SORT_B"].includes(objectOrFunctionCall.name)) {
       throw new Error("このシンボルは配列にできません");
