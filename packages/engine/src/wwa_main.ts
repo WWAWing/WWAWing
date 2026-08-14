@@ -2612,7 +2612,7 @@ export class WWA {
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_V)) {
                     this._displayUserVars();
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_X)) {
-                    if (this._debugConsoleElement && !this._player.isControllable()) {
+                    if (this._debugConsoleElement && this._player.isControllable()) {
                       this._debugEvalString();
                     }
                 } else if (this._keyStore.checkHitKey(KeyCode.KEY_F12) ||
