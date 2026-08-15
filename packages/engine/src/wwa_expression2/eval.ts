@@ -871,10 +871,8 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(2, node);
         const dividend = Number(this.evalWwaNode(node.value[0]));
         const divisor = Number(this.evalWwaNode(node.value[1]));
-        if (divisor === 0) {
-          return NaN;
-        }
         // "DIV" 関数は小数点以下の値も含める
+        // 0 除算は Infinity を返すが、仕様通りの挙動
         return dividend / divisor;
       }
       case "FLOOR": {
