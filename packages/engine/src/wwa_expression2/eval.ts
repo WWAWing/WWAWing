@@ -1186,6 +1186,15 @@ export class EvalCalcWwaNode {
         } : undefined));
         return;
       }
+      case "OPEN_QUICK_SAVE_WINDOW": {
+        return this.generator.wwa.openQuickSaveWindow();
+      }
+      case "OPEN_QUICK_LOAD_WINDOW": {
+        return this.generator.wwa.openQuickLoadWindow();
+      }
+      case "OPEN_RESTART_GAME_WINDOW": {
+        return this.generator.wwa.openRestartGameWindow();
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
