@@ -1099,17 +1099,9 @@ export class WWA {
                 }
             });
 
-            util.$id("button-save").addEventListener("click", () => {
-                if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
-                    this.onselectbutton(SidebarButton.QUICK_SAVE);
-                }
-            });
-
-            util.$id("button-restart").addEventListener("click", () => {
-                if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
-                    this.onselectbutton(SidebarButton.RESTART_GAME);
-                }
-            });
+            util.$id("button-load").addEventListener("click", this.openQuickLoadWindow.bind(this));
+            util.$id("button-save").addEventListener("click", this.openQuickSaveWindow.bind(this));
+            util.$id("button-restart").addEventListener("click", this.openRestartGameWindow.bind(this));
             util.$id("button-gotowwa").addEventListener("click", () => {
                 if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
                     this.onselectbutton(SidebarButton.GOTO_WWA, false, false);
@@ -7251,6 +7243,30 @@ font-weight: bold;
 
     public cancelManualPause(): void {
         this._player.clearWaitingMessageOrManualPause();
+    }
+
+    public openQuickSaveWindow(): boolean {
+        if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
+            this.onselectbutton(SidebarButton.QUICK_SAVE);
+            return true;
+        }
+        return false;
+    }
+
+    public openQuickLoadWindow(): boolean {
+        if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
+            this.onselectbutton(SidebarButton.QUICK_LOAD);
+            return true;
+        }
+        return false;
+    }
+
+    public openRestartGameWindow(): boolean {
+        if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
+            this.onselectbutton(SidebarButton.RESTART_GAME);
+            return true;
+        }
+        return false;
     }
 };
 
