@@ -870,6 +870,29 @@ export class EvalCalcWwaNode {
         const hasPicture = game_status.wwaData.pictureRegistry.some((item) => item.layerNumber === layerNumber);
         return hasPicture;
       }
+      case "DIV": {
+        this._checkArgsLength(2, node);
+        const dividend = Number(this.evalWwaNode(node.value[0]));
+        const divisor = Number(this.evalWwaNode(node.value[1]));
+        // "DIV" 関数は小数点以下の値も含める
+        // 0 除算は Infinity を返すが、仕様通りの挙動
+        return dividend / divisor;
+      }
+      case "FLOOR": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.floor(value);
+      }
+      case "CEIL": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.ceil(value);
+      }
+      case "ROUND": {
+        this._checkArgsLength(1, node);
+        const value = Number(this.evalWwaNode(node.value[0]));
+        return Math.round(value);
+      }
       /** 絶対値を返す関数 */
       case "ABS": {
         this._checkArgsLength(1, node);
@@ -989,6 +1012,11 @@ export class EvalCalcWwaNode {
         this._checkArgsLength(1, node);
         const value = this.evalWwaNode(node.value[0]);
         return typeof value === "number";
+      }
+      case "IS_NAN": {
+        this._checkArgsLength(1, node);
+        const value = this.evalWwaNode(node.value[0]);
+        return isNaN(value);
       }
       case "CLONE": {
         this._checkArgsLength(1, node);
