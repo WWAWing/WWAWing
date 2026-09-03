@@ -264,6 +264,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "CHANGE_SOUND_ATTACK":
     case "CHANGE_SOUND_DECISION":
     case "SORT":
+    case "DISABLE_BATTLE_REPORT":
       return execSystemDefinedFunctionCall(node.arguments, functionName);
     default:
       return {

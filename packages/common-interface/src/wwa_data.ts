@@ -198,6 +198,7 @@ export interface WWAData {
 
     decisionSound?: number | string;
     attackSound?: number | string;
+    battleEstimateDisabled?: boolean;
 }
 
 export enum SystemSound {
