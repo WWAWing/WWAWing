@@ -5417,6 +5417,16 @@ export class WWA {
         const yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
         const monsterList: Monster[] = [];
         this.playDecisionSound();
+        if (this._bottomButtonType === ControlPanelBottomButton.BATTLE_REPORT) {
+            (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.add("onpress");
+        }
+        if (this._wwaData.battleEstimateDisabled) {
+            this.registerSystemMessagePageByKey(SystemMessage.Key.BATTLE_REPORT_DISABLED);
+            if (this._wwaData.customSystemMessages[SystemMessage.Key.BATTLE_REPORT_DISABLED] === "BLANK") {
+                (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+            }
+            return false;
+        }
         for (let x = xLeft; x <= xRight; x++) {
             for (let y= yTop; y <= yBottom; y++) {
                 const partsId = this._wwaData.mapObject[y][x];
@@ -5428,9 +5438,6 @@ export class WWA {
                 }
                 monsterList.push(this._createMonster(partsId, new Coord(x, y)));
             }
-        }
-        if (this._bottomButtonType === ControlPanelBottomButton.BATTLE_REPORT) {
-            (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.add("onpress");
         }
         if (monsterList.length === 0) {
             (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
@@ -7252,6 +7259,11 @@ font-weight: bold;
     public cancelManualPause(): void {
         this._player.clearWaitingMessageOrManualPause();
     }
+
+    public disableBattleEstimate(disabled: boolean): void {
+        this._wwaData.battleEstimateDisabled = disabled;
+    }
+
 };
 
 var isCopyRightClick = false;

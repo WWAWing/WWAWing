@@ -1214,6 +1214,13 @@ export class EvalCalcWwaNode {
         } : undefined));
         return;
       }
+      case "DISABLE_BATTLE_REPORT": {
+        this._checkArgsLength(1, node);
+        const disabled = Boolean(this.evalWwaNode(node.value[0]));
+        this.generator.wwa.disableBattleEstimate(disabled);
+        return;
+
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
