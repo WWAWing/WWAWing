@@ -19,7 +19,7 @@
     "generate": "lerna run generate --stream",
     "make-dist": "npm run build && lerna run make-dist --stream",
     "version-up": "lerna version --no-git-tag-version",
-    "publish:all": "run-s build generate && lerna publish from-package"
+    "publish:all": "run-s build generate && lerna publish from-package --concurrency 1"
   },
   "repository": {
     "type": "git",
