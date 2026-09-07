@@ -91,6 +91,16 @@ export class KeyStore {
     private _keyInputContinueFrameNum: Array<number>;
     private _keyInputContinueFrameNumOnRelease: Array<number>;
 
+    constructor() {
+        const size = KeyStore.KEY_BUFFER_MAX;
+        this._nextKeyState                      = new Array(size).fill(false);
+        this._keyState                          = new Array(size).fill(false);
+        this._prevKeyState                      = new Array(size).fill(false);
+        this._prevKeyStateOnControllable        = new Array(size).fill(false);
+        this._keyInputContinueFrameNum          = new Array(size).fill(0);
+        this._keyInputContinueFrameNumOnRelease = new Array(size).fill(0);
+    }
+
     public checkHitKey(keyCode: KeyCode): boolean {
         const s = this.getKeyState(keyCode);
         return (
@@ -102,31 +112,30 @@ export class KeyStore {
     }
 
     public getKeyState(keyCode: KeyCode): KeyState {
-        const frames = this._keyInputContinueFrameNum[keyCode];
-        if (this._prevKeyState[keyCode]) {
-            if (this._keyState[keyCode]) {
-                if (frames === KeyStore.KEYHOLD_THRESHOLD_FRAME) {
-                    return KeyState.KEYHOLD;
-                }
-                if (
-                    frames > KeyStore.KEYHOLD_THRESHOLD_FRAME &&
-                    (frames - KeyStore.KEYHOLD_THRESHOLD_FRAME) % KeyStore.KEYREPEAT_INTERVAL_FRAME === 0
-                ) {
-                    return KeyState.KEYPRESS_REPEAT;
-                }
-                return KeyState.KEYPRESS;
-            }
-            return KeyState.KEYUP;
-        } else {
-            if (this._keyState[keyCode]) {
-                return KeyState.KEYDOWN;
-            }
-            return KeyState.NONE;
+        // 前フレームでキーが押されていない場合
+        if (!this._prevKeyState[keyCode]) {
+            return this._keyState[keyCode] ? KeyState.KEYDOWN : KeyState.NONE;
         }
+        // 以下、前フレームでキーが押されていた場合
+        if (!this._keyState[keyCode]) {
+            return KeyState.KEYUP;
+        }
+        const frames = this._keyInputContinueFrameNum[keyCode];
+        if (frames === KeyStore.KEYHOLD_THRESHOLD_FRAME) {
+            return KeyState.KEYHOLD;
+        }
+        if (
+            frames > KeyStore.KEYHOLD_THRESHOLD_FRAME &&
+            (frames - KeyStore.KEYHOLD_THRESHOLD_FRAME) % KeyStore.KEYREPEAT_INTERVAL_FRAME === 0
+        ) {
+            return KeyState.KEYPRESS_REPEAT;
+        }
+        return KeyState.KEYPRESS;
     }
 
-    public wasLongPress(keyCode: KeyCode): boolean {
-        return this._keyInputContinueFrameNumOnRelease[keyCode] >= KeyStore.KEYHOLD_THRESHOLD_FRAME;
+    // 長押しが終了した瞬間かどうかを判定する
+    public isLongPressEndedNow(keyCode: KeyCode): boolean {
+        return this.getKeyState(keyCode) === KeyState.KEYUP && this._keyInputContinueFrameNumOnRelease[keyCode] >= KeyStore.KEYHOLD_THRESHOLD_FRAME;
     }
 
     public getKeyStateForControllPlayer(keyCode: KeyCode): KeyState {
@@ -197,14 +206,45 @@ export class KeyStore {
         this._nextKeyState = new Array(KeyStore.KEY_BUFFER_MAX).fill(false);
     }
 
-    constructor() {
-        const size = KeyStore.KEY_BUFFER_MAX;
-        this._nextKeyState                      = new Array(size).fill(false);
-        this._keyState                          = new Array(size).fill(false);
-        this._prevKeyState                      = new Array(size).fill(false);
-        this._prevKeyStateOnControllable        = new Array(size).fill(false);
-        this._keyInputContinueFrameNum          = new Array(size).fill(0);
-        this._keyInputContinueFrameNumOnRelease = new Array(size).fill(0);
+    public assignUserDefinedFunctions(callUserDefinedFunction: (funcName: string) => void): void {
+        /** Keyを押した際のユーザ定義独自関数を呼び出す */
+        const make = (keyName: string, funcName: string) => ({
+            // HACK: 本来は keyNames の時点で型がつくべきだが、コードが煩雑になるため as で逃げる
+            key: KeyCode[`KEY_${keyName}` as keyof typeof KeyCode],
+            funcName
+        });
+        const keyNames = [
+            ..."0123456789".split("").map(n => ({ keyName: n, funcSuffix: n })),
+            ..."0123456789".split("").map(n => ({ keyName: `NUM${n}`, funcSuffix: n })),
+            ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => ({ keyName: l, funcSuffix: l })),
+            ...["ENTER", "SHIFT", "ESC", "SPACE", "LEFT", "RIGHT", "UP", "DOWN"]
+                .map(k => ({ keyName: k, funcSuffix: k }))
+        ];
+        const checkHitKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
+            make(keyName, `CALL_PUSH_${funcSuffix}`)
+        );
+        const checkHoldKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
+            make(keyName, `CALL_HOLD_${funcSuffix}`)
+        );
+        const checkHoldReleaseKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
+            make(keyName, `CALL_HOLD_RELEASE_${funcSuffix}`)
+        );
+        checkHitKeyUserFunctions.forEach(({ key, funcName }) => {
+            if (this.checkHitKey(key)) {
+                callUserDefinedFunction(funcName);
+            }
+        });
+        checkHoldKeyUserFunctions.forEach(({ key, funcName }) => {
+            const state = this.getKeyState(key);
+            if (state === KeyState.KEYHOLD || state === KeyState.KEYPRESS_REPEAT) {
+                callUserDefinedFunction(funcName);
+            }
+        });
+        checkHoldReleaseKeyUserFunctions.forEach(({ key, funcName }) => {
+            if (this.isLongPressEndedNow(key)) {
+                callUserDefinedFunction(funcName);
+            }
+        });
     }
 }
 

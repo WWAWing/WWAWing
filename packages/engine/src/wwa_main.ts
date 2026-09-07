@@ -2625,52 +2625,7 @@ export class WWA {
                         this._gameFrameRateWindow.updateTargetFps(WWAConsts.TARGET_FPS);
                     }
                 }
-                /** Keyを押した際のユーザ定義独自関数を呼び出す */
-                const make = (keyName: string, funcName: string) => ({
-                    key: KeyCode[`KEY_${keyName}` as keyof typeof KeyCode],
-                    func: funcName
-                });
-                const keyNames = [
-                    ..."0123456789".split("").map(n => ({ keyName: n,       funcSuffix: n })),
-                    ..."0123456789".split("").map(n => ({ keyName: `NUM${n}`, funcSuffix: n })),
-                    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => ({ keyName: l, funcSuffix: l })),
-                    ...["ENTER", "SHIFT", "ESC", "SPACE", "LEFT", "RIGHT", "UP", "DOWN"]
-                        .map(k => ({ keyName: k, funcSuffix: k }))
-                ];
-                const checkHitKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
-                    make(keyName, `CALL_PUSH_${funcSuffix}`)
-                );
-                const checkHoldKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
-                    make(keyName, `CALL_HOLD_${funcSuffix}`)
-                );
-                const checkHoldReleaseKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
-                    make(keyName, `CALL_HOLD_RELEASE_${funcSuffix}`)
-                );
-                const callIfDefined = (funcName: string) => {
-                    const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[funcName];
-                    if (userFunc) {
-                        this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
-                    }
-                };
-                checkHitKeyUserFunctions.forEach(({ key, func }) => {
-                    if (this._keyStore.checkHitKey(key)) {
-                        callIfDefined(func);
-                    }
-                });
-                checkHoldKeyUserFunctions.forEach(({ key, func }) => {
-                    const state = this._keyStore.getKeyState(key);
-                    if (state === KeyState.KEYHOLD || state === KeyState.KEYPRESS_REPEAT) {
-                        callIfDefined(func);
-                    }
-                });
-                checkHoldReleaseKeyUserFunctions.forEach(({ key, func }) => {
-                    if (
-                        this._keyStore.getKeyState(key) === KeyState.KEYUP &&
-                        this._keyStore.wasLongPress(key)
-                    ) {
-                        callIfDefined(func);
-                    }
-                });
+                this._keyStore.assignUserDefinedFunctions(this._callIfUserFunctionDefined.bind(this));
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
@@ -7286,6 +7241,12 @@ font-weight: bold;
         this._wwaData.battleEstimateDisabled = disabled;
     }
 
+    private _callIfUserFunctionDefined(funcName: string)  {
+        const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[funcName];
+        if (userFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
+        }
+    }
 };
 
 var isCopyRightClick = false;
