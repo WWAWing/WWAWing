@@ -2625,43 +2625,7 @@ export class WWA {
                         this._gameFrameRateWindow.updateTargetFps(WWAConsts.TARGET_FPS);
                     }
                 }
-                /** Keyを押した際のユーザ定義独自関数を呼び出す */
-                const make = (keyName: string, funcName: string) => ({
-                    key: KeyCode[`KEY_${keyName}` as keyof typeof KeyCode],
-                    funcName
-                });
-                const keyNames = [
-                    ..."0123456789".split("").map(n => ({ keyName: n, funcSuffix: n })),
-                    ..."0123456789".split("").map(n => ({ keyName: `NUM${n}`, funcSuffix: n })),
-                    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => ({ keyName: l, funcSuffix: l })),
-                    ...["ENTER", "SHIFT", "ESC", "SPACE", "LEFT", "RIGHT", "UP", "DOWN"]
-                        .map(k => ({ keyName: k, funcSuffix: k }))
-                ];
-                const checkHitKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
-                    make(keyName, `CALL_PUSH_${funcSuffix}`)
-                );
-                const checkHoldKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
-                    make(keyName, `CALL_HOLD_${funcSuffix}`)
-                );
-                const checkHoldReleaseKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
-                    make(keyName, `CALL_HOLD_RELEASE_${funcSuffix}`)
-                );
-                checkHitKeyUserFunctions.forEach(({ key, funcName }) => {
-                    if (this._keyStore.checkHitKey(key)) {
-                        this._callIfUserFunctionDefined(funcName);
-                    }
-                });
-                checkHoldKeyUserFunctions.forEach(({ key, funcName }) => {
-                    const state = this._keyStore.getKeyState(key);
-                    if (state === KeyState.KEYHOLD || state === KeyState.KEYPRESS_REPEAT) {
-                        this._callIfUserFunctionDefined(funcName);
-                    }
-                });
-                checkHoldReleaseKeyUserFunctions.forEach(({ key, funcName }) => {
-                    if (this._keyStore.isLongPressEndedNow(key)) {
-                        this._callIfUserFunctionDefined(funcName);
-                    }
-                });
+                this._keyStore.assignUserDefinedFunctions(this._callIfUserFunctionDefined.bind(this));
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
