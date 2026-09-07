@@ -102,31 +102,30 @@ export class KeyStore {
     }
 
     public getKeyState(keyCode: KeyCode): KeyState {
-        const frames = this._keyInputContinueFrameNum[keyCode];
-        if (this._prevKeyState[keyCode]) {
-            if (this._keyState[keyCode]) {
-                if (frames === KeyStore.KEYHOLD_THRESHOLD_FRAME) {
-                    return KeyState.KEYHOLD;
-                }
-                if (
-                    frames > KeyStore.KEYHOLD_THRESHOLD_FRAME &&
-                    (frames - KeyStore.KEYHOLD_THRESHOLD_FRAME) % KeyStore.KEYREPEAT_INTERVAL_FRAME === 0
-                ) {
-                    return KeyState.KEYPRESS_REPEAT;
-                }
-                return KeyState.KEYPRESS;
-            }
-            return KeyState.KEYUP;
-        } else {
-            if (this._keyState[keyCode]) {
-                return KeyState.KEYDOWN;
-            }
-            return KeyState.NONE;
+        // 前フレームでキーが押されていない場合
+        if (!this._prevKeyState[keyCode]) {
+            return this._keyState[keyCode] ? KeyState.KEYDOWN : KeyState.NONE;
         }
+        // 以下、前フレームでキーが押されていた場合
+        if (!this._keyState[keyCode]) {
+            return KeyState.KEYUP;
+        }
+        const frames = this._keyInputContinueFrameNum[keyCode];
+        if (frames === KeyStore.KEYHOLD_THRESHOLD_FRAME) {
+            return KeyState.KEYHOLD;
+        }
+        if (
+            frames > KeyStore.KEYHOLD_THRESHOLD_FRAME &&
+            (frames - KeyStore.KEYHOLD_THRESHOLD_FRAME) % KeyStore.KEYREPEAT_INTERVAL_FRAME === 0
+        ) {
+            return KeyState.KEYPRESS_REPEAT;
+        }
+        return KeyState.KEYPRESS;
     }
 
-    public wasLongPress(keyCode: KeyCode): boolean {
-        return this._keyInputContinueFrameNumOnRelease[keyCode] >= KeyStore.KEYHOLD_THRESHOLD_FRAME;
+    // 長押しが終了した瞬間かどうかを判定する
+    public isLongPressEndedNow(keyCode: KeyCode): boolean {
+        return this.getKeyState(keyCode) === KeyState.KEYUP && this._keyInputContinueFrameNumOnRelease[keyCode] >= KeyStore.KEYHOLD_THRESHOLD_FRAME;
     }
 
     public getKeyStateForControllPlayer(keyCode: KeyCode): KeyState {

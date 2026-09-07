@@ -2628,10 +2628,10 @@ export class WWA {
                 /** Keyを押した際のユーザ定義独自関数を呼び出す */
                 const make = (keyName: string, funcName: string) => ({
                     key: KeyCode[`KEY_${keyName}` as keyof typeof KeyCode],
-                    func: funcName
+                    funcName
                 });
                 const keyNames = [
-                    ..."0123456789".split("").map(n => ({ keyName: n,       funcSuffix: n })),
+                    ..."0123456789".split("").map(n => ({ keyName: n, funcSuffix: n })),
                     ..."0123456789".split("").map(n => ({ keyName: `NUM${n}`, funcSuffix: n })),
                     ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => ({ keyName: l, funcSuffix: l })),
                     ...["ENTER", "SHIFT", "ESC", "SPACE", "LEFT", "RIGHT", "UP", "DOWN"]
@@ -2646,29 +2646,20 @@ export class WWA {
                 const checkHoldReleaseKeyUserFunctions = keyNames.map(({ keyName, funcSuffix }) =>
                     make(keyName, `CALL_HOLD_RELEASE_${funcSuffix}`)
                 );
-                const callIfDefined = (funcName: string) => {
-                    const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[funcName];
-                    if (userFunc) {
-                        this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
-                    }
-                };
-                checkHitKeyUserFunctions.forEach(({ key, func }) => {
+                checkHitKeyUserFunctions.forEach(({ key, funcName }) => {
                     if (this._keyStore.checkHitKey(key)) {
-                        callIfDefined(func);
+                        this._callIfUserFunctionDefined(funcName);
                     }
                 });
-                checkHoldKeyUserFunctions.forEach(({ key, func }) => {
+                checkHoldKeyUserFunctions.forEach(({ key, funcName }) => {
                     const state = this._keyStore.getKeyState(key);
                     if (state === KeyState.KEYHOLD || state === KeyState.KEYPRESS_REPEAT) {
-                        callIfDefined(func);
+                        this._callIfUserFunctionDefined(funcName);
                     }
                 });
-                checkHoldReleaseKeyUserFunctions.forEach(({ key, func }) => {
-                    if (
-                        this._keyStore.getKeyState(key) === KeyState.KEYUP &&
-                        this._keyStore.wasLongPress(key)
-                    ) {
-                        callIfDefined(func);
+                checkHoldReleaseKeyUserFunctions.forEach(({ key, funcName }) => {
+                    if (this._keyStore.isLongPressEndedNow(key)) {
+                        this._callIfUserFunctionDefined(funcName);
                     }
                 });
             }
@@ -7286,6 +7277,12 @@ font-weight: bold;
         this._wwaData.battleEstimateDisabled = disabled;
     }
 
+    private _callIfUserFunctionDefined(funcName: string)  {
+        const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[funcName];
+        if (userFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
+        }
+    }
 };
 
 var isCopyRightClick = false;
