@@ -1214,12 +1214,20 @@ export class EvalCalcWwaNode {
         } : undefined));
         return;
       }
+      case "OPEN_QUICK_SAVE_WINDOW": {
+        return this.generator.wwa.openQuickSaveWindow();
+      }
+      case "OPEN_QUICK_LOAD_WINDOW": {
+        return this.generator.wwa.openQuickLoadWindow();
+      }
+      case "OPEN_RESTART_GAME_WINDOW": {
+        return this.generator.wwa.openRestartGameWindow();
+      }
       case "DISABLE_BATTLE_REPORT": {
         this._checkArgsLength(1, node);
         const disabled = Boolean(this.evalWwaNode(node.value[0]));
         this.generator.wwa.disableBattleEstimate(disabled);
         return;
-
       }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
