@@ -604,6 +604,7 @@ export enum MacroType {
     DELAYBGM = 64,
     SYSMSG = 65,
     PICTURE = 66,
+    DISABLE_BATTLE_REPORT = 67,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101,
     LEGACY_IF = 10050
@@ -678,6 +679,7 @@ export var macrotable = {
     "$delaybgm": 64,
     "$sysmsg": 65,
     "$picture": 66,
+    "$disable_battle_report": 67,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }

@@ -521,6 +521,10 @@ export class Macro {
                     this._executePictureMacro();
                     return {};
                 }
+                case MacroType.DISABLE_BATTLE_REPORT: {
+                    this._executeDisableBattleReportMacro();
+                    return {};
+                }
                 default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     return {};
@@ -1170,6 +1174,12 @@ export class Macro {
         }
         const definePartsType = this._evaluateIntValue(2, PartsType.OBJECT);
         this._wwa.setPictureRegistry(layerNumber, definePartsNumber, definePartsType, this._triggerParts.position);
+    }
+
+    private _executeDisableBattleReportMacro(): void {
+        this._concatEmptyArgs(1);
+        const disableBattleReportFlag = Boolean(this._evaluateIntValue(0));
+        this._wwa.disableBattleEstimate(disableBattleReportFlag);
     }
 
     private _executeDelayBgmMacro(): void {

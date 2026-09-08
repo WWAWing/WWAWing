@@ -86,7 +86,11 @@ const _systemMessage = Object.freeze({
     defaultText: `ここでは移動速度を
 変更できません。`,
   },
-} as {[key in string]: Config});
+  BATTLE_REPORT_DISABLED: {
+    code: 601,
+    defaultText: `ここでは戦闘予測を表示できません。`,
+  }
+} as const satisfies {[key in string]: Config});
 
 export const keys = Object.keys(_systemMessage) as Key[];
 

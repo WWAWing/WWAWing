@@ -224,6 +224,10 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "CLEAR_ALL_PICTURES":
     case "HAS_PICTURE":
     case "SHOW_USER_DEF_VAR":
+    case "DIV":
+    case "FLOOR":
+    case "CEIL":
+    case "ROUND":
     case "ABS":
     case "POW":
     case "SQRT":
@@ -238,6 +242,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_IMG_POS_Y":
     case "LENGTH":
     case "IS_NUMBER":
+    case "IS_NAN":
     case "CLONE":
     case "MANUAL_PAUSE":
     case "WAIT_ENTER":
@@ -262,6 +267,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "OPEN_QUICK_SAVE_WINDOW":
     case "OPEN_QUICK_LOAD_WINDOW":
     case "OPEN_RESTART_GAME_WINDOW":
+    case "DISABLE_BATTLE_REPORT":
       return execSystemDefinedFunctionCall(node.arguments, functionName);
     default:
       return {

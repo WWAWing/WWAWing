@@ -2617,30 +2617,7 @@ export class WWA {
                         this._gameFrameRateWindow.updateTargetFps(WWAConsts.TARGET_FPS);
                     }
                 }
-                /** Keyを押した際のユーザ定義独自関数を呼び出す */
-                const make = (keyName: string, funcName: string) => ({
-                    key: KeyCode[`KEY_${keyName}` as keyof typeof KeyCode],
-                    func: funcName
-                });
-                const checkHitKeyUserFunctions = [
-                    // 通常数字
-                    ..."0123456789".split("").map(n => make(n, `CALL_PUSH_${n}`)),
-                    // テンキー（同じfuncを使う）
-                    ..."0123456789".split("").map(n => make(`NUM${n}`, `CALL_PUSH_${n}`)),
-                    // アルファベット
-                    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l => make(l, `CALL_PUSH_${l}`)),
-                    // その他
-                    ...["ENTER", "SHIFT", "ESC", "SPACE", "LEFT", "RIGHT", "UP", "DOWN"]
-                        .map(k => make(k, `CALL_PUSH_${k}`))
-                ];
-                checkHitKeyUserFunctions.forEach((key)=>{
-                    if(this._keyStore.checkHitKey(key.key)) {
-                        const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[key.func];
-                        if(userFunc) {
-                            this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
-                        }
-                    }
-                })
+                this._keyStore.assignUserDefinedFunctions(this._callIfUserFunctionDefined.bind(this));
             }
             this._keyStore.memorizeKeyStateOnControllableFrame();
             this._mouseStore.memorizeMouseStateOnControllableFrame();
@@ -5409,6 +5386,16 @@ export class WWA {
         const yBottom = Math.min(this._wwaData.mapWidth - 1, cpParts.y + Consts.V_PARTS_NUM_IN_WINDOW - 1);
         const monsterList: Monster[] = [];
         this.playDecisionSound();
+        if (this._bottomButtonType === ControlPanelBottomButton.BATTLE_REPORT) {
+            (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.add("onpress");
+        }
+        if (this._wwaData.battleEstimateDisabled) {
+            this.registerSystemMessagePageByKey(SystemMessage.Key.BATTLE_REPORT_DISABLED);
+            if (this._wwaData.customSystemMessages[SystemMessage.Key.BATTLE_REPORT_DISABLED] === "BLANK") {
+                (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
+            }
+            return false;
+        }
         for (let x = xLeft; x <= xRight; x++) {
             for (let y= yTop; y <= yBottom; y++) {
                 const partsId = this._wwaData.mapObject[y][x];
@@ -5420,9 +5407,6 @@ export class WWA {
                 }
                 monsterList.push(this._createMonster(partsId, new Coord(x, y)));
             }
-        }
-        if (this._bottomButtonType === ControlPanelBottomButton.BATTLE_REPORT) {
-            (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.add("onpress");
         }
         if (monsterList.length === 0) {
             (<HTMLDivElement>(util.$id(sidebarButtonCellElementID[SidebarButton.GOTO_WWA]))).classList.remove("onpress");
@@ -7267,6 +7251,17 @@ font-weight: bold;
             return true;
         }
         return false;
+    }
+
+    public disableBattleEstimate(disabled: boolean): void {
+        this._wwaData.battleEstimateDisabled = disabled;
+    }
+
+    private _callIfUserFunctionDefined(funcName: string)  {
+        const userFunc = this.userDefinedFunctions && this.userDefinedFunctions[funcName];
+        if (userFunc) {
+            this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
+        }
     }
 };
 
