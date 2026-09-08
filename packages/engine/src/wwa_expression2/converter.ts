@@ -267,6 +267,8 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "OPEN_QUICK_SAVE_WINDOW":
     case "OPEN_QUICK_LOAD_WINDOW":
     case "OPEN_RESTART_GAME_WINDOW":
+    case "OPEN_GO_TO_WWA_WINDOW":
+    case "OPEN_BATTLE_REPORT_WINDOW":
     case "DISABLE_BATTLE_REPORT":
       return execSystemDefinedFunctionCall(node.arguments, functionName);
     default:

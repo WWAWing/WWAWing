@@ -7253,6 +7253,22 @@ font-weight: bold;
         return false;
     }
 
+    public openGoToWwaWindow(): boolean {
+        if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
+            this.onselectbutton(SidebarButton.GOTO_WWA, false, true);
+            return true;
+        }
+        return false;
+    }
+
+    public openBattleReportWindow(): boolean {
+        if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
+            this.launchBattleEstimateWindow();
+            return true;
+        }
+        return false;
+    }
+
     public disableBattleEstimate(disabled: boolean): void {
         this._wwaData.battleEstimateDisabled = disabled;
     }

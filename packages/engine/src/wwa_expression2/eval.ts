@@ -1223,6 +1223,12 @@ export class EvalCalcWwaNode {
       case "OPEN_RESTART_GAME_WINDOW": {
         return this.generator.wwa.openRestartGameWindow();
       }
+      case "OPEN_GO_TO_WWA_WINDOW": {
+        return this.generator.wwa.openGoToWwaWindow();
+      }
+      case "OPEN_BATTLE_REPORT_WINDOW": {
+        return this.generator.wwa.openBattleReportWindow();
+      }
       case "DISABLE_BATTLE_REPORT": {
         this._checkArgsLength(1, node);
         const disabled = Boolean(this.evalWwaNode(node.value[0]));
