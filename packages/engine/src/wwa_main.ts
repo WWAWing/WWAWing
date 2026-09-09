@@ -5547,11 +5547,10 @@ export class WWA {
                 case DEVICE_TYPE.GAME:
                     switch (this.userDevice.os) {
                         case OS_TYPE.NINTENDO:
-                            helpMessage = "　【操作方法】\n" +
+                            helpMessage = "　【操作方法：Ｙでも開けます】\n" +
                                 "Ａ：Ｙｅｓ,戦闘結果予測の表示\n" +
                                 "Ｂ：Ｎｏ\n" +
                                 "Ｘ：メニュー\n" +
-                                "Ｙ：このリストの表示\n" +
                                 "Ｒ：初めからスタート\n" +
                                 "ＺＬ：データの一時保存\n" +
                                 "ＺＲ：一時保存データの読み込み\n" +
@@ -5563,11 +5562,10 @@ export class WWA {
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                             break;
                         case OS_TYPE.PLAY_STATION:
-                            helpMessage = "　【操作方法】\n" +
+                            helpMessage = "　【操作方法：□でも開けます】\n" +
                                 "〇：Ｙｅｓ,戦闘結果予測の表示\n" +
                                 "×：Ｎｏ\n" +
                                 "△：メニュー\n" +
-                                "□：このリストの表示\n" +
                                 "Ｒ１：初めからスタート\n" +
                                 "Ｌ２：データの一時保存\n" +
                                 "Ｒ２：一時保存データの読み込み\n" +
@@ -5580,11 +5578,10 @@ export class WWA {
                                 Math.floor(this._wwaData.version / 10) + "." + this._wwaData.version % 10;
                             break;
                         case OS_TYPE.XBOX:
-                            helpMessage = "　【操作方法】\n" +
+                            helpMessage = "　【操作方法：Ｘでも開けます】\n" +
                                 "Ｂ：Ｙｅｓ,戦闘結果予測の表示\n" +
                                 "Ａ：Ｎｏ\n" +
                                 "Ｙ：メニュー\n" +
-                                "Ｘ：このリストの表示\n" +
                                 "ＲＢ：初めからスタート\n" +
                                 "ＬＴ：データの一時保存\n" +
                                 "ＲＴ：一時保存データの読み込み\n" +
@@ -5606,7 +5603,7 @@ export class WWA {
                 case DEVICE_TYPE.VR:
                     return;
                 case DEVICE_TYPE.PC:
-                    helpMessage = "　【操作方法】\n" +
+                    helpMessage = "【操作方法：Ｆ１２でも開けます】\n" +
                         "Ｆ１、Ｍ：戦闘結果予測の表示\n" +
                         "Ｆ３：復帰用パスワード入力\n" +
                         "Ｆ４：復帰用パスワード表示\n" +
@@ -5614,11 +5611,10 @@ export class WWA {
                         "Ｆ６：データの一時保存\n" +
                         "Ｆ７：初めからスタート\n" +
                         "Ｆ８：ＷＷＡ公式ページにリンク\n" +
-                        "Ｆ１２：このリストの表示\n" +
                         "キーボードの「１２３、ＱＷＥ、ＡＳＤ、ＺＸＣ」は右のアイテムボックスに対応。\n" +
                         "「Ｅｎｔｅｒ、Ｙ」はＹｅｓ,\n" +
                         "「Ｅｓｃ、Ｎ」はＮｏに対応。\n" +
-                        (this._frameRateDisplayingPattern !== "never" && this._frameRateDisplayingPattern !== "always" ? "Ｆ：FPS表示切り替え\n" : "") +
+                        (this._frameRateDisplayingPattern !== "never" && this._frameRateDisplayingPattern !== "always" ? "　　　Ｆ：ＦＰＳ表示切り替え\n" : "") +
                         "　　　Ｉ: 移動速度を落とす／\n" +
                         "Ｆ２、Ｐ: 移動速度を上げる\n" +
                         "　　現在の移動回数：" + this._player.getMoveCount() + "\n" +
