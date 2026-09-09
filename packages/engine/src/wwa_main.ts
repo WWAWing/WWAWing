@@ -1093,12 +1093,6 @@ export class WWA {
             }
             //////////////// タッチ関連 超β ////////////////////////////
 
-            util.$id("button-load").addEventListener("click", () => {
-                if (this._player.isControllable() || (this._messageWindow.isItemMenuChoice())) {
-                    this.onselectbutton(SidebarButton.QUICK_LOAD);
-                }
-            });
-
             util.$id("button-load").addEventListener("click", this.openQuickLoadWindow.bind(this));
             util.$id("button-save").addEventListener("click", this.openQuickSaveWindow.bind(this));
             util.$id("button-restart").addEventListener("click", this.openRestartGameWindow.bind(this));
