@@ -1,10 +1,9 @@
-$monospace_font: 'ＭＳ ゴシック', 'Osaka-mono', monospace;
-$sans-serif_font: 'ＭＳ Ｐゴシック', 'Osaka', sans-serif;
-
-$wwa_font_size: 18px;
-$wwa_wide_cell_font_size: 18px;
-
-@import "../../core/index";
+@use '../../core' with (
+    $monospace_font: ('ＭＳ ゴシック', 'Osaka-mono', monospace),
+    $sans-serif_font: ('ＭＳ Ｐゴシック', 'Osaka', sans-serif),
+    $wwa_font_size: 18px,
+    $wwa_wide_cell_font_size: 18px
+);
 
 .wwa-size-box {
     text-shadow: 1px 0px 0 gray;
@@ -19,13 +18,18 @@ div#wwa-sidebar {
     }
 }
 
-%wwa_window {
+#wwa-text-message-window,
+.wwa-message-window,
+#wwa-password-window,
+#wwa-battle-estimate,
+#wwa-game-frame-rate-window {
     background-color: #ffffff;
     box-sizing: border-box;
     border-radius: 15px;
 }
 
-%wwa_full_window {
+#wwa-password-window,
+#wwa-battle-estimate {
     margin: 0;
     padding: 18px;
     width: 440px;
