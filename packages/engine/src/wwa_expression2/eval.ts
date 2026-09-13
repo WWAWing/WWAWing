@@ -1033,7 +1033,7 @@ export class EvalCalcWwaNode {
       }
       case "MANUAL_PAUSE":
       case "WAIT_ENTER": {
-        const arg0 = this.evalWwaNode(node.value[0]);
+        const arg0 = node.value[0] ? this.evalWwaNode(node.value[0]) : undefined;
         const blockingCancelPauseByPlayer = arg0 === "__BLOCK";
         this.generator.wwa.manualPause({
           functionNames: {
