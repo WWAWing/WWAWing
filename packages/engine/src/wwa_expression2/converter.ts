@@ -185,6 +185,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "BGM_STOP":
     case "STOP_BGM":
     case "SOUND_STOP":
+    case "GET_BGM":
     case "STOP_SOUND":
     case "ALL_SOUND_STOP":
     case "STOP_ALL_SOUND":
@@ -218,6 +219,10 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_SECONDS":
     case "GET_DATE_MILLISECONDS":
     case "GET_DATE_WEEKDAY":
+    case "GET_DATE_WEEKDAY_JA":
+    case "GET_DATE_WEEKDAY_JA_LONG":
+    case "GET_DATE_WEEKDAY_EN":
+    case "GET_DATE_WEEKDAY_EN_LONG":
     case "CHANGE_SYSMSG":
     case "PICTURE":
     case "PICTURE_FROM_PARTS":
