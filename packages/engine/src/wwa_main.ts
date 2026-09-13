@@ -1785,6 +1785,10 @@ export class WWA {
         this._wwaData.bgm = 0;
     }
 
+    public getBgmId(): number | string {
+        return this._wwaData.bgm;
+    }
+
     /**
      * 指定されたサウンドを停止します
      * BGM, 効果音を問いません。

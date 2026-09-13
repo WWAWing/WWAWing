@@ -574,6 +574,9 @@ export class EvalCalcWwaNode {
         this.generator.wwa.stopBgm();
         return undefined;
       }
+      case "GET_BGM": {
+        return this.generator.wwa.getBgmId();
+      }
       case "SOUND_STOP":
       case "STOP_SOUND": {
         this._checkArgsLength(1, node);
@@ -796,6 +799,14 @@ export class EvalCalcWwaNode {
         return (new Date()).getMilliseconds();
       case "GET_DATE_WEEKDAY":
         return (new Date()).getDay();
+      case "GET_DATE_WEEKDAY_JA":
+        return Intl.DateTimeFormat("ja-JP", { weekday: "short" }).format(new Date());
+      case "GET_DATE_WEEKDAY_JA_LONG":
+        return Intl.DateTimeFormat("ja-JP", { weekday: "long" }).format(new Date());
+      case "GET_DATE_WEEKDAY_EN":
+        return Intl.DateTimeFormat("en-US", { weekday: "short" }).format(new Date());
+      case "GET_DATE_WEEKDAY_EN_LONG":
+        return Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date());
       /** ユーザー定義名前付き変数をconsole.log出力する */
       case "SHOW_USER_DEF_VAR":
         {
