@@ -7,11 +7,11 @@
     フォントやフォントサイズは自由に変更できます。
 */
 
-@import 'main';
-@import 'common';
-@import 'sidebar';
-@import 'canvas';
-@import 'window';
-@import 'vardump';
-@import 'virtualpad';
-@import 'z-index';
+@forward 'main';
+@forward 'common';
+@forward 'sidebar';
+@forward 'canvas';
+@forward 'window';
+@forward 'vardump';
+@forward 'virtualpad';
+@forward 'z-index';
