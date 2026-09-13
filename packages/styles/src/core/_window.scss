@@ -1,3 +1,5 @@
+@use 'common';
+
 $wwa_icon_width-scale_up: 100px !default;
 
 %wwa_window {
@@ -11,7 +13,7 @@ $wwa_icon_width-scale_up: 100px !default;
 
 %wwa_full_window {
     @extend %wwa_window;
-    
+
     position: absolute;
     top: 0;
     left: 0;
@@ -56,10 +58,10 @@ $wwa_icon_width-scale_up: 100px !default;
     > .est {
         width: 100%;
         height: 50px;
-        
+
         > .est-img-wrapper {
-            width: $wwa_icon_width;
-            height: $wwa_icon_width;
+            width: common.$wwa_icon_width;
+            height: common.$wwa_icon_width;
             margin: 5px;
             float: left;
         }
@@ -67,12 +69,12 @@ $wwa_icon_width-scale_up: 100px !default;
             $item_width: 140px;
             $item_height: 20px;
 
-            height: $wwa_icon_width;
+            height: common.$wwa_icon_width;
             margin: 5px;
             float: left;
             text-align: left;
             position: relative;
-    
+
             > div {
                 width: $item_width;
                 height: $item_height;
@@ -110,8 +112,8 @@ $wwa_icon_width-scale_up: 100px !default;
 
 .wwa-yesno-wrapper {
     margin: 0 0 10px 246px;
-    width: $wwa_icon_width * 2;
-    height: $wwa_icon_width;
+    width: common.$wwa_icon_width * 2;
+    height: common.$wwa_icon_width;
     cursor: pointer;
 }
 
@@ -120,18 +122,18 @@ $wwa_icon_width-scale_up: 100px !default;
     padding: 0;
     margin: 0;
     float: left;
-    width: $wwa_icon_width;
-    height: $wwa_icon_width;
+    width: common.$wwa_icon_width;
+    height: common.$wwa_icon_width;
 }
 
 #wwa-wrapper.useScaleUp #wwa-text-message-window {
     overflow: hidden; // translate によるはみ出し対策
-    
+
     .wwa-yesno-wrapper {
         transform: scale(1.5, 1.5) translate(-30px, 20px);
         image-rendering: pixelated;
         width: $wwa_icon_width-scale_up;
-        height: $wwa_icon_width * 2 !important;
+        height: common.$wwa_icon_width * 2 !important;
         .wwa-yes-button,
         .wwa-no-button {
             margin: 0 5px !important;
@@ -201,12 +203,12 @@ div.savedata {
     }
     > div.wide-cell-row {
         // TODO: _sidebar にいる %wide-cell と共通化できる部分を共通化したい
-        @extend %wide_cell;
+        @include common.wide_cell();
         position: relative;
         pointer-events: none;
 
         > div.status-icon {
-            @extend %item_cell;
+            @include common.item_cell();
 
             top: 0;
             left: 6px; // $wwa_status_x_offset
@@ -237,7 +239,7 @@ div.savedata {
             right: 0;
             background-color: rgba(0, 0, 0, 0.6);
             color: rgba(255, 255, 255, 1);
-            padding: 3px 7px; 
+            padding: 3px 7px;
         }
     }
 }
