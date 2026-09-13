@@ -1246,6 +1246,38 @@ export class EvalCalcWwaNode {
         this.generator.wwa.disableBattleEstimate(disabled);
         return;
       }
+      case "PUSH": {
+        this._checkArgsLength(2, node);
+        const targetArray = this.evalWwaNode(node.value[0]);
+        if (!Array.isArray(targetArray)) {
+          throw new Error("PUSH関数の第一引数は配列である必要があります。");
+        }
+        return targetArray.push(this.evalWwaNode(node.value[1]));
+      }
+      case "POP": {
+        this._checkArgsLength(1, node);
+        const targetArray = this.evalWwaNode(node.value[0]);
+        if (!Array.isArray(targetArray)) {
+          throw new Error("POP関数の第一引数は配列である必要があります。");
+        }
+        return targetArray.pop();
+      }
+      case "SHIFT": {
+        this._checkArgsLength(1, node);
+        const targetArray = this.evalWwaNode(node.value[0]);
+        if (!Array.isArray(targetArray)) {
+          throw new Error("SHIFT関数の第一引数は配列である必要があります。");
+        }
+        return targetArray.shift();
+      }
+      case "UNSHIFT": {
+        this._checkArgsLength(2, node);
+        const targetArray = this.evalWwaNode(node.value[0]);
+        if (!Array.isArray(targetArray)) {
+          throw new Error("UNSHIFT関数の第一引数は配列である必要があります。");
+        }
+        return targetArray.unshift(this.evalWwaNode(node.value[1]));
+      }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
     }
