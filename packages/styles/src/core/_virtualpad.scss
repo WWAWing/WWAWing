@@ -1,4 +1,3 @@
-$virtualpad-margin-x: 6vmin;
 $virtualpad-margin-y-portrait: 30vh;
 // アドレスバーの高さ分下にずれるので、高めにしておく
 $virtualpad-margin-y-landscape: 20vh;
@@ -20,10 +19,13 @@ $virtual-buttons-font-size-small: 25px;
     @media (orientation: portrait) {
         width: $portrait-value;
         height: $portrait-value;
+        // TODO surface 要素を設けなかった時代は下記の line-height がなくてもテキストが真ん中に寄ってくれたが・・・？
+        line-height: $portrait-value;
     }
     @media (orientation: landscape) {
         width: $landscape-value;
         height: $landscape-value;
+        line-height: $landscape-value;
     }
 }
 
@@ -41,13 +43,8 @@ $virtual-buttons-font-size-small: 25px;
     -webkit-user-select: none;
 }
 
-%virtualpad_button-large {
-    font-size: $virtual-buttons-font-size;
-    @include orientation-size($virtual-buttons-size-portrait, $virtual-buttons-size-landscape);
-    border-radius: 50%;
-}
-
 %virtualpad_button-move {
+    // TODO タッチ範囲を広げたい
     font-size: $virtual-buttons-font-size;
     @include orientation-size($virtual-buttons-move-size-portrait, $virtual-buttons-move-size-landscape);
 }
@@ -87,7 +84,6 @@ $virtual-buttons-font-size-small: 25px;
     @include orientation-size($virtual-buttons-move-size-portrait * 2, $virtual-buttons-move-size-landscape * 2);
     transform: rotate(45deg);
     gap: 4px;
-    margin-left: $virtualpad-margin-x;
 
     .wwa-virtualpad__hole {
         grid-column: 2 / 4;
@@ -110,21 +106,30 @@ $virtual-buttons-font-size-small: 25px;
         "esc esc esc   .     .     .  "
         " .   .    .   .     .     .  " $virtualpad-spacing;
     gap: $virtualpad-spacing;
-    margin-right: $virtualpad-margin-x;
 }
 
-.wwa-virtualpad__button {
+.wwa-virtualpad-button__surface {
     @extend %virtualpad_button;
     pointer-events: auto;
-
-    &--pressed {
+}
+.wwa-virtualpad__button--pressed {
+    .wwa-virtualpad-button__surface {
         background-color: #808080;
     }
 }
 
-#wwa-enter-button,
-#wwa-esc-button {
-    @extend %virtualpad_button-large;
+.wwa-virtualpad-button--action {
+    // タッチ範囲を広げるため、 button 要素自体はタッチ範囲を示す透明の要素として、ボタン自体の飾り付けは子要素の surface で行う
+    background: none;
+    border: none;
+    font-size: $virtual-buttons-font-size;
+    padding: 1.5vmax;
+
+    .wwa-virtualpad-button__surface {
+        display: block;
+        @include orientation-size($virtual-buttons-size-portrait, $virtual-buttons-size-landscape);
+        border-radius: 50%;
+    }
 }
 
 #wwa-slow-button,
