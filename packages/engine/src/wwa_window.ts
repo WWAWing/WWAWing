@@ -481,7 +481,7 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
             this._ynWrapperElement.style.display = "none";
         }
         this._msgWrapperElement.textContent = "";
-        var mesArray = this._message.split("\n");
+        const mesArray = this._message.split("\n");
         mesArray.forEach((line, i) => {
             let lsp: HTMLSpanElement; // Logical SPan
             if (this._wwa.isClassicMode()) {
@@ -491,17 +491,18 @@ export class MessageWindow /* implements TextWindow(予定)*/ {
                 lsp.textContent = mesArray[i];
             }
             this._msgWrapperElement.appendChild(lsp);
-            this._msgWrapperElement.appendChild(document.createElement("br"));
+            if (i < mesArray.length - 1) {
+                this._msgWrapperElement.appendChild(document.createElement("br"));
+            }
         });
 
         if (this._isVisible) {
+            this._element.style.visibility = "visible";
             this._element.style.left = this._x + "px";
             this._element.style.top = this._y + "px";
         } else {
-            // HACK: display: none;にしてもいいのだが、そうすると、
-            // 裏方でclientHeight(プレイヤー座標から位置を決定する時に必要!!)が取得できなくなる。
-            this._element.style.left = "-999999px";
-            this._element.style.top = "-999999px";
+            // display: none にすると裏方でclientHeight(プレイヤー座標から位置を決定する時に必要!!)が取得できなくなる。
+            this._element.style.visibility = "hidden";
         }
         if (this._isSave) {
             this._saveElement.style.display = "block";
