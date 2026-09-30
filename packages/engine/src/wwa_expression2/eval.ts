@@ -1033,7 +1033,7 @@ export class EvalCalcWwaNode {
       case "IS_NAN": {
         this._checkArgsLength(1, node);
         const value = this.evalWwaNode(node.value[0]);
-        return isNaN(value);
+        return Number.isNaN(value);
       }
       case "CLONE": {
         this._checkArgsLength(1, node);
