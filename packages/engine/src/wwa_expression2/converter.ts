@@ -355,6 +355,7 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
     case "-=":
     case "*=":
     case "/=":
+    case "%=":
       if (left.type === "ArrayOrObject2D") {
         if (left.name === "m" || left.name === "o") {
           return {
