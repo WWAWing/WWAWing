@@ -10,13 +10,19 @@ import { getPlayerCoordPx, getPlayerCoordPy } from "./symbols";
 import { PageAdditionalItem, GameOver } from "./typedef";
 
 const operatorOperationMap: {
-  [ KEY in "=" | "+=" | "-=" | "*=" | "/=" ]: (currentValue: number, value: number) => number
+  [ KEY in "=" | "+" | "+=" | "-" | "-=" | "*"| "*=" | "/" | "/=" | "%" | "%=" ]: (currentValue: number, value: number) => number
 } = Object.freeze({
   "=": (_, value) => value,
-  "+=": (currentValue, value) => currentValue + value,
-  "-=": (currentValue, value) => currentValue - value,
-  "*=": (currentValue, value) => currentValue * value,
-  "/=": (currentValue, value) => currentValue / value
+  "+": (a, b) => a + b,
+  "+=": (a, b) => a + b,
+  "-": (a, b) => a - b,
+  "-=": (a, b) => a - b,
+  "*": (a, b) => a * b,
+  "*=": (a, b) => a * b,
+  "/": (a, b) => Math.trunc(a / b),
+  "/=": (a, b) => Math.trunc(a / b),
+  "%": (a, b) => a % b,
+  "%=": (a, b) => a % b,
 });
 
 
@@ -1027,7 +1033,7 @@ export class EvalCalcWwaNode {
       case "IS_NAN": {
         this._checkArgsLength(1, node);
         const value = this.evalWwaNode(node.value[0]);
-        return isNaN(value);
+        return Number.isNaN(value);
       }
       case "CLONE": {
         this._checkArgsLength(1, node);
@@ -1341,9 +1347,9 @@ export class EvalCalcWwaNode {
       case "+=":
       case "-=":
       case "*=":
-      case "/=": {
-        // | 0 で小数点以下無視
-        const result = operatorOperationMap[node.operator](currentValue, value) | 0;
+      case "/=":
+      case "%=": {
+        const result = operatorOperationMap[node.operator](currentValue, value);
         if (result < 0) {
           throw new Error(`負値のパーツ番号 ${result} は代入できません`);
         }
@@ -1414,24 +1420,7 @@ export class EvalCalcWwaNode {
   convertLoopPointerExpression(node: Wwa.LoopPointerAssignment) {
     const right = this.evalWwaNode(node.value);
     const index = this.evalWwaNode(node.index);
-    switch(node.operator) {
-      case "+=":
-        this.for_id.LP[index] = right;
-        break;
-      case "-=":
-        this.for_id.LP[index] = right;
-        break;
-      case "/=":
-        this.for_id.LP[index] = right;
-        break;
-      case "*=":
-        this.for_id.LP[index] = right;
-        break;
-      case "=":
-      default:
-        this.for_id.LP[index] = right;
-        break;
-    }
+    this.for_id.LP[index] = operatorOperationMap[node.operator](this.for_id.LP[index], right);
     return 0;
   }
 
@@ -1457,13 +1446,13 @@ export class EvalCalcWwaNode {
       case "+=":
       case "-=":
       case "*=":
-      case "/=": {
+      case "/=":
+      case "%=": {
         if (idx === 0) {
           throw new Error("複合代入では ITEM[0] への操作はできません")
         }
         const currentItemId = this.generator.wwa.getGameStatus().itemBox[idx - 1] ;
-        // | 0 で小数点以下無視
-        const result = operatorOperationMap[node.operator](currentItemId, itemID) | 0;
+        const result = operatorOperationMap[node.operator](currentItemId, itemID);
         if (result < 0) {
           throw new Error(`負値のパーツ番号 ${result} は代入できません`);
         }
@@ -1504,25 +1493,17 @@ export class EvalCalcWwaNode {
     const targetValue = (()=>{
       switch(node.operator) {
         case "+=":
+          // 文字列連結の場合もある
           return currentValue + right;
         case "-=":
+        case "*=":
+        case "/=":
+        case "%=":
           if (typeof currentValue !== "number" || typeof right !== "number") {
             console.warn(`${node.kind} に数値以外の減算をすることはできません、` );
             return NaN;
           }
-          return currentValue - right;
-        case "*=":
-          if (typeof currentValue !== "number" || typeof right !== "number") {
-            console.warn(`${node.kind} に数値以外の乗算をすることはできません、` );
-            return NaN;
-          }
-          return currentValue * right;
-        case "/=":
-          if (typeof currentValue !== "number" || typeof right !== "number") {
-            console.warn(`${node.kind} に数値以外の除算をすることはできません、` );
-            return NaN;
-          }
-          return currentValue / right;
+          return operatorOperationMap[node.operator](currentValue, right);
         case "=":
         default:
           return right;
@@ -1613,15 +1594,11 @@ export class EvalCalcWwaNode {
     const right = this.evalWwaNode(node.right);
     switch(node.operator) {
       case "+":
-        return left + right;
       case "-":
-        return left - right;
       case "*":
-        return left * right;
       case "/":
-        return right === 0 ? 0 : Math.floor(left / right);
       case "%":
-        return right === 0 ? 0 :left % right;
+        return operatorOperationMap[node.operator](left, right);
       case ">":
         return left > right;
       case ">=":
@@ -1807,6 +1784,9 @@ export class EvalCalcWwaNode {
         return partsID;
       case "v": {
         const key = this.evalWwaNode(node.indecies[0]);
+        if (typeof key === "number") {
+          throw new Error(`数字が添字のユーザー変数を2次元以上にはできません: v[${key}]`);
+        }
         const value = this.generator.wwa.getUserNameVar(key);
         if (
           value === null ||
