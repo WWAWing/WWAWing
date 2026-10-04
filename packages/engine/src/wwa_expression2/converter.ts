@@ -279,6 +279,7 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "POP":
     case "SHIFT":
     case "UNSHIFT":
+    case "IS_SAVE_DATA_LOADING":
       return execSystemDefinedFunctionCall(node.arguments, functionName);
     default:
       return {
