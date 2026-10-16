@@ -17,7 +17,7 @@ export function isFunctionCall(node: WWANode): node is FunctionCall {
 export interface PartsAssignment {
   type: "PartsAssignment"
   partsKind: "map" | "object";
-  operator?: "+" | "-" | "*" | "/" | "%" | "+=" | "=" | "-=" | "*=" | "/="; // 複合代入で使う
+  operator?: "+" | "-" | "*" | "/" | "%" | "+=" | "=" | "-=" | "*=" | "/=" | "%="; // 複合代入で使う
   destinationX: Calcurable;
   destinationY: Calcurable;
   value: Calcurable;
@@ -27,14 +27,14 @@ export interface ItemAssignment {
   type: "ItemAssignment";
   itemBoxPosition1to12: Calcurable;
   value: Calcurable;
-  operator?: "=" | "+=" | "-=" | "*=" | "/=";
+  operator?: "=" | "+=" | "-=" | "*=" | "/=" | "%=";
 }
 
 export interface UserVariableAssignment {
   type: "UserVariableAssignment";
   index: Calcurable[];
   value: Calcurable;
-  operator?: "=" | "+=" | "-=" | "*=" | "/=";
+  operator?: "=" | "+=" | "-=" | "*=" | "/=" | "%=";
 }
 
 
@@ -42,14 +42,14 @@ export interface LoopPointerAssignment {
   type: "LoopPointerAssignment";
   index: Calcurable;
   value: Calcurable;
-  operator?: "=" | "+=" | "-=" | "*=" | "/=";
+  operator?: "=" | "+=" | "-=" | "*=" | "/=" | "%=";
 }
 
 export interface SpecialParameterAssignment {
   type: "SpecialParameterAssignment";
   kind: "PX" | "PY" | "HP" | "HPMAX" | "AT" | "DF" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS";
   value: Calcurable;
-  operator?: "=" | "+=" | "-=" | "*=" | "/=";
+  operator?: "=" | "+=" | "-=" | "*=" | "/=" | "%=";
 }
 
 export interface UnaryOperation {
