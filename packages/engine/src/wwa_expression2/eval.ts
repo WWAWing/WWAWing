@@ -640,7 +640,8 @@ export class EvalCalcWwaNode {
         return undefined;
       }
       case "RESTART_GAME": {
-        this.generator.wwa.restartGame();
+        const applyAnimation = node.value.length > 0 ? Boolean(this.evalWwaNode(node.value[0])) : false;
+        this.generator.wwa.restartGame(applyAnimation);
         return undefined;
       }
       case "URL_JUMPGATE":
@@ -1277,6 +1278,9 @@ export class EvalCalcWwaNode {
           throw new Error("UNSHIFT関数の第一引数は配列である必要があります。");
         }
         return targetArray.unshift(this.evalWwaNode(node.value[1]));
+      }
+      case "IS_SAVE_DATA_LOADING": {
+        return this.generator.wwa.isQuickLoading();
       }
       default:
         throw new Error("未定義の関数が指定されました: "+node.functionName);
