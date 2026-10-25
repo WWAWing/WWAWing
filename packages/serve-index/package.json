@@ -34,13 +34,12 @@
     "after": "0.8.2",
     "eslint": "9.39.4",
     "eslint-plugin-markdown": "5.1.0",
+    "jest": "^30.5.2",
+    "jest-cli": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2",
     "supertest": "7.0.0"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=24",
-    "npm": ">=11"
   }
 }

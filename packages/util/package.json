@@ -19,6 +19,7 @@
   "devDependencies": {
     "@swc/core": "^1.15.8",
     "@swc/jest": "^0.2.39",
+    "@types/jest": "^30.0.0",
     "jest": "^30.5.2",
     "jest-cli": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
@@ -28,9 +29,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=24",
-    "npm": ">=11"
   }
 }

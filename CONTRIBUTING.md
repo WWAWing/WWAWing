@@ -114,6 +114,11 @@ WWA Wing Team のメンバーによって、 `v3` ブランチ宛てのPull Requ
 
 の2点を守り、`Run workflow` を押してください。
 
+## Node.js, pnpm のアップデートについて
+- Node.js は、原則 LTS の最新版を採用します。 [`.node-version`](./.node-version) で固定されたバージョンを使用します。新しいバージョンがリリースされた場合、手動で更新してください。また、wwa-server で使用している node.exe を更新する必要があるため、[`packages/assets/download-node.ps1`](./packages/assets/download-node.ps1) を Windows から実行する必要があります。
+- 各パッケージの `devDependencies` にある `@types/node` のメジャーバージョンは `Node.js` のものと揃えてください。
+- pnpm は、原則最新版を採用します。`pnpm self-update` で更新し、 [`package.json`](./package.json) の `packageManager` フィールドに書かれているバージョンを使用します（先述のコマンド実行で自動で書き換わります）。
+
 ## monorepo 中のパッケージの追加について
 monorepo 中にパッケージを追加する場合は、事前に @matsuyuki-a までご相談ください。
 (新規パッケージに対して、npmjs.com 側で [Trusted Publishing の設定作業](https://docs.npmjs.com/trusted-publishers#configuring-trusted-publishing)を行う必要があります。)

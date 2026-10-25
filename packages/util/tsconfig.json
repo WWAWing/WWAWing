@@ -5,10 +5,11 @@
     "outDir": "./lib",
     "module": "esnext",
     "strict": true,
+    "lib": [],
     "noImplicitAny": true,
   },
   "include": [
-    "src/**/*.ts",
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules"
