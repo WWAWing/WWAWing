@@ -8,23 +8,18 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+    - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
-        node-version: '24.22.1'
+        node-version-file: '.node-version'
         registry-url: 'https://registry.npmjs.org'
+        cache: 'pnpm'
     
     - name: "Configure"
       shell: bash
       run: |
         git config user.name "[Automatically Released] Matsuyuki"
         git config user.email "matsuyuki.eca@gmail.com"
-
-    - name: Restore node_modules
-      id: restore-node-modules
-      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
-      with:
-        path: '**/node_modules'
-        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
 
     # https://github.com/actions/checkout/issues/165#issuecomment-2776048200
     - name: Create Git LFS file list
@@ -43,11 +38,7 @@ runs:
       shell: bash
       run: git lfs pull
 
-    - name: "Install npm"
-      shell: bash
-      run: npm i -g npm@11.11.0
-
     - name: "Install dependencies"
       shell: bash
       if: steps.restore-node-modules.outputs.cache-hit != 'true'
-      run: npm ci
+      run: pnpm install --frozen-lockfile

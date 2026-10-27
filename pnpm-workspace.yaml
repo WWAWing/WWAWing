@@ -1,0 +1,13 @@
+packages:
+  - "packages/*"
+# サプライチェーン攻撃対策のため、リリースされてから一週間経過したパッケージのみを使用するようにする
+minimumReleaseAge: 10080 # 7days = 60 * 24 * 7 minutes
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+# ただし、内製パッケージは除外する
+minimumReleaseAgeExclude:
+  - "@wwawing/*"
+allowBuilds:
+  '@parcel/watcher': true 
+  '@swc/core': true
+  unrs-resolver: true 
