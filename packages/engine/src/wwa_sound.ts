@@ -3,7 +3,7 @@ import { SystemSound } from './wwa_data';
 export class Sound {
     private audioBuffer: AudioBuffer;
     private bufferSources: AudioBufferSourceNode[];
-    private isLoaded: boolean;
+    private loadStatus: "not-loaded" | "loading" | "done" | "error" | "canceled";
     private isExceededMaxRetryCount?: true;
     // NOTE: 現状ブラウザで動くことを前提にしているので、もしNodeで動かすとかがあれば setTimeout まわりのラッパーを作る必要がありそうです。
     private delayBgmTimeoutId: number | null;
@@ -28,10 +28,13 @@ export class Sound {
         this.audioBuffer = null;
         this.bufferSources = [];
 
-        this.isLoaded = false;
+        this.loadStatus = "not-loaded";
         this.delayBgmTimeoutId = null;
+        // BGM はファイルサイズが大きいため、起動段階では読み込まない
         // floating promise だが仕方ない
-        this.load()
+        if (!this.isBgm()) {
+            this.load();
+        }
     }
 
     private async fetchSoundFile(): Promise<Response | undefined> {
@@ -52,20 +55,22 @@ export class Sound {
         }
     }
 
-    private async load(errorCount: number = 0): Promise<void> {
+    public async load(errorCount: number = 0): Promise<void> {
         if (errorCount >= 10) {
             console.log(`サウンドID ${this.id} の音声ファイルの取得失敗 (最大リトライ回数超過)`);
             this.isExceededMaxRetryCount = true;
+            this.errorLoad();
             return;
         }
+        this.loadStatus = "loading";
         const response = await this.fetchSoundFile();
         if (!response) {
             this.retry(errorCount);
             return;
         }
         if (response.status !== 0 && response.status !== 200) {
-            console.warn(`サウンドID ${this.id} の音声ファイルが見つかりません！ HTTPエラー番号: ${response.status}`);
-            this.cancelLoad();
+            console.warn(`サウンドID ${this.id} 番の音声ファイルが見つかりません！ HTTPエラー番号: ${response.status}`);
+            this.errorLoad();
             return;
         }
         const buffer = await this.getArrayBuffer(response);
@@ -89,12 +94,12 @@ export class Sound {
 
     private setData(data: AudioBuffer): void {
         this.audioBuffer = data;
-        this.isLoaded = true;
+        this.loadStatus = "done";
     }
 
-    private cancelLoad(): void {
+    private errorLoad(): void {
         this.audioBuffer = null;
-        this.isLoaded = true;
+        this.loadStatus = "error";
     }
 
     /**
@@ -154,6 +159,11 @@ export class Sound {
     public isBgm(): boolean {
         return this._isBgm === true;
     }
+
+    public checkLoadDone() {
+        return this.loadStatus === "not-loaded" || this.loadStatus === "done";
+    }
+
     /**
      * データが取得できたかを確認します。
      * - hasData も isError も false だった場合 -> まだ読み込み中です。
@@ -168,17 +178,13 @@ export class Sound {
     public isPlaying(): boolean {
         return this.hasData() || this.delayBgmTimeoutId !== null;
     }
-    
-    public isLoading(): boolean {
-        return !this.isLoaded;
-    }
 
     /**
      * データの取得に失敗したか確認します。
      * hasData メソッドと組み合わせることが多いです。詳細は hasData メソッドのコメントをご確認ください。
      */
     public isError(): boolean {
-        return this.isExceededMaxRetryCount || this.isLoaded && this.audioBuffer === null;
+        return this.loadStatus === "error";
     }
 
     private disposeBufferSource = (bufferSource: AudioBufferSourceNode): void => {

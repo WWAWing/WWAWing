@@ -1712,7 +1712,7 @@ export class WWA {
                 return;
             }
             total++;
-            if (!instance.hasData()) {
+            if (!instance.checkLoadDone()) {
                 return;
             }
             loadedNum++;
@@ -1852,16 +1852,21 @@ export class WWA {
             console.warn(`サウンドID ${id} は、マップデータにも ${this._audioDirectory}sound-list.json にも出現しないため、再生できません。`);
             return;
         }
+
+        if (isBgm) {
+           /* 
+              音源がロードされていなくても、QuickLoad などでゲーム状態を復元したときにはBGMを復元しなければならない。
+              ので、ゲームデータ上にはBGM設定を反映する
+              ただし、ループ再生でない場合は復元しない
+            */
+            this._wwaData.bgm = loopPlaying ? id : 0;
+        }
+
         if (!audioInstance.hasData()) {
-            if (isBgm) {
-               /* 
-                  音源がロードされていなくても、QuickLoad などでゲーム状態を復元したときにはBGMを復元しなければならない。
-                  ので、ゲームデータ上にはBGM設定を反映する
-                  ただし、ループ再生でない場合は復元しない
-                */
-                this._wwaData.bgm = loopPlaying ? id : 0;
-                this._setSoundLoadedCheckTimer(id);
-            }
+            this._setSoundLoadedCheckTimer(id);
+            audioInstance.load().then(() => {
+                audioInstance.play();
+            });
         } else {
             if (isBgm) {
                 audioInstance?.play(option.bgmDelayDurationMs ?? this._wwaData.bgmDelayDurationMs, loopPlaying, () => {
