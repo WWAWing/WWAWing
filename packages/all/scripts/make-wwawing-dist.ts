@@ -1,12 +1,12 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import * as shell from "shelljs";
 import { render, InputConfig } from "@wwawing/page-generator";
 
 const wwawingDistDirName = "wwawing-dist";
 const wwawingUpdateDirName = "wwawing-update";
 
-const srcBasePath = path.join("..", "..", "node_modules", "@wwawing");
+const srcBasePath = "..";
 const destBasePath = path.join(".", "dist", wwawingDistDirName);
 const destUpdateBasePath = path.join(".", "dist", wwawingUpdateDirName);
 
@@ -24,6 +24,7 @@ export default async function makeDistribution(
     if (!isUpdate) {
         shell.mkdir("-p", path.join(destBasePath, "mapdata"));
         shell.mkdir("-p", path.join(destBasePath, "mapdata", "audio"));
+        shell.mkdir("-p", path.join(destBasePath, "mapdata", "script"));
         shell.mkdir("-p", path.join(destBasePath, "mapdata", "backup"));
     }
     let tasks = [];
@@ -52,8 +53,11 @@ export default async function makeDistribution(
             copy("assets", path.join("images", "*.gif"), "mapdata"),
             copy("assets", path.join("images", "wwawing-disp.png"), "mapdata"),
             copy("debug-server", path.join("bin", "wwa-server.exe"), "mapdata"),
+            copy("debug-server", path.join("bin", "LICENSE"), "mapdata"),
             copy("styles", path.join("output", "*.css"), "mapdata"),
             copy("assets", path.join("defs", "*.json"), "mapdata"),
+            copy("assets", path.join("script", "script_file_list.json"), path.join("mapdata", "script")),
+            copy("assets", path.join("script", "*.js"), path.join("mapdata", "script")),
         ];
     }
     await Promise.all(tasks);

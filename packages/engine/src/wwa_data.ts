@@ -1,9 +1,9 @@
-import { type WWAData } from "@wwawing/common-interface";
+import { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound, type FrameRateDisplayingPattern } from "@wwawing/common-interface";
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
-export { type WWAData };
+export { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound, type FrameRateDisplayingPattern };
 
 export class EquipmentStatus {
     public strength: number;
@@ -350,6 +350,7 @@ export enum Direction {
     RIGHT_UP = 9,
 
     // 向きなしは、マクロ$movesで「プレイヤーの動きなしに物体を動かす」時に使う
+    // ジャンプゲート系のマクロやスクリプトの関数で向きを指定しない場合にも使う
     NO_DIRECTION = 5
 };
 
@@ -603,6 +604,7 @@ export enum MacroType {
     DELAYBGM = 64,
     SYSMSG = 65,
     PICTURE = 66,
+    DISABLE_BATTLE_REPORT = 67,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101,
     LEGACY_IF = 10050
@@ -677,6 +679,7 @@ export var macrotable = {
     "$delaybgm": 64,
     "$sysmsg": 65,
     "$picture": 66,
+    "$disable_battle_report": 67,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
@@ -700,19 +703,14 @@ export enum MacroImgFrameIndex {
     MAIN_FRAME = 6
 }
 
-export enum SystemSound {
-    DECISION = 1,
-    ATTACK = 3,
-    BGM_LB = 70,
-    NO_SOUND = 99
-}
-
 export const speedList = [1, 2, 5, 8, 10, 20];
 export const speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
 export const StatusKind = ["energy", "strength", "defence", "gold"] as const;
 export type StatusKind = typeof StatusKind[number];
 export class WWAConsts {
     static WWA_HOME: string = "http://wwajp.com";
+    static TARGET_FPS: number = 60;
+    static INTERVAL_MS: number = 1000 / WWAConsts.TARGET_FPS;
 
     static ITEMBOX_SIZE: number = 12;
     static MAP_ATR_MAX: number = 60;
@@ -812,8 +810,9 @@ export class WWAConsts {
     static MAX_SPEED_INDEX = speedList.length - 1;
     static QUICK_BATTLE_SPEED_INDECIES = [speedList.length - 2, speedList.length - 1];
 
-    static ANIMATION_REP_HALF_FRAME: number = 22;
-    static PLAYER_LOOKING_AROUND_START_FRAME: number = WWAConsts.ANIMATION_REP_HALF_FRAME * 4;
+    static ANIMATION_REP_HALF_FRAME: number = 32;
+    static PLAYER_LOOKING_AROUND_START_FRAME: number = 80;
+    static PLAYER_LOOKING_AROUND_LOOP_INTERVAL_FRAME: number = 80;
 
     static RELATIVE_COORD_BIAS: number = 10000;
     static RELATIVE_COORD_LOWER: number = WWAConsts.RELATIVE_COORD_BIAS - 1000;
@@ -1097,3 +1096,17 @@ export interface BattleEstimateParameters {
  * 戦闘ダメージ方向の定義
  */
 export type BattleDamageDirection = "playerToEnemy" | "enemyToPlayer";
+
+/**
+ * マニュアルポーズ情報
+ */
+export interface ManualPauseInformation {
+    functionNames: {
+        cancelPause: string;
+        up: string;
+        down: string;
+        right: string;
+        left: string;
+    }
+    blockingCancelPauseByPlayer: boolean;
+}

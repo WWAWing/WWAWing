@@ -10,39 +10,27 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          node-version: '18.x'
-          registry-url: 'https://registry.npmjs.org'
-
+          lfs: true
+      - uses: ./.github/actions/init
+        with:
+          lfs: true
       - name: "Set Env"
         run: "echo \"WWA_WING_VERSION=$(node -e \"console.log(require('./packages/engine/package.json').version)\")\" >> $GITHUB_ENV"
-
-      - name: restore node_modules
-        uses: actions/cache@v3
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-
-      - name: "Install & Build"
+      - name: "Build"
         run: |
-          npm i -g npm@8
-          npm install
-          npm run build
-          npm run generate
-
+          pnpm run build
+          pnpm run generate
       - name: "Upload distributions"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: "cd packages/all && npm run release && cd ../.."
+        run: "cd packages/all && pnpm run release && cd ../.."
 
       # WWAWing/sites リポジトリ側にある、新バージョンの公開を行うワークフローを呼び出す
       - name: "Create pull request to WWAWing/sites respoitory"
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
         with:
           token: ${{ secrets.WWA_WING_CALL_WORKFLOW_TOKEN }}
           repository: WWAWing/sites

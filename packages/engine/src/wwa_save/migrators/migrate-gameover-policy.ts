@@ -1,11 +1,18 @@
 import { WWAData } from "../../wwa_data";
 
 /**
- * v3.7.1 以前のセーブデータを v3.7.2 以降に変換
+ * セーブデータの過去バージョン互換のためのマイグレータです。
  * isGameOverDisabled の真偽値を gameOverPolicy に変換します。
  * 引数の oldWWAData は破壊せず、新しいオブジェクトを返します。
+ * また、 except-macro だった gameOverPolicy は except-assignment に変換します。
  */
 export const migrateGameOverPolicy = (oldWWAData: WWAData): WWAData => {
+  if ((oldWWAData.gameOverPolicy as string) === "except-macro") {
+    return {
+      ...oldWWAData,
+      gameOverPolicy: "except-assignment",
+    }
+  }
   if (typeof oldWWAData.isGameOverDisabled !== "boolean") {
     return oldWWAData;
   }

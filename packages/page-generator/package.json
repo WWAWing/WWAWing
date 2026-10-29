@@ -1,18 +1,24 @@
 {
   "name": "@wwawing/page-generator",
-  "version": "4.1.0-unstable.based-on.3.12.11.p.20",
+  "version": "4.0.30",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WWAWing/WWAWing.git",
+    "directory": "packages/page-generator"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm run build && shx mkdir -p output && node debug/debug.js",
+    "start": "pnpm run build && shx mkdir -p output && node debug/debug.js",
     "build": "run-p build:*",
     "build:lib": "tsc && shx cp ./src/wwa.pug ./lib/wwa.pug",
     "build:module": "tsc -p ./tsconfig.module.json && shx cp ./src/wwa.pug ./module/wwa.pug",
     "clean": "run-s clean:*",
     "clean:lib": "shx rm -rf ./lib",
-    "clean:module": "shx rm -rf ./module"
+    "clean:module": "shx rm -rf ./module",
+    "type-check": "tsc -p . --watch --noEmit"
   },
   "files": [
     "lib",
@@ -26,21 +32,18 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^18.11.9",
+    "@types/node": "^26",
     "@types/pug": "^2.0.6",
-    "npm-run-all": "^4.1.5",
-    "shelljs": "^0.8.5",
-    "shx": "^0.3.4",
-    "typescript": "^5.3.3"
+    "npm-run-all2": "^8.0.1",
+    "shelljs": "^0.10.0",
+    "shx": "^0.4.0",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
-    "pug": "^3.0.2"
+    "@wwawing/common-interface": "workspace:*",
+    "pug": "^3.0.3"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=18",
-    "npm": ">=8"
   }
 }

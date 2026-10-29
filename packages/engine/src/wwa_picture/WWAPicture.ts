@@ -1,5 +1,4 @@
-import { CacheCanvas } from "../wwa_cgmanager";
-import { Coord, PartsType, WWAConsts } from "../wwa_data";
+import { Coord, PartsType } from "../wwa_data";
 import { PicturePropertyDefinitions } from "./config";
 import { PictureExternalImageItem } from "./typedef";
 import { PictureRegistry, RawPictureRegistry } from "@wwawing/common-interface/lib/wwa_data";
@@ -46,11 +45,11 @@ export default class WWAPicutre {
             return;
         }
         if (status.kind !== "data") {
-            alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が見つかりませんでした。エラーメッセージ: ${status.errorMessage}`);
+            console.warn(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が見つかりませんでした。エラーメッセージ: ${status.errorMessage}`);
             return;
         }
         if (!status.data || typeof status.data !== "object") {
-            alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が正しい形式で書かれていません。`);
+            console.warn(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} が正しい形式で書かれていません。`);
             return;
         }
         if ("files" in status.data) {
@@ -62,12 +61,12 @@ export default class WWAPicutre {
                     element.src = path;
                     element.onerror = (err) => {
                         if (typeof err === "string") {
-                            alert(`ピクチャ画像ファイル ${path} が見つかりませんでした。エラーメッセージ: ${err}`);
+                            console.warn(`ピクチャ画像ファイル ${path} が見つかりませんでした。エラーメッセージ: ${err}`);
                         } else {
                             // onerror の引数にあたる ErrorEvent では理由を示すエラーメッセージが含まれていない
                             // TODO より正確なエラーメッセージを出力するに fetch で画像データを取得すると良いのだが、
                             //      取得したデータが画像形式なのか判別したり変換したりする機能の開発コストが大きいため、しばらくはこの状態で維持
-                            alert(`ピクチャ画像ファイル ${path} が見つかりませんでした。`);
+                            console.warn(`ピクチャ画像ファイル ${path} が見つかりませんでした。`);
                         }
                         this._externalImageFiles.set(name, { status: "failed" })
                     };
@@ -76,7 +75,7 @@ export default class WWAPicutre {
                     };
                 });
             } else {
-                alert(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} の files が正しい形式で書かれていません。`);
+                console.warn(`ピクチャ画像の定義ファイル ${pictureImageNamesFile} の files が正しい形式で書かれていません。`);
             }
         }
     }
@@ -93,11 +92,6 @@ export default class WWAPicutre {
      * @param registry ピクチャのレジストリ情報
      */
     public registerPicture(registry: PictureRegistry) {
-        const canvas = new CacheCanvas(
-            WWAConsts.CHIP_SIZE * WWAConsts.H_PARTS_NUM_IN_WINDOW,
-            WWAConsts.CHIP_SIZE * WWAConsts.V_PARTS_NUM_IN_WINDOW,
-            true
-        );
         const invalidPropertyNames = Object.keys(registry.properties)
             .filter((propertyName) => !PicturePropertyDefinitions.some(({ name }) => name === propertyName));
         if (invalidPropertyNames.length > 0) {
@@ -122,9 +116,9 @@ export default class WWAPicutre {
         }
         if (isValidLayerNumber(registry.layerNumber)) {
             if (isAnonymousPicture(registry.layerNumber)) {
-                this._anonymousPictures.push(new WWAPictureItem(registry, canvas, externalImageFile));
+                this._anonymousPictures.push(new WWAPictureItem(this._wwa, registry, externalImageFile));
             } else {
-                this._pictures.set(registry.layerNumber, new WWAPictureItem(registry, canvas, externalImageFile));
+                this._pictures.set(registry.layerNumber, new WWAPictureItem(this._wwa, registry, externalImageFile));
                 // Map は key で自動的に並び替えていないので、追加のたびにソートし直す。通常の配列の方が順番通りに処理できそうだが、飛んだレイヤー番号が記載された場合に参照エラーを起こす可能性がありそう・・・。
                 this._pictures = new Map([...this._pictures.entries()].sort(([, a], [, b]) => a.layerNumber - b.layerNumber));
             }
@@ -223,12 +217,10 @@ export default class WWAPicutre {
             this._anonymousPictures.splice(0);
             return this.getPictureRegistryData();
         }
-        if (!this._pictures.has(layerNumber)) {
-            console.warn(`${layerNumber} 番のピクチャが見つかりませんでした。`)
-            return this.getPictureRegistryData();
+        if (this._pictures.has(layerNumber)) {
+            this._pictures.get(layerNumber).clearCanvas();
+            this._pictures.delete(layerNumber);
         }
-        this._pictures.get(layerNumber).clearCanvas();
-        this._pictures.delete(layerNumber);
         return this.getPictureRegistryData();
     }
 

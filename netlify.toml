@@ -1,10 +1,12 @@
 [build]
   base = "/"
   publish = "packages/engine/lib"
-  command = "npm i && npm run build && npm run deploy"
+  command = "pnpm i && pnpm run build && pnpm run deploy"
 
 [build.environment]
-  NODE_VERSION = "18.12.1"
-  NPM_VERSION = "8"
-  # node-gyp が v3.6.0 以上の Python を要求している
-  PYTHON_VERSION = "3.8"
+  # 以下の理由により、 Node.js のバージョンはここでは指定しない。
+  # - Netlify は Node.js のバージョンの決定に nvm か mise のどちらかが使われる。
+  #   - nvm の場合は .node-version を見るので解決される。
+  #   - mise の場合は mise.toml に idiomatic_version_file_enable_tools の指定があるので、結局 .node-version を参照する。
+  # 一方で、 node-gyp が v3.6.0 以上の Python を要求しており、こちらはここで指定する。
+  PYTHON_VERSION = "3.14.4"

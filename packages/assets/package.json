@@ -1,14 +1,23 @@
 {
   "name": "@wwawing/assets",
-  "version": "4.1.0-unstable.based-on.3.12.11.p.20",
+  "version": "4.0.30",
   "description": "WWA Wing asset files",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WWAWing/WWAWing.git",
+    "directory": "packages/assets"
+  },
   "files": [
     "audio",
+    "defs",
+    "exe",
     "html",
     "images",
     "mapdata",
+    "script",
     "style",
+    "text",
     "wwamk310"
   ],
   "scripts": {
@@ -18,9 +27,5 @@
   "license": "CC-BY-4.0",
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=18",
-    "npm": ">=8"
   }
 }

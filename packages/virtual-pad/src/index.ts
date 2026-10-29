@@ -1,13 +1,13 @@
-import VirtualPadStore, { VirtualPadState, VirtualPadButtonCodes, VirtualPadButtonCode, VirtualPadButtons } from './VirtualPad';
+import VirtualPadStore, { type VirtualPadState, VirtualPadButtonCodes, type VirtualPadButtonCode, type VirtualPadButtons } from './VirtualPad';
 import viewportFit, { initializeViewport } from './viewportFit';
 import makeInject from './makeInject';
 
 export {
   VirtualPadStore,
-  VirtualPadState,
+  type VirtualPadState,
   VirtualPadButtonCodes,
-  VirtualPadButtonCode,
-  VirtualPadButtons,
+  type VirtualPadButtonCode,
+  type VirtualPadButtons,
   viewportFit,
   initializeViewport,
   makeInject

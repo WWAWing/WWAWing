@@ -1,3 +1,4 @@
+import { isPrimitive } from "@wwawing/util";
 import * as Acorn from "./acorn";
 import * as Wwa from "./wwa";
 
@@ -54,7 +55,7 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
       case "TemplateElement":
         return convertTemplateElement(node as Acorn.TemplateElement);
       case "ConditionalExpression":
-        return convertConditionalExpression(node as Acorn.ConditionalExpression);
+        return convertConditionalExpression(node as Acorn.ConditionalExpression)
       case "Property":
         return convertProperty(node as Acorn.Property);
       case "ObjectExpression":
@@ -71,7 +72,7 @@ export function convertNodeAcornToWwa(node: Acorn.Node): Wwa.WWANode {
 
 function convertFunctionStatement(node: Acorn.FunctionDeclaration): Wwa.WWANode {
   return {
-    type: "DefinedFunction",
+    type: "UserDefinedFunction",
     functionName: node.id.name,
     body: convertNodeAcornToWwa(node.body)
   }
@@ -169,16 +170,27 @@ function convertIfStatement(node: Acorn.IfStatement): Wwa.WWANode {
  * @returns 
  */
 function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
+  if (node.callee.type !== "Identifier") {
+    // xxx.foo(), xxx().foo() のような関数呼び出しは現状サポートしない
+    throw new Error("WWAでは存在しない構文です");
+  }
   const functionName = node.callee.name;
   switch(functionName) {
     case "RAND":
       return execRandomFunction(node.arguments);
-    case "JUMPGATE":
-      return execJumpgateFunction(node.arguments);
     case "MSG":
     case "MESSAGE":
       return execMessageFunction(node.arguments);
+    case "JUMPGATE":
+    case "MUSIC":
     case "SOUND":
+    case "BGM_STOP":
+    case "STOP_BGM":
+    case "SOUND_STOP":
+    case "GET_BGM":
+    case "STOP_SOUND":
+    case "ALL_SOUND_STOP":
+    case "STOP_ALL_SOUND":
     case "SAVE":
     case "LOG":
     case "ABLE_CHANGE_SPEED":
@@ -192,10 +204,14 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "FACE":
     case "EFFECT":
     case "CHANGE_PLAYER_IMAGE":
+    case "CHANGE_PLAYER_IMG":
     case "HAS_ITEM":
     case "REMOVE_ITEM":
     case "MOVE":
+    case "PARTS_MOVE":
     case "IS_PLAYER_WAITING_MESSAGE":
+    case "IS_MANUAL_PAUSE":
+    case "IS_PLAYER_WAITING_ENTER":
     case "GET_UNIXTIME":
     case "GET_DATE_YEAR":
     case "GET_DATE_MONTH":
@@ -205,34 +221,83 @@ function convertCallExpression(node: Acorn.CallExpression): Wwa.WWANode  {
     case "GET_DATE_SECONDS":
     case "GET_DATE_MILLISECONDS":
     case "GET_DATE_WEEKDAY":
+    case "GET_DATE_WEEKDAY_JA":
+    case "GET_DATE_WEEKDAY_JA_LONG":
+    case "GET_DATE_WEEKDAY_EN":
+    case "GET_DATE_WEEKDAY_EN_LONG":
     case "CHANGE_SYSMSG":
     case "PICTURE":
     case "PICTURE_FROM_PARTS":
+    case "CLEAR_ALL_PICTURES":
+    case "HAS_PICTURE":
     case "SHOW_USER_DEF_VAR":
+    case "DIV":
+    case "FLOOR":
+    case "CEIL":
+    case "ROUND":
     case "ABS":
+    case "POW":
+    case "SQRT":
+    case "SIN":
+    case "COS":
+    case "TAN":
     case "GET_GAMEOVER_POS_X":
     case "GET_GAMEOVER_POS_Y":
     case "ABORT_BATTLE":
     case "EXIT":
     case "GET_IMG_POS_X":
     case "GET_IMG_POS_Y":
-      return execAnyFunction(node.arguments, functionName);
+    case "LENGTH":
+    case "IS_NUMBER":
+    case "IS_NAN":
+    case "CLONE":
+    case "MANUAL_PAUSE":
+    case "WAIT_ENTER":
+    case "CANCEL_MANUAL_PAUSE":
+    case "CANCEL_WAIT_ENTER":
+    case "COLOR":
+    case "EFFITEM":
+    case "CHANGE_BOM_IMG":
+    case "CHANGE_BOM_IMAGE":
+    case "CHANGE_CLICK_IMAGE":
+    case "CHANGE_CLICK_IMG":
+    case "CHANGE_FRAME_IMAGE":
+    case "CHANGE_FRAME_IMG":
+    case "CHANGE_YESNO_IMAGE":
+    case "CHANGE_YESNO_IMG":
+    case "NO_GAMEOVER":
+    case "DEFAULT":
+    case "DIR_MAP":
+    case "CHANGE_SOUND_ATTACK":
+    case "CHANGE_SOUND_DECISION":
+    case "SORT":
+    case "OPEN_QUICK_SAVE_WINDOW":
+    case "OPEN_QUICK_LOAD_WINDOW":
+    case "OPEN_RESTART_GAME_WINDOW":
+    case "OPEN_GO_TO_WWA_WINDOW":
+    case "OPEN_BATTLE_REPORT_WINDOW":
+    case "DISABLE_BATTLE_REPORT":
+    case "PUSH":
+    case "POP":
+    case "SHIFT":
+    case "UNSHIFT":
+      return execSystemDefinedFunctionCall(node.arguments, functionName);
     default:
       return {
-        type: "CallDefinedFunction",
+        type: "UserDefinedFunctionCall",
         functionName: functionName
       }
   }
 }
 
 /**
- * 任意の関数型
+ * システム定義関数を実行する
  * @param callee 
  * @returns 
  */
-function execAnyFunction(callee: Acorn.Literal[], functionName: string): Wwa.WWANode {
+function execSystemDefinedFunctionCall(callee: Acorn.Literal[], functionName: string): Wwa.WWANode {
   return {
-    type: "AnyFunction",
+    type: "SystemDefinedFunctionCall",
     functionName: functionName,
     value: callee.map((v) => {
       return convertNodeAcornToWwa(v)
@@ -252,24 +317,6 @@ function execMessageFunction(callee: Acorn.Literal[]): Wwa.WWANode {
   }
 }
 
-/**
- * JUMPGATE関数を実行する
- * JUMPGATEを実行するための識別子を返す
- */
-function execJumpgateFunction(callee: Acorn.Literal[]): Wwa.WWANode {
-  if(callee.length < 2) {
-    throw new Error("RAND関数には引数が2つ必要です。")
-  }
-  const pos = {
-    x: callee[0],
-    y: callee[1]
-  }
-  return {
-    type: "Jumpgate",
-    x: convertNodeAcornToWwa(pos.x),
-    y: convertNodeAcornToWwa(pos.y)
-  }
-}
 
 /**
  * RAND関数を実行する
@@ -310,36 +357,50 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
     case "-=":
     case "*=":
     case "/=":
-      if (left.type === "Array2D") {
+      if (left.type === "ArrayOrObject2D") {
         if (left.name === "m" || left.name === "o") {
           return {
             type: "PartsAssignment",
             partsKind: left.name === "m" ? "map" : "object",
-            destinationX: left.index0,
-            destinationY: left.index1,
-            value: right,
-            operator: node.operator
-          }
-        } else {
-          throw new Error("想定していない記号が2次元配列ででてきました");
-        }
-      } else if (left.type === "Array1D") {
-        if (left.name === "ITEM") {
-          return {
-            type: "ItemAssignment",
-            itemBoxPosition1to12: left.index0,
+            destinationX: left.indecies[0],
+            destinationY: left.indecies[1],
             value: right,
             operator: node.operator
           }
         } else if (left.name === "v") {
           return {
             type: "UserVariableAssignment",
-            index: left.index0,
+            index: [left.indecies[0], left.indecies[1]],
             value: right,
             operator: node.operator
           }
         } else {
-          throw new Error("");
+          throw new Error("想定していない記号が2次元配列ででてきました");
+        }
+      } else if (left.type === "ArrayOrObject1D") {
+        if (left.name === "ITEM") {
+          return {
+            type: "ItemAssignment",
+            itemBoxPosition1to12: left.indecies[0],
+            value: right,
+            operator: node.operator
+          }
+        } else if (left.name === "v") {
+          return {
+            type: "UserVariableAssignment",
+            index: [left.indecies[0]],
+            value: right,
+            operator: node.operator
+          }
+        } else if (left.name === "LP") {
+          return {
+            type: "LoopPointerAssignment",
+            index: left.indecies[0],
+            value: right,
+            operator: node.operator
+          }
+        } else {
+          throw new Error(`1次元配列にて想定していないシンボルが指定されました ${left.name}`);
         }
       } else if (left.type === "Symbol") {
         if (
@@ -351,9 +412,18 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
           left.name === "Y" ||
           left.name === "ID" ||
           left.name === "TYPE" ||
+          left.name === "CX" ||
+          left.name === "CY" ||
+          left.name === "PICTURE" ||
+          left.name === "PLAYER_PX" ||
+          left.name === "PLAYER_PY" ||
           left.name === "MOVE_SPEED" ||
           left.name === "MOVE_FRAME_TIME" ||
-          left.name === "f"
+          left.name === "LP" ||
+          left.name === "SORT_A" ||
+          left.name === "SORT_B" ||
+          left.name === "f" ||
+          left.name === "undefined"
         ) {
           throw new Error("このシンボルには代入できません");
         }
@@ -374,6 +444,13 @@ function convertAssignmentExpression(node: Acorn.AssignmentExpression): Wwa.WWAN
         }
       } else if (left.type === "Literal") {
         throw new Error("数値には代入できません");
+      } else if (left.type === "ArrayOrObject3DPlus" && left.name === "v") {
+        return {
+          type: "UserVariableAssignment",
+          index: left.indecies,
+          value: right,
+          operator: node.operator
+        }
       } else {
         throw new Error("代入できません");
       }
@@ -427,40 +504,72 @@ function convertBinaryExpression(node: Acorn.BinaryExpression): Wwa.WWANode {
   }
 }
 
-// WWA においては hoge.a というパターンはないので、配列系の処理しかない
-function convertMemberExpression(node: Acorn.MemberExpression): Wwa.Array1D | Wwa.Array2D {
-  const object = convertNodeAcornToWwa(node.object);
+function convertMemberExpression(node: Acorn.MemberExpression): Wwa.ArrayOrObject1D | Wwa.ArrayOrObject2D | Wwa.ArrayOrObject3DPlus | Wwa.SystemDefinedFunctionCall | Wwa.UserDefinedFunctionCall {
+  const objectOrFunctionCall = convertNodeAcornToWwa(node.object);
   const property = convertNodeAcornToWwa(node.property);
 
-  if (object.type === "Symbol") {
-    if (object.name !== "v" && object.name !== "m" && object.name !== "o" && object.name !== "ITEM") {
+  if (objectOrFunctionCall.type === "Symbol") {
+    if (!["v", "m", "o", "ITEM", "LP", "PICTURE", "SORT_A", "SORT_B"].includes(objectOrFunctionCall.name)) {
       throw new Error("このシンボルは配列にできません");
     }
-    if(property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
-      // m, o については一次元分適用
+    if (Wwa.isCalcurable(property)) {
       return {
-        type: "Array1D",
-        name: object.name,
-        index0: property
-      }
+        type: "ArrayOrObject1D",
+        name: <"v"|"m"|"o"|"ITEM"|"LP"|"SORT_A"|"SORT_B">objectOrFunctionCall.name,
+        indecies: [property],
+      };
     } else {
-      throw new Error("WWAでは存在しない構文です")
+      throw new Error("WWAでは存在しない構文です");
     }
-  } else if (object.type === "Array1D") {
+  } else if (objectOrFunctionCall.type === "ArrayOrObject1D") {
     // 1次元にしかできないものは排除
-    if (object.name === "ITEM" || object.name === "v") {
+    if (objectOrFunctionCall.name === "ITEM" || objectOrFunctionCall.name === "PICTURE") {
       throw new Error("この配列は2次元以上にはできません。");
     }
-    // 1次元配列 + 1次元分の index を合成
-    if (property.type === "Literal" || property.type === "Symbol" || property.type === "BinaryOperation" || property.type === "Array1D") {
+    if (Wwa.isCalcurable(property)) {
       return {
-        type: "Array2D",
-        name: object.name,
-        index0: object.index0,
-        index1: property
+        type: "ArrayOrObject2D",
+        name: <"m" | "o" | "SORT_A" | "SORT_B">objectOrFunctionCall.name,
+        // 1次元配列 + 1次元分の index を合成
+        indecies: [...objectOrFunctionCall.indecies, property]
       }
     } else {
       // 数値に解決できないものが index に来てはいけない
+      throw new Error("WWAでは存在しない構文です")
+    }
+  } else if(objectOrFunctionCall.type === "ArrayOrObject2D" || objectOrFunctionCall.type === "ArrayOrObject3DPlus") {
+    if (objectOrFunctionCall.name === "m" || objectOrFunctionCall.name === "o") {
+      throw new Error("この配列は3次元以上にはできません。");
+    }
+    // ユーザ定義名前変数, SORT_A, SORT_B のみ3次元以上配列が使える
+    if ((objectOrFunctionCall.name === "v" || objectOrFunctionCall.name === "SORT_A" || objectOrFunctionCall.name === "SORT_B") && Wwa.isCalcurable(property)) {
+      return {
+        type: "ArrayOrObject3DPlus",
+        name: objectOrFunctionCall.name,
+        indecies: [ ...objectOrFunctionCall.indecies, property]
+      }
+    }
+  } else if (objectOrFunctionCall.type === "SystemDefinedFunctionCall") {
+    if (Wwa.isCalcurable(property)) {
+      return {
+        type: "SystemDefinedFunctionCall",
+        functionName: objectOrFunctionCall.functionName,
+        value: objectOrFunctionCall.value,
+        // fooFunction().barMember.bazMember... のような形
+        indecies: [...(objectOrFunctionCall.indecies ?? []), property],
+      };
+    } else {
+      throw new Error("WWAでは存在しない構文です")
+    }
+  } else if (objectOrFunctionCall.type === "UserDefinedFunctionCall") {
+    if (Wwa.isCalcurable(property)) {
+      return {
+        type: "UserDefinedFunctionCall",
+        functionName: objectOrFunctionCall.functionName,
+        // fooFunction().barMember.bazMember... のような形
+        indecies: [...(objectOrFunctionCall.indecies ?? []), property],
+      }
+    } else {
       throw new Error("WWAでは存在しない構文です")
     }
   }
@@ -477,6 +586,8 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "TYPE":
     case "PX":
     case "PY":
+    case "CX":
+    case "CY":
     case "v":
     case "HP":
     case "HPMAX":
@@ -497,9 +608,16 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
     case "ENEMY_HP":
     case "ENEMY_AT":
     case "ENEMY_DF":
+    case "PICTURE":
+    case "PLAYER_PX":
+    case "PLAYER_PY":
     case "MOVE_SPEED":
     case "MOVE_FRAME_TIME":
+    case "LP":
+    case "SORT_A":
+    case "SORT_B":
     case "f":
+    case "undefined":
       return {
         type: "Symbol",
         name: node.name
@@ -513,9 +631,9 @@ function convertIdentifer(node: Acorn.Identifier): Wwa.Symbol | Wwa.Literal {
 }
 
 function convertLiteral(node: Acorn.Literal): Wwa.Literal {
-  // UNDONE: 小数点以下の処理をする
-  // UNDONE: boolean 値の取り扱いをする. 多分 Wwa.Boolean を作ることになる.
-  // typeof node.value が number でも boolean でもないならエラーにする. (nullやらundefinedやら書かれると困る)
+  if (!isPrimitive(node.value)) {
+    throw new TypeError("Literal の値が不正です");
+  }
   return {
     type: "Literal",
     value: node.value

@@ -9,5 +9,8 @@ export function createElement(): HTMLElement {
 }
 
 export function setText(element: HTMLElement, text: string): void {
+  if (element.textContent === text) {
+    return;
+  }
   element.textContent = text;
 }

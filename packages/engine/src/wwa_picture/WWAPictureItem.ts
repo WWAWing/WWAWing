@@ -1,19 +1,21 @@
 import { PictureRegistry } from "@wwawing/common-interface";
 import { PartsType } from "@wwawing/loader";
-import { CacheCanvas } from "../wwa_cgmanager";
 import { Coord, WWAConsts } from "../wwa_data";
+import { WWA } from "../wwa_main";
 import * as util from "../wwa_util";
 import {
-    isAnonymousPicture,
     getArrayItemFromSingleOrArray,
     adjustPositiveValue,
     getHorizontalCirclePosition,
     getHorizontalCorrectionBySizeAnchor,
     getVerticalCirclePosition,
-    getVerticalCorrectionBySizeAnchor
+    getVerticalCorrectionBySizeAnchor,
+    canDrawChip,
 } from "./utils";
-import { NextPicturePartsInfo } from "./typedef";
+import { DrawCoordType, NextPicturePartsInfo } from "./typedef";
 import { WWATimer } from "./WWATimer";
+import { PictureCacheCanvas } from "./PictureCacheCanvas";
+import { getDrawPictureCanvasCoords, getDrawPictureOffsetInCacheCanvas, getPictureCanvasSize, getTranslateOffsetForRotate } from "./coordType";
 
 /**
  * 描画用ピクチャインスタンスです。
@@ -21,6 +23,9 @@ import { WWATimer } from "./WWATimer";
  * そこでこれらのパラメーターを生成時に算出してキャッシュすることで描画の効率化を図ります。
  */
 export default class WWAPictureItem {
+
+    private readonly _canvas: PictureCacheCanvas;
+    private readonly _drawCoordType: DrawCoordType;
 
     /**
      * 基準 X 座標。 circle プロパティによる円運動では、基準となる座標がないと同じ座標上での円運動を維持できない。
@@ -42,10 +47,18 @@ export default class WWAPictureItem {
     private _sizeX: number;
     private _sizeY: number;
     /**
-     * crop プロパティを用いた場合の、1マス分の横幅。
+     * crop プロパティを用いた場合の1マス分の横幅
      */
     private _chipWidth: number;
     private _chipHeight: number;
+    /**
+     * crop プロパティでくっつけた、1体分の横幅
+     */
+    private _charaWidth: number;
+    private _charaHeight: number;
+    /**
+     * ピクチャの描画範囲の横幅
+     */
     private _totalWidth: number;
     private _totalHeight: number;
     private _moveX: number;
@@ -66,20 +79,31 @@ export default class WWAPictureItem {
     private readonly _imgFile?: HTMLImageElement;
     private readonly _cropX: number;
     private readonly _cropY: number;
+    /**
+     * imgMap 使用時限定。各パーツのイメージ座標を記載した二次元配列のキャッシュ。
+     * @todo _cropX と _cropY とでどちらかしか使用しないため、両方ともまとめてクラスで管理できるようにしたい
+     */
+    private readonly _mapCropCache: [number, number, number, number][][] | null;
+    private readonly _fontStyle: string;
+    private readonly _textAlign: CanvasTextAlign | null;
+    private readonly _fillStyle: string;
     private _opacity: number;
     private readonly _fade: number;
+    private _angleRadian: number;
+    private readonly _rotateRadian: number;
     private readonly _hasAnimation: boolean;
 
     private _timer: WWATimer;
 
-    constructor(private _registry: PictureRegistry, private _canvas: CacheCanvas, externalFile?: HTMLImageElement) {
+    constructor(wwa: WWA, private _registry: PictureRegistry, externalFile?: HTMLImageElement) {
         const { properties } = _registry;
         this._posBaseX = properties.pos?.[0] ?? 0;
         this._posBaseY = properties.pos?.[1] ?? 0;
         [this._imgMainX, this._imgMainY] = WWAPictureItem._getImgPosByPicture(this._registry, true);
         [this._imgSubX, this._imgSubY] = WWAPictureItem._getImgPosByPicture(this._registry, false);
+        this._mapCropCache = WWAPictureItem._getMapImgPosArray(this._registry, wwa);
         // イメージ画像がどれも 0, 0 の場合は何も描画しない（PICTURE 関数から呼び出す場合に黒四角が現れる対策）
-        this._drawChip = this._imgMainX !== 0 || this._imgMainY !== 0 || this._imgSubX !== 0 || this._imgSubY !== 0;
+        this._drawChip = canDrawChip(this._imgMainX, this._imgMainY, this._imgSubX, this._imgSubY) || this._mapCropCache !== null;
         this._repeatX = properties.repeat?.[0] ?? 1;
         this._repeatY = properties.repeat?.[1] ?? 1;
         this._imgFile = externalFile;
@@ -93,6 +117,13 @@ export default class WWAPictureItem {
         this._circleRadiusX = properties.circle?.[0] ?? 0;
         this._circleRadiusY = properties.circle?.[1] ?? this._circleRadiusX;
         this._circleAngle = properties.circle?.[2] ?? 0;
+
+        this._fontStyle = WWAPictureItem._getFontValue(properties);
+        this._textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
+        const colorR = properties.color?.[0] ?? 0;
+        const colorG = properties.color?.[1] ?? 0;
+        const colorB = properties.color?.[2] ?? 0;
+        this._fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
 
         // アニメーション関連のプロパティをセット
         this._moveX = properties.move?.[0] ?? 0;
@@ -109,7 +140,24 @@ export default class WWAPictureItem {
         this._opacity = properties.opacity ?? 100;
         this._fade = properties.fade ?? 0;
 
+        this._angleRadian = properties.angle ? properties.angle * Math.PI / 180 : 0;
+        this._rotateRadian = properties.rotate ? properties.rotate * Math.PI / 180 : 0;
+        if (properties.text) {
+            if (properties.angle || properties.rotate) {
+                console.warn(`レイヤー${this.layerNumber}番: テキストの描画と回転の併用は、現時点では非推奨です。今後動作が変わる可能性があるので、自己責任でお願いします。`);
+            }
+            this._drawCoordType = "maximum";
+        } else if (properties.angle || properties.rotate) {
+            this._drawCoordType = "minimumWithMargin";
+        } else {
+            this._drawCoordType = "minimum";
+        }
+        
         this._updatePictureCache();
+        const { width: canvasWidth, height: canvasHeight } = getPictureCanvasSize(
+            this._drawCoordType, this._totalWidth, this._totalHeight
+        );
+        this._canvas = new PictureCacheCanvas(canvasWidth, canvasHeight);
         
         this._timer = new WWATimer();
         this._timer.addPoint(
@@ -125,19 +173,20 @@ export default class WWAPictureItem {
         this._timer.addPoint("startAnim", properties.animTime?.[0], properties.animTimeFrame?.[0]);
         this._timer.addPoint("endAnim", properties.animTime?.[1], properties.animTimeFrame?.[1]);
         this._timer.addPoint("wait", properties.wait, properties.waitFrame);
-        
-        // Canvas の ctx を色々いじる
-        this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
-        this._canvas.ctx.font = WWAPictureItem._getFontValue(properties);
-        this._canvas.ctx.textBaseline = "top";
-        if (properties.textAlign) {
-            this._canvas.ctx.textAlign = WWAPictureItem._convertTextAlign(properties.textAlign);
-        }
-        const colorR = properties.color?.[0] ?? 0;
-        const colorG = properties.color?.[1] ?? 0;
-        const colorB = properties.color?.[2] ?? 0;
-        this._canvas.ctx.fillStyle = `rgb(${colorR}, ${colorG}, ${colorB})`;
 
+        if (this._angleRadian !== 0) {
+            const { x: offsetX, y: offsetY } = getTranslateOffsetForRotate(
+                this._drawCoordType,
+                this._totalWidth,
+                this._totalHeight,
+                this._posBaseX,
+                this._posBaseY
+            );
+            this._canvas.ctx.translate(offsetX, offsetY);
+            this._canvas.ctx.rotate(this._angleRadian);
+            this._canvas.ctx.translate(-offsetX, -offsetY);
+        }
+        this.updateCanvasContext();
         this._hasAnimation = this.getHasAnimation();
     }
 
@@ -149,8 +198,8 @@ export default class WWAPictureItem {
         return this._hasAnimation;
     }
 
-    public get cvs() {
-        return this._canvas.cvs;
+    public get canvasImage() {
+        return this._canvas.getCanvasImage();
     }
 
     public get appearParts() {
@@ -171,6 +220,18 @@ export default class WWAPictureItem {
         return this._registry.properties.script;
     }
 
+    public updateCanvasContext() {
+        // Canvas の ctx を色々いじる
+        this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+        this._canvas.ctx.font = this._fontStyle;
+        this._canvas.ctx.textBaseline = "top";
+        if (this._textAlign) {
+            this._canvas.ctx.textAlign = this._textAlign;
+        }
+        this._canvas.ctx.fillStyle = this._fillStyle;
+        // ピクチャの角度については clear しても角度設定はこのまま維持されるみたいなので、ここでは行わない
+    }
+
     /**
      * ピクチャを描画します。
      * 毎フレーム処理されるため、プロパティから直接引き出される値以外はあらかじめフィールドに数値などをキャッシュしてください。
@@ -181,29 +242,49 @@ export default class WWAPictureItem {
 
         const imgPosX = isMainAnimation ? this._imgMainX : this._imgSubX;
         const imgPosY = isMainAnimation ? this._imgMainY : this._imgSubY;
-        
+        const { x: offsetX, y: offsetY } = getDrawPictureOffsetInCacheCanvas(this._drawCoordType, this._posDestX, this._posDestY);
+
         for (let ry = 0; ry < this._repeatY; ry++) {
             for (let rx = 0; rx < this._repeatX; rx++) {
-                const chipX = this._posDestX + (this._totalWidth * rx);
-                const chipY = this._posDestY + (this._totalHeight * ry);
+                const chipX = offsetX + this._charaWidth * rx;
+                const chipY = offsetY + this._charaHeight * ry;
                 if (this._imgFile) {
-                    this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._totalWidth, this._totalHeight);
+                    this._canvas.drawCanvasFree(this._imgFile, chipX, chipY, this._charaWidth, this._charaHeight);
                 } else if (this._drawChip) {
-                    for (let cy = 0; cy < this._cropY; cy++) {
-                        for (let cx = 0; cx < this._cropX; cx++) {
-                            this._canvas.drawCanvas(
-                                image,
-                                imgPosX + cx,
-                                imgPosY + cy,
-                                chipX + (this._chipWidth * cx),
-                                chipY + (this._chipHeight * cy),
-                                this._chipWidth,
-                                this._chipHeight
-                            );
+                    if (this._mapCropCache !== null) {
+                        this._mapCropCache.forEach((line, y) => {
+                            line.forEach(([cx, cy, cx2, cy2], x) => {
+                                if (!canDrawChip(cx, cy, cx2, cy2)) {
+                                    return;
+                                }
+                                this._canvas.drawCanvas(
+                                    image,
+                                    isMainAnimation ? cx : cx2,
+                                    isMainAnimation ? cy : cy2,
+                                    chipX + (this._chipWidth * x),
+                                    chipY + (this._chipHeight * y),
+                                    this._chipWidth,
+                                    this._chipHeight
+                                );
+                            })
+                        })
+                    } else {
+                        for (let cy = 0; cy < this._cropY; cy++) {
+                            for (let cx = 0; cx < this._cropX; cx++) {
+                                this._canvas.drawCanvas(
+                                    image,
+                                    imgPosX + cx,
+                                    imgPosY + cy,
+                                    chipX + (this._chipWidth * cx),
+                                    chipY + (this._chipHeight * cy),
+                                    this._chipWidth,
+                                    this._chipHeight
+                                );
+                            }
                         }
                     }
                 }
-                if (this._registry.properties.text) {
+                if (this.getHasText()) {
                     this._canvas.drawFont(
                         this._registry.properties.text,
                         chipX,
@@ -213,6 +294,16 @@ export default class WWAPictureItem {
                 }
             }
         }
+    }
+
+    public getDrawPictureCoords() {
+        return getDrawPictureCanvasCoords(
+            this._drawCoordType,
+            this._posDestX,
+            this._posDestY,
+            this._totalWidth,
+            this._totalHeight
+        );
     }
 
     /**
@@ -231,35 +322,60 @@ export default class WWAPictureItem {
         this._zoomX = this._zoomX + this._zoomAccelX;
         this._zoomY = this._zoomY + this._zoomAccelY;
         this._updatePictureCache();
+        const { width: canvasWidth, height: canvasHeight } = getPictureCanvasSize(
+            this._drawCoordType, this._totalWidth, this._totalHeight
+        );
+        this._canvas.updateSize(canvasWidth, canvasHeight);
         this._circleAngle = this._circleAngle + this._circleSpeed;
         if (this._fade !== 0) {
             this._opacity = this._opacity + this._fade;
-            this._canvas.ctx.globalAlpha = WWAPictureItem._roundPercentage(this._opacity) / 100;
+            // opacity の変更反映は後の this.updateCanvasContext で行う
         }
+        if (this._angleRadian !== 0 || this._rotateRadian !== 0) {
+            this._angleRadian += this._rotateRadian;
+            const { x: offsetX, y: offsetY } = getTranslateOffsetForRotate(
+                this._drawCoordType,
+                this._totalWidth,
+                this._totalHeight,
+                this._posBaseX,
+                this._posBaseY
+            );
+            this._canvas.ctx.translate(offsetX, offsetY);
+            this._canvas.ctx.rotate(this._angleRadian);
+            this._canvas.ctx.translate(-offsetX, -offsetY);
+        }
+        // this._canvas.updateSize の Canvas のサイズ変更によって内部の CanvasContext がリセットされることがあるので再設定する
+        this.updateCanvasContext();
     }
 
     private _updatePictureCache() {
-        this._totalWidth = adjustPositiveValue(this._sizeX) * this._cropX;
-        this._totalHeight = adjustPositiveValue(this._sizeY) * this._cropY;
-        this._chipWidth = Math.floor(this._totalWidth / this._cropX);
-        this._chipHeight = Math.floor(this._totalHeight / this._cropY);
-        this._posDestX = getHorizontalCorrectionBySizeAnchor(
-            getHorizontalCirclePosition(
-                this._posBaseX,
-                this._circleRadiusX,
-                this._circleAngle
-            ),
-            this._totalWidth,
-            this._anchor
+        this._chipWidth = adjustPositiveValue(this._sizeX);
+        this._chipHeight = adjustPositiveValue(this._sizeY);
+        this._charaWidth = this._chipWidth * this._cropX;
+        this._charaHeight = this._chipHeight * this._cropY;
+        this._totalWidth = this._charaWidth * this._repeatX;
+        this._totalHeight = this._charaHeight * this._repeatY;
+        this._posDestX = Math.floor(
+            getHorizontalCorrectionBySizeAnchor(
+                getHorizontalCirclePosition(
+                    this._posBaseX,
+                    this._circleRadiusX,
+                    this._circleAngle
+                ),
+                this._charaWidth,
+                this._anchor
+            )
         );
-        this._posDestY = getVerticalCorrectionBySizeAnchor(
-            getVerticalCirclePosition(
-                this._posBaseY,
-                this._circleRadiusY,
-                this._circleAngle
-            ),
-            this._totalHeight,
-            this._anchor
+        this._posDestY = Math.floor(
+            getVerticalCorrectionBySizeAnchor(
+                getVerticalCirclePosition(
+                    this._posBaseY,
+                    this._circleRadiusY,
+                    this._circleAngle
+                ),
+                this._charaHeight,
+                this._anchor
+            )
         );
     }
 
@@ -348,12 +464,20 @@ export default class WWAPictureItem {
             this._zoomAccelX !== 0 ||
             this._zoomAccelY !== 0 ||
             this._circleSpeed !== 0 ||
-            this._fade !== 0
+            this._fade !== 0 ||
+            this._rotateRadian !== 0
         );
+    }
+
+    private getHasText() {
+        return this._registry.properties.text;
     }
 
     private static _getImgPosByPicture(registry: PictureRegistry, isMainTime: boolean) {
         const { properties } = registry;
+        if (properties.imgMap?.[0] !== undefined && properties.imgMap?.[1] !== undefined) {
+            return [0, 0];
+        }
         if (properties.img?.[0] !== undefined && properties.img?.[1] !== undefined) {
             if (isMainTime) {
                 return [properties.img[0], properties.img[1]];
@@ -367,6 +491,49 @@ export default class WWAPictureItem {
             return [registry.imgPosX, registry.imgPosY];
         }
         return [registry.imgPosX2, registry.imgPosY2];
+    }
+
+    private static _getMapImgPosArray(registry: PictureRegistry, wwa: WWA): [number, number, number, number][][] | null {
+        const { properties } = registry;
+        const imgMapX = properties.imgMap?.[0] ?? -1;
+        const imgMapY = properties.imgMap?.[1] ?? -1;
+        // imgMap プロパティは [0, 0] も使用される場合があるため、負の値を指定した場合は未定義と扱うようにする
+        if (imgMapX < 0 || imgMapY < 0) {
+            return null;
+        }
+        const cropX = properties.crop?.[0] ?? 1;
+        const cropY = properties.crop?.[1] ?? 1;
+        const type = properties.imgMap?.[2] !== undefined && properties.imgMap[2] >= 1 ? PartsType.MAP : PartsType.OBJECT;
+        const array = [];
+        for (let my = 0; my < cropY; my++) {
+            const line = [];
+            for (let mx = 0; mx < cropX; mx++) {
+                const id = wwa.getPartsID(new Coord(imgMapX + mx, imgMapY + my), type);
+                if (id === 0) {
+                    line.push([0, 0, 0, 0]);
+                } else {
+                    const info = type === PartsType.MAP ? wwa.getMapInfo(id) : wwa.getObjectInfo(id);
+                    // 背景パーツでも ATR_X2 や ATR_Y2 に黒以外のイメージ座標が含まれている場合がある
+                    if (type === PartsType.MAP || info[WWAConsts.ATR_X2] === 0 && info[WWAConsts.ATR_Y2] === 0) {
+                        line.push([
+                            info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
+                        ]);
+                    } else {
+                        line.push([
+                            info[WWAConsts.ATR_X] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_X2] / WWAConsts.CHIP_SIZE,
+                            info[WWAConsts.ATR_Y2] / WWAConsts.CHIP_SIZE,
+                        ]);
+                    }
+                }
+            }
+            array.push(line);
+        }
+        return array;
     }
 
     private static _getFontValue(properties: PictureRegistry["properties"]): string {
@@ -390,13 +557,16 @@ export default class WWAPictureItem {
         return `${italicValue} ${boldValue} ${fontSizeValue} ${fontFamilyValue}`;
     }
 
-    private static _convertTextAlign(value: string): CanvasTextAlign | undefined {
+    private static _convertTextAlign(value: string): CanvasTextAlign | null {
+        if (!value) {
+            return null;
+        }
         if (["center", "end", "left", "right", "start"].includes(value)) {
             return value as CanvasTextAlign;
         }
         // TODO 例外を投げるべき？
         console.warn(`textAlign プロパティで不正な値が検出されました。: ${value}`);
-        return undefined;
+        return null;
     }
 
     private static _roundPercentage(value: number): number {

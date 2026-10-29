@@ -1,8 +1,11 @@
+@use 'common';
+@use 'main';
+
 $wwa_status_x_offset: 6px !default;
 
 
-%wide_cell_absolute {
-    @extend %wide_cell;
+@mixin wide_cell_absolute() {
+    @include common.wide_cell();
     position: absolute;
 }
 
@@ -13,46 +16,46 @@ div#wwa-sidebar {
     width: 120px;
     height: 440px;
     background-color: #000000;
-    font-family: $sans-serif_font;
+    font-family: main.$sans-serif_font;
 
     > div.wide-cell-row {
-        @extend %wide_cell_absolute;
+        @include wide_cell_absolute();
 
         &.onpress /*, div#wwa-sidebar>div.wide-cell-row:hover*/ {
-            @extend %button_cell_onpress;
+            @include common.button_cell_onpress();
         }
     }
     > div.item-cell {
-        @extend %item_cell;
+        @include common.item_cell();
         &.onpress /*, div#wwa-sidebar>div.item-cell:hover */ {
-            @extend %button_cell_onpress;
+            @include common.button_cell_onpress();
         }
     }
 }
 
 div.status-icon {
-    width: $wwa_icon_width;
-    height: $wwa_wide_cell_height;
+    width: common.$wwa_icon_width;
+    height: common.$wwa_wide_cell_height;
     margin-left: $wwa_status_x_offset;
 }
 
 div.status-value-box {
-    @extend %wide_cell_absolute;
+    @include wide_cell_absolute();
     top: 0;
     left: 0;
-    padding-left: $wwa_status_x_offset + $wwa_icon_width;
+    padding-left: $wwa_status_x_offset + common.$wwa_icon_width;
     box-sizing: border-box;
     text-align: center;
 }
 
 div.item-click-border {
-    @extend %item_cell;
+    @include common.item_cell();
     top: 0;
     left: 0;
 }
 
 div.item-disp {
-    @extend %item_cell;
+    @include common.item_cell();
     top: 0;
     left: 0;
 }
@@ -68,7 +71,7 @@ div.item-disp {
 }
 
 .wide-button {
-    @extend %wide_cell_absolute;
+    @include wide_cell_absolute();
     cursor: pointer;
 }
 
@@ -83,17 +86,17 @@ $_y: 0;
         top: $_y;
         left: 0px;
     }
-    $_y: $_y + $wwa_wide_cell_height;
+    $_y: $_y + common.$wwa_wide_cell_height;
 }
 
 @for $row from 0 to 4 {
     @for $column from 0 to 3 {
         #item#{($row * 3) + $column} {
             top: $_y;
-            left: $column * $wwa_icon_width;
+            left: $column * common.$wwa_icon_width;
         }
     }
-    $_y: $_y + $wwa_icon_width;
+    $_y: $_y + common.$wwa_icon_width;
 }
 
 @each $button_name in $menu_buttons {
@@ -105,5 +108,5 @@ $_y: 0;
         top: $_y;
         left: 0px;
     }
-    $_y: $_y + $wwa_wide_cell_height;
+    $_y: $_y + common.$wwa_wide_cell_height;
 }

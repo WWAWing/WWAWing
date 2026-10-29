@@ -11,11 +11,13 @@ import {
     StatusSolutionKind,
     TriggerParts,
     ScoreOption,
-    PreprocessMacroType
+    PreprocessMacroType,
+    Direction
 } from "./wwa_data";
 
 import { type TokenValues, type Descriminant, evaluateDescriminant, evaluateMacroArgExpression } from "./wwa_expression";
 import { convertRelativeValue } from "./wwa_message/utils";
+import { isValidPlayerDirection } from "./wwa_util";
 
 /**
  * 値が更新された時に、再評価されるべき値を返す関数の型。
@@ -519,6 +521,10 @@ export class Macro {
                     this._executePictureMacro();
                     return {};
                 }
+                case MacroType.DISABLE_BATTLE_REPORT: {
+                    this._executeDisableBattleReportMacro();
+                    return {};
+                }
                 default: {
                     console.log("不明なマクロIDが実行されました:" + this.macroType);
                     return {};
@@ -555,10 +561,15 @@ export class Macro {
 
     // JumpGateマクロ実行部
     private _executeJumpGateMacro(): void {
-        this._concatEmptyArgs(2);
-        var x = this._evaluateIntValue(0);
-        var y = this._evaluateIntValue(1);
-        this._wwa.forcedJumpGate(x, y);
+        this._concatEmptyArgs(3);
+        const x = this._evaluateIntValue(0);
+        const y = this._evaluateIntValue(1);
+        const dir = this._evaluateIntValue(2, Direction.NO_DIRECTION);
+        if (!isValidPlayerDirection(dir)) {
+            // NOTE: マクロのエラーは握りつぶされる
+            throw new TypeError("この値の向きにプレイヤーを向けることはできません:" + dir);
+        }
+        this._wwa.forcedJumpGate(x, y, dir);
     }
     // RecPositionマクロ実行部
     private _executeRecPositionMacro(): void {
@@ -1103,9 +1114,10 @@ export class Macro {
         this._concatEmptyArgs(2);
         // 注) $sound マクロは、マップデータ読み込み時に全メッセージ解析でロードする音源を決定しているため
         // 変数などによるサウンド番号指定を受け付けない
+        // また、文字列のサウンドIDも受け付けず、数値のサウンドIDのみ受け付ける
         const id = parseInt(this.macroArgs[0]);
         const bgmDelayMs = parseInt(this.macroArgs[1]);
-        this._wwa.playSound(id, bgmDelayMs);
+        this._wwa.playSound(id,{ bgmDelayDurationMs: bgmDelayMs });
     }
     private _executeGamePadButtonMacro(): void {
         this._concatEmptyArgs(2);
@@ -1162,6 +1174,12 @@ export class Macro {
         }
         const definePartsType = this._evaluateIntValue(2, PartsType.OBJECT);
         this._wwa.setPictureRegistry(layerNumber, definePartsNumber, definePartsType, this._triggerParts.position);
+    }
+
+    private _executeDisableBattleReportMacro(): void {
+        this._concatEmptyArgs(1);
+        const disableBattleReportFlag = Boolean(this._evaluateIntValue(0));
+        this._wwa.disableBattleEstimate(disableBattleReportFlag);
     }
 
     private _executeDelayBgmMacro(): void {

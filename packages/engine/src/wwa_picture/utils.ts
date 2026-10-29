@@ -45,11 +45,14 @@ const validatePropertyValue = (key: string, value: unknown): boolean => {
             break;
         }
         case "string":
+            // TODO "text" プロパティのように文字列も数値も受け付けるプロパティと、 "textAlign" プロパティのように文字列しか受け付けないプロパティで種類を分けたい
             if (typeof value !== "string") {
-                if (typeof value !== "number") {
+                if (typeof value === "number") {
+                    console.warn(`プロパティ ${key} は文字列形式を推奨しています。実際に入った値は ${value} です。`);
+                } else {
                     console.warn(`プロパティ ${key} では文字列形式である必要があります。実際に入った値は ${value} です。`);
+                    return false;
                 }
-                return false;
             }
     }
     return true;
@@ -165,6 +168,9 @@ export const getArrayItemFromSingleOrArray = <T>(value: T | T[], index: number, 
     return value[index];
 };
 
+export const canDrawChip = (imgPosX: number, imgPosY: number, imgPosX2: number, imgPosY2: number) =>
+    imgPosX > 0 || imgPosY > 0 || imgPosX2 > 0 || imgPosY2 > 0;
+
 export const adjustPositiveValue = (value: number) => {
     if (value < 0) {
         return 0;
@@ -254,3 +260,12 @@ export const getVerticalCirclePosition = (y: number, radius: number, angle: numb
     const rad = angle * Math.PI / 180.0;
     return y + (radius * Math.sin(rad));
 };
+
+/**
+ * 指定した横幅を、 Canvas で使用可能な横幅に変換します。
+ * 横幅が 0 以下になると OffscreenCanvas が機能されないため、1以上の値に調整します。
+ * @param width 横幅 (px 単位)
+ * @returns Canvas で設定しても安全な状態の横幅 (px 単位)
+ */
+export const convertAppliableCanvasWidth = (width: number) => Math.max(width, 1);
+export const convertAppliableCanvasHeight = (height: number) => Math.max(height, 1);

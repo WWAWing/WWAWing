@@ -7,20 +7,20 @@ $wwa_wide_cell_font_size: 14px !default;
 
 $wwa_icon_width: 40px !default;
 
-%wide_cell {
+@mixin wide_cell() {
     width: 120px;
     height: $wwa_wide_cell_height;
     line-height: $wwa_wide_cell_height;
     font-size: $wwa_wide_cell_font_size;
 }
 
-%item_cell {
+@mixin item_cell() {
     position: absolute;
     width: 40px;
     height: 40px;
 }
 
-%button_cell_onpress {
+@mixin button_cell_onpress() {
     $border_size: 3px;
 
     margin: $border_size 0 0 $border_size;

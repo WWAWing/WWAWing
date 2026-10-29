@@ -1,5 +1,5 @@
 import { LoadStage, WWAConsts, WWALoaderEventEmitter } from "../../infra";
-import { WWAData } from "@wwawing/common-interface";
+import { WWAData, SystemSound } from "@wwawing/common-interface";
 
 export class TextLoader {
   public readonly OLDVER_MESSAGE_MAX: number = 400;
@@ -122,7 +122,7 @@ export class TextLoader {
     wwaData.gameSpeedIndex = WWAConsts.DEFAULT_SPEED_INDEX;
     wwaData.permitChangeGameSpeed = true;
     wwaData.userVar = Array.from({length: WWAConsts.USER_VAR_NUM}).map(() => 0);
-    wwaData.userNamedVar = [];
+    wwaData.userNamedVar = new Map();
     wwaData.playTime = 0;
 
     wwaData.isVisibleStatusEnergy = true;
@@ -135,6 +135,9 @@ export class TextLoader {
     wwaData.bgmDelayDurationMs = 0;
 
     wwaData.pictureRegistry = [];
+
+    wwaData.decisionSound = SystemSound.DECISION;
+    wwaData.attackSound = SystemSound.ATTACK;
 
     return wwaData;
   }

@@ -6,27 +6,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          node-version: '18.x'
-          registry-url: 'https://registry.npmjs.org'
-      
-      - name: restore node_modules
-        uses: actions/cache@v3
+          lfs: true
+      - uses: ./.github/actions/init
         with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-
-      - name: "Install & Build"
+          lfs: true
+      - name: "Build"
         run: |
-          npm i -g npm@8
-          npm install
-          npm run build
-
+          pnpm run build
       - name: "test"
         run: |
-          npm test
+          pnpm test
