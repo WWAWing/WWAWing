@@ -27,9 +27,5 @@
   "license": "CC-BY-4.0",
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=24",
-    "npm": ">=11"
   }
 }

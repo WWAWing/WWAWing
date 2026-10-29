@@ -1,0 +1,16 @@
+packages:
+  - "packages/*"
+# サプライチェーン攻撃対策のため、リリースされてから一週間経過したパッケージのみを使用するようにする
+minimumReleaseAge: 10080 # 7days = 60 * 24 * 7 minutes
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+# ただし、内製パッケージは除外する
+minimumReleaseAgeExclude:
+  - "@wwawing/*"
+  # 以下は pnpm 移行時の暫定措置 (2026-11-03 までに削除予定)
+  - "postcss-selector-parser"
+  - vite@8.3.5
+allowBuilds:
+  '@parcel/watcher': true 
+  '@swc/core': true
+  unrs-resolver: true 
