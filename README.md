@@ -1,22 +1,27 @@
 # WWA Wing
 インターネット RPG 「[World Wide Adventure](http://wwajp.com/)」 の TypeScript / JavaScript 実装です。
 
-このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna-lite により自動化されています。
+このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のパッケージにまたがる操作などは pnpm workspace により自動化されています。
 
-## 準備
-- Node.js 24系
-- npm 11系
-- **Git LFS** (通常の開発をする場合は不要ですが、wwa-server の生成をする場合に必要になります。)
+## 準備 
+- Git, **Git LFS** (通常の開発をする場合は不要ですが、wwa-server の生成をする場合に必要になります。) が必要です。
   - 必ず1度は `git lfs install` を実行する必要があります。詳しくは [Git LFS の Wiki 「Installation」](https://github.com/git-lfs/git-lfs/wiki/Installation) をご覧ください。
 
-を準備してください。
+これ以外については、[mise-en-place](https://mise.jdx.dev/) （以下, mise）をご利用の方は、何も準備しなくても開発に必要なツールは用意されます。
+
+以下は mise を使わない場合に必要なツールを用意する手順です。
+1. [`.node-version`](./.node-version) に記述されたバージョンの [Node.js](https://nodejs.org/ja/download) をインストールしてください。
+2. [pnpm](https://pnpm.io/ja/installation) の導入手順に従って、 pnpm をインストールしてください。
+  - 実際に使われる pnpm のバージョンは [`package.json`](./package.json) の `packageManager` フィールドで決定されますが、実際に使われる pnpm のバージョンを自動で決定する機構が入っているため、 pnpm v10 以降であれば、インストールするバージョン不問です（なるべく新しいものの利用は推奨します）。
+  - Corepack は使用しておりませんのでご注意ください。
+3. `node -v`, `pnpm -v` などで、使われるバージョンを確認してください。
 
 この `README.md` があるディレクトリで、
 
 ``` sh
 git lfs pull
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
 
 することで、各パッケージが動作可能な状態になります。
@@ -35,9 +40,13 @@ OSは不問です。
 
 ## ディレクトリ構成
 ```
-├── lerna.json                                  ## lerna-lite の構成ファイル
+├── .node-version                               ## 使用する Node.js のバージョン
+├── mise.toml                                   ## mise の設定ファイル
+├── package.json                                ## ルートの package.json (全パッケージにまたがるスクリプトを定義)
+├── pnpm-workspace.yaml                         ## pnpm workspace の構成ファイル
 ├── netlify.toml                                ## Netlify によるテストファイル自動生成のための設定ファイル
 ├── tsconfig.json                               ## TypeScript のコンパイル設定ファイル
+├── docs ===================================== ## WWA Script などの開発者向けドキュメント
 └── packages ================================== ## このディレクトリ以下に各 npm パッケージを格納しています
      ├── all ================================== ## WWA Wing の配布物すべてを含むパッケージ
      ├── assets =============================== ## 開発時や配布物の生成時に使う静的なファイル
@@ -47,7 +56,10 @@ OSは不問です。
      ├── event-emitter ======================== ## Node.js でもブラウザでも動作する EventEmitter ライブラリ
      ├── loader =============================== ## WWALoader (WWAのマップデータを WWA Wing のデータに変換するプログラム)
      ├── page-generator ======================= ## WWA のHTMLファイルを生成するプログラム
-     └── styles =============================== ## sassスタイルシートのファイル (scss形式)
+     ├── serve-index ========================== ## ディレクトリ一覧を表示するミドルウェア (wwa-server で使用)
+     ├── styles =============================== ## sassスタイルシートのファイル (scss形式)
+     ├── util ================================= ## パッケージ間で共有するユーティリティ関数
+     └── virtual-pad ========================== ## スマートフォン・タブレット向けの仮想ゲームパッド
 ```
 
 ## ローカルで動かしたい

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/page-generator",
-  "version": "4.0.28",
+  "version": "4.0.30",
   "description": "a HTML file generator for WWA Wing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -11,7 +11,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm run build && shx mkdir -p output && node debug/debug.js",
+    "start": "pnpm run build && shx mkdir -p output && node debug/debug.js",
     "build": "run-p build:*",
     "build:lib": "tsc && shx cp ./src/wwa.pug ./lib/wwa.pug",
     "build:module": "tsc -p ./tsconfig.module.json && shx cp ./src/wwa.pug ./module/wwa.pug",
@@ -32,7 +32,7 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^24",
+    "@types/node": "^26",
     "@types/pug": "^2.0.6",
     "npm-run-all2": "^8.0.1",
     "shelljs": "^0.10.0",
@@ -40,14 +40,10 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@wwawing/common-interface": "file:../common-interface",
+    "@wwawing/common-interface": "workspace:*",
     "pug": "^3.0.3"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=24",
-    "npm": ">=11"
   }
 }

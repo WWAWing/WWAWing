@@ -4,82 +4,94 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-WWA Wing は、インターネット RPG 「World Wide Adventure」の TypeScript / JavaScript 実装です。このリポジトリは lerna-lite で管理される monorepo であり、`packages/` ディレクトリ下に複数の npm パッケージが含まれています。
+WWA Wing は、インターネット RPG 「World Wide Adventure」の TypeScript / JavaScript 実装です。このリポジトリは pnpm workspace で管理される monorepo であり、`packages/` ディレクトリ下に複数の npm パッケージが含まれています。
 
 ## 必要な環境
-
-- Node.js 24系
-- npm 11系
-- Git LFS (wwa-server の生成時のみ必要)
-  - 開発前に一度 `git lfs install` を実行する必要があります
+[`README.md`](./README.md) に記載。
 
 ## 基本的なコマンド
 
 ### 初期セットアップ
 ```sh
 git lfs pull
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
+
+パッケージマネージャーは pnpm です (npm は使用不可)。pnpm のバージョンは `package.json` の `packageManager`、Node.js のバージョンは `.node-version` で決まります。
 
 ### 開発コマンド
 ```sh
 # すべてのパッケージをビルド
-npm run build
+pnpm run build
 
 # engine の開発サーバーを起動 (変更を監視してローカルでサーブ)
-npm run start
+pnpm run start
 
-# テストを実行 (engine と serve-index パッケージ)
-npm run test
+# テストを実行 (engine, loader (型チェックのみ), serve-index パッケージ)
+pnpm run test
 
 # すべてのビルド成果物をクリーン
-npm run clean
+pnpm run clean
 ```
+
+### リリース関連コマンド
+```sh
+# 全パッケージ (ルートを除く) のバージョンを上げる (patch/minor/major/X.Y.Z)
+pnpm run version-up patch
+
+# ビルドして、未公開のバージョンのパッケージを依存関係順に publish
+pnpm run publish:all --tag unstable
+```
+
+通常は GitHub Actions の `WWA Wing Publish` ワークフロー (`.github/workflows/publish.yml`) から実行します。
 
 ### パッケージ別コマンド
 
 **Engine パッケージ** (`packages/engine`):
 ```sh
-# テストを実行
-npm run test
+# テストを実行 (型チェック + Jest)
+pnpm run test
 
 # 開発サーバーを起動 (watch モード)
-npm run start
+pnpm run start
 
 # プロダクションビルド
-npm run build
+pnpm run build
 
 # 開発ビルド (watch モード)
-npm run build:dev
+pnpm run build:dev
 
 # プロダクションファイルのデプロイ
-npm run deploy:prod
+pnpm run deploy:prod
+
+# 型チェック (watch モード)
+pnpm run type-check
 ```
 
 **Loader パッケージ** (`packages/loader`):
 ```sh
 # CommonJS と ES モジュール両方をビルド
-npm run build
+pnpm run build
 
 # ブラウザデモを起動
-npm run start
+pnpm run start
 ```
 
 **Styles パッケージ** (`packages/styles`):
 ```sh
 # SCSS を CSS にコンパイル
-npm run build
+pnpm run build
 ```
 
 ### テストの実行
 
 ルートディレクトリから特定のパッケージのテストを実行:
 ```sh
-npm test -- --scope @wwawing/engine
+pnpm --filter @wwawing/engine test
 ```
 
-または、パッケージディレクトリに移動して `npm test` を実行。
+または、パッケージディレクトリに移動して `pnpm test` を実行。
 
 ## Monorepo アーキテクチャ
 
@@ -100,7 +112,7 @@ npm test -- --scope @wwawing/engine
 
 ### パッケージ間の依存関係
 
-パッケージは `file:` プロトコルを使用して兄弟パッケージを参照します。主な依存関係:
+パッケージは `workspace:*` プロトコルを使用して兄弟パッケージを参照します (publish 時に実際のバージョン番号に置き換えられます)。主な依存関係:
 - `engine` の依存先: `common-interface`, `loader`, `event-emitter`, `assets`, `styles`, `page-generator`, `debug-server`, `virtual-pad`, `util`
 - `loader` の依存先: `common-interface`, `event-emitter`
 - ほとんどのパッケージが共有型のために `common-interface` に依存
@@ -108,8 +120,8 @@ npm test -- --scope @wwawing/engine
 ### ビルドシステム
 
 - **TypeScript**: ターゲット ES2018、CommonJS モジュールでコンパイル
-- **Webpack**: engine パッケージのバンドルに使用
-- **lerna-lite**: パッケージ間の操作を統括
+- **Vite**: engine パッケージのバンドル、loader のブラウザデモに使用
+- **pnpm workspace**: パッケージ間の操作 (一括ビルド、バージョン更新、publish) を統括
 - **ts-node with SWC**: ビルドスクリプトの高速な TypeScript 実行
 - **Jest with SWC**: engine パッケージのテストフレームワーク
 
@@ -164,10 +176,11 @@ npm test -- --scope @wwawing/engine
 - `X` (メジャー): 破壊的変更や大規模な UX 更新
 
 ### 不安定版
-形式: `X.Y.Z-unstable.based-on.A.B.C` または `X.Y.Z-unstable.based-on.A.B.C.p.n`
-- `X.Y.Z`: リリース予定のバージョン
-- `A.B.C`: ベースとなる安定版バージョン
-- `p.n`: プレリリースの増分番号
+- `v4` 系 (`4.Y.Z`) はバージョン名に `unstable` を含みませんが、すべて不安定版です。npm には `unstable` タグで公開されます (`latest` タグは `v3` 系の安定版)。
+- 特定機能の検証用リリースは `X.Y.Z-hogehoge.based-on.A.B.C` または `X.Y.Z-hogehoge.based-on.A.B.C.p.n` 形式で、`hogehoge` と同名のタグで公開されます。
+  - `X.Y.Z`: リリース予定のバージョン
+  - `A.B.C`: ベースとなるバージョン
+  - `p.n`: プレリリースの増分番号
 
 ## 重要な注意事項
 
@@ -176,16 +189,16 @@ npm test -- --scope @wwawing/engine
 - **モバイル**: Android の最新版 Chrome、iOS の最新版 Safari
 
 ### Git LFS
-通常の開発には Git LFS は不要ですが、wwa-server の生成には必要です。マップデータと大きなアセットは LFS に保存されています。
+通常の開発には Git LFS は不要ですが、wwa-server の生成には必要です。大きなアセットは LFS に保存されています。
 
 ### 開発ワークフロー
 1. `packages/engine/src/` や他のパッケージで変更を行う
-2. ルートから `npm run build` を実行してすべてのパッケージをビルド
-3. `npm start` を実行して開発サーバーを起動しテスト
+2. ルートから `pnpm run build` を実行してすべてのパッケージをビルド
+3. `pnpm start` を実行して開発サーバーを起動しテスト
 4. `__tests__/` ディレクトリにテストを作成
-5. コミット前に `npm test` を実行
+5. コミット前に `pnpm test` を実行
 
 ### Monorepo の考慮事項
 - `common-interface` への変更は複数のパッケージに影響します
 - 適切な依存関係解決のため、常にルートからビルドしてください
-- すべてのパッケージでスクリプトを実行するには `lerna run <command>` を使用します
+- すべてのパッケージでスクリプトを実行するには `pnpm -r run <command>` を使用します

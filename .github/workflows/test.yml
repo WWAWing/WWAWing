@@ -15,7 +15,7 @@ jobs:
           lfs: true
       - name: "Build"
         run: |
-          npm run build
+          pnpm run build
       - name: "test"
         run: |
-          npm test
+          pnpm test
