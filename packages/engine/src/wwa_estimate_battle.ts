@@ -175,10 +175,15 @@ function calc(
     const playerEnergyBeforeBattle = playerStatus.energy;
 
     // デフォルトダメージ関数を使っている場合の攻撃無効判定
-    if(
+    // プレイヤーが敵にダメージを与えられない場合は、攻撃無効と判定する。
+    // 以下の 2 パターンが含まれる。
+    // 1. 一方的に敵からプレイヤーにダメージが入り、プレイヤー生命力が 0 になってしまう場合
+    // 2. 敵もプレイヤーにダメージを与えられず、戦闘が開始できない場合（システムメッセージ CANNOT_DAMAGE_MONSTER が出る）
+    //
+    // 注) カスタムダメージ関数を使っている場合は、1ターン目の結果でダメージ量の予測ができないため、攻撃無効判定はせずに必ずシミュレーションを行う。
+    if (
         usingDefaultDamageFunction &&
-        clonedPlayerStatus.strength <= clonedMonster.status.defence &&
-        clonedPlayerStatus.defence >= clonedMonster.status.strength
+        clonedPlayerStatus.strength <= clonedMonster.status.defence 
     ) {
         return { cannotDamageMonster: true, estimatedDamage: 0 }
     }

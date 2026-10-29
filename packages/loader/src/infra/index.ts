@@ -187,6 +187,10 @@ export function createDefaultWWAData(): WWAData {
         gameOverPolicy: "default",
         bgmDelayDurationMs: undefined,
         customSystemMessages: {},
+        pictureRegistry: [],
+        decisionSound: undefined,
+        attackSound: undefined,
+        battleEstimateDisabled: undefined,
     };
 }
 

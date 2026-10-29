@@ -4,15 +4,15 @@
       "target": "es2018",
       "module": "commonjs",
       "moduleResolution": "node",
-      "lib": [
-        "esnext",
-        "dom"
-      ],
       "declaration": true,
       "removeComments": true,
       "experimentalDecorators": true,
       "noLib": false,
       "esModuleInterop": true,
-      "resolveJsonModule": true
+      "resolveJsonModule": true,
+      "skipLibCheck": true
     },
+    "ts-node": {
+      "swc": true
+    }
   }

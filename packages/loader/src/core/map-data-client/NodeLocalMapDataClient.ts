@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "node:fs";
 import { BaseMapDataClient } from "./BaseMapDataClient";
 /**
 * Node.js で動作しているローカルのファイルのマップデータを取得するクライアント
