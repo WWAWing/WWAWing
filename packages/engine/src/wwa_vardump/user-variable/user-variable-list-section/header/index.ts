@@ -1,8 +1,10 @@
+import * as ElementStore from "../../../infra/element-store"
 import * as Information from "./information";
 
 export { Information };
 
 export interface Props {
+  elementStore: ElementStore.Props,
   heading: {
     text: string;
   };
@@ -13,6 +15,7 @@ export interface Props {
 }
 
 export function createElement({
+  elementStore,
   heading,
   contentVisibilityToggleButton,
   information,
@@ -22,7 +25,9 @@ export function createElement({
     createHeadingAreaElement({ heading, contentVisibilityToggleButton })
   );
   if (information) {
-    element.appendChild(Information.createElemnt());
+    const informationElement = Information.createElemnt();
+    element.appendChild(informationElement);
+    elementStore.updateNamedUserVarInformationElement(informationElement);
   }
 
   return element;

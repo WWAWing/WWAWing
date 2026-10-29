@@ -1,19 +1,27 @@
 # WWA Wing
 インターネット RPG 「[World Wide Adventure](http://wwajp.com/)」 の TypeScript / JavaScript 実装です。
 
-このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のリポジトリにまたがる操作などは lerna により自動化されています。
+このリポジトリは、 `packages` ディレクトリ下 にある複数の npm パッケージで管理されており、複数のパッケージにまたがる操作などは pnpm workspace により自動化されています。
 
-## 準備
-- Node.js 18系
-- npm 8系
+## 準備 
+- Git, **Git LFS** (通常の開発をする場合は不要ですが、wwa-server の生成をする場合に必要になります。) が必要です。
+  - 必ず1度は `git lfs install` を実行する必要があります。詳しくは [Git LFS の Wiki 「Installation」](https://github.com/git-lfs/git-lfs/wiki/Installation) をご覧ください。
 
-を準備してください。
+これ以外については、[mise-en-place](https://mise.jdx.dev/) （以下, mise）をご利用の方は、何も準備しなくても開発に必要なツールは用意されます。
+
+以下は mise を使わない場合に必要なツールを用意する手順です。
+1. [`.node-version`](./.node-version) に記述されたバージョンの [Node.js](https://nodejs.org/ja/download) をインストールしてください。
+2. [pnpm](https://pnpm.io/ja/installation) の導入手順に従って、 pnpm をインストールしてください。
+  - 実際に使われる pnpm のバージョンは [`package.json`](./package.json) の `packageManager` フィールドで決定されますが、実際に使われる pnpm のバージョンを自動で決定する機構が入っているため、 pnpm v10 以降であれば、インストールするバージョン不問です（なるべく新しいものの利用は推奨します）。
+  - Corepack は使用しておりませんのでご注意ください。
+3. `node -v`, `pnpm -v` などで、使われるバージョンを確認してください。
 
 この `README.md` があるディレクトリで、
 
 ``` sh
-npm install
-npm run build
+git lfs pull
+pnpm install
+pnpm run build
 ```
 
 することで、各パッケージが動作可能な状態になります。
@@ -32,10 +40,13 @@ OSは不問です。
 
 ## ディレクトリ構成
 ```
-├── getEngineVersion.sh                         ## WWA Wing 本体のバージョンを取得するためのシェルスクリプト (Travis CIで使用）
-├── lerna.json                                  ## lerna の構成ファイル
+├── .node-version                               ## 使用する Node.js のバージョン
+├── mise.toml                                   ## mise の設定ファイル
+├── package.json                                ## ルートの package.json (全パッケージにまたがるスクリプトを定義)
+├── pnpm-workspace.yaml                         ## pnpm workspace の構成ファイル
 ├── netlify.toml                                ## Netlify によるテストファイル自動生成のための設定ファイル
 ├── tsconfig.json                               ## TypeScript のコンパイル設定ファイル
+├── docs ===================================== ## WWA Script などの開発者向けドキュメント
 └── packages ================================== ## このディレクトリ以下に各 npm パッケージを格納しています
      ├── all ================================== ## WWA Wing の配布物すべてを含むパッケージ
      ├── assets =============================== ## 開発時や配布物の生成時に使う静的なファイル
@@ -45,7 +56,10 @@ OSは不問です。
      ├── event-emitter ======================== ## Node.js でもブラウザでも動作する EventEmitter ライブラリ
      ├── loader =============================== ## WWALoader (WWAのマップデータを WWA Wing のデータに変換するプログラム)
      ├── page-generator ======================= ## WWA のHTMLファイルを生成するプログラム
-     └── styles =============================== ## sassスタイルシートのファイル (scss形式)
+     ├── serve-index ========================== ## ディレクトリ一覧を表示するミドルウェア (wwa-server で使用)
+     ├── styles =============================== ## sassスタイルシートのファイル (scss形式)
+     ├── util ================================= ## パッケージ間で共有するユーティリティ関数
+     └── virtual-pad ========================== ## スマートフォン・タブレット向けの仮想ゲームパッド
 ```
 
 ## ローカルで動かしたい
@@ -54,10 +68,15 @@ OSは不問です。
 WWA Wing 本体のソースは `packages/engine/src` 下にあります。
 
 ## ブランチ戦略
-- `develop` ブランチが最新です。
-- 現在リリースされているWWA Wingは `master` ブランチの最新です。
-- Pull Request を作成する場合は、 リポジトリのフォークを作成した上でこのリポジトリの `develop` ブランチに向けて作成してください。
-- リリース作業は　WWA Wing Team のメンテナ(まつゆき @matsuyuki-a)が行います。(`develop` ブランチを `master` ブランチにマージします。)
+- `v4` ブランチが現在開発中の最新です。 `v4` ブランチの内容が不安定版としてリリースされます。不安定版は、後方互換性のない変更がリリースされる可能性があります。
+- `v3` ブランチは安定版の最新です。原則として、致命的な不具合やセキュリティ上の対応が必要な場合のみ更新されます。
+- Pull Request を作成する場合は、 リポジトリのフォークを作成した上でこのリポジトリの `v4` ブランチに向けて作成してください。
+- リリース作業は　WWA Wing Team のメンテナ （@matsuyuki-a, @aokashi, @hirarira）が行います。
+- `v3` ブランチに新しい変更が入った場合でも、 `v4` ブランチは `v3` ブランチに追従しません。 `v3`, `v4` 双方に適用すべき差分がある場合は、 `v3` で対応後、 `v4` に cherry-pick してください。
+
+### ブランチ戦略変更に伴う変更点について
+- 2025-10-30 より、ブランチ戦略が見直されました。 旧 `develop`, `feat/picture-feature-with-wwa-script` ブランチは `v4` ブランチ, 旧 `master` ブランチは `v3` ブランチ相当になっています。
+- `v4` 系は 2025-10-30 現在すべて不安定版です。以前はバージョン名に `unstable` が入っていましたが、入っていなくとも不安定版ですのでご注意願います。
 
 詳細は [コントリビューションガイドライン](./CONTRIBUTING.md) に含まれています。
 
