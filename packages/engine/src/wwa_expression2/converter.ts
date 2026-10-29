@@ -688,7 +688,7 @@ function convertArrowFunctionExpression(node: Acorn.ArrowFunctionExpression): Ww
       return paramWwaNode;
     }
     if (paramWwaNode.type === "Literal") {
-      throw new Error(`パラメーターの引数 ${paramWwaNode.value} はシンボルではありません。`);
+      throw new Error(`パラメーターの引数 ${String(paramWwaNode.value)} はシンボルではありません。`);
     }
     throw new Error("パラメーターの引数が間違っています。");
   });

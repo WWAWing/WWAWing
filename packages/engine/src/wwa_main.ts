@@ -1412,7 +1412,11 @@ export class WWA {
         const templateText = "`" + targetText.replace("`", "\`") + "`";
         const acornNode = ExpressionParser2.parse(templateText);
         const wwaNode = ExpressionParser2.convertNodeAcornToWwa(acornNode);
-        return this.evalCalcWwaNodeGenerator.evalWwaNode(wwaNode);
+        const result = this.evalCalcWwaNodeGenerator.evalWwaNode(wwaNode);
+        if (typeof result !== "string") {
+            throw new TypeError(`テンプレート文字列の評価結果が文字列ではありませんでした。評価結果: ${result}`);
+        }
+        return result;
     }
 
     /** ユーザ変数読み込み関数 */
