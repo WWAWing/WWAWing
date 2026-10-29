@@ -67,7 +67,7 @@ export interface BinaryOperation {
 
 export interface Symbol {
   type: "Symbol";
-  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "CX" | "CY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF" | "ENEMY_GD" | "PICTURE" | "PLAYER_PX" | "PLAYER_PY" | "MOVE_SPEED" | "MOVE_FRAME_TIME" | "LP" | "SORT_A" | "SORT_B" | "undefined";
+  name: "ITEM" | "m" | "o" | "v" | "X" | "Y" | "ID" | "TYPE" | "PX" | "PY" | "CX" | "CY" | "HP" | "HPMAX" | "AT" | "AT_TOTAL" | "DF" | "DF_TOTAL" | "GD" | "STEP" | "TIME" | "PDIR" | "i" | "j" | "k" | "LOOPLIMIT" | "ITEM_ID" | "ITEM_POS" | "ENEMY_HP" | "ENEMY_AT" | "ENEMY_DF" | "ENEMY_GD" | "PICTURE" | "PLAYER_PX" | "PLAYER_PY" | "MOVE_SPEED" | "MOVE_FRAME_TIME" | "LP" | "SORT_A" | "SORT_B" | "MOVE_SPEED" | "MOVE_FRAME_TIME" | "f" | "undefined";
 }
 
 export interface ArrayOrObject1D {
@@ -219,6 +219,12 @@ export interface ArrayExpression {
   elements: WWANode[]
 }
 
+export interface ArrowFunctionExpression {
+  type: "ArrowFunctionExpression",
+  params: WWANode[],
+  body: WWANode,
+}
+
 export type WWANode = |
   PartsAssignment |
   ItemAssignment |
@@ -250,4 +256,5 @@ export type WWANode = |
   Property |
   ObjectExpression |
   ArrayExpression |
-  LoopPointerAssignment;
+  LoopPointerAssignment |
+  ArrowFunctionExpression;

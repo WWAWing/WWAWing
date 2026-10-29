@@ -1403,6 +1403,22 @@ export class WWA {
         return ExpressionParser2.convertNodeAcornToWwaArray(acornNode);
     }
 
+    /**
+     * テンプレート文字列を評価して評価後のテキストを出力します。
+     * @param targetText 対象のテキスト (` 抜き)
+     * @returns 評価後のテキスト
+     */
+    public evaluateTemplateText = (targetText: string): string => {
+        const templateText = "`" + targetText.replace("`", "\`") + "`";
+        const acornNode = ExpressionParser2.parse(templateText);
+        const wwaNode = ExpressionParser2.convertNodeAcornToWwa(acornNode);
+        const result = this.evalCalcWwaNodeGenerator.evalWwaNode(wwaNode);
+        if (typeof result !== "string") {
+            throw new TypeError(`テンプレート文字列の評価結果が文字列ではありませんでした。評価結果: ${result}`);
+        }
+        return result;
+    }
+
     /** ユーザ変数読み込み関数 */
     private setUserVarStatus(userVarStatus: (JsonResponseData | JsonResponseError<JsonResponseErrorKind> | {
         kind: "noFileSpecified";
