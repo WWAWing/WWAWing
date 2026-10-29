@@ -4,6 +4,7 @@
     "rootDir": "./src",
     "outDir": "./lib",
     "module": "esnext",
+    "lib": ["DOM"],
     "strict": true,
     "noImplicitAny": true,
   },

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/engine",
-  "version": "3.12.24",
+  "version": "3.12.33",
   "description": "World Wide Adventure: an RPG Engine.",
   "main": "./lib/wwa.js",
   "files": [
@@ -11,16 +11,16 @@
   "scripts": {
     "test": "jest",
     "start": "run-p build:dev deploy:dev server",
-    "build": "npm-run-all clean build:prod",
+    "build": "run-s clean build:prod",
     "build:prod": "webpack --config webpack.config.prod.ts",
     "build:dev": "webpack -w",
     "deploy:prod": "shx mkdir -p lib && run-p deploy:common:* deploy:prod:*",
     "deploy:dev": "shx mkdir -p lib && run-p deploy:common:* deploy:dev:*",
-    "deploy:common:audio": "shx cp -R ../../node_modules/@wwawing/assets/audio lib/",
-    "deploy:common:images": "shx cp ../../node_modules/@wwawing/assets/images/*.* lib/",
-    "deploy:common:mapdata": "shx cp ../../node_modules/@wwawing/assets/mapdata/*.* lib/",
-    "(UNDONE:スキップ) deploy:common:vars": "shx cp ../../node_modules/@wwawing/assets/vars/*.* lib/",
-    "deploy:common:style": "shx cp ../../node_modules/@wwawing/styles/output/*.* lib/ && shx cp ../../node_modules/@wwawing/assets/style/*.* lib/",
+    "deploy:common:audio": "shx cp -R ../assets/audio lib/",
+    "deploy:common:images": "shx cp ../assets/images/*.* lib/",
+    "deploy:common:mapdata": "shx cp ../assets/mapdata/*.* lib/",
+    "(UNDONE:スキップ) deploy:common:vars": "shx cp ../assets/vars/*.* lib/",
+    "deploy:common:style": "shx cp ../styles/output/*.* lib/ && shx cp ../assets/style/*.* lib/",
     "deploy:prod:html": "ts-node ./debug/make-debug-pages",
     "deploy:dev:html": "ts-node ./debug/make-debug-pages dev",
     "clean": "shx rm -rf lib",
@@ -50,17 +50,17 @@
     "@types/terser-webpack-plugin": "^5.2.0",
     "@types/webpack": "^5.28.0",
     "@wwawing/assets": "4.0.2",
-    "@wwawing/common-interface": "file:../common-interface",
+    "@wwawing/common-interface": "workspace:*",
     "@wwawing/debug-server": "4.0.2",
-    "@wwawing/event-emitter": "file:../event-emitter",
-    "@wwawing/loader": "file:../loader",
-    "@wwawing/page-generator": "file:../page-generator",
-    "@wwawing/styles": "file:../styles",
-    "@wwawing/virtual-pad": "file:../virtual-pad",
+    "@wwawing/event-emitter": "workspace:*",
+    "@wwawing/loader": "workspace:*",
+    "@wwawing/page-generator": "workspace:*",
+    "@wwawing/styles": "workspace:*",
+    "@wwawing/virtual-pad": "workspace:*",
     "crypto-js": "^4.1.1",
-    "jest": "^30.3.0",
-    "jest-cli": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
+    "jest": "^30.4.2",
+    "jest-cli": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.2",
     "npm-run-all2": "^8.0.1",
     "pug": "^3.0.2",
     "shelljs": "^0.10.0",
@@ -74,9 +74,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=24",
-    "npm": ">=11"
   }
 }

@@ -2,22 +2,22 @@
   "name": "@wwawing/wwawing",
   "version": "0.0.0",
   "description": "",
-  "private": "true",
+  "private": true,
   "workspaces": {
     "packages": [
       "packages/*"
     ]
   },
   "scripts": {
-    "test": "lerna run test --scope @wwawing/{engine,serve-index}",
-    "clean": "lerna run clean",
-    "start": "lerna run start --stream --scope @wwawing/engine",
-    "build": "lerna run build --stream",
-    "deploy": "lerna run deploy:prod --scope @wwawing/engine",
-    "generate": "lerna run generate --stream",
-    "make-dist": "npm run build && lerna run make-dist --stream",
-    "version-up": "lerna version --no-git-tag-version",
-    "publish:all": "run-s build generate && lerna publish from-package"
+    "test": "pnpm --filter @wwawing/engine --filter serve-index test",
+    "clean": "pnpm -r run clean",
+    "start": "pnpm -C packages/engine start",
+    "build": "pnpm -r run build",
+    "deploy": "pnpm --filter @wwawing/engine deploy:prod",
+    "generate": "pnpm -r run generate",
+    "make-dist": "pnpm run build && pnpm -r run make-dist",
+    "version-up": "pnpm --filter \"./packages/*\" version",
+    "publish:all": "run-s build generate && pnpm -r publish --workspace-concurrency=1 --no-git-checks"
   },
   "repository": {
     "type": "git",
@@ -35,21 +35,16 @@
   "devDependencies": {
     "@swc/core": "^1.10.4",
     "@swc/helpers": "^0.5.15",
-    "@types/node": "^24",
-    "@lerna-lite/cli": "^4.10.5",
-    "@lerna-lite/publish": "^4.10.5",
-    "@lerna-lite/run": "^4.10.5",
-    "@lerna-lite/version": "^4.10.5",
+    "@types/node": "^26",
     "npm-run-all2": "^8.0.1",
     "regenerator-runtime": "^0.14.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "engines": {
-    "node": ">=24",
-    "npm": ">=11"
+    "node": ">=26",
+    "npm": "使えない",
+    "pnpm": ">=12"
   },
-  "volta": {
-    "node": "24.14.1"
-  }
+  "packageManager": "pnpm@12.14.0"
 }

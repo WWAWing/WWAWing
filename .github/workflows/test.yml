@@ -15,4 +15,4 @@ jobs:
           lfs: true
       - name: "test"
         run: |
-          npm test
+          pnpm test

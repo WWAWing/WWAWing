@@ -63,7 +63,8 @@ function createPlayPageConfig(mapDataName: string, cssName?: string, isClassicMo
                     enable: true,
                     viewportFitEnable: true,
                     controllerId: "virtualpad-controller"
-                }
+                },
+                frameRateDisplayingPattern: "default-on",
             },
             resources: {
                 mapData: `${mapDataName}.dat`,

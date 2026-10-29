@@ -1,3 +1,5 @@
+import type { FrameRateDisplayingPattern } from "@wwawing/common-interface";
+
 export interface GameOption {
     isUrlGateEnabled?: boolean;
     isClassicMode?: boolean;
@@ -16,6 +18,7 @@ export interface GameOption {
         viewportFitEnable?: boolean,
         controllerId?: string;
     },
+    frameRateDisplayingPattern?: FrameRateDisplayingPattern;
 }
 
 export interface Resources {

@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/all",
-  "version": "3.12.24",
+  "version": "3.12.33",
   "description": "World Wide Adventure: an RPG Engine.",
   "author": "WWA Wing Team",
   "license": "MIT",
@@ -11,7 +11,7 @@
   },
   "scripts": {
     "release": "run-s release:make-zip release:upload-zip",
-    "release:make-zip": "npm run clean && ts-node ./scripts",
+    "release:make-zip": "pnpm run clean && ts-node ./scripts",
     "release:upload-zip": "ts-node ./scripts/upload-zip",
     "clean": "shx rm -rf dist",
     "generate": "run-s release:make-zip"
@@ -25,16 +25,15 @@
   "homepage": "https://github.com/WWAWing/WWAWing#readme",
   "devDependencies": {
     "@octokit/rest": "^21.1.1",
-    "@types/jszip": "^3.4.1",
     "@types/shelljs": "^0.8.11",
     "@wwawing/assets": "4.0.2",
-    "@wwawing/common-interface": "file:../common-interface",
+    "@wwawing/common-interface": "workspace:*",
     "@wwawing/debug-server": "4.0.2",
-    "@wwawing/engine": "file:../engine",
-    "@wwawing/loader": "file:../loader",
-    "@wwawing/page-generator": "file:../page-generator",
+    "@wwawing/engine": "workspace:*",
+    "@wwawing/loader": "workspace:*",
+    "@wwawing/page-generator": "workspace:*",
     "@wwawing/serve-index": "4.0.2",
-    "@wwawing/styles": "file:../styles",
+    "@wwawing/styles": "workspace:*",
     "jszip": "^3.10.1",
     "npm-run-all2": "^8.0.1",
     "shelljs": "^0.10.0",
@@ -44,9 +43,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=24",
-    "npm": ">=11"
   }
 }

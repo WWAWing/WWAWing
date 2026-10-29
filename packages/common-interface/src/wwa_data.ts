@@ -13,6 +13,8 @@ export interface Coord {
  */
 export type GameOverPolicy = "default" | "never" | "except-macro";
 
+export type FrameRateDisplayingPattern = "default-off" | "default-on" | "always" | "never";
+
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
 export interface WWAData {
