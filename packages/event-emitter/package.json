@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/event-emitter",
-  "version": "4.0.28",
+  "version": "4.0.30",
   "description": "nodeでもモダンブラウザでもIE11でも使えるすごいEventEmitter",
   "repository": {
     "type": "git",
@@ -17,7 +17,7 @@
   "sideEffects": false,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run clean && run-p build:*",
+    "build": "pnpm run clean && run-p build:*",
     "build:lib": "tsc -p .",
     "build:module": "tsc -p ./tsconfig.module.json",
     "clean": "run-p clean:*",
@@ -35,9 +35,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=24",
-    "npm": ">=11"
   }
 }

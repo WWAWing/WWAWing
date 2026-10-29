@@ -1,6 +1,6 @@
 {
   "name": "@wwawing/debug-server",
-  "version": "4.0.28",
+  "version": "4.0.30",
   "description": "wwawing debug server",
   "main": "lib/index.js",
   "repository": {
@@ -13,7 +13,7 @@
     "lib"
   ],
   "scripts": {
-    "start": "npm run build && node lib debug",
+    "start": "pnpm run build && node lib debug",
     "build": "webpack build --config ./webpack.config.ts",
     "generate": "run-s generate:*",
     "generate:pre-crean": "shx rm -rf bin tmp",
@@ -27,11 +27,11 @@
   "author": "WWA Wing Team",
   "license": "MIT",
   "dependencies": {
-    "@wwawing/serve-index": "file:../serve-index"
+    "@wwawing/serve-index": "workspace:*"
   },
   "devDependencies": {
     "@types/express": "5.0.6",
-    "@types/node": "^24",
+    "@types/node": "^26",
     "express": "^5.2.1",
     "npm-run-all2": "^8.0.1",
     "postject": "^1.0.0-alpha.6",
@@ -46,9 +46,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=24",
-    "npm": ">=11"
   }
 }

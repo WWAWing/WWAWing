@@ -21,12 +21,12 @@ jobs:
         run: "echo \"WWA_WING_VERSION=$(node -e \"console.log(require('./packages/engine/package.json').version)\")\" >> $GITHUB_ENV"
       - name: "Build"
         run: |
-          npm run build
-          npm run generate
+          pnpm run build
+          pnpm run generate
       - name: "Upload distributions"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: "cd packages/all && npm run release && cd ../.."
+        run: "cd packages/all && pnpm run release && cd ../.."
 
       # WWAWing/sites リポジトリ側にある、新バージョンの公開を行うワークフローを呼び出す
       - name: "Create pull request to WWAWing/sites respoitory"
