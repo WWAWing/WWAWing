@@ -1,0 +1,7 @@
+[settings]
+# Node.js のバージョンは .node-version で決定する
+idiomatic_version_file_enable_tools = ["node"]
+
+[tools]
+# とりあえず最新の pnpm を持ってくる。実際に使われる pnpm のバージョンは package.json の packageManager フィールドで決定される。
+pnpm = "latest"
