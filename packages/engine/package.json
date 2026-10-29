@@ -49,7 +49,7 @@
     "@types/pug": "^2.0.6",
     "@types/terser-webpack-plugin": "^5.2.0",
     "@types/webpack": "^5.28.0",
-    "@wwawing/assets": "4.0.2",
+    "@wwawing/assets": "4.0.30",
     "@wwawing/common-interface": "workspace:*",
     "@wwawing/debug-server": "4.0.2",
     "@wwawing/event-emitter": "workspace:*",

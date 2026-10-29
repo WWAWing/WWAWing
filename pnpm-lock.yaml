@@ -197,14 +197,14 @@ importers:
         specifier: ^0.8.11
         version: 0.8.17
       '@wwawing/assets':
-        specifier: 4.0.2
-        version: 4.0.2
+        specifier: 4.0.30
+        version: 4.0.30
       '@wwawing/common-interface':
         specifier: workspace:*
         version: link:../common-interface
       '@wwawing/debug-server':
-        specifier: 4.0.2
-        version: 4.0.2(supports-color@8.1.1)
+        specifier: 4.0.30
+        version: 4.0.30(supports-color@8.1.1)
       '@wwawing/engine':
         specifier: workspace:*
         version: link:../engine
@@ -215,8 +215,8 @@ importers:
         specifier: workspace:*
         version: link:../page-generator
       '@wwawing/serve-index':
-        specifier: 4.0.2
-        version: 4.0.2(supports-color@8.1.1)
+        specifier: 4.0.30
+        version: 4.0.30(supports-color@8.1.1)
       '@wwawing/styles':
         specifier: workspace:*
         version: link:../styles
@@ -317,8 +317,8 @@ importers:
         specifier: ^5.28.0
         version: 5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(html-minifier-terser@7.2.0)(webpack-cli@5.1.4)
       '@wwawing/assets':
-        specifier: 4.0.2
-        version: 4.0.2
+        specifier: 4.0.30
+        version: 4.0.30
       '@wwawing/common-interface':
         specifier: workspace:*
         version: link:../common-interface
@@ -1567,17 +1567,22 @@ packages:
       webpack-dev-server:
         optional: true
 
-  '@wwawing/assets@4.0.2':
-    resolution: {integrity: sha512-kMNze1oSYT3TMdaVuFFrHJ/6zjzlPchGc2HzdaPkoJmcQBiKhaxy/EV+p/R4Nz7Fw8yV41iEbH/lMLg1HAqKFA==}
-    engines: {node: '>=24', npm: '>=11'}
+  '@wwawing/assets@4.0.30':
+    resolution: {integrity: sha512-wqXLvyl3UN/HxYiCVStPv6xnOfkKhyhRTzzd2mdCAiOBzqNQWSk4MfTUqbYF8E9cWNpPl/0OZduI/ZtcZgKVLA==}
 
   '@wwawing/debug-server@4.0.2':
     resolution: {integrity: sha512-40kAdDkb/GXQPptAsG/7op3aeVpSodpezn4EWsKNTO+LCmFH7d7L84p1KqoSt4sRo0upD9xVIUWHzLjRgszDNw==}
     engines: {node: '>=24', npm: '>=11'}
 
+  '@wwawing/debug-server@4.0.30':
+    resolution: {integrity: sha512-mv+zccFV8BPLHdu86q8VwyQ3QWReXNMV5No3xoUIfIJurk2d1xZbLy99/UJ+K380W+HJIaAqeg1MsmXJypL/iA==}
+
   '@wwawing/serve-index@4.0.2':
     resolution: {integrity: sha512-Ml1cztxxR/DILMT6fEu6PK0yEYe125XbXoXwXgHveQ5ptSOQNfyBtLr8ZXYQNkoKSQycRbTafCKYpvXCceWtGw==}
     engines: {node: '>=24', npm: '>=11'}
+
+  '@wwawing/serve-index@4.0.30':
+    resolution: {integrity: sha512-toa5R9UWHRRBl7ig75NCsEeNrQacAh8UJozHMyqKcj8I5DSDpYnkzfYVWkG1UuUdhoo2HSLfmb/BcG1HvGjQkQ==}
 
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
@@ -5104,7 +5109,7 @@ snapshots:
       webpack: 5.112.0(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(html-minifier-terser@7.2.0)(webpack-cli@5.1.4)
       webpack-cli: 5.1.4(webpack@5.112.0)
 
-  '@wwawing/assets@4.0.2': {}
+  '@wwawing/assets@4.0.30': {}
 
   '@wwawing/debug-server@4.0.2(supports-color@8.1.1)':
     dependencies:
@@ -5112,7 +5117,26 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@wwawing/debug-server@4.0.30(supports-color@8.1.1)':
+    dependencies:
+      '@wwawing/serve-index': 4.0.30(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - supports-color
+
   '@wwawing/serve-index@4.0.2(supports-color@8.1.1)':
+    dependencies:
+      accepts: 1.3.8
+      batch: 0.6.1
+      css.escape: 1.5.1
+      debug: 2.6.9(supports-color@8.1.1)
+      escape-html: 1.0.3
+      http-errors: 1.8.1
+      mime-types: 2.1.35
+      parseurl: 1.3.3
+    transitivePeerDependencies:
+      - supports-color
+
+  '@wwawing/serve-index@4.0.30(supports-color@8.1.1)':
     dependencies:
       accepts: 1.3.8
       batch: 0.6.1
