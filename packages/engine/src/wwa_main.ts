@@ -293,6 +293,12 @@ export class WWA {
 
     private _frameRateDisplayingPattern: FrameRateDisplayingPattern = "default-off";
 
+    /**
+     * Quick Load 実行中か。
+     * Restart Game やパスワードロードの実行中でも true になります。
+     */
+    private _isQuickLoading: boolean = false;
+
     ////////////////////////
     public debug: boolean;
     private hoge: number[][];
@@ -2955,35 +2961,7 @@ export class WWA {
             }
         }
         if (this._stopUpdateByLoadFlag) {
-            this._fadeout((): void => {
-                this._stopUpdateByLoadFlag = false;
-                if (this._loadType === LoadType.QUICK_LOAD) {
-                    this._quickLoad();
-                    this.wwaCustomEvent('wwa_quickload');
-                    /** クイックロード時のユーザ定義独自関数を呼び出す */
-                    const quickLoadFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_QUICKLOAD"];
-                    if(quickLoadFunc) {
-                        this.evalCalcWwaNodeGenerator.evalWwaNode(quickLoadFunc);
-                    }
-                } else if (this._loadType === LoadType.RESTART_GAME) {
-                    this.restartGame();
-                    this.wwaCustomEvent('wwa_restert');
-                    /** リスタート時のユーザ定義独自関数を呼び出す */
-                    const restartFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_RESTART"];
-                    if(restartFunc) {
-                        this.evalCalcWwaNodeGenerator.evalWwaNode(restartFunc);
-                    }
-                } else if (this._loadType === LoadType.PASSWORD) {
-                    this._applyQuickLoad(this._passwordSaveExtractData);
-                    this._passwordSaveExtractData = void 0;
-                    this.wwaCustomEvent('wwa_passwordload');
-                    /** パスワードロード時のユーザ定義独自関数を呼び出す */
-                    const passwordLoadFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_PASSWORDLOAD"];
-                    if(passwordLoadFunc) {
-                        this.evalCalcWwaNodeGenerator.evalWwaNode(passwordLoadFunc);
-                    }
-                }
-            });
+            this._quickLoadWithAnimation(this._loadType);
         }
         this._varDump?.updateAllVariables({
           userVar: this._userVar.numbered,
@@ -4879,10 +4857,53 @@ export class WWA {
         };
     }
 
+    private _quickLoadWithAnimation(loadType: LoadType) {
+        this._isQuickLoading = true; // 解除は _quickLoad() 内で行う
+        this._fadeout((): void => {
+            this._stopUpdateByLoadFlag = false;
+            switch (loadType) {
+                case LoadType.QUICK_LOAD: {
+                    this._quickLoad();
+                    this.wwaCustomEvent('wwa_quickload');
+                    /** クイックロード時のユーザ定義独自関数を呼び出す */
+                    const quickLoadFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_QUICKLOAD"];
+                    if (quickLoadFunc) {
+                        this.evalCalcWwaNodeGenerator.evalWwaNode(quickLoadFunc);
+                    }
+                    break;
+                }
+                case LoadType.RESTART_GAME: {
+                    this._quickLoad(true);
+                    this.restartGame();
+                    this.wwaCustomEvent('wwa_restert');
+                    /** リスタート時のユーザ定義独自関数を呼び出す */
+                    const restartFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_RESTART"];
+                    if (restartFunc) {
+                        this.evalCalcWwaNodeGenerator.evalWwaNode(restartFunc);
+                    }
+                    break;
+                }
+                case LoadType.PASSWORD: {
+                    this._applyQuickLoad(this._passwordSaveExtractData);
+                    this._isQuickLoading = false; // HACK: _applyQuickLoad() 内では _isQuickLoading を false にしないので、ここで false にする 
+                    this._passwordSaveExtractData = void 0;
+                    this.wwaCustomEvent('wwa_passwordload');
+                    /** パスワードロード時のユーザ定義独自関数を呼び出す */
+                    const passwordLoadFunc = this.userDefinedFunctions && this.userDefinedFunctions["CALL_PASSWORDLOAD"];
+                    if (passwordLoadFunc) {
+                        this.evalCalcWwaNodeGenerator.evalWwaNode(passwordLoadFunc);
+                    }
+                    break;
+                }
+            }
+        });
+    }
+
     private _quickLoad(restart: boolean = false, password: string = null, apply: boolean = true): WWAData {
         if (!restart && this._wwaSave.hasSaveData() === void 0 && password === null) {
             throw new Error("セーブデータがありません。");
         }
+        this._isQuickLoading = true;
         let newData: WWAData;
         let isWorldNameEmpty: boolean = false;
         // FIXME: IndexedDBから復元した場合は配列やオブジェクト内の参照が復元されるが、パスワードセーブの場合はされない。
@@ -4923,6 +4944,7 @@ export class WWA {
         if (apply) {
             this._applyQuickLoad(newData);
         }
+        this._isQuickLoading = false;
         return newData;
     }
 
@@ -5004,7 +5026,11 @@ export class WWA {
     /**
      * リスタートゲームをかける
      */
-    public restartGame(): void {
+    public restartGame(applyAnimation: boolean = false): void {
+        if (applyAnimation) {
+            this._quickLoadWithAnimation(LoadType.RESTART_GAME);
+            return;
+        }
         this._quickLoad(true);
     }
 
@@ -7272,6 +7298,10 @@ font-weight: bold;
         if (userFunc) {
             this.evalCalcWwaNodeGenerator.evalWwaNode(userFunc);
         }
+    }
+
+    public isQuickLoading(): boolean {
+        return this._isQuickLoading;
     }
 };
 
