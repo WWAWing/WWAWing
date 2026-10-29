@@ -1,0 +1,20 @@
+#wwa-debug-console-area {
+    /*!*/
+}
+
+#wwa-debug-console {
+    display: flex;;
+    justify-content: center;
+    margin: 8px;
+
+    > .script-running-button {
+        cursor: pointer;
+        background-color: #009944;
+        color: #FFFFFF;
+        border: 2px solid #006622;
+        border-radius: 2px;
+        &:hover {
+            background-color: #33cc66;
+        }
+    }
+}

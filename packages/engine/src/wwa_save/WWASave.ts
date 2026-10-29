@@ -43,7 +43,7 @@ export default class WWASave {
     /**
      * @param wwa WWA インスタンス本体
      * @param worldName WWA マップデータのワールド名
-     * @param worldPassNummber WWA マップデータの暗証番号
+     * @param worldPassNumber WWA マップデータの暗証番号
      * @param onCheckLoadingSaveData セーブデータ読み込みの互換性チェック時に実行される関数
      * @param onCompleteLoadingSaveData セーブデータの読み込みが完了した際に実行される関数
      */

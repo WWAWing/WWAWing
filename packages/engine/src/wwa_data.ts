@@ -1,10 +1,9 @@
+import { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound, type FrameRateDisplayingPattern } from "@wwawing/common-interface";
 import { WWA } from "./wwa_main";
 import { Camera } from "./wwa_camera";
-import { KeyCode } from "./wwa_input";
-import { WWAData } from "@wwawing/common-interface";
 import type { JsonResponseErrorKind } from "./json_api_client";
 
-export { WWAData };
+export { type WWAData, type UserVar, type UserVarPrimitive, type UserVarMap, SystemSound, type FrameRateDisplayingPattern };
 
 export class EquipmentStatus {
     public strength: number;
@@ -83,13 +82,17 @@ export class Status extends EquipmentStatus {
         return this.energy === e.energy && this.strength === e.strength && this.defence === e.defence && this.gold === e.gold;
     }
 
-    public calculateScore(scoreOption: ScoreOptions): number {
+    public calculateScore(scoreOption: ScoreOption): number {
         type Key = keyof ScoreRates;
         // TODO: this[key] など型が効いていない部分があるが、一旦目を瞑る。
         return (Object.keys(scoreOption.rates) as Key[]).reduce((prev, key) =>  prev + scoreOption.rates[key] * this[key], 0);
     }
 
-    public constructor( e: number, s: number, d: number, g: number) {
+    public clone() {
+        return new Status(this.energy, this.strength, this.defence, this.gold);
+    }
+
+    public constructor(e: number, s: number, d: number, g: number) {
         super(s, d);
         this.energy = e;
         this.gold = g;
@@ -347,6 +350,7 @@ export enum Direction {
     RIGHT_UP = 9,
 
     // 向きなしは、マクロ$movesで「プレイヤーの動きなしに物体を動かす」時に使う
+    // ジャンプゲート系のマクロやスクリプトの関数で向きを指定しない場合にも使う
     NO_DIRECTION = 5
 };
 
@@ -534,19 +538,6 @@ export enum SecondCandidateMoveType {
 export var sidebarButtonCellElementID = ["cell-load", "cell-save", "cell-restart", "cell-gotowwa"];
 
 
-export enum SystemMessage1 {
-    ASK_LINK = 5,
-    NO_MONEY = 6,
-    NO_ITEM = 7,
-    USE_ITEM = 8
-}
-
-export enum SystemMessage2 {
-    CLICKABLE_ITEM = 0,
-    FULL_ITEM = 1,
-    LOAD_SE = 2
-}
-
 export enum MacroType {
     UNDEFINED = 0,
     IMGPLAYER = 1,
@@ -611,6 +602,9 @@ export enum MacroType {
     SHOW_STR2 = 62,
     CONSOLE_LOG2 = 63,
     DELAYBGM = 64,
+    SYSMSG = 65,
+    PICTURE = 66,
+    DISABLE_BATTLE_REPORT = 67,
     GAMEPAD_BUTTON = 100,
     OLDMOVE = 101,
     LEGACY_IF = 10050
@@ -683,6 +677,9 @@ export var macrotable = {
     "$show_str2": 62,
     "$console_log2": 63,
     "$delaybgm": 64,
+    "$sysmsg": 65,
+    "$picture": 66,
+    "$disable_battle_report": 67,
     "$gamepad_button" : 100,
     "$oldmove": 101
 }
@@ -706,19 +703,14 @@ export enum MacroImgFrameIndex {
     MAIN_FRAME = 6
 }
 
-export enum SystemSound {
-    DECISION = 1,
-    ATTACK = 3,
-    BGM_LB = 70,
-    NO_SOUND = 99
-}
-
 export const speedList = [1, 2, 5, 8, 10, 20];
 export const speedNameList = ["超低速", "低速", "準低速", "中速", "高速", "超高速"];
 export const StatusKind = ["energy", "strength", "defence", "gold"] as const;
 export type StatusKind = typeof StatusKind[number];
 export class WWAConsts {
     static WWA_HOME: string = "http://wwajp.com";
+    static TARGET_FPS: number = 60;
+    static INTERVAL_MS: number = 1000 / WWAConsts.TARGET_FPS;
 
     static ITEMBOX_SIZE: number = 12;
     static MAP_ATR_MAX: number = 60;
@@ -818,8 +810,9 @@ export class WWAConsts {
     static MAX_SPEED_INDEX = speedList.length - 1;
     static QUICK_BATTLE_SPEED_INDECIES = [speedList.length - 2, speedList.length - 1];
 
-    static ANIMATION_REP_HALF_FRAME: number = 22;
-    static PLAYER_LOOKING_AROUND_START_FRAME: number = WWAConsts.ANIMATION_REP_HALF_FRAME * 4;
+    static ANIMATION_REP_HALF_FRAME: number = 32;
+    static PLAYER_LOOKING_AROUND_START_FRAME: number = 80;
+    static PLAYER_LOOKING_AROUND_LOOP_INTERVAL_FRAME: number = 80;
 
     static RELATIVE_COORD_BIAS: number = 10000;
     static RELATIVE_COORD_LOWER: number = WWAConsts.RELATIVE_COORD_BIAS - 1000;
@@ -911,6 +904,9 @@ export class WWAConsts {
      */
     static INLINE_USER_VAR_VIEWER_DISPLAY_NUM = 10;
 
+    // 戦闘でお互いノーダメージが指定ターン続いた場合、引き分けとする。
+    // ここでいうターンは プレイヤーターンと敵ターンの合計であることに注意。
+    static readonly FIGHT_DRAW_TURN: number = 40;
 }
 export class WWASaveConsts {
     static QUICK_SAVE_MAX: number = 4;//保存可能なクイックセーブデータ数
@@ -1035,7 +1031,7 @@ export type UserVarNameListRequestErrorKind = JsonResponseErrorKind | "notObject
 /**
  * スコア表示で使用されるオプション
  */
-export interface ScoreOptions {
+export interface ScoreOption {
     rates: ScoreRates
 }
 
@@ -1056,4 +1052,61 @@ export interface TriggerParts {
     id: number;
     type: PartsType;
     position: Coord;
+}
+
+/**
+ * ユーザ変数の種類
+ * - named: 名前つき変数
+ * - numbered: 添字が数値の変数
+ */
+export type UserVariableKind = "named" | "numbered";
+
+/**
+ * 戦闘における1ターンの結果
+ */
+export interface BattleTurnResult {
+    /**
+     * ダメージ量
+     */
+    damage: number;
+    /**
+     * 中断の場合は true
+     * 中断した場合でも該当ターンのダメージは入ります。
+     */
+    aborted?: boolean;
+    /**
+     * ユーザー定義関数で予期せぬエラーがあった場合 true
+     * ほとんど起きないと思いますが念のため。
+     * エラーがあった場合はダメージは 0 となります。
+     */
+    hasError?: boolean
+}
+
+
+/**
+ * 戦闘予測用パラメータ
+ */
+export interface BattleEstimateParameters {
+    playerStatus: Status;
+    enemyStatus: Status
+}
+
+
+/**
+ * 戦闘ダメージ方向の定義
+ */
+export type BattleDamageDirection = "playerToEnemy" | "enemyToPlayer";
+
+/**
+ * マニュアルポーズ情報
+ */
+export interface ManualPauseInformation {
+    functionNames: {
+        cancelPause: string;
+        up: string;
+        down: string;
+        right: string;
+        left: string;
+    }
+    blockingCancelPauseByPlayer: boolean;
 }

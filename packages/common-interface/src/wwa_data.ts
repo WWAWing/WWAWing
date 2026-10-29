@@ -1,3 +1,10 @@
+import { Key } from "./wwa_system_message";
+import { PictureProperties } from "./wwa_picture";
+
+export type UserVarPrimitive = number | string | boolean;  // null | undefined も認めたい
+export type UserVar = UserVarPrimitive | Array<UserVar> | UserVarMap;
+export type UserVarMap =  Map<string, UserVar>
+
 export interface Coord {
     x: number;
     y: number;
@@ -7,9 +14,36 @@ export interface Coord {
  * プレイヤーの生命力が 0 になった時の挙動
  * - default: 生命力が 0 になったらゲームオーバーとする
  * - never: 生命力が 0 になってもゲームオーバーにしない
- * - except-macro: マクロで生命力が 0 になった場合以外ではゲームオーバーにする
+ * - except-assignment: マクロやスクリプトなどでので生命力 0 代入以外ではゲームオーバーにする
  */
-export type GameOverPolicy = "default" | "never" | "except-macro";
+export type GameOverPolicy = "default" | "never" | "except-assignment";
+
+type PictureRegistryBase<N> = {
+    layerNumber: number,
+    imgPosX: number,
+    imgPosY: number,
+    imgPosX2: number,
+    imgPosY2: number,
+    /**
+     * ピクチャ作成を呼び出したパーツの X 座標。 next プロパティで次のピクチャをつながる場合に使用する。
+     */
+    triggerPartsX: number,
+    /**
+     * ピクチャ作成を呼び出したパーツの Y 座標。
+     */
+    triggerPartsY: number,
+    /**
+     * サウンドID
+     * 互換性のため soundNumber を名乗っているが、文字列のサウンドIDでもOK。
+     */
+    soundNumber: number | string,
+    properties: PictureProperties<N>
+};
+export type PictureRegistry = PictureRegistryBase<number>;
+// 変数参照がまだ残っている状態の PictureRegistry
+export type RawPictureRegistry = PictureRegistryBase<number | string>;
+
+export type FrameRateDisplayingPattern = "default-off" | "default-on" | "always" | "never";
 
 // TODO: LoaderとEngineで必要なやつが違うのでわける
 // @see: https://github.com/WWAWing/tmp-wwadata-compare/pull/1/files
@@ -70,7 +104,7 @@ export interface WWAData {
 
     delPlayerFlag: boolean;
 
-    bgm: number;
+    bgm: number | string;
     effectCoords: Coord[];
     effectWaits: number;
 
@@ -112,7 +146,7 @@ export interface WWAData {
     checkString: string;
 
     isItemEffectEnabled: boolean;
-
+    
     /**
      * プレイ時間
      * memo: playFrameCount というのは古い表記なのでマージなどの時に注意
@@ -126,7 +160,8 @@ export interface WWAData {
      */
     gamePadButtonItemTable: number[];
 
-    userVar: number[];
+    userVar: UserVarPrimitive[];
+    userNamedVar: UserVarMap;
     permitChangeGameSpeed: boolean;
     gameSpeedIndex: number;
     playTime: number;
@@ -148,5 +183,27 @@ export interface WWAData {
 
     bgmDelayDurationMs: number;
 
+    /**
+     * ゲーム中に書き換えられたシステムメッセージ群
+     * SystemMessageKeyごとにデータが保存されています。
+     * キーに対する値が未定義の場合はマップデータで決められたシステムメッセージ
+     * (WWAData の message もしくは systemMessage) を使用します。
+     * 
+     * 本当は WWAData の systemMessage を使いたいがセーブデータの互換性が損なわれる問題があるため
+     * キーを増やす対応をしています。
+     */
+    customSystemMessages: Partial<Record<Key, string>>;
+
+    pictureRegistry: PictureRegistry[];
+
+    decisionSound?: number | string;
+    attackSound?: number | string;
+    battleEstimateDisabled?: boolean;
 }
 
+export enum SystemSound {
+    DECISION = 1,
+    ATTACK = 3,
+    BGM_LB = 70,
+    NO_SOUND = 99
+}

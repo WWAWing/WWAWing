@@ -1,21 +1,21 @@
-import {
-    WWAData,
-    WWAConsts
-} from "../wwa_data";
+import { toJSON, fromJSON } from "flatted"
+import { convertMapToObject, convertObjectToMap } from "@wwawing/util";
+import { WWAData, WWAConsts } from "../wwa_data";
 import { WWADataWithWorldNameStatus } from "./common";
 
-var SAVE_COMPRESS_ID = {
+const SAVE_COMPRESS_ID = Object.freeze({
     MAP: "map",
     MAP_OBJECT: "mapObject",
     SYSTEM_MESSAGE: "systemMessage",
-    USER_VAR: "userVar"
-};
+    USER_VAR: "userVar",
+    USER_NAMED_VAR: "userNamedVar"
+});
 
-var NOT_COMPRESS_ID = {
+const NOT_COMPRESS_ID = Object.freeze({
     "mapAttribute": true,
     "objectAttribute": true,
     "message": true,
-};
+});
 
 export class FirstChangedMapUint8Table {
     public map: Uint8Array;
@@ -33,8 +33,8 @@ export default class WWACompress {
      * @param wwaData
      * @todo 圧縮データの型情報を作成する
      */
-    public static compress(wwaData: WWAData): object {
-        var saveObject: object = {};
+    public static compress(wwaData: WWAData, option: {isPassword?: boolean} = {}): object {
+        var saveObject: object = Object.create(null);
         var key: string, value;
         for (key in wwaData) {
             if (NOT_COMPRESS_ID[key]) {
@@ -51,12 +51,13 @@ export default class WWACompress {
                     }
                     break;
                 case "object":
-                    if (value === null) {
+                   if (value === null) {
                         if (this._restartData[key] === value) {
                             continue;
                         }
-                    } else {
-                        value = this.compressObject(key, value, this._restartData[key]);
+                    } else { 
+                        // typeof value === "object" には instanceof Array なども含まれることに注意してください。
+                        value = this.compressObject(key, value, this._restartData[key], option);
                         if (value === undefined) {
                             continue;
                         }
@@ -72,21 +73,21 @@ export default class WWACompress {
 
         return saveObject;
     }
-    private static compressObject(key: string, wwaObject: object, restartObject: object): object {
+    private static compressObject(key: string, wwaObject: object, restartObject: object, option: {isPassword?: boolean} = {}): object {
         var saveObject: object, mapY: number[], restartMapY: number[], writeMapY: object;
         switch (key) {
             // マップ (2次元配列)
             case SAVE_COMPRESS_ID.MAP:
             case SAVE_COMPRESS_ID.MAP_OBJECT:
                 var newValue: number, oldValue: number, addValue: number, x: string, y: string, x_number: number, id: number, allIdTableX: object, allIdTableY: object, idTableX: number[][], idTableY: number[][], idText: string, xList: number[], yList: number[];
-                saveObject = {};
-                allIdTableY = {};
-                allIdTableX = {};
+                saveObject = Object.create(null);
+                allIdTableY = Object.create(null);
+                allIdTableX = Object.create(null);
 
                 for (y in wwaObject) {
                     mapY = wwaObject[y];
                     restartMapY = restartObject[y];
-                    writeMapY = {};
+                    writeMapY = Object.create(null);
                     oldValue = -1;
                     // 物体・背景IDごとにテーブルを作り、そこに座標情報を保存する。
                     // Y座標を添え字にしてX座標を配列に格納。同じY座標に存在するX座標を抽出。
@@ -95,7 +96,7 @@ export default class WWACompress {
                         if (id !== restartMapY[x]) {
                             writeMapY[x] = id;
                             if (allIdTableY[id] === undefined) {
-                                allIdTableY[id] = {};
+                                allIdTableY[id] = Object.create(null);
                             }
                             idTableY = allIdTableY[id];
                             if (idTableY[y] === undefined) {
@@ -111,7 +112,7 @@ export default class WWACompress {
                 for (idText in allIdTableY) {
                     idTableY = allIdTableY[idText];
                     if (allIdTableX[idText] === undefined) {
-                        allIdTableX[idText] = {};
+                        allIdTableX[idText] = Object.create(null);
                     }
                     idTableX = allIdTableX[idText];
                     if (saveObject[idText] === undefined) {
@@ -185,7 +186,7 @@ export default class WWACompress {
 
                 return saveList;
             case SAVE_COMPRESS_ID.SYSTEM_MESSAGE:
-                saveObject = {};
+                saveObject = Object.create(null);
                 var key: string, value;
                 for (key in wwaObject) {
                     value = wwaObject[key];
@@ -197,6 +198,15 @@ export default class WWACompress {
                 break;
             case SAVE_COMPRESS_ID.USER_VAR:
                 return this.compressUserVars(wwaObject as number[]); // 型は妥協...
+            case SAVE_COMPRESS_ID.USER_NAMED_VAR:
+                if (!(wwaObject instanceof Map)) {
+                    throw new TypeError("USER_NAMED_VAR が正しい形式でないためセーブできません");
+                }
+                return {
+                  version: 2,
+                  data: toJSON(convertMapToObject(wwaObject)),
+                };
+
             default:
                 return wwaObject;
         }
@@ -238,7 +248,7 @@ export default class WWACompress {
         count = 0;
         indexCount = 0;
         compressClassList = [];
-        idClassTable = {};
+        idClassTable = Object.create(null);
         idList = [];
         indexList = [];
         for (y = 0; y < mapWidth; y++) {
@@ -281,7 +291,7 @@ export default class WWACompress {
         // IDごとの利用回数順に並び替え
         compressClassList.sort(this.idSort);
 
-        indexTable = {};
+        indexTable = Object.create(null);
         // Index配列を生成する。使用回数が多い順に格納する
         for (indexText in compressClassList) {
             id = compressClassList[indexText].id;
@@ -441,7 +451,7 @@ export default class WWACompress {
     public static decompress(saveObject: object): WWADataWithWorldNameStatus {
         var newData: WWAData;
 
-        newData = <WWAData>JSON.parse(JSON.stringify(this._restartData));
+        newData = structuredClone(this._restartData) as WWAData;
 
         var key: string, value;
         for (key in saveObject) {
@@ -465,7 +475,7 @@ export default class WWACompress {
         }
         return [newData, {isWorldNameEmpty: (saveObject as WWAData).worldName === undefined}];
     }
-    private static decompressObject(key: string, loadObject: object, newObject: object): object {
+    private static decompressObject(key: string, loadObject: object, newObject: object, option: {isPassword?: boolean} = {}): object {
         var saveObject: object;
         var key: string;
         switch (key) {
@@ -473,7 +483,7 @@ export default class WWACompress {
             case SAVE_COMPRESS_ID.MAP_OBJECT:
                 var newValue: number, oldValue: number, addValue: number, x: string, y: string, id: number, idText: string;
 
-                saveObject = {};
+                saveObject = Object.create(null);
 
                 oldValue = -1;
                 var i, len;
@@ -584,6 +594,24 @@ export default class WWACompress {
                 return newObject;
             case SAVE_COMPRESS_ID.USER_VAR:
                 return this.decompressUserVars(loadObject as number[][]); // 型妥協
+            case SAVE_COMPRESS_ID.USER_NAMED_VAR:
+                if (!loadObject) {
+                    return loadObject;
+                }
+                // 不安定版旧版互換: 以前は Map を配列化した表現 [["key1", "value1"], ["key2", "value2"], ...] の形式だった
+                // これを Map に復元する
+                if (Array.isArray(loadObject)) {
+                    return new Map(
+                      structuredClone(loadObject).map(([key, value]) => [
+                        key,
+                        convertObjectToMap(value),
+                      ])
+                    );
+                }
+                if (loadObject["version"] !== 2 || typeof loadObject["data"] !== "object") {
+                    throw new TypeError("セーブデータが壊れています");
+                }
+                return convertObjectToMap(fromJSON((loadObject as any).data));
             case SAVE_COMPRESS_ID.SYSTEM_MESSAGE:
             default:
                 if (newObject) {
@@ -592,7 +620,7 @@ export default class WWACompress {
                         if (newObject instanceof Array) {
                             newObject = [];
                         } else {
-                            newObject = {};
+                            newObject = Object.create(null);
                         }
                     } else {
                         return undefined;

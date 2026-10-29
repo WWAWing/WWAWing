@@ -1,5 +1,6 @@
 import * as pug from "pug";
-import * as path from "path";
+import * as path from "node:path";
+import type { FrameRateDisplayingPattern } from "@wwawing/common-interface";
 import * as DataTypes from "./data-types";
 import * as Helper from "./helper";
 
@@ -38,8 +39,14 @@ export interface TemplateValues {
             "data-wwa-virtualpad-enable"?: string;
             "data-wwa-virtualpad-viewport-fit-enable"?: string;
             "data-wwa-virtualpad-controller-elm"?: string;
+            "data-wwa-user-defined-scripts-file"?: string;
+            "data-wwa-picture-image-names-file"?: string;
+            "data-wwa-frame-rate-displaying-pattern"?: FrameRateDisplayingPattern;
         };
     };
+    debugConsoleElement?: {
+        id: string;
+    }
     varDumpElement?: {
         id: string;
     };
@@ -77,8 +84,13 @@ function generateTemplateValues({page, wwa, copyrights}: InputConfig): TemplateV
                 "data-wwa-virtualpad-enable": Helper.toStringBooleanOptional(wwa.gameOption?.virtualPad?.enable),
                 "data-wwa-virtualpad-viewport-fit-enable": Helper.toStringBooleanOptional(wwa.gameOption?.virtualPad?.viewportFitEnable),
                 "data-wwa-virtualpad-controller-elm": wwa.gameOption?.virtualPad?.controllerId ? `#${wwa.gameOption.virtualPad.controllerId}` : undefined,
+                "data-wwa-user-defined-scripts-file": wwa.gameOption?.wwaScript?.userDefinedScriptsFile,
+                "data-wwa-picture-image-names-file": wwa.resources.pictureImageNamesFile,
+                "data-wwa-frame-rate-displaying-pattern": wwa.gameOption?.frameRateDisplayingPattern
             }
         },
+        // HACK: デバッグコンソールエリアの要素名は変更できるようにする
+        debugConsoleElement: wwa.gameOption?.debugConsole ? { id: "wwa-debug-console-area" } : undefined,
         varDumpElement: wwa.gameOption?.userVars?.dumpElementId ? { id: wwa.gameOption.userVars.dumpElementId } : undefined,
         virtualPadController: wwa.gameOption?.virtualPad?.controllerId ? { id: wwa.gameOption.virtualPad.controllerId } : undefined,
         footer: {

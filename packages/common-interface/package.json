@@ -1,26 +1,28 @@
 {
   "name": "@wwawing/common-interface",
-  "version": "3.12.6",
+  "version": "4.0.30",
   "description": "",
   "sideEffects": false,
   "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WWAWing/WWAWing.git",
+    "directory": "packages/common-interface"
+  },
   "files": [
     "lib"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "type-check": "tsc -p . --watch --noEmit",
     "build": "tsc -p ."
   },
   "author": "WWA Wing Team",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.0.4"
+    "typescript": "^5.8.3"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "engines": {
-    "node": ">=18",
-    "npm": ">=8"
   }
 }

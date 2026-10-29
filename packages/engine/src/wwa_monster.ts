@@ -8,7 +8,7 @@ export class Monster {
         private _status: Status,
         private _message: string,
         private _item: number,
-        private _battleEndCallback: () => void
+        private _battleEndCallback?: () => void,
     ) {
 
     }
@@ -25,8 +25,32 @@ export class Monster {
     }
 
     public battleEndProcess(): void {
-        this._battleEndCallback();
+        this._battleEndCallback?.();
     }
 
+    public setStatus(status: Status): void {
+        if(status.energy !== null) {
+            this._status.energy = status.energy;
+        }
+        if(status.strength !== null) {
+            this._status.strength = status.strength;
+        }
+        if(status.defence !== null) {
+            this._status.defence = status.defence;
+        }
+    }
+    // データをクローンします。ただしコールバックは引き継ぎます。
+    public clone(): Monster {
+        return new Monster(
+            this._partsID,
+            this._position.clone(),
+            this._imgCoord.clone(),
+            this._status.clone(),
+            this._message,
+            this._item,
+            this._battleEndCallback
+        )
+            
+    }
 }
 

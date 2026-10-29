@@ -7,6 +7,7 @@ import { makeInject as makeInjectVirtualPad } from "@wwawing/virtual-pad";
 function makeInjectHtml(hasTitleImg: boolean, enableVirtualPad: boolean): string {
     const coverHtml = hasTitleImg ? `
         <div id="wwa-cover">
+            <div id="unstable-version-warning"></div>
             <div id="version"></div>
             <div id="progress-message-container">開始しています...</div>
             <div id="progress-bar-bg"></div>

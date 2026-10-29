@@ -175,6 +175,7 @@ export function createDefaultWWAData(): WWAData {
         frameCount: undefined,
         gamePadButtonItemTable: undefined,
         userVar: undefined,
+        userNamedVar: undefined,
         permitChangeGameSpeed: undefined,
         gameSpeedIndex: undefined,
         playTime: undefined,
@@ -185,6 +186,11 @@ export function createDefaultWWAData(): WWAData {
         isGameOverDisabled: undefined,
         gameOverPolicy: "default",
         bgmDelayDurationMs: undefined,
+        customSystemMessages: {},
+        pictureRegistry: [],
+        decisionSound: undefined,
+        attackSound: undefined,
+        battleEstimateDisabled: undefined,
     };
 }
 
